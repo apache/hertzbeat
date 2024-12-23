@@ -65,9 +65,9 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    realTimeDataWriter.saveData(metricsData);
                     historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
                     pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
+                    realTimeDataWriter.saveData(metricsData);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {

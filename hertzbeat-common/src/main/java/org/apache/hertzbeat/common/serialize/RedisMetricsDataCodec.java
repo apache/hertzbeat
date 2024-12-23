@@ -47,7 +47,7 @@ public class RedisMetricsDataCodec implements RedisCodec<String, CollectRep.Metr
     @Override
     public ByteBuffer encodeValue(CollectRep.MetricsData metricsData) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             VectorSchemaRoot root = metricsData.toVectorSchemaRoot();
+             VectorSchemaRoot root = metricsData.toVectorSchemaRootAndRelease();
              ArrowStreamWriter writer = new ArrowStreamWriter(root,
                      null, Channels.newChannel(out))) {
             writer.start();

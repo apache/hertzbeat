@@ -25,8 +25,6 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
@@ -83,26 +81,28 @@ public class MetricsDataServiceImpl implements MetricsDataService {
                 .toList());
 
         List<ValueRow> valueRows = new ArrayList<>();
-        RowWrapper rowWrapper = storageData.readRow();
-        while (rowWrapper.hasNextRow()) {
-            rowWrapper = rowWrapper.nextRow();
-            Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
-            List<Value> values = new ArrayList<>();
-            rowWrapper.cellStream().forEach(cell -> {
-                String origin = cell.getValue();
+        if (storageData.rowCount() > 0) {
+            RowWrapper rowWrapper = storageData.readRow();
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+                Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
+                List<Value> values = new ArrayList<>();
+                rowWrapper.cellStream().forEach(cell -> {
+                    String origin = cell.getValue();
 
-                if (CommonConstants.NULL_VALUE.equals(origin)) {
-                    values.add(new Value());
-                } else {
-                    values.add(new Value(origin));
-                    if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
-                        labels.put(cell.getField().getName(), origin);
+                    if (CommonConstants.NULL_VALUE.equals(origin)) {
+                        values.add(new Value());
+                    } else {
+                        values.add(new Value(origin));
+                        if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
+                            labels.put(cell.getField().getName(), origin);
+                        }
                     }
-                }
-            });
-            valueRows.add(ValueRow.builder().labels(labels).values(values).build());
+                });
+                valueRows.add(ValueRow.builder().labels(labels).values(values).build());
+            }
+            dataBuilder.valueRows(valueRows);
         }
-        dataBuilder.valueRows(valueRows);
         return dataBuilder.build();
     }
 

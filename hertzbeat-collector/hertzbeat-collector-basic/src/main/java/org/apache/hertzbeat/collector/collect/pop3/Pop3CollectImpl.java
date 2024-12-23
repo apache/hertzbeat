@@ -155,7 +155,7 @@ public class Pop3CollectImpl extends AbstractCollect {
                 }
             }
         }
-        builder.addValue(valueRowBuilder);
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private Map<String, Object> parsePop3Metrics(POP3Client pop3Client, List<String> aliasFields) throws IOException {

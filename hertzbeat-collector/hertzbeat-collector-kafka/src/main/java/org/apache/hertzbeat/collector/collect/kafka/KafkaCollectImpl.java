@@ -188,7 +188,7 @@ public class KafkaCollectImpl extends AbstractCollect {
         Set<String> names = adminClient.listTopics(options).names().get();
         names.forEach(name -> {
             CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder().addColumn(name).build();
-            builder.addValue(valueRow);
+            builder.addValueRow(valueRow);
         });
     }
 
@@ -258,7 +258,7 @@ public class KafkaCollectImpl extends AbstractCollect {
                         })
                 )
                 .filter(Objects::nonNull)
-                .forEach(builder::addValue);
+                .forEach(builder::addValueRow);
     }
 
     private static Map<String, Set<String>> getTopicConsumerGroupsMap(Collection<ConsumerGroupListing> consumerGroups,

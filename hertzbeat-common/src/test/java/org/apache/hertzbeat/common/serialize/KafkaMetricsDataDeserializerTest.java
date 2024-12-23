@@ -69,7 +69,7 @@ class KafkaMetricsDataDeserializerTest {
                 .build();
         byte[] bytes = null;
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             VectorSchemaRoot root = expectedMetricsData.toVectorSchemaRoot();
+             VectorSchemaRoot root = expectedMetricsData.toVectorSchemaRootAndRelease();
              ArrowStreamWriter writer = new ArrowStreamWriter(root,
                      null, Channels.newChannel(out))) {
             writer.start();
@@ -100,7 +100,7 @@ class KafkaMetricsDataDeserializerTest {
                 .build();
         byte[] bytes = null;
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             VectorSchemaRoot root = expectedMetricsData.toVectorSchemaRoot();
+             VectorSchemaRoot root = expectedMetricsData.toVectorSchemaRootAndRelease();
              ArrowStreamWriter writer = new ArrowStreamWriter(root,
                      null, Channels.newChannel(out))) {
             writer.start();

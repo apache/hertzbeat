@@ -47,14 +47,12 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     private final LinkedBlockingQueue<Alert> alertDataQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
 
     public InMemoryCommonDataQueue() {
         alertDataQueue = new LinkedBlockingQueue<>();
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToStorageQueue = new LinkedBlockingQueue<>();
-        metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
         serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
     }
 
@@ -63,7 +61,6 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
         metrics.put("alertDataQueue", alertDataQueue.size());
         metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
         metrics.put("metricsDataToPersistentStorageQueue", metricsDataToStorageQueue.size());
-        metrics.put("metricsDataToMemoryStorageQueue", metricsDataToRealTimeStorageQueue.size());
         return metrics;
     }
 
@@ -95,13 +92,11 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     @Override
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
         metricsDataToAlertQueue.offer(metricsData);
-        metricsDataToStorageQueue.offer(metricsData);
-        metricsDataToRealTimeStorageQueue.offer(metricsData);
     }
 
     @Override
     public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
-        
+        metricsDataToStorageQueue.offer(metricsData);
     }
 
     @Override
@@ -114,7 +109,6 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
         alertDataQueue.clear();
         metricsDataToAlertQueue.clear();
         metricsDataToStorageQueue.clear();
-        metricsDataToRealTimeStorageQueue.clear();
         serviceDiscoveryDataQueue.clear();
     }
 }

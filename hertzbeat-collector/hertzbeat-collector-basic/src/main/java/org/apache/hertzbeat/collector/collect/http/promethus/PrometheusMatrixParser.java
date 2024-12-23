@@ -91,7 +91,7 @@ public class PrometheusMatrixParser extends AbstractPrometheusParse {
                         }
                     }
                 }
-                builder.addValue(valueRowBuilder);
+                builder.addValueRow(valueRowBuilder.build());
             }
 
         }

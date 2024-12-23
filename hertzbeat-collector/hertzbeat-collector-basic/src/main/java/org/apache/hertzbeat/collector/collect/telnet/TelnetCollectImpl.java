@@ -65,6 +65,7 @@ public class TelnetCollectImpl extends AbstractCollect {
             if (telnetClient.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
                 List<String> aliasFields = metrics.getAliasFields();
+                String app = builder.getApp();
                 Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
                 if (resultMap.size() < aliasFields.size()) {

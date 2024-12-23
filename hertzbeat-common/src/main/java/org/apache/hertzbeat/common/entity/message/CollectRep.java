@@ -19,19 +19,26 @@
 
 package org.apache.hertzbeat.common.entity.message;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.table.ArrowTable;
 import org.apache.arrow.vector.table.Row;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 
 @SuppressWarnings("all")
+@Slf4j
 public final class CollectRep {
     private CollectRep() {}
 
@@ -113,6 +120,10 @@ public final class CollectRep {
         public MetricsData(ArrowTable table) {
             this.table = table;
         }
+        
+        public MetricsData(VectorSchemaRoot vectorSchemaRoot) {
+            this.table = new ArrowTable(vectorSchemaRoot);
+        }
 
         public static Builder newBuilder() {
             return new Builder();
@@ -124,6 +135,10 @@ public final class CollectRep {
             return null;
         }
         
+        public long rowCount() {
+            return table != null ? table.getRowCount() : 0;
+        }
+        
         public ArrowTable getTable() {
             return table;
         }
@@ -132,8 +147,27 @@ public final class CollectRep {
          * notice is to vectorschemaRoot for arrow, the table will empty
          * @return
          */
-        public VectorSchemaRoot toVectorSchemaRoot() {
+        public VectorSchemaRoot toVectorSchemaRootAndRelease() {
             return table != null ? table.toVectorSchemaRoot() : null;
+        }
+
+        /**
+         * to byte array and release the table
+         * @return
+         */
+        public byte[] toByteArrayAndRelease() {
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+                 VectorSchemaRoot root = table.toVectorSchemaRoot();
+                 ArrowStreamWriter writer = new ArrowStreamWriter(root,
+                         null, Channels.newChannel(out))) {
+                writer.start();
+                writer.writeBatch();
+                writer.end();
+                return out.toByteArray();
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+                return null;
+            }
         }
         
         public long getId() {
@@ -322,58 +356,67 @@ public final class CollectRep {
                 metadata.put("code", String.valueOf(code != null ? code.value : 0));
                 metadata.put("msg", msg != null ? msg : "");
 
-                // Create Arrow fields with metadata
-                List<org.apache.arrow.vector.types.pojo.Field> arrowFields = fields.stream()
-                    .map(field -> {
-                        Map<String, String> fieldMetadata = new HashMap<>();
-                        fieldMetadata.put("type", String.valueOf(field.getType()));
-                        fieldMetadata.put("unit", field.getUnit());
-                        fieldMetadata.put("label", String.valueOf(field.getLabel()));
-                        
-                        return new org.apache.arrow.vector.types.pojo.Field(
-                            field.getName(),
-                            new org.apache.arrow.vector.types.pojo.FieldType(
-                                true,
-                                new org.apache.arrow.vector.types.pojo.ArrowType.Utf8(),
-                                null,
-                                fieldMetadata),
-                            null);
-                    })
-                    .collect(Collectors.toList());
+                org.apache.arrow.memory.BufferAllocator allocator =
+                        new org.apache.arrow.memory.RootAllocator();
+                try {
+                    // Create Arrow fields with metadata
+                    List<org.apache.arrow.vector.types.pojo.Field> arrowFields = fields.stream()
+                            .map(field -> {
+                                Map<String, String> fieldMetadata = new HashMap<>();
+                                fieldMetadata.put("type", String.valueOf(field.getType()));
+                                fieldMetadata.put("unit", field.getUnit());
+                                fieldMetadata.put("label", String.valueOf(field.getLabel()));
 
-                // Create Schema with metadata
-                org.apache.arrow.vector.types.pojo.Schema schema = 
-                    new org.apache.arrow.vector.types.pojo.Schema(arrowFields, metadata);
+                                return new org.apache.arrow.vector.types.pojo.Field(
+                                        field.getName(),
+                                        new org.apache.arrow.vector.types.pojo.FieldType(
+                                                true,
+                                                new org.apache.arrow.vector.types.pojo.ArrowType.Utf8(),
+                                                null,
+                                                fieldMetadata),
+                                        null);
+                            })
+                            .collect(Collectors.toList());
 
-                // Create VectorSchemaRoot and populate data
-                try (org.apache.arrow.memory.BufferAllocator allocator = 
-                        new org.apache.arrow.memory.RootAllocator()) {
-                    org.apache.arrow.vector.VectorSchemaRoot root = 
-                        org.apache.arrow.vector.VectorSchemaRoot.create(schema, allocator);
+                    // Create Schema with metadata
+                    org.apache.arrow.vector.types.pojo.Schema schema =
+                            new org.apache.arrow.vector.types.pojo.Schema(arrowFields, metadata);
+
+                    org.apache.arrow.vector.VectorSchemaRoot root =
+                            org.apache.arrow.vector.VectorSchemaRoot.create(schema, allocator);
                     
-                    root.allocateNew();
-                    int rowCount = values.size();
-                    root.setRowCount(rowCount);
+                    try {
+                        root.allocateNew();
+                        int rowCount = values.size();
+                        root.setRowCount(rowCount);
+                        // Write values
+                        for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+                            org.apache.arrow.vector.VarCharVector vector =
+                                    (org.apache.arrow.vector.VarCharVector) root.getVector(fieldIndex);
+                            vector.allocateNew();
 
-                    // Write values
-                    for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-                        org.apache.arrow.vector.VarCharVector vector = 
-                            (org.apache.arrow.vector.VarCharVector) root.getVector(fieldIndex);
-                        vector.allocateNew();
-
-                        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-                            ValueRow row = values.get(rowIndex);
-                            if (row != null && row.getColumnsList() != null && 
-                                fieldIndex < row.getColumnsList().size()) {
-                                String value = row.getColumns(fieldIndex);
-                                if (value != null) {
-                                    vector.set(rowIndex, value.getBytes());
+                            for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+                                ValueRow row = values.get(rowIndex);
+                                if (row != null && row.getColumnsList() != null &&
+                                        fieldIndex < row.getColumnsList().size()) {
+                                    String value = row.getColumns(fieldIndex);
+                                    if (value != null) {
+                                        vector.set(rowIndex, value.getBytes());
+                                    }
                                 }
                             }
+                            vector.setValueCount(rowCount);
                         }
-                        vector.setValueCount(rowCount);
+                        return new MetricsData(new ArrowTable(root));
+                    } catch (Exception e1) {
+                        log.error(e1.getMessage(), e1);
+                        root.close();
+                        throw e1;
                     }
-                    return new MetricsData(new ArrowTable(root));
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    allocator.close();
+                    throw e;
                 }
             }
 
@@ -439,7 +482,15 @@ public final class CollectRep {
             }
 
             public void clearValues() {
-                values.clear();
+                values = new LinkedList<>();
+            }
+
+            public void clearMetrics() {
+                metrics = null;
+            }
+
+            public void clearFields() {
+                fields = new LinkedList<>();
             }
         }
     }
@@ -553,7 +604,7 @@ public final class CollectRep {
         private java.util.List<String> columns;
 
         public ValueRow() {
-            columns = new java.util.ArrayList<>();
+            columns = new LinkedList<>();
         }
 
         public List<String> getColumnsList() {
@@ -572,7 +623,7 @@ public final class CollectRep {
         }
 
         public void clearColumns() {
-            columns.clear();
+            columns = new LinkedList<>();
         }
 
         public String getColumns(int index) {
@@ -588,7 +639,7 @@ public final class CollectRep {
         }
 
         public static class Builder {
-            private final ValueRow instance;
+            private ValueRow instance;
 
             private Builder() {
                 instance = new ValueRow();
@@ -616,7 +667,7 @@ public final class CollectRep {
             }
 
             public void clear() {
-                instance.clearColumns();
+                instance = new ValueRow();
             }
         }
     }

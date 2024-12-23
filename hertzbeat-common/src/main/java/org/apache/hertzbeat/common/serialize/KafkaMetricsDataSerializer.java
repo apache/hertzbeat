@@ -48,7 +48,7 @@ public class KafkaMetricsDataSerializer implements Serializer<CollectRep.Metrics
             return null;
         }
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             VectorSchemaRoot root = metricsData.toVectorSchemaRoot();
+             VectorSchemaRoot root = metricsData.toVectorSchemaRootAndRelease();
              ArrowStreamWriter writer = new ArrowStreamWriter(root,
                      null, Channels.newChannel(out))) {
             writer.start();

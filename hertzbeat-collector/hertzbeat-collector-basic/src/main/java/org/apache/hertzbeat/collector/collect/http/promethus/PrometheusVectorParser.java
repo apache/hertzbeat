@@ -90,7 +90,7 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
                     }
                 }
             }
-            builder.addValue(valueRowBuilder);
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 }

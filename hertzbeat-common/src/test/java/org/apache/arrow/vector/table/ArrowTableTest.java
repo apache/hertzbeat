@@ -1,7 +1,7 @@
 package org.apache.arrow.vector.table;
 
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -101,7 +101,7 @@ class ArrowTableTest {
             writer.writeBatch();
             writer.end();
             bytes = out.toByteArray();
-        } catch (IOException e) {}
+        } catch (IOException ignored) {}
         assertEquals(3, root2.getRowCount());
         root2.close();
         BufferAllocator bufferAllocator = new RootAllocator();
@@ -146,7 +146,7 @@ class ArrowTableTest {
             writer.writeBatch();
             writer.end();
             bytes = out.toByteArray();
-        } catch (IOException e) {}
+        } catch (IOException ignored) {}
         assertEquals(3, root.getRowCount());
         root.close();
         BufferAllocator bufferAllocator = new RootAllocator();

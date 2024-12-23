@@ -216,12 +216,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
         Set<Metrics> metricsSet = job.getNextCollectMetrics(metrics, false);
         if (job.isCyclic()) {
-            if (job.isSd()) {
-                commonDataQueue.sendServiceDiscoveryData(metricsData);
-            }
-
-            // If it is an asynchronous periodic cyclic task, directly response the collected data
-            commonDataQueue.sendMetricsData(metricsData);
             if (log.isDebugEnabled()) {
                 log.debug("Cyclic Job: {} - {} - {}", job.getMonitorId(), job.getApp(), metricsData.getMetrics());
                 for (CollectRep.ValueRow valueRow : metricsData.getValues()) {
@@ -230,6 +224,12 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     }
                 }
             }
+            if (job.isSd()) {
+                commonDataQueue.sendServiceDiscoveryData(metricsData);
+            }
+
+            // If it is an asynchronous periodic cyclic task, directly response the collected data
+            commonDataQueue.sendMetricsData(metricsData);
 
             // If metricsSet is null, it means that the execution is completed or whether the priority of the collection metrics is 0, that is, the availability collection metrics.
             // If the availability collection fails, the next metrics scheduling will be cancelled and the next round of scheduling will be entered directly.

@@ -19,20 +19,17 @@ package org.apache.hertzbeat.common.queue.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.apache.hertzbeat.common.config.CommonProperties;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.ProtoJsonUtil;
+import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,14 +46,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class RedisCommonDataQueueTest {
 
     @Mock
-    private StatefulRedisConnection<String, String> connection;
+    private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
 
     @Mock
-    private RedisCommands<String, String> syncCommands;
-
-    @Mock
-    private ObjectMapper objectMapper;
-
+    private RedisCommands<String, CollectRep.MetricsData> syncCommands;
+    
     private RedisClient redisClient;
 
     private CommonProperties commonProperties;
@@ -90,32 +84,21 @@ class RedisCommonDataQueueTest {
             mockedRedisClient.when(() -> RedisClient.create(
                     any(RedisURI.class))
             ).thenReturn(redisClient);
-
-            when(redisClient.connect()).thenReturn(connection);
+            RedisMetricsDataCodec codec = new RedisMetricsDataCodec();
+            when(redisClient.connect(codec)).thenReturn(connection);
             when(connection.sync()).thenReturn(syncCommands);
 
             redisCommonDataQueue = new RedisCommonDataQueue(commonProperties);
         }
     }
-
-    @Test
-    public void testPollAlertsData() throws Exception {
-
-        String alertJson = "{\"id\":\"1\",\"content\":\"Test Alert\"}";
-        Alert expectedAlert = Alert.builder().id(1L).content("Test Alert").build();
-
-        when(syncCommands.rpop(anyString())).thenReturn(alertJson);
-        Alert actualAlert = redisCommonDataQueue.pollAlertsData();
-        assertEquals(expectedAlert, actualAlert);
-    }
+    
 
     @Test
     public void testPollMetricsDataToAlerter() throws Exception {
 
         CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().setMetrics("test metrics").build();
-        String metricsDataJson = "{\"metrics\":\"test metrics\"}";
 
-        when(syncCommands.rpop("metricsDataQueueToAlerter")).thenReturn(metricsDataJson);
+        when(syncCommands.rpop("metricsDataQueueToAlerter")).thenReturn(metricsData);
 
         CollectRep.MetricsData actualMetricsData = redisCommonDataQueue.pollMetricsDataToAlerter();
         assertEquals(metricsData, actualMetricsData);
@@ -123,35 +106,18 @@ class RedisCommonDataQueueTest {
 
     @Test
     public void testSendMetricsData() throws Exception {
-//        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().setMetrics("test metrics").build();
-//        String metricsDataJson = ProtoJsonUtil.toJsonStr(metricsData);
-//
-//        redisCommonDataQueue.sendMetricsData(metricsData);
-//
-//        verify(syncCommands).lpush("metricsDataQueueToAlerter", metricsDataJson);
-//        verify(syncCommands).lpush("metricsDataQueueToPersistentStorage", metricsDataJson);
-//        verify(syncCommands).lpush("metricsDataQueueToRealTimeStorage", metricsDataJson);
-    }
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().setMetrics("test metrics").build();
 
-    @SuppressWarnings("checkstyle:OperatorWrap")
-    @Test
-    public void testSendAlertsData() throws Exception {
+        redisCommonDataQueue.sendMetricsData(metricsData);
 
-        Alert alert = Alert.builder()
-                .content("test")
-                .build();
-        String alertJson = "{\"id\":null,\"target\":null,\"alertDefineId\":null,\"priority\":0,\"content\":\"test\"," +
-                "\"status\":0,\"times\":null,\"firstAlarmTime\":null,\"lastAlarmTime\":null,\"triggerTimes\":null," +
-                "\"tags\":null,\"creator\":null,\"modifier\":null,\"gmtCreate\":null,\"gmtUpdate\":null}";
-        redisCommonDataQueue.sendAlertsData(alert);
-
-        verify(syncCommands).lpush("alertsDataQueue", alertJson);
+        verify(syncCommands).lpush("metricsDataQueueToAlerter", metricsData);
+        verify(syncCommands).lpush("metricsDataQueueToPersistentStorage", metricsData);
+        verify(syncCommands).lpush("metricsDataQueueToRealTimeStorage", metricsData);
     }
 
     @Test
     public void testDestroy() {
         redisCommonDataQueue.destroy();
-
         verify(connection).close();
         verify(redisClient).shutdown();
     }

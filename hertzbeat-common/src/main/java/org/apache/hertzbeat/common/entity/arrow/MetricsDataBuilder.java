@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.common.entity.arrow;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
