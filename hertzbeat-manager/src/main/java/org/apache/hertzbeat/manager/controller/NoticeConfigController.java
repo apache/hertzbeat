@@ -19,6 +19,8 @@ package org.apache.hertzbeat.manager.controller;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+import cn.hutool.core.bean.BeanUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.dto.vo.NoticeReceiverVO;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
@@ -82,9 +85,9 @@ public class NoticeConfigController {
     @GetMapping(path = "/receivers")
     @Operation(summary = "Get a list of message notification recipients based on query filter items",
             description = "Get a list of message notification recipients based on query filter items")
-    public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
+    public ResponseEntity<Message<List<NoticeReceiverVO>>> getReceivers(
             @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name) {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name)));
+        return ResponseEntity.ok(Message.success(BeanUtil.copyToList(noticeConfigService.getNoticeReceivers(name), NoticeReceiverVO.class)));
     }
 
     @PostMapping(path = "/rule")
