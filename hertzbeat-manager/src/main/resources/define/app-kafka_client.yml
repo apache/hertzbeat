@@ -116,11 +116,13 @@ metrics:
     interval: 300
     fields:
       - field: TopicName
+        label: true
         type: 1
         i18n:
           zh-CN: 主题名称
           en-US: Topic Name
       - field: PartitionNum
+        label: true
         type: 1
         i18n:
           zh-CN: 分区号
@@ -149,6 +151,7 @@ metrics:
     interval: 300
     fields:
       - field: GroupId
+        label: true
         type: 1
         i18n:
           zh-CN: 消费者组ID
@@ -159,6 +162,7 @@ metrics:
           zh-CN: 消费者实例数量
           en-US: Group Member Num
       - field: Topic
+        label: true
         type: 1
         i18n:
           zh-CN: 订阅主题名称
