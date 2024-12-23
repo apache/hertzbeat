@@ -130,9 +130,21 @@ public final class CollectRep {
         }
         
         public static Builder newBuilder(MetricsData metricsData) {
-            // todo construct a new builder with the same data
+            Builder builder = new Builder();
+            // get metadata from metricsData
+            Map<String, String> metadata = metricsData.getMetadata();
+            builder.setId(Long.parseLong(metadata.getOrDefault("id", "0")))
+                   .setTenantId(Long.parseLong(metadata.getOrDefault("tenantId", "0")))
+                   .setApp(metadata.getOrDefault("app", ""))
+                   .setMetrics(metadata.getOrDefault("metrics", ""))
+                   .setPriority(Integer.parseInt(metadata.getOrDefault("priority", "0")))
+                   .setTime(Long.parseLong(metadata.getOrDefault("time", "0")))
+                   .setCode(Code.forNumber(Integer.parseInt(metadata.getOrDefault("code", "0"))))
+                   .setMsg(metadata.getOrDefault("msg", ""));
             
-            return null;
+            metricsData.getFields().forEach(builder::addField);
+            metricsData.getValues().forEach(builder::addValueRow);
+            return builder;
         }
         
         public long rowCount() {
