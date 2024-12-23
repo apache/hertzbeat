@@ -21,7 +21,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.arrow.vector.table.Row;
 import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.hertzbeat.common.entity.arrow.reader.DefaultMetadataReader;
 
 /**
  * A cell consisting of {@link Field} and value

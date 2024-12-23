@@ -27,7 +27,7 @@ public interface MetricDataConstants {
     String UNIT = "unit";
 
     // key in Schema metadata
-    String MONITOR_ID = "monitorId";
+    String MONITOR_ID = "id";
     String TENANT_ID = "tenantId";
     String APP = "app";
     String METRICS = "metrics";

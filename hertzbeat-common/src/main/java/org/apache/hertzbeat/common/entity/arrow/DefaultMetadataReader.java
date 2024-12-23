@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.arrow.reader;
+package org.apache.hertzbeat.common.entity.arrow;
 
 import java.util.Map;
 

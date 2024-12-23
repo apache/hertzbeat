@@ -35,6 +35,7 @@ import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.table.ArrowTable;
 import org.apache.arrow.vector.table.Row;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 
 @SuppressWarnings("all")
@@ -133,14 +134,14 @@ public final class CollectRep {
             Builder builder = new Builder();
             // get metadata from metricsData
             Map<String, String> metadata = metricsData.getMetadata();
-            builder.setId(Long.parseLong(metadata.getOrDefault("id", "0")))
-                   .setTenantId(Long.parseLong(metadata.getOrDefault("tenantId", "0")))
-                   .setApp(metadata.getOrDefault("app", ""))
-                   .setMetrics(metadata.getOrDefault("metrics", ""))
-                   .setPriority(Integer.parseInt(metadata.getOrDefault("priority", "0")))
-                   .setTime(Long.parseLong(metadata.getOrDefault("time", "0")))
-                   .setCode(Code.forNumber(Integer.parseInt(metadata.getOrDefault("code", "0"))))
-                   .setMsg(metadata.getOrDefault("msg", ""));
+            builder.setId(Long.parseLong(metadata.getOrDefault(MetricDataConstants.MONITOR_ID, "0")))
+                   .setTenantId(Long.parseLong(metadata.getOrDefault(MetricDataConstants.TENANT_ID, "0")))
+                   .setApp(metadata.getOrDefault(MetricDataConstants.APP, ""))
+                   .setMetrics(metadata.getOrDefault(MetricDataConstants.METRICS, ""))
+                   .setPriority(Integer.parseInt(metadata.getOrDefault(MetricDataConstants.PRIORITY, "0")))
+                   .setTime(Long.parseLong(metadata.getOrDefault(MetricDataConstants.TIME, "0")))
+                   .setCode(Code.forNumber(Integer.parseInt(metadata.getOrDefault(MetricDataConstants.CODE, "0"))))
+                   .setMsg(metadata.getOrDefault(MetricDataConstants.MSG, ""));
             
             metricsData.getFields().forEach(builder::addField);
             metricsData.getValues().forEach(builder::addValueRow);
@@ -236,9 +237,9 @@ public final class CollectRep {
                     Map<String, String> metadata = field.getMetadata();
                     return Field.newBuilder()
                         .setName(field.getName())
-                        .setType(Integer.parseInt(metadata.getOrDefault("type", "0")))
-                        .setUnit(metadata.getOrDefault("unit", ""))
-                        .setLabel(Boolean.parseBoolean(metadata.getOrDefault("label", "false")))
+                        .setType(Integer.parseInt(metadata.getOrDefault(MetricDataConstants.TYPE, "0")))
+                        .setUnit(metadata.getOrDefault(MetricDataConstants.UNIT, ""))
+                        .setLabel(Boolean.parseBoolean(metadata.getOrDefault(MetricDataConstants.LABEL, "false")))
                         .build();
                 })
                 .collect(Collectors.toList());
@@ -359,14 +360,14 @@ public final class CollectRep {
             public MetricsData build() {
                 // Create metadata
                 Map<String, String> metadata = new HashMap<>();
-                metadata.put("id", String.valueOf(id));
-                metadata.put("tenantId", String.valueOf(tenantId));
-                metadata.put("app", app != null ? app : "");
-                metadata.put("metrics", metrics != null ? metrics : "");
-                metadata.put("priority", String.valueOf(priority));
-                metadata.put("time", String.valueOf(time));
-                metadata.put("code", String.valueOf(code != null ? code.value : 0));
-                metadata.put("msg", msg != null ? msg : "");
+                metadata.put(MetricDataConstants.MONITOR_ID, String.valueOf(id));
+                metadata.put(MetricDataConstants.TENANT_ID, String.valueOf(tenantId));
+                metadata.put(MetricDataConstants.APP, app != null ? app : "");
+                metadata.put(MetricDataConstants.METRICS, metrics != null ? metrics : "");
+                metadata.put(MetricDataConstants.PRIORITY, String.valueOf(priority));
+                metadata.put(MetricDataConstants.TIME, String.valueOf(time));
+                metadata.put(MetricDataConstants.CODE, String.valueOf(code != null ? code.value : 0));
+                metadata.put(MetricDataConstants.MSG, msg != null ? msg : "");
 
                 org.apache.arrow.memory.BufferAllocator allocator =
                         new org.apache.arrow.memory.RootAllocator();
@@ -375,9 +376,9 @@ public final class CollectRep {
                     List<org.apache.arrow.vector.types.pojo.Field> arrowFields = fields.stream()
                             .map(field -> {
                                 Map<String, String> fieldMetadata = new HashMap<>();
-                                fieldMetadata.put("type", String.valueOf(field.getType()));
-                                fieldMetadata.put("unit", field.getUnit());
-                                fieldMetadata.put("label", String.valueOf(field.getLabel()));
+                                fieldMetadata.put(MetricDataConstants.TYPE, String.valueOf(field.getType()));
+                                fieldMetadata.put(MetricDataConstants.UNIT, field.getUnit());
+                                fieldMetadata.put(MetricDataConstants.LABEL, String.valueOf(field.getLabel()));
 
                                 return new org.apache.arrow.vector.types.pojo.Field(
                                         field.getName(),
