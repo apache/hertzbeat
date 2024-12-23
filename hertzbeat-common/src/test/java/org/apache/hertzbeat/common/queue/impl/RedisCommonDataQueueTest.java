@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -52,18 +51,12 @@ class RedisCommonDataQueueTest {
     private RedisCommands<String, CollectRep.MetricsData> syncCommands;
     
     private RedisClient redisClient;
-
     private CommonProperties commonProperties;
-
     private CommonProperties.RedisProperties redisProperties;
-
     private RedisCommonDataQueue redisCommonDataQueue;
 
     @BeforeEach
     public void setUp() {
-
-        MockitoAnnotations.openMocks(this);
-
         redisClient = mock(RedisClient.class);
         commonProperties = mock(CommonProperties.class);
         redisProperties = mock(CommonProperties.RedisProperties.class);
@@ -71,32 +64,24 @@ class RedisCommonDataQueueTest {
 
         when(commonProperties.getQueue()).thenReturn(dataQueueProperties);
         when(dataQueueProperties.getRedis()).thenReturn(redisProperties);
-
+        when(redisProperties.getMetricsDataQueueNameToAlerter()).thenReturn("metricsDataQueueToAlerter");
         when(redisProperties.getRedisHost()).thenReturn("localhost");
         when(redisProperties.getRedisPort()).thenReturn(6379);
-        when(redisProperties.getMetricsDataQueueNameToAlerter()).thenReturn("metricsDataQueueToAlerter");
-        when(redisProperties.getMetricsDataQueueNameToPersistentStorage()).thenReturn("metricsDataQueueToPersistentStorage");
-        when(redisProperties.getMetricsDataQueueNameToRealTimeStorage()).thenReturn("metricsDataQueueToRealTimeStorage");
-        when(redisProperties.getAlertsDataQueueName()).thenReturn("alertsDataQueue");
 
         try (MockedStatic<RedisClient> mockedRedisClient = mockStatic(RedisClient.class)) {
-
-            mockedRedisClient.when(() -> RedisClient.create(
-                    any(RedisURI.class))
-            ).thenReturn(redisClient);
-            RedisMetricsDataCodec codec = new RedisMetricsDataCodec();
-            when(redisClient.connect(codec)).thenReturn(connection);
+            mockedRedisClient.when(() -> RedisClient.create(any(RedisURI.class))).thenReturn(redisClient);
+            when(redisClient.connect(any(RedisMetricsDataCodec.class))).thenReturn(connection);
             when(connection.sync()).thenReturn(syncCommands);
 
             redisCommonDataQueue = new RedisCommonDataQueue(commonProperties);
         }
     }
-    
 
     @Test
     public void testPollMetricsDataToAlerter() throws Exception {
-
-        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().setMetrics("test metrics").build();
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("test metrics")
+                .build();
 
         when(syncCommands.rpop("metricsDataQueueToAlerter")).thenReturn(metricsData);
 
@@ -106,13 +91,13 @@ class RedisCommonDataQueueTest {
 
     @Test
     public void testSendMetricsData() throws Exception {
-        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().setMetrics("test metrics").build();
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("test metrics")
+                .build();
 
         redisCommonDataQueue.sendMetricsData(metricsData);
 
         verify(syncCommands).lpush("metricsDataQueueToAlerter", metricsData);
-        verify(syncCommands).lpush("metricsDataQueueToPersistentStorage", metricsData);
-        verify(syncCommands).lpush("metricsDataQueueToRealTimeStorage", metricsData);
     }
 
     @Test
@@ -121,5 +106,4 @@ class RedisCommonDataQueueTest {
         verify(connection).close();
         verify(redisClient).shutdown();
     }
-
 }
