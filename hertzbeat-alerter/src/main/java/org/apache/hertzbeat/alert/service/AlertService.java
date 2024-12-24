@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
@@ -80,7 +81,7 @@ public interface AlertService {
      * A third party reports an alarm 
      * @param alertReport The alarm information 
      */
-    void addNewAlertReport(AlertReport alertReport);
+    void addNewAlertReport(SingleAlert alertReport);
 
     /**
      * Save external alarms of cloud services

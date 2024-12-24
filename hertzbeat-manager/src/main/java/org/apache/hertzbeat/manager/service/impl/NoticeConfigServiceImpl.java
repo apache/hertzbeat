@@ -36,12 +36,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.apache.hertzbeat.alert.notice.DispatcherAlarm;
+import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
@@ -84,7 +83,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     
     @Autowired
     @Lazy
-    private DispatcherAlarm dispatcherAlarm;
+    private AlertNoticeDispatch dispatcherAlarm;
 
     @Override
     public List<NoticeReceiver> getNoticeReceivers(String name) {

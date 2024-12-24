@@ -20,25 +20,18 @@ package org.apache.hertzbeat.manager.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import com.google.common.collect.Lists;
-import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.apache.hertzbeat.alert.notice.DispatcherAlarm;
+import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
-import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -62,7 +55,7 @@ class NoticeConfigServiceTest {
     @Mock
     NoticeRuleDao noticeRuleDao;
     @Mock
-    DispatcherAlarm dispatcherAlarm;
+    AlertNoticeDispatch dispatcherAlarm;
     @InjectMocks
     private NoticeConfigServiceImpl noticeConfigService;
 

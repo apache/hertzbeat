@@ -27,7 +27,6 @@ import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.apache.hertzbeat.plugin.PostAlertPlugin;
 import org.apache.hertzbeat.plugin.Plugin;
@@ -39,22 +38,19 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class DispatcherAlarm {
+public class AlertNoticeDispatch {
 
     private final AlerterWorkerPool workerPool;
-    private final CommonDataQueue dataQueue;
     private final NoticeConfigService noticeConfigService;
     private final AlertStoreHandler alertStoreHandler;
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
     private final PluginRunner pluginRunner;
 
-    public DispatcherAlarm(AlerterWorkerPool workerPool,
-        CommonDataQueue dataQueue,
-        NoticeConfigService noticeConfigService,
-        AlertStoreHandler alertStoreHandler,
-        List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner) {
+    public AlertNoticeDispatch(AlerterWorkerPool workerPool,
+                               NoticeConfigService noticeConfigService,
+                               AlertStoreHandler alertStoreHandler,
+                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner) {
         this.workerPool = workerPool;
-        this.dataQueue = dataQueue;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
         this.pluginRunner = pluginRunner;

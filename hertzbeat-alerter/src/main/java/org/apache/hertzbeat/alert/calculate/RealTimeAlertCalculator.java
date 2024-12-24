@@ -91,9 +91,8 @@ public class RealTimeAlertCalculator {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = dataQueue.pollMetricsDataToAlerter();
-                    if (metricsData != null) {
-                        calculate(metricsData);
-                    }
+                    calculate(metricsData);
+                    dataQueue.sendMetricsDataToStorage(metricsData);
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
@@ -123,7 +122,7 @@ public class RealTimeAlertCalculator {
         commonContext.put("code", code);
         commonContext.put("metrics", metrics);
         
-        List<CollectRep.Field> fields = metricsData.getFieldsList();
+        List<CollectRep.Field> fields = metricsData.getFields();
         Map<String, Object> fieldValueMap = new HashMap<>(8);
         int valueRowCount = metricsData.getValuesCount();
         for (AlertDefine define : thresholds) {
@@ -150,7 +149,7 @@ public class RealTimeAlertCalculator {
                     }
                 } catch (Exception ignored) {}
             }
-            for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+            for (CollectRep.ValueRow valueRow : metricsData.getValues()) {
 
                 if (CollectionUtils.isEmpty(valueRow.getColumnsList())) {
                     continue;
@@ -209,7 +208,7 @@ public class RealTimeAlertCalculator {
         if (firingAlert != null) {
             firingAlert.setEndAt(System.currentTimeMillis());
             firingAlert.setStatus(STATUS_RESOLVED);
-//            alarmCommonReduce.reduceAndSendAlarm(firingAlert);
+            alarmCommonReduce.reduceAndSendAlarm(firingAlert);
         }
         pendingAlertMap.remove(alarmKey);
     }
@@ -246,7 +245,7 @@ public class RealTimeAlertCalculator {
             if (requiredTimes <= 1) {
                 newAlert.setStatus(STATUS_FIRING);
                 firingAlertMap.put(alarmKey, newAlert);
-//                alarmCommonReduce.reduceAndSendAlarm(newAlert);
+                alarmCommonReduce.reduceAndSendAlarm(newAlert);
             } else {
                 // 否则先放入pending队列
                 pendingAlertMap.put(alarmKey, newAlert);
@@ -261,7 +260,7 @@ public class RealTimeAlertCalculator {
                 // 达到触发次数阈值,转为firing状态
                 existingAlert.setStatus(STATUS_FIRING);
                 firingAlertMap.put(alarmKey, existingAlert);
-//                alarmCommonReduce.reduceAndSendAlarm(existingAlert);
+                alarmCommonReduce.reduceAndSendAlarm(existingAlert);
                 pendingAlertMap.remove(alarmKey);
             }
         }

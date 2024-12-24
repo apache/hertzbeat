@@ -38,21 +38,6 @@ class InMemoryCommonDataQueueTest {
     }
 
     @Test
-    void testAlertsData() throws InterruptedException {
-
-        var alert = new Alert();
-
-        queue.sendAlertsData(alert);
-        assertEquals(1, queue.getQueueSizeMetricsInfo().get("alertDataQueue"));
-
-        var polledAlert = queue.pollAlertsData();
-        assertEquals(0, queue.getQueueSizeMetricsInfo().get("alertDataQueue"));
-
-        assertNotNull(polledAlert);
-        assertEquals(alert, polledAlert);
-    }
-
-    @Test
     void testMetricsData() throws InterruptedException {
 
         var metricsData = CollectRep.MetricsData.newBuilder().build();
@@ -69,32 +54,27 @@ class InMemoryCommonDataQueueTest {
     void testGetQueueSizeMetricsInfo() {
 
         Map<String, Integer> metricsInfo = queue.getQueueSizeMetricsInfo();
-
-        assertEquals(0, metricsInfo.get("alertDataQueue"));
+        
         assertEquals(0, metricsInfo.get("metricsDataToAlertQueue"));
         assertEquals(0, metricsInfo.get("metricsDataToStorageQueue"));
-
-        queue.sendAlertsData(new Alert());
+        
         queue.sendMetricsData(CollectRep.MetricsData.newBuilder().build());
 
         metricsInfo = queue.getQueueSizeMetricsInfo();
-
-        assertEquals(1, metricsInfo.get("alertDataQueue"));
+        
         assertEquals(1, metricsInfo.get("metricsDataToAlertQueue"));
         assertEquals(0, metricsInfo.get("metricsDataToStorageQueue"));
     }
 
     @Test
     void testDestroy() {
-
-        queue.sendAlertsData(new Alert());
+        
         queue.sendMetricsData(CollectRep.MetricsData.newBuilder().build());
 
         queue.destroy();
 
         Map<String, Integer> metricsInfo = queue.getQueueSizeMetricsInfo();
-
-        assertEquals(0, metricsInfo.get("alertDataQueue"));
+        
         assertEquals(0, metricsInfo.get("metricsDataToAlertQueue"));
         assertEquals(0, metricsInfo.get("metricsDataToStorageQueue"));
     }

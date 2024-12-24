@@ -271,10 +271,6 @@ public final class CollectRep {
         
         public RowWrapper readRow() {
             final Iterator<Row> rowIterator = table.iterator();
-
-            if (!rowIterator.hasNext()) {
-                throw new NoSuchElementException("No data found! ");
-            }
             List<org.apache.arrow.vector.types.pojo.Field> fields = table.getSchema().getFields();
             return new RowWrapper(null, rowIterator, fields, -1);
         }

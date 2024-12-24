@@ -17,59 +17,61 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import lombok.RequiredArgsConstructor;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Service;
 
 /**
- * reduce alarm and send alert data
+ * common reduce alarm worker
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AlarmCommonReduce {
+    
+    private final AlarmGroupReduce alarmGroupReduce;
+    
+    private ThreadPoolExecutor workerExecutor;
 
-    private final AlarmSilenceReduce alarmSilenceReduce;
-	
-    private final AlarmConvergeReduce alarmConvergeReduce;
-
-    private final CommonDataQueue dataQueue;
-
-    private final AlertMonitorDao alertMonitorDao;
-
-    public void reduceAndSendAlarm(Alert alert) {
-        alert.setTimes(1);
-        Map<String, String> tags = alert.getTags();
-        if (tags == null) {
-            tags = new HashMap<>(8);
-            alert.setTags(tags);
-        }
-        String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
-        if (monitorIdStr == null) {
-            log.debug("receiver extern alarm message: {}", alert);
-        } else {
-            long monitorId = Long.parseLong(monitorIdStr);
-            Optional<Monitor> monitorOptional = alertMonitorDao.findMonitorById(monitorId);
-            if (monitorOptional.isPresent()) {
-                if (monitorOptional.get().getLabels() != null) {
-                    tags.putAll(monitorOptional.get().getLabels());    
-                }
-            }
-        }
-        // converge -> silence
-        if (alarmConvergeReduce.filterConverge(alert) && alarmSilenceReduce.filterSilence(alert)) {
-            dataQueue.sendAlertsData(alert);
-        }
+    public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce) {
+        initWorkExecutor();
+        this.alarmGroupReduce = alarmGroupReduce;
     }
 
+    private void initWorkExecutor() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("alerter-reduce-worker has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .setDaemon(true)
+                .setNameFormat("alerter-reduce-worker-%d")
+                .build();
+        workerExecutor = new ThreadPoolExecutor(2,
+                2,
+                10,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                threadFactory,
+                new ThreadPoolExecutor.AbortPolicy());
+    }
+
+
+    public void reduceAndSendAlarm(SingleAlert alert) {
+        workerExecutor.execute(reduceAlarmTask(alert));
+    }
+    
+    Runnable reduceAlarmTask(SingleAlert alert) {
+        return () -> {
+            try {
+                alarmGroupReduce.processGroupAlert(alert);
+            } catch (Exception e) {
+                log.error("Reduce alarm failed: {}", e.getMessage());
+            }
+        };
+    }
 }

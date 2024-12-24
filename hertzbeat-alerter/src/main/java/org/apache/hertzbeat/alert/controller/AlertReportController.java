@@ -21,8 +21,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dto.GeneralCloudAlertReport;
 import org.apache.hertzbeat.alert.service.AlertService;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -55,8 +55,7 @@ public class AlertReportController {
     @PostMapping
     @Operation(summary = "Interface for reporting external and general alarm information",
             description = "The interface is used to report external and general alarm information")
-    public ResponseEntity<Message<Void>> addNewAlertReport(@RequestBody GeneralCloudAlertReport alertReport) {
-        alertReport.refreshAlertTime();
+    public ResponseEntity<Message<Void>> addNewAlertReport(@RequestBody SingleAlert alertReport) {
         alertService.addNewAlertReport(alertReport);
         return ResponseEntity.ok(Message.success("Add report success"));
     }

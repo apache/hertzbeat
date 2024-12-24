@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
-import org.apache.hertzbeat.alert.notice.DispatcherAlarm;
+import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -40,7 +40,7 @@ import org.springframework.stereotype.Service;
 public class AlarmSilenceReduce {
 
     private final AlertSilenceDao alertSilenceDao;
-    private final DispatcherAlarm dispatcherAlarm;
+    private final AlertNoticeDispatch dispatcherAlarm;
 
     /**
      * alert silence filter data

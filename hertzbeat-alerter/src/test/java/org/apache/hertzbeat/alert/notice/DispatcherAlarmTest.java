@@ -21,26 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import java.util.List;
-import org.apache.hertzbeat.alert.AlerterWorkerPool;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
-import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.alert.service.NoticeConfigService;
-import org.apache.hertzbeat.plugin.runner.PluginRunner;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Test case for {@link DispatcherAlarm}
+ * Test case for {@link AlertNoticeDispatch}
  */
 @Disabled
 @ExtendWith(MockitoExtension.class)
