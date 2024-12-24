@@ -207,7 +207,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             metricsTimeoutMonitorMap.remove(job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId());
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);
             if (isLastTask) {
-                metricsData = metrics.getSubTaskDataRef().get();
+                metricsData = metrics.getSubTaskDataRef().get().build();
             } else {
                 return;
             }
@@ -224,13 +224,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     }
                 }
             }
-            if (job.isSd()) {
-                commonDataQueue.sendServiceDiscoveryData(metricsData);
-            }
-
-            // If it is an asynchronous periodic cyclic task, directly response the collected data
-            commonDataQueue.sendMetricsData(metricsData);
-
             // If metricsSet is null, it means that the execution is completed or whether the priority of the collection metrics is 0, that is, the availability collection metrics.
             // If the availability collection fails, the next metrics scheduling will be cancelled and the next round of scheduling will be entered directly.
             boolean isAvailableCollectFailed = metricsSet != null && !metricsSet.isEmpty()
@@ -239,15 +232,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // The collection and execution task of this job are completed.
                 // The periodic task pushes the task to the time wheel again.
                 // First, determine the execution time of the task and the task collection interval.
-                if (timeout.isCancelled()) {
-                    return;
+                if (!timeout.isCancelled()) {
+                    long spendTime = System.currentTimeMillis() - job.getDispatchTime();
+                    long interval = job.getInterval() - spendTime / 1000;
+                    interval = interval <= 0 ? 0 : interval;
+                    // Reset Construction Execution Metrics Task View 
+                    job.constructPriorMetrics();
+                    timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
                 }
-                long spendTime = System.currentTimeMillis() - job.getDispatchTime();
-                long interval = job.getInterval() - spendTime / 1000;
-                interval = interval <= 0 ? 0 : interval;
-                // Reset Construction Execution Metrics Task View 
-                job.constructPriorMetrics();
-                timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
             } else if (!metricsSet.isEmpty()) {
                 // The execution of the current level metrics is completed, and the execution of the next level metrics starts
                 // use pre collect metrics data to replace next metrics config params
@@ -268,7 +260,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     boolean isSubTask = configmapList.stream().anyMatch(map -> map.keySet().stream().anyMatch(cryPlaceholderFields::contains));
                     int subTaskNum = isSubTask ? Math.min(configmapList.size(), MAX_SUB_TASK_NUM) : 1;
                     AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
-                    AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
+                    AtomicReference<CollectRep.MetricsData.Builder> metricsDataReference = new AtomicReference<>();
                     for (int index = 0; index < subTaskNum; index++) {
                         Map<String, Configmap> configmap = new HashMap<>(job.getEnvConfigmaps());
                         if (isSubTask) {
@@ -293,6 +285,11 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // The list of metrics at the current execution level has not been fully executed.
                 // It needs to wait for the execution of other metrics task of the same level to complete the execution and enter the next level for execution.
             }
+            // If it is an asynchronous periodic cyclic task, directly response the collected data
+            if (job.isSd()) {
+                commonDataQueue.sendServiceDiscoveryData(metricsData);
+            }
+            commonDataQueue.sendMetricsData(metricsData);
         } else {
             // If it is a temporary one-time task, you need to wait for the collected data of all metrics task to be packaged and returned.
             // Insert the current metrics data into the job for unified assembly
@@ -332,20 +329,19 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         Job job = timerJob.getJob();
         metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
         if (job.isCyclic()) {
-            // If it is an asynchronous periodic cyclic task, directly response the collected data
-            metricsDataList.forEach(commonDataQueue::sendMetricsData);
             // The collection and execution of all task of this job are completed.
             // The periodic task pushes the task to the time wheel again.
             // First, determine the execution time of the task and the task collection interval.
-            if (timeout.isCancelled()) {
-                return;
+            if (!timeout.isCancelled()) {
+                long spendTime = System.currentTimeMillis() - job.getDispatchTime();
+                long interval = job.getInterval() - spendTime / 1000;
+                interval = interval <= 0 ? 0 : interval;
+                // Reset Construction Execution Metrics Task View 
+                job.constructPriorMetrics();
+                timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);   
             }
-            long spendTime = System.currentTimeMillis() - job.getDispatchTime();
-            long interval = job.getInterval() - spendTime / 1000;
-            interval = interval <= 0 ? 0 : interval;
-            // Reset Construction Execution Metrics Task View 
-            job.constructPriorMetrics();
-            timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
+            // it is an asynchronous periodic cyclic task, directly response the collected data
+            metricsDataList.forEach(commonDataQueue::sendMetricsData);
         } else {
             // The collection and execution of all metrics of this job are completed
             // and the result listener is notified of the combination of all metrics data
