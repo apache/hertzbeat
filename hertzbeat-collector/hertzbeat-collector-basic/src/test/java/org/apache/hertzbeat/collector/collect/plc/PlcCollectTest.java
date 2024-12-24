@@ -197,7 +197,7 @@ public class PlcCollectTest {
                     "holding-register:1-2"
             ));
             plcCollect.preCheck(metrics);
-            plcCollect.collect(builder, 1L, "app", metrics);
+            plcCollect.collect(builder, metrics);
         });
 
         // with coil
@@ -220,7 +220,7 @@ public class PlcCollectTest {
                     "coil:1-2"
             ));
             plcCollect.preCheck(metrics);
-            plcCollect.collect(builder, 1L, "app", metrics);
+            plcCollect.collect(builder, metrics);
         });
 
 
@@ -245,7 +245,7 @@ public class PlcCollectTest {
                     "holding-register:1-2"
             ));
             plcCollect.preCheck(metrics);
-            plcCollect.collect(builder, 1L, "app", metrics);
+            plcCollect.collect(builder, metrics);
         });
 
     }

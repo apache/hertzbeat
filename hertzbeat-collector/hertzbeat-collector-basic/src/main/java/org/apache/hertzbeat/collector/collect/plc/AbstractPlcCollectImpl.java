@@ -41,6 +41,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * abstract plc collect implement
+ */
 @Slf4j
 public abstract class AbstractPlcCollectImpl extends AbstractCollect {
     private static final String[] DRIVER_LIST = {"s7", "modbus-tcp"};
@@ -106,7 +109,7 @@ public abstract class AbstractPlcCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
 
         long startTime = System.currentTimeMillis();
         PlcProtocol plcProtocol = metrics.getPlc();
@@ -156,9 +159,9 @@ public abstract class AbstractPlcCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String field : aliasFields) {
                 String fieldValue = resultMap.get(field);
-                valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
             String message = CommonUtil.getMessageFromThrowable(e);
