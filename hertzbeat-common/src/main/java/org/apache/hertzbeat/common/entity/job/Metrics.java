@@ -125,6 +125,11 @@ public class Metrics {
      */
     private List<String> calculates;
     /**
+     * filters
+     * eg: class == 9 && name != 'java'
+     */
+    private List<String> filters;
+    /**
      * unit conversion expr
      * eg:
      * - heap_used=B->MB

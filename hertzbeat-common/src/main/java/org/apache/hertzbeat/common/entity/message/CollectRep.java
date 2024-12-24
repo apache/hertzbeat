@@ -619,6 +619,11 @@ public final class CollectRep {
         public ValueRow() {
             columns = new LinkedList<>();
         }
+        
+        public ValueRow(java.util.List<String> columns) {
+            this.columns = new LinkedList<>();
+            this.columns.addAll(columns);
+        }
 
         public List<String> getColumnsList() {
             return columns;
@@ -652,35 +657,35 @@ public final class CollectRep {
         }
 
         public static class Builder {
-            private ValueRow instance;
+            private java.util.List<String> columns;
 
             private Builder() {
-                instance = new ValueRow();
+                columns = new LinkedList<>();
             }
 
             public Builder setColumns(java.util.List<String> columns) {
-                instance.setColumns(columns);
+                columns = columns;
                 return this;
             }
 
             public Builder addColumn(String column) {
-                instance.addColumns(column);
+                columns.add(column);
                 return this;
             }
 
             public Builder addAllColumns(Iterable<String> columns) {
                 for (String column : columns) {
-                    instance.addColumns(column);
+                    this.columns.add(column);
                 }
                 return this;
             }
 
             public ValueRow build() {
-                return instance;
+                return new ValueRow(columns);
             }
 
             public void clear() {
-                instance = new ValueRow();
+                columns.clear();
             }
         }
     }
