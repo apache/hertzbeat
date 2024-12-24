@@ -403,6 +403,8 @@
   "monitors.new-monitor": "新增监控",
   "monitors.new.success": "新增监控成功",
   "monitors.new.failed": "新增监控失败",
+  "monitors.new.notify.change-to-https": "已开启HTTPS，端口号自动更改为 443，请留意。",
+  "monitors.new.notify.change-to-http": "已关闭HTTPS，端口号自动更改为 80，请留意。",
   "monitors.edit": "编辑",
   "monitors.edit.success": "修改监控成功",
   "monitors.edit.failed": "修改监控失败",
