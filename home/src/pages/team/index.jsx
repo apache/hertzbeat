@@ -1179,6 +1179,18 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/127600988?v=4?s=100" width="100px;"
                     alt="Ayu"/><br/><sub><b>Ayu</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=ayu-v0" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/Rancho-7"><img
+                    src="https://avatars.githubusercontent.com/u/59016860?v=4?s=100" width="100px;"
+                    alt="Nick Guo"/><br/><sub><b>Nick Guo</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=Rancho-7" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/doveLin0818"><img
+                    src="https://avatars.githubusercontent.com/u/190927907?v=4?s=100" width="100px;"
+                    alt="doveLin"/><br/><sub><b>doveLin</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=doveLin0818" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://zzrl.cc/"><img
+                    src="https://avatars.githubusercontent.com/u/91836599?v=4?s=100" width="100px;"
+                    alt="yunfan24"/><br/><sub><b>yunfan24</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=yunfan24" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

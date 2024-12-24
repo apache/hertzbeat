@@ -17,8 +17,11 @@
 
 package org.apache.hertzbeat.warehouse.store.history.jpa;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import jakarta.persistence.criteria.Predicate;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -37,6 +40,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.warehouse.History;
@@ -119,67 +125,73 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse jpa] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         String monitorType = metricsData.getApp();
         String metrics = metricsData.getMetrics();
-        List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
+
         try {
-            List<History> allHistoryList = new LinkedList<>();
-            for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                List<History> singleHistoryList = new LinkedList<>();
-                Map<String, String> labels = new HashMap<>(8);
-                for (int i = 0; i < fieldsList.size(); i++) {
-                    History.HistoryBuilder historyBuilder = History.builder()
-                            .monitorId(metricsData.getId())
-                            .app(monitorType)
-                            .metrics(metrics)
-                            .time(metricsData.getTime());
-                    final CollectRep.Field field = fieldsList.get(i);
-                    final int fieldType = field.getType();
-                    final String fieldName = field.getName();
-                    final String columnValue = valueRow.getColumns(i);
+            List<History> allHistoryList = Lists.newArrayList();
+            Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
+            RowWrapper rowWrapper = metricsData.readRow();
 
-                    historyBuilder.metric(fieldName);
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+                List<History> singleHistoryList = new ArrayList<>();
 
-                    if (CommonConstants.NULL_VALUE.equals(columnValue)) {
-                        switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                    .dou(null);
-                            case CommonConstants.TYPE_STRING -> historyBuilder.metricType(CommonConstants.TYPE_STRING)
-                                    .str(null);
-                            case CommonConstants.TYPE_TIME -> historyBuilder.metricType(CommonConstants.TYPE_TIME)
-                                    .int32(null);
-                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
-                        }
-                    } else {
-                        switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                    .dou(Double.parseDouble(columnValue));
-                            case CommonConstants.TYPE_STRING -> historyBuilder.metricType(CommonConstants.TYPE_STRING)
-                                    .str(formatStrValue(columnValue));
-                            case CommonConstants.TYPE_TIME -> historyBuilder.metricType(CommonConstants.TYPE_TIME)
-                                    .int32(Integer.parseInt(columnValue));
-                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                    .dou(Double.parseDouble(columnValue));
-                        }
-
-                        if (field.getLabel()) {
-                            labels.put(fieldName, columnValue);
-                        }
-                    }
-
-                    singleHistoryList.add(historyBuilder.build());
-                }
+                rowWrapper.cellStream().forEach(cell -> singleHistoryList.add(buildHistory(metricsData, cell, monitorType, metrics, labels)));
                 singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
+
                 allHistoryList.addAll(singleHistoryList);
             }
+
             historyDao.saveAll(allHistoryList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    private History buildHistory(CollectRep.MetricsData metricsData, ArrowCell cell, String monitorType, String metrics, Map<String, String> labels) {
+        History.HistoryBuilder historyBuilder = History.builder()
+                .monitorId(metricsData.getId())
+                .app(monitorType)
+                .metrics(metrics)
+                .time(metricsData.getTime())
+                .metric(cell.getField().getName());
+
+        final String columnValue = cell.getValue();
+        final int fieldType = cell.getMetadataAsInteger(MetricDataConstants.TYPE);
+        if (CommonConstants.NULL_VALUE.equals(columnValue)) {
+            switch (fieldType) {
+                case CommonConstants.TYPE_NUMBER ->
+                        historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                .dou(null);
+                case CommonConstants.TYPE_STRING ->
+                        historyBuilder.metricType(CommonConstants.TYPE_STRING)
+                                .str(null);
+                case CommonConstants.TYPE_TIME -> historyBuilder.metricType(CommonConstants.TYPE_TIME)
+                        .int32(null);
+                default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
+            }
+        } else {
+            switch (fieldType) {
+                case CommonConstants.TYPE_STRING ->
+                        historyBuilder.metricType(CommonConstants.TYPE_STRING)
+                                .str(formatStrValue(columnValue));
+                case CommonConstants.TYPE_TIME -> historyBuilder.metricType(CommonConstants.TYPE_TIME)
+                        .int32(Integer.parseInt(columnValue));
+                default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                        .dou(Double.parseDouble(columnValue));
+            }
+
+            if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
+                labels.put(cell.getField().getName(), columnValue);
+            }
+        }
+
+        return historyBuilder.build();
     }
 
     @Override

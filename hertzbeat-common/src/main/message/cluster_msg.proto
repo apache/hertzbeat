@@ -27,7 +27,7 @@ message Message
     // message type
     MessageType type = 3;
     // message content
-    string msg = 4;
+    bytes msg = 4;
 }
 
 enum MessageType

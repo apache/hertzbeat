@@ -63,7 +63,7 @@ public class IpmiCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         IpmiConnection connection = null;
         try {
             connection = getIpmiConnection(metrics.getIpmi());

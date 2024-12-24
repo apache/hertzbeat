@@ -973,7 +973,7 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
-
+        collectRep.forEach(CollectRep.MetricsData::close);
     }
 
     private void detectMonitorDirectly(Monitor monitor, List<Param> params, String collector) {
@@ -1012,6 +1012,7 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
+        collectRep.forEach(CollectRep.MetricsData::close);
     }
 
     private List<Tag> filterTags(List<Tag> tags) {

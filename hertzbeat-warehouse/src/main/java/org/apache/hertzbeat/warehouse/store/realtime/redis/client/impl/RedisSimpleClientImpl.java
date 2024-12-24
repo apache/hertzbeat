@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
+import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisProperties;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.client.RedisClientOperation;
 
@@ -56,7 +56,7 @@ public class RedisSimpleClientImpl implements RedisClientOperation<String, Colle
         }
 
         redisClient = RedisClient.create(uriBuilder.build());
-        connection = redisClient.connect(new MetricsDataRedisCodec());
+        connection = redisClient.connect(new RedisMetricsDataCodec());
         return this;
     }
 

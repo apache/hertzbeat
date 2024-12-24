@@ -84,7 +84,7 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         NginxProtocol nginxProtocol = metrics.getNginx();
@@ -196,16 +196,16 @@ public class NginxCollectImpl extends AbstractCollect {
         for (String alias : aliasFields) {
             Object value = metricMap.get(alias);
             if (value != null) {
-                valueRowBuilder.addColumns(String.valueOf(value));
+                valueRowBuilder.addColumn(String.valueOf(value));
             } else {
                 if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    valueRowBuilder.addColumn(responseTime.toString());
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**
@@ -237,13 +237,13 @@ public class NginxCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (NetworkConstants.RESPONSE_TIME.equals(alias)) {
-                    valueRowBuilder.addColumns(String.valueOf(responseTime));
+                    valueRowBuilder.addColumn(String.valueOf(responseTime));
                 } else {
                     try {
                         String methodName = reqStatusResponse.getFieldMethodName(alias);
                         Object value = reflect(reqStatusResponse, methodName);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumns(String.valueOf(value));
+                        valueRowBuilder.addColumn(String.valueOf(value));
                     } catch (Exception e) {
                         String errorMsg = CommonUtil.getMessageFromThrowable(e);
                         log.error(errorMsg);
@@ -252,7 +252,7 @@ public class NginxCollectImpl extends AbstractCollect {
                     }
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 

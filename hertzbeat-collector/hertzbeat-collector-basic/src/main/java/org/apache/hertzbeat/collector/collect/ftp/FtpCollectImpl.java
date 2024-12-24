@@ -58,7 +58,7 @@ public class FtpCollectImpl extends AbstractCollect {
 
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         FTPClient ftpClient = new FTPClient();
         FtpProtocol ftpProtocol = metrics.getFtp();
         // Set timeout
@@ -72,9 +72,9 @@ public class FtpCollectImpl extends AbstractCollect {
             metrics.getAliasFields().forEach(it -> {
                 if (valueMap.containsKey(it)) {
                     String fieldValue = valueMap.get(it);
-                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             });
         } catch (Exception e) {
@@ -82,7 +82,7 @@ public class FtpCollectImpl extends AbstractCollect {
             builder.setMsg(e.getMessage());
             return;
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**

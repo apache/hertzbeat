@@ -44,7 +44,7 @@ if [ ! -d $LOGS_DIR ]; then
 fi
 
 # JVM Configuration
-JAVA_OPTS=" -Doracle.jdbc.timezoneAsRegion=false"
+JAVA_OPTS=" -Doracle.jdbc.timezoneAsRegion=false --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
 
 # JVM Configuration
 JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR"

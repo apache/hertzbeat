@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.dispatch.entrance;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.protobuf.ByteString;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
@@ -145,7 +146,7 @@ public class CollectServer implements CommandLineRunner {
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setIdentity(identity)
                     .setType(ClusterMsg.MessageType.GO_ONLINE)
-                    .setMsg(JsonUtil.toJson(collectorInfo))
+                    .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(collectorInfo)))
                     .build();
             CollectServer.this.sendMsg(message);
 

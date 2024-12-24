@@ -77,7 +77,7 @@ class NtpCollectImplTest {
         metrics.setNtp(telnetProtocol);
         metrics.setAliasFields(aliasField);
         ntpCollect.preCheck(metrics);
-        ntpCollect.collect(builder, 1L, "test", metrics);
+        ntpCollect.collect(builder, metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

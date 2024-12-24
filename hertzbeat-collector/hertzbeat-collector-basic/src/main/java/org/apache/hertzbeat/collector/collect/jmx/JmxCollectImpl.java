@@ -90,7 +90,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
@@ -120,9 +120,9 @@ public class JmxCollectImpl extends AbstractCollect {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : metrics.getAliasFields()) {
                     String fieldValue = attributeValueMap.get(aliasField);
-                    valueRowBuilder.addColumns(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         } catch (IOException exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);

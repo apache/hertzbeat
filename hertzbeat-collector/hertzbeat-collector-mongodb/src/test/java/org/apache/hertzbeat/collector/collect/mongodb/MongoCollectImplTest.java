@@ -100,7 +100,7 @@ public class MongoCollectImplTest {
                 .build();
         mongoClientsMockedStatic.when(() -> MongoClients.create(settings)).thenReturn(mongoClient);
         mongodbSingleCollect.preCheck(metrics);
-        mongodbSingleCollect.collect(builder, 1L, "test", metrics);
+        mongodbSingleCollect.collect(builder, metrics);
         Assertions.assertEquals("Linux", builder.getValues(0).getColumns(0));
         Assertions.assertEquals("Ubuntu", builder.getValues(0).getColumns(1));
         Assertions.assertEquals("22.04", builder.getValues(0).getColumns(2));

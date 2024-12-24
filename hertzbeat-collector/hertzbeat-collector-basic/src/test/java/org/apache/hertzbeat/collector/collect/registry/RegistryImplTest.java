@@ -79,7 +79,7 @@ class RegistryImplTest {
         Mockito.when(client.getServerInfo()).thenReturn(serverInfo);
         registry.setDiscoveryClientManagement(discoveryClientManagement);
         registry.preCheck(metrics);
-        registry.collect(builder, 1L, "test", metrics);
+        registry.collect(builder, metrics);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(host, valueRow.getColumns(0));
             assertEquals(port, valueRow.getColumns(1));
@@ -123,7 +123,7 @@ class RegistryImplTest {
         Mockito.when(client.getServices()).thenReturn(serviceInstances);
         registry.setDiscoveryClientManagement(discoveryClientManagement);
         registry.preCheck(metrics);
-        registry.collect(builder, 1L, "test", metrics);
+        registry.collect(builder, metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(serviceId, valueRow.getColumns(0));

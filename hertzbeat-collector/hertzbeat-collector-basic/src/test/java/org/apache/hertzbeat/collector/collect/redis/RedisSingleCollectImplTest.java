@@ -103,7 +103,7 @@ class RedisSingleCollectImplTest {
         Mockito.when(client.connect()).thenReturn(connection);
         Mockito.when(connection.sync()).thenReturn(cmd);
         Mockito.when(cmd.info(metrics.getName())).thenReturn(info);
-        redisSingleCollect.collect(builder, 1L, "test", metrics);
+        redisSingleCollect.collect(builder, metrics);
         assertEquals(builder.getValues(0).getColumns(0), "0.544635");
         clientMockedStatic.close();
     }
@@ -149,7 +149,7 @@ class RedisSingleCollectImplTest {
         Mockito.when(cmd.info(metrics.getName())).thenReturn(redisInfo);
 
         redisSingleCollect.preCheck(metrics);
-        redisSingleCollect.collect(builder, 1L, "test", metrics);
+        redisSingleCollect.collect(builder, metrics);
         assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
         for (CollectRep.ValueRow row : builder.getValuesList()) {
             assertEquals(row.getColumnsCount(), 2);

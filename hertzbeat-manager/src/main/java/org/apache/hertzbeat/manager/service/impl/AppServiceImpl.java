@@ -146,7 +146,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         Metrics tmpMetrics = job.getMetrics().get(0);
         List<Metrics> metricsList = new LinkedList<>();
         for (CollectRep.MetricsData metricsData : metricsDataList) {
-            List<Metrics.Field> fields = metricsData.getFieldsList().stream().map(item ->
+            List<Metrics.Field> fields = metricsData.getFields().stream().map(item ->
                     Metrics.Field.builder()
                             .field(item.getName())
                             .type((byte) item.getType())
@@ -311,7 +311,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     var hierarchyMetric = new Hierarchy();
                     hierarchyMetric.setValue(metricsData.getMetrics());
                     hierarchyMetric.setLabel(metricsData.getMetrics());
-                    List<Hierarchy> hierarchyFieldList = metricsData.getFieldsList().stream()
+                    List<Hierarchy> hierarchyFieldList = metricsData.getFields().stream()
                             .map(item -> {
                                 var hierarchyField = new Hierarchy();
                                 hierarchyField.setValue(item.getName());

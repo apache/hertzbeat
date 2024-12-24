@@ -485,20 +485,10 @@ public final class ClusterMsg {
      * message content
      * </pre>
      *
-     * <code>string msg = 4;</code>
+     * <code>bytes msg = 4;</code>
      * @return The msg.
      */
-    String getMsg();
-    /**
-     * <pre>
-     * message content
-     * </pre>
-     *
-     * <code>string msg = 4;</code>
-     * @return The bytes for msg.
-     */
-    com.google.protobuf.ByteString
-        getMsgBytes();
+    com.google.protobuf.ByteString getMsg();
   }
   /**
    * Protobuf type {@code org.apache.hertzbeat.common.entity.message.Message}
@@ -516,7 +506,7 @@ public final class ClusterMsg {
       identity_ = "";
       direction_ = 0;
       type_ = 0;
-      msg_ = "";
+      msg_ = com.google.protobuf.ByteString.EMPTY;
     }
 
     @Override
@@ -568,9 +558,8 @@ public final class ClusterMsg {
               break;
             }
             case 34: {
-              String s = input.readStringRequireUtf8();
 
-              msg_ = s;
+              msg_ = input.readBytes();
               break;
             }
             default: {
@@ -708,49 +697,18 @@ public final class ClusterMsg {
     }
 
     public static final int MSG_FIELD_NUMBER = 4;
-    private volatile Object msg_;
+    private com.google.protobuf.ByteString msg_;
     /**
      * <pre>
      * message content
      * </pre>
      *
-     * <code>string msg = 4;</code>
+     * <code>bytes msg = 4;</code>
      * @return The msg.
      */
     @Override
-    public String getMsg() {
-      Object ref = msg_;
-      if (ref instanceof String) {
-        return (String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
-        msg_ = s;
-        return s;
-      }
-    }
-    /**
-     * <pre>
-     * message content
-     * </pre>
-     *
-     * <code>string msg = 4;</code>
-     * @return The bytes for msg.
-     */
-    @Override
-    public com.google.protobuf.ByteString
-        getMsgBytes() {
-      Object ref = msg_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (String) ref);
-        msg_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public com.google.protobuf.ByteString getMsg() {
+      return msg_;
     }
 
     private byte memoizedIsInitialized = -1;
@@ -776,8 +734,8 @@ public final class ClusterMsg {
       if (type_ != MessageType.HEARTBEAT.getNumber()) {
         output.writeEnum(3, type_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(msg_)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 4, msg_);
+      if (!msg_.isEmpty()) {
+        output.writeBytes(4, msg_);
       }
       unknownFields.writeTo(output);
     }
@@ -799,8 +757,9 @@ public final class ClusterMsg {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(3, type_);
       }
-      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(msg_)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, msg_);
+      if (!msg_.isEmpty()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(4, msg_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -981,7 +940,7 @@ public final class ClusterMsg {
 
         type_ = 0;
 
-        msg_ = "";
+        msg_ = com.google.protobuf.ByteString.EMPTY;
 
         return this;
       }
@@ -1071,9 +1030,8 @@ public final class ClusterMsg {
         if (other.type_ != 0) {
           setTypeValue(other.getTypeValue());
         }
-        if (!other.getMsg().isEmpty()) {
-          msg_ = other.msg_;
-          onChanged();
+        if (other.getMsg() != com.google.protobuf.ByteString.EMPTY) {
+          setMsg(other.getMsg());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -1348,59 +1306,29 @@ public final class ClusterMsg {
         return this;
       }
 
-      private Object msg_ = "";
+      private com.google.protobuf.ByteString msg_ = com.google.protobuf.ByteString.EMPTY;
       /**
        * <pre>
        * message content
        * </pre>
        *
-       * <code>string msg = 4;</code>
+       * <code>bytes msg = 4;</code>
        * @return The msg.
        */
-      public String getMsg() {
-        Object ref = msg_;
-        if (!(ref instanceof String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          String s = bs.toStringUtf8();
-          msg_ = s;
-          return s;
-        } else {
-          return (String) ref;
-        }
+      @Override
+      public com.google.protobuf.ByteString getMsg() {
+        return msg_;
       }
       /**
        * <pre>
        * message content
        * </pre>
        *
-       * <code>string msg = 4;</code>
-       * @return The bytes for msg.
-       */
-      public com.google.protobuf.ByteString
-          getMsgBytes() {
-        Object ref = msg_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (String) ref);
-          msg_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <pre>
-       * message content
-       * </pre>
-       *
-       * <code>string msg = 4;</code>
+       * <code>bytes msg = 4;</code>
        * @param value The msg to set.
        * @return This builder for chaining.
        */
-      public Builder setMsg(
-          String value) {
+      public Builder setMsg(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -1414,32 +1342,12 @@ public final class ClusterMsg {
        * message content
        * </pre>
        *
-       * <code>string msg = 4;</code>
+       * <code>bytes msg = 4;</code>
        * @return This builder for chaining.
        */
       public Builder clearMsg() {
         
         msg_ = getDefaultInstance().getMsg();
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * message content
-       * </pre>
-       *
-       * <code>string msg = 4;</code>
-       * @param value The bytes for msg to set.
-       * @return This builder for chaining.
-       */
-      public Builder setMsgBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        
-        msg_ = value;
         onChanged();
         return this;
       }
@@ -1516,7 +1424,7 @@ public final class ClusterMsg {
       "pache.hertzbeat.common.entity.message.Di" +
       "rection\022E\n\004type\030\003 \001(\01627.org.apache.hertz" +
       "beat.common.entity.message.MessageType\022\013" +
-      "\n\003msg\030\004 \001(\t*\363\001\n\013MessageType\022\r\n\tHEARTBEAT" +
+      "\n\003msg\030\004 \001(\014*\363\001\n\013MessageType\022\r\n\tHEARTBEAT" +
       "\020\000\022\r\n\tGO_ONLINE\020\001\022\016\n\nGO_OFFLINE\020\002\022\014\n\010GO_" +
       "CLOSE\020\003\022\025\n\021ISSUE_CYCLIC_TASK\020\004\022\026\n\022DELETE" +
       "_CYCLIC_TASK\020\005\022\027\n\023ISSUE_ONE_TIME_TASK\020\006\022" +

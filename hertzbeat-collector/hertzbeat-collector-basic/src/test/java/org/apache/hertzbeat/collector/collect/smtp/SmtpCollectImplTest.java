@@ -68,7 +68,7 @@ public class SmtpCollectImplTest {
             Metrics metrics = Metrics.builder()
                 .smtp(new SmtpProtocol())
                 .build();
-            smtpCollect.collect(builder, 0, null, metrics);
+            smtpCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }
