@@ -54,10 +54,7 @@ export class MonitorFormComponent implements OnChanges {
 
   hasAdvancedParams: boolean = false;
 
-  constructor(
-    private notifySvc: NzNotificationService,
-    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
-  ) {}
+  constructor(private notifySvc: NzNotificationService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
@@ -158,8 +155,7 @@ export class MonitorFormComponent implements OnChanges {
       if (portParam) {
         if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
           portParam.paramValue = 443;
-          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitors.new.notify.change-to-https')
-          );
+          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitors.new.notify.change-to-https'));
         }
         if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
           portParam.paramValue = 80;
