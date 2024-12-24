@@ -22,6 +22,7 @@ module.exports = {
     repoUrl,
     cdnUrl,
   },
+  clientModules: [path.resolve(__dirname, './src/pages/components/Matomo.js')],
   i18n: {
     defaultLocale: 'en',
     locales: ['zh-cn', 'en'],
