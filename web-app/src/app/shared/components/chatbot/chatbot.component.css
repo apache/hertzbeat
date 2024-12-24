@@ -1,0 +1,96 @@
+.float {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.float img {
+  width: 3rem;
+  height: 3rem;
+}
+
+.popup {
+  position: fixed;
+  bottom: 5rem;
+  right: 2rem;
+  width: 310px;
+  max-height: 400px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.popup-content {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100%;
+}
+
+.close-btn {
+  align-self: flex-end;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 100%;
+}
+
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto; /* Enables vertical scrolling */
+  max-height: 200px; /* Set a maximum height for the chat window */
+  margin-bottom: 10px;
+  width: 100%;
+  padding-right: 5px; /* Optional: Adds some padding for better readability */
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+input[type='text'] {
+  flex-grow: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-right: 5px;
+}
+
+button {
+  border: none;
+  background-color: #3f51b5;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+  height: 34px;
+}
+
+.reset-btn {
+  background-color: #dc3545;
+  margin-right: 0;
+}
+
+.reset-btn:hover {
+  background-color: #c82333;
+}
