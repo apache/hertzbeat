@@ -68,7 +68,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
-                        long monitorId, String app, Metrics metrics) {
+                        Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         HttpProtocol httpProtocol = metrics.getHttp();
@@ -111,24 +111,24 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : metrics.getAliasFields()) {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Long.toString(responseTime));
+                        valueRowBuilder.addColumn(Long.toString(responseTime));
                     } else if (NAME_SUBJECT.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getSubjectX500Principal().getName());
+                        valueRowBuilder.addColumn(x509Certificate.getSubjectX500Principal().getName());
                     } else if (NAME_EXPIRED.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Boolean.toString(expired));
+                        valueRowBuilder.addColumn(Boolean.toString(expired));
                     } else if (NAME_START_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getNotBefore().toLocaleString());
+                        valueRowBuilder.addColumn(x509Certificate.getNotBefore().toLocaleString());
                     } else if (NAME_START_TIMESTAMP.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(String.valueOf(x509Certificate.getNotBefore().getTime()));
+                        valueRowBuilder.addColumn(String.valueOf(x509Certificate.getNotBefore().getTime()));
                     } else if (NAME_END_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getNotAfter().toLocaleString());
+                        valueRowBuilder.addColumn(x509Certificate.getNotAfter().toLocaleString());
                     } else if (NAME_END_TIMESTAMP.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(String.valueOf(x509Certificate.getNotAfter().getTime()));
+                        valueRowBuilder.addColumn(String.valueOf(x509Certificate.getNotAfter().getTime()));
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         } catch (SSLPeerUnverifiedException e1) {
             String errorMsg = "Ssl certificate does not exist.";

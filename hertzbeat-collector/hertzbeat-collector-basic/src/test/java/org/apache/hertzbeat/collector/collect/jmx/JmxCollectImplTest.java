@@ -60,7 +60,7 @@ class JmxCollectImplTest {
         // metrics is null
         assertDoesNotThrow(() -> {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            jmxCollect.collect(builder, 1L, "app", null);
+            jmxCollect.collect(builder, null);
         });
     }
 

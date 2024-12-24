@@ -70,7 +70,7 @@ public class KafkaCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         try {
             KafkaProtocol kafkaProtocol = metrics.getKclient();
             String command = kafkaProtocol.getCommand();
@@ -133,11 +133,11 @@ public class KafkaCollectImpl extends AbstractCollect {
             long earliestOffset = getEarliestOffset(adminClient, topicPartition);
             long latestOffset = getLatestOffset(adminClient, topicPartition);
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-            valueRowBuilder.addColumns(value.name());
-            valueRowBuilder.addColumns(String.valueOf(info.partition()));
-            valueRowBuilder.addColumns(String.valueOf(earliestOffset));
-            valueRowBuilder.addColumns(String.valueOf(latestOffset));
-            builder.addValues(valueRowBuilder.build());
+            valueRowBuilder.addColumn(value.name());
+            valueRowBuilder.addColumn(String.valueOf(info.partition()));
+            valueRowBuilder.addColumn(String.valueOf(earliestOffset));
+            valueRowBuilder.addColumn(String.valueOf(latestOffset));
+            builder.addValueRow(valueRowBuilder.build());
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
             log.warn("Topic {} get offset fail", name);
         }
@@ -187,8 +187,8 @@ public class KafkaCollectImpl extends AbstractCollect {
         ListTopicsOptions options = new ListTopicsOptions().listInternal(true);
         Set<String> names = adminClient.listTopics(options).names().get();
         names.forEach(name -> {
-            CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder().addColumns(name).build();
-            builder.addValues(valueRow);
+            CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder().addColumn(name).build();
+            builder.addValueRow(valueRow);
         });
     }
 
@@ -209,14 +209,14 @@ public class KafkaCollectImpl extends AbstractCollect {
             List<TopicPartitionInfo> listp = value.partitions();
             listp.forEach(info -> {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                valueRowBuilder.addColumns(value.name());
-                valueRowBuilder.addColumns(String.valueOf(value.partitions().size()));
-                valueRowBuilder.addColumns(String.valueOf(info.partition()));
-                valueRowBuilder.addColumns(info.leader().host());
-                valueRowBuilder.addColumns(String.valueOf(info.leader().port()));
-                valueRowBuilder.addColumns(String.valueOf(info.replicas().size()));
-                valueRowBuilder.addColumns(String.valueOf(info.replicas()));
-                builder.addValues(valueRowBuilder.build());
+                valueRowBuilder.addColumn(value.name());
+                valueRowBuilder.addColumn(String.valueOf(value.partitions().size()));
+                valueRowBuilder.addColumn(String.valueOf(info.partition()));
+                valueRowBuilder.addColumn(info.leader().host());
+                valueRowBuilder.addColumn(String.valueOf(info.leader().port()));
+                valueRowBuilder.addColumn(String.valueOf(info.replicas().size()));
+                valueRowBuilder.addColumn(String.valueOf(info.replicas()));
+                builder.addValueRow(valueRowBuilder.build());
             });
         });
     }
@@ -245,11 +245,11 @@ public class KafkaCollectImpl extends AbstractCollect {
                                 ConsumerGroupDescription description = consumerGroupDescriptions.get(groupId);
                                 Map<String, String> offsetAndLagNum = getConsumerGroupMetrics(topic, groupId, adminClient);
                                 return CollectRep.ValueRow.newBuilder()
-                                        .addColumns(groupId)
-                                        .addColumns(String.valueOf(description.members().size()))
-                                        .addColumns(topic)
-                                        .addColumns(offsetAndLagNum.get(PARTITION_OFFSET))
-                                        .addColumns(offsetAndLagNum.get(LAG_NUM))
+                                        .addColumn(groupId)
+                                        .addColumn(String.valueOf(description.members().size()))
+                                        .addColumn(topic)
+                                        .addColumn(offsetAndLagNum.get(PARTITION_OFFSET))
+                                        .addColumn(offsetAndLagNum.get(LAG_NUM))
                                         .build();
                             } catch (InterruptedException | ExecutionException e) {
                                 log.warn("group {} get message fail", groupId);
@@ -258,7 +258,7 @@ public class KafkaCollectImpl extends AbstractCollect {
                         })
                 )
                 .filter(Objects::nonNull)
-                .forEach(builder::addValues);
+                .forEach(builder::addValueRow);
     }
 
     private static Map<String, Set<String>> getTopicConsumerGroupsMap(Collection<ConsumerGroupListing> consumerGroups,

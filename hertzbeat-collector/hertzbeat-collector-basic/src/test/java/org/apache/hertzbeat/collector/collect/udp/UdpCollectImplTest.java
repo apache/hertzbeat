@@ -90,7 +90,7 @@ class UdpCollectImplTest {
         metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
-        udpCollect.collect(builder, 1L, "test", metrics);
+        udpCollect.collect(builder, metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));
@@ -119,7 +119,7 @@ class UdpCollectImplTest {
         metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
-        udpCollect.collect(builder, 1L, "test", metrics);
+        udpCollect.collect(builder, metrics);
         assertEquals(builder.getCode(), CollectRep.Code.UN_CONNECTABLE);
 
         socketMockedConstruction.close();
@@ -145,7 +145,7 @@ class UdpCollectImplTest {
         metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
-        udpCollect.collect(builder, 1L, "test", metrics);
+        udpCollect.collect(builder, metrics);
         assertEquals(builder.getCode(), CollectRep.Code.UN_REACHABLE);
 
         socketMockedConstruction.close();

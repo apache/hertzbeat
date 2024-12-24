@@ -56,8 +56,8 @@ public class ModbusCollectImpl extends AbstractPlcCollectImpl {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        super.collect(builder, monitorId, app, metrics);
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
+        super.collect(builder, metrics);
     }
 
     @Override

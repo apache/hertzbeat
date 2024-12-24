@@ -87,7 +87,7 @@ class IcmpCollectImplTest {
         try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenReturn(true);
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+            assertDoesNotThrow(() -> icmpCollect.collect(builder, metrics));
             assertEquals(1, builder.getValuesCount());
             assertNotNull(builder.getValues(0).getColumns(0));
 
@@ -99,7 +99,7 @@ class IcmpCollectImplTest {
         try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenReturn(false);
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+            assertDoesNotThrow(() -> icmpCollect.collect(builder, metrics));
             assertEquals(CollectRep.Code.UN_REACHABLE, builder.getCode());
             assertNotNull(builder.getMsg());
         }
@@ -109,7 +109,7 @@ class IcmpCollectImplTest {
     void testUnknownHostException() {
         try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenThrow(new UnknownHostException("Mocked exception"));
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+            assertDoesNotThrow(() -> icmpCollect.collect(builder, metrics));
             assertEquals(CollectRep.Code.UN_REACHABLE, builder.getCode());
             assertNotNull(builder.getMsg());
         }
@@ -120,7 +120,7 @@ class IcmpCollectImplTest {
         try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenThrow(new IOException("Mocked exception"));
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+            assertDoesNotThrow(() -> icmpCollect.collect(builder, metrics));
             assertEquals(CollectRep.Code.UN_REACHABLE, builder.getCode());
             assertNotNull(builder.getMsg());
         }
@@ -131,7 +131,7 @@ class IcmpCollectImplTest {
         try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenThrow(new RuntimeException("Mocked exception"));
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+            assertDoesNotThrow(() -> icmpCollect.collect(builder, metrics));
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
             assertNotNull(builder.getMsg());
         }

@@ -50,7 +50,7 @@ public class HttpSdCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         List<ConnectionConfig> configList = Lists.newArrayList();
         HttpUriRequest request = RequestBuilder.get().setUri(metrics.getSdProtocol().getSdSource()).build();
 
@@ -77,9 +77,9 @@ public class HttpSdCollectImpl extends AbstractCollect {
 
             configList.forEach(config -> {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                valueRowBuilder.addColumns(config.getHost());
-                valueRowBuilder.addColumns(config.getPort());
-                builder.addValues(valueRowBuilder.build());
+                valueRowBuilder.addColumn(config.getHost());
+                valueRowBuilder.addColumn(config.getPort());
+                builder.addValueRow(valueRowBuilder.build());
             });
         } catch (IOException e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);

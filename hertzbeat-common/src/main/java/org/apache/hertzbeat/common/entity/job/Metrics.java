@@ -125,6 +125,11 @@ public class Metrics {
      */
     private List<String> calculates;
     /**
+     * filters
+     * eg: class == 9 && name != 'java'
+     */
+    private List<String> filters;
+    /**
      * unit conversion expr
      * eg:
      * - heap_used=B->MB
@@ -269,7 +274,7 @@ public class Metrics {
      * collector use - Temporarily store subTask metrics response data
      */
     @JsonIgnore
-    private transient AtomicReference<CollectRep.MetricsData> subTaskDataRef;
+    private transient AtomicReference<CollectRep.MetricsData.Builder> subTaskDataRef;
 
     /**
      * collector use - Temporarily store subTask running num
@@ -299,26 +304,24 @@ public class Metrics {
      * @return is last task?
      */
     public boolean consumeSubTaskResponse(CollectRep.MetricsData metricsData) {
-        if (subTaskNum == null) {
-            return true;
-        }
         synchronized (subTaskNum) {
             int index = subTaskNum.decrementAndGet();
             if (subTaskDataRef.get() == null) {
-                subTaskDataRef.set(metricsData);
+                subTaskDataRef.set(CollectRep.MetricsData.newBuilder(metricsData));
             } else {
                 if (metricsData.getValuesCount() >= 1) {
-                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataRef.get());
-                    for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                    CollectRep.MetricsData.Builder dataBuilder = subTaskDataRef.get();
+                    for (CollectRep.ValueRow valueRow : metricsData.getValues()) {
                         if (valueRow.getColumnsCount() == dataBuilder.getFieldsCount()) {
-                            dataBuilder.addValues(valueRow);
+                            dataBuilder.addValueRow(valueRow);
                         } else {
                             log.error("consume subTask data value not mapping filed");
                         }
                     }
-                    subTaskDataRef.set(dataBuilder.build());
+                    subTaskDataRef.set(dataBuilder);
                 }
             }
+            metricsData.close();
             return index == 0;
         }
     }

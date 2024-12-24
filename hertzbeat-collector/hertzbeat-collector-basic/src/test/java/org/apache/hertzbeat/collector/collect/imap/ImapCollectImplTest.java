@@ -89,7 +89,7 @@ public class ImapCollectImplTest {
                 });
 
         imapCollect.preCheck(metrics);
-        imapCollect.collect(builder, 1L, "testIMAP", metrics);
+        imapCollect.collect(builder, metrics);
         assertEquals(1, builder.getValuesCount());
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));
@@ -117,7 +117,7 @@ public class ImapCollectImplTest {
                 });
 
         imapCollect.preCheck(metrics);
-        imapCollect.collect(builder, 1L, "testIMAP", metrics);
+        imapCollect.collect(builder, metrics);
         assertEquals(1, builder.getValuesCount());
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

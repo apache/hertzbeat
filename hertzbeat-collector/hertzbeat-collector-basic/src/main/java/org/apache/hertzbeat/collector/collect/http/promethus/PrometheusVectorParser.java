@@ -62,35 +62,35 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
                 if (!CollectUtil.assertPromRequireField(aliasField)) {
                     JsonElement jsonElement = r.getMetric().get(aliasField);
                     if (jsonElement != null) {
-                        valueRowBuilder.addColumns(jsonElement.getAsString());
+                        valueRowBuilder.addColumn(jsonElement.getAsString());
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                     }
                 } else {
                     if (CommonConstants.PROM_TIME.equals(aliasField)) {
                         for (Object o : r.getValue()) {
                             if (o instanceof Double time) {
-                                valueRowBuilder.addColumns(String.valueOf(BigDecimal.valueOf(time * 1000)));
+                                valueRowBuilder.addColumn(String.valueOf(BigDecimal.valueOf(time * 1000)));
                                 setTimeFlag = true;
                             }
                         }
                         if (!setTimeFlag) {
-                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                         }
                     } else {
                         for (Object o : r.getValue()) {
                             if (o instanceof String str) {
-                                valueRowBuilder.addColumns(str);
+                                valueRowBuilder.addColumn(str);
                                 setValueFlag = true;
                             }
                         }
                         if (!setValueFlag) {
-                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                         }
                     }
                 }
             }
-            builder.addValues(valueRowBuilder);
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 }

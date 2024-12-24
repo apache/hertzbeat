@@ -187,10 +187,10 @@ public class PrometheusAutoCollectImpl {
                     if (index == 0) {
                         metric.getLabels().forEach(label -> {
                             metricsFields.add(label.getName());
-                            builder.addFields(CollectRep.Field.newBuilder().setName(label.getName())
+                            builder.addField(CollectRep.Field.newBuilder().setName(label.getName())
                                     .setType(CommonConstants.TYPE_STRING).setLabel(true).build());
                         });
-                        builder.addFields(CollectRep.Field.newBuilder().setName("value")
+                        builder.addField(CollectRep.Field.newBuilder().setName("value")
                                 .setType(CommonConstants.TYPE_NUMBER).setLabel(false).build());
                     }
                     Map<String, String> labelMap = metric.getLabels()
@@ -199,10 +199,10 @@ public class PrometheusAutoCollectImpl {
                     CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                     for (String field : metricsFields) {
                         String fieldValue = labelMap.get(field);
-                        valueRowBuilder.addColumns(fieldValue == null ? CommonConstants.NULL_VALUE : fieldValue);
+                        valueRowBuilder.addColumn(fieldValue == null ? CommonConstants.NULL_VALUE : fieldValue);
                     }
-                    valueRowBuilder.addColumns(String.valueOf(metric.getValue()));
-                    builder.addValues(valueRowBuilder.build());
+                    valueRowBuilder.addColumn(String.valueOf(metric.getValue()));
+                    builder.addValueRow(valueRowBuilder.build());
                 }
                 metricsDataList.add(builder.build());
             }

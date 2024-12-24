@@ -82,7 +82,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         try {
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
@@ -166,12 +166,12 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         metrics.getAliasFields().forEach(it -> {
             if (valueMap.containsKey(it)) {
                 String fieldValue = valueMap.get(it);
-                valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
             } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
             }
         });
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**

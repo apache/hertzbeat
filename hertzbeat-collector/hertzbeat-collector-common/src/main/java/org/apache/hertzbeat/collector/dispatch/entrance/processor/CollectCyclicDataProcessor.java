@@ -38,7 +38,7 @@ public class CollectCyclicDataProcessor implements NettyRemotingProcessor {
 
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        Job job = JsonUtil.fromJson(message.getMsg(), Job.class);
+        Job job = JsonUtil.fromJson(message.getMsg().toStringUtf8(), Job.class);
         if (job == null) {
             log.error("collector receive cyclic task job is null");
             return null;

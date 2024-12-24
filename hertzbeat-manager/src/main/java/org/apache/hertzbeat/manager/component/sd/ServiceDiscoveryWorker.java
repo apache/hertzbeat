@@ -22,13 +22,13 @@ import com.google.common.collect.Sets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
@@ -82,13 +82,10 @@ public class ServiceDiscoveryWorker implements InitializingBean {
         @Override
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    final CollectRep.MetricsData serviceDiscoveryData = dataQueue.pollServiceDiscoveryData();
-                    if (Objects.isNull(serviceDiscoveryData)) {
-                        continue;
-                    }
+                try (final CollectRep.MetricsData metricsData = dataQueue.pollServiceDiscoveryData()) {
 
-                    final Monitor mainMonitor = monitorDao.findMonitorsByIdIn(Sets.newHashSet(serviceDiscoveryData.getId())).get(0);
+                    Long monitorId = metricsData.getId();
+                    final Monitor mainMonitor = monitorDao.findMonitorsByIdIn(Sets.newHashSet(monitorId)).get(0);
                     mainMonitor.setTags(mainMonitor.getTags().stream().filter(tag -> tag.getType() != CommonConstants.TAG_TYPE_AUTO_GENERATE).collect(Collectors.toList()));
                     // collector
                     final Optional<CollectorMonitorBind> collectorBind = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(mainMonitor.getId());
@@ -97,7 +94,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     List<Param> mainMonitorParamList = paramDao.findParamsByMonitorId(mainMonitor.getId());
                     mainMonitorParamList = SdMonitorOperator.removeSdParam(mainMonitorParamList);
 
-                    final Set<Long> subMonitorIdSet = monitorBindDao.findMonitorBindByBizIdAndType(serviceDiscoveryData.getId(), CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR)
+                    final Set<Long> subMonitorIdSet = monitorBindDao.findMonitorBindByBizIdAndType(monitorId, CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR)
                             .stream()
                             .map(MonitorBind::getMonitorId)
                             .collect(Collectors.toSet());
@@ -105,9 +102,14 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             ? Maps.newHashMap()
                             : monitorDao.findMonitorsByIdIn(subMonitorIdSet).stream().collect(Collectors.groupingBy(Monitor::getHost));
 
-                    for (CollectRep.ValueRow row : serviceDiscoveryData.getValuesList()) {
-                        final String host = row.getColumns(CommonConstants.SD_HOST_COLUMN);
-                        final String port = row.getColumns(CommonConstants.SD_PORT_COLUMN);
+                    RowWrapper rowWrapper = metricsData.readRow();
+
+                    while (rowWrapper.hasNextRow()) {
+                        rowWrapper = rowWrapper.nextRow();
+
+
+                        final String host = rowWrapper.nextCell().getValue();
+                        final String port = rowWrapper.nextCell().getValue();
                         final List<Monitor> monitorList = hostMonitorMap.get(host);
                         if (CollectionUtils.isEmpty(monitorList)) {
                             monitorService.addAndSaveMonitorJob(mainMonitor.clone(), SdMonitorOperator.cloneParamList(mainMonitorParamList), collector,
@@ -116,7 +118,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                                             .detectedPort(port)
                                             .bizId(mainMonitor.getId())
                                             .build(), null);
-                            continue;
+                            return;
                         }
 
                         for (Monitor monitor : monitorList) {

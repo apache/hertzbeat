@@ -171,7 +171,7 @@ public class ModbusCollectTest {
                     "holding-register:1-2"
             ));
             modbusCollect.preCheck(metrics);
-            modbusCollect.collect(builder, 1L, "app", metrics);
+            modbusCollect.collect(builder, metrics);
         });
 
         // with coil
@@ -194,7 +194,7 @@ public class ModbusCollectTest {
                     "coil:1-2"
             ));
             modbusCollect.preCheck(metrics);
-            modbusCollect.collect(builder, 1L, "app", metrics);
+            modbusCollect.collect(builder, metrics);
         });
 
 
@@ -219,7 +219,7 @@ public class ModbusCollectTest {
                     "holding-register:1-2"
             ));
             modbusCollect.preCheck(metrics);
-            modbusCollect.collect(builder, 1L, "app", metrics);
+            modbusCollect.collect(builder, metrics);
         });
 
     }

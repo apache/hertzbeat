@@ -78,12 +78,12 @@ public class SensorHandler implements IpmiHandler {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (Metrics.Field field : metrics.getFields()) {
                 if (!parseValue.containsKey(field.getField())) {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                     continue;
                 }
-                valueRowBuilder.addColumns(parseValue.get(field.getField()));
+                valueRowBuilder.addColumn(parseValue.get(field.getField()));
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 

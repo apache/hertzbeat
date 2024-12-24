@@ -99,7 +99,7 @@ public class SnmpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         SnmpProtocol snmpProtocol = metrics.getSnmp();
         int timeout = CollectUtil.getTimeout(snmpProtocol.getTimeout());
@@ -173,14 +173,14 @@ public class SnmpCollectImpl extends AbstractCollect {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : metrics.getAliasFields()) {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Long.toString(responseTime));
+                        valueRowBuilder.addColumn(Long.toString(responseTime));
                     } else {
                         String oid = oidsMap.get(alias);
                         String value = oidsValueMap.get(oid);
-                        valueRowBuilder.addColumns(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
+                        valueRowBuilder.addColumn(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             } else if (OPERATION_WALK.equalsIgnoreCase(operation)) {
                 Map<String, String> oidMap = snmpProtocol.getOids();
                 Assert.notEmpty(oidMap, "snmp oids is required when operation is walk.");
@@ -214,7 +214,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                     CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                     for (String alias : metrics.getAliasFields()) {
                         if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                            valueRowBuilder.addColumns(Long.toString(responseTime));
+                            valueRowBuilder.addColumn(Long.toString(responseTime));
                         } else {
                             String oid = oidMap.get(alias);
                             String value = oidsValueMap.get(oid);
@@ -227,10 +227,10 @@ public class SnmpCollectImpl extends AbstractCollect {
                                     }
                                 }
                             }
-                            valueRowBuilder.addColumns(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
+                            valueRowBuilder.addColumn(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
                         }
                     }
-                    builder.addValues(valueRowBuilder.build());
+                    builder.addValueRow(valueRowBuilder.build());
                 }
             }
         } catch (ExecutionException | InterruptedException ex) {
