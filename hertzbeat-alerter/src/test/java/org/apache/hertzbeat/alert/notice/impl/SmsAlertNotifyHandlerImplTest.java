@@ -17,106 +17,111 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.Locale;
+
 import java.util.Map;
-import java.util.ResourceBundle;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.apache.hertzbeat.alert.service.TencentSmsClient;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ResourceBundle;
 
 /**
- * test case for {@link SmsAlertNotifyHandlerImpl}
+ * Test case for SMS Alert Notify
  */
-@Disabled
+@ExtendWith(MockitoExtension.class)
 class SmsAlertNotifyHandlerImplTest {
 
-
     @Mock
-    private TencentSmsClient tencentSmsClient;
+    private RestTemplate restTemplate;
+    
+    @Mock
+    private AlerterProperties alerterProperties;
+    
+    @Mock
+    private ResourceBundle bundle;
 
-    private SmsAlertNotifyHandlerImpl notifyHandler;
-
-    private NoticeTemplate noticeTemplate;
+    @InjectMocks
+    private SmsAlertNotifyHandlerImpl smsAlertNotifyHandler;
 
     private NoticeReceiver receiver;
-
-    private ResourceBundle bundle;
+    private GroupAlert groupAlert;
+    private NoticeTemplate template;
 
     @BeforeEach
     public void setUp() {
-
-        MockitoAnnotations.openMocks(this);
-
-        noticeTemplate = mock(NoticeTemplate.class);
-        when(noticeTemplate.getContent()).thenReturn("This is a test notice template.");
-
-        receiver = mock(NoticeReceiver.class);
-        when(receiver.getPhone()).thenReturn("1234567890");
-
-        bundle = mock(ResourceBundle.class);
-        when(bundle.getString(anyString())).thenReturn("High");
-
-        Locale.setDefault(Locale.ENGLISH);
-
-        notifyHandler = new SmsAlertNotifyHandlerImpl(tencentSmsClient);
+        receiver = new NoticeReceiver();
+        receiver.setId(1L);
+        receiver.setName("test-receiver");
+        receiver.setPhone("+8613800138000");
+        
+        groupAlert = new GroupAlert();
+        SingleAlert singleAlert = new SingleAlert();
+        singleAlert.setLabels(new HashMap<>());
+        singleAlert.getLabels().put("severity", "critical");
+        singleAlert.getLabels().put("alertname", "Test Alert");
+        
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+        
+        template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("test-template");
+        template.setContent("test content");
+        
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
-    public void testSendSuccess() throws AlertNoticeException {
-
-        Alert alert = Alert.builder()
-                .content("Alert Content")
-                .priority((byte) 1)
-                .target("TestTarget")
-                .tags(Map.of(CommonConstants.TAG_MONITOR_NAME, "MonitorName"))
-                .lastAlarmTime(System.currentTimeMillis())
-                .id(1L)
-                .build();
-        when(bundle.getString("alerter.priority.1")).thenReturn("High");
-
-//        notifyHandler.send(receiver, noticeTemplate, alert);
-
-        String[] expectedParams = {"MonitorName", "Critical Alert", "Alert Content"};
-        verify(tencentSmsClient).sendMessage(expectedParams, new String[]{"1234567890"});
+    public void testNotifyAlertWithInvalidPhone() {
+        receiver.setPhone(null);
+        
+        assertThrows(IllegalArgumentException.class, 
+                () -> smsAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
-    public void testSendFailed() {
-
-        Alert alert = Alert.builder()
-                .content("Alert Content")
-                .priority((byte) 1)
-                .target("TestTarget")
-                .tags(Map.of(CommonConstants.TAG_MONITOR_NAME, "MonitorName"))
-                .lastAlarmTime(System.currentTimeMillis())
-                .id(1L)
-                .build();
-        Mockito.when(bundle.getString("alerter.priority.1")).thenReturn("High");
-
-        doThrow(new RuntimeException("[Sms Notify Error]")).when(tencentSmsClient).sendMessage(any(), any());
-
-//        Exception exception = Assertions.assertThrows(
-//                AlertNoticeException.class,
-//                () -> notifyHandler.send(receiver, noticeTemplate, alert)
-//        );
-//        assertEquals("[Sms Notify Error] [Sms Notify Error]", exception.getMessage());
+    public void testNotifyAlertSuccess() {
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(
+                Map.of("code", "0", "msg", "success"), 
+                HttpStatus.OK
+            );
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        smsAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
+    @Test
+    public void testNotifyAlertFailure() {
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(
+                Map.of("code", "1", "msg", "Test Error"), 
+                HttpStatus.OK
+            );
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        assertThrows(AlertNoticeException.class, 
+                () -> smsAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
 }

@@ -17,65 +17,111 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import jakarta.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.junit.jupiter.api.Disabled;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.alert.notice.AlertNoticeException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
  * Test case for {@link WeComRobotAlertNotifyHandlerImpl}
- * todo
  */
-@Disabled
-@Slf4j
+@ExtendWith(MockitoExtension.class)
 class WeComRobotAlertNotifyHandlerImplTest {
 
-    @Resource
-    private WeComRobotAlertNotifyHandlerImpl weWorkRobotAlertNotifyHandler;
+    @Mock
+    private RestTemplate restTemplate;
+    
+    @Mock
+    private AlerterProperties alerterProperties;
+    
+    @Mock
+    private ResourceBundle bundle;
 
-    @Test
-    void send() {
-        String weWorkKey = System.getenv("WE_WORK_KEY");
-        if (StringUtils.isBlank(weWorkKey)) {
-            log.warn("Please provide environment variables WE_WORK_KEY");
-            return;
-        }
-        NoticeReceiver receiver = new NoticeReceiver();
+    @InjectMocks
+    private WeComRobotAlertNotifyHandlerImpl weComRobotAlertNotifyHandler;
+
+    private NoticeReceiver receiver;
+    private GroupAlert groupAlert;
+    private NoticeTemplate template;
+
+    @BeforeEach
+    public void setUp() {
+        receiver = new NoticeReceiver();
         receiver.setId(1L);
-        receiver.setName("Mock 告警");
-        receiver.setWechatId(weWorkKey);
-        Alert alert = new Alert();
-        alert.setId(1L);
-        alert.setTarget("Mock Target");
-        NoticeTemplate noticeTemplate = new NoticeTemplate();
-        noticeTemplate.setId(1L);
-        noticeTemplate.setName("WeWork");
-        noticeTemplate.setContent("""
-                [${title}]
-                ${targetLabel} : ${target}
-                <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
-                <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
-                <#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>
-                ${priorityLabel} : ${priority}
-                ${triggerTimeLabel} : ${triggerTime}
-                ${contentLabel} : ${content}""");
-        Map<String, String> map = new HashMap<>();
-        map.put(CommonConstants.TAG_MONITOR_ID, "Mock monitor id");
-        map.put(CommonConstants.TAG_MONITOR_NAME, "Mock monitor name");
-        map.put(CommonConstants.TAG_MONITOR_HOST, "Mock monitor host");
-        alert.setTags(map);
-        alert.setContent("mock content");
-        alert.setPriority((byte) 0);
-        alert.setLastAlarmTime(System.currentTimeMillis());
-
-        //        weWorkRobotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        receiver.setName("test-receiver");
+        receiver.setAccessToken("test-token");
+        
+        groupAlert = new GroupAlert();
+        SingleAlert singleAlert = new SingleAlert();
+        singleAlert.setLabels(new HashMap<>());
+        singleAlert.getLabels().put("severity", "critical");
+        singleAlert.getLabels().put("alertname", "Test Alert");
+        
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+        
+        template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("test-template");
+        template.setContent("test content");
+        
+        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
+    @Test
+    public void testNotifyAlertWithInvalidToken() {
+        receiver.setAccessToken(null);
+        
+        assertThrows(IllegalArgumentException.class, 
+                () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertSuccess() {
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(Collections.singletonMap("errcode", 0), HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        weComRobotAlertNotifyHandler.send(receiver, template, groupAlert);
+    }
+
+    @Test
+    public void testNotifyAlertFailure() {
+        Map<String, Object> errorResp = new HashMap<>();
+        errorResp.put("errcode", 1);
+        errorResp.put("errmsg", "Test Error");
+        
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(errorResp, HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        assertThrows(AlertNoticeException.class, 
+                () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
 }

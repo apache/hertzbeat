@@ -18,127 +18,113 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import org.apache.hertzbeat.alert.AlerterProperties;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+
 /**
- * test case for {@link ServerChanAlertNotifyHandlerImpl}
+ * Test case for ServerChan Alert Notify
  */
-@Disabled
+@ExtendWith(MockitoExtension.class)
 class ServerChanAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-
+    
     @Mock
-    private HttpHeaders headers;
+    private AlerterProperties alerterProperties;
+    
+    @Mock
+    private ResourceBundle bundle;
 
-    private ServerChanAlertNotifyHandlerImpl notifyHandler;
-
-    private NoticeTemplate noticeTemplate;
+    @InjectMocks
+    private ServerChanAlertNotifyHandlerImpl serverChanAlertNotifyHandler;
 
     private NoticeReceiver receiver;
-
-    private AlerterProperties alerterProperties;
+    private GroupAlert groupAlert;
+    private NoticeTemplate template;
 
     @BeforeEach
-    void setUp() {
-
-        MockitoAnnotations.openMocks(this);
-
-        noticeTemplate = mock(NoticeTemplate.class);
-        when(noticeTemplate.getContent()).thenReturn("This is a test notice template.");
-
-        receiver = mock(NoticeReceiver.class);
-        when(receiver.getAccessToken()).thenReturn("dummyToken");
-
-        alerterProperties = mock(AlerterProperties.class);
-        when(alerterProperties.getServerChanWebhookUrl()).thenReturn("http://localhost:8080/webhook/%s");
-
-        notifyHandler = new ServerChanAlertNotifyHandlerImpl();
-        ReflectionTestUtils.setField(notifyHandler, "restTemplate", restTemplate);
-        ReflectionTestUtils.setField(notifyHandler, "alerterProperties", alerterProperties);
+    public void setUp() {
+        receiver = new NoticeReceiver();
+        receiver.setId(1L);
+        receiver.setName("test-receiver");
+        receiver.setAccessToken("test-token");
+        
+        groupAlert = new GroupAlert();
+        SingleAlert singleAlert = new SingleAlert();
+        singleAlert.setLabels(new HashMap<>());
+        singleAlert.getLabels().put("severity", "critical");
+        singleAlert.getLabels().put("alertname", "Test Alert");
+        
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+        
+        template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("test-template");
+        template.setContent("test content");
+        
+        when(alerterProperties.getServerChanWebhookUrl()).thenReturn("http://test.url/");
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
-    void testSendSuccess() {
-
-        Alert alert = Alert.builder()
-                .content("Alert Content")
-                .lastAlarmTime(System.currentTimeMillis())
-                .id(1L)
-                .build();
-
-        ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto serverChanWebHookDto =
-                new ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto();
-        serverChanWebHookDto.setTitle("Test Title");
-        serverChanWebHookDto.setDesp("Test Message");
-
-        ResponseEntity<CommonRobotNotifyResp> mockResponseEntity =
-                new ResponseEntity<>(new CommonRobotNotifyResp(), HttpStatus.OK);
-        when(restTemplate.postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class))
-        ).thenReturn(mockResponseEntity);
-
-//        notifyHandler.send(receiver, noticeTemplate, alert);
-
-        verify(restTemplate, times(1)).postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class)
-        );
+    public void testNotifyAlertWithInvalidToken() {
+        receiver.setAccessToken(null);
+        
+        assertThrows(IllegalArgumentException.class, 
+                () -> serverChanAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
-    void testSendFailed() {
-
-        Alert alert = Alert.builder()
-                .content("Alert Content")
-                .lastAlarmTime(System.currentTimeMillis())
-                .id(1L)
-                .build();
-
-        when(restTemplate.postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class))
-        ).thenThrow(new RuntimeException("Simulated failure"));
-
-//        AlertNoticeException exception = assertThrows(
-//                AlertNoticeException.class,
-//                () -> notifyHandler.send(receiver, noticeTemplate, alert)
-//        );
-//        assertTrue(exception.getMessage().contains("[ServerChan Notify Error]"));
-
-        verify(restTemplate, times(1)).postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class)
-        );
+    public void testNotifyAlertSuccess() {
+        Map<String, Object> successResp = new HashMap<>();
+        successResp.put("code", 0);
+        successResp.put("message", "success");
+        
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(successResp, HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        serverChanAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
+    @Test
+    public void testNotifyAlertFailure() {
+        Map<String, Object> errorResp = new HashMap<>();
+        errorResp.put("code", 1);
+        errorResp.put("message", "Test Error");
+        
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(errorResp, HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        assertThrows(AlertNoticeException.class, 
+                () -> serverChanAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
 }

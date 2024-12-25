@@ -99,10 +99,10 @@ public class AlarmSilenceReduce {
      * @return true if alert should not be silenced, false if alert should be silenced
      */
     private boolean checkAndSave(LocalDateTime now, AlertSilence alertSilence) {
-        boolean startMatch = alertSilence.getPeriodStart() == null || 
-                           now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-        boolean endMatch = alertSilence.getPeriodEnd() == null || 
-                         now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+        boolean startMatch = alertSilence.getPeriodStart() == null 
+                || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+        boolean endMatch = alertSilence.getPeriodEnd() == null 
+                || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
 
         if (startMatch && endMatch) {
             int time = Optional.ofNullable(alertSilence.getTimes()).orElse(0);

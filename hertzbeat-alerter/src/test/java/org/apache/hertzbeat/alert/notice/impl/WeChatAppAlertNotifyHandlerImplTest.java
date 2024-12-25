@@ -17,61 +17,118 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import jakarta.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.junit.jupiter.api.Disabled;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.alert.notice.AlertNoticeException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 /**
- * unit test case for WeChatAppAlertNotifyHandlerImpl
- * todo
+ * Test case for WeChat App Alert Notify
  */
-@Disabled
-@Slf4j
-public class WeChatAppAlertNotifyHandlerImplTest {
+@ExtendWith(MockitoExtension.class)
+class WeChatAppAlertNotifyHandlerImplTest {
 
-    @Resource
-    private WeComAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
+    @Mock
+    private RestTemplate restTemplate;
+    
+    @Mock
+    private AlerterProperties alerterProperties;
+    
+    @Mock
+    private ResourceBundle bundle;
 
-    @Test
-    public void send() {
-        String corpId = System.getenv("CORP_ID");
-        String agentId = System.getenv("AGENT_ID");
-        String appSecret = System.getenv("APP_SECRET");
-        if (StringUtils.isBlank(corpId) || StringUtils.isBlank(agentId) || StringUtils.isBlank(appSecret)) {
-            log.warn("Please provide environment variables CORP_ID, TG_USER_ID APP_SECRET");
-            return;
-        }
-        NoticeReceiver receiver = new NoticeReceiver();
+    @InjectMocks
+    private WeChatAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
+
+    private NoticeReceiver receiver;
+    private GroupAlert groupAlert;
+    private NoticeTemplate template;
+
+    @BeforeEach
+    public void setUp() {
+        receiver = new NoticeReceiver();
         receiver.setId(1L);
-        receiver.setName("WeChat App 告警");
-        receiver.setCorpId(corpId);
-        receiver.setAgentId(Integer.valueOf(agentId));
-        receiver.setAppSecret(appSecret);
-        Alert alert = new Alert();
-        alert.setId(1L);
-        alert.setTarget("Mock Target");
-        NoticeTemplate noticeTemplate = new NoticeTemplate();
-        noticeTemplate.setId(1L);
-        noticeTemplate.setName("WeChatApp");
-        noticeTemplate.setContent("");
-        Map<String, String> map = new HashMap<>();
-        map.put(CommonConstants.TAG_MONITOR_ID, "Mock monitor id");
-        map.put(CommonConstants.TAG_MONITOR_NAME, "Mock monitor name");
-        map.put(CommonConstants.TAG_MONITOR_HOST, "Mock monitor host");
-        alert.setTags(map);
-        alert.setContent("mock content");
-        alert.setPriority((byte) 0);
-        alert.setLastAlarmTime(System.currentTimeMillis());
-
-        //        weChatAppAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        receiver.setName("test-receiver");
+        receiver.setWechatId("test-openid");
+        
+        groupAlert = new GroupAlert();
+        SingleAlert singleAlert = new SingleAlert();
+        singleAlert.setLabels(new HashMap<>());
+        singleAlert.getLabels().put("severity", "critical");
+        singleAlert.getLabels().put("alertname", "Test Alert");
+        
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+        
+        template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("test-template");
+        template.setContent("test content");
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        
+        // Mock token response
+        Map<String, Object> tokenResp = new HashMap<>();
+        tokenResp.put("access_token", "test-token");
+        tokenResp.put("errcode", 0);
+        when(restTemplate.getForObject(any(), any())).thenReturn(tokenResp);
     }
 
+    @Test
+    public void testNotifyAlertWithInvalidConfig() {
+        receiver.setWechatId(null);
+        
+        assertThrows(IllegalArgumentException.class, 
+                () -> weChatAppAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertSuccess() {
+        Map<String, Object> successResp = new HashMap<>();
+        successResp.put("errcode", 0);
+        successResp.put("errmsg", "ok");
+        
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(successResp, HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        weChatAppAlertNotifyHandler.send(receiver, template, groupAlert);
+    }
+
+    @Test
+    public void testNotifyAlertFailure() {
+        Map<String, Object> errorResp = new HashMap<>();
+        errorResp.put("errcode", 1);
+        errorResp.put("errmsg", "Test Error");
+        
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(errorResp, HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        assertThrows(AlertNoticeException.class, 
+                () -> weChatAppAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
 }

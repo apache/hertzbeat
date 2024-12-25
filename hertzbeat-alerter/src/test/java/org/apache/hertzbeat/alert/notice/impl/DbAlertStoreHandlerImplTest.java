@@ -18,16 +18,14 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import org.apache.hertzbeat.alert.service.AlertService;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import static org.mockito.Mockito.when;
+import org.apache.hertzbeat.alert.dao.GroupAlertDao;
+import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.support.exception.IgnoreException;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -35,6 +33,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test case for {@link DbAlertStoreHandlerImpl}
@@ -43,103 +43,71 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class DbAlertStoreHandlerImplTest {
     
-//    @Mock
-//    private AlertService alertService;
-//
-//    @InjectMocks
-//    private DbAlertStoreHandlerImpl dbAlertStoreHandler;
-//
-//    private GroupAlert groupAlert;
-//
-//    @BeforeEach
-//    public void setUp() {
-//
-//        groupAlert = new GroupAlert();
-//    }
-//
-//    @Test
-//    public void testStoreMonitorNotExist() {
-//
-//        dbAlertStoreHandler.store(groupAlert);
-//        
-//        verify(alertService, never()).addAlert(any(Alert.class));
-//    }
-//
-//    @Test
-//    public void testStoreMonitorPaused() {
-//
-//        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
-//
-//        Monitor monitor = new Monitor();
-//        monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
-//
-//        dbAlertStoreHandler.store(alert);
-//        
-//        verify(alertService, never()).addAlert(any(Alert.class));
-//    }
-//
-//    @Test
-//    public void testStoreAvailabilityPendingAndMonitorUp() {
-//
-//        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
-//
-//        Monitor monitor = new Monitor();
-//        monitor.setId(1L);
-//        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
-//
-//        dbAlertStoreHandler.store(alert);
-//        
-//        verify(alertService).addAlert(alert);
-//    }
-//
-//    @Test
-//    public void testStoreAvailabilityRestoredAndMonitorDown() {
-//
-//        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
-//        alert.setStatus(CommonConstants.ALERT_STATUS_CODE_RESTORED);
-//
-//        Monitor monitor = new Monitor();
-//        monitor.setId(1L);
-//        monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
-//
-//        dbAlertStoreHandler.store(alert);
-//        
-//        verify(alertService).addAlert(alert);
-//    }
-//
-//    @Test
-//    public void testStoreIgnoreTagExists() {
-//
-//        alert.getTags().put(CommonConstants.IGNORE, "true");
-//
-//        assertThrows(IgnoreException.class, () -> dbAlertStoreHandler.store(alert));
-//    }
-//
-//    @Test
-//    public void testStoreNoMonitorId() {
-//
-//        alert.getTags().remove(CommonConstants.TAG_MONITOR_ID);
-//        dbAlertStoreHandler.store(alert);
-//
-//        verify(alertService).addAlert(alert);
-//    }
-//
-//    @Test
-//    public void testStoreAddMonitorNameAndHostIfNotPresent() {
-//
-//        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
-//
-//        Monitor monitor = new Monitor();
-//        monitor.setId(1L);
-//        monitor.setName("test-monitor");
-//        monitor.setHost("test-host");
-//        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
-//
-//        dbAlertStoreHandler.store(alert);
-//        
-//        assertEquals("test-monitor", alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
-//        assertEquals("test-host", alert.getTags().get(CommonConstants.TAG_MONITOR_HOST));
-//        verify(alertService).addAlert(alert);
-//    }
+    @Mock
+    private GroupAlertDao groupAlertDao;
+    
+    @Mock
+    private SingleAlertDao singleAlertDao;
 
+    @InjectMocks
+    private DbAlertStoreHandlerImpl dbAlertStoreHandler;
+
+    private GroupAlert groupAlert;
+    private SingleAlert singleAlert;
+
+    @BeforeEach
+    public void setUp() {
+        groupAlert = new GroupAlert();
+        singleAlert = new SingleAlert();
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+    }
+
+    @Test
+    public void testStoreEmptyAlerts() {
+        GroupAlert emptyGroupAlert = new GroupAlert();
+        dbAlertStoreHandler.store(emptyGroupAlert);
+        verify(groupAlertDao, never()).save(any(GroupAlert.class));
+    }
+
+    @Test
+    public void testStoreNewAlert() {
+        String groupKey = "test-group";
+        groupAlert.setGroupKey(groupKey);
+        
+        when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(null);
+        
+        dbAlertStoreHandler.store(groupAlert);
+        
+        verify(singleAlertDao).save(any(SingleAlert.class));
+        verify(groupAlertDao).save(groupAlert);
+    }
+
+    @Test
+    public void testStoreExistingAlert() {
+        String groupKey = "test-group";
+        String fingerprint = "test-fingerprint";
+        
+        groupAlert.setGroupKey(groupKey);
+        singleAlert.setFingerprint(fingerprint);
+        
+        GroupAlert existingGroup = new GroupAlert();
+        existingGroup.setId(1L);
+        when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(existingGroup);
+        
+        SingleAlert existingAlert = new SingleAlert();
+        existingAlert.setId(1L);
+        existingAlert.setStatus("firing");
+        existingAlert.setStartAt(1000L);
+        existingAlert.setActiveAt(2000L);
+        existingAlert.setTriggerTimes(1);
+        when(singleAlertDao.findByFingerprint(fingerprint)).thenReturn(existingAlert);
+        
+        dbAlertStoreHandler.store(groupAlert);
+        
+        verify(singleAlertDao).save(any(SingleAlert.class));
+        verify(groupAlertDao).save(groupAlert);
+        assertEquals(1L, groupAlert.getId());
+    }
 }

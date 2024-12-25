@@ -17,126 +17,108 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import java.util.ResourceBundle;
+
+import java.util.Map;
 import org.apache.hertzbeat.alert.AlerterProperties;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpEntity;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ResourceBundle;
+
 /**
- * Test case for {@link GotifyAlertNotifyHandlerImpl}
+ * Test case for Gotify Alert Notify
  */
-@Disabled
+@ExtendWith(MockitoExtension.class)
 class GotifyAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-
+    
+    @Mock
+    private AlerterProperties alerterProperties;
+    
     @Mock
     private ResourceBundle bundle;
 
-    private AlerterProperties alerterProperties;
-
-    private GotifyAlertNotifyHandlerImpl notifyHandler;
-
-    private NoticeTemplate noticeTemplate;
+    @InjectMocks
+    private GotifyAlertNotifyHandlerImpl gotifyAlertNotifyHandler;
 
     private NoticeReceiver receiver;
+    private GroupAlert groupAlert;
+    private NoticeTemplate template;
 
     @BeforeEach
     public void setUp() {
-
-        MockitoAnnotations.openMocks(this);
-
-        noticeTemplate = mock(NoticeTemplate.class);
-        when(noticeTemplate.getContent()).thenReturn("This is a test notice template.");
-
-        receiver = mock(NoticeReceiver.class);
-        when(receiver.getAccessToken()).thenReturn("dummyToken");
-
-        alerterProperties = mock(AlerterProperties.class);
-        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/webhook/%s");
-
-        notifyHandler = new GotifyAlertNotifyHandlerImpl();
-        ReflectionTestUtils.setField(notifyHandler, "alerterProperties", alerterProperties);
-        ReflectionTestUtils.setField(notifyHandler, "restTemplate", restTemplate);
+        receiver = new NoticeReceiver();
+        receiver.setId(1L);
+        receiver.setName("test-receiver");
+        receiver.setAccessToken("test-token");
+        
+        groupAlert = new GroupAlert();
+        SingleAlert singleAlert = new SingleAlert();
+        singleAlert.setLabels(new HashMap<>());
+        singleAlert.getLabels().put("severity", "critical");
+        singleAlert.getLabels().put("alertname", "Test Alert");
+        
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+        
+        template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("test-template");
+        template.setContent("test content");
+        
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
-    public void testSendSuccess() throws AlertNoticeException {
-
-        Alert alert = Alert.builder()
-                .content("Alert Content")
-                .lastAlarmTime(System.currentTimeMillis())
-                .id(1L)
-                .build();
-
-        when(restTemplate.postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class))
-        ).thenReturn(new ResponseEntity<>(new CommonRobotNotifyResp(), HttpStatus.OK));
-
-//        assertDoesNotThrow(() -> notifyHandler.send(receiver, noticeTemplate, alert));
-
-        verify(restTemplate).postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class)
-        );
-        verify(restTemplate, times(1)).postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class)
-        );
-        verifyNoMoreInteractions(bundle, restTemplate);
+    public void testNotifyAlertWithInvalidConfig() {
+        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("https://push.example.de/message?token=");
+        
+        assertThrows(IllegalArgumentException.class, 
+                () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
-    public void testSendFailed() {
-
-        Alert alert = Alert.builder()
-                .content("Alert Content")
-                .lastAlarmTime(System.currentTimeMillis())
-                .id(1L)
-                .build();
-
-        when(restTemplate.postForEntity(
-                anyString(),
-                any(HttpEntity.class),
-                eq(CommonRobotNotifyResp.class))
-        ).thenReturn(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
-
-//        AlertNoticeException exception = assertThrows(
-//                AlertNoticeException.class,
-//                () -> notifyHandler.send(receiver, noticeTemplate, alert)
-//        );
-
-//        assertEquals("[Gotify Notify Error] Http StatusCode 500 INTERNAL_SERVER_ERROR", exception.getMessage());
-        verify(restTemplate).postForEntity(anyString(), any(HttpEntity.class), eq(CommonRobotNotifyResp.class));
-        verifyNoMoreInteractions(bundle, restTemplate);
+    public void testNotifyAlertSuccess() {
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>(
+                Map.of("id", 123, "appid", "1", "message", "success"), 
+                HttpStatus.OK
+            );
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
+    @Test
+    public void testNotifyAlertFailure() {
+        ResponseEntity<Object> responseEntity = 
+            new ResponseEntity<>("Error", HttpStatus.BAD_REQUEST);
+        
+        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        
+        assertThrows(AlertNoticeException.class, 
+                () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
 }
