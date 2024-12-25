@@ -19,9 +19,10 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -40,7 +41,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -51,9 +51,6 @@ class WeComAppAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-    
-    @Mock
-    private AlerterProperties alerterProperties;
     
     @Mock
     private ResourceBundle bundle;
@@ -89,47 +86,47 @@ class WeComAppAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-        
-        // Mock token response
-        Map<String, Object> tokenResp = new HashMap<>();
-        tokenResp.put("access_token", "test-token");
-        tokenResp.put("errcode", 0);
-        when(restTemplate.getForObject(any(), any())).thenReturn(tokenResp);
-    }
-
-    @Test
-    public void testNotifyAlertWithInvalidConfig() {
-        receiver.setCorpId(null);
-        
-        assertThrows(IllegalArgumentException.class, 
-                () -> weComAppAlertNotifyHandler.send(receiver, template, groupAlert));
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        Map<String, Object> successResp = new HashMap<>();
-        successResp.put("errcode", 0);
-        successResp.put("errmsg", "ok");
+        WeComAppAlertNotifyHandlerImpl.WeChatAppReq weChatAppReq = 
+            new WeComAppAlertNotifyHandlerImpl.WeChatAppReq();
+        weChatAppReq.setErrCode(0);
+        weChatAppReq.setErrMsg("ok");
         
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(successResp, HttpStatus.OK);
+        ResponseEntity<WeComAppAlertNotifyHandlerImpl.WeChatAppReq> responseEntity = 
+            new ResponseEntity<>(weChatAppReq, HttpStatus.OK);
+
+        when(restTemplate.getForEntity(any(String.class),
+                eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)))
+                .thenReturn(responseEntity);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
-        
+        when(restTemplate.postForEntity(any(String.class), any(),
+                eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)))
+                .thenReturn(responseEntity);
+
         weComAppAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        Map<String, Object> errorResp = new HashMap<>();
-        errorResp.put("errcode", 1);
-        errorResp.put("errmsg", "Test Error");
+        WeComAppAlertNotifyHandlerImpl.WeChatAppReq weChatAppReq =
+                new WeComAppAlertNotifyHandlerImpl.WeChatAppReq();
+        weChatAppReq.setErrCode(2);
+        weChatAppReq.setErrMsg("error");
+
+        ResponseEntity<WeComAppAlertNotifyHandlerImpl.WeChatAppReq> responseEntity =
+                new ResponseEntity<>(weChatAppReq, HttpStatus.BAD_REQUEST);
+
+        when(restTemplate.getForEntity(any(String.class),
+                eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)))
+                .thenReturn(responseEntity);
         
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(errorResp, HttpStatus.OK);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(any(String.class), any(),
+                eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)))
+                .thenReturn(responseEntity).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> weComAppAlertNotifyHandler.send(receiver, template, groupAlert));

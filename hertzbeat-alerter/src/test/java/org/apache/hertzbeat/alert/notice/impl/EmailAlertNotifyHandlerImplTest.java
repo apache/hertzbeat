@@ -19,22 +19,29 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.hertzbeat.alert.AlerterProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Properties;
+import org.apache.hertzbeat.alert.dto.MailServerConfig;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import jakarta.mail.internet.MimeMessage;
 
 import java.util.ArrayList;
@@ -49,16 +56,19 @@ import java.util.ResourceBundle;
 class EmailAlertNotifyHandlerImplTest {
 
     @Mock
-    private JavaMailSender mailSender;
-    
-    @Mock
-    private AlerterProperties alerterProperties;
+    private JavaMailSenderImpl mailSender;
     
     @Mock
     private ResourceBundle bundle;
     
     @Mock
+    private GeneralConfigDao generalConfigDao;
+    
+    @Mock
     private MimeMessage mimeMessage;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private EmailAlertNotifyHandlerImpl emailAlertNotifyHandler;
@@ -68,7 +78,7 @@ class EmailAlertNotifyHandlerImplTest {
     private NoticeTemplate template;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws JsonProcessingException {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
@@ -89,21 +99,38 @@ class EmailAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        // 设置邮件服务器配置
+        MailServerConfig mailServerConfig = new MailServerConfig();
+        mailServerConfig.setEmailHost("smtp.example.com");
+        mailServerConfig.setEmailPort(587);
+        mailServerConfig.setEmailUsername("sender@example.com");
+        mailServerConfig.setEmailPassword("password");
+        mailServerConfig.setEnable(true);
+        GeneralConfig generalConfig = GeneralConfig.builder().content("").build();
+        when(generalConfigDao.findByType(any())).thenReturn(generalConfig);
+        when(objectMapper.readValue(any(String.class), eq(MailServerConfig.class)))
+            .thenReturn(mailServerConfig);
+        when(mailSender.getJavaMailProperties()).thenReturn(new Properties());
+    }
+
+    @Test
+    public void testNotifyAlertWithInvalidEmail() {
+        receiver.setEmail(null);
+        assertThrows(AlertNoticeException.class, 
+                () -> emailAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
     public void testNotifyAlertSuccess() throws Exception {
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
         emailAlertNotifyHandler.send(receiver, template, groupAlert);
-        
         verify(mailSender).send(any(MimeMessage.class));
     }
 
     @Test
     public void testNotifyAlertFailure() {
         when(mailSender.createMimeMessage()).thenThrow(new RuntimeException("Test Error"));
-        
         assertThrows(AlertNoticeException.class, 
                 () -> emailAlertNotifyHandler.send(receiver, template, groupAlert));
     }

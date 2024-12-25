@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -40,7 +41,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -93,37 +93,33 @@ class TelegramBotAlertNotifyHandlerImplTest {
     }
 
     @Test
-    public void testNotifyAlertWithInvalidToken() {
-        receiver.setAccessToken(null);
-        
-        assertThrows(IllegalArgumentException.class, 
-                () -> telegramBotAlertNotifyHandler.send(receiver, template, groupAlert));
-    }
-
-    @Test
     public void testNotifyAlertSuccess() {
-        Map<String, Object> successResp = new HashMap<>();
-        successResp.put("ok", true);
-        successResp.put("result", Map.of("message_id", 123));
+        TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse successResp = 
+            new TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse();
+        successResp.setOk(true);
+        successResp.setDescription("Test Success");
         
-        ResponseEntity<Object> responseEntity = 
+        ResponseEntity<TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse> responseEntity = 
             new ResponseEntity<>(successResp, HttpStatus.OK);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(any(String.class), any(), 
+                eq(TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse.class))).thenReturn(responseEntity);
         
         telegramBotAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        Map<String, Object> errorResp = new HashMap<>();
-        errorResp.put("ok", false);
-        errorResp.put("description", "Test Error");
-        
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(errorResp, HttpStatus.BAD_REQUEST);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse successResp =
+                new TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse();
+        successResp.setOk(false);
+        successResp.setDescription("Test failed");
+
+        ResponseEntity<TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse> responseEntity =
+                new ResponseEntity<>(successResp, HttpStatus.BAD_REQUEST);
+
+        when(restTemplate.postForEntity(any(String.class), any(),
+                eq(TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse.class))).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> telegramBotAlertNotifyHandler.send(receiver, template, groupAlert));

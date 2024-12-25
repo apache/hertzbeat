@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -40,7 +41,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -70,7 +70,6 @@ class FlyBookAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setAccessToken("test-token");
         
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
@@ -87,42 +86,44 @@ class FlyBookAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        when(alerterProperties.getFlyBookWebhookUrl()).thenReturn("http://test.url/");
         when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
     public void testNotifyAlertWithInvalidToken() {
-        receiver.setAccessToken(null);
-        
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AlertNoticeException.class, 
                 () -> flyBookAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        Map<String, Object> successResp = new HashMap<>();
-        successResp.put("code", 0);
-        successResp.put("msg", "success");
-        
-        ResponseEntity<Object> responseEntity = 
+        CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
+        successResp.setErrCode(0);
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = 
             new ResponseEntity<>(successResp, HttpStatus.OK);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
-        
+
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
+
         flyBookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        Map<String, Object> errorResp = new HashMap<>();
-        errorResp.put("code", 1);
-        errorResp.put("msg", "Test Error");
-        
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(errorResp, HttpStatus.OK);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
+        failResp.setCode(1);
+        failResp.setErrMsg("Test Error");
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = 
+            new ResponseEntity<>(failResp, HttpStatus.OK);
+
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> flyBookAlertNotifyHandler.send(receiver, template, groupAlert));

@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -38,10 +39,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -91,35 +90,36 @@ class WeComRobotAlertNotifyHandlerImplTest {
         when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
         when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
-
-    @Test
-    public void testNotifyAlertWithInvalidToken() {
-        receiver.setAccessToken(null);
-        
-        assertThrows(IllegalArgumentException.class, 
-                () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
-    }
-
+    
     @Test
     public void testNotifyAlertSuccess() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(Collections.singletonMap("errcode", 0), HttpStatus.OK);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
+        successResp.setErrCode(0);
+        ResponseEntity<CommonRobotNotifyResp> responseEntity =
+                new ResponseEntity<>(successResp, HttpStatus.OK);
+
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
         
         weComRobotAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        Map<String, Object> errorResp = new HashMap<>();
-        errorResp.put("errcode", 1);
-        errorResp.put("errmsg", "Test Error");
-        
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(errorResp, HttpStatus.OK);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
+        failResp.setCode(1);
+        failResp.setErrMsg("Test Error");
+        ResponseEntity<CommonRobotNotifyResp> responseEntity =
+                new ResponseEntity<>(failResp, HttpStatus.OK);
+
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));

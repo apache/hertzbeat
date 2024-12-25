@@ -89,7 +89,7 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @NoArgsConstructor
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class TelegramBotNotifyResponse {
+    public static class TelegramBotNotifyResponse {
         private boolean ok;
         @JsonProperty("error_code")
         private Integer errorCode;

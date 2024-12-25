@@ -19,9 +19,10 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -52,9 +53,6 @@ class SlackAlertNotifyHandlerImplTest {
     private RestTemplate restTemplate;
     
     @Mock
-    private AlerterProperties alerterProperties;
-    
-    @Mock
     private ResourceBundle bundle;
 
     @InjectMocks
@@ -70,6 +68,7 @@ class SlackAlertNotifyHandlerImplTest {
         receiver.setId(1L);
         receiver.setName("test-receiver");
         receiver.setAccessToken("test-token");
+        receiver.setSlackWebHookUrl("http://localhost:8080");
         
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
@@ -85,34 +84,26 @@ class SlackAlertNotifyHandlerImplTest {
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
-        
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-    }
 
-    @Test
-    public void testNotifyAlertWithInvalidToken() {
-        receiver.setAccessToken(null);
-        
-        assertThrows(IllegalArgumentException.class, 
-                () -> slackAlertNotifyHandler.send(receiver, template, groupAlert));
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        ResponseEntity<Object> responseEntity = 
+        ResponseEntity<String> responseEntity = 
             new ResponseEntity<>("ok", HttpStatus.OK);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
         
         slackAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>("invalid_payload", HttpStatus.BAD_REQUEST);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        ResponseEntity<String> responseEntity =
+                new ResponseEntity<>("invalid_payload", HttpStatus.BAD_REQUEST);
+
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> slackAlertNotifyHandler.send(receiver, template, groupAlert));

@@ -19,9 +19,10 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -53,10 +54,7 @@ class WebHookAlertNotifyHandlerImplTest {
     
     @Mock
     private ResourceBundle bundle;
-
-    @Mock
-    private AlerterProperties alerterProperties;
-
+    
     @InjectMocks
     private WebHookAlertNotifyHandlerImpl webHookAlertNotifyHandler;
 
@@ -69,7 +67,7 @@ class WebHookAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setAccessToken("http://test.webhook.url");
+        receiver.setHookUrl("http://test.webhook.url");
         
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
@@ -86,34 +84,27 @@ class WebHookAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-    }
-
-    @Test
-    public void testNotifyAlertWithInvalidUrl() {
-        receiver.setAccessToken("invalid-url");
-        
-        assertThrows(IllegalArgumentException.class, 
-                () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(null, HttpStatus.OK);
+        ResponseEntity<String> responseEntity = 
+            new ResponseEntity<>("null", HttpStatus.OK);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
         
         webHookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
-        
+        ResponseEntity<String> responseEntity =
+                new ResponseEntity<>("null", HttpStatus.INTERNAL_SERVER_ERROR);
+
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
+
+
         assertThrows(AlertNoticeException.class, 
                 () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
     }

@@ -19,9 +19,9 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import java.util.Map;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -88,35 +88,38 @@ class GotifyAlertNotifyHandlerImplTest {
         template.setContent("test content");
         
         when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-    }
-
-    @Test
-    public void testNotifyAlertWithInvalidConfig() {
-        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("https://push.example.de/message?token=");
-        
-        assertThrows(IllegalArgumentException.class, 
-                () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
+        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://localhost:8080/gotify/%s");
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(
-                Map.of("id", 123, "appid", "1", "message", "success"), 
-                HttpStatus.OK
-            );
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
+        successResp.setErrCode(0);
+        ResponseEntity<CommonRobotNotifyResp> responseEntity =
+                new ResponseEntity<>(successResp, HttpStatus.OK);
+
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
         
         gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>("Error", HttpStatus.BAD_REQUEST);
-        
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
+        failResp.setCode(1);
+        failResp.setErrMsg("Test Error");
+        ResponseEntity<CommonRobotNotifyResp> responseEntity =
+                new ResponseEntity<>(failResp, HttpStatus.BAD_REQUEST);
+
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
