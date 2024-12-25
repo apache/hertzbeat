@@ -22,6 +22,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
+import { AlertInhibitComponent } from './alert-inhibit/alert-inhibit.component';
 import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
 import { AlertSilenceComponent } from './alert-silence/alert-silence.component';
@@ -32,7 +33,8 @@ const routes: Routes = [
   { path: 'setting', component: AlertSettingComponent },
   { path: 'notice', component: AlertNoticeComponent },
   { path: 'silence', component: AlertSilenceComponent },
-  { path: 'group', component: AlertGroupConvergeComponent }
+  { path: 'group', component: AlertGroupConvergeComponent },
+  { path: 'inhibit', component: AlertInhibitComponent }
 ];
 
 @NgModule({

@@ -36,6 +36,7 @@ import { NzUploadModule } from 'ng-zorro-antd/upload';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
+import { AlertInhibitComponent } from './alert-inhibit/alert-inhibit.component';
 import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
@@ -46,6 +47,7 @@ const COMPONENTS: Array<Type<void>> = [
   AlertSettingComponent,
   AlertNoticeComponent,
   AlertSilenceComponent,
+  AlertInhibitComponent,
   AlertGroupConvergeComponent
 ];
 
