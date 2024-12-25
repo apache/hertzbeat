@@ -29,11 +29,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.impl.AlertServiceImpl;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,7 +87,8 @@ class AlertServiceTest {
     @Test
     void getAlertsSummary() {
         List<SingleAlert> singleAlerts = new ArrayList<>();
-        singleAlerts.add(SingleAlert.builder().status("firing").build());
+        singleAlerts.add(SingleAlert.builder().status("firing")
+                .labels(Map.of(CommonConstants.LABEL_ALERT_SEVERITY, "warning")).build());
         when(singleAlertDao.querySingleAlertsByStatus(any())).thenReturn(singleAlerts);
         when(singleAlertDao.count()).thenReturn(1L);
 

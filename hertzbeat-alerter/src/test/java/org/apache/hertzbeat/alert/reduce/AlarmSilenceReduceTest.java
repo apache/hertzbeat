@@ -91,7 +91,7 @@ class AlarmSilenceReduceTest {
     }
 
     @Test
-    void whenMatchingCyclicSilenceRule_shouldNotForwardAlert() {
+    void whenMatchingCyclicSilenceRuleShouldNotForwardAlert() {
         LocalDateTime now = LocalDateTime.now();
         // Create cyclic silence rule
         AlertSilence silenceRule = AlertSilence.builder()
@@ -99,8 +99,8 @@ class AlarmSilenceReduceTest {
                 .matchAll(false)
                 .type((byte) 1) // cyclic
                 .labels(createLabels("service", "web"))
-                .periodStart(now.minusMinutes(30).atZone(ZoneId.systemDefault()))  // 确保在当前时间之前
-                .periodEnd(now.plusMinutes(30).atZone(ZoneId.systemDefault()))     // 确保在当前时间之后
+                .periodStart(now.minusMinutes(30).atZone(ZoneId.systemDefault())) 
+                .periodEnd(now.plusMinutes(30).atZone(ZoneId.systemDefault())) 
                 .days(Collections.singletonList((byte) now.getDayOfWeek().getValue()))
                 .times(0)
                 .build();

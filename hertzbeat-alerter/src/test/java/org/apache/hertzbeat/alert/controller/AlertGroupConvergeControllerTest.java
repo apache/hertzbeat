@@ -76,7 +76,7 @@ public class AlertGroupConvergeControllerTest {
         doNothing().when(alertGroupConvergeService).validate(any(AlertGroupConverge.class), eq(false));
         doNothing().when(alertGroupConvergeService).addAlertGroupConverge(any(AlertGroupConverge.class));
 
-        mockMvc.perform(post("/api/alert/converge")
+        mockMvc.perform(post("/api/alert/group")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(alertGroupConverge))
                 ).andExpect(status().isOk())
@@ -90,7 +90,7 @@ public class AlertGroupConvergeControllerTest {
         doNothing().when(alertGroupConvergeService).validate(any(AlertGroupConverge.class), eq(true));
         doNothing().when(alertGroupConvergeService).modifyAlertGroupConverge(any(AlertGroupConverge.class));
 
-        mockMvc.perform(put("/api/alert/converge")
+        mockMvc.perform(put("/api/alert/group")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(alertGroupConverge))
                 ).andExpect(status().isOk())
@@ -103,7 +103,7 @@ public class AlertGroupConvergeControllerTest {
 
         when(alertGroupConvergeService.getAlertGroupConverge(1L)).thenReturn(alertGroupConverge);
 
-        mockMvc.perform(get("/api/alert/converge/{id}", 1L)
+        mockMvc.perform(get("/api/alert/group/{id}", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(alertGroupConverge.getId()));
@@ -114,7 +114,7 @@ public class AlertGroupConvergeControllerTest {
 
         when(alertGroupConvergeService.getAlertGroupConverge(1L)).thenReturn(null);
 
-        mockMvc.perform(get("/api/alert/converge/{id}", 1L)
+        mockMvc.perform(get("/api/alert/group/{id}", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_NOT_EXIST_CODE))
