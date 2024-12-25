@@ -43,6 +43,13 @@ params:
     range: '[0,65535]'
     required: true
     defaultValue: 9092
+  - field: monitorInternalTopic
+    name:
+      zh-CN: 是否监控内部主题
+      en-US: Monitor Internal Topic
+    type: boolean
+    required: true
+    defaultValue: false
 
 metrics:
   - name: topic_list
@@ -60,6 +67,7 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-list
   - name: topic_detail
     i18n:
@@ -106,6 +114,7 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-describe
   - name: topic_offset
     i18n:
@@ -141,6 +150,7 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-offset
   - name: consumer_detail
     i18n:
@@ -181,4 +191,5 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: consumer-detail
