@@ -29,12 +29,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import org.apache.hertzbeat.alert.dao.AlertDao;
-import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
+import org.apache.hertzbeat.alert.dao.GroupAlertDao;
+import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.impl.AlertServiceImpl;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +49,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AlertServiceTest {
     @Mock
-    private AlertDao alertDao;
+    private GroupAlertDao groupAlertDao;
+    
+    @Mock
+    private SingleAlertDao singleAlertDao;
 
     @Mock
     private AlarmCommonReduce alarmCommonReduce;
@@ -63,50 +65,31 @@ class AlertServiceTest {
     }
 
     @Test
-    void addAlert() {
-        Alert alert = new Alert();
-        assertDoesNotThrow(() -> alertService.addAlert(alert));
-        verify(alertDao, times(1)).save(alert);
-    }
-
-    @Test
-    void getAlerts() {
-        // todo
-    }
-
-    @Test
-    void deleteAlerts() {
+    void deleteGroupAlerts() {
         HashSet<Long> ids = new HashSet<>();
         ids.add(1L);
         ids.add(2L);
-        assertDoesNotThrow(() -> alertService.deleteAlerts(ids));
-        verify(alertDao, times(1)).deleteAlertsByIdIn(ids);
+        assertDoesNotThrow(() -> alertService.deleteGroupAlerts(ids));
+        verify(groupAlertDao, times(1)).deleteGroupAlertsByIdIn(ids);
     }
+    
 
     @Test
-    void clearAlerts() {
-        assertDoesNotThrow(() -> alertService.clearAlerts());
-        verify(alertDao, times(1)).deleteAll();
-    }
-
-    @Test
-    void editAlertStatus() {
-        Byte status = 0;
+    void editGroupAlertStatus() {
+        String status = "firing";
         List<Long> ids = List.of(1L, 2L, 3L);
-        assertDoesNotThrow(() -> alertService.editAlertStatus(status, ids));
-        verify(alertDao, times(1)).updateAlertsStatus(status, ids);
+        assertDoesNotThrow(() -> alertService.editGroupAlertStatus(status, ids));
+        verify(groupAlertDao, times(1)).updateGroupAlertsStatus(status, ids);
     }
 
     @Test
     void getAlertsSummary() {
-        List<AlertPriorityNum> priorityNums = new ArrayList<>();
-        priorityNums.add(new AlertPriorityNum((byte) 1, 100));
-        when(alertDao.findAlertPriorityNum()).thenReturn(priorityNums);
+        List<SingleAlert> singleAlerts = new ArrayList<>();
+        singleAlerts.add(SingleAlert.builder().status("firing").build());
+        when(singleAlertDao.querySingleAlertsByStatus(any())).thenReturn(singleAlerts);
+        when(singleAlertDao.count()).thenReturn(1L);
 
         assertDoesNotThrow(() -> alertService.getAlertsSummary());
-        verify(alertDao, times(1)).findAlertPriorityNum();
-        verify(alertDao, times(1)).count();
-
         assertNotNull(alertService.getAlertsSummary());
     }
 

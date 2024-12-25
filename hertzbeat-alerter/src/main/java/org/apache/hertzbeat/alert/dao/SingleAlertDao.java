@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Single Alert Database Operations
@@ -33,12 +37,27 @@ public interface SingleAlertDao extends JpaRepository<SingleAlert, Long>, JpaSpe
      * @return alert
      */
     SingleAlert findByFingerprint(String fingerprint);
-
-
+    
     /**
      * Query alerts by status 
      * @param status status firing or resolved
      * @return alerts
      */
     List<SingleAlert> querySingleAlertsByStatus(String status);
+
+    /**
+     * Delete alerts based on ID list
+     * @param ids Alert ID List
+     */
+    @Modifying
+    void deleteSingleAlertsByIdIn(HashSet<Long> ids);
+
+    /**
+     * Updates the alarm status based on the alarm ID-status value
+     * @param status status value
+     * @param ids   alarm ids
+     */
+    @Modifying
+    @Query("update SingleAlert set status = :status where id in :ids")
+    void updateSingleAlertsStatus(@Param(value = "status") String status, @Param(value = "ids") List<Long> ids);
 }

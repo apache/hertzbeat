@@ -43,14 +43,7 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * @return alarm defines
      */
     List<AlertDefine> queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(String app, String metric);
-
-    /**
-     * Query app metric alert define
-     * @param app app
-     * @param metric metric
-     * @return alert define
-     */
-    List<AlertDefine> queryAlertDefineByAppAndMetric(String app, String metric);
+    
 
     /**
      * Query the alarm definition list associated with the monitoring ID

@@ -17,9 +17,14 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.HashSet;
+import java.util.List;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Group Alert Database Operations
@@ -32,4 +37,20 @@ public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpeci
      * @return alert group
      */
     GroupAlert findByGroupKey(String groupKey);
+
+    /**
+     * Delete alerts based on ID list
+     * @param ids Alert ID List
+     */
+    @Modifying
+    void deleteGroupAlertsByIdIn(HashSet<Long> ids);
+
+    /**
+     * Updates the alarm status based on the alarm ID-status value
+     * @param status status value
+     * @param ids  alarm ids
+     */
+    @Modifying
+    @Query("update GroupAlert set status = :status where id in :ids")
+    void updateGroupAlertsStatus(@Param(value = "status") String status, @Param(value = "ids") List<Long> ids);
 }

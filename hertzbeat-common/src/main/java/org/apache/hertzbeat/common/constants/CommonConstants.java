@@ -83,39 +83,54 @@ public interface CommonConstants {
     byte MONITOR_BIND_TYPE_SD_MAIN_MONITOR = 0x01;
 
     /**
-     * Alarm status: 0 - normal alarm (to be processed)
+     * label key: instance
      */
-    byte ALERT_STATUS_CODE_PENDING = 0x00;
+    String LABEL_INSTANCE = "instance";
 
     /**
-     * Alarm Status: 1 - Threshold triggered but not reached the number of alarms
+     * label key: alert name
      */
-    byte ALERT_STATUS_CODE_NOT_REACH = 0x01;
+    String LABEL_ALERT_NAME = "alertname";
+    
+    /**
+     * Alarm severity label key
+     */
+    String LABEL_ALERT_SEVERITY = "severity";
+    
+    /**
+     * alarm severity emergency level
+     */
+    String ALERT_SEVERITY_EMERGENCY = "emergency";
 
     /**
-     * Alarm Status: 2-Restore Alarm
+     * alarm severity critical level
      */
-    byte ALERT_STATUS_CODE_RESTORED = 0x02;
+    String ALERT_SEVERITY_CRITICAL = "critical";
 
     /**
-     * Alert Status: 3-Handled
+     * alarm severity warning level
      */
-    byte ALERT_STATUS_CODE_SOLVED = 0x03;
+    String ALERT_SEVERITY_WARNING = "warning";
 
     /**
-     * Alarm level: 0: high-emergency-emergency-red
+     * alarm severity info level
      */
-    byte ALERT_PRIORITY_CODE_EMERGENCY = 0x00;
+    String ALERT_SEVERITY_INFO = "info";
 
     /**
-     * Alarm severity: 1: medium-critical-critical alarm-orange
+     * Alarm status: firing
      */
-    byte ALERT_PRIORITY_CODE_CRITICAL = 0x01;
+    String ALERT_STATUS_FIRING = "firing";
 
     /**
-     * Warning level: 2: low-warning-warning warning-yellow
+     * Alarm status: resolved
      */
-    byte ALERT_PRIORITY_CODE_WARNING = 0x02;
+    String ALERT_STATUS_RESOLVED = "resolved";
+
+    /**
+     * Alarm status: pending
+     */
+    String ALERT_STATUS_PENDING = "pending";
 
     /**
      * Field parameter type: number

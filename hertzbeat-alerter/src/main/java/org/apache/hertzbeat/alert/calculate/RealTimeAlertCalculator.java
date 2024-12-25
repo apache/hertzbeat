@@ -55,13 +55,6 @@ public class RealTimeAlertCalculator {
     
     private static final int CALCULATE_THREADS = 3;
 
-    private static final String STATUS_INACTIVE = "inactive";  
-    private static final String STATUS_PENDING = "pending";
-    private static final String STATUS_FIRING = "firing";
-    private static final String STATUS_RESOLVED = "resolved";
-    private static final String LABEL_INSTANCE = "instance";
-    private static final String LABEL_ALERT_NAME = "alertname";
-
     /**
      * The alarm in the process is triggered
      * key - labels fingerprint
@@ -87,7 +80,7 @@ public class RealTimeAlertCalculator {
         this.pendingAlertMap = new ConcurrentHashMap<>(16);
         this.firingAlertMap = new ConcurrentHashMap<>(16);
         // Initialize firing stateAlertMap
-        List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(STATUS_FIRING);
+        List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
         for (SingleAlert singleAlert : singleAlerts) {
             String fingerprint = calculateFingerprint(singleAlert.getLabels());
             firingAlertMap.put(fingerprint, singleAlert);
@@ -146,8 +139,8 @@ public class RealTimeAlertCalculator {
                     boolean match = execAlertExpression(fieldValueMap, expr);
                     try {
                         Map<String, String> fingerPrints = new HashMap<>(8);
-                        fingerPrints.put(LABEL_INSTANCE, String.valueOf(instance));
-                        fingerPrints.put(LABEL_ALERT_NAME, define.getName());
+                        fingerPrints.put(CommonConstants.LABEL_INSTANCE, String.valueOf(instance));
+                        fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
                         fingerPrints.putAll(define.getLabels());
                         if (match) {
                             // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
@@ -171,8 +164,8 @@ public class RealTimeAlertCalculator {
                 fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
                 fieldValueMap.putAll(commonContext);
                 fingerPrints.clear();
-                fingerPrints.put(LABEL_INSTANCE, String.valueOf(instance));
-                fingerPrints.put(LABEL_ALERT_NAME, define.getName());
+                fingerPrints.put(CommonConstants.LABEL_INSTANCE, String.valueOf(instance));
+                fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
                 fingerPrints.putAll(define.getLabels());
                 for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
                     String valueStr = valueRow.getColumns(index);
@@ -224,7 +217,7 @@ public class RealTimeAlertCalculator {
         SingleAlert firingAlert = firingAlertMap.remove(fingerprint);
         if (firingAlert != null) {
             firingAlert.setEndAt(System.currentTimeMillis());
-            firingAlert.setStatus(STATUS_RESOLVED);
+            firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
             alarmCommonReduce.reduceAndSendAlarm(firingAlert);
         }
         pendingAlertMap.remove(fingerprint);
@@ -245,7 +238,7 @@ public class RealTimeAlertCalculator {
                     .labels(labels)
                     .annotations(annotations)
                     .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
-                    .status(STATUS_PENDING)
+                    .status(CommonConstants.ALERT_STATUS_PENDING)
                     .triggerTimes(1) 
                     .startAt(currentTimeMilli)
                     .activeAt(currentTimeMilli)
@@ -253,7 +246,7 @@ public class RealTimeAlertCalculator {
                     
             // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
-                newAlert.setStatus(STATUS_FIRING);
+                newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
                 firingAlertMap.put(fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert);
             } else {
@@ -266,9 +259,9 @@ public class RealTimeAlertCalculator {
             existingAlert.setActiveAt(currentTimeMilli);
             
             // Check if required trigger times reached
-            if (existingAlert.getStatus().equals(STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
+            if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
                 // Reached trigger times threshold, change to firing status
-                existingAlert.setStatus(STATUS_FIRING);
+                existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
                 firingAlertMap.put(fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert);
                 pendingAlertMap.remove(fingerprint);

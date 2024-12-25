@@ -17,30 +17,25 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dao.AlertDao;
-import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
+import org.apache.hertzbeat.alert.dao.GroupAlertDao;
+import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.dto.CloudAlertReportAbstract;
 import org.apache.hertzbeat.alert.enums.CloudServiceAlarmInformationEnum;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.common.entity.dto.AlertReport;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -57,44 +52,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class AlertServiceImpl implements AlertService {
-
+    
     @Autowired
-    private AlertDao alertDao;
+    private GroupAlertDao groupAlertDao;
+    
+    @Autowired
+    private SingleAlertDao singleAlertDao;
     
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
 
     @Override
-    public void addAlert(Alert alert) throws RuntimeException {
-        alertDao.save(alert);
-    }
-
-    @Override
-    public Page<Alert> getAlerts(List<Long> alarmIds, Long monitorId, Byte priority, Byte status, String content, String sort, String order, int pageIndex, int pageSize) {
-        Specification<Alert> specification = (root, query, criteriaBuilder) -> {
+    public Page<GroupAlert> getGroupAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
+        Specification<GroupAlert> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
-
-            if (alarmIds != null && !alarmIds.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
-                for (long id : alarmIds) {
-                    inPredicate.value(id);
-                }
-                andList.add(inPredicate);
-            }
-            if (monitorId != null) {
-                Predicate predicate = criteriaBuilder.like(root.get("tags").as(String.class), "%" + monitorId + "%");
-                andList.add(predicate);
-            }
-            if (priority != null) {
-                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
-                andList.add(predicate);
-            }
             if (status != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicate);
             }
-            if (content != null && !content.isEmpty()) {
-                Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + content + "%");
+            if (search != null && !search.isEmpty()) {
+                Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + search + "%");
                 andList.add(predicateContent);
             }
             Predicate[] predicates = new Predicate[andList.size()];
@@ -102,50 +79,63 @@ public class AlertServiceImpl implements AlertService {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        return alertDao.findAll(specification, pageRequest);
+        return groupAlertDao.findAll(specification, pageRequest);
     }
 
     @Override
-    public void deleteAlerts(HashSet<Long> ids) {
-        alertDao.deleteAlertsByIdIn(ids);
+    public void deleteGroupAlerts(HashSet<Long> ids) {
+        groupAlertDao.deleteGroupAlertsByIdIn(ids);
     }
 
     @Override
-    public void clearAlerts() {
-        alertDao.deleteAll();
+    public void deleteSingleAlerts(HashSet<Long> ids) {
+        singleAlertDao.deleteSingleAlertsByIdIn(ids);
     }
 
     @Override
-    public void editAlertStatus(Byte status, List<Long> ids) {
-        alertDao.updateAlertsStatus(status, ids);
+    public void editGroupAlertStatus(String status, List<Long> ids) {
+        groupAlertDao.updateGroupAlertsStatus(status, ids);
     }
+
+    @Override
+    public void editSingleAlertStatus(String status, List<Long> ids) {
+        singleAlertDao.updateSingleAlertsStatus(status, ids);
+    }
+    
 
     @Override
     public AlertSummary getAlertsSummary() {
         AlertSummary alertSummary = new AlertSummary();
         // Statistics on the alarm information in the alarm state
-        List<AlertPriorityNum> priorityNums = alertDao.findAlertPriorityNum();
-        if (priorityNums != null) {
-            for (AlertPriorityNum priorityNum : priorityNums) {
-                switch (priorityNum.getPriority()) {
-                    case CommonConstants
-                            .ALERT_PRIORITY_CODE_WARNING -> alertSummary.setPriorityWarningNum(priorityNum.getNum());
-                    case CommonConstants.ALERT_PRIORITY_CODE_CRITICAL -> alertSummary.setPriorityCriticalNum(priorityNum.getNum());
-                    case CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY -> alertSummary.setPriorityEmergencyNum(priorityNum.getNum());
+        List<SingleAlert> firingAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
+        // severity - emergency critical warning info
+        int emergencyNum = 0;
+        int criticalNum = 0;
+        int warningNum = 0;
+        for (SingleAlert alert : firingAlerts) {
+            String severity = alert.getLabels().get(CommonConstants.LABEL_ALERT_SEVERITY);
+            if (severity != null) {
+                switch (severity) {
+                    case CommonConstants.ALERT_SEVERITY_EMERGENCY -> emergencyNum++;
+                    case CommonConstants.ALERT_SEVERITY_CRITICAL -> criticalNum++;
+                    case CommonConstants.ALERT_SEVERITY_WARNING -> warningNum++;
                     default -> {}
                 }
             }
+            alertSummary.setPriorityCriticalNum(criticalNum);
+            alertSummary.setPriorityEmergencyNum(emergencyNum);
+            alertSummary.setPriorityWarningNum(warningNum);
         }
-        long total = alertDao.count();
+        
+        long total = singleAlertDao.count();
         alertSummary.setTotal(total);
-        long dealNum = total - alertSummary.getPriorityCriticalNum()
-                - alertSummary.getPriorityEmergencyNum() - alertSummary.getPriorityWarningNum();
-        alertSummary.setDealNum(dealNum);
+        long resolved = total - firingAlerts.size();
+        alertSummary.setDealNum(resolved);
         try {
             if (total == 0) {
                 alertSummary.setRate(100);
             } else {
-                float rate = BigDecimal.valueOf(100 * (float) dealNum / total)
+                float rate = BigDecimal.valueOf(100 * (float) resolved / total)
                         .setScale(2, RoundingMode.HALF_UP)
                         .floatValue();
                 alertSummary.setRate(rate);
@@ -190,41 +180,5 @@ public class AlertServiceImpl implements AlertService {
             }
         }
         Optional.ofNullable(alert).ifPresent(this::addNewAlertReport);
-    }
-
-    @Override
-    public List<Alert> getAlerts(Specification<Alert> specification) {
-
-        return alertDao.findAll(specification);
-    }
-
-    /**
-     * The external alarm information is converted to Alert  
-     * @param alertReport alarm body
-     * @return Alert entity
-     */
-    private Alert buildAlertData(AlertReport alertReport){
-        Map<String, String> annotations = alertReport.getAnnotations();
-        StringBuilder sb = new StringBuilder();
-        if (alertReport.getContent() == null || alertReport.getContent().length() <= 0){
-            StringBuilder finalSb = sb;
-            annotations.forEach((k, v) -> finalSb.append(k).append(":").append(v).append("\n"));
-        } else {
-            sb = new StringBuilder(alertReport.getContent());
-        }
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(alertReport.getAlertTime()), 
-                ZoneId.systemDefault());
-        return Alert.builder()
-                .content("Alert Center\n" + sb)
-                .priority(alertReport.getPriority().byteValue())
-                .status(CommonConstants.ALERT_STATUS_CODE_PENDING)
-                .tags(alertReport.getLabels())
-                .target(alertReport.getAlertName())
-                .triggerTimes(1)
-                .firstAlarmTime(alertReport.getAlertTime())
-                .lastAlarmTime(alertReport.getAlertTime())
-                .gmtCreate(dateTime)
-                .gmtUpdate(dateTime)
-                .build();
     }
 }
