@@ -17,25 +17,19 @@
  * under the License.
  */
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
-import { AlertConvergeComponent } from './alert-converge.component';
+import { AlertGroupService } from './alert-group.service';
 
-describe('AlertConvergeComponent', () => {
-  let component: AlertConvergeComponent;
-  let fixture: ComponentFixture<AlertConvergeComponent>;
+describe('AlertConvergeService', () => {
+  let service: AlertGroupService;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [AlertConvergeComponent]
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(AlertConvergeComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(AlertGroupService);
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should be created', () => {
+    expect(service).toBeTruthy();
   });
 });

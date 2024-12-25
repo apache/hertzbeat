@@ -21,32 +21,32 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { AlertConverge } from '../pojo/AlertConverge';
+import { AlertGroupConverge } from '../pojo/AlertGroupConverge';
 import { Message } from '../pojo/Message';
 import { Page } from '../pojo/Page';
 
-const alert_converge_uri = '/alert/converge';
-const alert_converges_uri = '/alert/converges';
+const alert_group_uri = '/alert/group';
+const alert_groups_uri = '/alert/groups';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AlertConvergeService {
+export class AlertGroupService {
   constructor(private http: HttpClient) {}
 
-  public newAlertConverge(body: AlertConverge): Observable<Message<any>> {
-    return this.http.post<Message<any>>(alert_converge_uri, body);
+  public newAlertGroupConverge(body: AlertGroupConverge): Observable<Message<any>> {
+    return this.http.post<Message<any>>(alert_group_uri, body);
   }
 
-  public editAlertConverge(body: AlertConverge): Observable<Message<any>> {
-    return this.http.put<Message<any>>(alert_converge_uri, body);
+  public editAlertGroupConverge(body: AlertGroupConverge): Observable<Message<any>> {
+    return this.http.put<Message<any>>(alert_group_uri, body);
   }
 
-  public getAlertConverge(convergeId: number): Observable<Message<AlertConverge>> {
-    return this.http.get<Message<AlertConverge>>(`${alert_converge_uri}/${convergeId}`);
+  public getAlertGroupConverge(convergeId: number): Observable<Message<AlertGroupConverge>> {
+    return this.http.get<Message<AlertGroupConverge>>(`${alert_group_uri}/${convergeId}`);
   }
 
-  public deleteAlertConverges(convergeIds: Set<number>): Observable<Message<any>> {
+  public deleteAlertGroupConverges(convergeIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     convergeIds.forEach(convergeId => {
       // HttpParams is unmodifiable, so we need to save the return value of append/set
@@ -54,10 +54,10 @@ export class AlertConvergeService {
       httpParams = httpParams.append('ids', convergeId);
     });
     const options = { params: httpParams };
-    return this.http.delete<Message<any>>(alert_converges_uri, options);
+    return this.http.delete<Message<any>>(alert_groups_uri, options);
   }
 
-  public getAlertConverges(search: string, pageIndex: number, pageSize: number): Observable<Message<Page<AlertConverge>>> {
+  public getAlertGroupConverges(search: string, pageIndex: number, pageSize: number): Observable<Message<Page<AlertGroupConverge>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // HttpParams is unmodifiable, so we need to save the return value of append/set
@@ -72,6 +72,6 @@ export class AlertConvergeService {
       httpParams = httpParams.append('search', search.trim());
     }
     const options = { params: httpParams };
-    return this.http.get<Message<Page<AlertConverge>>>(alert_converges_uri, options);
+    return this.http.get<Message<Page<AlertGroupConverge>>>(alert_groups_uri, options);
   }
 }

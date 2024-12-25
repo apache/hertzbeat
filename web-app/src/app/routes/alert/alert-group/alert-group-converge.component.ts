@@ -26,21 +26,21 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
-import { AlertConverge } from '../../../pojo/AlertConverge';
+import { AlertGroupConverge } from '../../../pojo/AlertGroupConverge';
 import { TagItem } from '../../../pojo/NoticeRule';
-import { AlertConvergeService } from '../../../service/alert-converge.service';
+import { AlertGroupService } from '../../../service/alert-group.service';
 import { TagService } from '../../../service/tag.service';
 
 @Component({
   selector: 'app-alert-converge',
-  templateUrl: './alert-converge.component.html',
-  styleUrls: ['./alert-converge.component.less']
+  templateUrl: './alert-group-converge.component.html',
+  styleUrls: ['./alert-group-converge.component.less']
 })
-export class AlertConvergeComponent implements OnInit {
+export class AlertGroupConvergeComponent implements OnInit {
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
-    private alertConvergeService: AlertConvergeService,
+    private alertConvergeService: AlertGroupService,
     private tagService: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
@@ -50,7 +50,7 @@ export class AlertConvergeComponent implements OnInit {
   pageSize: number = 8;
   total: number = 0;
   search!: string;
-  converges!: AlertConverge[];
+  converges!: AlertGroupConverge[];
   tableLoading: boolean = true;
   checkedConvergeIds = new Set<number>();
 
@@ -64,7 +64,7 @@ export class AlertConvergeComponent implements OnInit {
 
   loadAlertConvergeTable() {
     this.tableLoading = true;
-    let alertDefineInit$ = this.alertConvergeService.getAlertConverges(this.search, this.pageIndex - 1, this.pageSize).subscribe(
+    let alertDefineInit$ = this.alertConvergeService.getAlertGroupConverges(this.search, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
@@ -86,10 +86,10 @@ export class AlertConvergeComponent implements OnInit {
     );
   }
 
-  updateAlertConverge(alertConverge: AlertConverge) {
+  updateAlertConverge(alertConverge: AlertGroupConverge) {
     this.tableLoading = true;
     const updateDefine$ = this.alertConvergeService
-      .editAlertConverge(alertConverge)
+      .editAlertGroupConverge(alertConverge)
       .pipe(
         finalize(() => {
           updateDefine$.unsubscribe();
@@ -149,7 +149,7 @@ export class AlertConvergeComponent implements OnInit {
       return;
     }
     this.tableLoading = true;
-    const deleteDefines$ = this.alertConvergeService.deleteAlertConverges(convergeIds).subscribe(
+    const deleteDefines$ = this.alertConvergeService.deleteAlertGroupConverges(convergeIds).subscribe(
       message => {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
@@ -207,14 +207,14 @@ export class AlertConvergeComponent implements OnInit {
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
-  converge: AlertConverge = new AlertConverge();
+  converge: AlertGroupConverge = new AlertGroupConverge();
   searchTag!: string;
   tagsOption: any[] = [];
   matchTags: string[] = [];
   convergeDates!: Date[];
 
   onNewAlertConverge() {
-    this.converge = new AlertConverge();
+    this.converge = new AlertGroupConverge();
     let now = new Date();
     now.setHours(now.getHours() + 6);
     this.convergeDates = [new Date(), now];
@@ -239,7 +239,7 @@ export class AlertConvergeComponent implements OnInit {
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
     const getConverge$ = this.alertConvergeService
-      .getAlertConverge(convergeId)
+      .getAlertGroupConverge(convergeId)
       .pipe(
         finalize(() => {
           getConverge$.unsubscribe();
@@ -303,7 +303,7 @@ export class AlertConvergeComponent implements OnInit {
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertConvergeService
-        .newAlertConverge(this.converge)
+        .newAlertGroupConverge(this.converge)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();
@@ -326,7 +326,7 @@ export class AlertConvergeComponent implements OnInit {
         );
     } else {
       const modalOk$ = this.alertConvergeService
-        .editAlertConverge(this.converge)
+        .editAlertGroupConverge(this.converge)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();

@@ -19,7 +19,7 @@
 
 import { TagItem } from './NoticeRule';
 
-export class AlertConverge {
+export class AlertGroupConverge {
   id!: number;
   name!: string;
   enable: boolean = true;
