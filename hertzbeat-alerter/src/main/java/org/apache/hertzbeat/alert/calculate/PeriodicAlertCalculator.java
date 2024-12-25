@@ -28,7 +28,7 @@ public class PeriodicAlertCalculator {
     
     
     public List<SingleAlert> calculate(AlertDefine rule) {
-        if (!rule.isEnabled() || StringUtils.isEmpty(rule.getExpr())) {
+        if (!rule.isEnable() || StringUtils.isEmpty(rule.getExpr())) {
             return Collections.emptyList();
         }
         // todo: implement the following logic

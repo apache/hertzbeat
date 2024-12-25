@@ -22,7 +22,6 @@ import freemarker.core.TemplateClassResolver;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -46,7 +45,6 @@ import org.springframework.web.client.RestTemplate;
 abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
 
     private static final String NUMBER_FORMAT = "0";
-    protected static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     @Autowired
     protected RestTemplate restTemplate;

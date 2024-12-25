@@ -91,6 +91,11 @@ public interface CommonConstants {
      * label key: alert name
      */
     String LABEL_ALERT_NAME = "alertname";
+
+    /**
+     * label key: host
+     */
+    String LABEL_HOST = "host";
     
     /**
      * Alarm severity label key

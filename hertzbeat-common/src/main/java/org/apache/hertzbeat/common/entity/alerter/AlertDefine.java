@@ -120,7 +120,7 @@ public class AlertDefine {
     private String datasource;
 
     @Schema(title = "Is Enabled", example = "true")
-    private boolean enabled = true;
+    private boolean enable = true;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy

@@ -73,13 +73,13 @@ public class SingleAlert {
     private String status;
 
     @Schema(title = "Trigger Times", example = "1")
-    private int triggerTimes;
+    private Integer triggerTimes;
 
     @Schema(title = "Start At", example = "1734005477630")
-    private long startAt;
+    private Long startAt;
 
     @Schema(title = "Active At", example = "1734005477630")
-    private long activeAt;
+    private Long activeAt;
 
     @Schema(title = "End At, when status is resolved has", example = "null")
     private Long endAt;

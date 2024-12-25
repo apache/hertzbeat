@@ -258,23 +258,35 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
         Map<String, String> labels = new HashMap<>(8);
-        labels.put(CommonConstants.TAG_MONITOR_ID, "100");
-        labels.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
-        labels.put(CommonConstants.TAG_MONITOR_HOST, "127.0.0.1");
-        labels.put(CommonConstants.TAG_THRESHOLD_ID, "200");
-        SingleAlert singleAlert = SingleAlert.builder()
+        labels.put(CommonConstants.LABEL_INSTANCE, "1000000");
+        labels.put(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert");
+        labels.put(CommonConstants.LABEL_HOST, "127.0.0.1");
+        Map<String, String> annotations = new HashMap<>(8);
+        annotations.put("suggest", "Please check the CPU usage of the server");
+        SingleAlert singleAlert1 = SingleAlert.builder()
                 .labels(labels)
                 .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
                 .startAt(System.currentTimeMillis())
+                .activeAt(System.currentTimeMillis())
                 .endAt(System.currentTimeMillis())
                 .triggerTimes(2)
-                .annotations(labels)
+                .annotations(annotations)
+                .status("firing")
+                .build();
+        SingleAlert singleAlert2 = SingleAlert.builder()
+                .labels(labels)
+                .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
+                .startAt(System.currentTimeMillis())
+                .activeAt(System.currentTimeMillis())
+                .endAt(System.currentTimeMillis())
+                .triggerTimes(4)
+                .annotations(annotations)
                 .status("firing")
                 .build();
         GroupAlert groupAlert = GroupAlert.builder()
-                .commonLabels(singleAlert.getLabels())
-                .commonAnnotations(singleAlert.getAnnotations())
-                .alerts(List.of(singleAlert))
+                .commonLabels(Map.of(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert"))
+                .commonAnnotations(annotations)
+                .alerts(List.of(singleAlert1, singleAlert2))
                 .status("firing")
                 .build();
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, groupAlert);
