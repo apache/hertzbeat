@@ -19,27 +19,27 @@ package org.apache.hertzbeat.alert.dao;
 
 import java.util.List;
 import java.util.Set;
-import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 
 /**
- * AlertConverge Dao
+ * AlertInhibit Dao
  */
-public interface AlertGroupConvergeDao extends JpaRepository<AlertGroupConverge, Long>, JpaSpecificationExecutor<AlertGroupConverge> {
+public interface AlertInhibitDao extends JpaRepository<AlertInhibit, Long>, JpaSpecificationExecutor<AlertInhibit> {
 
     /**
-     * Delete group alarm converge based on the ID list
-     * @param ids alert converge id list
+     * Delete alarm inhibit based on the ID list
+     *
+     * @param ids alert inhibit id list
      */
     @Modifying
-    void deleteAlertGroupConvergesByIdIn(Set<Long> ids);
+    void deleteAlertInhibitsByIdIn(Set<Long> ids);
 
     /**
-     * Query the enable true group alarm converge list
-     * @return group alarm converge list
+     * Query the enable true alarm inhibit list 
+     * @return alarm inhibit list
      */
-    List<AlertGroupConverge> findAlertGroupConvergesByEnableIsTrue();
-    
+    List<AlertInhibit> findAlertInhibitsByEnableIsTrue();
 }

@@ -24,8 +24,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Objects;
-import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
-import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.apache.hertzbeat.alert.service.AlertInhibitService;
+import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,42 +38,42 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Alarm Converge management API
+ * Alarm Silence management API
  */
-@Tag(name = "Alert Converge API")
+@Tag(name = "Alert Silence API")
 @RestController
-@RequestMapping(path = "/api/alert/group", produces = {APPLICATION_JSON_VALUE})
-public class AlertGroupConvergeController {
+@RequestMapping(path = "/api/alert/inhibit", produces = {APPLICATION_JSON_VALUE})
+public class AlertInhibitController {
 
     @Autowired
-    private AlertGroupConvergeService alertGroupConvergeService;
+    private AlertInhibitService alertInhibitService;
 
     @PostMapping
-    @Operation(summary = "New Alarm Group Converge", description = "Added an alarm Group Converge")
-    public ResponseEntity<Message<Void>> addNewAlertGroupConverge(@Valid @RequestBody AlertGroupConverge alertGroupConverge) {
-        alertGroupConvergeService.validate(alertGroupConverge, false);
-        alertGroupConvergeService.addAlertGroupConverge(alertGroupConverge);
+    @Operation(summary = "New Alarm Silence", description = "Added an alarm Silence")
+    public ResponseEntity<Message<Void>> addNewAlertInhibit(@Valid @RequestBody AlertInhibit alertInhibit) {
+        alertInhibitService.validate(alertInhibit, false);
+        alertInhibitService.addAlertInhibit(alertInhibit);
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping
-    @Operation(summary = "Modifying an Alarm Group Converge", description = "Modify an existing alarm Group Converge")
-    public ResponseEntity<Message<Void>> modifyAlertGroupConverge(@Valid @RequestBody AlertGroupConverge alertGroupConverge) {
-        alertGroupConvergeService.validate(alertGroupConverge, true);
-        alertGroupConvergeService.modifyAlertGroupConverge(alertGroupConverge);
+    @Operation(summary = "Modifying an Alarm Silence", description = "Modify an existing alarm Silence")
+    public ResponseEntity<Message<Void>> modifyAlertInhibit(@Valid @RequestBody AlertInhibit alertInhibit) {
+        alertInhibitService.validate(alertInhibit, true);
+        alertInhibitService.modifyAlertInhibit(alertInhibit);
         return ResponseEntity.ok(Message.success("Modify success"));
     }
 
     @GetMapping(path = "/{id}")
-    @Operation(summary = "Querying Alarm Group Converge",
-            description = "You can obtain alarm Group Converge information based on the alarm Converge ID")
-    public ResponseEntity<Message<AlertGroupConverge>> getAlertGroupConverge(
-            @Parameter(description = "Alarm Converge ID", example = "6565463543") @PathVariable("id") long id) {
-        AlertGroupConverge alertGroupConverge = alertGroupConvergeService.getAlertGroupConverge(id);
+    @Operation(summary = "Querying Alarm Silence",
+            description = "You can obtain alarm Silence information based on the alarm Silence ID")
+    public ResponseEntity<Message<AlertInhibit>> getAlertInhibit(
+            @Parameter(description = "Alarm Silence ID", example = "6565463543") @PathVariable("id") long id) {
+        AlertInhibit alertInhibit = alertInhibitService.getAlertInhibit(id);
 
-        return Objects.isNull(alertGroupConverge)
-                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "Alert Group Converge not exist."))
-                : ResponseEntity.ok(Message.success(alertGroupConverge));
+        return Objects.isNull(alertInhibit)
+                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertInhibit not exist."))
+                : ResponseEntity.ok(Message.success(alertInhibit));
     }
 
 }

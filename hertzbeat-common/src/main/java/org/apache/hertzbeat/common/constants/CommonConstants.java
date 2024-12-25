@@ -311,6 +311,11 @@ public interface CommonConstants {
     String CACHE_ALERT_GROUP_CONVERGE = "alert_group_converge";
 
     /**
+     * cache key alert inhibit
+     */
+    String CACHE_ALERT_INHIBIT = "alert_inhibit";
+
+    /**
      * collector status online 0
      */
     byte COLLECTOR_STATUS_ONLINE = 0;

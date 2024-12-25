@@ -23,10 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
-import org.apache.hertzbeat.alert.reduce.AlarmGroupReduce;
-import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
-import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
+import org.apache.hertzbeat.alert.reduce.AlarmInhibitReduce;
+import org.apache.hertzbeat.alert.service.AlertInhibitService;
+import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,54 +37,54 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
- * implement for alert converge service
+ * management interface service implement for alert inhibit
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-public class AlertGroupConvergeServiceImpl implements AlertGroupConvergeService {
+public class AlertInhibitServiceImpl implements AlertInhibitService {
+
+    @Autowired
+    private AlertInhibitDao alertInhibitDao;
     
     @Autowired
-    private AlertGroupConvergeDao alertGroupConvergeDao;
-    
-    @Autowired
-    private AlarmGroupReduce alarmGroupReduce;
- 
+    private AlarmInhibitReduce alarmInhibitReduce;
+
     @Override
-    public void validate(AlertGroupConverge alertGroupConverge, boolean isModify) throws IllegalArgumentException {
-        // todo 
+    public void validate(AlertInhibit alertInhibit, boolean isModify) throws IllegalArgumentException {
+        // todo
     }
-    
+
     @Override
-    public void addAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException {
-        alertGroupConvergeDao.save(alertGroupConverge);
-        refreshAlertGroupConvergesCache();
+    public void addAlertInhibit(AlertInhibit alertInhibit) throws RuntimeException {
+        alertInhibitDao.save(alertInhibit);
+        refreshAlertInhibitsCache();
     }
-    
+
     @Override
-    public void modifyAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException {
-        alertGroupConvergeDao.save(alertGroupConverge);
-        refreshAlertGroupConvergesCache();
+    public void modifyAlertInhibit(AlertInhibit alertInhibit) throws RuntimeException {
+        alertInhibitDao.save(alertInhibit);
+        refreshAlertInhibitsCache();
     }
-    
+
     @Override
-    public AlertGroupConverge getAlertGroupConverge(long convergeId) throws RuntimeException {
-        return alertGroupConvergeDao.findById(convergeId).orElse(null);
+    public AlertInhibit getAlertInhibit(long inhibitId) throws RuntimeException {
+        return alertInhibitDao.findById(inhibitId).orElse(null);
     }
-    
+
     @Override
-    public void deleteAlertGroupConverges(Set<Long> convergeIds) throws RuntimeException {
-        alertGroupConvergeDao.deleteAlertGroupConvergesByIdIn(convergeIds);
-        refreshAlertGroupConvergesCache();
+    public void deleteAlertInhibits(Set<Long> inhibitIds) throws RuntimeException {
+        alertInhibitDao.deleteAlertInhibitsByIdIn(inhibitIds);
+        refreshAlertInhibitsCache();
     }
-    
+
     @Override
-    public Page<AlertGroupConverge> getAlertGroupConverges(List<Long> convergeIds, String search, String sort, String order, int pageIndex, int pageSize) {
-        Specification<AlertGroupConverge> specification = (root, query, criteriaBuilder) -> {
+    public Page<AlertInhibit> getAlertInhibits(List<Long> inhibitIds, String search, String sort, String order, int pageIndex, int pageSize) {
+        Specification<AlertInhibit> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
-            if (convergeIds != null && !convergeIds.isEmpty()) {
+            if (inhibitIds != null && !inhibitIds.isEmpty()) {
                 CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
-                for (long id : convergeIds) {
+                for (long id : inhibitIds) {
                     inPredicate.value(id);
                 }
                 andList.add(inPredicate);
@@ -103,11 +103,10 @@ public class AlertGroupConvergeServiceImpl implements AlertGroupConvergeService 
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        return alertGroupConvergeDao.findAll(specification, pageRequest);
+        return alertInhibitDao.findAll(specification, pageRequest);
     }
-    
-    private void refreshAlertGroupConvergesCache() {
-        List<AlertGroupConverge> alertGroupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
-        alarmGroupReduce.refreshGroupDefines(alertGroupConverges);
+
+    private void refreshAlertInhibitsCache() {
+        alarmInhibitReduce.refreshInhibitRules(alertInhibitDao.findAlertInhibitsByEnableIsTrue());
     }
 }

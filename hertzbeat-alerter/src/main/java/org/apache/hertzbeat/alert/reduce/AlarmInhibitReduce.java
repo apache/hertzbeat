@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,7 +38,6 @@ import lombok.AllArgsConstructor;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class AlarmInhibitReduce {
 
     /**
@@ -47,23 +46,30 @@ public class AlarmInhibitReduce {
     private static final long SOURCE_ALERT_TTL = 4 * 60 * 60 * 1000L;
 
     private final AlarmSilenceReduce alarmSilenceReduce;
-    private final Map<Long, AlertInhibit> inhibitRules = new ConcurrentHashMap<>();
+    
+    private final Map<Long, AlertInhibit> inhibitRules;
     
     /**
      * Cache for source alerts
      * key: ruleId
      * value: map of source alerts with their fingerprints
      */
-    private final Map<Long, Map<String, SourceAlertEntry>> sourceAlertCache = new ConcurrentHashMap<>();
+    private final Map<Long, Map<String, SourceAlertEntry>> sourceAlertCache;
 
+    public AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao) {
+        this.alarmSilenceReduce = alarmSilenceReduce;
+        inhibitRules = new ConcurrentHashMap<>(8);
+        sourceAlertCache = new ConcurrentHashMap<>(8);
+        List<AlertInhibit> inhibits = alertInhibitDao.findAlertInhibitsByEnableIsTrue();
+        refreshInhibitRules(inhibits);
+    }
+    
     /**
      * Configure inhibit rules
      */
-    public void configureInhibitRules(List<AlertInhibit> rules) {
+    public void refreshInhibitRules(List<AlertInhibit> rules) {
         this.inhibitRules.clear();
-        rules.stream()
-            .filter(AlertInhibit::getEnable)
-            .forEach(rule -> this.inhibitRules.put(rule.getId(), rule));
+        rules.forEach(rule -> this.inhibitRules.put(rule.getId(), rule));
     }
 
     /**

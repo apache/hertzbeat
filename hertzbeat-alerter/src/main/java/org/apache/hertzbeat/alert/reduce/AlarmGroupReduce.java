@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class AlarmGroupReduce {
 
     /**
@@ -48,20 +47,28 @@ public class AlarmGroupReduce {
      * key: rule name
      * value: group rule configuration
      */
-    private final Map<String, AlertGroupConverge> groupDefines = new HashMap<>();
+    private final Map<String, AlertGroupConverge> groupDefines;
     
     /**
      * Alert cache grouped by labels
      * key: groupDefineKey:groupKey
      * value: GroupAlertCache
      */
-    private final Map<String, GroupAlertCache> groupCacheMap = new ConcurrentHashMap<>(16);
-    
+    private final Map<String, GroupAlertCache> groupCacheMap;
+
+    public AlarmGroupReduce(AlarmInhibitReduce alarmInhibitReduce, AlertGroupConvergeDao alertGroupConvergeDao) {
+        this.alarmInhibitReduce = alarmInhibitReduce;
+        this.groupDefines = new ConcurrentHashMap<>(8);
+        this.groupCacheMap = new ConcurrentHashMap<>(8);
+        List<AlertGroupConverge> groupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
+        refreshGroupDefines(groupConverges);
+    }
+
     /**
      * Configure group define rules
      * @param groupDefines map of group rule configurations
      */
-    public void configureGroupDefines(List<AlertGroupConverge> groupDefines) {
+    public void refreshGroupDefines(List<AlertGroupConverge> groupDefines) {
         this.groupDefines.clear();
         groupDefines.forEach(define -> this.groupDefines.put(define.getName(), define));
     }

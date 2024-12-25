@@ -31,9 +31,9 @@ public class PeriodicAlertCalculator {
         if (!rule.isEnabled() || StringUtils.isEmpty(rule.getExpr())) {
             return Collections.emptyList();
         }
-        
+        // todo: implement the following logic
         try {
-            // 执行查询
+            // Execute query
             List<Map<String, Object>> queryResults = dataSourceService.query(
                 rule.getDatasource(), 
                 rule.getExpr()
@@ -43,13 +43,13 @@ public class PeriodicAlertCalculator {
                 return Collections.emptyList();
             }
             
-            // 对查询结果执行表达式计算
+            // Execute expression calculation on query results
             List<SingleAlert> newAlerts = queryResults.stream()
                 .filter(result -> execAlertExpression(result, rule.getExpr()))
                 .map(result -> buildAlert(rule, result))
                 .collect(Collectors.toList());
                 
-            // 处理恢复通知
+            // Handle recovery notification
             if (newAlerts.isEmpty()) {
                 return handleAlertRecover(rule);
             }
