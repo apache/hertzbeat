@@ -9,9 +9,8 @@ describe('AlertInhibitComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AlertInhibitComponent]
-    })
-    .compileComponents();
-    
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AlertInhibitComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

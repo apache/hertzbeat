@@ -5,6 +5,4 @@ import { Component } from '@angular/core';
   templateUrl: './alert-inhibit.component.html',
   styleUrl: './alert-inhibit.component.less'
 })
-export class AlertInhibitComponent {
-
-}
+export class AlertInhibitComponent {}
