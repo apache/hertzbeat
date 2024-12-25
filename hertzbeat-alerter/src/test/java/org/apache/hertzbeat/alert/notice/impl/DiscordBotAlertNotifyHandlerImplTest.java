@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -69,7 +70,8 @@ class DiscordBotAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setAccessToken("test-token");
+        receiver.setDiscordChannelId("test-channel");
+        receiver.setDiscordBotToken("test-token");
         
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
@@ -86,34 +88,42 @@ class DiscordBotAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        when(alerterProperties.getDiscordWebhookUrl()).thenReturn("https://discord.com/api/v9/channels/%s/messages");
+        when(alerterProperties.getDiscordWebhookUrl()).thenReturn("http://test.url/channels/test-channel/messages");
         when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
     public void testNotifyAlertWithInvalidToken() {
-        receiver.setAccessToken(null);
+        receiver.setDiscordBotToken(null);
         
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AlertNoticeException.class, 
                 () -> discordBotAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+        DiscordBotAlertNotifyHandlerImpl.DiscordResponseDTO responseDTO = new DiscordBotAlertNotifyHandlerImpl.DiscordResponseDTO();
+        responseDTO.setId("test-id");
+        ResponseEntity<DiscordBotAlertNotifyHandlerImpl.DiscordResponseDTO> responseEntity = new ResponseEntity<>(responseDTO, HttpStatus.OK);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(
+                eq("http://test.url/channels/test-channel/messages"),
+                any(),
+                eq(DiscordBotAlertNotifyHandlerImpl.DiscordResponseDTO.class)
+        )).thenReturn(responseEntity);
         
         discordBotAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        ResponseEntity<Object> responseEntity = 
-            new ResponseEntity<>("Test Error", HttpStatus.BAD_REQUEST);
+        ResponseEntity<String> responseEntity = new ResponseEntity<>("Error", HttpStatus.BAD_REQUEST);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(
+                eq("http://test.url/channels/test-channel/messages"),
+                any(),
+                eq(String.class)
+        )).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> discordBotAlertNotifyHandler.send(receiver, template, groupAlert));

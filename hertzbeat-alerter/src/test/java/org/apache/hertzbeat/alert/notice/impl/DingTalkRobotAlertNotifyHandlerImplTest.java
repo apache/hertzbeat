@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -94,7 +95,7 @@ class DingTalkRobotAlertNotifyHandlerImplTest {
     public void testNotifyAlertWithInvalidToken() {
         receiver.setAccessToken(null);
         
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(AlertNoticeException.class, 
                 () -> dingTalkRobotAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
@@ -102,10 +103,14 @@ class DingTalkRobotAlertNotifyHandlerImplTest {
     public void testNotifyAlertSuccess() {
         CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
         successResp.setErrCode(0);
-        ResponseEntity<Object> responseEntity = 
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = 
             new ResponseEntity<>(successResp, HttpStatus.OK);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(
+                eq("http://test.url/test-token"),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
         
         dingTalkRobotAlertNotifyHandler.send(receiver, template, groupAlert);
     }
@@ -115,10 +120,14 @@ class DingTalkRobotAlertNotifyHandlerImplTest {
         CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
         failResp.setErrCode(1);
         failResp.setErrMsg("Test Error");
-        ResponseEntity<Object> responseEntity = 
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = 
             new ResponseEntity<>(failResp, HttpStatus.OK);
         
-        when(restTemplate.postForEntity(any(), any(), any())).thenReturn(responseEntity);
+        when(restTemplate.postForEntity(
+                eq("http://test.url/test-token"),
+                any(),
+                eq(CommonRobotNotifyResp.class)
+        )).thenReturn(responseEntity);
         
         assertThrows(AlertNoticeException.class, 
                 () -> dingTalkRobotAlertNotifyHandler.send(receiver, template, groupAlert));

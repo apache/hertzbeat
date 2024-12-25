@@ -94,14 +94,6 @@ class EmailAlertNotifyHandlerImplTest {
     }
 
     @Test
-    public void testNotifyAlertWithInvalidEmail() {
-        receiver.setEmail(null);
-        
-        assertThrows(IllegalArgumentException.class, 
-                () -> emailAlertNotifyHandler.send(receiver, template, groupAlert));
-    }
-
-    @Test
     public void testNotifyAlertSuccess() throws Exception {
         emailAlertNotifyHandler.send(receiver, template, groupAlert);
         

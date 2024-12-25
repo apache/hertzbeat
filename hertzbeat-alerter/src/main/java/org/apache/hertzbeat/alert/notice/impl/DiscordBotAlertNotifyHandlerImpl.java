@@ -93,7 +93,7 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class DiscordResponseDTO {
+    public static class DiscordResponseDTO {
         private String id;
         private Integer type;
         private String content;
