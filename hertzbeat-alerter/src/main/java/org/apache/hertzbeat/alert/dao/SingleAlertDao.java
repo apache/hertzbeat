@@ -37,6 +37,13 @@ public interface SingleAlertDao extends JpaRepository<SingleAlert, Long>, JpaSpe
      * @return alert
      */
     SingleAlert findByFingerprint(String fingerprint);
+
+    /**
+     * Query alerts by fingerprint list
+     * @param fingerprints alert fingerprint list
+     * @return alerts
+     */
+    List<SingleAlert> findSingleAlertsByFingerprintIn(List<String> fingerprints);
     
     /**
      * Query alerts by status 

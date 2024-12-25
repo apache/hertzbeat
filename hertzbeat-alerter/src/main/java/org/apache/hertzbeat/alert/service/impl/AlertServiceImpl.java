@@ -79,7 +79,13 @@ public class AlertServiceImpl implements AlertService {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        return groupAlertDao.findAll(specification, pageRequest);
+        Page<GroupAlert> groupAlertPage = groupAlertDao.findAll(specification, pageRequest);
+        for (GroupAlert groupAlert : groupAlertPage.getContent()) {
+            List<String> firingAlerts = groupAlert.getAlertFingerprints();
+            List<SingleAlert> singleAlerts = singleAlertDao.findSingleAlertsByFingerprintIn(firingAlerts);
+            groupAlert.setAlerts(singleAlerts);
+        }
+        return groupAlertPage;
     }
 
     @Override
