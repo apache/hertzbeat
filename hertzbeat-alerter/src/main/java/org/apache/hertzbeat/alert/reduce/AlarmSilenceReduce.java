@@ -30,8 +30,8 @@ import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.stereotype.Service;
 
 /**
- * silence alarm
- * refer from prometheus, code with @cursor
+ * Silence alert handler
+ * Refer from prometheus alert silencing mechanism
  */
 @Service
 @RequiredArgsConstructor
@@ -40,76 +40,71 @@ public class AlarmSilenceReduce {
     private final AlertSilenceDao alertSilenceDao;
     private final AlertNoticeDispatch dispatcherAlarm;
 
+    /**
+     * Process alert with silence rules
+     * If alert matches any active silence rule, it will be silenced
+     * @param groupAlert The alert to be processed
+     */
     public void silenceAlarm(GroupAlert groupAlert) {
         List<AlertSilence> alertSilenceList = CacheFactory.getAlertSilenceCache();
         if (alertSilenceList == null) {
             alertSilenceList = alertSilenceDao.findAll();
             CacheFactory.setAlertSilenceCache(alertSilenceList);
         }
+        
+        // Check each silence rule
         for (AlertSilence alertSilence : alertSilenceList) {
             if (!alertSilence.isEnable()) {
                 continue;
             }
-            // if match the silence rule, return
+            
+            // Check if alert matches silence rule
             boolean match = alertSilence.isMatchAll();
-            if (!match) {
+            if (!match && groupAlert.getGroupLabels() != null) {
                 Map<String, String> labels = alertSilence.getLabels();
-                if (groupAlert.getGroupLabels() != null && !groupAlert.getGroupLabels().isEmpty()) {
-                    Map<String, String> alertLabels = groupAlert.getGroupLabels();
-                    match = labels.entrySet().stream().anyMatch(item -> {
-                        if (alertLabels.containsKey(item.getKey())) {
-                            String tagValue = alertLabels.get(item.getKey());
-                            if (tagValue == null && item.getValue() == null) {
-                                return true;
-                            } else {
-                                return tagValue != null && tagValue.equals(item.getValue());
-                            }
-                        } else {
-                            return false;
-                        }
-                    });
-                } else {
-                    match = true;
-                }
+                Map<String, String> alertLabels = groupAlert.getGroupLabels();
+                match = labels.entrySet().stream().anyMatch(item -> 
+                    alertLabels.containsKey(item.getKey()) && item.getValue().equals(alertLabels.get(item.getKey())));
             }
+            
             if (match) {
+                LocalDateTime now = LocalDateTime.now();
                 if (alertSilence.getType() == 0) {
-                    // once time
-                    if (checkAndSave(LocalDateTime.now(), alertSilence)) {
-                        dispatcherAlarm.dispatchAlarm(groupAlert);
-                    } else {
-                        return;
+                    // One-time silence rule
+                    if (checkAndSave(now, alertSilence)) {
+                        continue;
                     }
+                    // Alert is silenced
+                    return;
                 } else if (alertSilence.getType() == 1) {
-                    // cyc time
-                    int currentDayOfWeek = LocalDateTime.now().toLocalDate().getDayOfWeek().getValue();
-                    if (alertSilence.getDays() != null && !alertSilence.getDays().isEmpty()) {
-                        boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-                        if (dayMatch && checkAndSave(LocalDateTime.now(), alertSilence)) {
-                            dispatcherAlarm.dispatchAlarm(groupAlert);
-                        } else {
-                            return;
-                        }
+                    // Cyclic silence rule
+                    int currentDayOfWeek = now.getDayOfWeek().getValue();
+                    if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek) 
+                            && !checkAndSave(now, alertSilence)) {
+                        // Alert is silenced
+                        return;
                     }
                 }
             }
         }
+        
+        // No matching silence rule, forward the alert
         dispatcherAlarm.dispatchAlarm(groupAlert);
     }
 
     /**
-     * Check AlertSilence start and end match, to save alertSilence obj.
-     * @param times         LocalDateTime.
-     * @param alertSilence  {@link AlertSilence}
-     * @return boolean
+     * Check if alert time is within silence period and update silence rule counter
+     * @param now Current time
+     * @param alertSilence Silence rule to check
+     * @return true if alert should not be silenced, false if alert should be silenced
      */
-    private boolean checkAndSave(LocalDateTime times, AlertSilence alertSilence) {
-
-        boolean startMatch = alertSilence.getPeriodStart() == null || times.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-        boolean endMatch = alertSilence.getPeriodEnd() == null || times.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+    private boolean checkAndSave(LocalDateTime now, AlertSilence alertSilence) {
+        boolean startMatch = alertSilence.getPeriodStart() == null || 
+                           now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+        boolean endMatch = alertSilence.getPeriodEnd() == null || 
+                         now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
 
         if (startMatch && endMatch) {
-
             int time = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
             alertSilence.setTimes(time + 1);
             alertSilenceDao.save(alertSilence);
