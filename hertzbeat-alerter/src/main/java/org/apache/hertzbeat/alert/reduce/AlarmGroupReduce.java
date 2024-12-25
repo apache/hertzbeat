@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Alarm group reduce
+ * refer from prometheus, code with @cursor
  */
 @Service
 @Slf4j

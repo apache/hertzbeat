@@ -260,4 +260,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         var imExportService = alertDefineImExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
     }
+
+    @Override
+    public List<AlertDefine> getRealTimeAlertDefines() {
+        return List.of();
+    }
 }

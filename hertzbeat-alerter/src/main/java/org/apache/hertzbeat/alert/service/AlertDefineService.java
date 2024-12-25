@@ -146,4 +146,11 @@ public interface AlertDefineService {
      * @throws Exception An exception was thrown during the importConfig
      */
     void importConfig(MultipartFile file) throws Exception;
+
+    /**
+     * Get the real-time alarm definition list
+     * @return Real-time alarm definition list
+     */
+    List<AlertDefine> getRealTimeAlertDefines();
+    
 }

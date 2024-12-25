@@ -34,6 +34,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * inhibit alarm
+ * refer from prometheus, code with @cursor
  */
 @Service
 @Slf4j

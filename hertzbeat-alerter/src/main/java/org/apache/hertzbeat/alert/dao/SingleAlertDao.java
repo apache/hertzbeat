@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -26,4 +27,18 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  */
 public interface SingleAlertDao extends JpaRepository<SingleAlert, Long>, JpaSpecificationExecutor<SingleAlert> {
     
+    /**
+     * Query alert by fingerprint
+     * @param fingerprint alert fingerprint
+     * @return alert
+     */
+    SingleAlert findByFingerprint(String fingerprint);
+
+
+    /**
+     * Query alerts by status 
+     * @param status status firing or resolved
+     * @return alerts
+     */
+    List<SingleAlert> querySingleAlertsByStatus(String status);
 }

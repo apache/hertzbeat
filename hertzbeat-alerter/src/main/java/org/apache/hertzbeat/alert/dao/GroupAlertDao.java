@@ -26,4 +26,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  */
 public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpecificationExecutor<GroupAlert> {
     
+    /**
+     * Query alert group by groupKey
+     * @param groupKey group key identifier
+     * @return alert group
+     */
+    GroupAlert findByGroupKey(String groupKey);
 }

@@ -67,12 +67,10 @@ public class AlertDefine {
 
     @Schema(title = "Monitoring Type", example = "linux", accessMode = READ_WRITE) 
     @Size(max = 100)
-    @NotNull
     private String app;
 
     @Schema(title = "Metrics", example = "cpu", accessMode = READ_WRITE)
     @Size(max = 100)
-    @NotNull
     private String metric;
 
     @Schema(title = "Monitoring Metrics Field", example = "usage", accessMode = READ_WRITE)
