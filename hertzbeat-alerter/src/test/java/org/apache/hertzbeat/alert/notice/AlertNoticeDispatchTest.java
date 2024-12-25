@@ -18,8 +18,9 @@
 package org.apache.hertzbeat.alert.notice;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 
 /**
  * Test case for Alert Notice Dispatch
@@ -67,6 +69,8 @@ class AlertNoticeDispatchTest {
 
     @BeforeEach
     void setUp() {
+        when(alertNotifyHandler.type()).thenReturn((byte) 1);
+        
         List<AlertNotifyHandler> alertNotifyHandlerList = List.of(alertNotifyHandler);
         alertNoticeDispatch = new AlertNoticeDispatch(
                 workerPool,
@@ -93,9 +97,14 @@ class AlertNoticeDispatchTest {
 
     @Test
     void testSendNoticeMsg() {
-        when(alertNotifyHandler.type()).thenReturn((byte) 1);
-        assertFalse(alertNoticeDispatch.sendNoticeMsg(receiver, null, alert));
-        verify(alertNotifyHandler).send(eq(receiver), isNull(), eq(alert));
+        NoticeTemplate template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("default-template");
+        when(noticeConfigService.getDefaultNoticeTemplateByType((byte) 1)).thenReturn(template);
+        doNothing().when(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
+        
+        assertTrue(alertNoticeDispatch.sendNoticeMsg(receiver, null, alert));
+        verify(alertNotifyHandler).send(eq(receiver), eq(template), eq(alert));
     }
 
     @Test
