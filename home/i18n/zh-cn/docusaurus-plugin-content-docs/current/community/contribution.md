@@ -62,7 +62,6 @@ limitations under the License.
 
 5. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
 
-
 #### 前端启动
 
 1. 需要 `nodejs yarn` 环境, 确保 `Node.js >= 18`
