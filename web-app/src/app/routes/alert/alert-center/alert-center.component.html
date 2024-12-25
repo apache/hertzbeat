@@ -44,10 +44,6 @@
       <i nz-icon nzType="delete" nzTheme="outline"></i>
       {{ 'alert.center.delete' | i18n }}
     </button>
-    <button nz-button nzType="primary" nzDanger (click)="onClearAllAlerts()">
-      <i nz-icon nzType="clear" nzTheme="outline"></i>
-      {{ 'alert.center.clear' | i18n }}
-    </button>
   </ng-template>
   <ng-template #right>
     <nz-select
@@ -69,10 +65,10 @@
       [(ngModel)]="filterStatus"
       (ngModelChange)="loadAlertsTable()"
     >
-      <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="9"></nz-option>
-      <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="0"></nz-option>
-      <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="2"></nz-option>
-      <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="3"></nz-option>
+      <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="'all'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="'emergency'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="'critical'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="'warning'"></nz-option>
     </nz-select>
     <app-multi-func-input
       groupStyle="width: 250px;"

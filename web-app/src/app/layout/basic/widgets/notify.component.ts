@@ -45,8 +45,6 @@ import { AlertService } from '../../../service/alert.service';
         }
       </nz-spin>
       <div style="display: flex; align-items: center; border-top: 1px solid #f0f0f0;">
-        <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="onClearAllAlerts()">{{ data[0].clearText }}</div>
-        <nz-divider nzType="vertical"></nz-divider>
         <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="gotoAlertCenter()">{{ data[0].enterText }}</div>
       </div>
     </nz-dropdown-menu>
@@ -154,7 +152,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     }
     this.loading = true;
     let loadAlerts$ = this.alertSvc
-      .loadAlerts(0, undefined, undefined, 0, 5)
+      .loadGroupAlerts('firing', undefined, 0, 5)
       .pipe(
         finalize(() => {
           loadAlerts$.unsubscribe();
@@ -196,8 +194,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       );
   }
 
-  updateAlertsStatus(alertIds: Set<number>, status: number) {
-    const markAlertsStatus$ = this.alertSvc.applyAlertsStatus(alertIds, status).subscribe(
+  updateAlertsStatus(alertIds: Set<number>, status: string) {
+    const markAlertsStatus$ = this.alertSvc.applyGroupAlertsStatus(alertIds, status).subscribe(
       message => {
         markAlertsStatus$.unsubscribe();
         if (message.code === 0) {
@@ -217,37 +215,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   onMarkReadOneAlert(alertId: number) {
     let alerts = new Set<number>();
     alerts.add(alertId);
-    this.updateAlertsStatus(alerts, 3);
-  }
-
-  clearAllAlerts() {
-    const deleteAlerts$ = this.alertSvc.clearAlerts().subscribe(
-      message => {
-        deleteAlerts$.unsubscribe();
-        if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.clear-success'), '');
-          this.loadData();
-        } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), message.msg);
-        }
-      },
-      error => {
-        deleteAlerts$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), error.msg);
-      }
-    );
-  }
-
-  onClearAllAlerts() {
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.clear-all'),
-      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
-      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
-      nzOkDanger: true,
-      nzOkType: 'primary',
-      nzClosable: false,
-      nzOnOk: () => this.clearAllAlerts()
-    });
+    this.updateAlertsStatus(alerts, 'resolved');
   }
 
   gotoAlertCenter(): void {

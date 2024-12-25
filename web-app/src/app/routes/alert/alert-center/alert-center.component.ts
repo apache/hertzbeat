@@ -47,7 +47,7 @@ export class AlertCenterComponent implements OnInit {
   alerts!: Alert[];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
-  filterStatus: number = 9;
+  filterStatus: string = 'firing';
   filterPriority: number = 9;
   filterContent: string | undefined;
 
@@ -61,42 +61,40 @@ export class AlertCenterComponent implements OnInit {
 
   loadAlertsTable() {
     this.tableLoading = true;
-    let alertsInit$ = this.alertSvc
-      .loadAlerts(this.filterStatus, this.filterPriority, this.filterContent, this.pageIndex - 1, this.pageSize)
-      .subscribe(
-        message => {
-          this.tableLoading = false;
-          this.checkedAll = false;
-          this.checkedAlertIds.clear();
-          if (message.code === 0) {
-            let page = message.data;
-            this.alerts = page.content;
-            this.pageIndex = page.number + 1;
-            this.total = page.totalElements;
-            if (this.alerts) {
-              this.alerts.forEach(item => {
-                item.tmp = [];
-                if (item.tags != undefined) {
-                  Object.keys(item.tags).forEach(name => {
-                    item.tmp.push({
-                      name: name,
-                      tagValue: item.tags[name]
-                    });
+    let alertsInit$ = this.alertSvc.loadGroupAlerts(this.filterStatus, this.filterContent, this.pageIndex - 1, this.pageSize).subscribe(
+      message => {
+        this.tableLoading = false;
+        this.checkedAll = false;
+        this.checkedAlertIds.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.alerts = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+          if (this.alerts) {
+            this.alerts.forEach(item => {
+              item.tmp = [];
+              if (item.tags != undefined) {
+                Object.keys(item.tags).forEach(name => {
+                  item.tmp.push({
+                    name: name,
+                    tagValue: item.tags[name]
                   });
-                }
-              });
-            }
-          } else {
-            console.warn(message.msg);
+                });
+              }
+            });
           }
-          alertsInit$.unsubscribe();
-        },
-        error => {
-          this.tableLoading = false;
-          alertsInit$.unsubscribe();
-          console.error(error.msg);
+        } else {
+          console.warn(message.msg);
         }
-      );
+        alertsInit$.unsubscribe();
+      },
+      error => {
+        this.tableLoading = false;
+        alertsInit$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
   }
 
   renderAlertTarget(target: string): string {
@@ -135,18 +133,6 @@ export class AlertCenterComponent implements OnInit {
     });
   }
 
-  onClearAllAlerts() {
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.clear-all'),
-      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
-      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
-      nzOkDanger: true,
-      nzOkType: 'primary',
-      nzClosable: false,
-      nzOnOk: () => this.clearAllAlerts()
-    });
-  }
-
   onMarkReadAlerts() {
     if (this.checkedAlertIds == null || this.checkedAlertIds.size === 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('alert.center.notify.no-mark'), '');
@@ -159,7 +145,7 @@ export class AlertCenterComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 3)
+      nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 'resolved')
     });
   }
   onMarkUnReadAlerts() {
@@ -174,7 +160,7 @@ export class AlertCenterComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 0)
+      nzOnOk: () => this.updateAlertsStatus(this.checkedAlertIds, 'firing')
     });
   }
 
@@ -195,18 +181,18 @@ export class AlertCenterComponent implements OnInit {
   onMarkReadOneAlert(alertId: number) {
     let alerts = new Set<number>();
     alerts.add(alertId);
-    this.updateAlertsStatus(alerts, 3);
+    this.updateAlertsStatus(alerts, 'resolved');
   }
 
   onMarkUnReadOneAlert(alertId: number) {
     let alerts = new Set<number>();
     alerts.add(alertId);
-    this.updateAlertsStatus(alerts, 0);
+    this.updateAlertsStatus(alerts, 'firing');
   }
 
   deleteAlerts(alertIds: Set<number>) {
     this.tableLoading = true;
-    const deleteAlerts$ = this.alertSvc.deleteAlerts(alertIds).subscribe(
+    const deleteAlerts$ = this.alertSvc.deleteGroupAlerts(alertIds).subscribe(
       message => {
         deleteAlerts$.unsubscribe();
         if (message.code === 0) {
@@ -231,30 +217,9 @@ export class AlertCenterComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  clearAllAlerts() {
+  updateAlertsStatus(alertIds: Set<number>, status: string) {
     this.tableLoading = true;
-    const deleteAlerts$ = this.alertSvc.clearAlerts().subscribe(
-      message => {
-        deleteAlerts$.unsubscribe();
-        if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.clear-success'), '');
-          this.loadAlertsTable();
-        } else {
-          this.tableLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), message.msg);
-        }
-      },
-      error => {
-        this.tableLoading = false;
-        deleteAlerts$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), error.msg);
-      }
-    );
-  }
-
-  updateAlertsStatus(alertIds: Set<number>, status: number) {
-    this.tableLoading = true;
-    const markAlertsStatus$ = this.alertSvc.applyAlertsStatus(alertIds, status).subscribe(
+    const markAlertsStatus$ = this.alertSvc.applyGroupAlertsStatus(alertIds, status).subscribe(
       message => {
         markAlertsStatus$.unsubscribe();
         if (message.code === 0) {
