@@ -6,6 +6,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
+import { AlertSoundService } from '../../../service/alert-sound.service';
 import { AlertService } from '../../../service/alert.service';
 
 @Component({
@@ -48,6 +49,12 @@ import { AlertService } from '../../../service/alert.service';
         <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="onClearAllAlerts()">{{ data[0].clearText }}</div>
         <nz-divider nzType="vertical"></nz-divider>
         <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="gotoAlertCenter()">{{ data[0].enterText }}</div>
+      </div>
+      <div style="padding: 8px; text-align: center; border-top: 1px solid #f0f0f0;">
+        <button nz-button nzType="default" (click)="testAlertSound()">
+          <i nz-icon nzType="sound" nzTheme="outline"></i>
+          测试告警声音
+        </button>
       </div>
     </nz-dropdown-menu>
     }
@@ -110,13 +117,15 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   loading = false;
   popoverVisible = false;
   refreshInterval: any;
+  private previousCount = 0;
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private notifySvc: NzNotificationService,
     private alertSvc: AlertService,
     private modal: NzModalService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private alertSound: AlertSoundService
   ) {}
 
   ngOnInit(): void {
@@ -184,6 +193,11 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
               list.push(item);
             });
             this.data = this.updateNoticeData(list);
+
+            if (page.totalElements > this.previousCount) {
+              this.alertSound.playAlertSound();
+            }
+            this.previousCount = page.totalElements;
             this.count = page.totalElements;
           } else {
             console.warn(message.msg);
@@ -258,5 +272,9 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   gotoDetail(monitorId: number): void {
     this.popoverVisible = false;
     this.router.navigateByUrl(`/monitors/${monitorId}`);
+  }
+
+  testAlertSound(): void {
+    this.alertSound.playAlertSound();
   }
 }
