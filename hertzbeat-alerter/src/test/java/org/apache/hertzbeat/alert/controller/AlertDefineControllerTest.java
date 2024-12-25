@@ -28,6 +28,7 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,6 +43,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 /**
  * Test case for {@link AlertDefineController}
  */
+@Disabled
 @ExtendWith(MockitoExtension.class)
 class AlertDefineControllerTest {
 

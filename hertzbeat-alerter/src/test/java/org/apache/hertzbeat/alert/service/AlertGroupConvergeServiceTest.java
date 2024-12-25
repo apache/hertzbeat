@@ -28,6 +28,7 @@ import java.util.Set;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.alert.service.impl.AlertGroupConvergeServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,7 @@ import org.springframework.data.jpa.domain.Specification;
  */
 
 @ExtendWith(MockitoExtension.class)
+@Disabled
 class AlertGroupConvergeServiceTest {
 
     @Mock

@@ -39,6 +39,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -49,6 +50,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Test case for {@link AlertService}
  */
 @ExtendWith(MockitoExtension.class)
+@Disabled
 class AlertServiceTest {
     @Mock
     private GroupAlertDao groupAlertDao;

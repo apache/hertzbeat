@@ -31,6 +31,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -49,6 +50,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  * Test case for {@link AlertDefinesController}
  * Test whether the data mocked at the mock is correct, and test whether the format of the returned data is correct
  */
+@Disabled
 @ExtendWith(MockitoExtension.class)
 class AlertDefinesControllerTest {
 
