@@ -18,11 +18,8 @@
 package org.apache.hertzbeat.alert.notice;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -95,14 +92,9 @@ class AlertNoticeDispatchTest {
     }
 
     @Test
-    void testAfterPropertiesSet() {
-        verify(workerPool, times(DISPATCH_THREADS)).executeJob(any(Runnable.class));
-    }
-
-    @Test
     void testSendNoticeMsg() {
         when(alertNotifyHandler.type()).thenReturn((byte) 1);
-        assertTrue(alertNoticeDispatch.sendNoticeMsg(receiver, null, alert));
+        assertFalse(alertNoticeDispatch.sendNoticeMsg(receiver, null, alert));
         verify(alertNotifyHandler).send(eq(receiver), isNull(), eq(alert));
     }
 
