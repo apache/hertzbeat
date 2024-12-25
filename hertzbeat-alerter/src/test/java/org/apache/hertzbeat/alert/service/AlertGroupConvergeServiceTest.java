@@ -25,9 +25,9 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
-import org.apache.hertzbeat.alert.service.impl.AlertConvergeServiceImpl;
-import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
+import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
+import org.apache.hertzbeat.alert.service.impl.AlertGroupConvergeServiceImpl;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,69 +40,69 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
- * test case for {@link org.apache.hertzbeat.alert.service.impl.AlertConvergeServiceImpl}
+ * test case for {@link AlertGroupConvergeServiceImpl}
  */
 
 @ExtendWith(MockitoExtension.class)
-class AlertConvergeServiceTest {
+class AlertGroupConvergeServiceTest {
 
     @Mock
-    private AlertConvergeDao alertConvergeDao;
+    private AlertGroupConvergeDao alertGroupConvergeDao;
 
     @InjectMocks
-    private AlertConvergeServiceImpl alertConvergeService;
+    private AlertGroupConvergeServiceImpl alertGroupConvergeService;
 
     @Test
-    public void testAddAlertConverge() {
+    public void testAddAlertGroupConverge() {
 
-        AlertConverge alertConverge = new AlertConverge();
-        alertConvergeService.addAlertConverge(alertConverge);
+        AlertGroupConverge alertGroupConverge = new AlertGroupConverge();
+        alertGroupConvergeService.addAlertGroupConverge(alertGroupConverge);
 
-        verify(alertConvergeDao, times(1)).save(alertConverge);
+        verify(alertGroupConvergeDao, times(1)).save(alertGroupConverge);
     }
 
     @Test
-    public void testModifyAlertConverge() {
+    public void testModifyAlertGroupConverge() {
 
-        AlertConverge alertConverge = new AlertConverge();
-        alertConvergeService.modifyAlertConverge(alertConverge);
+        AlertGroupConverge alertGroupConverge = new AlertGroupConverge();
+        alertGroupConvergeService.modifyAlertGroupConverge(alertGroupConverge);
 
-        verify(alertConvergeDao, times(1)).save(alertConverge);
+        verify(alertGroupConvergeDao, times(1)).save(alertGroupConverge);
     }
 
     @Test
-    public void testGetAlertConverge() {
+    public void testGetAlertGroupConverge() {
 
         long convergeId = 1L;
-        AlertConverge alertConverge = new AlertConverge();
-        when(alertConvergeDao.findById(convergeId)).thenReturn(Optional.of(alertConverge));
-        AlertConverge result = alertConvergeService.getAlertConverge(convergeId);
+        AlertGroupConverge alertGroupConverge = new AlertGroupConverge();
+        when(alertGroupConvergeDao.findById(convergeId)).thenReturn(Optional.of(alertGroupConverge));
+        AlertGroupConverge result = alertGroupConvergeService.getAlertGroupConverge(convergeId);
 
-        verify(alertConvergeDao, times(1)).findById(convergeId);
-        assertEquals(alertConverge, result);
+        verify(alertGroupConvergeDao, times(1)).findById(convergeId);
+        assertEquals(alertGroupConverge, result);
     }
 
     @Test
-    public void testDeleteAlertConverges() {
+    public void testDeleteAlertGroupConverges() {
 
         Set<Long> convergeIds = Set.of(1L, 2L, 3L);
-        alertConvergeService.deleteAlertConverges(convergeIds);
+        alertGroupConvergeService.deleteAlertGroupConverges(convergeIds);
 
-        verify(alertConvergeDao, times(1)).deleteAlertConvergesByIdIn(convergeIds);
+        verify(alertGroupConvergeDao, times(1)).deleteAlertGroupConvergesByIdIn(convergeIds);
     }
 
     @Test
-    public void testGetAlertConverges() {
+    public void testGetAlertGroupConverges() {
 
-        Page<AlertConverge> page = new PageImpl<>(Collections.emptyList());
-        when(alertConvergeDao.findAll(
+        Page<AlertGroupConverge> page = new PageImpl<>(Collections.emptyList());
+        when(alertGroupConvergeDao.findAll(
                 any(Specification.class),
                 any(Pageable.class))
         ).thenReturn(page);
 
-        Page<AlertConverge> result = alertConvergeService.getAlertConverges(null, null, "id", "desc", 1, 10);
+        Page<AlertGroupConverge> result = alertGroupConvergeService.getAlertGroupConverges(null, null, "id", "desc", 1, 10);
 
-        verify(alertConvergeDao, times(1)).findAll(
+        verify(alertGroupConvergeDao, times(1)).findAll(
                 any(Specification.class),
                 any(PageRequest.class)
         );

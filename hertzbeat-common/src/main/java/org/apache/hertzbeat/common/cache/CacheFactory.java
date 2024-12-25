@@ -18,6 +18,10 @@
 package org.apache.hertzbeat.common.cache;
 
 import java.time.Duration;
+import java.util.List;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
+import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 
 /**
  * common cache factory
@@ -25,36 +29,54 @@ import java.time.Duration;
 public final class CacheFactory {
     private CacheFactory() {}
 
-    private static final CommonCacheService<String, Object> NOTICE_CACHE =
-            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
-    
-    private static final CommonCacheService<String, Object> ALERT_SILENCE_CACHE =
-            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
-    
-    private static final CommonCacheService<String, Object> ALERT_CONVERGE_CACHE =
-            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
+    private static final CommonCacheService<String, Object> COMMON_CACHE =
+            new CaffeineCacheServiceImpl<>(1, 1000, Duration.ofDays(1), false);
     
     /**
      * get notice cache
      * @return caffeine cache
      */
-    public static CommonCacheService<String, Object> getNoticeCache() {
-        return NOTICE_CACHE;
+    @SuppressWarnings("unchecked")
+    public static List<NoticeRule> getNoticeCache() {
+        return (List<NoticeRule>) COMMON_CACHE.get(CommonConstants.CACHE_NOTICE_RULE);
+    }
+
+    /**
+     * set notice cache
+     * @param noticeRules notice rules
+     */
+    public static void setNoticeCache(List<NoticeRule> noticeRules) {
+        COMMON_CACHE.put(CommonConstants.CACHE_NOTICE_RULE, noticeRules);
+    }
+
+    /**
+     * clear notice cache
+     */
+    public static void clearNoticeCache() {
+        COMMON_CACHE.remove(CommonConstants.CACHE_NOTICE_RULE);
     }
     
     /**
      * get alert silence cache
      * @return caffeine cache
      */
-    public static CommonCacheService<String, Object> getAlertSilenceCache() {
-        return ALERT_SILENCE_CACHE;
+    @SuppressWarnings("unchecked")
+    public static List<AlertSilence> getAlertSilenceCache() {
+        return (List<AlertSilence>) COMMON_CACHE.get(CommonConstants.CACHE_ALERT_SILENCE);
     }
 
     /**
-     * get alert converge cache
-     * @return converge cache
+     * set alert silence cache
+     * @param alertSilences alert silences
      */
-    public static CommonCacheService<String, Object> getAlertConvergeCache() {
-        return ALERT_CONVERGE_CACHE;
+    public static void setAlertSilenceCache(List<AlertSilence> alertSilences) {
+        COMMON_CACHE.put(CommonConstants.CACHE_ALERT_SILENCE, alertSilences);
+    }
+
+    /**
+     * clear alert silence cache
+     */
+    public static void clearAlertSilenceCache() {
+        COMMON_CACHE.remove(CommonConstants.CACHE_ALERT_SILENCE);
     }
 }

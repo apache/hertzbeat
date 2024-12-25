@@ -19,50 +19,50 @@ package org.apache.hertzbeat.alert.service;
 
 import java.util.List;
 import java.util.Set;
-import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.springframework.data.domain.Page;
 
 /**
  * management interface service for alert converge
  */
-public interface AlertConvergeService {
+public interface AlertGroupConvergeService {
     /**
      * Verify the correctness of the request data parameters
-     * @param alertConverge AlertConverge
+     * @param alertGroupConverge AlertGroupConverge
      * @param isModify      whether modify
      * @throws IllegalArgumentException A checksum parameter error is thrown
      */
-    void validate(AlertConverge alertConverge, boolean isModify) throws IllegalArgumentException;
+    void validate(AlertGroupConverge alertGroupConverge, boolean isModify) throws IllegalArgumentException;
 
     /**
-     * New AlertConverge
-     * @param alertConverge AlertConverge Entity
+     * New AlertGroupConverge
+     * @param alertGroupConverge AlertGroupConverge Entity
      * @throws RuntimeException Added procedure exception throwing
      */
-    void addAlertConverge(AlertConverge alertConverge) throws RuntimeException;
+    void addAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException;
 
     /**
-     * Modifying an AlertConverge
-     * @param alertConverge Alarm definition Entity
+     * Modifying an AlertGroupConverge
+     * @param alertGroupConverge Alarm definition Entity
      * @throws RuntimeException Exception thrown during modification
      */
-    void modifyAlertConverge(AlertConverge alertConverge) throws RuntimeException;
+    void modifyAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException;
 
     /**
-     * Obtain AlertConverge information
-     * @param convergeId AlertConverge ID
-     * @return AlertConverge
+     * Obtain AlertGroupConverge information
+     * @param convergeId AlertGroupConverge ID
+     * @return AlertGroupConverge
      * @throws RuntimeException An exception was thrown during the query
      */
-    AlertConverge getAlertConverge(long convergeId) throws RuntimeException;
+    AlertGroupConverge getAlertGroupConverge(long convergeId) throws RuntimeException;
 
 
     /**
-     * Delete AlertConverge in batches
-     * @param convergeIds AlertConverge IDs
+     * Delete AlertGroupConverge in batches
+     * @param convergeIds AlertGroupConverge IDs
      * @throws RuntimeException Exception thrown during deletion
      */
-    void deleteAlertConverges(Set<Long> convergeIds) throws RuntimeException;
+    void deleteAlertGroupConverges(Set<Long> convergeIds) throws RuntimeException;
 
     /**
      * Dynamic conditional query
@@ -74,5 +74,5 @@ public interface AlertConvergeService {
      * @param pageSize      Number of list pages
      * @return The query results
      */
-    Page<AlertConverge> getAlertConverges(List<Long> convergeIds, String search, String sort, String order, int pageIndex, int pageSize);
+    Page<AlertGroupConverge> getAlertGroupConverges(List<Long> convergeIds, String search, String sort, String order, int pageIndex, int pageSize);
 }

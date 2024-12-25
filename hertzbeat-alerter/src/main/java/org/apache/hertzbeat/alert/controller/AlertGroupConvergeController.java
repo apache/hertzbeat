@@ -24,8 +24,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Objects;
-import org.apache.hertzbeat.alert.service.AlertConvergeService;
-import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
+import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -42,38 +42,38 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Alert Converge API")
 @RestController
-@RequestMapping(path = "/api/alert/converge", produces = {APPLICATION_JSON_VALUE})
-public class AlertConvergeController {
+@RequestMapping(path = "/api/alert/group", produces = {APPLICATION_JSON_VALUE})
+public class AlertGroupConvergeController {
 
     @Autowired
-    private AlertConvergeService alertConvergeService;
+    private AlertGroupConvergeService alertGroupConvergeService;
 
     @PostMapping
     @Operation(summary = "New Alarm Converge", description = "Added an alarm Converge")
-    public ResponseEntity<Message<Void>> addNewAlertConverge(@Valid @RequestBody AlertConverge alertConverge) {
-        alertConvergeService.validate(alertConverge, false);
-        alertConvergeService.addAlertConverge(alertConverge);
+    public ResponseEntity<Message<Void>> addNewAlertGroupConverge(@Valid @RequestBody AlertGroupConverge alertGroupConverge) {
+        alertGroupConvergeService.validate(alertGroupConverge, false);
+        alertGroupConvergeService.addAlertGroupConverge(alertGroupConverge);
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping
     @Operation(summary = "Modifying an Alarm Converge", description = "Modify an existing alarm Converge")
-    public ResponseEntity<Message<Void>> modifyAlertConverge(@Valid @RequestBody AlertConverge alertConverge) {
-        alertConvergeService.validate(alertConverge, true);
-        alertConvergeService.modifyAlertConverge(alertConverge);
+    public ResponseEntity<Message<Void>> modifyAlertGroupConverge(@Valid @RequestBody AlertGroupConverge alertGroupConverge) {
+        alertGroupConvergeService.validate(alertGroupConverge, true);
+        alertGroupConvergeService.modifyAlertGroupConverge(alertGroupConverge);
         return ResponseEntity.ok(Message.success("Modify success"));
     }
 
     @GetMapping(path = "/{id}")
     @Operation(summary = "Querying Alarm Converge",
             description = "You can obtain alarm Converge information based on the alarm Converge ID")
-    public ResponseEntity<Message<AlertConverge>> getAlertConverge(
+    public ResponseEntity<Message<AlertGroupConverge>> getAlertGroupConverge(
             @Parameter(description = "Alarm Converge ID", example = "6565463543") @PathVariable("id") long id) {
-        AlertConverge alertConverge = alertConvergeService.getAlertConverge(id);
+        AlertGroupConverge alertGroupConverge = alertGroupConvergeService.getAlertGroupConverge(id);
 
-        return Objects.isNull(alertConverge)
-                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertConverge not exist."))
-                : ResponseEntity.ok(Message.success(alertConverge));
+        return Objects.isNull(alertGroupConverge)
+                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertGroupConverge not exist."))
+                : ResponseEntity.ok(Message.success(alertGroupConverge));
     }
 
 }

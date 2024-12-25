@@ -31,10 +31,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.cache.CacheFactory;
-import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -160,14 +158,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<NoticeRule> getReceiverFilterRule(GroupAlert alert) {
         // use cache
-        CommonCacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
-        List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
-        if (CollectionUtils.isEmpty(rules)) {
+        List<NoticeRule> rules = CacheFactory.getNoticeCache();
+        if (rules == null) {
             rules = noticeRuleDao.findNoticeRulesByEnableTrue();
-            noticeCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
+            CacheFactory.setNoticeCache(rules);
         }
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
@@ -285,8 +281,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     }
 
     private void clearNoticeRulesCache() {
-        CommonCacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
-        noticeCache.remove(CommonConstants.CACHE_NOTICE_RULE);
+        CacheFactory.clearNoticeCache();
     }
 
     @Override

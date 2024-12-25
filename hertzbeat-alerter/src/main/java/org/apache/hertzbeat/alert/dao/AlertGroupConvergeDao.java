@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.alert.dao;
 
 import java.util.Set;
-import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -26,12 +26,13 @@ import org.springframework.data.jpa.repository.Modifying;
 /**
  * AlertConverge Dao
  */
-public interface AlertConvergeDao extends JpaRepository<AlertConverge, Long>, JpaSpecificationExecutor<AlertConverge> {
+public interface AlertGroupConvergeDao extends JpaRepository<AlertGroupConverge, Long>, JpaSpecificationExecutor<AlertGroupConverge> {
 
     /**
-     * Delete alarm converge based on the ID list
-     * @param convergeIds alert converge id list
+     * Delete group alarm converge based on the ID list
+     * @param ids alert converge id list
      */
     @Modifying
-    void deleteAlertConvergesByIdIn(Set<Long> convergeIds);
+    void deleteAlertGroupConvergesByIdIn(Set<Long> ids);
+    
 }

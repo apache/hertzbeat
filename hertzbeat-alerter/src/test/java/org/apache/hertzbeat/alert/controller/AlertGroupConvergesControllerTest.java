@@ -29,9 +29,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import org.apache.hertzbeat.alert.service.AlertConvergeService;
+import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,50 +47,50 @@ import org.springframework.test.web.servlet.MockMvc;
 
 
 /**
- * test case for {@link AlertConvergesController}
+ * test case for {@link AlertGroupConvergesController}
  */
 
 @ExtendWith(MockitoExtension.class)
-class AlertConvergesControllerTest {
+class AlertGroupConvergesControllerTest {
 
     private MockMvc mockMvc;
 
     @Mock
-    private AlertConvergeService alertConvergeService;
+    private AlertGroupConvergeService alertGroupConvergeService;
 
     @InjectMocks
-    private AlertConvergesController alertConvergesController;
+    private AlertGroupConvergesController alertGroupConvergesController;
 
-    private List<AlertConverge> alertConvergeList;
+    private List<AlertGroupConverge> alertGroupConvergeList;
 
     @BeforeEach
     void setUp() {
 
-        this.mockMvc = standaloneSetup(alertConvergesController).build();
+        this.mockMvc = standaloneSetup(alertGroupConvergesController).build();
 
-        AlertConverge alertConverge1 = AlertConverge.builder()
+        AlertGroupConverge alertGroupConverge1 = AlertGroupConverge.builder()
                 .name("Converge1")
                 .id(1L)
                 .build();
 
-        AlertConverge alertConverge2 = AlertConverge.builder()
+        AlertGroupConverge alertGroupConverge2 = AlertGroupConverge.builder()
                 .name("Converge2")
                 .id(2L)
                 .build();
 
-        alertConvergeList = Arrays.asList(alertConverge1, alertConverge2);
+        alertGroupConvergeList = Arrays.asList(alertGroupConverge1, alertGroupConverge2);
     }
 
     @Test
-    void testGetAlertConverges() throws Exception {
+    void testGetAlertGroupConverges() throws Exception {
 
-        Page<AlertConverge> alertConvergePage = new PageImpl<>(
-                alertConvergeList,
+        Page<AlertGroupConverge> alertGroupConvergePage = new PageImpl<>(
+                alertGroupConvergeList,
                 PageRequest.of(0, 8, Sort.by("id").descending()),
-                alertConvergeList.size()
+                alertGroupConvergeList.size()
         );
 
-        when(alertConvergeService.getAlertConverges(null, null, "id", "desc", 0, 8)).thenReturn(alertConvergePage);
+        when(alertGroupConvergeService.getAlertGroupConverges(null, null, "id", "desc", 0, 8)).thenReturn(alertGroupConvergePage);
 
         mockMvc.perform(get("/api/alert/converges")
                         .param("pageIndex", "0")
@@ -108,7 +108,7 @@ class AlertConvergesControllerTest {
     @Test
     void testDeleteAlertDefines() throws Exception {
 
-        doNothing().when(alertConvergeService).deleteAlertConverges(eq(new HashSet<>(Arrays.asList(1L, 2L))));
+        doNothing().when(alertGroupConvergeService).deleteAlertGroupConverges(eq(new HashSet<>(Arrays.asList(1L, 2L))));
 
         mockMvc.perform(delete("/api/alert/converges")
                         .param("ids", "1,2")

@@ -308,7 +308,7 @@ public interface CommonConstants {
     /**
      * cache key alert converge
      */
-    String CACHE_ALERT_CONVERGE = "alert_converge";
+    String CACHE_ALERT_GROUP_CONVERGE = "alert_group_converge";
 
     /**
      * collector status online 0

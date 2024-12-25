@@ -27,9 +27,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
-import org.apache.hertzbeat.alert.service.AlertConvergeService;
+import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,28 +41,28 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * test case for {@link AlertConvergeController}
+ * test case for {@link AlertGroupConvergeController}
  */
 
 @ExtendWith(MockitoExtension.class)
-public class AlertConvergeControllerTest {
+public class AlertGroupConvergeControllerTest {
 
     private MockMvc mockMvc;
 
     @Mock
-    private AlertConvergeService alertConvergeService;
+    private AlertGroupConvergeService alertGroupConvergeService;
 
-    private AlertConverge alertConverge;
+    private AlertGroupConverge alertGroupConverge;
 
     @InjectMocks
-    private AlertConvergeController alertConvergeController;
+    private AlertGroupConvergeController alertGroupConvergeController;
 
     @BeforeEach
     void setUp() {
 
-        this.mockMvc = standaloneSetup(alertConvergeController).build();
+        this.mockMvc = standaloneSetup(alertGroupConvergeController).build();
 
-        alertConverge = AlertConverge.builder()
+        alertGroupConverge = AlertGroupConverge.builder()
                 .name("test")
                 .creator("admin")
                 .modifier("admin")
@@ -71,54 +71,54 @@ public class AlertConvergeControllerTest {
     }
 
     @Test
-    void testAddNewAlertConverge() throws Exception {
+    void testAddNewAlertGroupConverge() throws Exception {
 
-        doNothing().when(alertConvergeService).validate(any(AlertConverge.class), eq(false));
-        doNothing().when(alertConvergeService).addAlertConverge(any(AlertConverge.class));
+        doNothing().when(alertGroupConvergeService).validate(any(AlertGroupConverge.class), eq(false));
+        doNothing().when(alertGroupConvergeService).addAlertGroupConverge(any(AlertGroupConverge.class));
 
         mockMvc.perform(post("/api/alert/converge")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(alertConverge))
+                        .content(JsonUtil.toJson(alertGroupConverge))
                 ).andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"));
     }
 
     @Test
-    void testModifyAlertConverge() throws Exception {
+    void testModifyAlertGroupConverge() throws Exception {
 
-        doNothing().when(alertConvergeService).validate(any(AlertConverge.class), eq(true));
-        doNothing().when(alertConvergeService).modifyAlertConverge(any(AlertConverge.class));
+        doNothing().when(alertGroupConvergeService).validate(any(AlertGroupConverge.class), eq(true));
+        doNothing().when(alertGroupConvergeService).modifyAlertGroupConverge(any(AlertGroupConverge.class));
 
         mockMvc.perform(put("/api/alert/converge")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(alertConverge))
+                        .content(JsonUtil.toJson(alertGroupConverge))
                 ).andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Modify success"));
     }
 
     @Test
-    void testGetAlertConvergeExists() throws Exception {
+    void testGetAlertGroupConvergeExists() throws Exception {
 
-        when(alertConvergeService.getAlertConverge(1L)).thenReturn(alertConverge);
+        when(alertGroupConvergeService.getAlertGroupConverge(1L)).thenReturn(alertGroupConverge);
 
         mockMvc.perform(get("/api/alert/converge/{id}", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(alertConverge.getId()));
+                .andExpect(jsonPath("$.data.id").value(alertGroupConverge.getId()));
     }
 
     @Test
-    void testGetAlertConvergeNotExists() throws Exception {
+    void testGetAlertGroupConvergeNotExists() throws Exception {
 
-        when(alertConvergeService.getAlertConverge(1L)).thenReturn(null);
+        when(alertGroupConvergeService.getAlertGroupConverge(1L)).thenReturn(null);
 
         mockMvc.perform(get("/api/alert/converge/{id}", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_NOT_EXIST_CODE))
-                .andExpect(jsonPath("$.msg").value("AlertConverge not exist."));
+                .andExpect(jsonPath("$.msg").value("AlertGroupConverge not exist."));
     }
 
 }

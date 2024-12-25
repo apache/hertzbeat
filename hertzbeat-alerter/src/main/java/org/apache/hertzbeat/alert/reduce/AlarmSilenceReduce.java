@@ -25,8 +25,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.common.cache.CacheFactory;
-import org.apache.hertzbeat.common.cache.CommonCacheService;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.stereotype.Service;
@@ -43,11 +41,10 @@ public class AlarmSilenceReduce {
     private final AlertNoticeDispatch dispatcherAlarm;
 
     public void silenceAlarm(GroupAlert groupAlert) {
-        CommonCacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
-        List<AlertSilence> alertSilenceList = (List<AlertSilence>) silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE);
+        List<AlertSilence> alertSilenceList = CacheFactory.getAlertSilenceCache();
         if (alertSilenceList == null) {
             alertSilenceList = alertSilenceDao.findAll();
-            silenceCache.put(CommonConstants.CACHE_ALERT_SILENCE, alertSilenceList);
+            CacheFactory.setAlertSilenceCache(alertSilenceList);
         }
         for (AlertSilence alertSilence : alertSilenceList) {
             if (!alertSilence.isEnable()) {

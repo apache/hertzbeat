@@ -23,12 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
-import org.apache.hertzbeat.alert.service.AlertConvergeService;
-import org.apache.hertzbeat.common.cache.CacheFactory;
-import org.apache.hertzbeat.common.cache.CommonCacheService;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
+import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
+import org.apache.hertzbeat.alert.reduce.AlarmGroupReduce;
+import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,42 +42,45 @@ import org.springframework.util.StringUtils;
 @Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-public class AlertConvergeServiceImpl implements AlertConvergeService {
+public class AlertGroupConvergeServiceImpl implements AlertGroupConvergeService {
     
     @Autowired
-    private AlertConvergeDao alertConvergeDao;
+    private AlertGroupConvergeDao alertGroupConvergeDao;
+    
+    @Autowired
+    private AlarmGroupReduce alarmGroupReduce;
  
     @Override
-    public void validate(AlertConverge alertConverge, boolean isModify) throws IllegalArgumentException {
+    public void validate(AlertGroupConverge alertGroupConverge, boolean isModify) throws IllegalArgumentException {
         // todo 
     }
     
     @Override
-    public void addAlertConverge(AlertConverge alertConverge) throws RuntimeException {
-        alertConvergeDao.save(alertConverge);
-        clearAlertConvergesCache();
+    public void addAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException {
+        alertGroupConvergeDao.save(alertGroupConverge);
+        refreshAlertGroupConvergesCache();
     }
     
     @Override
-    public void modifyAlertConverge(AlertConverge alertConverge) throws RuntimeException {
-        alertConvergeDao.save(alertConverge);
-        clearAlertConvergesCache();
+    public void modifyAlertGroupConverge(AlertGroupConverge alertGroupConverge) throws RuntimeException {
+        alertGroupConvergeDao.save(alertGroupConverge);
+        refreshAlertGroupConvergesCache();
     }
     
     @Override
-    public AlertConverge getAlertConverge(long convergeId) throws RuntimeException {
-        return alertConvergeDao.findById(convergeId).orElse(null);
+    public AlertGroupConverge getAlertGroupConverge(long convergeId) throws RuntimeException {
+        return alertGroupConvergeDao.findById(convergeId).orElse(null);
     }
     
     @Override
-    public void deleteAlertConverges(Set<Long> convergeIds) throws RuntimeException {
-        alertConvergeDao.deleteAlertConvergesByIdIn(convergeIds);
-        clearAlertConvergesCache();
+    public void deleteAlertGroupConverges(Set<Long> convergeIds) throws RuntimeException {
+        alertGroupConvergeDao.deleteAlertGroupConvergesByIdIn(convergeIds);
+        refreshAlertGroupConvergesCache();
     }
     
     @Override
-    public Page<AlertConverge> getAlertConverges(List<Long> convergeIds, String search, String sort, String order, int pageIndex, int pageSize) {
-        Specification<AlertConverge> specification = (root, query, criteriaBuilder) -> {
+    public Page<AlertGroupConverge> getAlertGroupConverges(List<Long> convergeIds, String search, String sort, String order, int pageIndex, int pageSize) {
+        Specification<AlertGroupConverge> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (convergeIds != null && !convergeIds.isEmpty()) {
                 CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
@@ -102,11 +103,11 @@ public class AlertConvergeServiceImpl implements AlertConvergeService {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        return alertConvergeDao.findAll(specification, pageRequest);
+        return alertGroupConvergeDao.findAll(specification, pageRequest);
     }
     
-    private void clearAlertConvergesCache() {
-        CommonCacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
-        convergeCache.remove(CommonConstants.CACHE_ALERT_CONVERGE);
+    private void refreshAlertGroupConvergesCache() {
+        List<AlertGroupConverge> alertGroupConverges = alertGroupConvergeDao.findAll();
+        alarmGroupReduce.configureGroupDefines(alertGroupConverges);
     }
 }
