@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -52,6 +53,9 @@ class WebHookAlertNotifyHandlerImplTest {
     
     @Mock
     private ResourceBundle bundle;
+
+    @Mock
+    private AlerterProperties alerterProperties;
 
     @InjectMocks
     private WebHookAlertNotifyHandlerImpl webHookAlertNotifyHandler;
