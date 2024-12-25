@@ -97,6 +97,6 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        huaweiyunSmnAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        //        huaweiyunSmnAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }

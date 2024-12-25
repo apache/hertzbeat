@@ -71,7 +71,7 @@ public class WeChatAppAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        weChatAppAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        //        weChatAppAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 
 }

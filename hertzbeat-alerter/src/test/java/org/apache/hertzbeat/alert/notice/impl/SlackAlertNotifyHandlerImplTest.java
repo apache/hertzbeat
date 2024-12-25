@@ -76,6 +76,6 @@ class SlackAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        slackAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        //        slackAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }

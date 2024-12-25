@@ -74,7 +74,7 @@ class DingTalkRobotAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        dingTalkRobotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        // dingTalkRobotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 
 }

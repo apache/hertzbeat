@@ -94,7 +94,7 @@ class EmailAlertNotifyHandlerImplTest {
         MimeMessage mimeMessage = mock(MimeMessage.class);
         when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
         
-//        emailAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        // emailAlertNotifyHandler.send(receiver, noticeTemplate, alert);
 
         verify(javaMailSender).send(mimeMessage);
 

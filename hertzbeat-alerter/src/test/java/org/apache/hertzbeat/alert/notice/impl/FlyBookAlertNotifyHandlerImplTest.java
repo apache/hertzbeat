@@ -74,7 +74,7 @@ class FlyBookAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        flyBookAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        //        flyBookAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 
 }

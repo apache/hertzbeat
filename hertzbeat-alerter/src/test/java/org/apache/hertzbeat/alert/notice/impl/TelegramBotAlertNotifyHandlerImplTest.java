@@ -78,6 +78,6 @@ class TelegramBotAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        telegramBotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        //        telegramBotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }

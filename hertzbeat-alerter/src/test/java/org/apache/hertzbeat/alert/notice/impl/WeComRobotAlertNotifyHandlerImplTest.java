@@ -75,7 +75,7 @@ class WeComRobotAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        weWorkRobotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        //        weWorkRobotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 
 }

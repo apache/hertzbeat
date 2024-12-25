@@ -76,6 +76,6 @@ class DiscordBotAlertNotifyHandlerImplTest {
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-//        discordBotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
+        // discordBotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }

@@ -37,8 +37,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonByteListAttributeConverter;
-import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.entity.manager.ZonedDateTimeAttributeConverter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;

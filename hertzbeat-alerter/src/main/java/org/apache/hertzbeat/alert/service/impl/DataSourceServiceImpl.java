@@ -1,6 +1,5 @@
 package org.apache.hertzbeat.alert.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.springframework.beans.factory.annotation.Autowired;

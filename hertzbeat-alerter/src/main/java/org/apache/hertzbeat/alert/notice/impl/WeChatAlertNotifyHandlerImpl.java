@@ -80,7 +80,7 @@ final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
         JsonObject textContent = new JsonObject();
 
         // Here you can construct the message content based on the NoticeTemplate and Alert information
-//        String alertMessage = String.format("警告：%s\n详情：%s", alert.getAlertDefineId(), alert.getContent());
+        // String alertMessage = String.format("警告：%s\n详情：%s", alert.getAlertDefineId(), alert.getContent());
         String alertMessage = "Alert message content";
         textContent.addProperty("content", alertMessage);
         messageContent.add("text", textContent);

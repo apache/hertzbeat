@@ -31,11 +31,7 @@ public interface AlertService {
 
     /**
      * Dynamic conditional query
-     * @param alarmIds      Alarm ID List
-     * @param monitorId     Monitor ID
-     * @param priority      Alarm level
      * @param status        Alarm Status
-     * @param content       Alarm content fuzzy query
      * @param sort          Sort field
      * @param order         Sort Type
      * @param pageIndex     List current page
