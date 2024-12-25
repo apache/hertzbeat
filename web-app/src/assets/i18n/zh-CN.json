@@ -39,7 +39,9 @@
     "alert": {
       "": "告警",
       "center": "告警中心",
+      "group": "分组收敛",
       "converge": "告警收敛",
+      "inhibit": "告警抑制",
       "silence": "告警静默",
       "setting": "阈值规则",
       "dispatch": "消息通知"

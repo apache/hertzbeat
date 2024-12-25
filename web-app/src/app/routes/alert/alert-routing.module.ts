@@ -32,8 +32,7 @@ const routes: Routes = [
   { path: 'setting', component: AlertSettingComponent },
   { path: 'notice', component: AlertNoticeComponent },
   { path: 'silence', component: AlertSilenceComponent },
-  { path: 'converge', component: AlertConvergeComponent },
-  { path: '**', component: AlertCenterComponent }
+  { path: 'group', component: AlertConvergeComponent }
 ];
 
 @NgModule({

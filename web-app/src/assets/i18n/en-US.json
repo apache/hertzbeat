@@ -39,7 +39,9 @@
     "alert": {
       "": "Alerting",
       "center": "Alarm Center",
+      "group": "Group Converge",
       "converge": "Alarm Converge",
+      "inhibit": "Alarm Inhibit",
       "setting": "Threshold Rule",
       "silence": "Alarm Silence",
       "dispatch": "Notification"

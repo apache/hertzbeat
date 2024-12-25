@@ -149,10 +149,16 @@
           "link": "/alert/setting"
         },
         {
-          "text": "Converge",
-          "i18n": "menu.alert.converge",
+          "text": "Group",
+          "i18n": "menu.alert.group",
           "icon": "anticon-filter",
-          "link": "/alert/converge"
+          "link": "/alert/group"
+        },
+        {
+          "text": "Inhibition",
+          "i18n": "menu.alert.inhibit",
+          "icon": "anticon-delete-column",
+          "link": "/alert/inhibit"
         },
         {
           "text": "Silence",
