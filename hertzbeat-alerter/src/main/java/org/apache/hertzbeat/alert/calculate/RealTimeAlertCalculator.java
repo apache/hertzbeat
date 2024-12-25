@@ -240,7 +240,7 @@ public class RealTimeAlertCalculator {
         labels.putAll(fingerPrints);
         int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
         if (existingAlert == null) {
-            // 首次触发告警,创建新告警并设置为pending状态
+            // First time triggering alert, create new alert and set to pending status
             SingleAlert newAlert = SingleAlert.builder()
                     .labels(labels)
                     .annotations(annotations)
@@ -251,23 +251,23 @@ public class RealTimeAlertCalculator {
                     .activeAt(currentTimeMilli)
                     .build();
                     
-            // 如果所需触发次数为1,直接设为firing状态
+            // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
                 newAlert.setStatus(STATUS_FIRING);
                 firingAlertMap.put(fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert);
             } else {
-                // 否则先放入pending队列
+                // Otherwise put into pending queue first
                 pendingAlertMap.put(fingerprint, newAlert);
             }
         } else {
-            // 更新已存在的告警
+            // Update existing alert
             existingAlert.setTriggerTimes(existingAlert.getTriggerTimes() + 1);
             existingAlert.setActiveAt(currentTimeMilli);
             
-            // 检查是否达到所需触发次数
+            // Check if required trigger times reached
             if (existingAlert.getStatus().equals(STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
-                // 达到触发次数阈值,转为firing状态
+                // Reached trigger times threshold, change to firing status
                 existingAlert.setStatus(STATUS_FIRING);
                 firingAlertMap.put(fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert);
