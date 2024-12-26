@@ -71,7 +71,7 @@ public class ScriptCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         ScriptProtocol scriptProtocol = metrics.getScript();
         long startTime = System.currentTimeMillis();
         ProcessBuilder processBuilder;
@@ -171,12 +171,12 @@ public class ScriptCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    valueRowBuilder.addColumn(responseTime.toString());
                 } else {
-                    valueRowBuilder.addColumns(line);
+                    valueRowBuilder.addColumn(line);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -201,9 +201,9 @@ public class ScriptCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+            valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
@@ -217,18 +217,18 @@ public class ScriptCollectImpl extends AbstractCollect {
         int lineIndex = 0;
         while (aliasIndex < aliasFields.size()) {
             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
-                valueRowBuilder.addColumns(responseTime.toString());
+                valueRowBuilder.addColumn(responseTime.toString());
             } else {
                 if (lineIndex < lines.length) {
-                    valueRowBuilder.addColumns(lines[lineIndex].trim());
+                    valueRowBuilder.addColumn(lines[lineIndex].trim());
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
                 lineIndex++;
             }
             aliasIndex++;
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private void parseResponseDataByMulti(String result, List<String> aliasFields,
@@ -248,17 +248,17 @@ public class ScriptCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    valueRowBuilder.addColumn(responseTime.toString());
                 } else {
                     Integer index = fieldMapping.get(alias.toLowerCase());
                     if (index != null && index < values.length) {
-                        valueRowBuilder.addColumns(values[index]);
+                        valueRowBuilder.addColumn(values[index]);
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                     }
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 }

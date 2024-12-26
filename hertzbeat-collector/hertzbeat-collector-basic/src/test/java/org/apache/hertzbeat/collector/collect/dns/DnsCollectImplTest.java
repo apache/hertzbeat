@@ -86,12 +86,12 @@ public class DnsCollectImplTest {
         metrics.setName("question");
         metrics.setDns(dnsProtocol);
         metrics.setAliasFields(Collections.singletonList("section"));
-        dnsCollect.collect(builder, monitorId, app, metrics);
+        dnsCollect.collect(builder, metrics);
         assertNotNull(builder.getValues(0).getColumns(0));
 
         // dns is null, no exception throws
         assertDoesNotThrow(() -> {
-            dnsCollect.collect(builder, monitorId, app, null);
+            dnsCollect.collect(builder, null);
         });
 
         // metric name is header
@@ -100,7 +100,7 @@ public class DnsCollectImplTest {
             metrics1.setName("header");
             metrics1.setDns(dnsProtocol);
             metrics1.setAliasFields(Collections.singletonList("section"));
-            dnsCollect.collect(builder, monitorId, app, metrics1);
+            dnsCollect.collect(builder, metrics1);
         });
     }
 

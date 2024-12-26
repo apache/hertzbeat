@@ -19,7 +19,7 @@ package org.apache.hertzbeat.warehouse.store.realtime.redis.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
+import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisProperties;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.client.impl.RedisClusterClientImpl;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.client.impl.RedisSentinelClientImpl;
@@ -56,9 +56,9 @@ public class RedisCommandDelegate {
 
         try {
             operation = switch (redisProperties.mode()) {
-                case SINGLE_MODE -> new RedisSimpleClientImpl().connect(redisProperties, new MetricsDataRedisCodec());
-                case SENTINEL_MODE -> new RedisSentinelClientImpl().connect(redisProperties, new MetricsDataRedisCodec());
-                case CLUSTER_MODE -> new RedisClusterClientImpl().connect(redisProperties, new MetricsDataRedisCodec());
+                case SINGLE_MODE -> new RedisSimpleClientImpl().connect(redisProperties, new RedisMetricsDataCodec());
+                case SENTINEL_MODE -> new RedisSentinelClientImpl().connect(redisProperties, new RedisMetricsDataCodec());
+                case CLUSTER_MODE -> new RedisClusterClientImpl().connect(redisProperties, new RedisMetricsDataCodec());
                 default -> throw new UnsupportedOperationException("Incorrect redis mode: " + redisProperties.mode());
             };
 

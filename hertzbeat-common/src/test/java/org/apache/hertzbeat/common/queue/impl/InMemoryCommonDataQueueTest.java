@@ -63,16 +63,6 @@ class InMemoryCommonDataQueueTest {
 
         assertNotNull(polledMetricsData);
         assertEquals(metricsData, polledMetricsData);
-
-        polledMetricsData = queue.pollMetricsDataToPersistentStorage();
-
-        assertNotNull(polledMetricsData);
-        assertEquals(metricsData, polledMetricsData);
-
-        polledMetricsData = queue.pollMetricsDataToRealTimeStorage();
-
-        assertNotNull(polledMetricsData);
-        assertEquals(metricsData, polledMetricsData);
     }
 
     @Test
@@ -82,8 +72,7 @@ class InMemoryCommonDataQueueTest {
 
         assertEquals(0, metricsInfo.get("alertDataQueue"));
         assertEquals(0, metricsInfo.get("metricsDataToAlertQueue"));
-        assertEquals(0, metricsInfo.get("metricsDataToPersistentStorageQueue"));
-        assertEquals(0, metricsInfo.get("metricsDataToMemoryStorageQueue"));
+        assertEquals(0, metricsInfo.get("metricsDataToStorageQueue"));
 
         queue.sendAlertsData(new Alert());
         queue.sendMetricsData(CollectRep.MetricsData.newBuilder().build());
@@ -92,8 +81,7 @@ class InMemoryCommonDataQueueTest {
 
         assertEquals(1, metricsInfo.get("alertDataQueue"));
         assertEquals(1, metricsInfo.get("metricsDataToAlertQueue"));
-        assertEquals(1, metricsInfo.get("metricsDataToPersistentStorageQueue"));
-        assertEquals(1, metricsInfo.get("metricsDataToMemoryStorageQueue"));
+        assertEquals(0, metricsInfo.get("metricsDataToStorageQueue"));
     }
 
     @Test
@@ -108,8 +96,7 @@ class InMemoryCommonDataQueueTest {
 
         assertEquals(0, metricsInfo.get("alertDataQueue"));
         assertEquals(0, metricsInfo.get("metricsDataToAlertQueue"));
-        assertEquals(0, metricsInfo.get("metricsDataToPersistentStorageQueue"));
-        assertEquals(0, metricsInfo.get("metricsDataToMemoryStorageQueue"));
+        assertEquals(0, metricsInfo.get("metricsDataToStorageQueue"));
     }
 
 }

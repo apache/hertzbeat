@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
+import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
@@ -44,7 +45,7 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
         return ClusterMsg.Message.newBuilder()
                 .setIdentity(message.getIdentity())
                 .setDirection(ClusterMsg.Direction.RESPONSE)
-                .setMsg(String.valueOf(CommonConstants.SUCCESS_CODE))
+                .setMsg(ByteString.copyFromUtf8(String.valueOf(CommonConstants.SUCCESS_CODE)))
                 .build();
     }
 }

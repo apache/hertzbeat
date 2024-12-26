@@ -57,7 +57,7 @@ class HttpCollectImplTest {
                 .build();
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
 
-        httpCollectImpl.collect(builder, 1L, "app", metrics);
+        httpCollectImpl.collect(builder, metrics);
     }
 
     @Test

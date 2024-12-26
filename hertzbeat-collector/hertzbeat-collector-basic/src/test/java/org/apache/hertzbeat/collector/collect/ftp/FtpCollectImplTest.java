@@ -96,7 +96,7 @@ class FtpCollectImplTest {
         metrics.setFtp(ftpProtocol);
         metrics.setAliasFields(aliasField);
         ftpCollectImpl.preCheck(metrics);
-        ftpCollectImpl.collect(builder, 1L, "test", metrics);
+        ftpCollectImpl.collect(builder, metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(Boolean.toString(isActive), valueRow.getColumns(0));
@@ -133,7 +133,7 @@ class FtpCollectImplTest {
         metrics.setFtp(ftpProtocol);
         metrics.setAliasFields(aliasField);
 
-        ftpCollectImpl.collect(builder, 1L, "test", metrics);
+        ftpCollectImpl.collect(builder, metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(Boolean.toString(isActive), valueRow.getColumns(0));

@@ -108,8 +108,7 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder,
-                        long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         HttpProtocol httpProtocol = metrics.getHttp();
@@ -156,6 +155,8 @@ public class HttpCollectImpl extends AbstractCollect {
                             parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, response);
                     case DispatchConstants.PARSE_SITE_MAP ->
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
+                    case DispatchConstants.PARSE_HEADER ->
+                            parseResponseByHeader(builder, metrics.getAliasFields(), response);
                     default ->
                             parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
@@ -196,6 +197,24 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
+    private void parseResponseByHeader(CollectRep.MetricsData.Builder builder, List<String> aliases, CloseableHttpResponse response) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        for (String alias : aliases) {
+            if (!StringUtils.hasText(alias)) {
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                continue;
+            }
+            final Header firstHeader = response.getFirstHeader(alias);
+            if (Objects.isNull(firstHeader)) {
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                continue;
+            }
+
+            valueRowBuilder.addColumn(firstHeader.getValue());
+        }
+        builder.addValueRow(valueRowBuilder.build());
+    }
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_HTTP;
@@ -207,37 +226,18 @@ public class HttpCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : metrics.getAliasFields()) {
-            if ("summary".equalsIgnoreCase(metrics.getName())) {
-                addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
-            } else if ("header".equalsIgnoreCase(metrics.getName())) {
-                addColumnFromHeader(valueRowBuilder, alias, response);
-            }
+            addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
         }
-        builder.addValues(valueRowBuilder.build());
-    }
-
-    private void addColumnFromHeader(CollectRep.ValueRow.Builder valueRowBuilder, String alias, CloseableHttpResponse response) {
-        if (!StringUtils.hasText(alias)) {
-            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            return;
-        }
-
-        final Header firstHeader = response.getFirstHeader(alias);
-        if (Objects.isNull(firstHeader)) {
-            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            return;
-        }
-
-        valueRowBuilder.addColumns(firstHeader.getValue());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private void addColumnForSummary(Long responseTime, CollectRep.ValueRow.Builder valueRowBuilder, int keywordNum, String alias) {
         if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-            valueRowBuilder.addColumns(responseTime.toString());
+            valueRowBuilder.addColumn(responseTime.toString());
         } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-            valueRowBuilder.addColumns(Integer.toString(keywordNum));
+            valueRowBuilder.addColumn(Integer.toString(keywordNum));
         } else {
-            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
         }
     }
 
@@ -308,19 +308,19 @@ public class HttpCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (NetworkConstants.URL.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(siteUrl);
+                    valueRowBuilder.addColumn(siteUrl);
                 } else if (NetworkConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(statusCode == null
+                    valueRowBuilder.addColumn(statusCode == null
                             ? CommonConstants.NULL_VALUE : String.valueOf(statusCode));
                 } else if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(String.valueOf(responseTime));
+                    valueRowBuilder.addColumn(String.valueOf(responseTime));
                 } else if (NetworkConstants.ERROR_MSG.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(errorMsg);
+                    valueRowBuilder.addColumn(errorMsg);
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -344,34 +344,34 @@ public class HttpCollectImpl extends AbstractCollect {
                 for (String alias : aliasFields) {
                     Object value = stringMap.get(alias);
                     if (value != null) {
-                        valueRowBuilder.addColumns(String.valueOf(value));
+                        valueRowBuilder.addColumn(String.valueOf(value));
                     } else {
                         if (alias.startsWith("$.")) {
                             List<Object> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
                             if (subResults != null && subResults.size() > i) {
                                 Object resultValue = subResults.get(i);
-                                valueRowBuilder.addColumns(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
+                                valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
                             } else {
-                                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                             }
                         } else {
                             addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                         }
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             } else if (objectValue instanceof String stringValue) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
                     if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(responseTime.toString());
+                        valueRowBuilder.addColumn(responseTime.toString());
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Integer.toString(keywordNum));
+                        valueRowBuilder.addColumn(Integer.toString(keywordNum));
                     } else {
-                        valueRowBuilder.addColumns(stringValue);
+                        valueRowBuilder.addColumn(stringValue);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
@@ -400,24 +400,24 @@ public class HttpCollectImpl extends AbstractCollect {
                 for (String aliasField : aliasFields) {
                     if ("value".equals(aliasField)) {
                         if (metric.getCounter() != null) {
-                            valueRowBuilder.addColumns(String.valueOf(metric.getCounter().getValue()));
+                            valueRowBuilder.addColumn(String.valueOf(metric.getCounter().getValue()));
                         } else if (metric.getGauge() != null) {
-                            valueRowBuilder.addColumns(String.valueOf(metric.getGauge().getValue()));
+                            valueRowBuilder.addColumn(String.valueOf(metric.getGauge().getValue()));
                         } else if (metric.getUntyped() != null) {
-                            valueRowBuilder.addColumns(String.valueOf(metric.getUntyped().getValue()));
+                            valueRowBuilder.addColumn(String.valueOf(metric.getUntyped().getValue()));
                         } else if (metric.getInfo() != null) {
-                            valueRowBuilder.addColumns(String.valueOf(metric.getInfo().getValue()));
+                            valueRowBuilder.addColumn(String.valueOf(metric.getInfo().getValue()));
                         } else if (metric.getSummary() != null) {
-                            valueRowBuilder.addColumns(String.valueOf(metric.getSummary().getValue()));
+                            valueRowBuilder.addColumn(String.valueOf(metric.getSummary().getValue()));
                         } else if (metric.getHistogram() != null) {
-                            valueRowBuilder.addColumns(String.valueOf(metric.getHistogram().getValue()));
+                            valueRowBuilder.addColumn(String.valueOf(metric.getHistogram().getValue()));
                         }
                     } else {
                         String columnValue = labelMap.get(aliasField);
-                        valueRowBuilder.addColumns(columnValue == null ? CommonConstants.NULL_VALUE : columnValue);
+                        valueRowBuilder.addColumn(columnValue == null ? CommonConstants.NULL_VALUE : columnValue);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
@@ -444,12 +444,12 @@ public class HttpCollectImpl extends AbstractCollect {
                 JsonElement valueElement = object.get(alias);
                 if (valueElement != null) {
                     String value = valueElement.getAsString();
-                    valueRowBuilder.addColumns(value);
+                    valueRowBuilder.addColumn(value);
                 } else {
                     addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 

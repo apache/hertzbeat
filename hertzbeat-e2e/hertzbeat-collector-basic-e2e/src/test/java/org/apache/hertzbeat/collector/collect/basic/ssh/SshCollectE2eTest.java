@@ -139,7 +139,7 @@ public class SshCollectE2eTest {
 
         // Execute collection
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        sshCollect.collect(builder, 0, "ubuntu", metrics);
+        sshCollect.collect(builder, metrics);
         return builder;
     }
 
