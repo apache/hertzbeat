@@ -29,18 +29,10 @@ import java.util.Properties;
  * Kafka connection
  */
 public class KafkaConnect extends AbstractConnection<AdminClient> {
+    private final AdminClient adminClient;
 
-
-    private static AdminClient adminClient;
-
-    private static String preUrl;
-
-    public KafkaConnect(String brokerList) {
-        Properties properties = new Properties();
-        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-        properties.put(AdminClientConfig.RETRIES_CONFIG, 3);
-        properties.put(AdminClientConfig.RETRY_BACKOFF_MS_CONFIG, 500);
-        adminClient = KafkaAdminClient.create(properties);
+    public KafkaConnect(AdminClient adminClient) {
+        this.adminClient = adminClient;
     }
 
     @Override
@@ -55,14 +47,5 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
         }
     }
 
-    public static synchronized AdminClient getAdminClient(String brokerList) {
-        if (StringUtils.isBlank(preUrl) || !brokerList.equals(preUrl)) {
-            Properties properties = new Properties();
-            properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-            adminClient = KafkaAdminClient.create(properties);
-            preUrl = brokerList;
-        }
-        return adminClient;
-    }
 
 }

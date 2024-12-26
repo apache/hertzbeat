@@ -19,15 +19,20 @@ package org.apache.hertzbeat.collector.collect.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
+import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
@@ -47,6 +52,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +65,9 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     private static final String LAG_NUM = "lag_num";
     private static final String PARTITION_OFFSET = "Partition_offset";
+
+    private final GlobalConnectionCache connectionCache = GlobalConnectionCache.getInstance();
+
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -79,9 +89,12 @@ public class KafkaCollectImpl extends AbstractCollect {
                 log.error("Unsupported command: {}", command);
                 return;
             }
-
             // Create AdminClient with the provided host and port
-            AdminClient adminClient = KafkaConnect.getAdminClient(kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
+            AdminClient adminClient = getAdminClient(kafkaProtocol);
+            if (adminClient == null) {
+                log.error("kafkaClient get failed:{},{}",kafkaProtocol.getHost(),kafkaProtocol.getPort());
+                return;
+            }
 
             // Execute the appropriate collection method based on the command
             switch (SupportedCommand.fromCommand(command)) {
@@ -104,6 +117,31 @@ public class KafkaCollectImpl extends AbstractCollect {
         } catch (InterruptedException | ExecutionException e) {
             log.error("Kafka collect error", e);
         }
+    }
+
+    private AdminClient getAdminClient(KafkaProtocol kafkaProtocol) {
+        CacheIdentifier KafkaAdminClientIdentifier = CacheIdentifier.builder()
+                .ip(kafkaProtocol.getHost()).port(kafkaProtocol.getPort())
+                .build();
+        Optional<AbstractConnection<?>> KafkaClientCache = connectionCache.getCache(KafkaAdminClientIdentifier, true);
+        if (KafkaClientCache.isPresent()) {
+            KafkaConnect kafkaConnect = (KafkaConnect) KafkaClientCache.get();
+            AdminClient adminClient = kafkaConnect.getConnection();
+            if (adminClient != null) {
+                return adminClient;
+            }
+            // kafkaConnect 不为空，但是AdminClient为空，认为该缓存无效
+            connectionCache.removeCache(KafkaAdminClientIdentifier);
+        }
+        // 缓存中不存在KafkaConnect
+        Properties properties = new Properties();
+        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
+        AdminClient adminClient = KafkaAdminClient.create(properties);
+        if (adminClient == null) {
+            return null;
+        }
+        connectionCache.addCache(KafkaAdminClientIdentifier, new KafkaConnect(adminClient));
+        return adminClient;
     }
 
     /**
