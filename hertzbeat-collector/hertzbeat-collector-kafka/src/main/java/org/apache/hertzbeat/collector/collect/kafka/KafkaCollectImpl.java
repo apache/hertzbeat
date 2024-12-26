@@ -19,6 +19,9 @@ package org.apache.hertzbeat.collector.collect.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
+import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.kafka.constants.InternalTopic;
 import org.apache.hertzbeat.collector.collect.kafka.constants.SupportedCommand;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -26,10 +29,12 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
 import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.KafkaAdminClient;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
@@ -50,6 +55,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -61,6 +68,8 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     private static final String LAG_NUM = "lag_num";
     private static final String PARTITION_OFFSET = "Partition_offset";
+
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     /**
      * Collect the list of topics
@@ -234,7 +243,7 @@ public class KafkaCollectImpl extends AbstractCollect {
             }
 
             // Create AdminClient with the provided host and port
-            AdminClient adminClient = KafkaConnect.getAdminClient(kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
+            AdminClient adminClient = getAdminClient(kafkaProtocol);
 
             // Execute the appropriate collection method based on the command
             switch (SupportedCommand.fromCommand(command)) {
@@ -258,6 +267,32 @@ public class KafkaCollectImpl extends AbstractCollect {
             log.error("Kafka collect error", e);
         }
     }
+
+    private AdminClient getAdminClient(KafkaProtocol kafkaProtocol) {
+        CacheIdentifier kafkaAdminClientIdentifier = CacheIdentifier.builder()
+                .ip(kafkaProtocol.getHost()).port(kafkaProtocol.getPort())
+                .build();
+        Optional<AbstractConnection<?>> kafkaClientCache = connectionCommonCache.getCache(kafkaAdminClientIdentifier, true);
+        if (kafkaClientCache.isPresent()) {
+            KafkaConnect kafkaConnect = (KafkaConnect) kafkaClientCache.get();
+            AdminClient adminClient = kafkaConnect.getConnection();
+            if (adminClient != null) {
+                return adminClient;
+            }
+            // Cached KafkaConnect is present but AdminClient is null, invalidate the cache
+            connectionCommonCache.removeCache(kafkaAdminClientIdentifier);
+        }
+        // Cached AdminClient was not present or was invalid; create a new AdminClient
+        Properties properties = new Properties();
+        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
+        AdminClient adminClient = KafkaAdminClient.create(properties);
+        if (adminClient == null) {
+            return null;
+        }
+        connectionCommonCache.addCache(kafkaAdminClientIdentifier, new KafkaConnect(adminClient));
+        return adminClient;
+    }
+
 
     /**
      * Collect the earliest and latest offsets for each topic

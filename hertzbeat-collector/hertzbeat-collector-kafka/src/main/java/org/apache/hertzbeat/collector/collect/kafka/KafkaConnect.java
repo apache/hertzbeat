@@ -17,13 +17,9 @@
 
 package org.apache.hertzbeat.collector.collect.kafka;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
 
-import java.util.Properties;
 
 /**
  * Kafka connection
@@ -46,6 +42,5 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
             adminClient.close();
         }
     }
-
 
 }
