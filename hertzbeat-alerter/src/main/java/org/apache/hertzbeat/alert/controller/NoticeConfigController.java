@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.controller;
+package org.apache.hertzbeat.alert.controller;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
-import javax.validation.Valid;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;

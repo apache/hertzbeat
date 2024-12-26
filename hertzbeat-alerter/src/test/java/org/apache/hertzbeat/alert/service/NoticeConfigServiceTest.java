@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.alert.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
@@ -31,7 +31,6 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
-import org.apache.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.controller;
+package org.apache.hertzbeat.alert.controller;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
@@ -31,13 +31,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.apache.hertzbeat.alert.service.impl.NoticeConfigServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

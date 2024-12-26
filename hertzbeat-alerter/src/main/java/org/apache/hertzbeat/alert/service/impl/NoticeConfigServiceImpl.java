@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service.impl;
+package org.apache.hertzbeat.alert.service.impl;
 
 import jakarta.persistence.criteria.Predicate;
 import java.io.IOException;
@@ -63,11 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLineRunner {
-
-    private static final String ALERT_TEST_TARGET = "Test Target";
-
-    private static final String ALERT_TEST_CONTENT = "test send msg! \\n This is the test data. It is proved that it can be received successfully";
-
+    
     private static final Map<Byte, NoticeTemplate> PRESET_TEMPLATE = new HashMap<>(16);
     
     @Autowired
