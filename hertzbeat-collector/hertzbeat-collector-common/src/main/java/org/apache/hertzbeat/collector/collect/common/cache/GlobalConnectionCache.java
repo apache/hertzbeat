@@ -45,10 +45,6 @@ public class GlobalConnectionCache {
      */
     private static final int CACHE_TIME_LENGTH = 2;
 
-    /**
-     * cacheMap max size,ConcurrentLinkedHashMap default LRU
-     */
-    private static final int MAX_CACHE_SIZE = 1000;
 
     /**
      * Cache timeout map
@@ -65,7 +61,7 @@ public class GlobalConnectionCache {
      */
     private GlobalConnectionCache() {
         cacheMap = new ConcurrentLinkedHashMap.Builder<Object, AbstractConnection<?>>()
-                .maximumWeightedCapacity(MAX_CACHE_SIZE)
+                .maximumWeightedCapacity(Integer.MAX_VALUE)
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
                     try {
