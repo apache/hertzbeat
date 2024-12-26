@@ -5,26 +5,23 @@ import { Injectable } from '@angular/core';
 })
 export class AlertSoundService {
   private audio: HTMLAudioElement;
-  private isPlaying = false;
 
   constructor() {
     this.audio = new Audio();
-    this.audio.src = '/assets/audio/default-alert.mp3';
+    this.audio.src = '/assets/audio/default-alert-CN.mp3';
     this.audio.load();
   }
 
-  playAlertSound(): void {
-    if (!this.isPlaying) {
-      this.isPlaying = true;
-      this.audio.volume = 1.0;
-      this.audio
-        .play()
-        .catch(error => {
-          console.error('Failed to play sound:', error);
-        })
-        .finally(() => {
-          this.isPlaying = false;
-        });
+  playAlertSound(lang: string): void {
+    if (lang === 'zh-CN' || lang === 'zh-TW') {
+      this.audio.src = '/assets/audio/default-alert-CN.mp3';
+    } else {
+      this.audio.src = '/assets/audio/default-alert-EN.mp3';
     }
+
+    this.audio.load();
+    this.audio.play().catch(error => {
+      console.warn('Failed to play alert sound:', error);
+    });
   }
 }

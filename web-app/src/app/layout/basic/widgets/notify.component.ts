@@ -12,21 +12,34 @@ import { AlertService } from '../../../service/alert.service';
 @Component({
   selector: 'header-notify',
   template: `
-    <ng-template #badgeTpl>
-      <nz-badge [nzCount]="count" ngClass="alain-default__nav-item" [nzStyle]="{ 'box-shadow': 'none' }">
-        <i nz-icon nzType="bell" ngClass="alain-default__nav-item-icon"></i>
+    <div style="display: flex; align-items: center;">
+      <ng-template #badgeTpl>
+        <nz-badge [nzCount]="count" ngClass="alain-default__nav-item" [nzStyle]="{ 'box-shadow': 'none' }">
+          <i nz-icon nzType="bell" ngClass="alain-default__nav-item-icon"></i>
+        </nz-badge>
+      </ng-template>
+      @if (data!.length <= 0) {<ng-template [ngTemplateOutlet]="badgeTpl" />} @else {<div
+        nz-dropdown
+        (nzVisibleChange)="onPopoverVisibleChange($event)"
+        [(nzVisible)]="popoverVisible"
+        nzTrigger="click"
+        nzPlacement="bottomRight"
+        nzOverlayClassName="header-dropdown notice-icon"
+        [nzDropdownMenu]="noticeMenu"
+      >
+        <ng-template [ngTemplateOutlet]="badgeTpl" />
+      </div>
+      }
+      <nz-badge ngClass="alain-default__nav-item" [nzStyle]="{ 'box-shadow': 'none' }">
+        <i
+          nz-icon
+          [nzType]="isMuted ? 'muted' : 'sound'"
+          ngClass="alain-default__nav-item-icon"
+          (click)="toggleMute($event)"
+          nz-tooltip
+          [nzTooltipTitle]="'common.mute' | i18n"
+        ></i>
       </nz-badge>
-    </ng-template>
-    @if (data!.length <= 0) {<ng-template [ngTemplateOutlet]="badgeTpl" />} @else {<div
-      nz-dropdown
-      (nzVisibleChange)="onPopoverVisibleChange($event)"
-      [(nzVisible)]="popoverVisible"
-      nzTrigger="click"
-      nzPlacement="bottomRight"
-      nzOverlayClassName="header-dropdown notice-icon"
-      [nzDropdownMenu]="noticeMenu"
-    >
-      <ng-template [ngTemplateOutlet]="badgeTpl" />
     </div>
     <nz-dropdown-menu #noticeMenu="nzDropdownMenu">
       @if (data[0].title) {<div class="ant-modal-title" style="line-height: 44px; text-align: center;">{{ data[0].title }}</div>
@@ -50,14 +63,7 @@ import { AlertService } from '../../../service/alert.service';
         <nz-divider nzType="vertical"></nz-divider>
         <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="gotoAlertCenter()">{{ data[0].enterText }}</div>
       </div>
-      <div style="padding: 8px; text-align: center; border-top: 1px solid #f0f0f0;">
-        <button nz-button nzType="default" (click)="testAlertSound()">
-          <i nz-icon nzType="sound" nzTheme="outline"></i>
-          测试告警声音
-        </button>
-      </div>
     </nz-dropdown-menu>
-    }
     <ng-template #listTpl>
       <nz-list [nzDataSource]="data[0].list" [nzRenderItem]="item">
         <ng-template #item let-item>
@@ -118,6 +124,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   popoverVisible = false;
   refreshInterval: any;
   private previousCount = 0;
+  isMuted = false;
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
@@ -132,7 +139,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     this.loadData();
     this.refreshInterval = setInterval(() => {
       this.loadData();
-    }, 30000); // every 30 seconds refresh the tabs
+    }, 10000); // every 10 seconds refresh the tabs
   }
 
   ngOnDestroy() {
@@ -194,8 +201,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
             });
             this.data = this.updateNoticeData(list);
 
-            if (page.totalElements > this.previousCount) {
-              this.alertSound.playAlertSound();
+            if (page.totalElements > this.previousCount && !this.isMuted) {
+              this.alertSound.playAlertSound(this.i18nSvc.currentLang);
             }
             this.previousCount = page.totalElements;
             this.count = page.totalElements;
@@ -274,7 +281,9 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     this.router.navigateByUrl(`/monitors/${monitorId}`);
   }
 
-  testAlertSound(): void {
-    this.alertSound.playAlertSound();
+  toggleMute(event: MouseEvent): void {
+    event.stopPropagation();
+    this.isMuted = !this.isMuted;
+    this.cdr.markForCheck();
   }
 }
