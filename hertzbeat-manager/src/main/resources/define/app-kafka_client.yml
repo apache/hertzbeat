@@ -43,6 +43,13 @@ params:
     range: '[0,65535]'
     required: true
     defaultValue: 9092
+  - field: monitorInternalTopic
+    name:
+      zh-CN: 是否监控内部主题
+      en-US: Monitor Internal Topic
+    type: boolean
+    required: true
+    defaultValue: false
 
 metrics:
   - name: topic_list
@@ -60,6 +67,7 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-list
   - name: topic_detail
     i18n:
@@ -106,6 +114,7 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-describe
   - name: topic_offset
     i18n:
@@ -116,11 +125,13 @@ metrics:
     interval: 300
     fields:
       - field: TopicName
+        label: true
         type: 1
         i18n:
           zh-CN: 主题名称
           en-US: Topic Name
       - field: PartitionNum
+        label: true
         type: 1
         i18n:
           zh-CN: 分区号
@@ -139,6 +150,7 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: topic-offset
   - name: consumer_detail
     i18n:
@@ -149,6 +161,7 @@ metrics:
     interval: 300
     fields:
       - field: GroupId
+        label: true
         type: 1
         i18n:
           zh-CN: 消费者组ID
@@ -159,6 +172,7 @@ metrics:
           zh-CN: 消费者实例数量
           en-US: Group Member Num
       - field: Topic
+        label: true
         type: 1
         i18n:
           zh-CN: 订阅主题名称
@@ -177,4 +191,5 @@ metrics:
     kclient:
       host: ^_^host^_^
       port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
       command: consumer-detail

@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.util.CollectionUtils;
 
 /**
  * metrics collection
@@ -58,19 +59,19 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     protected String collectorIdentity;
     /**
-     * Tenant ID
+     * tenant id
      */
     protected long tenantId;
     /**
-     * Monitor ID
+     * task id
      */
-    protected long monitorId;
+    protected long id;
     /**
-     * Monitoring type name
+     * app type name
      */
     protected String app;
     /**
-     * Metrics configuration
+     * metrics configuration
      */
     protected Metrics metrics;
     /**
@@ -114,7 +115,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.collectorIdentity = collectorIdentity;
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
-        this.monitorId = job.getMonitorId();
+        this.id = job.getMonitorId();
         this.tenantId = job.getTenantId();
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
@@ -132,10 +133,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     @Override
     public void run() {
         this.startTime = System.currentTimeMillis();
-        setNewThreadName(monitorId, app, startTime, metrics);
+        setNewThreadName(id, app, startTime, metrics);
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
         response.setApp(app);
-        response.setId(monitorId);
+        response.setId(id);
         response.setTenantId(tenantId);
         // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
@@ -158,7 +159,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         } else {
             try {
                 abstractCollect.preCheck(metrics);
-                abstractCollect.collect(response, monitorId, app, metrics);
+                abstractCollect.collect(response, metrics);
             } catch (Exception e) {
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
@@ -334,14 +335,40 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 if (value == null) {
                     value = CommonConstants.NULL_VALUE;
                 }
-                realValueRowBuilder.addColumns(value);
+                realValueRowBuilder.addColumn(value);
             }
             aliasFieldValueMap.clear();
             fieldValueMap.clear();
             aliasFieldUnitMap.clear();
             stringTypefieldValueMap.clear();
-            collectData.addValues(realValueRowBuilder.build());
+            CollectRep.ValueRow realValueRow = realValueRowBuilder.build();
             realValueRowBuilder.clear();
+            // apply filter calculation to the real value row
+            if (!CollectionUtils.isEmpty(metrics.getFilters())) {
+                Map<String, Object> contextMap = new HashMap<>(8);
+                for (int i = 0; i < fields.size(); i++) {
+                    Metrics.Field field = fields.get(i);
+                    String value = realValueRow.getColumns(i);
+                    contextMap.put(field.getField(), value);
+                }
+                boolean isMatch = false;
+                for (String filterExpr : metrics.getFilters()) {
+                    try {
+                        JexlExpression expression = JexlExpressionRunner.compile(filterExpr);
+                        if ((Boolean) JexlExpressionRunner.evaluate(expression, contextMap)) {
+                            isMatch = true;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.warn("[metrics data row filters execute warning] {}.", e.getMessage());
+                    }
+                }
+                if (!isMatch) {
+                    // ignore this data row
+                    continue;
+                }
+            }
+            collectData.addValueRow(realValueRow);
         }
     }
 

@@ -103,7 +103,7 @@ public class DnsCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
 
         DnsResolveResult dnsResolveResult;
         try {
@@ -127,18 +127,18 @@ public class DnsCollectImpl extends AbstractCollect {
         if (StringUtils.equals(HEADER, metrics.getName())) {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
-            metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumns(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
+            metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumn(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
         } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {
-                valueRowBuilder.addColumns(index >= currentMetricsResolveResultList.size()
+                valueRowBuilder.addColumn(index >= currentMetricsResolveResultList.size()
                         ? CommonConstants.NULL_VALUE
                         : currentMetricsResolveResultList.get(index));
             }
         }
 
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     @Override

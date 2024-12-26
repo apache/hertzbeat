@@ -87,7 +87,7 @@ class JdbcCommonCollectTest {
             metrics.setJdbc(jdbc);
 
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            jdbcCommonCollect.collect(builder, 1, "test", metrics);
+            jdbcCommonCollect.collect(builder, metrics);
         });
 
         String[] platforms = new String[]{
@@ -107,7 +107,7 @@ class JdbcCommonCollectTest {
                 metrics.setJdbc(jdbc);
     
                 CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-                jdbcCommonCollect.collect(builder, 1, "test", metrics);
+                jdbcCommonCollect.collect(builder, metrics);
             });
         }
         // invalid platform
@@ -119,7 +119,7 @@ class JdbcCommonCollectTest {
             metrics.setJdbc(jdbc);
 
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            jdbcCommonCollect.collect(builder, 1, "test", metrics);
+            jdbcCommonCollect.collect(builder, metrics);
         });
     }
 

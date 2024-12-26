@@ -53,7 +53,7 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         Pop3Protocol pop3Protocol = metrics.getPop3();
@@ -146,16 +146,16 @@ public class Pop3CollectImpl extends AbstractCollect {
         for (String alias : aliasFields) {
             Object value = pop3Metrics.get(alias);
             if (value != null) {
-                valueRowBuilder.addColumns(String.valueOf(value));
+                valueRowBuilder.addColumn(String.valueOf(value));
             } else {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(String.valueOf(responseTime));
+                    valueRowBuilder.addColumn(String.valueOf(responseTime));
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
         }
-        builder.addValues(valueRowBuilder);
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private Map<String, Object> parsePop3Metrics(POP3Client pop3Client, List<String> aliasFields) throws IOException {

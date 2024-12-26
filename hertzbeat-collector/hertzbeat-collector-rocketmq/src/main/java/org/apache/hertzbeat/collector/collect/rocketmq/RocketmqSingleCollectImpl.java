@@ -119,7 +119,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         DefaultMQAdminExt mqAdminExt = null;
         try {
             mqAdminExt = this.createMqAdminExt(metrics);
@@ -361,12 +361,12 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                 List<Object> valueList = JsonPathParser.parseContentWithJsonPath(dataJson, parseScript + aliasField);
                 if (CollectionUtils.isNotEmpty(valueList) && valueList.size() > i) {
                     Object value = valueList.get(i);
-                    valueRowBuilder.addColumns(value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
+                    valueRowBuilder.addColumn(value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 }

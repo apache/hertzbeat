@@ -132,7 +132,7 @@ public class RedisClusterCollectImplTest {
         Mockito.when(cmd.clusterInfo()).thenReturn(clusterInfo);
 
         redisClusterCollect.preCheck(metrics);
-        redisClusterCollect.collect(builder, 1L, "test", metrics);
+        redisClusterCollect.collect(builder, metrics);
 
         assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
         assertEquals(builder.getValuesCount(), 2);

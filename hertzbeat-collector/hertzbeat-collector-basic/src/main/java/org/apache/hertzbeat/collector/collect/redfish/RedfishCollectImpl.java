@@ -63,7 +63,7 @@ public class RedfishCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         ConnectSession connectSession = null;
         try {
             connectSession = getRedfishConnectSession(metrics.getRedfish());
@@ -182,11 +182,11 @@ public class RedfishCollectImpl extends AbstractCollect {
             List<Object> res = JsonPathParser.parseContentWithJsonPath(resp, path);
             if (res != null && !res.isEmpty()) {
                 Object value = res.get(0);
-                valueRowBuilder.addColumns(value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
+                valueRowBuilder.addColumn(value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
             } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
             }
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 }

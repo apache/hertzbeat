@@ -17,8 +17,14 @@
 
 package org.apache.hertzbeat.common.serialize;
 
-import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.channels.Channels;
 import java.util.Map;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.ipc.ArrowStreamReader;
+import org.apache.arrow.vector.table.ArrowTable;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -35,10 +41,13 @@ public class KafkaMetricsDataDeserializer implements Deserializer<CollectRep.Met
 
     @Override
     public CollectRep.MetricsData deserialize(String s, byte[] bytes){
-        try {
-            return CollectRep.MetricsData.parseFrom(bytes);
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
+        try (ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+             ArrowStreamReader reader = new ArrowStreamReader(Channels.newChannel(in), new RootAllocator())) {
+            VectorSchemaRoot root = reader.getVectorSchemaRoot();
+            reader.loadNextBatch();
+            return new CollectRep.MetricsData(new ArrowTable(root));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize Arrow table", e);
         }
     }
 

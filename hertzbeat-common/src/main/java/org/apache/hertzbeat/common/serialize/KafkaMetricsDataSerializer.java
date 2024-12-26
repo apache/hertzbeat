@@ -17,8 +17,13 @@
 
 package org.apache.hertzbeat.common.serialize;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.channels.Channels;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
@@ -37,13 +42,23 @@ public class KafkaMetricsDataSerializer implements Serializer<CollectRep.Metrics
 
     @Override
     public byte[] serialize(String s, CollectRep.MetricsData metricsData) {
-
+        // todo use the ArrowTable bytebuffer to direct send zero copy
         if (metricsData == null) {
             log.error("metricsData is null");
             return null;
         }
-
-        return metricsData.toByteArray();
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             VectorSchemaRoot root = metricsData.toVectorSchemaRootAndRelease();
+             ArrowStreamWriter writer = new ArrowStreamWriter(root,
+                     null, Channels.newChannel(out))) {
+            writer.start();
+            writer.writeBatch();
+            writer.end();
+            return out.toByteArray();
+        } catch (IOException e) {
+            log.error("sendMetricsData error", e);
+        }
+        return null;
     }
 
     @Override

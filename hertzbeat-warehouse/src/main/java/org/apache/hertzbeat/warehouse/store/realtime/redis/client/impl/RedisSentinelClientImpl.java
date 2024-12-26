@@ -33,7 +33,7 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
+import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisProperties;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.client.RedisClientOperation;
 
@@ -73,7 +73,7 @@ public class RedisSentinelClientImpl implements RedisClientOperation<String, Col
             }
 
             masterRedisClient = RedisClient.create(masterUriBuilder.build());
-            masterConnection = masterRedisClient.connect(new MetricsDataRedisCodec());
+            masterConnection = masterRedisClient.connect(new RedisMetricsDataCodec());
         } else {
             throw new UnsupportedOperationException("Incorrect type of SocketAddress, connect redis sentinel failed...");
         }

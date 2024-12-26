@@ -98,7 +98,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         // The command naming convention is the command supported by the above mongodb diagnostic. Support subdocument
         // If the command does not include., execute the command directly and use the document it returns;
         // otherwise, you need to execute the metricsParts[0] command first and then obtain the related subdocument
@@ -126,7 +126,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                 throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand() + " is null.");
             }
             fillBuilder(metrics, valueRowBuilder, document);
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
             connectionCommonCache.removeCache(identifier);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
@@ -153,12 +153,12 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             if (document.containsKey(it)) {
                 Object fieldValue = document.get(it);
                 if (fieldValue == null) {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 } else {
-                    valueRowBuilder.addColumns(fieldValue.toString());
+                    valueRowBuilder.addColumn(fieldValue.toString());
                 }
             } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
             }
         });
     }
