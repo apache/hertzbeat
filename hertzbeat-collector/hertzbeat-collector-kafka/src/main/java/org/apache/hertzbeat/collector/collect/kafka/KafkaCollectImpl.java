@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.collect.kafka;
 
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
@@ -272,7 +273,8 @@ public class KafkaCollectImpl extends AbstractCollect {
         CacheIdentifier kafkaAdminClientIdentifier = CacheIdentifier.builder()
                 .ip(kafkaProtocol.getHost()).port(kafkaProtocol.getPort())
                 .build();
-        Optional<AbstractConnection<?>> kafkaClientCache = connectionCommonCache.getCache(kafkaAdminClientIdentifier, true);
+        Optional<AbstractConnection<?>> kafkaClientCache =
+                connectionCommonCache.getCache(kafkaAdminClientIdentifier, true);
         if (kafkaClientCache.isPresent()) {
             KafkaConnect kafkaConnect = (KafkaConnect) kafkaClientCache.get();
             AdminClient adminClient = kafkaConnect.getConnection();
@@ -284,7 +286,8 @@ public class KafkaCollectImpl extends AbstractCollect {
         }
         // Cached AdminClient was not present or was invalid; create a new AdminClient
         Properties properties = new Properties();
-        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
+        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaProtocol.getHost() + ":" + kafkaProtocol.getPort());
         AdminClient adminClient = KafkaAdminClient.create(properties);
         if (adminClient == null) {
             return null;
@@ -297,19 +300,23 @@ public class KafkaCollectImpl extends AbstractCollect {
     /**
      * Collect the earliest and latest offsets for each topic
      *
-     * @param builder     The MetricsData builder
+     * @param builder The MetricsData builder
      * @param adminClient The AdminClient
      * @throws InterruptedException If the thread is interrupted
-     * @throws ExecutionException   If an error occurs during execution
+     * @throws ExecutionException If an error occurs during execution
      */
-    private void collectTopicOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient, Boolean monitorInternalTopic) throws InterruptedException, ExecutionException {
+    private void collectTopicOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient,
+            Boolean monitorInternalTopic) throws InterruptedException, ExecutionException {
         ListTopicsResult listTopicsResult = adminClient.listTopics(new ListTopicsOptions().listInternal(true));
         Set<String> topicNames = listTopicsResult.names().get();
         topicNames.forEach(topicName -> {
             if (filterInternalTopics(topicName, monitorInternalTopic)) {
                 try {
-                    Map<String, TopicDescription> map = adminClient.describeTopics(Collections.singleton(topicName)).all().get(3L, TimeUnit.SECONDS);
-                    map.forEach((key, value) -> value.partitions().forEach(info -> extractedOffset(builder, adminClient, topicName, value, info)));
+                    Map<String, TopicDescription> map =
+                            adminClient.describeTopics(Collections.singleton(topicName)).all()
+                                    .get(3L, TimeUnit.SECONDS);
+                    map.forEach((key, value) -> value.partitions()
+                            .forEach(info -> extractedOffset(builder, adminClient, topicName, value, info)));
                 } catch (TimeoutException | InterruptedException | ExecutionException e) {
                     log.warn("Topic {} get offset fail", topicName);
                 }
@@ -317,7 +324,8 @@ public class KafkaCollectImpl extends AbstractCollect {
         });
     }
 
-    private void extractedOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient, String name, TopicDescription value, TopicPartitionInfo info) {
+    private void extractedOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient, String name,
+            TopicDescription value, TopicPartitionInfo info) {
         try {
             TopicPartition topicPartition = new TopicPartition(value.name(), info.partition());
             long earliestOffset = getEarliestOffset(adminClient, topicPartition);
@@ -336,7 +344,7 @@ public class KafkaCollectImpl extends AbstractCollect {
     /**
      * Get the earliest offset for a given topic partition
      *
-     * @param adminClient    The AdminClient
+     * @param adminClient The AdminClient
      * @param topicPartition The TopicPartition
      * @return The earliest offset
      */
@@ -353,7 +361,7 @@ public class KafkaCollectImpl extends AbstractCollect {
     /**
      * Get the latest offset for a given topic partition
      *
-     * @param adminClient    The AdminClient
+     * @param adminClient The AdminClient
      * @param topicPartition The TopicPartition
      * @return The latest offset
      */
