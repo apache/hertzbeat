@@ -56,7 +56,7 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
   替换里面的`spring.database`数据源参数，IP端口账户密码驱动
   ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://github.com/hertzbeat/hertzbeat/raw/master/script/application.yml)
-
+  
   需修改部分原参数:
 
 ```yaml
@@ -101,5 +101,7 @@ spring:
 ```
 
 - 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串。
+
+> 注意：上述是针对下载安装包的方式，对于本地切换数据源，只需完成[数据库创建](./mysql-change#数据库创建)以及修改`hertzbeat-manager/src/main/resources/application.yml`中的配置即可。
 
 **启动 HertzBeat 浏览器访问 <http://ip:1157/> 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**

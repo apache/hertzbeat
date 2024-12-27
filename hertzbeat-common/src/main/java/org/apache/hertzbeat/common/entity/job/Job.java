@@ -119,6 +119,10 @@ public class Job {
      * Monitoring configuration parameter properties and values eg: username password timeout host
      */
     private List<Configmap> configmap;
+    /**
+     * Whether it is a service discovery job, true is yes, false is no
+     */
+    private boolean isSd = false;
 
     /**
      * the collect data response metrics as env configmap for other collect use. ^o^xxx^o^
@@ -179,9 +183,8 @@ public class Job {
             Optional<Metrics> metric = e.stream().findAny();
             if (metric.isPresent()) {
                 return metric.get().getPriority();
-            } else {
-                return Byte.MAX_VALUE;
             }
+            return Byte.MAX_VALUE;
         }));
         envConfigmaps = new HashMap<>(8);
     }
@@ -225,9 +228,8 @@ public class Job {
             }
             Set<Metrics> source = priorMetrics.peek();
             return new HashSet<>(source);
-        } else {
-            return Collections.emptySet();
         }
+        return Collections.emptySet();
     }
 
     public void addCollectMetricsData(CollectRep.MetricsData metricsData) {

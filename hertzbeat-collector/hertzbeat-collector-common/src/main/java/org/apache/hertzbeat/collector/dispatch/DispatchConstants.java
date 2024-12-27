@@ -124,6 +124,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_REGISTRY = "registry";
     /**
+     * protocol http sd
+     */
+    String PROTOCOL_HTTP_SD = "httpsd";
+    /**
      * protocol redfish
      */
     String PROTOCOL_REDFISH = "redfish";
@@ -191,6 +195,10 @@ public interface DispatchConstants {
      */
     String PARSE_SITE_MAP = "sitemap";
     /**
+     * Analysis method resolution: response header
+     */
+    String PARSE_HEADER = "header";
+    /**
      * Parsing method prometheus exporter data
      */
     String PARSE_PROMETHEUS = "prometheus";
@@ -209,4 +217,14 @@ public interface DispatchConstants {
      * protocol kafka
      */
     String PROTOCOL_KAFKA = "kclient";
+
+    /**
+     * protocol plc
+     */
+    String PROTOCOL_PLC = "plc";
+
+    /**
+     * protocol modbus
+     */
+    String PROTOCOL_MODBUS = "modbus";
 }

@@ -28,3 +28,5 @@ org.apache.hertzbeat.collector.collect.script.ScriptCollectImpl
 org.apache.hertzbeat.collector.collect.mqtt.MqttCollectImpl
 org.apache.hertzbeat.collector.collect.ipmi2.IpmiCollectImpl
 org.apache.hertzbeat.collector.collect.kafka.KafkaCollectImpl
+org.apache.hertzbeat.collector.collect.sd.HttpSdCollectImpl
+org.apache.hertzbeat.collector.collect.modbus.ModbusCollectImpl

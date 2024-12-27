@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
+import com.google.protobuf.ByteString;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -211,7 +212,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                                 .setDirection(ClusterMsg.Direction.REQUEST)
                                 .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                .setMsg(JsonUtil.toJson(job))
+                                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                                 .build();
                         this.manageServer.sendMsg(collectorName, message);
                     }
@@ -226,7 +227,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                             .setDirection(ClusterMsg.Direction.REQUEST)
                             .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                            .setMsg(JsonUtil.toJson(assignJobs.getRemovingJobs()))
+                            .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(assignJobs.getRemovingJobs())))
                             .build();
                     this.manageServer.sendMsg(collectorName, message);
                 }
@@ -299,7 +300,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
                     .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(job))
+                    .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                     .build();
             boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
 
@@ -342,7 +343,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
                 .setDirection(ClusterMsg.Direction.REQUEST)
-                .setMsg(JsonUtil.toJson(job))
+                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                 .build();
         boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
         if (result) {
@@ -394,7 +395,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
                     .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(job))
+                    .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
                     .build();
             this.manageServer.sendMsg(node.getIdentity(), message);
         }
@@ -437,7 +438,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
                             .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
                             .setDirection(ClusterMsg.Direction.REQUEST)
-                            .setMsg(JsonUtil.toJson(List.of(jobId)))
+                            .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(List.of(jobId))))
                             .build();
                     this.manageServer.sendMsg(node.getIdentity(), deleteMessage);
                 }

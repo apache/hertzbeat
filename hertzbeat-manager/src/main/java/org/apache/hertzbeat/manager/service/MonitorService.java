@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -195,4 +196,6 @@ public interface MonitorService {
      * @param job job content
      */
     void updateAppCollectJob(Job job);
+
+    void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector, SdMonitorParam sdMonitorParam, GrafanaDashboard grafanaDashboard);
 }

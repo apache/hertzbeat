@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.scheduler;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,10 +30,13 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.service.AppService;
@@ -73,6 +77,9 @@ public class SchedulerInit implements CommandLineRunner {
     
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
+
+    @Autowired
+    private MonitorBindDao monitorBindDao;
     
     @Override
     public void run(String... args) throws Exception {
@@ -89,14 +96,22 @@ public class SchedulerInit implements CommandLineRunner {
                 .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(List.of((byte) 0));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(List.of(CommonConstants.MONITOR_PAUSED_CODE));
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findAll();
+        final Set<Long> sdMonitorIds = monitorBindDao.findAllByType(CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR).stream()
+                .map(MonitorBind::getBizId)
+                .collect(Collectors.toSet());
         Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
                 Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
         for (Monitor monitor : monitors) {
             try {
                 // build collect job entity
                 Job appDefine = appService.getAppDefine(monitor.getApp());
+                List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+                if (sdMonitorIds.contains(monitor.getId())) {
+                    appDefine = SdMonitorOperator.constructSdJob(appDefine, SdMonitorOperator.getSdParam(params).get());
+                }
+
                 if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                     appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
                 }
@@ -105,7 +120,7 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
-                List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());
@@ -114,8 +129,7 @@ public class SchedulerInit implements CommandLineRunner {
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                        // todo type
-                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
+                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), CommonConstants.TYPE_STRING);
                         configmaps.add(configmap);
                     }
                 });

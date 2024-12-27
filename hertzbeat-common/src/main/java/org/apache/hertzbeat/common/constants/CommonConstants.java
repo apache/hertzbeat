@@ -73,6 +73,16 @@ public interface CommonConstants {
     byte MONITOR_DOWN_CODE = 0x02;
 
     /**
+     * Monitor bind type, 0: monitor that auto-created by sd
+     */
+    byte MONITOR_BIND_TYPE_SD_SUB_MONITOR = 0x00;
+
+    /**
+     * Monitor bind type, 1: the main monitor of sd
+     */
+    byte MONITOR_BIND_TYPE_SD_MAIN_MONITOR = 0x01;
+
+    /**
      * Alarm status: 0 - normal alarm (to be processed)
      */
     byte ALERT_STATUS_CODE_PENDING = 0x00;
@@ -203,6 +213,16 @@ public interface CommonConstants {
     String TAG_MONITOR_NAME = "monitorName";
 
     /**
+     * Inside the tag: indicate that this monitor is auto-created by main monitor
+     */
+    String TAG_AUTO_CREATED = "autoCreated";
+
+    /**
+     * Inside the tag: indicate that this monitor is a main monitor which provides service discovery
+     */
+    String TAG_SD_MAIN_MONITOR = "sdMainMonitor";
+
+    /**
      * Inside the tag: monitorHost Task host
      */
     String TAG_MONITOR_HOST = "monitorHost";
@@ -231,6 +251,19 @@ public interface CommonConstants {
      * Inside the tag: code
      */
     String TAG_CODE = "code";
+
+    /**
+     * Tag Type: Auto-generated
+     */
+    byte TAG_TYPE_AUTO_GENERATE = 0;
+    /**
+     * Tag Type: User-generated
+     */
+    byte TAG_TYPE_USER_GENERATE = 1;
+    /**
+     * Tag Type: System preset
+     */
+    byte TAG_TYPE_SYSTEM_PRESET = 2;
 
     /**
      * notice_period type Type field, daily type

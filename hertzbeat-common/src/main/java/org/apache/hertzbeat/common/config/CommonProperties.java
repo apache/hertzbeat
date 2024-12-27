@@ -111,6 +111,11 @@ public class CommonProperties {
         private String metricsDataQueueNameToRealTimeStorage;
 
         /**
+         * Queue name for service discovery
+         */
+        private String metricsDataQueueNameForServiceDiscovery;
+
+        /**
          * Queue name for alerts data
          */
         private String alertsDataQueueName;
@@ -128,6 +133,14 @@ public class CommonProperties {
          * metrics data topic
          */
         private String metricsDataTopic;
+        /**
+         * metrics data to storage topic
+         */
+        private String metricsDataToStorageTopic;
+        /**
+         * service discovery data topic
+         */
+        private String serviceDiscoveryDataTopic;
         /**
          * alerts data topic
          */

@@ -68,116 +68,15 @@
     },
     {
       "type": "category",
-      "label": "custom",
-      "items": [
-        "advanced/extend-point",
-        "advanced/extend-tutorial",
-        {
-          "type": "category",
-          "label": "http",
-          "items": [
-            "advanced/extend-http",
-            "advanced/extend-http-default",
-            "advanced/extend-http-jsonpath",
-            "advanced/extend-http-example-hertzbeat",
-            "advanced/extend-http-example-token"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "jdbc",
-          "items": [
-            "advanced/extend-jdbc"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "ssh",
-          "items": [
-            "advanced/extend-ssh"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "telnet",
-          "items": [
-            "advanced/extend-telnet"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "jmx",
-          "items": [
-            "advanced/extend-jmx"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "snmp",
-          "items": [
-            "advanced/extend-snmp"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "NGQL",
-          "items": [
-            "advanced/extend-ngql"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "doc",
-      "id": "template"
-    },
-    {
-      "type": "category",
-      "label": "Community",
-      "items": [
-        "community/contact",
-        "community/development",
-        {
-          "type": "category",
-          "label": "contribution",
-          "items": [
-            "community/contribution",
-            "community/mailing_lists",
-            "community/become_committer",
-            "community/become_pmc_member",
-            "community/new_committer_process",
-            "community/new_pmc_ember_process"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "submit",
-          "items": [
-            "community/document",
-            "community/submit_code",
-            "community/code_style_and_quality_guide"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "release",
-          "items": [
-            "community/how_to_release",
-            "community/how_to_verify_release"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "category",
-      "label": "help",
+      "label": "guides",
       "items": [
         "help/guide",
-        "help/prometheus",
+        "help/security_model",
         {
           "type": "category",
           "label": "service",
           "items": [
+            "help/prometheus",
             "help/website",
             "help/api",
             "help/ping",
@@ -193,7 +92,8 @@
             "help/dns",
             "help/ftp",
             "help/websocket",
-            "help/mqtt"
+            "help/mqtt",
+            "help/modbus"
           ]
         },
         {
@@ -255,13 +155,6 @@
             "help/euleros",
             "help/linux_script",
             "help/windows_script"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "server",
-          "items": [
-            "help/ipmi"
           ]
         },
         {
@@ -386,9 +279,104 @@
     },
     {
       "type": "category",
-      "label": "Template Marketplace",
+      "label": "custom",
       "items": [
-        "help/template_marketplace"
+        "advanced/extend-point",
+        "advanced/extend-tutorial",
+        {
+          "type": "category",
+          "label": "http",
+          "items": [
+            "advanced/extend-http",
+            "advanced/extend-http-default",
+            "advanced/extend-http-jsonpath",
+            "advanced/extend-http-example-hertzbeat",
+            "advanced/extend-http-example-token"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "jdbc",
+          "items": [
+            "advanced/extend-jdbc"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "ssh",
+          "items": [
+            "advanced/extend-ssh"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "telnet",
+          "items": [
+            "advanced/extend-telnet"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "jmx",
+          "items": [
+            "advanced/extend-jmx"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "snmp",
+          "items": [
+            "advanced/extend-snmp"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "NGQL",
+          "items": [
+            "advanced/extend-ngql"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "doc",
+      "id": "template"
+    },
+    {
+      "type": "category",
+      "label": "Community",
+      "items": [
+        "community/contact",
+        "community/development",
+        {
+          "type": "category",
+          "label": "contribution",
+          "items": [
+            "community/contribution",
+            "community/mailing_lists",
+            "community/become_committer",
+            "community/become_pmc_member",
+            "community/new_committer_process",
+            "community/new_pmc_ember_process"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "submit",
+          "items": [
+            "community/document",
+            "community/submit_code",
+            "community/code_style_and_quality_guide"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "release",
+          "items": [
+            "community/how_to_release",
+            "community/how_to_verify_release"
+          ]
+        }
       ]
     },
     {

@@ -53,7 +53,7 @@ public class TelnetCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         TelnetProtocol telnet = metrics.getTelnet();
         int timeout = CollectUtil.getTimeout(telnet.getTimeout());
@@ -65,6 +65,7 @@ public class TelnetCollectImpl extends AbstractCollect {
             if (telnetClient.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
                 List<String> aliasFields = metrics.getAliasFields();
+                String app = builder.getApp();
                 Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
                 if (resultMap.size() < aliasFields.size()) {
@@ -76,9 +77,9 @@ public class TelnetCollectImpl extends AbstractCollect {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String field : aliasFields) {
                     String fieldValue = resultMap.get(field);
-                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             } else {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
                 builder.setMsg("Peer connect failed，Timeout " + timeout + "ms");

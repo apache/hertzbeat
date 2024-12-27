@@ -34,11 +34,15 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -148,40 +152,50 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse influxdb] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
-        List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
 
         String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId());
-
         List<Point> points = new ArrayList<>();
-        for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-            Point.Builder builder = Point.measurement(table);
-            builder.time(metricsData.getTime(), TimeUnit.MILLISECONDS);
-            Map<String, String> labels = new HashMap<>(8);
-            for (int i = 0; i < fieldsList.size(); i++) {
-                CollectRep.Field field = fieldsList.get(i);
-                if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                    if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                        builder.addField(field.getName(), Double.parseDouble(valueRow.getColumns(i)));
-                    } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                        builder.addField(field.getName(), valueRow.getColumns(i));
+        
+        try {
+            RowWrapper rowWrapper = metricsData.readRow();
+
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+                Point.Builder builder = Point.measurement(table);
+                builder.time(metricsData.getTime(), TimeUnit.MILLISECONDS);
+                Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
+
+                rowWrapper.cellStream().forEach(cell -> {
+                    if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                        builder.addField(cell.getField().getName(), "");
+                        return;
                     }
-                    if (field.getLabel()) {
-                        labels.put(field.getName(), valueRow.getColumns(i));
+
+                    Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+                    if (type == CommonConstants.TYPE_NUMBER) {
+                        builder.addField(cell.getField().getName(), Double.parseDouble(cell.getValue()));
+                    } else if (type == CommonConstants.TYPE_STRING) {
+                        builder.addField(cell.getField().getName(), cell.getValue());
                     }
-                } else {
-                    builder.addField(field.getName(), "");
-                }
+
+                    if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
+                        labels.put(cell.getField().getName(), cell.getValue());
+                    }
+                });
+                builder.tag("instance", JsonUtil.toJson(labels));
+                points.add(builder.build());
             }
-            builder.tag("instance", JsonUtil.toJson(labels));
-            points.add(builder.build());
+
+            BatchPoints.Builder builder = BatchPoints.database(DATABASE);
+            builder.points(points);
+            this.influxDb.write(builder.build());
+        } catch (Exception e) {
+            log.error("[warehouse influxdb]--Error: {}", e.getMessage(), e);
         }
-        BatchPoints.Builder builder = BatchPoints.database(DATABASE);
-        builder.points(points);
-        this.influxDb.write(builder.build());
     }
 
     @Override

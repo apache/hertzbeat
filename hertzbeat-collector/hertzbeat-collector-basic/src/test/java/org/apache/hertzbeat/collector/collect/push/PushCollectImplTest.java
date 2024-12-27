@@ -60,7 +60,7 @@ public class PushCollectImplTest {
     @Test
     void collect() throws Exception {
         assertDoesNotThrow(() -> {
-            pushCollect.collect(builder, 1L, "app", Metrics.builder().push(push).build());
+            pushCollect.collect(builder, Metrics.builder().push(push).build());
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

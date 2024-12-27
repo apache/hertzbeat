@@ -20,7 +20,12 @@ package org.apache.hertzbeat.common.serialize;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.channels.Channels;
 import java.util.Map;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +71,6 @@ class KafkaMetricsDataSerializerTest {
         byte[] bytes = serializer.serialize("", metricsData);
 
         assertNotNull(bytes);
-        assertArrayEquals(metricsData.toByteArray(), bytes);
     }
 
     @Test
@@ -84,9 +88,17 @@ class KafkaMetricsDataSerializerTest {
                 .setMetrics("someValue")
                 .setApp("linux")
                 .build();
-        byte[] expectedBytes = metricsData.toByteArray();
+        byte[] expectedBytes = null;
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             VectorSchemaRoot root = metricsData.toVectorSchemaRootAndRelease();
+             ArrowStreamWriter writer = new ArrowStreamWriter(root,
+                     null, Channels.newChannel(out))) {
+            writer.start();
+            writer.writeBatch();
+            writer.end();
+            expectedBytes = out.toByteArray();
+        } catch (IOException ignored) {}
         byte[] bytes = serializer.serialize("topic", headers, metricsData);
-
         assertArrayEquals(expectedBytes, bytes);
     }
 

@@ -54,28 +54,6 @@ public class DataStorageDispatch {
         this.historyDataWriter = historyDataWriter;
         this.pluginRunner = pluginRunner;
         startPersistentDataStorage();
-        startRealTimeDataStorage();
-    }
-
-    private void startRealTimeDataStorage() {
-        Runnable runnable = () -> {
-            Thread.currentThread().setName("warehouse-realtime-data-storage");
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToRealTimeStorage();
-                    if (metricsData == null) {
-                        continue;
-                    }
-                    realTimeDataWriter.saveData(metricsData);
-                    pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
-                } catch (InterruptedException interruptedException) {
-                    Thread.currentThread().interrupt();
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
-            }
-        };
-        workerPool.executeJob(runnable);
     }
 
     protected void startPersistentDataStorage() {
@@ -83,11 +61,13 @@ public class DataStorageDispatch {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToPersistentStorage();
+                    CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage();
                     if (metricsData == null) {
                         continue;
                     }
                     historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
+                    pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
+                    realTimeDataWriter.saveData(metricsData);
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {

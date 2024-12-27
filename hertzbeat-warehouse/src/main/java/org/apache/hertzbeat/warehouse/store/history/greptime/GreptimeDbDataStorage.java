@@ -17,9 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.store.history.greptime;
 
-import com.mysql.cj.jdbc.Driver;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import io.greptime.GreptimeDB;
 import io.greptime.models.AuthInfo;
 import io.greptime.models.DataType;
@@ -29,32 +26,47 @@ import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import io.greptime.options.GreptimeOptions;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collections;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAmount;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * GreptimeDB data storage, only supports GreptimeDB version >= v0.5
@@ -63,357 +75,212 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @Slf4j
 public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
-    
-    private static final String CONSTANT_DB_TTL = "30d";
-    
-    private static final String QUERY_HISTORY_SQL = "SELECT CAST (ts AS Int64) ts, instance, `%s` FROM `%s` WHERE ts >= now() -  interval '%s' and monitor_id = %s order by ts desc;";
-    
-    @SuppressWarnings("checkstyle:LineLength")
-    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL = "SELECT CAST (ts AS Int64) ts, instance, `%s` FROM `%s` WHERE ts >= now() - interval '%s' and monitor_id = %s and instance = '%s' order by ts desc;";
-    
-    private static final String QUERY_INSTANCE_SQL = "SELECT DISTINCT instance FROM `%s` WHERE ts >= now() - interval '1 WEEK'";
-    
-    @SuppressWarnings("checkstyle:LineLength")
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL = "SELECT CAST (ts AS Int64) ts, first_value(`%s`) range '4h' first, avg(`%s`) range '4h' avg, min(`%s`) range '4h' min, max(`%s`) range '4h' max FROM `%s` WHERE instance = '%s' AND ts >= now() - interval '%s' ALIGN '4h'";
-    
-    private static final String TABLE_NOT_EXIST = "not found";
-    
-    private static final String CONSTANTS_CREATE_DATABASE = "CREATE DATABASE IF NOT EXISTS `%s` WITH(ttl='%s')";
-    
-    private static final Runnable INSTANCE_EXCEPTION_PRINT = () -> {
-        if (log.isErrorEnabled()) {
-            log.error("""
-                    \t---------------GreptimeDB Init Failed---------------
-                    \t--------------Please Config GreptimeDB--------------
-                    t-----------Can Not Use Metric History Now-----------
-                    """);
-        }
-    };
-    
-    private HikariDataSource hikariDataSource;
-    
+
+    private static final String BASIC = "Basic";
+    private static final String QUERY_RANGE_PATH = "/v1/prometheus/api/v1/query_range";
+    private static final String LABEL_KEY_NAME = "__name__";
+    private static final String LABEL_KEY_FIELD = "__field__";
+    private static final String LABEL_KEY_INSTANCE = "instance";
+    private static final String SPILT = "_";
+
     private GreptimeDB greptimeDb;
-    
-    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties) {
+
+    private final GreptimeProperties greptimeProperties;
+
+    private final RestTemplate restTemplate;
+
+    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
         if (greptimeProperties == null) {
             log.error("init error, please config Warehouse GreptimeDB props in application.yml");
             throw new IllegalArgumentException("please config Warehouse GreptimeDB props");
         }
-        
-        serverAvailable = initGreptimeDbClient(greptimeProperties) && initGreptimeDbDataSource(greptimeProperties);
+        this.restTemplate = restTemplate;
+        this.greptimeProperties = greptimeProperties;
+        serverAvailable = initGreptimeDbClient(greptimeProperties);
     }
-    
-    private void initGreptimeDb(final GreptimeProperties greptimeProperties) throws SQLException {
-        final DriverPropertyInfo[] properties = new Driver().getPropertyInfo(greptimeProperties.url(), null);
-        final String host = ObjectUtils.requireNonEmpty(properties[0].value);
-        final String port = ObjectUtils.requireNonEmpty(properties[1].value);
-        final String dbName = ObjectUtils.requireNonEmpty(properties[2].value);
-        
-        String ttl = greptimeProperties.expireTime();
-        if (ttl == null || StringUtils.isBlank(ttl.trim())) {
-            ttl = CONSTANT_DB_TTL;
-        }
-        
-        try (final Connection tempConnection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port,
-                greptimeProperties.username(), greptimeProperties.password());
-             final PreparedStatement pstmt = tempConnection
-                     .prepareStatement(String.format(CONSTANTS_CREATE_DATABASE, dbName, ttl))) {
-            log.info("[warehouse greptime] try to create database `{}` if not exists", dbName);
-            pstmt.execute();
-        }
-    }
-    
+
     private boolean initGreptimeDbClient(GreptimeProperties greptimeProperties) {
         String endpoints = greptimeProperties.grpcEndpoints();
         try {
-            final DriverPropertyInfo[] properties = new Driver().getPropertyInfo(greptimeProperties.url(), null);
-            final String dbName = ObjectUtils.requireNonEmpty(properties[2].value);
-            
-            GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints.split(","), dbName) //
-                    .writeMaxRetries(3) //
+            GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints.split(","), greptimeProperties.database())
+                    .writeMaxRetries(3)
                     .authInfo(new AuthInfo(greptimeProperties.username(), greptimeProperties.password()))
-                    .routeTableRefreshPeriodSeconds(30) //
+                    .routeTableRefreshPeriodSeconds(30)
                     .build();
-            
             this.greptimeDb = GreptimeDB.create(opts);
         } catch (Exception e) {
             log.error("[warehouse greptime] Fail to start GreptimeDB client");
             return false;
         }
-        
+
         return true;
     }
-    
-    private boolean initGreptimeDbDataSource(final GreptimeProperties greptimeProperties) {
-        try {
-            initGreptimeDb(greptimeProperties);
-        } catch (Exception e) {
-            if (log.isErrorEnabled()) {
-                log.error(e.getMessage(), e);
-            }
-            
-            INSTANCE_EXCEPTION_PRINT.run();
-            return false;
-        }
-        
-        final HikariConfig config = new HikariConfig();
-        // jdbc properties
-        config.setJdbcUrl(greptimeProperties.url());
-        config.setUsername(greptimeProperties.username());
-        config.setPassword(greptimeProperties.password());
-        config.setDriverClassName(greptimeProperties.driverClassName());
-        // minimum number of idle connection
-        config.setMinimumIdle(10);
-        // maximum number of connection in the pool
-        config.setMaximumPoolSize(10);
-        // maximum wait milliseconds for get connection from pool
-        config.setConnectionTimeout(30000);
-        // maximum lifetime for each connection
-        config.setMaxLifetime(0);
-        // max idle time for recycle idle connection
-        config.setIdleTimeout(0);
-        // validation query
-        config.setConnectionTestQuery("select 1");
-        try {
-            this.hikariDataSource = new HikariDataSource(config);
-        } catch (Exception e) {
-            INSTANCE_EXCEPTION_PRINT.run();
-            return false;
-        }
-        return true;
-    }
-    
+
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse greptime] flush metrics data {} is null, ignore.", metricsData.getId());
+        if (metricsData.getValues().isEmpty()) {
+            log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
             return;
         }
         String monitorId = String.valueOf(metricsData.getId());
         String tableName = getTableName(metricsData.getApp(), metricsData.getMetrics());
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
-        
-        tableSchemaBuilder.addTag("monitor_id", DataType.String) //
-                .addTag("instance", DataType.String) //
+
+        tableSchemaBuilder.addTag("instance", DataType.String)
                 .addTimestamp("ts", DataType.TimestampMillisecond);
-        
-        List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
-        for (CollectRep.Field field : fieldsList) {
-            // handle field type
-            if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                tableSchemaBuilder.addField(field.getName(), DataType.Float64);
-            } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                tableSchemaBuilder.addField(field.getName(), DataType.String);
+        List<CollectRep.Field> fields = metricsData.getFields();
+        fields.forEach(field -> {
+            if (field.getLabel()) {
+                tableSchemaBuilder.addTag(field.getName(), DataType.String);
+            } else {
+                if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                    tableSchemaBuilder.addField(field.getName(), DataType.Float64);
+                } else if (field.getType() == CommonConstants.TYPE_STRING) {
+                    tableSchemaBuilder.addField(field.getName(), DataType.String);
+                }
             }
-        }
+        });
         Table table = Table.from(tableSchemaBuilder.build());
-        
-        try {
-            long now = System.currentTimeMillis();
-            Object[] values = new Object[3 + fieldsList.size()];
-            values[0] = monitorId;
-            values[2] = now;
-            for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                Map<String, String> labels = new HashMap<>(8);
-                for (int i = 0; i < fieldsList.size(); i++) {
-                    if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        CollectRep.Field field = fieldsList.get(i);
-                        if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                            values[3 + i] = Double.parseDouble(valueRow.getColumns(i));
-                        } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                            values[3 + i] = valueRow.getColumns(i);
-                        }
-                        if (field.getLabel()) {
-                            labels.put(field.getName(), String.valueOf(values[3 + i]));
-                        }
-                    } else {
-                        values[3 + i] = null;
+        long now = System.currentTimeMillis();
+        Object[] values = new Object[2 + fields.size()];
+        values[0] = monitorId;
+        values[1] = now;
+        RowWrapper rowWrapper = metricsData.readRow();
+        while (rowWrapper.hasNextRow()) {
+            rowWrapper = rowWrapper.nextRow();
+
+            AtomicInteger index = new AtomicInteger(-1);
+            rowWrapper.cellStream().forEach(cell -> {
+                index.getAndIncrement();
+
+                if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                    values[2 + index.get()] = null;
+                    return;
+                }
+
+                Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+                Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+
+                if (label) {
+                    values[2 + index.get()] = cell.getValue();
+                } else {
+                    if (type == CommonConstants.TYPE_NUMBER) {
+                        values[2 + index.get()] = Double.parseDouble(cell.getValue());
+                    } else if (type == CommonConstants.TYPE_STRING) {
+                        values[2 + index.get()] = cell.getValue();
                     }
                 }
-                values[1] = JsonUtil.toJson(labels);
-                table.addRow(values);
+            });
+
+            table.addRow(values);
+        }
+
+        CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
+        try {
+            Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
+            if (result.isOk()) {
+                log.debug("[warehouse greptime]-Write successful");
+            } else {
+                log.warn("[warehouse greptime]--Write failed: {}", result.getErr());
             }
-            
-            CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
-            try {
-                Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
-                if (result.isOk()) {
-                    log.debug("[warehouse greptime]-Write successful");
-                } else {
-                    log.warn("[warehouse greptime]--Write failed: {}", result.getErr());
-                }
-            } catch (Throwable throwable) {
-                log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
-            }
-        } catch (Exception e) {
-            log.error("[warehouse greptime]--Error: {}", e.getMessage(), e);
+        } catch (Throwable throwable) {
+            log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
         }
     }
-    
+
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
                                                          String label, String history) {
+        String name = getTableName(app, metrics);
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + name + "\""
+                + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
+        if (!CommonConstants.PROMETHEUS.equals(app)) {
+            timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
+        }
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
-        if (!isServerAvailable()) {
-            INSTANCE_EXCEPTION_PRINT.run();
-            return instanceValuesMap;
-        }
-        
-        String table = getTableName(app, metrics);
-        
-        String interval = history2interval(history);
-        String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, interval, monitorId)
-                : String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, interval, monitorId, label);
-        
-        if (log.isDebugEnabled()) {
-            log.debug("[warehouse greptime] getHistoryMetricData SQL: {}", selectSql);
-        }
-        
-        try (Connection connection = hikariDataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(selectSql)) {
-            while (resultSet.next()) {
-                long ts = resultSet.getLong(1);
-                if (ts == 0) {
-                    if (log.isErrorEnabled()) {
-                        log.error("[warehouse greptime] getHistoryMetricData query result timestamp is 0, ignore. {}.",
-                                selectSql);
-                    }
-                    continue;
-                }
-                String instanceValue = resultSet.getString(2);
-                if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
-                    instanceValue = "";
-                }
-                double value = resultSet.getDouble(3);
-                String strValue = double2decimalString(value);
-                
-                List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-                valueList.add(new Value(strValue, ts));
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            if (StringUtils.hasText(greptimeProperties.username())
+                    && StringUtils.hasText(greptimeProperties.password())) {
+                String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
+                String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                headers.add(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth);
             }
-            return instanceValuesMap;
-        } catch (SQLException sqlException) {
-            String msg = sqlException.getMessage();
-            if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
-                if (log.isWarnEnabled()) {
-                    log.warn("[warehouse greptime] failed to getHistoryMetricData: {}", sqlException.getMessage());
+            Instant now = Instant.now();
+            long start;
+            try {
+                if (NumberUtils.isParsable(history)) {
+                    start = NumberUtils.toLong(history);
+                    start = (ZonedDateTime.now().toEpochSecond() - start);
+                } else {
+                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
+                    assert temporalAmount != null;
+                    Instant dateTime = now.minus(temporalAmount);
+                    start = dateTime.getEpochSecond();
                 }
+            } catch (Exception e) {
+                log.error("history time error: {}. use default: 6h", e.getMessage());
+                start = now.minus(6, ChronoUnit.HOURS).getEpochSecond();
+            }
+            long end = now.getEpochSecond();
+            String step = "60s";
+            if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
+                step = "1h";
+            } else if (end - start >= Duration.ofDays(7).getSeconds()) {
+                step = "4h";
+            }
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+            URI uri = UriComponentsBuilder.fromHttpUrl(greptimeProperties.httpEndpoint() + QUERY_RANGE_PATH)
+                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
+                    .queryParam("start", start)
+                    .queryParam("end", end)
+                    .queryParam("step", step)
+                    .build(true).toUri();
+            ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
+                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                log.debug("query metrics data from victoria-metrics success. {}", uri);
+                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
+                        && responseEntity.getBody().getData().getResult() != null) {
+                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
+                    for (PromQlQueryContent.ContentData.Content content : contents) {
+                        Map<String, String> labels = content.getMetric();
+                        labels.remove(LABEL_KEY_NAME);
+                        labels.remove(LABEL_KEY_INSTANCE);
+                        String labelStr = JsonUtil.toJson(labels);
+                        if (content.getValues() != null && !content.getValues().isEmpty()) {
+                            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
+                            for (Object[] valueArr : content.getValues()) {
+                                long timestamp = ((Double) valueArr[0]).longValue();
+                                String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                                // read timestamp here is s unit
+                                valueList.add(new Value(value, timestamp * 1000));
+                            }
+                        }
+                    }
+                }
+            } else {
+                log.error("query metrics data from greptime failed. {}", responseEntity);
             }
         } catch (Exception e) {
-            if (log.isErrorEnabled()) {
-                log.error("[warehouse greptime] failed to getHistoryMetricData:{}", e.getMessage(), e);
-            }
+            log.error(e.getMessage(), e);
         }
         return instanceValuesMap;
     }
-    
+
     private String getTableName(String app, String metrics) {
-        return app + "_" + metrics;
+        return app + SPILT + metrics;
     }
-    
+
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
-        if (!isServerAvailable()) {
-            INSTANCE_EXCEPTION_PRINT.run();
-            return Collections.emptyMap();
-        }
-        String table = getTableName(app, metrics);
-        List<String> instances = new LinkedList<>();
-        if (label != null && !StringUtils.isBlank(label)) {
-            instances.add(label);
-        }
-        if (instances.isEmpty()) {
-            String selectSql = String.format(QUERY_INSTANCE_SQL, table);
-            if (log.isDebugEnabled()) {
-                log.debug("[warehouse greptime] getHistoryIntervalMetricData sql: {}", selectSql);
-            }
-            
-            try (Connection connection = hikariDataSource.getConnection();
-                 Statement statement = connection.createStatement();
-                 ResultSet resultSet = statement.executeQuery(selectSql)) {
-                while (resultSet.next()) {
-                    String instanceValue = resultSet.getString(1);
-                    if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
-                        instances.add("''");
-                    } else {
-                        instances.add(instanceValue);
-                    }
-                }
-            } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error("[warehouse greptime] failed to query instances{}", e.getMessage(), e);
-                }
-            }
-        }
-        
-        Map<String, List<Value>> instanceValuesMap = new HashMap<>(instances.size());
-        for (String instanceValue : instances) {
-            String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL, metric, metric, metric, metric,
-                    table, instanceValue, history2interval(history));
-            
-            if (log.isDebugEnabled()) {
-                log.debug("[warehouse greptime] getHistoryIntervalMetricData sql: {}", selectSql);
-            }
-            
-            List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-            try (Connection connection = hikariDataSource.getConnection();
-                 Statement statement = connection.createStatement();
-                 ResultSet resultSet = statement.executeQuery(selectSql)) {
-                while (resultSet.next()) {
-                    long ts = resultSet.getLong(1);
-                    if (ts == 0) {
-                        if (log.isErrorEnabled()) {
-                            log.error(
-                                    "[warehouse greptime] getHistoryIntervalMetricData query result timestamp is 0, ignore. {}.",
-                                    selectSql);
-                        }
-                        continue;
-                    }
-                    double origin = resultSet.getDouble(2);
-                    String originStr = double2decimalString(origin);
-                    double avg = resultSet.getDouble(3);
-                    String avgStr = double2decimalString(avg);
-                    double min = resultSet.getDouble(4);
-                    String minStr = double2decimalString(min);
-                    double max = resultSet.getDouble(5);
-                    String maxStr = double2decimalString(max);
-                    Value value = Value.builder().origin(originStr).mean(avgStr).min(minStr).max(maxStr).time(ts)
-                            .build();
-                    values.add(value);
-                }
-                resultSet.close();
-            } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error("[warehouse greptime] failed to getHistoryIntervalMetricData: {}", e.getMessage(), e);
-                }
-            }
-        }
-        return instanceValuesMap;
-    }
-    
-    // TODO(dennis): we can remove it when
-    // https://github.com/GreptimeTeam/greptimedb/issues/4168 is fixed.
-    // default 6h-6 hours: s-seconds, M-minutes, h-hours, d-days, w-weeks
-    private String history2interval(String history) {
-        if (history == null) {
-            return null;
-        }
-        history = history.trim().toLowerCase();
-        
-        // Be careful, the order matters.
-        return history.replaceAll("d", " day") //
-                .replaceAll("s", " second") //
-                .replaceAll("w", " week") //
-                .replaceAll("h", " hour")//
-                .replaceAll("m", " minute");
-    }
-    
-    private String double2decimalString(double d) {
-        return BigDecimal.valueOf(d).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+        return getHistoryMetricData(monitorId, app, metrics, metric, label, history);
     }
     
     @Override
@@ -421,10 +288,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (this.greptimeDb != null) {
             this.greptimeDb.shutdownGracefully();
             this.greptimeDb = null;
-        }
-        if (this.hikariDataSource != null) {
-            this.hikariDataSource.close();
-            hikariDataSource = null;
         }
     }
 }

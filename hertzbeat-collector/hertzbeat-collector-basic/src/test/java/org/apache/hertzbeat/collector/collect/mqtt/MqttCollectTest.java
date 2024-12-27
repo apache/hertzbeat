@@ -103,7 +103,7 @@ public class MqttCollectTest {
             metrics.setMqtt(mqtt);
             metrics.setAliasFields(new ArrayList<>());
 
-            mqttCollect.collect(builder, 1L, "app", metrics);
+            mqttCollect.collect(builder, metrics);
         });
 
         
@@ -118,7 +118,7 @@ public class MqttCollectTest {
             metrics.setMqtt(mqtt);
             metrics.setAliasFields(new ArrayList<>());
 
-            mqttCollect.collect(builder, 1L, "app", metrics);
+            mqttCollect.collect(builder, metrics);
         });
     }
 }

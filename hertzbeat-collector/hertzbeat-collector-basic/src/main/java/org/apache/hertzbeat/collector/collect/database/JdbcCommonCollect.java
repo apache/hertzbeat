@@ -78,7 +78,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
@@ -201,14 +201,14 @@ public class JdbcCommonCollect extends AbstractCollect {
                 for (String column : columns) {
                     if (CollectorConstants.RESPONSE_TIME.equals(column)) {
                         long time = System.currentTimeMillis() - startTime;
-                        valueRowBuilder.addColumns(String.valueOf(time));
+                        valueRowBuilder.addColumn(String.valueOf(time));
                     } else {
                         String value = resultSet.getString(column);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumns(value);
+                        valueRowBuilder.addColumn(value);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
@@ -241,14 +241,14 @@ public class JdbcCommonCollect extends AbstractCollect {
             for (String column : columns) {
                 if (CollectorConstants.RESPONSE_TIME.equals(column)) {
                     long time = System.currentTimeMillis() - startTime;
-                    valueRowBuilder.addColumns(String.valueOf(time));
+                    valueRowBuilder.addColumn(String.valueOf(time));
                 } else {
                     String value = values.get(column.toLowerCase());
                     value = value == null ? CommonConstants.NULL_VALUE : value;
-                    valueRowBuilder.addColumns(value);
+                    valueRowBuilder.addColumn(value);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -271,14 +271,14 @@ public class JdbcCommonCollect extends AbstractCollect {
                 for (String column : columns) {
                     if (CollectorConstants.RESPONSE_TIME.equals(column)) {
                         long time = System.currentTimeMillis() - startTime;
-                        valueRowBuilder.addColumns(String.valueOf(time));
+                        valueRowBuilder.addColumn(String.valueOf(time));
                     } else {
                         String value = resultSet.getString(column);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumns(value);
+                        valueRowBuilder.addColumn(value);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
@@ -292,6 +292,14 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
+            String url = jdbcProtocol.getUrl().toLowerCase(); // convert the URL to lowercase for case-insensitive checking
+            // check whether the parameter is valid
+            if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")
+                    || url.contains("allowloadlocalinfile") || url.contains("allowloadlocalinfileinpath")
+                    || url.contains("uselocalinfile") || url.contains("autodeserialize") || url.contains("detectcustomcollations")
+                    || url.contains("serverstatusdiffinterceptor")) {
+                throw new IllegalArgumentException("Invalid JDBC URL: contains malicious characters.");
+            }
             // when has config jdbc url, use it 
             return jdbcProtocol.getUrl();
         }

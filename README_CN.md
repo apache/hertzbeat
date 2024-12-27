@@ -78,7 +78,7 @@
   [ClickHouse](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-iotdb.yml),
   [Redis Cluster](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_sentinel.yml)
   [Doris BE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_fe.yml),
-  [Memcached](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-nebulaGraph.yml)
+  [Memcached](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-nebula_graph.yml)
 - [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-windows.yml),
   [EulerOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-coreos.yml),
@@ -159,7 +159,7 @@
 ##### 方式三：本地代码启动
 
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `manager` 和前端工程 `web-app`
-2. 后端：需要 `maven3+`, `java17` 和 `lombok` 环境，修改 `YML` 配置信息并启动 `manager` 服务
+2. 后端：需要 `maven3+`, `java17` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `manager` 服务即可。
 3. 前端：需要 `nodejs npm angular-cli`环境，待本地后端启动后，在 `web-app` 目录下启动 `ng serve --open`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
@@ -479,6 +479,12 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/All-The-Best-for"><img src="https://avatars.githubusercontent.com/u/76414672?v=4?s=100" width="100px;" alt="wbs99"/><br /><sub><b>wbs99</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=All-The-Best-for" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/starryCoder"><img src="https://avatars.githubusercontent.com/u/46510059?v=4?s=100" width="100px;" alt="starryCoder"/><br /><sub><b>starryCoder</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=starryCoder" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hasimmollah"><img src="https://avatars.githubusercontent.com/u/32538599?v=4?s=100" width="100px;" alt="hasimmollah"/><br /><sub><b>hasimmollah</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hasimmollah" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ayu-v0"><img src="https://avatars.githubusercontent.com/u/127600988?v=4?s=100" width="100px;" alt="Ayu"/><br /><sub><b>Ayu</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ayu-v0" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Rancho-7"><img src="https://avatars.githubusercontent.com/u/59016860?v=4?s=100" width="100px;" alt="Nick Guo"/><br /><sub><b>Nick Guo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Rancho-7" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/doveLin0818"><img src="https://avatars.githubusercontent.com/u/190927907?v=4?s=100" width="100px;" alt="doveLin"/><br /><sub><b>doveLin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=doveLin0818" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://zzrl.cc/"><img src="https://avatars.githubusercontent.com/u/91836599?v=4?s=100" width="100px;" alt="yunfan24"/><br /><sub><b>yunfan24</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yunfan24" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

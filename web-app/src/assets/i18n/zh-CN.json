@@ -147,8 +147,7 @@
     "monitor.type": "监控类型",
     "monitor.name": "监控任务名称",
     "monitor.metrics": "监控指标",
-    "help.message.content": "自定义监控看板",
-    "help.content": "自定义监控看板,以表格形式展示某种监控的自选指标",
+    "help.content": "自定义监控看板(beta),以表格形式展示某种监控的自选指标",
     "help.link": "https://hertzbeat.apache.org/zh-cn/docs/help/bulletin"
   },
   "question.link": "https://hertzbeat.apache.org/zh-cn/docs/help/issue",
@@ -404,6 +403,8 @@
   "monitors.new-monitor": "新增监控",
   "monitors.new.success": "新增监控成功",
   "monitors.new.failed": "新增监控失败",
+  "monitors.new.notify.change-to-https": "已开启HTTPS，端口号自动更改为 443，请留意。",
+  "monitors.new.notify.change-to-http": "已关闭HTTPS，端口号自动更改为 80，请留意。",
   "monitors.edit": "编辑",
   "monitors.edit.success": "修改监控成功",
   "monitors.edit.failed": "修改监控失败",

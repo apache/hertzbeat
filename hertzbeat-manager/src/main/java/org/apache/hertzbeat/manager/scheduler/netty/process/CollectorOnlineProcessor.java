@@ -42,7 +42,8 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         String collector = message.getIdentity();
         log.info("the collector {} actively requests to go online.", collector);
-        CollectorInfo collectorInfo = JsonUtil.fromJson(message.getMsg(), CollectorInfo.class);
+        String msg = message.getMsg().toStringUtf8();
+        CollectorInfo collectorInfo = JsonUtil.fromJson(msg, CollectorInfo.class);
         if (collectorInfo != null && StringUtils.isBlank(collectorInfo.getIp())) {
             // fetch remote ip address
             InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().remoteAddress();

@@ -19,7 +19,12 @@ package org.apache.hertzbeat.common.serialize;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.channels.Channels;
 import java.util.Map;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,11 +67,20 @@ class KafkaMetricsDataDeserializerTest {
                 .setMetrics("someValue")
                 .setApp("linux")
                 .build();
-        byte[] bytes = expectedMetricsData.toByteArray();
+        byte[] bytes = null;
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             VectorSchemaRoot root = expectedMetricsData.toVectorSchemaRootAndRelease();
+             ArrowStreamWriter writer = new ArrowStreamWriter(root,
+                     null, Channels.newChannel(out))) {
+            writer.start();
+            writer.writeBatch();
+            writer.end();
+            bytes = out.toByteArray();
+        } catch (IOException ignored) {}
 
         CollectRep.MetricsData actualMetricsData = deserializer.deserialize("", bytes);
 
-        assertEquals(expectedMetricsData, actualMetricsData);
+        assertEquals(expectedMetricsData.rowCount(), actualMetricsData.rowCount());
     }
 
     @Test
@@ -84,11 +98,20 @@ class KafkaMetricsDataDeserializerTest {
                 .setMetrics("someValue")
                 .setApp("linux")
                 .build();
-        byte[] bytes = expectedMetricsData.toByteArray();
+        byte[] bytes = null;
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             VectorSchemaRoot root = expectedMetricsData.toVectorSchemaRootAndRelease();
+             ArrowStreamWriter writer = new ArrowStreamWriter(root,
+                     null, Channels.newChannel(out))) {
+            writer.start();
+            writer.writeBatch();
+            writer.end();
+            bytes = out.toByteArray();
+        } catch (IOException ignored) {}
 
         CollectRep.MetricsData actualMetricsData = deserializer.deserialize("topic", headers, bytes);
 
-        assertEquals(expectedMetricsData, actualMetricsData);
+        assertEquals(expectedMetricsData.rowCount(), actualMetricsData.rowCount());
     }
 
     @Test

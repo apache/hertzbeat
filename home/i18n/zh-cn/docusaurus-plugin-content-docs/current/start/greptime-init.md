@@ -27,9 +27,9 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
 2. Docker安装GreptimeDB
 
    ```shell
-   $ docker run -p 127.0.0.1:4000-4003:4000-4003 \
+   $ docker run -d -p 127.0.0.1:4000-4003:4000-4003 \
      -v "$(pwd)/greptimedb:/tmp/greptimedb" \
-     --name greptime --rm \
+     --name greptime \
      greptime/greptimedb:latest standalone start \
      --http-addr 0.0.0.0:4000 \
      --rpc-addr 0.0.0.0:4001 \
@@ -52,20 +52,19 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
    ```yaml
    warehouse:
       store:
-         # 关闭默认JPA
          jpa:
             enabled: false
          greptime:
             enabled: true
             grpc-endpoints: localhost:4001
-            url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
-            driver-class-name: com.mysql.cj.jdbc.Driver
+            http-endpoint: http://localhost:4000
+            database: public
             username: greptime
             password: greptime
-            expire-time: 30d
    ```
 
-   默认数据库是 URL 中配置的  `hertzbeat` ，将自动创建。 `expire-time` 是自动创建的数据库的 TTL （数据过期）时间，默认为 30 天。
+   默认数据库是内置的  `public` ，若制定其它数据库名称，需要在 `greptimeDB` 提前创建。  
+   eg: 创建名称为 `hertzbeat` 数据有效期90天的数据库 SQL: `CREATE DATABASE IF NOT EXISTS hertzbeat WITH(ttl='90d')`
 
 2. 重启 HertzBeat
 

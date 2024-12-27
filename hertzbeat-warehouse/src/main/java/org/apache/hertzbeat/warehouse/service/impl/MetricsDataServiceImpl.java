@@ -17,13 +17,15 @@
 
 package org.apache.hertzbeat.warehouse.service.impl;
 
-import java.util.HashMap;
-import java.util.LinkedList;
+import com.google.common.collect.Maps;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
 import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
@@ -39,6 +41,7 @@ import org.springframework.stereotype.Service;
 /**
  * Metrics Data Service impl
  */
+@Slf4j
 @Service
 public class MetricsDataServiceImpl implements MetricsDataService {
 
@@ -69,33 +72,37 @@ public class MetricsDataServiceImpl implements MetricsDataService {
         MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
         dataBuilder.id(storageData.getId()).app(storageData.getApp()).metrics(storageData.getMetrics())
                 .time(storageData.getTime());
-        List<Field> fields = storageData.getFieldsList().stream().map(tmpField ->
-                        Field.builder().name(tmpField.getName())
-                                .type(Integer.valueOf(tmpField.getType()).byteValue())
-                                .label(tmpField.getLabel())
-                                .unit(tmpField.getUnit())
-                                .build())
-                .collect(Collectors.toList());
-        dataBuilder.fields(fields);
-        List<ValueRow> valueRows = new LinkedList<>();
-        for (CollectRep.ValueRow valueRow : storageData.getValuesList()) {
-            Map<String, String> labels = new HashMap<>(8);
-            List<Value> values = new LinkedList<>();
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                String origin = valueRow.getColumns(i);
-                if (CommonConstants.NULL_VALUE.equals(origin)) {
-                    values.add(new Value());
-                } else {
-                    values.add(new Value(origin));
-                    if (field.getLabel()) {
-                        labels.put(field.getName(), origin);
+        dataBuilder.fields(storageData.getFields().stream()
+                .map(field -> Field.builder().name(field.getName())
+                        .type((byte) field.getType())
+                        .label(field.getLabel())
+                        .unit(field.getUnit())
+                        .build())
+                .toList());
+
+        List<ValueRow> valueRows = new ArrayList<>();
+        if (storageData.rowCount() > 0) {
+            RowWrapper rowWrapper = storageData.readRow();
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+                Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
+                List<Value> values = new ArrayList<>();
+                rowWrapper.cellStream().forEach(cell -> {
+                    String origin = cell.getValue();
+
+                    if (CommonConstants.NULL_VALUE.equals(origin)) {
+                        values.add(new Value());
+                    } else {
+                        values.add(new Value(origin));
+                        if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
+                            labels.put(cell.getField().getName(), origin);
+                        }
                     }
-                }
+                });
+                valueRows.add(ValueRow.builder().labels(labels).values(values).build());
             }
-            valueRows.add(ValueRow.builder().labels(labels).values(values).build());
+            dataBuilder.valueRows(valueRows);
         }
-        dataBuilder.valueRows(valueRows);
         return dataBuilder.build();
     }
 

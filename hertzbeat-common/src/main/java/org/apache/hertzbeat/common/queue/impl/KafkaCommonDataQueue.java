@@ -61,19 +61,19 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     private final ReentrantLock alertLock = new ReentrantLock();
     private final ReentrantLock metricDataToAlertLock = new ReentrantLock();
-    private final ReentrantLock metricDataToPersistentLock = new ReentrantLock();
-    private final ReentrantLock metricDataToRealTimeStorageLock = new ReentrantLock();
+    private final ReentrantLock metricDataToStorageLock = new ReentrantLock();
+    private final ReentrantLock serviceDiscoveryDataLock = new ReentrantLock();
     private final LinkedBlockingQueue<Alert> alertDataQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
     private final CommonProperties.KafkaProperties kafka;
     private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
     private KafkaProducer<Long, Alert> alertDataProducer;
     private KafkaConsumer<Long, Alert> alertDataConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
+    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToStorageConsumer;
+    private KafkaConsumer<Long, CollectRep.MetricsData> serviceDiscoveryDataConsumer;
 
     public KafkaCommonDataQueue(CommonProperties properties) {
         if (properties == null || properties.getQueue() == null || properties.getQueue().getKafka() == null) {
@@ -83,8 +83,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.kafka = properties.getQueue().getKafka();
         alertDataQueue = new LinkedBlockingQueue<>();
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
-        metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
-        metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
+        metricsDataToStorageQueue = new LinkedBlockingQueue<>();
+        serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
         initDataQueue();
     }
 
@@ -115,15 +115,16 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             metricsDataToAlertConsumer = new KafkaConsumer<>(metricsToAlertConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
             metricsDataToAlertConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
 
-            Map<String, Object> metricsToPersistentConsumerConfig = new HashMap<>(consumerConfig);
-            metricsToPersistentConsumerConfig.put("group.id", "metrics-persistent-consumer");
-            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
-            metricsDataToPersistentStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
+            Map<String, Object> metricsToStorageConsumerConfig = new HashMap<>(consumerConfig);
+            metricsToStorageConsumerConfig.put("group.id", "metrics-persistent-consumer");
+            metricsDataToStorageConsumer = new KafkaConsumer<>(metricsToStorageConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
 
-            Map<String, Object> metricsToRealTimeConsumerConfig = new HashMap<>(consumerConfig);
-            metricsToRealTimeConsumerConfig.put("group.id", "metrics-memory-consumer");
-            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
-            metricsDataToRealTimeStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
+            Map<String, Object> serviceDiscoveryDataConsumerConfig = new HashMap<>(consumerConfig);
+            serviceDiscoveryDataConsumerConfig.put("group.id", "service-discovery-data-consumer");
+            serviceDiscoveryDataConsumer = new KafkaConsumer<>(serviceDiscoveryDataConsumerConfig, new LongDeserializer(),
+                    new KafkaMetricsDataDeserializer());
+            serviceDiscoveryDataConsumer.subscribe(Collections.singletonList(kafka.getServiceDiscoveryDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);
             throw e;
@@ -140,6 +141,11 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
+    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
+        return genericPollDataFunction(serviceDiscoveryDataQueue, serviceDiscoveryDataConsumer, serviceDiscoveryDataLock);
+    }
+
+    @Override
     public Alert pollAlertsData() throws InterruptedException {
         return genericPollDataFunction(alertDataQueue, alertDataConsumer, alertLock);
 
@@ -151,16 +157,9 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        return genericPollDataFunction(metricsDataToPersistentStorageQueue, metricsDataToPersistentStorageConsumer, metricDataToPersistentLock);
+    public CollectRep.MetricsData pollMetricsDataToStorage() throws InterruptedException {
+        return genericPollDataFunction(metricsDataToStorageQueue, metricsDataToStorageConsumer, metricDataToStorageLock);
     }
-
-
-    @Override
-    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        return genericPollDataFunction(metricsDataToRealTimeStorageQueue, metricsDataToRealTimeStorageConsumer, metricDataToRealTimeStorageLock);
-    }
-
 
     public <T> T genericPollDataFunction(LinkedBlockingQueue<T> dataQueue, KafkaConsumer<Long, T> dataConsumer, ReentrantLock lock) throws InterruptedException {
 
@@ -192,7 +191,31 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     @Override
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
         if (metricsDataProducer != null) {
-            metricsDataProducer.send(new ProducerRecord<>(kafka.getMetricsDataTopic(), metricsData));
+            ProducerRecord<Long, CollectRep.MetricsData> record =
+                    new ProducerRecord<>(kafka.getMetricsDataTopic(), metricsData);
+            metricsDataProducer.send(record);
+        } else {
+            log.error("metricsDataProducer is not enabled");
+        }
+    }
+
+    @Override
+    public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
+        if (metricsDataProducer != null) {
+            ProducerRecord<Long, CollectRep.MetricsData> record =
+                    new ProducerRecord<>(kafka.getMetricsDataToStorageTopic(), metricsData);
+            metricsDataProducer.send(record);
+        } else {
+            log.error("metricsDataProducer is not enabled");
+        }
+    }
+
+    @Override
+    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        if (metricsDataProducer != null) {
+            ProducerRecord<Long, CollectRep.MetricsData> record =
+                    new ProducerRecord<>(kafka.getServiceDiscoveryDataTopic(), metricsData);
+            metricsDataProducer.send(record);
         } else {
             log.error("metricsDataProducer is not enabled");
         }
@@ -212,11 +235,11 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         if (metricsDataToAlertConsumer != null) {
             metricsDataToAlertConsumer.close();
         }
-        if (metricsDataToPersistentStorageConsumer != null) {
-            metricsDataToPersistentStorageConsumer.close();
+        if (metricsDataToStorageConsumer != null) {
+            metricsDataToStorageConsumer.close();
         }
-        if (metricsDataToRealTimeStorageConsumer != null) {
-            metricsDataToRealTimeStorageConsumer.close();
+        if (serviceDiscoveryDataConsumer != null) {
+            serviceDiscoveryDataConsumer.close();
         }
     }
 }

@@ -64,7 +64,6 @@ export class MonitorEditComponent implements OnInit {
   grafanaDashboard!: GrafanaDashboard;
   collectors!: Collector[];
   collector: string = '';
-  detected: boolean = false;
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
 
@@ -93,7 +92,6 @@ export class MonitorEditComponent implements OnInit {
               });
               this.paramValueMap = paramValueMap;
             }
-            this.detected = false;
             if (this.monitor.tags == undefined) {
               this.monitor.tags = [];
             }
@@ -192,17 +190,12 @@ export class MonitorEditComponent implements OnInit {
 
   onSubmit(info: any) {
     let addMonitor = {
-      detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
       params: info.params.concat(info.advancedParams),
       grafanaDashboard: info.grafanaDashboard
     };
-    if (this.detected) {
-      this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
-    } else {
-      this.spinningTip = 'Loading...';
-    }
+    this.spinningTip = 'Loading...';
     this.isSpinning = true;
     this.monitorSvc.editMonitor(addMonitor).subscribe(
       message => {
@@ -223,7 +216,6 @@ export class MonitorEditComponent implements OnInit {
 
   onDetect(info: any) {
     let detectMonitor = {
-      detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
       params: info.params.concat(info.advancedParams)

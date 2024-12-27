@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
@@ -27,9 +27,8 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.ArrowUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.ProtoJsonUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -38,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * Collection job management provides api interface
@@ -118,15 +116,9 @@ public class CollectJobService {
     public void collectSyncOneTimeJobData(Job oneTimeJob) {
         workerPool.executeJob(() -> {
             List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
-            List<String> jsons = CollectionUtils.emptyIfNull(metricsDataList)
-                    .stream()
-                    .map(ProtoJsonUtil::toJsonStr)
-                    .filter(StringUtils::hasText)
-                    .collect(Collectors.toList());
-
-            String response = JsonUtil.toJson(jsons);
+            byte[] msg = ArrowUtil.serializeMetricsData(metricsDataList);
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setMsg(response)
+                    .setMsg(ByteString.copyFrom(msg))
                     .setDirection(ClusterMsg.Direction.REQUEST)
                     .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA)
                     .build();
@@ -160,12 +152,23 @@ public class CollectJobService {
      * @param metricsData collect data
      */
     public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
-        String data = ProtoJsonUtil.toJsonStr(metricsData);
+        byte[] msg = ArrowUtil.serializeMetricsData(List.of(metricsData));
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setIdentity(collectorIdentity)
-                .setMsg(data)
+                .setMsg(ByteString.copyFrom(msg))
                 .setDirection(ClusterMsg.Direction.REQUEST)
                 .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
+                .build();
+        this.collectServer.sendMsg(message);
+    }
+
+    public void sendAsyncServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        byte[] msg = ArrowUtil.serializeMetricsData(List.of(metricsData));
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setIdentity(collectorIdentity)
+                .setMsg(ByteString.copyFrom(msg))
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA)
                 .build();
         this.collectServer.sendMsg(message);
     }

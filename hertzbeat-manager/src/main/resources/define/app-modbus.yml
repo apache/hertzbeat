@@ -1,0 +1,236 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+category: service
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: modbus
+# The app api i18n name
+name:
+  zh-CN: ModBus服务器
+  en-US: ModBus Server
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat对支持Modbus协议的服务进行(保持寄存器和线圈)相关指标进行采集
+  en-US: HertzBeat collects metrics related to maintaining registers and coils for services that support Modbus protocol
+  zh-TW: HertzBeat對支持Modbus協定的服務進行（保持寄存器和線圈）相關名額進行採集
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: ModBus服务Host
+      en-US: ModBus Server Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 502
+  - field: slaveId
+    # name-param field display i18n name
+    name:
+      zh-CN: slaveId
+      en-US: slaveId
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    defaultValue: 1
+  - field: timeout
+    name:
+      zh-CN: 请求超时时间(ms)
+      en-US: Request Timeout(ms)
+    type: number
+    # when type is number, range is required
+    range: '[400,200000]'
+    required: false
+    defaultValue: 6000
+    hide: true
+  - field: holdingRegisterAddresses
+    # name-param field display i18n name
+    name:
+      zh-CN: 保持寄存器地址
+      en-US: Holding Registers address
+    # type-param field type(most mapping the html input type)
+    type: array
+    # param field input placeholder
+    placeholder: 'Input RegisterAddress'
+    # required-true or false
+    required: true
+    # hide param-true or false
+  #    hide: true
+  - field: coilRegisterAddresses
+    # name-param field display i18n name
+    name:
+      zh-CN: 线圈寄存器地址
+      en-US: Coil Register address
+    # type-param field type(most mapping the html input type)
+    type: array
+    # param field input placeholder
+    placeholder: 'Input RegisterAddress'
+    # required-true or false
+    required: true
+    # hide param-true or false
+#    hide: true
+
+# collect metrics config list
+metrics:
+  # metrics - summary
+  - name: holding-register
+    i18n:
+      zh-CN: 保持寄存器 统计信息
+      en-US: holding-register stats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: address-0
+        type: 0
+        i18n:
+          zh-CN: address-0
+          en-US: address-0
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: address-1-0
+        type: 0
+        i18n:
+          zh-CN: address-1-0
+          en-US: address-1-0
+      - field: address-1-1
+        type: 0
+        i18n:
+          zh-CN: address-1-1
+          en-US: address-1-1
+      - field: address-1-2
+        type: 0
+        i18n:
+          zh-CN: address-1-2
+          en-US: address-1-2
+    # 指标别名列表，按照寄存器地址来进行命名的
+    # 例如 地址为下标为0 ，值为m  holding-register:0
+    # 地址为下标为1，值为m[2]  holding-register:1-0  holding-register:1-1
+    aliasFields:
+      - responseTime
+      - holding-register:0
+      - holding-register:1-0
+      - holding-register:1-1
+      - holding-register:1-2
+      # mapping and conversion expressions, use thesand aliasField above to calculate metrics value# (可选)指标映射转换计算表达式，与上面的别名一起作用，计算出最终需要的指标值# eg: cores=core1+core2, usage=usage, waitTimeallTime-runningTime
+    calculates:
+      - responseTime=responseTime
+      - address-0=holding-register:0
+      - address-1-0=holding-register:1-0
+      - address-1-1=holding-register:1-1
+      - address-1-2=holding-register:1-2
+    protocol: modbus
+    # the config content when protocol is http
+    modbus:
+      # host
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      driverName: modbus-tcp
+      addressSyntax: holding-register
+      slaveId: ^_^slaveId^_^
+      timeout: ^_^timeout^_^
+      registerAddresses: [ ^_^holdingRegisterAddresses^_^ ]
+
+  # metrics - summary
+  - name: coil
+    i18n:
+      zh-CN: 线圈 统计信息
+      en-US: coil stats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # collect metrics content
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: address-0
+        type: 0
+        i18n:
+          zh-CN: address-0
+          en-US: address-0
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: address-1-0
+        type: 0
+        i18n:
+          zh-CN: address-1-0
+          en-US: address-1-0
+      - field: address-1-1
+        type: 0
+        i18n:
+          zh-CN: address-1-1
+          en-US: address-1-1
+      - field: address-1-2
+        type: 0
+        i18n:
+          zh-CN: address-1-2
+          en-US: address-1-2
+    # 指标别名列表，按照寄存器地址来进行命名的
+    # 例如 地址为下标为0 ，值为m  coil:0
+    # 地址为下标为1，值为m[2]  coil:1-0  coil:1-1
+    aliasFields:
+      - responseTime
+      - coil:0
+      - coil:1-0
+      - coil:1-1
+      - coil:1-2
+      # mapping and conversion expressions, use thesand aliasField above to calculate metrics value# (可选)指标映射转换计算表达式，与上面的别名一起作用，计算出最终需要的指标值# eg: cores=core1+core2, usage=usage, waitTimeallTime-runningTime
+    calculates:
+      - responseTime=responseTime
+      - address-0=coil:0
+      - address-1-0=coil:1-0
+      - address-1-1=coil:1-1
+      - address-1-2=coil:1-2
+    protocol: modbus
+    # the config content when protocol is http
+    modbus:
+      # host
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      driverName: modbus-tcp
+      addressSyntax: coil
+      slaveId: ^_^slaveId^_^
+      timeout: ^_^timeout^_^
+      registerAddresses: [ ^_^coilRegisterAddresses^_^ ]

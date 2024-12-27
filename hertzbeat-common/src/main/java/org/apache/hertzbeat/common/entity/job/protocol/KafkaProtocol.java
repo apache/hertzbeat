@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class KafkaProtocol {
+public class KafkaProtocol implements CommonRequestProtocol {
 
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
@@ -50,4 +50,9 @@ public class KafkaProtocol {
      * COMMAND
      */
     private String command;
+
+    /**
+     * Monitor internal topic
+     */
+    private String monitorInternalTopic = "false";
 }

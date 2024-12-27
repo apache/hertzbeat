@@ -55,7 +55,7 @@
       "monitor.name": "監控任務名稱",
       "monitor.metrics": "監控指標",
       "help.message.content": "自定義監控看板",
-      "help.content": "自定義監控看板，以表格形式展示某種監控的自選指標",
+      "help.content": "自定義監控看板(beta)，以表格形式展示某種監控的自選指標",
       "help.link": ""
     },
     "advanced": {
@@ -161,8 +161,7 @@
     "monitor.type": "監控類型",
     "monitor.name": "監控任務名稱",
     "monitor.metrics": "監控指標",
-    "help.message.content": "自定義監控看板",
-    "help.content": "自定義監控看板，以表格形式展示某種監控的自選指標",
+    "help.content": "自定義監控看板(beta)，以表格形式展示某種監控的自選指標",
     "help.link": "https://hertzbeat.apache.org/docs/help/bulletin"
   },
   "alert.setting.new": "新增阈值規則",
@@ -417,6 +416,8 @@
   "monitors.new-monitor": "新增監控",
   "monitors.new.success": "新增監控成功",
   "monitors.new.failed": "新增監控失敗",
+  "monitors.new.notify.change-to-https": "已啟用 HTTPS，連接埠號已自動更改為 443，請注意。",
+  "monitors.new.notify.change-to-http": "已停用 HTTPS，連接埠號已自動更改為 80，請注意。",
   "monitors.edit": "編輯",
   "monitors.edit.success": "修改監控成功",
   "monitors.edit.failed": "修改監控失敗",

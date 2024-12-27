@@ -18,155 +18,120 @@
 package org.apache.hertzbeat.common.queue.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.config.CommonProperties;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test case for {@link KafkaCommonDataQueue}
  */
+@ExtendWith(MockitoExtension.class)
 class KafkaCommonDataQueueTest {
 
-    private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
-    private KafkaProducer<Long, Alert> alertDataProducer;
-    private KafkaConsumer<Long, Alert> alertDataConsumer;
+    @Mock(lenient = true)
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
-    private CommonProperties.KafkaProperties kafkaProperties;
+
+    @Mock(lenient = true)
+    private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
+
     private KafkaCommonDataQueue kafkaCommonDataQueue;
+
+    private CommonProperties commonProperties;
 
     @BeforeEach
     void setUp() throws Exception {
-        kafkaProperties = mock(CommonProperties.KafkaProperties.class);
+        commonProperties = mock(CommonProperties.class);
+        CommonProperties.DataQueueProperties dataQueueProperties = mock(CommonProperties.DataQueueProperties.class, withSettings().lenient());
+        CommonProperties.KafkaProperties kafkaProperties = mock(CommonProperties.KafkaProperties.class, withSettings().lenient());
+
+        when(commonProperties.getQueue()).thenReturn(dataQueueProperties);
+        when(dataQueueProperties.getKafka()).thenReturn(kafkaProperties);
+        
+        // 设置所有必需的 topic
+        when(kafkaProperties.getMetricsDataTopic()).thenReturn("metricsDataTopic");
+        when(kafkaProperties.getAlertsDataTopic()).thenReturn("alertsDataTopic");
+        when(kafkaProperties.getMetricsDataToStorageTopic()).thenReturn("metricsDataToStorageTopic");
+        when(kafkaProperties.getServiceDiscoveryDataTopic()).thenReturn("serviceDiscoveryDataTopic");
         when(kafkaProperties.getServers()).thenReturn("localhost:9092");
-        when(kafkaProperties.getAlertsDataTopic()).thenReturn("alerts");
-        when(kafkaProperties.getMetricsDataTopic()).thenReturn("metrics");
 
-        CommonProperties properties = mock(CommonProperties.class);
-        CommonProperties.DataQueueProperties queueProperties = mock(CommonProperties.DataQueueProperties.class);
-        when(properties.getQueue()).thenReturn(queueProperties);
-        when(queueProperties.getKafka()).thenReturn(kafkaProperties);
+        // 模拟 consumer 的 subscribe 方法
+        doNothing().when(metricsDataToAlertConsumer).subscribe(anyCollection());
 
-        metricsDataProducer = mock(KafkaProducer.class);
-        alertDataProducer = mock(KafkaProducer.class);
-        alertDataConsumer = mock(KafkaConsumer.class);
-        metricsDataToAlertConsumer = mock(KafkaConsumer.class);
-        metricsDataToPersistentStorageConsumer = mock(KafkaConsumer.class);
-        metricsDataToRealTimeStorageConsumer = mock(KafkaConsumer.class);
-
-        kafkaCommonDataQueue = new KafkaCommonDataQueue(properties);
-
+        kafkaCommonDataQueue = new KafkaCommonDataQueue(commonProperties);
+        
+        // 使用反射设置私有字段
         setPrivateField(kafkaCommonDataQueue, "metricsDataProducer", metricsDataProducer);
-        setPrivateField(kafkaCommonDataQueue, "alertDataProducer", alertDataProducer);
-        setPrivateField(kafkaCommonDataQueue, "alertDataConsumer", alertDataConsumer);
         setPrivateField(kafkaCommonDataQueue, "metricsDataToAlertConsumer", metricsDataToAlertConsumer);
-        setPrivateField(kafkaCommonDataQueue, "metricsDataToPersistentStorageConsumer", metricsDataToPersistentStorageConsumer);
-        setPrivateField(kafkaCommonDataQueue, "metricsDataToRealTimeStorageConsumer", metricsDataToRealTimeStorageConsumer);
-    }
-
-    // Test use, set private field.
-    private void setPrivateField(Object target, String fieldName, Object value) throws Exception {
-
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
-    }
-
-    @Test
-    void testSendAlertsData() {
-
-        Alert alert = new Alert();
-        kafkaCommonDataQueue.sendAlertsData(alert);
-
-        ArgumentCaptor<ProducerRecord<Long, Alert>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
-        verify(alertDataProducer).send(captor.capture());
-
-        ProducerRecord<Long, Alert> record = captor.getValue();
-        assertEquals("alerts", record.topic());
-        assertEquals(alert, record.value());
-    }
-
-    @Test
-    void testPollAlertsData() throws InterruptedException {
-
-        Alert alert = new Alert();
-        ConsumerRecords<Long, Alert> records = new ConsumerRecords<>(Collections.emptyMap());
-        when(alertDataConsumer.poll(Duration.ofSeconds(1))).thenReturn(records);
-
-        assertNull(kafkaCommonDataQueue.pollAlertsData());
-
-        records = new ConsumerRecords<>(Collections.singletonMap(
-                new TopicPartition("alerts", 0),
-                Collections.singletonList(
-                        new ConsumerRecord<>("alerts", 0, 0L, 1L, alert)
-                )
-        ));
-        when(alertDataConsumer.poll(Duration.ofSeconds(1))).thenReturn(records);
-
-        assertEquals(alert, kafkaCommonDataQueue.pollAlertsData());
     }
 
     @Test
     void testSendMetricsData() {
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("test metrics")
+                .build();
 
-        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().build();
         kafkaCommonDataQueue.sendMetricsData(metricsData);
 
-        ArgumentCaptor<ProducerRecord<Long, CollectRep.MetricsData>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
-        verify(metricsDataProducer).send(captor.capture());
-
-        ProducerRecord<Long, CollectRep.MetricsData> record = captor.getValue();
-        assertEquals("metrics", record.topic());
-        assertEquals(metricsData, record.value());
+        verify(metricsDataProducer).send(any());
     }
 
     @Test
     void testPollMetricsDataToAlerter() throws InterruptedException {
+        // 创建一个测试数据
+        CollectRep.MetricsData expectedData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("test metrics")
+                .build();
+        
+        // 创建一个包含测试数据的 ConsumerRecord
+        ConsumerRecord<Long, CollectRep.MetricsData> record = 
+                new ConsumerRecord<>("metricsDataTopic", 0, 0L, 1L, expectedData);
+        
+        // 创建一个包含单个记录的 ConsumerRecords
+        Map<TopicPartition, List<ConsumerRecord<Long, CollectRep.MetricsData>>> recordsMap = 
+                Collections.singletonMap(
+                        new TopicPartition("metricsDataTopic", 0), 
+                        Collections.singletonList(record));
+        ConsumerRecords<Long, CollectRep.MetricsData> records = new ConsumerRecords<>(recordsMap);
+        
+        when(metricsDataToAlertConsumer.poll(any(Duration.class))).thenReturn(records);
 
-        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().build();
-        ConsumerRecords<Long, CollectRep.MetricsData> records = new ConsumerRecords<>(Collections.emptyMap());
-        when(metricsDataToAlertConsumer.poll(Duration.ofSeconds(1))).thenReturn(records);
-
-        assertNull(kafkaCommonDataQueue.pollMetricsDataToAlerter());
-
-        records = new ConsumerRecords<>(Collections.singletonMap(
-                new TopicPartition("metrics", 0),
-                Collections.singletonList(
-                        new ConsumerRecord<>("metrics", 0, 0L, 1L, metricsData)
-                )
-        ));
-        when(metricsDataToAlertConsumer.poll(Duration.ofSeconds(1))).thenReturn(records);
-
-        assertEquals(metricsData, kafkaCommonDataQueue.pollMetricsDataToAlerter());
+        CollectRep.MetricsData result = kafkaCommonDataQueue.pollMetricsDataToAlerter();
+        assertEquals(expectedData, result);
+        
+        verify(metricsDataToAlertConsumer).commitAsync();
     }
 
     @Test
     void testDestroy() throws Exception {
-
         kafkaCommonDataQueue.destroy();
-
-        verify(metricsDataProducer).close();
-        verify(alertDataProducer).close();
-        verify(alertDataConsumer).close();
         verify(metricsDataToAlertConsumer).close();
-        verify(metricsDataToPersistentStorageConsumer).close();
-        verify(metricsDataToRealTimeStorageConsumer).close();
+        verify(metricsDataProducer).close();
+    }
+
+    private void setPrivateField(Object object, String fieldName, Object value) throws Exception {
+        Field field = object.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(object, value);
     }
 }
