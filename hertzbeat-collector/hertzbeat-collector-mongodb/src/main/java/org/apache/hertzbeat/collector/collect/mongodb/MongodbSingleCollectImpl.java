@@ -32,8 +32,9 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -79,11 +80,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             "validateDBMetadata",
     };
 
-    private final ConnectionCommonCache<CacheIdentifier, MongodbConnect> connectionCommonCache;
-
-    public MongodbSingleCollectImpl() {
-        connectionCommonCache = new ConnectionCommonCache<>();
-    }
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     /**
      * Check that the mongodb connection information in metrics is complete
@@ -179,10 +176,10 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     private MongoClient getClient(Metrics metrics, CacheIdentifier identifier) {
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
 
-        Optional<MongodbConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         MongoClient mongoClient = null;
         if (cacheOption.isPresent()) {
-            MongodbConnect mongodbConnect = cacheOption.get();
+            MongodbConnect mongodbConnect = (MongodbConnect) cacheOption.get();
             mongoClient = mongodbConnect.getConnection();
         }
         if (mongoClient != null) {
