@@ -35,8 +35,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshBlacklist;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshClient;
@@ -71,11 +72,7 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_LOG = "log";
 
     private static final int DEFAULT_TIMEOUT = 10_000;
-    private final ConnectionCommonCache<CacheIdentifier, SshConnect> connectionCommonCache;
-    
-    public SshCollectImpl() {
-        connectionCommonCache = new ConnectionCommonCache<>();
-    }
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -299,9 +296,10 @@ public class SshCollectImpl extends AbstractCollect {
                 .build();
         ClientSession clientSession = null;
         if (reuseConnection) {
-            Optional<SshConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+            Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
             if (cacheOption.isPresent()) {
-                clientSession = cacheOption.get().getConnection();
+                SshConnect sshConnect = (SshConnect) cacheOption.get();
+                clientSession = sshConnect.getConnection();
                 try {
                     if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
                         clientSession = null;

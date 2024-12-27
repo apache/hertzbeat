@@ -38,8 +38,9 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.RedisConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
@@ -66,11 +67,10 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     private static final String UNIQUE_IDENTITY = "identity";
 
     private final ClientResources defaultClientResources;
-    private final ConnectionCommonCache<CacheIdentifier, RedisConnect> connectionCommonCache;
+    private final GlobalConnectionCache connectionCache = GlobalConnectionCache.getInstance();
     
     public RedisCommonCollectImpl() {
         defaultClientResources = DefaultClientResources.create();
-        connectionCommonCache = new ConnectionCommonCache<>();
     }
 
     @Override
@@ -186,7 +186,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClient redisClient = buildSingleClient(redisProtocol);
             connection = redisClient.connect();
-            connectionCommonCache.addCache(identifier, new RedisConnect(connection));
+            connectionCache.addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -224,7 +224,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClusterClient redisClusterClient = buildClusterClient(redisProtocol);
             connection = redisClusterClient.connect();
-            connectionCommonCache.addCache(identifier, new RedisConnect(connection));
+            connectionCache.addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -237,9 +237,9 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      */
     private StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier) {
         StatefulConnection<String, String> connection = null;
-        Optional<RedisConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCache.getCache(identifier, true);
         if (cacheOption.isPresent()) {
-            RedisConnect redisConnect = cacheOption.get();
+            RedisConnect redisConnect = (RedisConnect) cacheOption.get();
             connection = redisConnect.getConnection();
             if (!connection.isOpen()) {
                 try {
@@ -248,7 +248,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                     log.info("The redis connect form cache, close error: {}", e.getMessage());
                 }
                 connection = null;
-                connectionCommonCache.removeCache(identifier);
+                connectionCache.removeCache(identifier);
             }
         }
         return connection;
