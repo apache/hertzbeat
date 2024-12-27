@@ -28,8 +28,9 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -57,11 +58,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
-    private final ConnectionCommonCache<CacheIdentifier, JdbcConnect> connectionCommonCache;
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
-    public JdbcCommonCollect(){
-        connectionCommonCache = new ConnectionCommonCache<>();
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -140,10 +138,10 @@ public class JdbcCommonCollect extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
-        Optional<JdbcConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         Statement statement = null;
         if (cacheOption.isPresent()) {
-            JdbcConnect jdbcConnect = cacheOption.get();
+            JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
             try {
                 statement = jdbcConnect.getConnection().createStatement();
                 // set query timeout
