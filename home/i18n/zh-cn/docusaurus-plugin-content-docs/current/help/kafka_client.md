@@ -39,9 +39,19 @@ keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 
 #### 指标集合：topic_offset
 
-| 指标名称  | 指标单位 | 指标帮助描述  |
-|-------|---|---------|
-| TopicName | 无  | 主题名称 |
-| PartitionNum | 无 | 分区数量 |
-| earliest | 无  | 最早偏移量 |
-| latest | 无  | 最新偏移量 |
+| 指标名称  | 指标单位 | 指标帮助描述 |
+|-------|---|--------|
+| TopicName | 无  | 主题名称   |
+| PartitionNum | 无 | 分区号    |
+| earliest | 无  | 最早偏移量  |
+| latest | 无  | 最新偏移量  |
+
+#### 指标集合：consumer_detail
+
+|   指标名称    | 指标单位 | 指标帮助描述 |
+|-----------|------|-------|
+| GroupId | 无    | 消费者组ID    |
+| Group Member Num      | 无   | 消费者实例数量|
+| Subscribed Topic Name       | 无   | 订阅主题名称    |
+| Offsets of Each Partition      | 无   | 各分区偏移量   |
+| Lag      | 无   | 落后偏移量   |

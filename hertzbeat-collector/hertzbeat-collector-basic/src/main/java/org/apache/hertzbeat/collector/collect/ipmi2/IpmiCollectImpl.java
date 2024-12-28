@@ -19,8 +19,9 @@ package org.apache.hertzbeat.collector.collect.ipmi2;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.ipmi2.cache.IpmiConnect;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiClient;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiConnection;
@@ -40,12 +41,11 @@ import java.util.Optional;
 @Slf4j
 public class IpmiCollectImpl extends AbstractCollect {
 
-    private final ConnectionCommonCache<CacheIdentifier, IpmiConnect> connectionCommonCache;
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     private final IpmiHandlerManager ipmiHandlerManager;
 
     public IpmiCollectImpl() {
-        connectionCommonCache = new ConnectionCommonCache<>();
         ipmiHandlerManager = new IpmiHandlerManager();
     }
 
@@ -63,7 +63,7 @@ public class IpmiCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         IpmiConnection connection = null;
         try {
             connection = getIpmiConnection(metrics.getIpmi());
@@ -94,9 +94,9 @@ public class IpmiCollectImpl extends AbstractCollect {
                 .password(ipmiProtocol.getPassword())
                 .build();
         IpmiConnection connection = null;
-        Optional<IpmiConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         if (cacheOption.isPresent()) {
-            IpmiConnect ipmiConnect = cacheOption.get();
+            IpmiConnect ipmiConnect = (IpmiConnect) cacheOption.get();
             connection = ipmiConnect.getConnection();
             if (connection == null || !connection.isActive()) {
                 connection = null;

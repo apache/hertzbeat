@@ -19,25 +19,16 @@ package org.apache.hertzbeat.collector.collect.kafka;
 
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
 
-import java.util.Properties;
 
 /**
  * Kafka connection
  */
 public class KafkaConnect extends AbstractConnection<AdminClient> {
+    private final AdminClient adminClient;
 
-
-    private static AdminClient adminClient;
-
-    public KafkaConnect(String brokerList) {
-        Properties properties = new Properties();
-        properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-        properties.put(AdminClientConfig.RETRIES_CONFIG, 3);
-        properties.put(AdminClientConfig.RETRY_BACKOFF_MS_CONFIG, 500);
-        adminClient = KafkaAdminClient.create(properties);
+    public KafkaConnect(AdminClient adminClient) {
+        this.adminClient = adminClient;
     }
 
     @Override
@@ -50,15 +41,6 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
         if (adminClient != null) {
             adminClient.close();
         }
-    }
-
-    public static synchronized AdminClient getAdminClient(String brokerList) {
-        if (adminClient == null) {
-            Properties properties = new Properties();
-            properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
-            adminClient = KafkaAdminClient.create(properties);
-        }
-        return adminClient;
     }
 
 }

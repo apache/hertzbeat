@@ -18,12 +18,13 @@
 package org.apache.hertzbeat.manager.scheduler.netty.process;
 
 import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
-import org.apache.hertzbeat.common.util.ProtoJsonUtil;
+import org.apache.hertzbeat.common.util.ArrowUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
 /**
@@ -34,10 +35,11 @@ public class CollectCyclicDataResponseProcessor implements NettyRemotingProcesso
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         CommonDataQueue dataQueue = SpringContextHolder.getBean(CommonDataQueue.class);
-        CollectRep.MetricsData metricsData = (CollectRep.MetricsData) ProtoJsonUtil.toProtobuf(message.getMsg(),
-                CollectRep.MetricsData.newBuilder());
-        if (metricsData != null) {
-            dataQueue.sendMetricsData(metricsData);
+        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg().toByteArray());
+        for (CollectRep.MetricsData metricsData : metricsDataList) {
+            if (metricsData != null) {
+                dataQueue.sendMetricsData(metricsData);
+            }
         }
         return null;
     }

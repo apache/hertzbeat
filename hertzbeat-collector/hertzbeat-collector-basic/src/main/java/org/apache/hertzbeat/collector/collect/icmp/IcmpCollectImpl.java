@@ -44,7 +44,7 @@ public class IcmpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         IcmpProtocol icmp = metrics.getIcmp();
@@ -69,12 +69,12 @@ public class IcmpCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : metrics.getAliasFields()) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(Long.toString(responseTime));
+                    valueRowBuilder.addColumn(Long.toString(responseTime));
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
             builder.setCode(CollectRep.Code.UN_REACHABLE);

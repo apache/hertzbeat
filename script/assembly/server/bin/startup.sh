@@ -86,7 +86,7 @@ fi
 
 
 # JVM Configuration
-JAVA_OPTS=" -Duser.timezone=Asia/Shanghai -Doracle.jdbc.timezoneAsRegion=false"
+JAVA_OPTS=" -Duser.timezone=Asia/Shanghai -Doracle.jdbc.timezoneAsRegion=false --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
 
 JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR"
 

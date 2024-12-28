@@ -65,7 +65,7 @@ class SshCollectImplTest {
     void collect() {
         assertDoesNotThrow(() -> {
             Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
-            sshCollect.collect(builder, 1L, "app", metrics);
+            sshCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

@@ -112,7 +112,7 @@ public class ScriptCollectImplTest {
             metrics.setScript(scriptProtocol);
 
             builder = CollectRep.MetricsData.newBuilder();
-            scriptCollect.collect(builder, 0, "app", metrics);
+            scriptCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
 
@@ -124,7 +124,7 @@ public class ScriptCollectImplTest {
             metrics.setScript(scriptProtocol);
 
             builder = CollectRep.MetricsData.newBuilder();
-            scriptCollect.collect(builder, 0, "app", metrics);
+            scriptCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
 
@@ -135,7 +135,7 @@ public class ScriptCollectImplTest {
             metrics.setScript(scriptProtocol);
 
             builder = CollectRep.MetricsData.newBuilder();
-            scriptCollect.collect(builder, 0, "app", metrics);
+            scriptCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

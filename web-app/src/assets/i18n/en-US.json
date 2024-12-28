@@ -402,6 +402,8 @@
   "monitors.new-monitor": "New Monitor",
   "monitors.new.success": "New Monitor Success",
   "monitors.new.failed": "New Monitor Failed",
+  "monitors.new.notify.change-to-https": "HTTPS has been enabled, and the port number has been automatically changed to 443. Please take note.",
+  "monitors.new.notify.change-to-http": "HTTPS has been disabled, and the port number has been automatically changed to 80. Please take note.",
   "monitors.edit": "Edit",
   "monitors.edit.success": "Update Monitor Success",
   "monitors.edit.failed": "Update Monitor Failed",

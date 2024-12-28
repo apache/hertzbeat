@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.kafka;
+package org.apache.hertzbeat.collector.collect.kafka.constants;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +27,8 @@ public enum SupportedCommand {
 
     TOPIC_DESCRIBE("topic-describe"),
     TOPIC_LIST("topic-list"),
-    TOPIC_OFFSET("topic-offset");
+    TOPIC_OFFSET("topic-offset"),
+    CONSUMER_DETAIL("consumer-detail");
 
     private static Set<String> SUPPORTED_COMMAND = new HashSet<>();
 

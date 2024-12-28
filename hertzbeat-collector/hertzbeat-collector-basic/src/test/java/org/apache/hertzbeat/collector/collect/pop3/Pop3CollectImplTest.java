@@ -88,7 +88,7 @@ public class Pop3CollectImplTest {
 
         assertDoesNotThrow(() -> {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            pop3Collect.collect(builder, 1, "app", metrics);
+            pop3Collect.collect(builder, metrics);
         });
     }
 

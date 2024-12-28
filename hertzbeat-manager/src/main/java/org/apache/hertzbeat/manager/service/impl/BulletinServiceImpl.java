@@ -138,9 +138,9 @@ public class BulletinServiceImpl implements BulletinService {
 
                     List<List<BulletinMetricsData.Field>> fieldsList;
                     if (currentMetricsData != null) {
-                        fieldsList = currentMetricsData.getValuesList().stream()
+                        fieldsList = currentMetricsData.getValues().stream()
                                 .map(valueRow -> {
-                                    List<BulletinMetricsData.Field> fieldList = currentMetricsData.getFieldsList().stream()
+                                    List<BulletinMetricsData.Field> fieldList = currentMetricsData.getFields().stream()
                                             .map(field -> BulletinMetricsData.Field.builder()
                                                     .key(field.getName())
                                                     .unit(field.getUnit())

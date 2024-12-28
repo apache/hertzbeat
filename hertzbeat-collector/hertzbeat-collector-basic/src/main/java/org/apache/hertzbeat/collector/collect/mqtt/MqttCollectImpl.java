@@ -70,7 +70,7 @@ public class MqttCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(Builder builder, Metrics metrics) {
         MqttProtocol mqtt = metrics.getMqtt();
         String protocolVersion = mqtt.getProtocolVersion();
         MqttVersion mqttVersion = MqttVersion.valueOf(protocolVersion);
@@ -197,14 +197,14 @@ public class MqttCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String column : metrics.getAliasFields()) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                valueRowBuilder.addColumns(String.valueOf(responseTime));
+                valueRowBuilder.addColumn(String.valueOf(responseTime));
             } else {
                 String value = data.get(column);
                 value = value == null ? CommonConstants.NULL_VALUE : value;
-                valueRowBuilder.addColumns(value);
+                valueRowBuilder.addColumn(value);
             }
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private Boolean test(Runnable runnable, String operationName) {

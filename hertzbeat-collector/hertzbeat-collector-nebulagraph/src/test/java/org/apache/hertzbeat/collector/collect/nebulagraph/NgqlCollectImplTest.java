@@ -88,7 +88,7 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        ngqlCollect.collect(builder, metrics);
         Assertions.assertEquals(builder.getValuesCount(), 1);
         Assertions.assertEquals(builder.getValues(0).getColumns(0), collation);
         Assertions.assertEquals(builder.getValues(0).getColumns(1), charset);
@@ -122,7 +122,7 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        ngqlCollect.collect(builder, metrics);
         Assertions.assertEquals(1, builder.getValuesCount());
         Assertions.assertEquals("1", builder.getValues(0).getColumns(0));
         mocked.close();
@@ -155,7 +155,7 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        ngqlCollect.collect(builder, metrics);
         Assertions.assertEquals(3, builder.getValuesCount());
         for (int i = 0; i < result.size(); i++) {
             List<Map.Entry<String, Object>> list = new ArrayList<>(result.get(i).entrySet());
@@ -193,7 +193,7 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        ngqlCollect.collect(builder, metrics);
         Assertions.assertEquals(1, builder.getValuesCount());
         for (int i = 0; i < 3; i++) {
             Assertions.assertEquals("9669" + i, builder.getValues(0).getColumns(i));

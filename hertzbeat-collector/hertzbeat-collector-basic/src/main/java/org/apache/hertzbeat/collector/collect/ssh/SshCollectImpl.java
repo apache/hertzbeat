@@ -35,8 +35,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshBlacklist;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshClient;
@@ -71,11 +72,7 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_LOG = "log";
 
     private static final int DEFAULT_TIMEOUT = 10_000;
-    private final ConnectionCommonCache<CacheIdentifier, SshConnect> connectionCommonCache;
-    
-    public SshCollectImpl() {
-        connectionCommonCache = new ConnectionCommonCache<>();
-    }
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -85,7 +82,7 @@ public class SshCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
 
         long startTime = System.currentTimeMillis();
         SshProtocol sshProtocol = metrics.getSsh();
@@ -192,12 +189,12 @@ public class SshCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    valueRowBuilder.addColumn(responseTime.toString());
                 } else {
-                    valueRowBuilder.addColumns(line);
+                    valueRowBuilder.addColumn(line);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -222,9 +219,9 @@ public class SshCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+            valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
@@ -238,18 +235,18 @@ public class SshCollectImpl extends AbstractCollect {
         int lineIndex = 0;
         while (aliasIndex < aliasFields.size()) {
             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
-                valueRowBuilder.addColumns(responseTime.toString());
+                valueRowBuilder.addColumn(responseTime.toString());
             } else {
                 if (lineIndex < lines.length) {
-                    valueRowBuilder.addColumns(lines[lineIndex].trim());
+                    valueRowBuilder.addColumn(lines[lineIndex].trim());
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
                 lineIndex++;
             }
             aliasIndex++;
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private void parseResponseDataByMulti(String result, List<String> aliasFields,
@@ -269,17 +266,17 @@ public class SshCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    valueRowBuilder.addColumn(responseTime.toString());
                 } else {
                     Integer index = fieldMapping.get(alias.toLowerCase());
                     if (index != null && index < values.length) {
-                        valueRowBuilder.addColumns(values[index]);
+                        valueRowBuilder.addColumn(values[index]);
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                     }
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -299,9 +296,10 @@ public class SshCollectImpl extends AbstractCollect {
                 .build();
         ClientSession clientSession = null;
         if (reuseConnection) {
-            Optional<SshConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+            Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
             if (cacheOption.isPresent()) {
-                clientSession = cacheOption.get().getConnection();
+                SshConnect sshConnect = (SshConnect) cacheOption.get();
+                clientSession = sshConnect.getConnection();
                 try {
                     if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
                         clientSession = null;

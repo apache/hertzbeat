@@ -115,7 +115,7 @@ public class NginxCollectImplTest {
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-            nginxCollect.collect(builder, monitorId, app, metrics);
+            nginxCollect.collect(builder, metrics);
             assertEquals(builder.getCode(), CollectRep.Code.FAIL);
         }
 
@@ -176,7 +176,7 @@ public class NginxCollectImplTest {
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-            nginxCollect.collect(builder, monitorId, app, metrics);
+            nginxCollect.collect(builder, metrics);
             assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
             for (CollectRep.ValueRow row : builder.getValuesList()) {
                 assertEquals(row.getColumnsCount(), 2);
@@ -242,7 +242,7 @@ public class NginxCollectImplTest {
             metrics.setName("req_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-            nginxCollect.collect(builder, monitorId, app, metrics);
+            nginxCollect.collect(builder, metrics);
             assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
             assertEquals(builder.getValuesCount(), 2);
             for (int i = 0; i < builder.getValuesList().size(); i++) {
