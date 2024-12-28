@@ -75,7 +75,7 @@ public class RedfishCollectImplTest {
         metrics.setName("Chassis");
         RedfishClient.create(redfishProtocol);
         redfishCollect.preCheck(metrics);
-        redfishCollect.collect(builder, 1L, "test", metrics);
+        redfishCollect.collect(builder, metrics);
     }
 
     @Test
@@ -169,7 +169,7 @@ public class RedfishCollectImplTest {
         clientMockedStatic.when(() -> RedfishClient.create(redfishProtocol)).thenReturn(redfishClient);
         Mockito.when(redfishClient.connect()).thenReturn(redfishConnectSession);
         redfishCollect.preCheck(metrics);
-        redfishCollect.collect(builder, 1L, "test", metrics);
+        redfishCollect.collect(builder, metrics);
         assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(0).getColumns(0));
         assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(1).getColumns(0));
         assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(2).getColumns(0));

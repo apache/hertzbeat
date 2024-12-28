@@ -93,7 +93,7 @@ public class MemcachedCollectImplTest {
                     Mockito.when(socket.getInputStream()).thenReturn(inputStream);
                 });
 
-        memcachedCollect.collect(builder, 1L, "test", metrics);
+        memcachedCollect.collect(builder, metrics);
         assertEquals(1, builder.getValuesCount());
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

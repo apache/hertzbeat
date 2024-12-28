@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.remoting;
 
+import com.google.protobuf.ByteString;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
@@ -102,14 +103,14 @@ public class RemotingServiceTest {
         final String msg = "hello world";
 
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) -> {
-            Assertions.assertEquals(msg, message.getMsg());
+            Assertions.assertEquals(msg, message.getMsg().toStringUtf8());
             return null;
         });
 
         ClusterMsg.Message request = ClusterMsg.Message.newBuilder()
                 .setDirection(ClusterMsg.Direction.REQUEST)
                 .setType(ClusterMsg.MessageType.HEARTBEAT)
-                .setMsg(msg)
+                .setMsg(ByteString.copyFromUtf8(msg))
                 .build();
         this.remotingClient.sendMsg(request);
     }
@@ -120,26 +121,26 @@ public class RemotingServiceTest {
         final String responseMsg = "response";
 
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) -> {
-            Assertions.assertEquals(requestMsg, message.getMsg());
+            Assertions.assertEquals(requestMsg, message.getMsg().toStringUtf8());
             return ClusterMsg.Message.newBuilder()
                     .setDirection(ClusterMsg.Direction.RESPONSE)
-                    .setMsg(responseMsg)
+                    .setMsg(ByteString.copyFromUtf8(responseMsg))
                     .build();
         });
 
         ClusterMsg.Message request = ClusterMsg.Message.newBuilder()
                 .setDirection(ClusterMsg.Direction.REQUEST)
                 .setType(ClusterMsg.MessageType.HEARTBEAT)
-                .setMsg(requestMsg)
+                .setMsg(ByteString.copyFromUtf8(requestMsg))
                 .build();
         ClusterMsg.Message response = this.remotingClient.sendMsgSync(request, 3000);
-        Assertions.assertEquals(responseMsg, response.getMsg());
+        Assertions.assertEquals(responseMsg, response.getMsg().toStringUtf8());
     }
 
     @Test
     public void testNettyHook() {
         this.remotingServer.registerHook(Lists.newArrayList(
-                (ctx, message) -> Assertions.assertEquals("hello world", message.getMsg())
+                (ctx, message) -> Assertions.assertEquals("hello world", message.getMsg().toStringUtf8())
         ));
 
         this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) ->
@@ -150,7 +151,7 @@ public class RemotingServiceTest {
         ClusterMsg.Message request = ClusterMsg.Message.newBuilder()
                 .setDirection(ClusterMsg.Direction.REQUEST)
                 .setType(ClusterMsg.MessageType.HEARTBEAT)
-                .setMsg("hello world")
+                .setMsg(ByteString.copyFromUtf8("hello world"))
                 .build();
         this.remotingClient.sendMsg(request);
     }

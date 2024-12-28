@@ -416,6 +416,8 @@
   "monitors.new-monitor": "新增監控",
   "monitors.new.success": "新增監控成功",
   "monitors.new.failed": "新增監控失敗",
+  "monitors.new.notify.change-to-https": "已啟用 HTTPS，連接埠號已自動更改為 443，請注意。",
+  "monitors.new.notify.change-to-http": "已停用 HTTPS，連接埠號已自動更改為 80，請注意。",
   "monitors.edit": "編輯",
   "monitors.edit.success": "修改監控成功",
   "monitors.edit.failed": "修改監控失敗",

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.kafka;
+package org.apache.hertzbeat.collector.collect.kafka.constants;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -91,7 +91,7 @@ class TelnetCollectImplTest {
         metrics.setTelnet(telnetProtocol);
         metrics.setAliasFields(aliasField);
         telnetCollect.preCheck(metrics);
-        telnetCollect.collect(builder, 1L, "test", metrics);
+        telnetCollect.collect(builder, metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));
@@ -144,7 +144,7 @@ class TelnetCollectImplTest {
         metrics.setTelnet(telnetProtocol);
         metrics.setAliasFields(aliasField);
         telnetCollect.preCheck(metrics);
-        telnetCollect.collect(builder, 1L, "test", metrics);
+        telnetCollect.collect(builder, metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

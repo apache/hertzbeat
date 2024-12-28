@@ -41,7 +41,7 @@ public class DeleteCyclicTaskProcessor implements NettyRemotingProcessor {
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         TypeReference<List<Long>> typeReference = new TypeReference<>() {};
-        List<Long> jobIds = JsonUtil.fromJson(message.getMsg(), typeReference);
+        List<Long> jobIds = JsonUtil.fromJson(message.getMsg().toStringUtf8(), typeReference);
         if (jobIds == null || jobIds.isEmpty()) {
             log.error("collector receive delete cyclic task job ids is null");
             return null;

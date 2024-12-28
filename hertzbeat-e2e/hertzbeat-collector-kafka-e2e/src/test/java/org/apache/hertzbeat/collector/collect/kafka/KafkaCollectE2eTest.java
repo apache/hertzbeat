@@ -121,14 +121,14 @@ public class KafkaCollectE2eTest {
 
         // Verify the information of topic list monitoring
         builder = CollectRep.MetricsData.newBuilder();
-        kafkaCollect.collect(builder, 0, "kafka", metrics);
+        kafkaCollect.collect(builder, metrics);
         Assertions.assertTrue(builder.getValuesList().stream()
                 .anyMatch(valueRow -> valueRow.getColumns(0).equals(topicName)));
 
         // Verify the information monitored by topic description
         builder = CollectRep.MetricsData.newBuilder();
         kafkaProtocol.setCommand("topic-describe");
-        kafkaCollect.collect(builder, 0, "kafka", metrics);
+        kafkaCollect.collect(builder, metrics);
         List<CollectRep.ValueRow> topicDescribeList = builder.getValuesList();
         CollectRep.ValueRow firstRow = topicDescribeList.get(0);
         Assertions.assertAll(
