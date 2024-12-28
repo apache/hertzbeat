@@ -17,10 +17,6 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
@@ -36,6 +32,13 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 /**
  * test case for {@link ObjectStoreConfigServiceImpl}
@@ -84,7 +87,7 @@ class ObjectStoreConfigServiceTest {
         ObjectStoreDTO.ObsConfig obsConfig = new ObjectStoreDTO.ObsConfig();
         obsConfig.setAccessKey("access-key");
         obsConfig.setSecretKey("secret-key");
-        obsConfig.setEndpoint("endpoint");
+        obsConfig.setEndpoint("http://xxx.myhuaweicloud.com");
         obsConfig.setBucketName("bucket-name");
         config.setConfig(obsConfig);
 
@@ -93,4 +96,39 @@ class ObjectStoreConfigServiceTest {
         verify(ctx).publishEvent(any(ObjectStoreConfigChangeEvent.class));
     }
 
+    @Test
+    void testValidateObsEndpoint() {
+        // Test valid endpoint URL - should pass validation
+        assertDoesNotThrow(() ->
+                objectStoreConfigService.validateObsEndpoint("https://obs.myhuaweicloud.com"));
+
+        // Test various invalid scenarios
+        // 1. Using http protocol (insecure)
+        assertDoesNotThrow(() ->
+                objectStoreConfigService.validateObsEndpoint("http://obs.myhuaweicloud.com"));
+
+        // 2. Using invalid domain names
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint("https://obs.someotherdomain.com"));
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint("https://obs.myhuaweicloud.com.abc.com"));
+
+        // 3. Using internal network addresses
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint("https://127.0.0.1"));
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint("https://192.168.1.1"));
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint("https://10.0.0.1"));
+
+        // 4. Test invalid URL format
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint("not-a-url"));
+
+        // 5. Test null and empty values
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint(null));
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint(""));
+    }
 }
