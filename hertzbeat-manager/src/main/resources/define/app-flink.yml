@@ -171,11 +171,11 @@ metrics:
       - jobs-cancelled
       - jobs-failed
     calculates:
-      - slots_total=slots-total
-      - slots_used=slots-total-slots-available
-      - task_total=jobs-running+jobs-finished+jobs-cancelled+jobs-failed
-      - jobs_running=jobs-running
-      - jobs_failed=jobs-failed
+      - slots_total=get('slots-total')
+      - slots_used=get('slots-total')-get('slots-available')
+      - task_total=get('jobs-running')+get('jobs-finished')+get('jobs-cancelled')+get('jobs-failed')
+      - jobs_running=get('jobs-running')
+      - jobs_failed=get('jobs-failed')
     protocol: http
     http:
       host: ^_^host^_^
