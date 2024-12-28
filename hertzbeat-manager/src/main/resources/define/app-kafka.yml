@@ -318,7 +318,7 @@ metrics:
       objectName: kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent
       url: ^_^url^_^
 
-  - name: topic_bytes_in_persec
+  - name: total_topic_bytes_in_persec
     i18n:
       zh-CN: 每秒主题流入字节
       en-US: Topic Bytes In PerSec
@@ -369,9 +369,65 @@ metrics:
       objectName: kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec
       url: ^_^url^_^
 
+  - name: topic_bytes_in_persec
+    i18n:
+      zh-CN: 各Topic每秒流入字节
+      en-US: Topic Bytes In PerSec
+    priority: 7
+    fields:
+      - field: TopicName
+        type: 1
+        i18n:
+          zh-CN: 主题名称
+          en-US: Topic Name
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec,topic=*
+      url: ^_^url^_^
+
   - name: topic_bytes_out_persec
     i18n:
-      zh-CN: 每秒主题流出字节
+      zh-CN: 主题每秒流出字节
       en-US: Topic Bytes Out PerSec
     priority: 8
     fields:
