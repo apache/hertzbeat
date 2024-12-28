@@ -134,6 +134,10 @@ public class CommonProperties {
          */
         private String metricsDataTopic;
         /**
+         * metrics data to storage topic
+         */
+        private String metricsDataToStorageTopic;
+        /**
          * service discovery data topic
          */
         private String serviceDiscoveryDataTopic;

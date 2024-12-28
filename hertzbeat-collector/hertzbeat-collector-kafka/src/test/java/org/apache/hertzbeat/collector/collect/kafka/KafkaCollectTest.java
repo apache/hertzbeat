@@ -75,14 +75,14 @@ public class KafkaCollectTest {
         // metrics is null
         assertThrows(NullPointerException.class, () -> {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            collect.collect(builder, 1L, "app", null);
+            collect.collect(builder, null);
         });
 
         assertDoesNotThrow(() -> {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
             Metrics metrics = Metrics.builder().kclient(kafka).build();
-            collect.collect(builder, 1L, "app", metrics);
+            collect.collect(builder, metrics);
         });
     }
 

@@ -70,7 +70,7 @@ public class NebulaGraphCollectImplTest {
         for (String validTimePeriod : validTimePeriods) {
             builder = CollectRep.MetricsData.newBuilder();
             Metrics metrics = Metrics.builder().nebulaGraph(NebulaGraphProtocol.builder().timePeriod(validTimePeriod).build()).build();
-            nebulaGraphCollect.collect(builder, 0, null, metrics);
+            nebulaGraphCollect.collect(builder, metrics);
             Assertions.assertEquals(CollectRep.Code.FAIL, builder.getCode());
         }
 
@@ -78,7 +78,7 @@ public class NebulaGraphCollectImplTest {
         assertDoesNotThrow(() -> {
             builder = CollectRep.MetricsData.newBuilder();
             Metrics metrics = Metrics.builder().nebulaGraph(NebulaGraphProtocol.builder().timePeriod("invalid").build()).build();
-            nebulaGraphCollect.collect(builder, 0, null, metrics);
+            nebulaGraphCollect.collect(builder, metrics);
             Assertions.assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
 
@@ -92,7 +92,7 @@ public class NebulaGraphCollectImplTest {
                 .url("example.com")
                 .timeout("1")
                 .build()).build();
-            nebulaGraphCollect.collect(builder, 0, null, metrics);
+            nebulaGraphCollect.collect(builder, metrics);
             Assertions.assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

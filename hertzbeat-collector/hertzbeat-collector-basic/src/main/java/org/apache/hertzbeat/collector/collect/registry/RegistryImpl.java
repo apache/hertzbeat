@@ -58,7 +58,7 @@ public class RegistryImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         RegistryProtocol registryProtocol = metrics.getRegistry();
 
         try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(registryProtocol)) {
@@ -84,19 +84,19 @@ public class RegistryImpl extends AbstractCollect {
             ServerInfo serverInfo = discoveryClient.getServerInfo();
             metrics.getAliasFields().forEach(fieldName -> {
                 if (StringUtils.equalsAnyIgnoreCase(CollectorConstants.RESPONSE_TIME, fieldName)) {
-                    valueRowBuilder.addColumns(String.valueOf(System.currentTimeMillis() - beginTime));
+                    valueRowBuilder.addColumn(String.valueOf(System.currentTimeMillis() - beginTime));
                 } else {
                     addColumnIfMatched(fieldName, serverInfo, valueRowBuilder);
                 }
             });
 
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         } else {
             // Service instances monitor
             discoveryClient.getServices().forEach(serviceInstance -> {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 metrics.getAliasFields().forEach(fieldName -> addColumnIfMatched(fieldName, serviceInstance, valueRowBuilder));
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             });
         }
     }
@@ -116,7 +116,7 @@ public class RegistryImpl extends AbstractCollect {
             log.warn("No such field for {}", fieldName);
         }
 
-        valueRowBuilder.addColumns(StringUtils.isBlank(columnValue)
+        valueRowBuilder.addColumn(StringUtils.isBlank(columnValue)
                 ? CommonConstants.NULL_VALUE
                 : columnValue);
     }

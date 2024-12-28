@@ -28,8 +28,9 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -57,11 +58,8 @@ public class JdbcCommonCollect extends AbstractCollect {
     
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
-    private final ConnectionCommonCache<CacheIdentifier, JdbcConnect> connectionCommonCache;
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
-    public JdbcCommonCollect(){
-        connectionCommonCache = new ConnectionCommonCache<>();
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -78,7 +76,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
@@ -140,10 +138,10 @@ public class JdbcCommonCollect extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
-        Optional<JdbcConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         Statement statement = null;
         if (cacheOption.isPresent()) {
-            JdbcConnect jdbcConnect = cacheOption.get();
+            JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
             try {
                 statement = jdbcConnect.getConnection().createStatement();
                 // set query timeout
@@ -201,14 +199,14 @@ public class JdbcCommonCollect extends AbstractCollect {
                 for (String column : columns) {
                     if (CollectorConstants.RESPONSE_TIME.equals(column)) {
                         long time = System.currentTimeMillis() - startTime;
-                        valueRowBuilder.addColumns(String.valueOf(time));
+                        valueRowBuilder.addColumn(String.valueOf(time));
                     } else {
                         String value = resultSet.getString(column);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumns(value);
+                        valueRowBuilder.addColumn(value);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
@@ -241,14 +239,14 @@ public class JdbcCommonCollect extends AbstractCollect {
             for (String column : columns) {
                 if (CollectorConstants.RESPONSE_TIME.equals(column)) {
                     long time = System.currentTimeMillis() - startTime;
-                    valueRowBuilder.addColumns(String.valueOf(time));
+                    valueRowBuilder.addColumn(String.valueOf(time));
                 } else {
                     String value = values.get(column.toLowerCase());
                     value = value == null ? CommonConstants.NULL_VALUE : value;
-                    valueRowBuilder.addColumns(value);
+                    valueRowBuilder.addColumn(value);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -271,14 +269,14 @@ public class JdbcCommonCollect extends AbstractCollect {
                 for (String column : columns) {
                     if (CollectorConstants.RESPONSE_TIME.equals(column)) {
                         long time = System.currentTimeMillis() - startTime;
-                        valueRowBuilder.addColumns(String.valueOf(time));
+                        valueRowBuilder.addColumn(String.valueOf(time));
                     } else {
                         String value = resultSet.getString(column);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumns(value);
+                        valueRowBuilder.addColumn(value);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }

@@ -15,105 +15,127 @@
  * limitations under the License.
  */
 
+
 package org.apache.hertzbeat.collector.collect.common.cache;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import lombok.extern.slf4j.Slf4j;
 
 /**
- * lru common resource cache for client-server connection
+ * Singleton LRU global resource cache for client-server connections
  */
 @Slf4j
-public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
-    
+public class GlobalConnectionCache {
+
     /**
-     * default cache time 600s
+     * Default cache time: 600 seconds
      */
     private static final long DEFAULT_CACHE_TIMEOUT = 600 * 1000L;
 
     /**
-     * cacheTime length
+     * Cache time length
      */
     private static final int CACHE_TIME_LENGTH = 2;
 
-    /**
-     * cache timeout map
-     */
-    private Map<T, Long[]> timeoutMap;
 
     /**
-     * object cache
+     * Cache timeout map
      */
-    private ConcurrentLinkedHashMap<T, C> cacheMap;
+    private final Map<Object, Long[]> timeoutMap = new ConcurrentHashMap<>(32);
 
-    public ConnectionCommonCache() {
-        initCache();
-    }
+    /**
+     * Object cache
+     */
+    private final ConcurrentLinkedHashMap<Object, AbstractConnection<?>> cacheMap;
 
-    private void initCache() {
-        cacheMap = new ConcurrentLinkedHashMap
-                .Builder<T, C>()
+    /**
+     * Private constructor to prevent instantiation
+     */
+    private GlobalConnectionCache() {
+        cacheMap = new ConcurrentLinkedHashMap.Builder<Object, AbstractConnection<?>>()
                 .maximumWeightedCapacity(Integer.MAX_VALUE)
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
                     try {
                         value.close();
                     } catch (Exception e) {
-                        log.error("connection close error: {}.", e.getMessage(), e);
+                        log.error("Connection close error for key {}: {}", key, e.getMessage(), e);
                     }
-                    log.info("connection common cache discard key: {}, value: {}.", key, value);
-                }).build();
-        timeoutMap = new ConcurrentHashMap<>(16);
-        // init monitor available detector cyc task
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("connection-cache-timout-detector-%d")
-                .setDaemon(true)
+                    log.info("GlobalConnectionCache discarded key: {}, value: {}.", key, value);
+                })
                 .build();
-        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1, threadFactory);
-        scheduledExecutor.scheduleWithFixedDelay(this::cleanTimeoutOrUnHealthCache, 2, 100, TimeUnit.SECONDS);
+        initCacheMonitor();
     }
 
     /**
-     * clean and remove timeout cache
+     * Holder class for lazy-loaded singleton instance
      */
-    private void cleanTimeoutOrUnHealthCache() {
+    private static class Holder {
+        private static final GlobalConnectionCache INSTANCE = new GlobalConnectionCache();
+    }
+
+    /**
+     * Get the singleton instance
+     *
+     * @return GlobalConnectionCache instance
+     */
+    public static GlobalConnectionCache getInstance() {
+        return Holder.INSTANCE;
+    }
+
+    /**
+     * Initialize the cache monitor for cleaning up expired connections
+     */
+    private void initCacheMonitor() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("connection-cache-timeout-detector-%d")
+                .setDaemon(true)
+                .build();
+        ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1, threadFactory);
+        scheduledExecutor.scheduleWithFixedDelay(this::cleanTimeoutOrUnHealthyCache, 2, 100, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Clean and remove timeout or unhealthy cache entries
+     */
+    private void cleanTimeoutOrUnHealthyCache() {
         try {
             cacheMap.forEach((key, value) -> {
-                // index 0 is startTime, 1 is timeDiff
                 Long[] cacheTime = timeoutMap.get(key);
                 long currentTime = System.currentTimeMillis();
                 if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH
                         || cacheTime[0] + cacheTime[1] < currentTime) {
-                    log.warn("[connection common cache] clean the timeout cache, key {}", key);
+                    log.warn("[GlobalConnectionCache] Cleaning timeout cache, key {}", key);
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
                     try {
                         value.close();
                     } catch (Exception e) {
-                        log.error("clean connection close error: {}.", e.getMessage(), e);
+                        log.error("Clean connection close error for key {}: {}", key, e.getMessage(), e);
                     }
                 }
             });
         } catch (Exception e) {
-            log.error("[connection common cache] clean timeout cache error: {}.", e.getMessage(), e);
+            log.error("[GlobalConnectionCache] Error cleaning timeout cache: {}", e.getMessage(), e);
         }
     }
 
     /**
-     * add update cache
+     * Add or update cache entry
      *
-     * @param key      cache key
-     * @param value    cache value
-     * @param timeDiff cache time millis
+     * @param key      Cache key
+     * @param value    Cache value
+     * @param timeDiff Cache time in milliseconds
      */
-    public void addCache(T key, C value, Long timeDiff) {
+    public void addCache(Object key, AbstractConnection<?> value, Long timeDiff) {
         removeCache(key);
         if (timeDiff == null) {
             timeDiff = DEFAULT_CACHE_TIMEOUT;
@@ -123,37 +145,37 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
     }
 
     /**
-     * add update cache
+     * Add or update cache entry with default timeout
      *
-     * @param key   cache key
-     * @param value cache value
+     * @param key   Cache key
+     * @param value Cache value
      */
-    public void addCache(T key, C value) {
+    public void addCache(Object key, AbstractConnection<?> value) {
         addCache(key, value, DEFAULT_CACHE_TIMEOUT);
     }
 
     /**
-     * get cache by key
+     * Get cache by key
      *
-     * @param key          cache key
-     * @param refreshCache is refresh cache
-     * @return cache object
+     * @param key          Cache key
+     * @param refreshCache Whether to refresh the cache timeout
+     * @return Optional containing the cached connection if present and valid
      */
-    public Optional<C> getCache(T key, boolean refreshCache) {
+    public Optional<AbstractConnection<?>> getCache(Object key, boolean refreshCache) {
         Long[] cacheTime = timeoutMap.get(key);
         if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH) {
-            log.info("[connection common cache] not hit the cache, key {}.", key);
+            log.info("[GlobalConnectionCache] Cache miss for key {}.", key);
             removeCache(key);
             return Optional.empty();
         }
         if (cacheTime[0] + cacheTime[1] < System.currentTimeMillis()) {
-            log.warn("[connection common cache] is timeout, remove it, key {}.", key);
+            log.warn("[GlobalConnectionCache] Cache entry expired for key {}.", key);
             removeCache(key);
             return Optional.empty();
         }
-        C value = cacheMap.compute(key, (k, v) -> {
+        AbstractConnection<?> value = cacheMap.compute(key, (k, v) -> {
             if (v == null) {
-                log.error("[connection common cache] value is null, remove it, key {}.", key);
+                log.error("[GlobalConnectionCache] Value is null, removing key {}.", key);
                 timeoutMap.remove(key);
                 return null;
             }
@@ -167,21 +189,19 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
     }
 
     /**
-     * remove cache by key
+     * Remove cache by key
      *
-     * @param key key
+     * @param key Cache key
      */
-    public void removeCache(T key) {
+    public void removeCache(Object key) {
         timeoutMap.remove(key);
-        C value = cacheMap.remove(key);
+        AbstractConnection<?> value = cacheMap.remove(key);
         try {
-            if (value == null) {
-                return;
+            if (value != null) {
+                value.close();
             }
-            value.close();
         } catch (Exception e) {
-            log.error("connection close error: {}.", e.getMessage(), e);
+            log.error("Connection close error for key {}: {}", key, e.getMessage(), e);
         }
     }
-
 }

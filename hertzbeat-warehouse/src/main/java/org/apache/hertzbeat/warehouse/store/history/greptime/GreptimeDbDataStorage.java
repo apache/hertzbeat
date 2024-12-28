@@ -26,6 +26,7 @@ import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import io.greptime.options.GreptimeOptions;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -42,10 +43,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -116,7 +121,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
             return;
         }
@@ -126,10 +131,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
         tableSchemaBuilder.addTag("instance", DataType.String)
                 .addTimestamp("ts", DataType.TimestampMillisecond);
-
-        List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
-        for (CollectRep.Field field : fieldsList) {
-            // handle field type
+        List<CollectRep.Field> fields = metricsData.getFields();
+        fields.forEach(field -> {
             if (field.getLabel()) {
                 tableSchemaBuilder.addTag(field.getName(), DataType.String);
             } else {
@@ -139,45 +142,52 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     tableSchemaBuilder.addField(field.getName(), DataType.String);
                 }
             }
-        }
+        });
         Table table = Table.from(tableSchemaBuilder.build());
-        try {
-            long now = System.currentTimeMillis();
-            Object[] values = new Object[2 + fieldsList.size()];
-            values[0] = monitorId;
-            values[1] = now;
-            for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                for (int i = 0; i < fieldsList.size(); i++) {
-                    if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        CollectRep.Field field = fieldsList.get(i);
-                        if (field.getLabel()) {
-                            values[2 + i] = valueRow.getColumns(i);
-                        } else {
-                            if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                                values[2 + i] = Double.parseDouble(valueRow.getColumns(i));
-                            } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                                values[2 + i] = valueRow.getColumns(i);
-                            }
-                        }
-                    } else {
-                        values[2 + i] = null;
+        long now = System.currentTimeMillis();
+        Object[] values = new Object[2 + fields.size()];
+        values[0] = monitorId;
+        values[1] = now;
+        RowWrapper rowWrapper = metricsData.readRow();
+        while (rowWrapper.hasNextRow()) {
+            rowWrapper = rowWrapper.nextRow();
+
+            AtomicInteger index = new AtomicInteger(-1);
+            rowWrapper.cellStream().forEach(cell -> {
+                index.getAndIncrement();
+
+                if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                    values[2 + index.get()] = null;
+                    return;
+                }
+
+                Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+                Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+
+                if (label) {
+                    values[2 + index.get()] = cell.getValue();
+                } else {
+                    if (type == CommonConstants.TYPE_NUMBER) {
+                        values[2 + index.get()] = Double.parseDouble(cell.getValue());
+                    } else if (type == CommonConstants.TYPE_STRING) {
+                        values[2 + index.get()] = cell.getValue();
                     }
                 }
-                table.addRow(values);
+            });
+
+            table.addRow(values);
+        }
+
+        CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
+        try {
+            Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
+            if (result.isOk()) {
+                log.debug("[warehouse greptime]-Write successful");
+            } else {
+                log.warn("[warehouse greptime]--Write failed: {}", result.getErr());
             }
-            CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
-            try {
-                Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
-                if (result.isOk()) {
-                    log.debug("[warehouse greptime]-Write successful");
-                } else {
-                    log.warn("[warehouse greptime]--Write failed: {}", result.getErr());
-                }
-            } catch (Throwable throwable) {
-                log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
-            }
-        } catch (Exception e) {
-            log.error("[warehouse greptime]--Error: {}", e.getMessage(), e);
+        } catch (Throwable throwable) {
+            log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
         }
     }
 

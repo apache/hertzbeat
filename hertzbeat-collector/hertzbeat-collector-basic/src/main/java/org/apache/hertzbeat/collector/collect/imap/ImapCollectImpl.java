@@ -66,7 +66,7 @@ public class ImapCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         ImapProtocol imapProtocol = metrics.getImap();
         IMAPClient imapClient = null;
@@ -162,8 +162,8 @@ public class ImapCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = resultsMap.get(field);
-            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+            valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 }

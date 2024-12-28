@@ -44,8 +44,9 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -69,13 +70,12 @@ public class JmxCollectImpl extends AbstractCollect {
     private static final String IGNORED_STUB = "/stub/";
 
     private static final String SUB_ATTRIBUTE = "->";
-    
-    private final ConnectionCommonCache<CacheIdentifier, JmxConnect> connectionCommonCache;
+
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     private final ClassLoader jmxClassLoader;
     
     public JmxCollectImpl() {
-        connectionCommonCache = new ConnectionCommonCache<>();
         jmxClassLoader = new JmxClassLoader(ClassLoader.getSystemClassLoader());
     }
 
@@ -90,7 +90,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
@@ -120,9 +120,9 @@ public class JmxCollectImpl extends AbstractCollect {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : metrics.getAliasFields()) {
                     String fieldValue = attributeValueMap.get(aliasField);
-                    valueRowBuilder.addColumns(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             }
         } catch (IOException exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
@@ -184,10 +184,10 @@ public class JmxCollectImpl extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder().ip(jmxProtocol.getHost())
                 .port(jmxProtocol.getPort()).username(jmxProtocol.getUsername())
                 .password(jmxProtocol.getPassword()).build();
-        Optional<JmxConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         JMXConnector conn = null;
         if (cacheOption.isPresent()) {
-            JmxConnect jmxConnect = cacheOption.get();
+            JmxConnect jmxConnect = (JmxConnect) cacheOption.get();
             conn = jmxConnect.getConnection();
             try {
                 conn.getMBeanServerConnection();

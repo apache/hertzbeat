@@ -160,7 +160,7 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apach
 ##### 3：Start via source code        
 
 1. Local source code debugging needs to start the back-end project `manager` and the front-end project `web-app`.  
-2. Backend：need `maven3+`, `java17`, `lombok`, start the `manager` service.  
+2. Backend：need `maven3+`, `java17`, `lombok`, add VM options in IDE: ` --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED `, then start the `manager` service. 
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`  
 
@@ -483,6 +483,9 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/starryCoder"><img src="https://avatars.githubusercontent.com/u/46510059?v=4?s=100" width="100px;" alt="starryCoder"/><br /><sub><b>starryCoder</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=starryCoder" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hasimmollah"><img src="https://avatars.githubusercontent.com/u/32538599?v=4?s=100" width="100px;" alt="hasimmollah"/><br /><sub><b>hasimmollah</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hasimmollah" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ayu-v0"><img src="https://avatars.githubusercontent.com/u/127600988?v=4?s=100" width="100px;" alt="Ayu"/><br /><sub><b>Ayu</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ayu-v0" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Rancho-7"><img src="https://avatars.githubusercontent.com/u/59016860?v=4?s=100" width="100px;" alt="Nick Guo"/><br /><sub><b>Nick Guo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Rancho-7" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/doveLin0818"><img src="https://avatars.githubusercontent.com/u/190927907?v=4?s=100" width="100px;" alt="doveLin"/><br /><sub><b>doveLin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=doveLin0818" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://zzrl.cc/"><img src="https://avatars.githubusercontent.com/u/91836599?v=4?s=100" width="100px;" alt="yunfan24"/><br /><sub><b>yunfan24</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yunfan24" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

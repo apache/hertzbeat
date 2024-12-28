@@ -32,8 +32,9 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -79,11 +80,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             "validateDBMetadata",
     };
 
-    private final ConnectionCommonCache<CacheIdentifier, MongodbConnect> connectionCommonCache;
-
-    public MongodbSingleCollectImpl() {
-        connectionCommonCache = new ConnectionCommonCache<>();
-    }
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     /**
      * Check that the mongodb connection information in metrics is complete
@@ -98,7 +95,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         // The command naming convention is the command supported by the above mongodb diagnostic. Support subdocument
         // If the command does not include., execute the command directly and use the document it returns;
         // otherwise, you need to execute the metricsParts[0] command first and then obtain the related subdocument
@@ -126,7 +123,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                 throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand() + " is null.");
             }
             fillBuilder(metrics, valueRowBuilder, document);
-            builder.addValues(valueRowBuilder.build());
+            builder.addValueRow(valueRowBuilder.build());
         } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
             connectionCommonCache.removeCache(identifier);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
@@ -153,12 +150,12 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             if (document.containsKey(it)) {
                 Object fieldValue = document.get(it);
                 if (fieldValue == null) {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 } else {
-                    valueRowBuilder.addColumns(fieldValue.toString());
+                    valueRowBuilder.addColumn(fieldValue.toString());
                 }
             } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
             }
         });
     }
@@ -179,10 +176,10 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     private MongoClient getClient(Metrics metrics, CacheIdentifier identifier) {
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
 
-        Optional<MongodbConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         MongoClient mongoClient = null;
         if (cacheOption.isPresent()) {
-            MongodbConnect mongodbConnect = cacheOption.get();
+            MongodbConnect mongodbConnect = (MongodbConnect) cacheOption.get();
             mongoClient = mongodbConnect.getConnection();
         }
         if (mongoClient != null) {

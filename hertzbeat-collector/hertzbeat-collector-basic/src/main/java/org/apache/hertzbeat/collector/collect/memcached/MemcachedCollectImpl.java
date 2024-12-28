@@ -59,7 +59,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         MemcachedProtocol memcachedProtocol = metrics.getMemcached();
@@ -90,9 +90,9 @@ public class MemcachedCollectImpl extends AbstractCollect {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String field : aliasFields) {
                     String fieldValue = resultMap.get(field);
-                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
                 }
-                builder.addValues(valueRowBuilder.build());
+                builder.addValueRow(valueRowBuilder.build());
             } else {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
                 builder.setMsg("Peer connect failed:");

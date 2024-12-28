@@ -73,12 +73,7 @@ public class NettyDataQueue implements CommonDataQueue {
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        return null;
-    }
-
-    @Override
-    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToStorage() throws InterruptedException {
         return null;
     }
 
@@ -90,6 +85,11 @@ public class NettyDataQueue implements CommonDataQueue {
     @Override
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
         collectJobService.sendAsyncCollectData(metricsData);
+    }
+
+    @Override
+    public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
+        
     }
 
     @Override

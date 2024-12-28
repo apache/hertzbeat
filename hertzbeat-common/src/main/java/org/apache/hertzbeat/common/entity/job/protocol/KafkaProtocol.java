@@ -50,4 +50,9 @@ public class KafkaProtocol implements CommonRequestProtocol {
      * COMMAND
      */
     private String command;
+
+    /**
+     * Monitor internal topic
+     */
+    private String monitorInternalTopic = "false";
 }

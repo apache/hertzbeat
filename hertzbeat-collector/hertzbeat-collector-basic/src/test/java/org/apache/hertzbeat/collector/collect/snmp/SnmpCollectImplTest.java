@@ -96,7 +96,7 @@ class SnmpCollectImplTest {
     @Test
     void collect() {
         assertDoesNotThrow(() -> {
-            snmpCollect.collect(builder, 0, null, metrics);
+            snmpCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

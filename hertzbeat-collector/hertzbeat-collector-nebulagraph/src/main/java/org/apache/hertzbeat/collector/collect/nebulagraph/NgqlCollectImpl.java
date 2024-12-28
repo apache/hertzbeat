@@ -61,7 +61,7 @@ public class NgqlCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(Builder builder, Metrics metrics) {
         NgqlProtocol ngql = metrics.getNgql();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -139,14 +139,14 @@ public class NgqlCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String column : columns) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                valueRowBuilder.addColumns(String.valueOf(responseTime));
+                valueRowBuilder.addColumn(String.valueOf(responseTime));
             } else {
                 String value = data.get(column);
                 value = value == null ? CommonConstants.NULL_VALUE : value;
-                valueRowBuilder.addColumns(value);
+                valueRowBuilder.addColumn(value);
             }
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private void queryOneRow(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
@@ -205,14 +205,14 @@ public class NgqlCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String column : columns) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                valueRowBuilder.addColumns(String.valueOf(responseTime));
+                valueRowBuilder.addColumn(String.valueOf(responseTime));
             } else {
                 Object value = dataFromDb.get(column);
                 value = value == null ? CommonConstants.NULL_VALUE : value;
-                valueRowBuilder.addColumns(Objects.toString(value));
+                valueRowBuilder.addColumn(Objects.toString(value));
             }
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     @Override
