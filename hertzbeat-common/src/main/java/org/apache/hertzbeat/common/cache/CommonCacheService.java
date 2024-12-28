@@ -37,7 +37,7 @@ public interface CommonCacheService<K, V> {
     void put(K key, V value);
 
     /**
-     * set cache
+     * set cache and return oldValue if present
      * @param key key
      * @param value value
      * @return old value
