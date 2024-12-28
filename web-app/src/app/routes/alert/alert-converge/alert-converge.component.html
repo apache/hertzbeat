@@ -156,8 +156,8 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="!converge.matchAll">
-        <nz-form-label nzSpan="10" nzFor="tags">{{ 'alert.converge.tags' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-label nzSpan="10" nzRequired="true" nzFor="tags">{{ 'alert.converge.tags' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip] = "'validation.required' | i18n">
           <nz-select
             [(ngModel)]="matchTags"
             [nzDisabled]="converge.matchAll"
@@ -177,8 +177,8 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="!converge.matchAll">
-        <nz-form-label nzSpan="10" nzFor="priorities">{{ 'alert.converge.priority' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-label nzSpan="10" nzRequired="true" nzFor="priorities">{{ 'alert.converge.priority' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip] = "'validation.required' | i18n">
           <nz-select
             [(ngModel)]="converge.priorities"
             [nzDisabled]="converge.matchAll"
