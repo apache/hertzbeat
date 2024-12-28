@@ -50,11 +50,16 @@ public class CaffeineCacheServiceImpl<K, V> implements CommonCacheService<K, V> 
     }
 
     @Override
-    public V put(K key, V value) {
+    public void put(K key, V value) {
+        cache.put(key, value);
+    }
+
+    @Override
+    public V putAndGetOld(K key, V value) {
         V oldValue = cache.getIfPresent(key);
         cache.put(key, value);
         return oldValue;
-    }
+    }//[improve]improve cacheService and add unit test
 
     @Override
     public boolean containsKey(K key) {
