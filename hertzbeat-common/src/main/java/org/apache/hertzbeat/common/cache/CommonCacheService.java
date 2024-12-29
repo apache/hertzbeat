@@ -42,7 +42,8 @@ public interface CommonCacheService<K, V> {
      * @param value value
      * @return old value
      */
-    V putAndGetOld(K key,V value);
+    V putAndGetOld(K key, V value);
+
     /**
      * if contain cache by key
      * @param key key

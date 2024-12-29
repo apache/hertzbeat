@@ -66,9 +66,9 @@ class CaffeineCacheTest {
         // test new method : cacheService.putAndGetOld(key,newValue)
         String oldValue = "oldOne";
         String newValue = "newOne";
-        cacheService.put(key,oldValue);
-        Assertions.assertEquals(oldValue,cacheService.putAndGetOld(key,newValue));
-        Assertions.assertEquals(newValue,cacheService.get(key));
+        cacheService.put(key, oldValue);
+        Assertions.assertEquals(oldValue, cacheService.putAndGetOld(key, newValue));
+        Assertions.assertEquals(newValue, cacheService.get(key));
     }
 
     @Test
