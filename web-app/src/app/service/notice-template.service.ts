@@ -48,7 +48,12 @@ export class NoticeTemplateService {
   public getNoticeTemplates(): Observable<Message<NoticeTemplate[]>> {
     return this.http.get<Message<NoticeTemplate[]>>(notice_templates_uri);
   }
+
   public getDefaultNoticeTemplates(): Observable<Message<NoticeTemplate[]>> {
     return this.http.get<Message<NoticeTemplate[]>>(default_notice_templates_uri);
+  }
+
+  public getNoticeTemplateById(templateId: number): Observable<Message<NoticeTemplate>> {
+    return this.http.get<Message<NoticeTemplate>>(`${notice_template_uri}/${templateId}`);
   }
 }
