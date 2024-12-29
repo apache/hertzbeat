@@ -298,9 +298,17 @@
   dependencies:
     "@ctrl/tinycolor" "^3.6.1"
 
+"@ant-design/icons-angular@19.0.0":
+  version "19.0.0"
+  resolved "https://registry.npmmirror.com/@ant-design/icons-angular/-/icons-angular-19.0.0.tgz#3cf43d2fcf516d07949fd609966b7cdec09e7126"
+  integrity sha512-bBWFA1cTZwLAFTgpozkeNIHX1nXyZuiUaRzTcAfFEt85eW1X3ypMcBfS/XEVVVzkdTw5Td+E1vwzgfuUlKiYSA==
+  dependencies:
+    "@ant-design/colors" "^7.0.0"
+    tslib "^2.0.0"
+
 "@ant-design/icons-angular@^17.0.0":
   version "17.0.0"
-  resolved "https://registry.yarnpkg.com/@ant-design/icons-angular/-/icons-angular-17.0.0.tgz#5e072f4be7fa0bcef1498be735de8b54ada23620"
+  resolved "https://registry.npmmirror.com/@ant-design/icons-angular/-/icons-angular-17.0.0.tgz#5e072f4be7fa0bcef1498be735de8b54ada23620"
   integrity sha512-MNEh3UbkSl6gkdb5MQRNHEuWI1DnU1dME9zSymnWCipEXN7MB0mcYHSfyYTqKL1j45ftp6l1UnsLvhokRYyhXA==
   dependencies:
     "@ant-design/colors" "^7.0.0"
