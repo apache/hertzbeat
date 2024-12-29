@@ -45,6 +45,7 @@
     "@angular/compiler": "17.3.10",
     "@angular/core": "17.3.10",
     "@angular/forms": "17.3.10",
+    "@ant-design/icons-angular": "19.0.0",
     "@angular/platform-browser": "17.3.10",
     "@angular/platform-browser-dynamic": "17.3.10",
     "@angular/router": "17.3.10",

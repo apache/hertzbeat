@@ -470,6 +470,7 @@
   "common.disable": "Disable",
   "common.copy": "Copy To Clipboard",
   "common.copy.button": "Copy",
+  "common.mute": "Mute",
   "common.notify.no-select-edit": "No items selected for editing!",
   "common.notify.one-select-edit": "Only one selection can be edited!",
   "common.confirm.delete": "Please confirm whether to delete!",

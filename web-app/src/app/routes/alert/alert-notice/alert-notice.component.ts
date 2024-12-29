@@ -317,9 +317,20 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onEditOneNoticeReceiver(receiver: NoticeReceiver) {
-    this.receiver = receiver;
-    this.isManageReceiverModalVisible = true;
-    this.isManageReceiverModalAdd = false;
+    this.noticeReceiverSvc.getReceiver(receiver.id).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.receiver = message.data;
+          this.isManageReceiverModalVisible = true;
+          this.isManageReceiverModalAdd = false;
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+      }
+    );
   }
 
   onSendAlertTestMsg() {
@@ -429,9 +440,20 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onEditOneNoticeTemplate(template: NoticeTemplate) {
-    this.template = template;
-    this.isManageTemplateModalVisible = true;
-    this.isManageTemplateModalAdd = false;
+    this.noticeTemplateSvc.getNoticeTemplateById(template.id).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.template = message.data;
+          this.isManageTemplateModalVisible = true;
+          this.isManageTemplateModalAdd = false;
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+      }
+    );
   }
 
   onShowOneNoticeTemplate(template: NoticeTemplate) {
@@ -452,46 +474,55 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onEditOneNoticeRule(rule: NoticeRule) {
-    this.rule = rule;
-    this.isLimit = !(this.rule.days == null || this.rule.days.length == 7);
-    this.isManageRuleModalVisible = true;
-    this.isManageRuleModalAdd = false;
-    this.receiversOption = [];
-
-    this.rule.receiverId.forEach(id => {
-      this.receiversOption.push({
-        value: id,
-        label: this.rule.receiverName[this.rule.receiverId.indexOf(id)]
-      });
-    });
-
-    this.templatesOption = [];
-    if (this.rule.templateId && this.rule.templateName) {
-      this.templatesOption.push({
-        value: rule.templateId,
-        label: rule.templateName
-      });
-    } else {
-      this.rule.templateId = -1;
-      this.templatesOption.push({
-        value: -1,
-        label: this.i18nSvc.fanyi('alert.notice.template.preset.true')
-      });
-    }
-    this.filterTags = [];
-    if (rule.tags != undefined) {
-      rule.tags.forEach(item => {
-        let tag = `${item.name}`;
-        if (item.value != undefined) {
-          tag = `${tag}:${item.value}`;
+    this.noticeRuleSvc.getNoticeRuleById(rule.id).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.rule = message.data;
+          this.isLimit = !(this.rule.days == null || this.rule.days.length == 7);
+          this.isManageRuleModalVisible = true;
+          this.isManageRuleModalAdd = false;
+          this.receiversOption = [];
+          this.rule.receiverId.forEach(id => {
+            this.receiversOption.push({
+              value: id,
+              label: this.rule.receiverName[this.rule.receiverId.indexOf(id)]
+            });
+          });
+          this.templatesOption = [];
+          if (this.rule.templateId && this.rule.templateName) {
+            this.templatesOption.push({
+              value: rule.templateId,
+              label: rule.templateName
+            });
+          } else {
+            this.rule.templateId = -1;
+            this.templatesOption.push({
+              value: -1,
+              label: this.i18nSvc.fanyi('alert.notice.template.preset.true')
+            });
+          }
+          this.filterTags = [];
+          if (rule.tags != undefined) {
+            rule.tags.forEach(item => {
+              let tag = `${item.name}`;
+              if (item.value != undefined) {
+                tag = `${tag}:${item.value}`;
+              }
+              this.filterTags.push(tag);
+              this.tagsOption.push({
+                value: tag,
+                label: tag
+              });
+            });
+          }
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
         }
-        this.filterTags.push(tag);
-        this.tagsOption.push({
-          value: tag,
-          label: tag
-        });
-      });
-    }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
+      }
+    );
   }
 
   onNoticeRuleDaysChange(value: any[]) {
