@@ -87,6 +87,18 @@ public class NoticeConfigController {
         return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name)));
     }
 
+    @GetMapping(path = "/receiver/{id}")
+    @Operation(summary = "Get the recipient information based on the recipient ID",
+            description = "Get the recipient information based on the recipient ID")
+    public ResponseEntity<Message<NoticeReceiver>> getReceiverById(
+            @Parameter(description = "en: Recipient ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
+        NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
+        if (noticeReceiver == null) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "The relevant information of the recipient could not be found, please check whether the parameters are correct or refresh the page"));
+        }
+        return ResponseEntity.ok(Message.success(noticeReceiver));
+    }
+
     @PostMapping(path = "/rule")
     @Operation(summary = "Add a notification policy", description = "Add a notification policy")
     public ResponseEntity<Message<Void>> addNewNoticeRule(@Valid @RequestBody NoticeRule noticeRule) {
@@ -122,6 +134,17 @@ public class NoticeConfigController {
         return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeRules(name)));
     }
 
+    @GetMapping(path = "/rule/{id}")
+    @Operation(summary = "Get the notification policy information based on the policy ID",
+            description = "Get the notification policy information based on the policy ID")
+    public ResponseEntity<Message<NoticeRule>> getRuleById(
+            @Parameter(description = "en: Notification Policy ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
+        NoticeRule noticeRule = noticeConfigService.getNoticeRulesById(ruleId);
+        if (noticeRule == null) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "The specified notification rule could not be queried, please check whether the parameters are correct or refresh the page"));
+        }
+        return ResponseEntity.ok(Message.success(noticeRule));
+    }
 
     @PostMapping(path = "/template")
     @Operation(summary = "Add a notification template", description = "Add a notification template")
@@ -157,6 +180,18 @@ public class NoticeConfigController {
             @Parameter(description = "Template name,support fuzzy query", example = "rule1") @RequestParam(required = false) final String name) {
         List<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(name);
         return ResponseEntity.ok(Message.success(templatePage));
+    }
+
+    @GetMapping(path = "/template/{id}")
+    @Operation(summary = "Get the notification template information based on the template ID",
+            description = "Get the notification template information based on the template ID")
+    public ResponseEntity<Message<NoticeTemplate>> getTemplateById(
+            @Parameter(description = "en: Notification template ID", example = "6565463543") @PathVariable("id") final Long templateId) {
+        Optional<NoticeTemplate> noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
+        if (noticeTemplate.isEmpty()) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "The specified notification template could not be queried, please check whether the parameters are correct or refresh the page"));
+        }
+        return ResponseEntity.ok(Message.success(noticeTemplate.get()));
     }
 
     @PostMapping(path = "/receiver/send-test-msg")

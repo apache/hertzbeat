@@ -182,6 +182,26 @@ class NoticeConfigControllerTest {
     }
 
     @Test
+    void getReceiverById() throws Exception {
+        NoticeReceiver noticeReceiver = getNoticeReceiver();
+        when(noticeConfigService.getReceiverById(7565463543L))
+                .thenReturn(noticeReceiver);
+        when(noticeConfigService.getReceiverById(6565463543L))
+                .thenReturn(null);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receiver/{id}", 6565463543L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("The relevant information of the recipient could not be found, please check whether the parameters are correct or refresh the page"))
+                .andReturn();
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receiver/{id}", 7565463543L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
+
+    @Test
     void addNewNoticeRule() throws Exception {
         NoticeRule noticeRule = getNoticeRule();
         this.mockMvc.perform(post("/api/notice/rule")
@@ -236,6 +256,26 @@ class NoticeConfigControllerTest {
                 .andReturn();
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/rules?name={name}", "tom"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
+
+    @Test
+    void getRuleById() throws Exception {
+        NoticeRule noticeRule = getNoticeRule();
+        when(noticeConfigService.getNoticeRulesById(7565463543L))
+                .thenReturn(noticeRule);
+        when(noticeConfigService.getNoticeRulesById(6565463543L))
+                .thenReturn(null);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/rule/{id}", 6565463543L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("The specified notification rule could not be queried, please check whether the parameters are correct or refresh the page"))
+                .andReturn();
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/rule/{id}", 7565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -343,6 +383,24 @@ class NoticeConfigControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data[0].name").value("Template1"))
                 .andExpect(jsonPath("$.data[1].name").value("Template2"));
+    }
+
+    @Test
+    void testGetTemplatesById() throws Exception {
+        // Mock the service response
+        NoticeTemplate template = new NoticeTemplate();
+        template.setName("Template1");
+        when(noticeConfigService.getNoticeTemplatesById(1010101010L)).thenReturn(Optional.of(template));
+        when(noticeConfigService.getNoticeTemplatesById(25857585858L)).thenReturn(Optional.empty());
+        // Perform the GET request and verify the response
+        this.mockMvc.perform(get("/api/notice/template/{id}", 1010101010L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data.name").value("Template1"));
+        this.mockMvc.perform(get("/api/notice/template/{id}", 25857585858L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("The specified notification template could not be queried, please check whether the parameters are correct or refresh the page"));
     }
 
     @Test

@@ -34,6 +34,7 @@ import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.apache.hertzbeat.manager.pojo.dto.SystemSecret;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
+import org.apache.hertzbeat.manager.service.impl.MuteGeneralConfigServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.SystemGeneralConfigServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.SystemSecretServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
@@ -68,6 +69,9 @@ public class ConfigInitializer implements SmartLifecycle {
 
     @Resource
     private TemplateConfigServiceImpl templateConfigService;
+
+    @Resource
+    private MuteGeneralConfigServiceImpl muteGeneralConfigService;
 
     @Resource
     private AppService appService;
@@ -128,6 +132,13 @@ public class ConfigInitializer implements SmartLifecycle {
         // else use the user custom jwt secret
         // set the jwt secret token in util
         JsonWebTokenUtil.setDefaultSecretKey(currentJwtSecret);
+
+        // init web-app mute config
+        MuteConfig muteConfig = muteGeneralConfigService.getConfig();
+        if (muteConfig == null) {
+            muteConfig = MuteConfig.builder().mute(true).build();
+            muteGeneralConfigService.saveConfig(muteConfig);
+        }
     }
 
     @Override

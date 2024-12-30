@@ -6,35 +6,57 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
+import { Mute } from '../../../pojo/Mute';
+import { AlertSoundService } from '../../../service/alert-sound.service';
 import { AlertService } from '../../../service/alert.service';
+import { GeneralConfigService } from '../../../service/general-config.service';
 
 @Component({
   selector: 'header-notify',
   template: `
-    <ng-template #badgeTpl>
-      <nz-badge [nzCount]="count" ngClass="alain-default__nav-item" [nzStyle]="{ 'box-shadow': 'none' }">
-        <i nz-icon nzType="bell" ngClass="alain-default__nav-item-icon"></i>
-      </nz-badge>
-    </ng-template>
-    @if (data!.length <= 0) {<ng-template [ngTemplateOutlet]="badgeTpl" />} @else {<div
-      nz-dropdown
-      (nzVisibleChange)="onPopoverVisibleChange($event)"
-      [(nzVisible)]="popoverVisible"
-      nzTrigger="click"
-      nzPlacement="bottomRight"
-      nzOverlayClassName="header-dropdown notice-icon"
-      [nzDropdownMenu]="noticeMenu"
-    >
+    <div style="display: flex; align-items: center;">
+      <ng-template #badgeTpl>
+        <nz-badge [nzCount]="count" ngClass="alain-default__nav-item" [nzStyle]="{ 'box-shadow': 'none' }">
+          <i nz-icon nzType="bell" ngClass="alain-default__nav-item-icon"></i>
+        </nz-badge>
+      </ng-template>
+      @if (data!.length <= 0) {
       <ng-template [ngTemplateOutlet]="badgeTpl" />
+      } @else {
+      <div
+        nz-dropdown
+        (nzVisibleChange)="onPopoverVisibleChange($event)"
+        [(nzVisible)]="popoverVisible"
+        nzTrigger="click"
+        nzPlacement="bottomRight"
+        nzOverlayClassName="header-dropdown notice-icon"
+        [nzDropdownMenu]="noticeMenu"
+      >
+        <ng-template [ngTemplateOutlet]="badgeTpl" />
+      </div>
+      }
+      <nz-badge ngClass="alain-default__nav-item" [nzStyle]="{ 'box-shadow': 'none' }">
+        <i
+          nz-icon
+          [nzType]="mute.mute ? 'muted' : 'sound'"
+          ngClass="alain-default__nav-item-icon"
+          (click)="toggleMute($event)"
+          nz-tooltip
+          [nzTooltipTitle]="'common.mute' | i18n"
+        ></i>
+      </nz-badge>
     </div>
     <nz-dropdown-menu #noticeMenu="nzDropdownMenu">
-      @if (data[0].title) {<div class="ant-modal-title" style="line-height: 44px; text-align: center;">{{ data[0].title }}</div>
+      @if (data[0].title) {
+      <div class="ant-modal-title" style="line-height: 44px; text-align: center;">{{ data[0].title }}</div>
       }
       <nz-spin [nzSpinning]="loading" [nzDelay]="0">
-        @if (data[0].list && data[0].list.length > 0) {<ng-template [ngTemplateOutlet]="listTpl" />} @else {<div
-          class="notice-icon__notfound"
-        >
-          @if (data[0].emptyImage) {<img class="notice-icon__notfound-img" [attr.src]="data[0].emptyImage" alt="not found" />
+        @if (data[0].list && data[0].list.length > 0) {
+        <ng-template [ngTemplateOutlet]="listTpl" />
+        } @else {
+        <div class="notice-icon__notfound">
+          @if (data[0].emptyImage) {
+          <img class="notice-icon__notfound-img" [attr.src]="data[0].emptyImage" alt="not found" />
           }
           <p>
             <ng-container *nzStringTemplateOutlet="data[0].emptyText">
@@ -48,7 +70,6 @@ import { AlertService } from '../../../service/alert.service';
         <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="gotoAlertCenter()">{{ data[0].enterText }}</div>
       </div>
     </nz-dropdown-menu>
-    }
     <ng-template #listTpl>
       <nz-list [nzDataSource]="data[0].list" [nzRenderItem]="item">
         <ng-template #item let-item>
@@ -58,18 +79,21 @@ import { AlertService } from '../../../service/alert.service';
                 <ng-container *nzStringTemplateOutlet="item.title; context: { $implicit: item }">
                   <a (click)="gotoDetail(item.monitorId)">{{ item.title }}</a>
                 </ng-container>
-                @if (item.extra) {<div class="notice-icon__item-extra">
+                @if (item.extra) {
+                <div class="notice-icon__item-extra">
                   <nz-tag [nzColor]="item.color">{{ item.extra }}</nz-tag>
                 </div>
                 }
               </ng-template>
               <ng-template #nzDescription>
-                @if (item.description) {<div class="notice-icon__item-desc">
+                @if (item.description) {
+                <div class="notice-icon__item-desc">
                   <ng-container *nzStringTemplateOutlet="item.description; context: { $implicit: item }">
                     {{ item.description }}
                   </ng-container>
                 </div>
-                } @if (item.datetime) {<div class="notice-icon__item-time">{{ item.datetime }}</div>
+                } @if (item.datetime) {
+                <div class="notice-icon__item-time">{{ item.datetime }}</div>
                 }
               </ng-template>
             </nz-list-item-meta>
@@ -108,20 +132,43 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   loading = false;
   popoverVisible = false;
   refreshInterval: any;
+  private previousCount = 0;
+  mute!: Mute;
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private notifySvc: NzNotificationService,
+    private configSvc: GeneralConfigService,
     private alertSvc: AlertService,
     private modal: NzModalService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private alertSound: AlertSoundService
   ) {}
 
   ngOnInit(): void {
+    let muteInit$ = this.configSvc
+      .getGeneralConfig('mute')
+      .pipe(
+        finalize(() => {
+          muteInit$.unsubscribe();
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.mute = message.data;
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.error(error);
+        }
+      );
     this.loadData();
     this.refreshInterval = setInterval(() => {
       this.loadData();
-    }, 30000); // every 30 seconds refresh the tabs
+    }, 10000); // every 10 seconds refresh the tabs
   }
 
   ngOnDestroy() {
@@ -182,6 +229,11 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
               list.push(item);
             });
             this.data = this.updateNoticeData(list);
+
+            if (page.totalElements > this.previousCount && !this.mute.mute) {
+              this.alertSound.playAlertSound(this.i18nSvc.currentLang);
+            }
+            this.previousCount = page.totalElements;
             this.count = page.totalElements;
           } else {
             console.warn(message.msg);
@@ -226,5 +278,12 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   gotoDetail(monitorId: number): void {
     this.popoverVisible = false;
     this.router.navigateByUrl(`/monitors/${monitorId}`);
+  }
+
+  toggleMute(event: MouseEvent): void {
+    event.stopPropagation();
+    this.mute.mute = !this.mute.mute;
+    this.configSvc.saveGeneralConfig(this.mute, 'mute');
+    this.cdr.markForCheck();
   }
 }
