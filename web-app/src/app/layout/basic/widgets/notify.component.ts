@@ -135,7 +135,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   popoverVisible = false;
   refreshInterval: any;
   private previousCount = 0;
-  mute!: Mute;
+  mute: Mute = { mute: false };
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
