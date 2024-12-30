@@ -165,8 +165,8 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="!silence.matchAll">
-        <nz-form-label nzSpan="7" nzFor="tags">{{ 'alert.silence.tags' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="12">
+        <nz-form-label nzSpan="7" nzFor="tags" nzRequired="true">{{ 'alert.silence.tags' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             [(ngModel)]="matchTags"
             [nzDisabled]="silence.matchAll"
@@ -186,8 +186,8 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="!silence.matchAll">
-        <nz-form-label nzSpan="7" nzFor="priorities">{{ 'alert.silence.priority' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="12">
+        <nz-form-label nzSpan="7" nzFor="priorities" nzRequired="true">{{ 'alert.silence.priority' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             [(ngModel)]="silence.priorities"
             [nzDisabled]="silence.matchAll"
