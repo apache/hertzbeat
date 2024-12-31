@@ -135,7 +135,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   popoverVisible = false;
   refreshInterval: any;
   private previousCount = 0;
-  mute: Mute = { mute: false };
+  // default to mute status
+  mute: Mute = { mute: true };
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
@@ -315,7 +316,9 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
 
   toggleMute(event: MouseEvent): void {
     event.stopPropagation();
-    let saveConfig$ = this.configSvc.saveGeneralConfig(this.mute, 'mute')
+    const updatedMuteState = !this.mute.mute;
+    const updatedMuteConfig = { ...this.mute, mute: updatedMuteState };
+    let saveConfig$ = this.configSvc.saveGeneralConfig(updatedMuteConfig, 'mute')
       .pipe(
         finalize(() => {
           saveConfig$.unsubscribe();
@@ -324,7 +327,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       .subscribe({
         next: response => {
           if (response.code === 0) {
-            this.mute.mute = !this.mute.mute;
+            this.mute = updatedMuteConfig;
             console.log('Config saved successfully', response);
           } else {
             console.warn('Error saving config', response.msg);
