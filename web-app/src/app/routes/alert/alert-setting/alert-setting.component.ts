@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -30,6 +30,8 @@ import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { EMPTY, zip } from 'rxjs';
 import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
+import { fromEvent } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
@@ -58,10 +60,13 @@ export class AlertSettingComponent implements OnInit {
   ) {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
     this.qbFormCtrl.valueChanges.subscribe(() => {
-      this.updatePreviewExpr();
+      if (!this.isExpr) {
+        this.updatePreviewExpr();
+      }
     });
   }
   @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
+  @ViewChild('expr') exprInput!: ElementRef;
   search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -173,6 +178,21 @@ export class AlertSettingComponent implements OnInit {
       );
   }
 
+  ngAfterViewInit() {
+    if (this.exprInput) {
+      fromEvent(this.exprInput.nativeElement, 'input')
+        .pipe(
+          debounceTime(300),
+          distinctUntilChanged()
+        )
+        .subscribe(() => {
+          if (this.isExpr) {
+            this.updatePreviewExpr();
+          }
+        });
+    }
+  }
+
   sync() {
     this.loadAlertDefineTable();
   }
@@ -282,19 +302,24 @@ export class AlertSettingComponent implements OnInit {
 
             // 从表达式解析出级联值
             this.cascadeValues = this.exprToCascadeValues(this.define.expr);
+            
+            // 等待级联选择器更新后再处理阈值规则
+            setTimeout(() => {
+              // 移除表达式中的app/metric部分,展示其他条件
+              const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+              
+              // 根据指标类型决定显示方式
+              if (this.cascadeValues[1] === 'availability') {
+                this.isExpr = false;
+              } else {
+                // 尝试解析阈值表达式
+                this.tryParseThresholdExpr(userExpr);
+              }
+            });
 
             if (this.define.tags == undefined) {
               this.define.tags = [];
             }
-
-            // 移除表达式中的app/metric/field部分,展示其他条件
-            const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
-
-            // 尝试解析阈值表达式
-            this.tryParseThresholdExpr(userExpr);
-
-            // 更新UI配置
-            this.cascadeOnChange(this.cascadeValues);
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
           }
@@ -754,6 +779,12 @@ export class AlertSettingComponent implements OnInit {
                 operators: this.getOperatorsByType(fixedItem.type) 
               };
               this.qbConfig = { ...this.qbConfig, fields };
+
+              // 如果是编辑模式，尝试重新解析表达式
+              if (!this.isManageModalAdd && this.define.expr) {
+                const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+                this.tryParseThresholdExpr(userExpr);
+              }
             }
           }
         });
@@ -764,9 +795,19 @@ export class AlertSettingComponent implements OnInit {
 
   switchAlertRuleShow() {
     if (this.isExpr) {
-      let expr = this.ruleset2expr(this.qbData);
-      if (expr != '') {
+      // 从可视化规则切换到表达式模式
+      const expr = this.ruleset2expr(this.qbData);
+      if (expr) {
         this.define.expr = expr;
+      }
+    } else {
+      // 从表达式模式切换到可视化规则
+      try {
+        const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+        this.tryParseThresholdExpr(userExpr);
+      } catch (e) {
+        console.warn('Failed to parse expression:', e);
+        this.resetQbDataDefault();
       }
     }
     this.updatePreviewExpr();
@@ -1057,44 +1098,15 @@ export class AlertSettingComponent implements OnInit {
     }
 
     try {
-      // 使用正则表达式匹配整个表达式
-      const pattern = /^(?:(\w+(?:\.\w+\(\))?)\s*([><=!]+)\s*(\d+(?:\.\d+)?)|(!?(?:equals|contains|matches))\(([^,]+),\s*"([^"]+)"\))$/;
-      const match = expr.match(pattern);
-
-      if (match) {
-        // 如果是比较运算符表达式
-        if (match[1] && match[2] && match[3]) {
-          this.qbData = {
-            condition: 'and',
-            rules: [
-              {
-                field: match[1],
-                operator: match[2],
-                value: parseFloat(match[3])
-              }
-            ]
-          };
-          this.isExpr = false;
-          return;
-        }
-        // 如果是函数表达式
-        if (match[4] && match[5] && match[6]) {
-          this.qbData = {
-            condition: 'and',
-            rules: [
-              {
-                field: match[5],
-                operator: match[4],
-                value: match[6]
-              }
-            ]
-          };
-          this.isExpr = false;
-          return;
-        }
+      // 首先尝试解析为可视化规则
+      const ruleset = this.expr2ruleset(expr);
+      if (ruleset && ruleset.rules && ruleset.rules.length > 0) {
+        this.resetQbData(ruleset);
+        this.isExpr = false;
+        return;
       }
 
-      // 如果无法解析，切换到表达式模式
+      // 如果无法解析为可视化规则，切换到表达式模式
       this.isExpr = true;
       this.define.expr = expr;
       this.resetQbDataDefault();
@@ -1107,16 +1119,20 @@ export class AlertSettingComponent implements OnInit {
   }
 
   // 新增方法：更新预览表达式
-  private updatePreviewExpr(): void {
-    // 构建基础表达式(app/metric/field)
+  public updatePreviewExpr(): void {
+    // 构建基础表达式(app/metric)
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
 
     // 构建阈值表达式
     let thresholdExpr = '';
-    if (this.cascadeValues.length == 3 && !this.isExpr) {
-      thresholdExpr = this.ruleset2expr(this.qbData);
-    } else if (this.isExpr) {
-      thresholdExpr = this.define.expr || '';
+    if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
+      if (!this.isExpr) {
+        // 使用可视化规则构建器的值
+        thresholdExpr = this.ruleset2expr(this.qbData);
+      } else {
+        // 使用表达式输入框的值
+        thresholdExpr = this.define.expr || '';
+      }
     }
 
     // 合并表达式

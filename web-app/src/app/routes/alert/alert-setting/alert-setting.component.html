@@ -260,6 +260,7 @@
           <nz-textarea-count [nzMaxCharacterCount]="100">
             <textarea
               [(ngModel)]="define.expr"
+              (ngModelChange)="updatePreviewExpr()"
               required
               rows="3"
               nz-input
