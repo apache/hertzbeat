@@ -17,24 +17,6 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.common.util.prometheus;
-
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-/**
- * prometheus metric line entity
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Metric {
-    private String metricName;
-    private List<Label> labelList;
-    private Double value;
-    private Long timestamp;
+export class Mute {
+  mute!: boolean;
 }

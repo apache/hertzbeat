@@ -484,6 +484,7 @@
   "common.disable": "關閉",
   "common.copy": "點擊複製",
   "common.copy.button": "複製",
+  "common.mute": "靜音",
   "common.notify.no-select-edit": "未選中任何待編輯項!",
   "common.notify.one-select-edit": "只能對一個選中項進行編輯!",
   "common.confirm.delete": "請確認是否刪除!",

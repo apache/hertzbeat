@@ -471,6 +471,7 @@
   "common.disable": "关闭",
   "common.copy": "点击复制",
   "common.copy.button": "复制",
+  "common.mute": "静音",
   "common.notify.no-select-edit": "未选中任何待编辑项!",
   "common.notify.one-select-edit": "只能对一个选中项进行编辑!",
   "common.confirm.delete": "请确认是否删除!",

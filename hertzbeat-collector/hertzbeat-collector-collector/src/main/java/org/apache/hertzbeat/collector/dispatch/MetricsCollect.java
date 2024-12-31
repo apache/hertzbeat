@@ -41,6 +41,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
 
@@ -288,6 +289,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     } catch (Exception e) {
                         log.info("[calculates execute warning] {}.", e.getMessage());
+                        value = Optional.ofNullable(fieldValueMap.get(expression.getSourceText()))
+                                        .map(String::valueOf)
+                                        .orElse(null);
                     }
                 } else {
                     // does not exist then map the alias value

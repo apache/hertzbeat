@@ -17,21 +17,30 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.common.util.prometheus;
+import { Injectable } from '@angular/core';
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+@Injectable({
+  providedIn: 'root'
+})
+export class AlertSoundService {
+  private audio: HTMLAudioElement;
 
-/**
- * prometheus label entity
- */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Label {
-    private String name;
-    private String value;
+  constructor() {
+    this.audio = new Audio();
+    this.audio.src = '/assets/audio/default-alert-CN.mp3';
+    this.audio.load();
+  }
+
+  playAlertSound(lang: string): void {
+    if (lang === 'zh-CN' || lang === 'zh-TW') {
+      this.audio.src = '/assets/audio/default-alert-CN.mp3';
+    } else {
+      this.audio.src = '/assets/audio/default-alert-EN.mp3';
+    }
+
+    this.audio.load();
+    this.audio.play().catch(error => {
+      console.warn('Failed to play alert sound:', error);
+    });
+  }
 }
