@@ -318,7 +318,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     const updatedMuteState = !this.mute.mute;
     const updatedMuteConfig = { ...this.mute, mute: updatedMuteState };
-    let saveConfig$ = this.configSvc.saveGeneralConfig(updatedMuteConfig, 'mute')
+    let saveConfig$ = this.configSvc
+      .saveGeneralConfig(updatedMuteConfig, 'mute')
       .pipe(
         finalize(() => {
           saveConfig$.unsubscribe();
