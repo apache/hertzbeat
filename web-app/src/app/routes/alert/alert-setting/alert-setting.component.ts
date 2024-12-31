@@ -118,6 +118,19 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     { name: '${time}', description: 'alert.setting.template.vars.time' }
   ];
 
+  // 添加常用操作符列表
+  commonOperators = [
+    { value: '==', description: 'alert.setting.expr.operator.equals' },
+    { value: '!=', description: 'alert.setting.expr.operator.not-equals' },
+    { value: '>', description: 'alert.setting.expr.operator.greater' },
+    { value: '>=', description: 'alert.setting.expr.operator.greater-equals' },
+    { value: '<', description: 'alert.setting.expr.operator.less' },
+    { value: '<=', description: 'alert.setting.expr.operator.less-equals' },
+    { value: '&&', description: 'alert.setting.expr.operator.and' },
+    { value: '||', description: 'alert.setting.expr.operator.or' },
+    { value: '()', description: 'alert.setting.expr.operator.brackets' }
+  ];
+
   ngOnInit(): void {
     this.loadAlertDefineTable();
     // query monitoring hierarchy
@@ -1184,6 +1197,39 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
         textarea.focus();
         const newCursorPos = start + env.name.length;
         textarea.setSelectionRange(newCursorPos, newCursorPos);
+      });
+    }
+  }
+
+  // 添加点击变量的处理方法
+  onExprVarClick(item: { value: string, description?: string }) {
+    const textarea = document.getElementById('expr') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+      
+      // 特殊处理括号
+      let insertText = item.value;
+      if (item.value === '()') {
+        insertText = '()';
+        // 如果有选中文本，将其包含在括号内
+        if (start !== end) {
+          insertText = `(${text.substring(start, end)})`;
+        }
+      }
+      
+      this.define.expr = before + insertText + after;
+      
+      // 恢复光标位置
+      setTimeout(() => {
+        textarea.focus();
+        const newPos = item.value === '()' && start === end ? 
+          start + 1 : // 将光标放在括号中间
+          start + insertText.length; // 将光标放在插入内容后面
+        textarea.setSelectionRange(newPos, newPos);
       });
     }
   }

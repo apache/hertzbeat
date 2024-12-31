@@ -228,46 +228,43 @@
       <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-textarea-count [nzMaxCharacterCount]="100">
-            <textarea
-              [(ngModel)]="define.expr"
-              (ngModelChange)="updatePreviewExpr()"
-              required
-              rows="3"
-              nz-input
-              name="expr"
-              id="expr"
-              [placeholder]="('alert.setting.expr.example' | i18n) + ': responseTime&gt;40'"
-            >
-            </textarea>
-          </nz-textarea-count>
-          <nz-collapse style="margin-top: 20px">
-            <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.expr.tip' | i18n">
-              <nz-list nzSize="small" nzSplit="false">
-                <nz-list-item *ngFor="let item of currentMetrics; let i = index">
-                  <code>
-                    {{ item.value }} :
-                    {{
-                      item.value == item.label
-                        ? i == 0
-                          ? ('alert.setting.target.tip' | i18n)
-                          : ('alert.setting.target.other' | i18n)
-                        : item.label
-                    }}
-                  </code>
-                  <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
+          <div class="template-input-wrapper">
+            <a nz-dropdown [nzDropdownMenu]="exprMenu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
+              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.expr.tip' | i18n">
+                <i nz-icon nzType="snippets" nzTheme="outline"></i>
+              </button>
+            </a>
+            <nz-dropdown-menu #exprMenu="nzDropdownMenu">
+              <ul nz-menu class="env-vars-menu">
+                <li nz-menu-item *ngFor="let item of currentMetrics" (click)="onExprVarClick(item)">
+                  <span class="env-var-name">{{ item.value }}</span>
+                  <span class="env-var-desc">{{ item.label }}</span>
+                  <nz-tag class="env-var-type" [nzColor]="item.type === 0 ? 'success' : 'processing'">
                     {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
                   </nz-tag>
-                </nz-list-item>
-                <nz-list-item>
-                  <code>
-                    {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
-                    <, <=, >, >=, !=, ( ), +, -, &&, ||
-                  </code>
-                </nz-list-item>
-              </nz-list>
-            </nz-collapse-panel>
-          </nz-collapse>
+                </li>
+                <nz-divider></nz-divider>
+                <li nz-menu-item *ngFor="let op of commonOperators" (click)="onExprVarClick(op)">
+                  <span class="env-var-name">{{ op.value }}</span>
+                  <span class="env-var-desc">{{ op.description | i18n }}</span>
+                </li>
+              </ul>
+            </nz-dropdown-menu>
+
+            <nz-textarea-count [nzMaxCharacterCount]="100">
+              <textarea
+                [(ngModel)]="define.expr"
+                (ngModelChange)="updatePreviewExpr()"
+                required
+                rows="3"
+                nz-input
+                name="expr"
+                id="expr"
+                [placeholder]="'alert.setting.expr.example' | i18n"
+              >
+              </textarea>
+            </nz-textarea-count>
+          </div>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && !isExpr">
@@ -427,7 +424,7 @@
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
             <a nz-dropdown [nzDropdownMenu]="menu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
-              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.template.vars.tip' | i18n">
+              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.template.tip' | i18n">
                 <i nz-icon nzType="snippets" nzTheme="outline"></i>
               </button>
             </a>
