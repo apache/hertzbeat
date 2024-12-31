@@ -90,12 +90,11 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="16%">{{ 'alert.setting.target' | i18n }}</th>
-      <th nzAlign="center" nzWidth="14%">{{ 'alert.setting.expr' | i18n }}</th>
+      <th nzAlign="center" nzWidth="16%">{{ 'alert.setting.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="24%">{{ 'alert.setting.expr' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.priority' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.times' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'alert.setting.template' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.default' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.enable' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -104,34 +103,7 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
-        <ng-container *ngIf="exprToCascadeValues(data.expr).length >= 2">
-          <span>
-            {{ 'monitor.app.' + exprToCascadeValues(data.expr)[0] | i18n }} /
-            <ng-container *ngIf="exprToCascadeValues(data.expr)[1] === 'availability'">
-              {{ 'monitor.availability' | i18n }}
-            </ng-container>
-            <ng-container *ngIf="exprToCascadeValues(data.expr)[1] !== 'availability'">
-              {{
-                'monitor.app.' + exprToCascadeValues(data.expr)[0] + '.metrics.' + exprToCascadeValues(data.expr)[1]
-                  | i18nElse : exprToCascadeValues(data.expr)[1]
-              }}
-              <span *ngIf="exprToCascadeValues(data.expr).length > 2">
-                /
-                {{
-                  'monitor.app.' +
-                    exprToCascadeValues(data.expr)[0] +
-                    '.metrics.' +
-                    exprToCascadeValues(data.expr)[1] +
-                    '.metric.' +
-                    exprToCascadeValues(data.expr)[2] | i18nElse : exprToCascadeValues(data.expr)[2]
-                }}
-              </span>
-            </ng-container>
-          </span>
-        </ng-container>
-        <span *ngIf="exprToCascadeValues(data.expr).length < 2">
-          {{ 'alert.setting.target.invalid' | i18n }}
-        </span>
+        <span>{{ data.name }}</span>
       </td>
       <td nzAlign="center">
         <span>{{ data.expr }}</span>
@@ -152,9 +124,6 @@
       </td>
       <td nzAlign="center">{{ data.times }}</td>
       <td nzAlign="center">{{ data.template }}</td>
-      <td nzAlign="center">
-        <nz-switch [(ngModel)]="data.preset" (ngModelChange)="updateAlertDefine(data)" name="preset"></nz-switch>
-      </td>
       <td nzAlign="center">
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
       </td>
@@ -201,7 +170,7 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #defineForm="ngForm">
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor="name" [nzTooltipTitle]="'alert.setting.times.tip' | i18n">
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="name" [nzTooltipTitle]="'alert.setting.name.tip' | i18n">
           {{ 'alert.setting.name' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
@@ -209,7 +178,9 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true">{{ 'alert.setting.target' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true" [nzTooltipTitle]="'alert.setting.target.tip' | i18n">
+          {{ 'alert.setting.target' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-cascader
             required
@@ -505,14 +476,6 @@
             [name]="'tags'"
             [(ngModel)]="define.tags"
           />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="preset" [nzTooltipTitle]="'alert.setting.default.tip' | i18n">
-          {{ 'alert.setting.default' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
