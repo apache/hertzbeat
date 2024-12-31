@@ -416,6 +416,16 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="previewExpr">
+          {{ 'alert.setting.preview.expr' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-card [nzBordered]="false" class="preview-expr-card">
+            <pre>{{ previewExpr }}</pre>
+          </nz-card>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="priority" [nzTooltipTitle]="'alert.setting.priority.tip' | i18n">
           {{ 'alert.priority' | i18n }}
         </nz-form-label>
