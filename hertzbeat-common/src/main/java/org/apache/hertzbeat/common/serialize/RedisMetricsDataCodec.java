@@ -46,6 +46,7 @@ public class RedisMetricsDataCodec implements RedisCodec<String, CollectRep.Metr
     public RedisMetricsDataCodec() {
         this.allocator = new RootAllocator();
     }
+
     @Override
     public String decodeKey(ByteBuffer byteBuffer) {
         return Unpooled.wrappedBuffer(byteBuffer).toString(StandardCharsets.UTF_8);
@@ -68,7 +69,6 @@ public class RedisMetricsDataCodec implements RedisCodec<String, CollectRep.Metr
             try (ByteArrayInputStream in = new ByteArrayInputStream(bytes);
                  ArrowStreamReader reader = new ArrowStreamReader(
                          Channels.newChannel(in), allocator)) {
-
                 reader.loadNextBatch();
                 VectorSchemaRoot root = reader.getVectorSchemaRoot();
                 if (root == null || root.getRowCount() == 0) {
