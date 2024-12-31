@@ -119,15 +119,32 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.appHierarchies = message.data;
+            // 修改层级结构
             this.appHierarchies.forEach(item => {
-              if (item.children == undefined) {
-                item.children = [];
+              if (item.children) {
+                // 保存原始的字段信息
+                item.children.forEach((metric: any) => {
+                  if (metric.children) {
+                    metric.fields = metric.children;
+                  }
+                  // 设置为叶子节点
+                  metric.isLeaf = true;
+                  // 删除 children 属性
+                  delete metric.children;
+                });
+                // 添加可用性选项
+                item.children.unshift({
+                  value: AVAILABILITY,
+                  label: this.i18nSvc.fanyi('monitor.availability'),
+                  isLeaf: true
+                });
+              } else {
+                item.children = [{
+                  value: AVAILABILITY,
+                  label: this.i18nSvc.fanyi('monitor.availability'),
+                  isLeaf: true
+                }];
               }
-              item.children.unshift({
-                value: AVAILABILITY,
-                label: this.i18nSvc.fanyi('monitor.availability'),
-                isLeaf: true
-              });
             });
           } else {
             console.warn(message.msg);
@@ -710,14 +727,20 @@ export class AlertSettingComponent implements OnInit {
     // 更新UI相关配置
     this.appHierarchies.forEach(hierarchy => {
       if (hierarchy.value == values[0]) {
-        hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
+        hierarchy.children.forEach((metrics: { value: string; fields?: any[] }) => {
           if (metrics.value == values[1]) {
             this.currentMetrics = [];
-            if (metrics.children) {
+            // 如果不是可用性指标且有字段信息，则加载指标字段
+            if (metrics.value !== 'availability' && metrics.fields) {
               let fields: any = {};
-              metrics.children.forEach(item => {
+              metrics.fields.forEach(item => {
                 this.currentMetrics.push(item);
-                fields[item.value] = { name: item.label, type: item.type, unit: item.unit, operators: this.getOperatorsByType(item.type) };
+                fields[item.value] = { 
+                  name: item.label, 
+                  type: item.type, 
+                  unit: item.unit, 
+                  operators: this.getOperatorsByType(item.type) 
+                };
               });
               let fixedItem = {
                 value: 'system_value_row_count',
@@ -725,7 +748,11 @@ export class AlertSettingComponent implements OnInit {
                 label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
               };
               this.currentMetrics.push(fixedItem);
-              fields[fixedItem.value] = { name: fixedItem.label, type: fixedItem.type, operators: this.getOperatorsByType(fixedItem.type) };
+              fields[fixedItem.value] = { 
+                name: fixedItem.label, 
+                type: fixedItem.type, 
+                operators: this.getOperatorsByType(fixedItem.type) 
+              };
               this.qbConfig = { ...this.qbConfig, fields };
             }
           }
@@ -985,36 +1012,27 @@ export class AlertSettingComponent implements OnInit {
   // 新增方法:将级联选择的值转换为表达式
   private cascadeValuesToExpr(values: string[]): string {
     if (!values || values.length < 2) return '';
-
-    let expr = `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
-    if (values.length > 2) {
-      expr += ` && equals(field,"${values[2]}")`;
-    }
-    return expr;
+    
+    return `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
   }
 
   // 新增方法:从表达式中解析出级联值
   public exprToCascadeValues(expr: string | undefined): string[] {
     const values: string[] = [];
 
-    // 处理空值情况
     if (!expr) {
       return values;
     }
 
-    // 使用正则匹配 equals(app,"xxx") 和 equals(metric,"xxx")
     const appMatch = expr.match(/equals\(app,"([^"]+)"\)/);
     const metricMatch = expr.match(/equals\(metric,"([^"]+)"\)/);
-    const fieldMatch = expr.match(/equals\(field,"([^"]+)"\)/);
 
-    // 必须至少包含 app 和 metric
     if (!appMatch || !metricMatch) {
       return values;
     }
 
     values.push(appMatch[1]);
     values.push(metricMatch[1]);
-    if (fieldMatch) values.push(fieldMatch[1]);
 
     return values;
   }
@@ -1026,7 +1044,6 @@ export class AlertSettingComponent implements OnInit {
     return expr
       .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
       .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
-      .replace(/equals\(field,"[^"]+"\)\s*&&\s*/, '')
       .replace(/^\s*&&\s*/, '')
       .replace(/\s*&&\s*$/, '');
   }

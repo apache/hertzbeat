@@ -223,29 +223,38 @@
           ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2" [ngStyle]="{ marginBottom: '5px' }">
+      <nz-form-item *ngIf="cascadeValues.length > 0" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzFor="isExpr" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-radio-group
-            [(ngModel)]="isExpr"
-            (ngModelChange)="switchAlertRuleShow()"
-            nzButtonStyle="solid"
-            [required]="'true'"
-            name="isExpr"
-            id="isExpr"
-          >
-            <label nz-radio-button [nzValue]="false">
-              {{ 'alert.setting.rule.switch-expr.0' | i18n }}
-            </label>
-            <label nz-radio-button [nzValue]="true">
-              {{ 'alert.setting.rule.switch-expr.1' | i18n }}
-            </label>
-          </nz-radio-group>
+          <div *ngIf="cascadeValues[1] === 'availability'">
+            <span style="color: red">
+              <nz-tag nzColor="error">{{ 'monitor.status.down' | i18n }}</nz-tag>
+              <nz-tag nzColor="error">{{ 'monitor.status.unreachable' | i18n }}</nz-tag>
+              {{ 'alert.setting.trigger' | i18n }}
+            </span>
+          </div>
+          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
+            <nz-radio-group
+              [(ngModel)]="isExpr"
+              (ngModelChange)="switchAlertRuleShow()"
+              nzButtonStyle="solid"
+              [required]="'true'"
+              name="isExpr"
+              id="isExpr"
+            >
+              <label nz-radio-button [nzValue]="false">
+                {{ 'alert.setting.rule.switch-expr.0' | i18n }}
+              </label>
+              <label nz-radio-button [nzValue]="true">
+                {{ 'alert.setting.rule.switch-expr.1' | i18n }}
+              </label>
+            </nz-radio-group>
+          </ng-container>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2 && isExpr">
+      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="100">
@@ -289,7 +298,7 @@
           </nz-collapse>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2 && !isExpr">
+      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && !isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
           <ngx-query-builder
@@ -401,18 +410,6 @@
               />
             </ng-container>
           </ngx-query-builder>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length == 2">
-        <nz-form-label [nzSpan]="7" nzFor="available">
-          {{ 'monitor.availability' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="10">
-          <span style="color: red">
-            <nz-tag nzColor="error">{{ 'monitor.status.down' | i18n }}</nz-tag>
-            <nz-tag nzColor="error">{{ 'monitor.status.unreachable' | i18n }}</nz-tag>
-            {{ 'alert.setting.trigger' | i18n }}
-          </span>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

@@ -163,7 +163,7 @@
   "alert.setting.target": "Metric Target",
   "alert.setting.target.place-holder": "Please search or select metrics target",
   "alert.setting.expr": "Threshold Trigger Expr",
-  "alert.setting.trigger": "Trigger alarms and update monitor status",
+  "alert.setting.trigger": "Trigger alarms",
   "alert.setting.rule": "Threshold Rule",
   "alert.setting.number": "Numeric",
   "alert.setting.string": "String",

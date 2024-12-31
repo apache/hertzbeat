@@ -176,7 +176,7 @@
   "alert.setting.target": "指標對象",
   "alert.setting.target.place-holder": "請搜索或選擇指標對象",
   "alert.setting.expr": "阈值觸發表達式",
-  "alert.setting.trigger": "異常時觸發告警,變更監控可用性狀態",
+  "alert.setting.trigger": "異常時觸發告警",
   "alert.setting.rule": "閾值規則",
   "alert.setting.number": "數值型",
   "alert.setting.string": "字符型",

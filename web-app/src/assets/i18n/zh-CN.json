@@ -163,7 +163,7 @@
   "alert.setting.target": "指标对象",
   "alert.setting.target.place-holder": "请搜索或选择指标对象",
   "alert.setting.expr": "阈值触发表达式",
-  "alert.setting.trigger": "异常时触发告警,变更监控可用性状态",
+  "alert.setting.trigger": "异常时触发告警",
   "alert.setting.rule": "阈值规则",
   "alert.setting.number": "数值型",
   "alert.setting.string": "字符型",
