@@ -117,6 +117,10 @@ public class MetricsDataServiceImpl implements MetricsDataService {
         } else {
             instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
         }
+        if (instanceValuesMap.containsKey("{}")) {
+            instanceValuesMap.put("", instanceValuesMap.get("{}"));
+            instanceValuesMap.remove("{}");
+        }
         return MetricsHistoryData.builder()
                 .id(monitorId).metrics(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())

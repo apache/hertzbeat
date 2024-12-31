@@ -31,10 +31,16 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.VarCharVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.arrow.vector.table.ArrowTable;
 import org.apache.arrow.vector.table.Row;
+import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.FieldType;
+import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 
@@ -257,10 +263,10 @@ public final class CollectRep {
             List<ValueRow> values = new ArrayList<>();
             Iterator<Row> iterator = table.iterator();
             while (iterator.hasNext()) {
-                org.apache.arrow.vector.table.Row row = iterator.next();
+                Row row = iterator.next();
                 ValueRow valueRow = ValueRow.newBuilder()
                     .setColumns(fieldNames.stream()
-                        .map(fieldName -> new String(((org.apache.arrow.vector.VarCharVector)
+                        .map(fieldName -> new String(((VarCharVector)
                             table.getVector(fieldName)).get(row.getRowNumber())))
                         .collect(Collectors.toList()))
                     .build();
@@ -369,8 +375,7 @@ public final class CollectRep {
                 metadata.put(MetricDataConstants.CODE, String.valueOf(code != null ? code.value : 0));
                 metadata.put(MetricDataConstants.MSG, msg != null ? msg : "");
 
-                org.apache.arrow.memory.BufferAllocator allocator =
-                        new org.apache.arrow.memory.RootAllocator();
+                BufferAllocator allocator = new RootAllocator();
                 try {
                     // Create Arrow fields with metadata
                     List<org.apache.arrow.vector.types.pojo.Field> arrowFields = fields.stream()
@@ -382,21 +387,14 @@ public final class CollectRep {
 
                                 return new org.apache.arrow.vector.types.pojo.Field(
                                         field.getName(),
-                                        new org.apache.arrow.vector.types.pojo.FieldType(
-                                                true,
-                                                new org.apache.arrow.vector.types.pojo.ArrowType.Utf8(),
-                                                null,
-                                                fieldMetadata),
+                                        new FieldType(true, new ArrowType.Utf8(), null, fieldMetadata),
                                         null);
                             })
                             .collect(Collectors.toList());
 
                     // Create Schema with metadata
-                    org.apache.arrow.vector.types.pojo.Schema schema =
-                            new org.apache.arrow.vector.types.pojo.Schema(arrowFields, metadata);
-
-                    org.apache.arrow.vector.VectorSchemaRoot root =
-                            org.apache.arrow.vector.VectorSchemaRoot.create(schema, allocator);
+                    Schema schema = new Schema(arrowFields, metadata);
+                    VectorSchemaRoot root = VectorSchemaRoot.create(schema, allocator);
                     
                     try {
                         root.allocateNew();
@@ -404,8 +402,7 @@ public final class CollectRep {
                         root.setRowCount(rowCount);
                         // Write values
                         for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-                            org.apache.arrow.vector.VarCharVector vector =
-                                    (org.apache.arrow.vector.VarCharVector) root.getVector(fieldIndex);
+                            VarCharVector vector = (VarCharVector) root.getVector(fieldIndex);
                             vector.allocateNew();
 
                             for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
@@ -614,13 +611,13 @@ public final class CollectRep {
         /**
          * monitoring collect metrics value, mapping with the fields
          */
-        private java.util.List<String> columns;
+        private List<String> columns;
 
         public ValueRow() {
             columns = new LinkedList<>();
         }
         
-        public ValueRow(java.util.List<String> columns) {
+        public ValueRow(List<String> columns) {
             this.columns = new LinkedList<>();
             this.columns.addAll(columns);
         }
@@ -629,7 +626,7 @@ public final class CollectRep {
             return columns;
         }
 
-        public void setColumns(java.util.List<String> columns) {
+        public void setColumns(List<String> columns) {
             this.columns = columns;
         }
 
@@ -657,14 +654,14 @@ public final class CollectRep {
         }
 
         public static class Builder {
-            private java.util.List<String> columns;
+            private List<String> columns;
 
             private Builder() {
                 columns = new LinkedList<>();
             }
 
-            public Builder setColumns(java.util.List<String> columns) {
-                columns = columns;
+            public Builder setColumns(List<String> columns) {
+                this.columns = columns;
                 return this;
             }
 
