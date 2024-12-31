@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -28,10 +28,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
-import { EMPTY, zip } from 'rxjs';
-import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
-import { fromEvent } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { EMPTY, zip, fromEvent } from 'rxjs';
+import { catchError, finalize, map, switchMap, take, tap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
@@ -48,7 +46,7 @@ const AVAILABILITY = 'availability';
   templateUrl: './alert-setting.component.html',
   styleUrls: ['./alert-setting.component.less']
 })
-export class AlertSettingComponent implements OnInit {
+export class AlertSettingComponent implements OnInit, AfterViewInit {
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
@@ -144,11 +142,13 @@ export class AlertSettingComponent implements OnInit {
                   isLeaf: true
                 });
               } else {
-                item.children = [{
-                  value: AVAILABILITY,
-                  label: this.i18nSvc.fanyi('monitor.availability'),
-                  isLeaf: true
-                }];
+                item.children = [
+                  {
+                    value: AVAILABILITY,
+                    label: this.i18nSvc.fanyi('monitor.availability'),
+                    isLeaf: true
+                  }
+                ];
               }
             });
           } else {
@@ -181,10 +181,7 @@ export class AlertSettingComponent implements OnInit {
   ngAfterViewInit() {
     if (this.exprInput) {
       fromEvent(this.exprInput.nativeElement, 'input')
-        .pipe(
-          debounceTime(300),
-          distinctUntilChanged()
-        )
+        .pipe(debounceTime(300), distinctUntilChanged())
         .subscribe(() => {
           if (this.isExpr) {
             this.updatePreviewExpr();
@@ -302,12 +299,12 @@ export class AlertSettingComponent implements OnInit {
 
             // 从表达式解析出级联值
             this.cascadeValues = this.exprToCascadeValues(this.define.expr);
-            
+
             // 等待级联选择器更新后再处理阈值规则
             setTimeout(() => {
               // 移除表达式中的app/metric部分,展示其他条件
               const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
-              
+
               // 根据指标类型决定显示方式
               if (this.cascadeValues[1] === 'availability') {
                 this.isExpr = false;
@@ -760,11 +757,11 @@ export class AlertSettingComponent implements OnInit {
               let fields: any = {};
               metrics.fields.forEach(item => {
                 this.currentMetrics.push(item);
-                fields[item.value] = { 
-                  name: item.label, 
-                  type: item.type, 
-                  unit: item.unit, 
-                  operators: this.getOperatorsByType(item.type) 
+                fields[item.value] = {
+                  name: item.label,
+                  type: item.type,
+                  unit: item.unit,
+                  operators: this.getOperatorsByType(item.type)
                 };
               });
               let fixedItem = {
@@ -773,10 +770,10 @@ export class AlertSettingComponent implements OnInit {
                 label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
               };
               this.currentMetrics.push(fixedItem);
-              fields[fixedItem.value] = { 
-                name: fixedItem.label, 
-                type: fixedItem.type, 
-                operators: this.getOperatorsByType(fixedItem.type) 
+              fields[fixedItem.value] = {
+                name: fixedItem.label,
+                type: fixedItem.type,
+                operators: this.getOperatorsByType(fixedItem.type)
               };
               this.qbConfig = { ...this.qbConfig, fields };
 
@@ -1053,7 +1050,12 @@ export class AlertSettingComponent implements OnInit {
   // 新增方法:将级联选择的值转换为表达式
   private cascadeValuesToExpr(values: string[]): string {
     if (!values || values.length < 2) return '';
-    
+
+    // 可用性指标特殊处理
+    if (values[1] === 'availability') {
+      return `equals(app,"${values[0]}") && equals(availability,"up")`;
+    }
+
     return `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
   }
 
@@ -1067,13 +1069,20 @@ export class AlertSettingComponent implements OnInit {
 
     const appMatch = expr.match(/equals\(app,"([^"]+)"\)/);
     const metricMatch = expr.match(/equals\(metric,"([^"]+)"\)/);
+    const availabilityMatch = expr.match(/equals\(availability,"up"\)/);
 
-    if (!appMatch || !metricMatch) {
+    if (!appMatch) {
       return values;
     }
 
     values.push(appMatch[1]);
-    values.push(metricMatch[1]);
+
+    // 如果存在可用性表达式，则添加 availability
+    if (availabilityMatch) {
+      values.push('availability');
+    } else if (metricMatch) {
+      values.push(metricMatch[1]);
+    }
 
     return values;
   }
@@ -1085,6 +1094,7 @@ export class AlertSettingComponent implements OnInit {
     return expr
       .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
       .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
+      .replace(/equals\(availability,"up"\)\s*&&\s*/, '') // 添加可用性表达式的移除
       .replace(/^\s*&&\s*/, '')
       .replace(/\s*&&\s*$/, '');
   }
