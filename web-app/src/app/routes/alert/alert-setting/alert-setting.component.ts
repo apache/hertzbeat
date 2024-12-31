@@ -1091,12 +1091,12 @@ export class AlertSettingComponent implements OnInit {
       const before = text.substring(0, start);
       const after = text.substring(end);
 
-      this.define.template = before + env.name + after;
+      this.define.template = `${before} ${env.name} ${after}`;
 
       // Restore cursor position
       setTimeout(() => {
         textarea.focus();
-        const newCursorPos = start + env.name.length;
+        const newCursorPos = start + env.name.length + 2;
         textarea.setSelectionRange(newCursorPos, newCursorPos);
       });
     }
@@ -1122,7 +1122,7 @@ export class AlertSettingComponent implements OnInit {
         }
       }
 
-      this.define.expr = before + insertText + after;
+      this.userExpr = `${before} ${insertText} ${after}`;
 
       // Restore cursor position
       setTimeout(() => {
@@ -1130,7 +1130,7 @@ export class AlertSettingComponent implements OnInit {
         const newPos =
           item.value === '()' && start === end
             ? start + 1 // Place cursor between brackets
-            : start + insertText.length; // Place cursor after inserted content
+            : start + insertText.length + 2; // Place cursor after inserted content
         textarea.setSelectionRange(newPos, newPos);
       });
     }
