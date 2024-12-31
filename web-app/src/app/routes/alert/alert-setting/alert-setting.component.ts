@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -28,8 +28,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
-import { EMPTY, zip, fromEvent } from 'rxjs';
-import { catchError, finalize, map, switchMap, take, tap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { zip } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
@@ -46,7 +46,7 @@ const AVAILABILITY = 'availability';
   templateUrl: './alert-setting.component.html',
   styleUrls: ['./alert-setting.component.less']
 })
-export class AlertSettingComponent implements OnInit, AfterViewInit {
+export class AlertSettingComponent implements OnInit {
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
@@ -58,13 +58,11 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
   ) {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
     this.qbFormCtrl.valueChanges.subscribe(() => {
-      if (!this.isExpr) {
-        this.updatePreviewExpr();
-      }
+      this.userExpr = this.ruleset2expr(this.qbFormCtrl.value);
+      this.updateFinalExpr();
     });
   }
   @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
-  @ViewChild('expr') exprInput!: ElementRef;
   search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -106,7 +104,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
   qbFormCtrl: FormControl;
   appMap = new Map<string, string>();
   appEntries: Array<{ value: any; key: string }> = [];
-  previewExpr: string = '';
 
   templateEnvVars = [
     { name: '${app}', description: 'alert.setting.template.vars.app' },
@@ -118,7 +115,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     { name: '${time}', description: 'alert.setting.template.vars.time' }
   ];
 
-  // 添加常用操作符列表
   commonOperators = [
     { value: '==', description: 'alert.setting.expr.operator.equals' },
     { value: '!=', description: 'alert.setting.expr.operator.not-equals' },
@@ -199,18 +195,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
           console.warn(error.msg);
         }
       );
-  }
-
-  ngAfterViewInit() {
-    if (this.exprInput) {
-      fromEvent(this.exprInput.nativeElement, 'input')
-        .pipe(debounceTime(300), distinctUntilChanged())
-        .subscribe(() => {
-          if (this.isExpr) {
-            this.updatePreviewExpr();
-          }
-        });
-    }
   }
 
   sync() {
@@ -296,56 +280,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
         error => {
           this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
-        }
-      );
-  }
-
-  editAlertDefine(alertDefineId: number) {
-    if (this.isLoadingEdit !== -1) return;
-    this.isLoadingEdit = alertDefineId;
-    this.isManageModalAdd = false;
-    this.isManageModalOkLoading = false;
-
-    const getDefine$ = this.alertDefineSvc
-      .getAlertDefine(alertDefineId)
-      .pipe(
-        finalize(() => {
-          getDefine$.unsubscribe();
-          this.isLoadingEdit = -1;
-          this.isManageModalVisible = true;
-        })
-      )
-      .subscribe(
-        message => {
-          if (message.code === 0) {
-            this.define = message.data;
-
-            // 从表达式解析出级联值
-            this.cascadeValues = this.exprToCascadeValues(this.define.expr);
-
-            // 等待级联选择器更新后再处理阈值规则
-            setTimeout(() => {
-              // 移除表达式中的app/metric部分,展示其他条件
-              const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
-
-              // 根据指标类型决定显示方式
-              if (this.cascadeValues[1] === 'availability') {
-                this.isExpr = false;
-              } else {
-                // 尝试解析阈值表达式
-                this.tryParseThresholdExpr(userExpr);
-              }
-            });
-
-            if (this.define.tags == undefined) {
-              this.define.tags = [];
-            }
-          } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
-          }
-        },
-        error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), error.msg);
         }
       );
   }
@@ -519,6 +453,50 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
   cascadeValues: string[] = [];
   currentMetrics: any[] = [];
   isExpr = false;
+  userExpr!: string;
+
+  editAlertDefine(alertDefineId: number) {
+    if (this.isLoadingEdit !== -1) return;
+    this.isLoadingEdit = alertDefineId;
+    this.isManageModalAdd = false;
+    this.isManageModalOkLoading = false;
+
+    const getDefine$ = this.alertDefineSvc
+      .getAlertDefine(alertDefineId)
+      .pipe(
+        finalize(() => {
+          getDefine$.unsubscribe();
+          this.isLoadingEdit = -1;
+          this.isManageModalVisible = true;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.define = message.data;
+            this.cascadeValues = this.exprToCascadeValues(this.define.expr);
+            this.cascadeOnChange(this.cascadeValues);
+            // wait for the cascadeValues to be set
+            setTimeout(() => {
+              this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+              if (this.cascadeValues[1] === 'availability') {
+                this.isExpr = false;
+              } else {
+                this.tryParseThresholdExpr(this.userExpr);
+              }
+            });
+            if (this.define.tags == undefined) {
+              this.define.tags = [];
+            }
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), error.msg);
+        }
+      );
+  }
 
   private getOperatorsByType(type: number): string[] {
     if (type === 0 || type === 3) {
@@ -768,8 +746,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
       this.resetQbDataDefault();
       return;
     }
-
-    // 更新UI相关配置
     this.appHierarchies.forEach(hierarchy => {
       if (hierarchy.value == values[0]) {
         hierarchy.children.forEach((metrics: { value: string; fields?: any[] }) => {
@@ -799,56 +775,23 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
                 operators: this.getOperatorsByType(fixedItem.type)
               };
               this.qbConfig = { ...this.qbConfig, fields };
-
-              // 如果是编辑模式，尝试重新解析表达式
-              if (!this.isManageModalAdd && this.define.expr) {
-                const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
-                this.tryParseThresholdExpr(userExpr);
-              }
             }
           }
         });
       }
     });
-    this.updatePreviewExpr();
+    this.updateFinalExpr();
   }
 
   switchAlertRuleShow() {
-    if (this.isExpr) {
-      // 从可视化规则切换到表达式模式
-      const expr = this.ruleset2expr(this.qbData);
-      if (expr) {
-        this.define.expr = expr;
-      }
-    } else {
-      // 从表达式模式切换到可视化规则
+    if (!this.isExpr) {
       try {
-        const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
-        this.tryParseThresholdExpr(userExpr);
+        this.tryParseThresholdExpr(this.userExpr);
       } catch (e) {
-        console.warn('Failed to parse expression:', e);
+        this.notifySvc.error('Parse threshold expr to visual error', '');
+        console.warn('Parse Threshold Expr to Visual error:', e);
         this.resetQbDataDefault();
       }
-    }
-    this.updatePreviewExpr();
-  }
-
-  renderAlertRuleExpr(expr: string | undefined) {
-    if (!expr) {
-      return;
-    }
-    if (expr.indexOf('||') > 0 || expr.indexOf(' + ') > 0 || expr.indexOf(' - ') > 0) {
-      this.isExpr = true;
-      return;
-    }
-    try {
-      this.resetQbData(this.expr2ruleset(expr));
-      this.isExpr = false;
-    } catch (e) {
-      console.error(e);
-      this.isExpr = true;
-      this.resetQbDataDefault();
-      return;
     }
   }
 
@@ -872,7 +815,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     this.isExpr = false;
     this.resetQbDataDefault();
     this.isManageModalVisible = false;
-    this.previewExpr = '';
   }
 
   onManageModalOk() {
@@ -889,29 +831,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
       return;
     }
     this.isManageModalOkLoading = true;
-
-    // 构建基础表达式(app/metric/field)
-    const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
-
-    // 构建阈值表达式
-    let thresholdExpr = '';
-    if (this.cascadeValues.length == 3 && !this.isExpr) {
-      thresholdExpr = this.ruleset2expr(this.qbData);
-    } else if (this.isExpr) {
-      thresholdExpr = this.define.expr || '';
-    }
-
-    // 合并表达式
-    if (baseExpr && thresholdExpr) {
-      this.define.expr = `${baseExpr} && (${thresholdExpr})`;
-    } else if (baseExpr) {
-      this.define.expr = baseExpr;
-    } else if (thresholdExpr) {
-      this.define.expr = thresholdExpr;
-    } else {
-      this.define.expr = '';
-    }
-
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc
         .newAlertDefine(this.define)
@@ -1070,7 +989,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
   }
   // end -- associate alert definition and monitoring model
 
-  // 新增方法:将级联选择的值转换为表达式
   private cascadeValuesToExpr(values: string[]): string {
     if (!values || values.length < 2) return '';
 
@@ -1082,35 +1000,28 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     return `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
   }
 
-  // 新增方法:从表达式中解析出级联值
   public exprToCascadeValues(expr: string | undefined): string[] {
     const values: string[] = [];
-
     if (!expr) {
       return values;
     }
-
     const appMatch = expr.match(/equals\(app,"([^"]+)"\)/);
     const metricMatch = expr.match(/equals\(metric,"([^"]+)"\)/);
     const availabilityMatch = expr.match(/equals\(availability,"up"\)/);
-
     if (!appMatch) {
       return values;
     }
-
     values.push(appMatch[1]);
-
     // If availability expression exists, add 'availability'
     if (availabilityMatch) {
       values.push('availability');
     } else if (metricMatch) {
       values.push(metricMatch[1]);
     }
-
     return values;
   }
 
-  // 新增方法:移除表达式中的app/metric/field条件
+  // remove the app/metric/availability condition from the expression
   private removeAppMetricFieldExpr(expr: string | undefined): string {
     if (!expr) return '';
 
@@ -1122,7 +1033,6 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
       .replace(/\s*&&\s*$/, '');
   }
 
-  // 新增方法：尝试解析阈值表达式
   private tryParseThresholdExpr(expr: string | undefined): void {
     if (!expr || !expr.trim()) {
       this.resetQbDataDefault();
@@ -1141,41 +1051,33 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
 
       // If cannot parse as visual rules, switch to expression mode
       this.isExpr = true;
-      this.define.expr = expr;
       this.resetQbDataDefault();
     } catch (e) {
       console.warn('Failed to parse threshold expr:', e);
       this.isExpr = true;
-      this.define.expr = expr;
       this.resetQbDataDefault();
     }
   }
 
-  public updatePreviewExpr(): void {
+  public updateFinalExpr(): void {
     // Build base expression (app/metric)
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
 
     // Build threshold expression
     let thresholdExpr = '';
     if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
-      if (!this.isExpr) {
-        // Use value from visual rule builder
-        thresholdExpr = this.ruleset2expr(this.qbData);
-      } else {
-        // Use value from expression input
-        thresholdExpr = this.define.expr || '';
-      }
+      thresholdExpr = this.userExpr;
     }
 
     // Merge expressions
     if (baseExpr && thresholdExpr) {
-      this.previewExpr = `${baseExpr} && (${thresholdExpr})`;
+      this.define.expr = `${baseExpr} && (${thresholdExpr})`;
     } else if (baseExpr) {
-      this.previewExpr = baseExpr;
+      this.define.expr = baseExpr;
     } else if (thresholdExpr) {
-      this.previewExpr = thresholdExpr;
+      this.define.expr = thresholdExpr;
     } else {
-      this.previewExpr = '';
+      this.define.expr = '';
     }
   }
 

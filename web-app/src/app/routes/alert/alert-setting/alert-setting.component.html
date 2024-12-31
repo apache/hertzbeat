@@ -253,8 +253,8 @@
 
             <nz-textarea-count [nzMaxCharacterCount]="100">
               <textarea
-                [(ngModel)]="define.expr"
-                (ngModelChange)="updatePreviewExpr()"
+                [(ngModel)]="userExpr"
+                (ngModelChange)="updateFinalExpr()"
                 required
                 rows="3"
                 nz-input
@@ -387,7 +387,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12">
           <nz-card [nzBordered]="false" class="preview-expr-card">
-            <pre>{{ previewExpr }}</pre>
+            <pre>{{ define.expr }}</pre>
           </nz-card>
         </nz-form-control>
       </nz-form-item>
