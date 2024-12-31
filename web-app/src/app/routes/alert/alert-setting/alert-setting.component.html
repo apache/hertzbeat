@@ -421,47 +421,38 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" [nzTooltipTitle]="'alert.setting.template.label' | i18n">
+        <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" [nzTooltipTitle]="'alert.setting.template.tip' | i18n">
           {{ 'alert.setting.template' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-textarea-count [nzMaxCharacterCount]="200">
-            <textarea
-              [(ngModel)]="define.template"
-              rows="3"
-              nz-input
-              required
-              name="template"
-              id="template"
-              [placeholder]="'alert.setting.template.example' | i18n"
-            >
-            </textarea>
-          </nz-textarea-count>
-          <nz-collapse style="margin-top: 20px">
-            <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.template.tip' | i18n">
-              <nz-list nzSize="small" nzSplit="false">
-                <nz-list-item>
-                  <code>&#36;&#123;app&#125; : {{ 'alert.setting.template.monitor-type' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item>
-                  <code>&#36;&#123;metrics&#125; : {{ 'alert.setting.template.metrics-name' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;&#123;metric&#125; : {{ 'alert.setting.template.metric-name' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item *ngFor="let item of filterMetrics(currentMetrics, cascadeValues)">
-                  <code
-                    >&#36;{{ '{' + item.value + '}' }} :
-                    {{
-                      item.value == item.label
-                        ? ('alert.setting.template.other-value' | i18n)
-                        : ('alert.setting.template.metric-value' | i18n) + '-' + item.label
-                    }}</code
-                  >
-                </nz-list-item>
-              </nz-list>
-            </nz-collapse-panel>
-          </nz-collapse>
+          <div class="template-input-wrapper">
+            <a nz-dropdown [nzDropdownMenu]="menu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
+              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.template.vars.tip' | i18n">
+                <i nz-icon nzType="snippets" nzTheme="outline"></i>
+              </button>
+            </a>
+            <nz-dropdown-menu #menu="nzDropdownMenu">
+              <ul nz-menu class="env-vars-menu">
+                <li nz-menu-item *ngFor="let env of templateEnvVars" (click)="onEnvVarClick(env)">
+                  <span class="env-var-name">{{ env.name }}</span>
+                  <span class="env-var-desc">{{ env.description | i18n }}</span>
+                </li>
+              </ul>
+            </nz-dropdown-menu>
+
+            <nz-textarea-count [nzMaxCharacterCount]="200">
+              <textarea
+                [(ngModel)]="define.template"
+                required
+                rows="3"
+                nz-input
+                name="template"
+                id="template"
+                [placeholder]="'alert.setting.template.example' | i18n"
+              >
+              </textarea>
+            </nz-textarea-count>
+          </div>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

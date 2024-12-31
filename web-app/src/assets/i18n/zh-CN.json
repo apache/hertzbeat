@@ -776,5 +776,14 @@
   "validation.standard.required": "请输入衡量标准",
   "validation.required": "请填充必填项! ",
   "expand": "展开",
-  "collapse": "收起"
+  "collapse": "收起",
+  "alert.setting.template.vars.app": "应用名称",
+  "alert.setting.template.vars.metric": "指标名称",
+  "alert.setting.template.vars.field": "字段名称",
+  "alert.setting.template.vars.value": "触发值",
+  "alert.setting.template.vars.threshold": "阈值表达式",
+  "alert.setting.template.vars.tags": "标签信息",
+  "alert.setting.template.vars.time": "触发时间",
+  "alert.setting.template.vars.tip": "插入环境变量",
+  "alert.setting.template.example": "请输入告警通知内容模版，支持使用环境变量"
 }

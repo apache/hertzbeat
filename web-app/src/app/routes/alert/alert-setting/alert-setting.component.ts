@@ -108,6 +108,16 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
   appEntries: Array<{ value: any; key: string }> = [];
   previewExpr: string = '';
 
+  templateEnvVars = [
+    { name: '${app}', description: 'alert.setting.template.vars.app' },
+    { name: '${metric}', description: 'alert.setting.template.vars.metric' },
+    { name: '${field}', description: 'alert.setting.template.vars.field' },
+    { name: '${value}', description: 'alert.setting.template.vars.value' },
+    { name: '${threshold}', description: 'alert.setting.template.vars.threshold' },
+    { name: '${tags}', description: 'alert.setting.template.vars.tags' },
+    { name: '${time}', description: 'alert.setting.template.vars.time' }
+  ];
+
   ngOnInit(): void {
     this.loadAlertDefineTable();
     // query monitoring hierarchy
@@ -1154,6 +1164,27 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
       this.previewExpr = thresholdExpr;
     } else {
       this.previewExpr = '';
+    }
+  }
+
+  onEnvVarClick(env: {name: string, description: string}) {
+    // 在光标位置插入环境变量
+    const textarea = document.getElementById('template') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+      
+      this.define.template = before + env.name + after;
+      
+      // 恢复光标位置
+      setTimeout(() => {
+        textarea.focus();
+        const newCursorPos = start + env.name.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      });
     }
   }
 }
