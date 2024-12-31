@@ -21,21 +21,16 @@ import { TagItem } from './NoticeRule';
 
 export class AlertDefine {
   id!: number;
-  app!: string;
-  // when metrics is availability (monitoring avail default), field is undefined
-  metric!: string;
-  field!: string;
-  preset: boolean = true;
+  name!: string;
   expr!: string;
-  // alert level -- 0:high-emergency-red 1:medium-critical-orange 2:low-warning-yellow
-  priority: number = 2;
   times: number = 3;
   tags!: TagItem[];
   enable: boolean = true;
-  recoverNotice: boolean = false;
   template!: string;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;
   gmtUpdate!: number;
+  preset: boolean = true;
+  priority: number = 2;
 }

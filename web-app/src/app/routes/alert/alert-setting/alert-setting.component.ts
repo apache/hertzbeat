@@ -244,7 +244,7 @@ export class AlertSettingComponent implements OnInit {
     this.isLoadingEdit = alertDefineId;
     this.isManageModalAdd = false;
     this.isManageModalOkLoading = false;
-    // 查询告警定义信息
+    
     const getDefine$ = this.alertDefineSvc
       .getAlertDefine(alertDefineId)
       .pipe(
@@ -258,16 +258,41 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
-            if (this.define.field) {
-              this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
-            } else {
-              this.cascadeValues = [this.define.app, this.define.metric];
-            }
+            
+            // 从表达式解析出级联值
+            this.cascadeValues = this.exprToCascadeValues(this.define.expr);
+            
             if (this.define.tags == undefined) {
               this.define.tags = [];
             }
+
+            // 移除表达式中的app/metric/field部分,展示其他条件
+            const userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+            
+            // 如果存在阈值表达式,则解析为规则集
+            if (userExpr && userExpr.trim()) {
+              try {
+                // 先尝试解析为规则集
+                const ruleset = this.expr2ruleset(userExpr);
+                if (ruleset.rules.length > 0) {
+                  this.qbData = ruleset;
+                  this.isExpr = false;
+                } else {
+                  // 如果解析失败或没有规则，则切换到手动输入模式
+                  this.isExpr = true;
+                  this.define.expr = userExpr;
+                }
+              } catch (e) {
+                console.warn('Failed to parse expr to ruleset:', e);
+                this.isExpr = true;
+                this.define.expr = userExpr;
+              }
+            } else {
+              this.resetQbDataDefault();
+              this.isExpr = false;
+            }
+
             this.cascadeOnChange(this.cascadeValues);
-            this.renderAlertRuleExpr(this.define.expr);
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
           }
@@ -552,48 +577,75 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private expr2ruleset(expr: string): RuleSet {
-    let ruleset = { rules: [] as any[], condition: 'and' };
-    let current = ruleset;
-    let stack: any[] = [];
-    for (let i = 0, j = expr.length; i < j; ) {
-      if (expr[i] === '(' && this.parseRule1(expr.substring(i)).pos === 0) {
-        stack.push(current);
-        current = { rules: [] as any[], condition: 'and' };
-        i++;
-      } else if (expr[i] === 'a' && expr[i + 1] === 'n' && expr[i + 2] === 'd') {
-        current.condition = 'and';
-        i += 3;
-      } else if (expr[i] === 'o' && expr[i + 1] === 'r') {
-        current.condition = 'or';
-        i += 2;
-      } else if (expr[i] === ')') {
-        let parent = stack.pop();
-        parent.rules.push(this.filterEmptyRules(current));
-        current = parent;
-        i++;
-      } else {
-        let rule = this.parseRule1(expr.substring(i));
-        if (rule.pos) {
-          current.rules.push(rule.rst);
-          i += rule.pos;
-          continue;
+    // 处理空值情况
+    if (!expr || expr.trim() === '') {
+      return { condition: 'and', rules: [] };
+    }
+
+    let ruleset: RuleSet = { condition: 'and', rules: [] };
+    
+    // 处理 AND/OR 连接的多个条件
+    const parts = expr.split(/\s+(and|or)\s+/i);
+    if (parts.length > 1) {
+      ruleset.condition = expr.match(/\s+and\s+/i) ? 'and' : 'or';
+      
+      for (let i = 0; i < parts.length; i += 2) {
+        const part = parts[i].trim();
+        if (!part) continue;
+        
+        // 解析单个规则
+        const rule = this.parseExprToRule(part);
+        if (rule) {
+          ruleset.rules.push(rule);
         }
-        rule = this.parseRule2(expr.substring(i));
-        if (rule.pos) {
-          current.rules.push(rule.rst);
-          i += rule.pos;
-          continue;
-        }
-        rule = this.parseRule3(expr.substring(i));
-        if (rule.pos) {
-          current.rules.push(rule.rst);
-          i += rule.pos;
-          continue;
-        }
-        i++;
+      }
+    } else {
+      // 单个条件的情况
+      const rule = this.parseExprToRule(expr);
+      if (rule) {
+        ruleset.rules.push(rule);
       }
     }
-    return this.filterEmptyRules(ruleset) as RuleSet;
+
+    return ruleset;
+  }
+
+  // 新增方法：解析单个表达式为规则
+  private parseExprToRule(expr: string): Rule | null {
+    // 移除可能的括号
+    expr = expr.replace(/^\(|\)$/g, '').trim();
+    
+    // 解析不同类型的表达式
+    // 1. 解析比较运算符表达式：field > value
+    const compareMatch = expr.match(/^(\w+)\s*([><=!]+)\s*(\d+(?:\.\d+)?)$/);
+    if (compareMatch) {
+      return {
+        field: compareMatch[1],
+        operator: compareMatch[2],
+        value: compareMatch[3]
+      };
+    }
+
+    // 2. 解析 exists/!exists
+    const existsMatch = expr.match(/^(!?exists)\(([^)]+)\)$/);
+    if (existsMatch) {
+      return {
+        field: existsMatch[2],
+        operator: existsMatch[1]
+      };
+    }
+
+    // 3. 解析字符串函数：equals/contains/matches
+    const funcMatch = expr.match(/^(!?(?:equals|contains|matches))\(([^,]+),"([^"]+)"\)$/);
+    if (funcMatch) {
+      return {
+        field: funcMatch[2],
+        operator: funcMatch[1],
+        value: funcMatch[3]
+      };
+    }
+
+    return null;
   }
 
   getOperatorLabelByType = (operator: string) => {
@@ -627,10 +679,12 @@ export class AlertSettingComponent implements OnInit {
   };
 
   cascadeOnChange(values: string[]): void {
-    this.resetQbDataDefault();
-    if (values == null || values.length != 3) {
+    if (!values || values.length < 2) {
+      this.resetQbDataDefault();
       return;
     }
+
+    // 更新UI相关配置
     this.appHierarchies.forEach(hierarchy => {
       if (hierarchy.value == values[0]) {
         hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
@@ -721,20 +775,29 @@ export class AlertSettingComponent implements OnInit {
       return;
     }
     this.isManageModalOkLoading = true;
-    this.define.app = this.cascadeValues[0];
-    this.define.metric = this.cascadeValues[1];
-    if (this.cascadeValues.length == 3) {
-      this.define.field = this.cascadeValues[2];
-      if (!this.isExpr) {
-        let expr = this.ruleset2expr(this.qbData);
-        if (expr != '') {
-          this.define.expr = expr;
-        }
-      }
+
+    // 构建基础表达式(app/metric/field)
+    const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
+    
+    // 构建阈值表达式
+    let thresholdExpr = '';
+    if (this.cascadeValues.length == 3 && !this.isExpr) {
+      thresholdExpr = this.ruleset2expr(this.qbData);
+    } else if (this.isExpr) {
+      thresholdExpr = this.define.expr || '';
+    }
+
+    // 合并表达式
+    if (baseExpr && thresholdExpr) {
+      this.define.expr = `${baseExpr} && (${thresholdExpr})`;
+    } else if (baseExpr) {
+      this.define.expr = baseExpr;
+    } else if (thresholdExpr) {
+      this.define.expr = thresholdExpr;
     } else {
       this.define.expr = '';
-      this.define.field = '';
     }
+
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc
         .newAlertDefine(this.define)
@@ -892,4 +955,53 @@ export class AlertSettingComponent implements OnInit {
     });
   }
   // end -- associate alert definition and monitoring model
+
+  // 新增方法:将级联选择的值转换为表达式
+  private cascadeValuesToExpr(values: string[]): string {
+    if (!values || values.length < 2) return '';
+
+    let expr = `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
+    if (values.length > 2) {
+      expr += ` && equals(field,"${values[2]}")`;
+    }
+    return expr;
+  }
+
+  // 新增方法:从表达式中解析出级联值
+  public exprToCascadeValues(expr: string): string[] {
+    const values: string[] = [];
+
+    // 处理空值情况
+    if (!expr) {
+      return values;
+    }
+
+    // 使用正则匹配 equals(app,"xxx") 和 equals(metric,"xxx")
+    const appMatch = expr.match(/equals\(app,"([^"]+)"\)/);
+    const metricMatch = expr.match(/equals\(metric,"([^"]+)"\)/);
+    const fieldMatch = expr.match(/equals\(field,"([^"]+)"\)/);
+
+    // 必须至少包含 app 和 metric
+    if (!appMatch || !metricMatch) {
+      return values;
+    }
+
+    values.push(appMatch[1]);
+    values.push(metricMatch[1]);
+    if (fieldMatch) values.push(fieldMatch[1]);
+
+    return values;
+  }
+
+  // 新增方法:移除表达式中的app/metric/field条件
+  private removeAppMetricFieldExpr(expr: string): string {
+    if (!expr) return '';
+
+    return expr
+      .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
+      .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
+      .replace(/equals\(field,"[^"]+"\)\s*&&\s*/, '')
+      .replace(/^\s*&&\s*/, '')
+      .replace(/\s*&&\s*$/, '');
+  }
 }

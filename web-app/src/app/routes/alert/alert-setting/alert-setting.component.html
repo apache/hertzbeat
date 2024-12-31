@@ -104,12 +104,33 @@
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
-        <span *ngIf="data.field">
-          {{ 'monitor.app.' + data.app | i18n }} / {{ 'monitor.app.' + data.app + '.metrics.' + data.metric | i18nElse : data.metric }} /
-          {{ 'monitor.app.' + data.app + '.metrics.' + data.metric + '.metric.' + data.field | i18nElse : data.field }}
-        </span>
-        <span *ngIf="!data.field && data.metric === 'availability'">
-          {{ 'monitor.app.' + data.app | i18n }} / {{ 'monitor.availability' | i18n }}
+        <ng-container *ngIf="exprToCascadeValues(data.expr).length >= 2">
+          <span>
+            {{ 'monitor.app.' + exprToCascadeValues(data.expr)[0] | i18n }} /
+            <ng-container *ngIf="exprToCascadeValues(data.expr)[1] === 'availability'">
+              {{ 'monitor.availability' | i18n }}
+            </ng-container>
+            <ng-container *ngIf="exprToCascadeValues(data.expr)[1] !== 'availability'">
+              {{
+                'monitor.app.' + exprToCascadeValues(data.expr)[0] + '.metrics.' + exprToCascadeValues(data.expr)[1]
+                  | i18nElse : exprToCascadeValues(data.expr)[1]
+              }}
+              <span *ngIf="exprToCascadeValues(data.expr).length > 2">
+                /
+                {{
+                  'monitor.app.' +
+                    exprToCascadeValues(data.expr)[0] +
+                    '.metrics.' +
+                    exprToCascadeValues(data.expr)[1] +
+                    '.metric.' +
+                    exprToCascadeValues(data.expr)[2] | i18nElse : exprToCascadeValues(data.expr)[2]
+                }}
+              </span>
+            </ng-container>
+          </span>
+        </ng-container>
+        <span *ngIf="exprToCascadeValues(data.expr).length < 2">
+          {{ 'alert.setting.target.invalid' | i18n }}
         </span>
       </td>
       <td nzAlign="center">
@@ -139,16 +160,6 @@
       </td>
       <td nzAlign="center">
         <div class="actions">
-          <button
-            nz-button
-            nzType="primary"
-            (click)="onOpenConnectModal(data.id, data.app)"
-            nz-tooltip
-            [disabled]="data.preset"
-            [nzTooltipTitle]="'alert.setting.connect' | i18n"
-          >
-            <i nz-icon nzType="link" nzTheme="outline"></i>
-          </button>
           <button
             nz-button
             nzType="primary"
@@ -189,6 +200,14 @@
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form #defineForm="ngForm">
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="name" [nzTooltipTitle]="'alert.setting.times.tip' | i18n">
+          {{ 'alert.setting.name' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="define.name" nz-input required type="text" name="name" id="name" />
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true">{{ 'alert.setting.target' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
@@ -486,19 +505,6 @@
         </nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="recoverNotice" [nzTooltipTitle]="'alert.setting.recover-notice.tip' | i18n">
-          {{ 'alert.setting.recover-notice' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-switch
-            [(ngModel)]="define.recoverNotice"
-            [ngModelOptions]="{ standalone: true }"
-            name="recoverNotice"
-            id="recoverNotice"
-          ></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

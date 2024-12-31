@@ -158,6 +158,7 @@
   "alert.setting.delete": "Delete Threshold Rule",
   "alert.setting.export": "Export Rule",
   "alert.setting.import": "Import Rule",
+  "alert.setting.name": "Rule Name",
   "alert.setting.target": "Metric Target",
   "alert.setting.target.place-holder": "Please search or select metrics target",
   "alert.setting.expr": "Threshold Trigger Expr",

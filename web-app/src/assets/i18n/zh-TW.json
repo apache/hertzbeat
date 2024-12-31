@@ -171,6 +171,7 @@
   "alert.setting.delete": "刪除阈值規則",
   "alert.setting.export": "導出規則",
   "alert.setting.import": "導入規則",
+  "alert.setting.name": "阈值名称",
   "alert.setting.target": "指標對象",
   "alert.setting.target.place-holder": "請搜索或選擇指標對象",
   "alert.setting.expr": "阈值觸發表達式",
