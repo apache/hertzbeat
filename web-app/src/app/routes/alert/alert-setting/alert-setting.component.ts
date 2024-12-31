@@ -145,20 +145,20 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
         message => {
           if (message.code === 0) {
             this.appHierarchies = message.data;
-            // 修改层级结构
+            // Modify hierarchy structure
             this.appHierarchies.forEach(item => {
               if (item.children) {
-                // 保存原始的字段信息
+                // Save original field information
                 item.children.forEach((metric: any) => {
                   if (metric.children) {
                     metric.fields = metric.children;
                   }
-                  // 设置为叶子节点
+                  // Set as leaf node
                   metric.isLeaf = true;
-                  // 删除 children 属性
+                  // Delete children property
                   delete metric.children;
                 });
-                // 添加可用性选项
+                // Add availability option
                 item.children.unshift({
                   value: AVAILABILITY,
                   label: this.i18nSvc.fanyi('monitor.availability'),
@@ -1074,7 +1074,7 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
   private cascadeValuesToExpr(values: string[]): string {
     if (!values || values.length < 2) return '';
 
-    // 可用性指标特殊处理
+    // Special handling for availability metrics
     if (values[1] === 'availability') {
       return `equals(app,"${values[0]}") && equals(availability,"up")`;
     }
@@ -1100,7 +1100,7 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
 
     values.push(appMatch[1]);
 
-    // 如果存在可用性表达式，则添加 availability
+    // If availability expression exists, add 'availability'
     if (availabilityMatch) {
       values.push('availability');
     } else if (metricMatch) {
@@ -1117,7 +1117,7 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     return expr
       .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
       .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
-      .replace(/equals\(availability,"up"\)\s*&&\s*/, '') // 添加可用性表达式的移除
+      .replace(/equals\(availability,"up"\)\s*&&\s*/, '') // Remove availability expression
       .replace(/^\s*&&\s*/, '')
       .replace(/\s*&&\s*$/, '');
   }
@@ -1131,7 +1131,7 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     }
 
     try {
-      // 首先尝试解析为可视化规则
+      // First try to parse as visual rules
       const ruleset = this.expr2ruleset(expr);
       if (ruleset && ruleset.rules && ruleset.rules.length > 0) {
         this.resetQbData(ruleset);
@@ -1139,7 +1139,7 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
         return;
       }
 
-      // 如果无法解析为可视化规则，切换到表达式模式
+      // If cannot parse as visual rules, switch to expression mode
       this.isExpr = true;
       this.define.expr = expr;
       this.resetQbDataDefault();
@@ -1151,24 +1151,23 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // 新增方法：更新预览表达式
   public updatePreviewExpr(): void {
-    // 构建基础表达式(app/metric)
+    // Build base expression (app/metric)
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
 
-    // 构建阈值表达式
+    // Build threshold expression
     let thresholdExpr = '';
     if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
       if (!this.isExpr) {
-        // 使用可视化规则构建器的值
+        // Use value from visual rule builder
         thresholdExpr = this.ruleset2expr(this.qbData);
       } else {
-        // 使用表达式输入框的值
+        // Use value from expression input
         thresholdExpr = this.define.expr || '';
       }
     }
 
-    // 合并表达式
+    // Merge expressions
     if (baseExpr && thresholdExpr) {
       this.previewExpr = `${baseExpr} && (${thresholdExpr})`;
     } else if (baseExpr) {
@@ -1180,8 +1179,8 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onEnvVarClick(env: {name: string, description: string}) {
-    // 在光标位置插入环境变量
+  onEnvVarClick(env: { name: string; description: string }) {
+    // Insert environment variable at cursor position
     const textarea = document.getElementById('template') as HTMLTextAreaElement;
     if (textarea) {
       const start = textarea.selectionStart;
@@ -1189,10 +1188,10 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
       const text = textarea.value;
       const before = text.substring(0, start);
       const after = text.substring(end);
-      
+
       this.define.template = before + env.name + after;
-      
-      // 恢复光标位置
+
+      // Restore cursor position
       setTimeout(() => {
         textarea.focus();
         const newCursorPos = start + env.name.length;
@@ -1201,8 +1200,8 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // 添加点击变量的处理方法
-  onExprVarClick(item: { value: string, description?: string }) {
+  // Handle variable click event
+  onExprVarClick(item: { value: string; description?: string }) {
     const textarea = document.getElementById('expr') as HTMLTextAreaElement;
     if (textarea) {
       const start = textarea.selectionStart;
@@ -1210,25 +1209,26 @@ export class AlertSettingComponent implements OnInit, AfterViewInit {
       const text = textarea.value;
       const before = text.substring(0, start);
       const after = text.substring(end);
-      
-      // 特殊处理括号
+
+      // Special handling for brackets
       let insertText = item.value;
       if (item.value === '()') {
         insertText = '()';
-        // 如果有选中文本，将其包含在括号内
+        // If text is selected, wrap it with brackets
         if (start !== end) {
           insertText = `(${text.substring(start, end)})`;
         }
       }
-      
+
       this.define.expr = before + insertText + after;
-      
-      // 恢复光标位置
+
+      // Restore cursor position
       setTimeout(() => {
         textarea.focus();
-        const newPos = item.value === '()' && start === end ? 
-          start + 1 : // 将光标放在括号中间
-          start + insertText.length; // 将光标放在插入内容后面
+        const newPos =
+          item.value === '()' && start === end
+            ? start + 1 // Place cursor between brackets
+            : start + insertText.length; // Place cursor after inserted content
         textarea.setSelectionRange(newPos, newPos);
       });
     }
