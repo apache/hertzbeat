@@ -23,9 +23,9 @@ name:
   en-US: Windows Script
 # The description and help of this monitoring type
 help:
-  zh-CN: Hertzbeat 使用采集器作为 agent 直接运行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-script'> CMD 或 Powershell 命令 </a> 对 Windows 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 Linux Script</i>”进行添加。或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat uses a collector as an agent to directly execute <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-script'> CMD or Powershell commands </a> to collect and monitor general performance metrics of the Windows operating system (system information, CPU, memory, disk, network card, file system, TOP resource processes, etc.).<br>You can click “<i>Create New Linux Script</i>” to add it. Or select “<i>More Actions</i>” to import an existing configuration.
-  zh-TW: Hertzbeat 使用采集器作為 agent 直接運行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-script'> CMD 或 Powershell 命令 </a> 對 Windows 操作系統的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Linux Script</i>”進行添加。或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: Hertzbeat 使用采集器作为 agent 直接运行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD 或 Powershell 命令 </a> 对 Windows 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 Linux Script</i>”进行添加。或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat uses a collector as an agent to directly execute <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD or Powershell commands </a> to collect and monitor general performance metrics of the Windows operating system (system information, CPU, memory, disk, network card, file system, TOP resource processes, etc.).<br>You can click “<i>Create New Linux Script</i>” to add it. Or select “<i>More Actions</i>” to import an existing configuration.
+  zh-TW: Hertzbeat 使用采集器作為 agent 直接運行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD 或 Powershell 命令 </a> 對 Windows 操作系統的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Linux Script</i>”進行添加。或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/windows_script
   en-US: https://hertzbeat.apache.org/docs/help/windows_script
