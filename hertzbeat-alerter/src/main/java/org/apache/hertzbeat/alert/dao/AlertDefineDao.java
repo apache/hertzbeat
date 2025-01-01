@@ -39,5 +39,5 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * @param type alarm type 
      * @return alarm defines
      */
-    List<AlertDefine> findAlertDefinesByType(String type);
+    List<AlertDefine> findAlertDefinesByTypeAndEnableTrue(String type);
 }

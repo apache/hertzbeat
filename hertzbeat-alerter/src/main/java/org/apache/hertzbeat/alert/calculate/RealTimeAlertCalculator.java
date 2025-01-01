@@ -40,10 +40,8 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -65,6 +63,10 @@ public class RealTimeAlertCalculator {
     private static final String UP = "up";
     private static final String DOWN = "down";
     private static final String KEY_ROW = "__row__";
+
+    private static final Pattern APP_PATTERN = Pattern.compile("equals\\(__app__,\"([^\"]+)\"\\)");
+    private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\"(\\d+)\"\\)");
+    private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
     /**
      * The alarm in the process is triggered
@@ -249,33 +251,23 @@ public class RealTimeAlertCalculator {
                     String expr = define.getExpr();
 
                     // Extract and check app
-                    String appPattern = "equals\\(app,\"([^\"]+)\"\\)";
-                    Pattern appRegex = Pattern.compile(appPattern);
-                    Matcher appMatcher = appRegex.matcher(expr);
+                    Matcher appMatcher = APP_PATTERN.matcher(expr);
                     // If no app specified in expr, skip app check
                     if (appMatcher.find() && !app.equals(appMatcher.group(1))) {
                         return false;
                     }
 
                     // Extract and check instance
-                    String instancePattern = "equals\\(id,\"(\\d+)\"\\)";
-                    Pattern instanceRegex = Pattern.compile(instancePattern);
-                    Matcher instanceMatcher = instanceRegex.matcher(expr);
+                    Matcher instanceMatcher = INSTANCE_PATTERN.matcher(expr);
                     // If instance specified in expr, must match current instance
                     while (instanceMatcher.find()) {
                         if (Objects.equals(instance, instanceMatcher.group(1))) {
                             return true;
                         }
                     }
-                    // If no instance specified in expr, continue checking metrics
-                    if (expr.contains("equals(id,")) {
-                        return false;
-                    }
-
+                    
                     // For other metrics
-                    String metricsPattern = "equals\\(metric,\"([^\"]+)\"\\)";
-                    Pattern metricsRegex = Pattern.compile(metricsPattern);
-                    Matcher metricsMatcher = metricsRegex.matcher(expr);
+                    Matcher metricsMatcher = METRICS_PATTERN.matcher(expr);
                     // If no metrics specified in expr, return true
                     // If metrics specified, must match current metrics
                     return !metricsMatcher.find() || metrics.equals(metricsMatcher.group(1));
@@ -346,7 +338,7 @@ public class RealTimeAlertCalculator {
         try {
             expression = JexlExpressionRunner.compile(expr);
         } catch (JexlException jexlException) {
-            log.error("Alarm Rule: {} Compile Error: {}.", expr, jexlException.getMessage());
+            log.warn("Alarm Rule: {} Compile Error: {}.", expr, jexlException.getMessage());
             throw jexlException;
         } catch (Exception e) {
             log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
@@ -356,7 +348,7 @@ public class RealTimeAlertCalculator {
         try {
             match = (Boolean) JexlExpressionRunner.evaluate(expression, fieldValueMap);
         } catch (JexlException jexlException) {
-            log.error("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
+            log.warn("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
             throw jexlException;
         } catch (Exception e) {
             log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
@@ -371,11 +363,4 @@ public class RealTimeAlertCalculator {
         return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
                 + Arrays.hashCode(valueList.toArray(new String[0]));
     }
-    
-    @EventListener(MonitorDeletedEvent.class)
-    public void onMonitorDeletedEvent(MonitorDeletedEvent event) {
-        log.info("calculate alarm receive monitor {} has been deleted.", event.getMonitorId());
-        this.pendingAlertMap.remove(String.valueOf(event.getMonitorId()));
-    }
-
 }

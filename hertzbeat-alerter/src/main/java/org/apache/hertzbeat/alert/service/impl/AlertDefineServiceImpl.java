@@ -201,7 +201,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     public List<AlertDefine> getRealTimeAlertDefines() {
         List<AlertDefine> alertDefines = CacheFactory.getAlertDefineCache();
         if (alertDefines == null) {
-            alertDefines = alertDefineDao.findAlertDefinesByType(ALERT_THRESHOLD_TYPE_REALTIME);
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(ALERT_THRESHOLD_TYPE_REALTIME);
             CacheFactory.setAlertDefineCache(alertDefines);
         }
         return alertDefines;
