@@ -32,7 +32,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ModbusProtocol {
+public class ModbusProtocol implements Protocol {
 
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
