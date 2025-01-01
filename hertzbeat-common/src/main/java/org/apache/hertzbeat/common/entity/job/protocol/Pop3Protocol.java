@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Pop3Protocol implements CommonRequestProtocol {
+public class Pop3Protocol implements CommonRequestProtocol, Protocol {
     /**
      * Receiving server address
      */

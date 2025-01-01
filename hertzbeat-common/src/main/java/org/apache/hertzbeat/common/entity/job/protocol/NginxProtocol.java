@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class NginxProtocol implements CommonRequestProtocol {
+public class NginxProtocol implements CommonRequestProtocol, Protocol {
     /**
      * nginx Host ip address or domain name
      */

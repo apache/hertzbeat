@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TelnetProtocol implements CommonRequestProtocol {
+public class TelnetProtocol implements CommonRequestProtocol, Protocol {
 
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
