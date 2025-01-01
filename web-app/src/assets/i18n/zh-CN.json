@@ -165,6 +165,7 @@
   "alert.setting.type": "阈值类型",
   "alert.setting.type.realtime": "实时计算",
   "alert.setting.type.periodic": "计划周期",
+  "alert.setting.promql.tip": "PromQL查询语句: sum(rate(process_cpu_seconds_total[5m])) > 0.8",
   "alert.setting.preview.expr": "最终总表达式",
   "alert.setting.target": "指标类型",
   "alert.setting.target.tip": "阈值应用于的指标类型",
@@ -175,7 +176,7 @@
   "alert.setting.number": "数值型",
   "alert.setting.string": "字符型",
   "alert.setting.time": "时间型",
-  "alert.setting.rule.label": "图形化选择设置指标触发告警规则,支持多规则与",
+  "alert.setting.rule.label": "图形化选择设置指标触发告警规则,支持多规则组合",
   "alert.setting.rule.metric.place-holder": "请选择指标",
   "alert.setting.rule.switch-expr.0": "可视化",
   "alert.setting.rule.switch-expr.1": "表达式",
@@ -800,5 +801,8 @@
   "alert.setting.expr.operator.less-equals": "小于等于",
   "alert.setting.expr.operator.and": "与",
   "alert.setting.expr.operator.or": "或",
-  "alert.setting.expr.operator.brackets": "括号"
+  "alert.setting.expr.operator.brackets": "括号",
+  "alert.setting.new": "新增阈值",
+  "alert.setting.type.realtime.desc": "实时计算指标数据，触发阈值时立即告警",
+  "alert.setting.type.periodic.desc": "周期性执行 PromQL 查询，触发阈值时告警"
 }

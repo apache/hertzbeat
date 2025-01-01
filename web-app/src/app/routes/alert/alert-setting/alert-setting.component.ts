@@ -127,6 +127,8 @@ export class AlertSettingComponent implements OnInit {
     { value: '()', description: 'alert.setting.expr.operator.brackets' }
   ];
 
+  isSelectTypeModalVisible = false;
+
   ngOnInit(): void {
     this.loadAlertDefineTable();
     // query monitoring hierarchy
@@ -240,7 +242,12 @@ export class AlertSettingComponent implements OnInit {
     );
   }
 
-  onNewAlertDefine(type: string) {
+  onNewAlertDefine() {
+    this.isSelectTypeModalVisible = true;
+  }
+
+  onSelectAlertType(type: string) {
+    this.isSelectTypeModalVisible = false;
     this.define = new AlertDefine();
     this.define.type = type;
     this.define.tags = [];
@@ -248,6 +255,10 @@ export class AlertSettingComponent implements OnInit {
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
+  }
+
+  onSelectTypeModalCancel() {
+    this.isSelectTypeModalVisible = false;
   }
 
   onEditOneAlertDefine(alertDefineId: number) {

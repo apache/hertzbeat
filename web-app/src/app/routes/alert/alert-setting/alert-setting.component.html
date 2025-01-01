@@ -31,7 +31,7 @@
     <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-    <button nz-button nzType="primary" (click)="onNewAlertDefine('realtime')">
+    <button nz-button nzType="primary" (click)="onNewAlertDefine()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
@@ -433,7 +433,7 @@
               nz-input
               name="periodic_expr"
               id="periodic_expr"
-              [placeholder]="'alert.setting.expr.example' | i18n"
+              [placeholder]="'alert.setting.promql.tip' | i18n"
             >
             </textarea>
           </nz-textarea-count>
@@ -601,4 +601,28 @@
       </button>
     </p>
   </ng-container>
+</nz-modal>
+
+<!-- 添加类型选择弹窗 -->
+<nz-modal
+  [(nzVisible)]="isSelectTypeModalVisible"
+  [nzTitle]="'alert.setting.new' | i18n"
+  (nzOnCancel)="onSelectTypeModalCancel()"
+  [nzFooter]="null"
+  nzWidth="400px"
+>
+  <div *nzModalContent>
+    <div class="alert-type-options">
+      <nz-card (click)="onSelectAlertType('realtime')" class="alert-type-card" [nzHoverable]="true">
+        <i nz-icon nzType="thunderbolt" nzTheme="outline"></i>
+        <h3>{{ 'alert.setting.type.realtime' | i18n }}</h3>
+        <p>{{ 'alert.setting.type.realtime.desc' | i18n }}</p>
+      </nz-card>
+      <nz-card (click)="onSelectAlertType('periodic')" class="alert-type-card" [nzHoverable]="true">
+        <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
+        <h3>{{ 'alert.setting.type.periodic' | i18n }}</h3>
+        <p>{{ 'alert.setting.type.periodic.desc' | i18n }}</p>
+      </nz-card>
+    </div>
+  </div>
 </nz-modal>
