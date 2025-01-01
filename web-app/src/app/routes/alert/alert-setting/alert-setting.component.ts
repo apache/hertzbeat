@@ -495,17 +495,19 @@ export class AlertSettingComponent implements OnInit {
             if (!this.define.type) {
               this.define.type = 'realtime';
             }
-            this.cascadeValues = this.exprToCascadeValues(this.define.expr);
-            this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
-            this.cascadeOnChange(this.cascadeValues);
-            // wait for the cascadeValues to be set
-            setTimeout(() => {
-              if (this.cascadeValues[1] === 'availability') {
-                this.isExpr = false;
-              } else {
-                this.tryParseThresholdExpr(this.userExpr);
-              }
-            });
+            if (this.define.type == 'realtime') {
+              this.cascadeValues = this.exprToCascadeValues(this.define.expr);
+              this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+              this.cascadeOnChange(this.cascadeValues);
+              // wait for the cascadeValues to be set
+              setTimeout(() => {
+                if (this.cascadeValues[1] === 'availability') {
+                  this.isExpr = false;
+                } else {
+                  this.tryParseThresholdExpr(this.userExpr);
+                }
+              });
+            }
             if (this.define.tags == undefined) {
               this.define.tags = [];
             }

@@ -414,7 +414,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <ng-container *ngIf="cascadeValues[1] !== 'availability'">
-            <nz-radio-group [ngModel]="'periodic'" nzButtonStyle="solid" id="promql">
+            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" id="promql">
               <label nz-radio-button [nzValue]="'periodic'">
                 {{ 'PromQL' | i18n }}
               </label>

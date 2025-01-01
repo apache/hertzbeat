@@ -24,6 +24,8 @@ export class AlertDefine {
   name!: string;
   // realtime, periodic
   type: string = 'realtime';
+  // datasource when type is periodic, promql | sql
+  datasource: string = 'promql';
   expr!: string;
   // unit second
   period: number = 300;
