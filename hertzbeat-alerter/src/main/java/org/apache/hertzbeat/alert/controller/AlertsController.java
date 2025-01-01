@@ -26,6 +26,7 @@ import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -49,8 +50,21 @@ public class AlertsController {
     @Autowired
     private AlertService alertService;
 
+    @GetMapping
+    @Operation(summary = "Query Alarms")
+    public ResponseEntity<Message<Page<SingleAlert>>> getAlerts(
+            @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
+            @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
+            @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "id") String sort,
+            @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
+            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+        Page<SingleAlert> alertPage = alertService.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
+        return ResponseEntity.ok(Message.success(alertPage));
+    }
+
     @GetMapping("/group")
-    @Operation(summary = "Get a list of alarm information based on query filter items", description = "according to the query filter items to obtain a list of alarm information")
+    @Operation(summary = "Query Group Alarms")
     public ResponseEntity<Message<Page<GroupAlert>>> getGroupAlerts(
             @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
             @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,

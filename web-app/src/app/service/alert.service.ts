@@ -21,13 +21,15 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Alert } from '../pojo/Alert';
+import { GroupAlert } from '../pojo/GroupAlert';
 import { Message } from '../pojo/Message';
 import { Page } from '../pojo/Page';
+import { SingleAlert } from '../pojo/SingleAlert';
 
 const alerts_summary_uri = '/alerts/summary';
 const alerts_group_uri = '/alerts/group';
 const alerts_group_status_uri = '/alerts/group/status';
+const alerts_uri = '/alerts';
 
 @Injectable({
   providedIn: 'root'
@@ -35,12 +37,12 @@ const alerts_group_status_uri = '/alerts/group/status';
 export class AlertService {
   constructor(private http: HttpClient) {}
 
-  public loadGroupAlerts(
+  public loadAlerts(
     status: string | undefined,
     search: string | undefined,
     pageIndex: number,
     pageSize: number
-  ): Observable<Message<Page<Alert>>> {
+  ): Observable<Message<Page<SingleAlert>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // HttpParams is unmodifiable, so we need to save the return value of append/set
@@ -58,7 +60,33 @@ export class AlertService {
       httpParams = httpParams.append('content', search.trim());
     }
     const options = { params: httpParams };
-    return this.http.get<Message<Page<Alert>>>(alerts_group_uri, options);
+    return this.http.get<Message<Page<SingleAlert>>>(alerts_uri, options);
+  }
+
+  public loadGroupAlerts(
+    status: string | undefined,
+    search: string | undefined,
+    pageIndex: number,
+    pageSize: number
+  ): Observable<Message<Page<GroupAlert>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    // HttpParams is unmodifiable, so we need to save the return value of append/set
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      sort: 'id',
+      order: 'desc',
+      pageIndex: pageIndex,
+      pageSize: pageSize
+    });
+    if (status != undefined) {
+      httpParams = httpParams.append('status', status);
+    }
+    if (search != undefined && search != '' && search.trim() != '') {
+      httpParams = httpParams.append('content', search.trim());
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<GroupAlert>>>(alerts_group_uri, options);
   }
 
   public deleteGroupAlerts(alertIds: Set<number>): Observable<Message<any>> {

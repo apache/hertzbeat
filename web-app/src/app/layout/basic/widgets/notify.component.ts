@@ -77,7 +77,7 @@ import { GeneralConfigService } from '../../../service/general-config.service';
             <nz-list-item-meta [nzTitle]="nzTitle" [nzDescription]="nzDescription" [nzAvatar]="item.avatar">
               <ng-template #nzTitle>
                 <ng-container *nzStringTemplateOutlet="item.title; context: { $implicit: item }">
-                  <a (click)="gotoDetail(item.monitorId)">{{ item.title }}</a>
+                  <a (click)="gotoDetail(item.id)">{{ item.title }}</a>
                 </ng-container>
                 @if (item.extra) {
                 <div class="notice-icon__item-extra">
@@ -97,19 +97,6 @@ import { GeneralConfigService } from '../../../service/general-config.service';
                 }
               </ng-template>
             </nz-list-item-meta>
-            @if (item.status !== 3) {
-            <ul nz-list-item-actions>
-              <button
-                nz-button
-                nzType="primary"
-                (click)="onMarkReadOneAlert(item.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'alert.center.deal' | i18n"
-              >
-                <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-              </button>
-            </ul>
-            }
           </nz-list-item>
         </ng-template>
       </nz-list>
@@ -199,7 +186,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     }
     this.loading = true;
     let loadAlerts$ = this.alertSvc
-      .loadGroupAlerts('firing', undefined, 0, 5)
+      .loadAlerts('firing', undefined, 0, 5)
       .pipe(
         finalize(() => {
           loadAlerts$.unsubscribe();
@@ -218,10 +205,10 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
             alerts.forEach(alert => {
               let item = {
                 id: alert.id,
-                monitorId: alert.tags?.monitorId,
                 avatar: '/assets/img/notification.svg',
-                title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
-                datetime: new Date(alert.lastAlarmTime).toLocaleString(),
+                // title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
+                title: alert.content,
+                datetime: new Date(alert.activeAt).toLocaleString(),
                 color: 'blue',
                 status: alert.status,
                 type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
@@ -264,25 +251,21 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     );
   }
 
-  onMarkReadOneAlert(alertId: number) {
-    let alerts = new Set<number>();
-    alerts.add(alertId);
-    this.updateAlertsStatus(alerts, 'resolved');
-  }
-
   gotoAlertCenter(): void {
     this.popoverVisible = false;
     this.router.navigateByUrl(`/alert/center`);
   }
 
-  gotoDetail(monitorId: number): void {
+  gotoDetail(id: number): void {
     this.popoverVisible = false;
-    this.router.navigateByUrl(`/monitors/${monitorId}`);
+    // todo goto this alert detail pop page
+    // this.router.navigateByUrl(`/alarm/center/detail/${id}`);
   }
 
   toggleMute(event: MouseEvent): void {
     event.stopPropagation();
-    let saveConfig$ = this.configSvc.saveGeneralConfig(this.mute, 'mute')
+    let saveConfig$ = this.configSvc
+      .saveGeneralConfig(this.mute, 'mute')
       .pipe(
         finalize(() => {
           saveConfig$.unsubscribe();
