@@ -48,14 +48,6 @@ export class MonitorService {
     return this.http.put<Message<any>>(monitor_uri, body);
   }
 
-  public getMonitorByApp(app: string): Observable<Message<any>> {
-    return this.http.get<Message<any>>(`${monitor_uri}/metric/${app}`);
-  }
-
-  public deleteMonitor(monitorId: number): Observable<Message<any>> {
-    return this.http.delete<Message<any>>(`${monitor_uri}/${monitorId}`);
-  }
-
   public deleteMonitors(monitorIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {

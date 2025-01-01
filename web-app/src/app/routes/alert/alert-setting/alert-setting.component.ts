@@ -28,13 +28,9 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
-import { zip } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
-import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
-import { Message } from '../../../pojo/Message';
-import { Monitor } from '../../../pojo/Monitor';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
