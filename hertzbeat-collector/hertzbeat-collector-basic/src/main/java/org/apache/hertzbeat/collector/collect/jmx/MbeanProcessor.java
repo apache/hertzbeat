@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor;
+
+package org.apache.hertzbeat.collector.collect.jmx;
 
 import java.util.Map;
 import java.util.Set;
@@ -23,36 +24,29 @@ import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
-import org.apache.hertzbeat.collector.collect.jmx.MBeanProcessor;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 
 /**
- * @author doveLin <lindefu@kuaishou.com>
- * Created on 2025-01-01
+ * If you want to customize JMX, please implement this interface
  */
-public class kafkaBytesInAndOutPerSecProcessor implements MBeanProcessor {
 
-    Boolean completeFlag = false;
+public interface MbeanProcessor {
 
-    @Override
-    public void preProcess(Builder builder, Metrics metrics) {
+    /**
+     * Theoretically, any customized requirement can be handled in preProcess, bypassing the general JMX collection method.
+     */
+    void preProcess(CollectRep.MetricsData.Builder builder, Metrics metrics);
 
-    }
+    /**
+     * Additional customized tasks, depending on the general JMX collection method.
+     */
+    void process(MBeanServerConnection serverConnection, ObjectInstance objectInstance,
+            Set<ObjectInstance> objectInstanceSet, ObjectName objectName, Map<String, String> attributeValueMap, CollectRep.ValueRow.Builder valueRowBuilder);
 
-    @Override
-    public void process(MBeanServerConnection serverConnection,
-            ObjectInstance objectInstance, Set<ObjectInstance> objectInstanceSet, ObjectName objectName,
-            Map<String, String> attributeValueMap, CollectRep.ValueRow.Builder valueRowBuilder) {
-        String topic = objectName.getKeyProperty("topic");
-        attributeValueMap.put("topic", topic);
-    }
-
-    @Override
-    public Boolean isCollectionComplete() {
-        return completeFlag;
-    }
-
+    /**
+     * Indicator of whether the collection is complete.
+     */
+    Boolean isCollectionComplete();
 }
 

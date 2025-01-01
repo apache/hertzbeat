@@ -14,16 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.hertzbeat.collector.collect.jmx;
 
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.KafkaJmxValidator;
+import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.KafkaJmxValidator;
 
 /**
- * @author doveLin <lindefu@kuaishou.com>
- * Created on 2024-12-28
+ * Please register the components you need to customize here
  */
 
 public class CustomizedJmxFactory {
@@ -50,7 +50,7 @@ public class CustomizedJmxFactory {
     }
 
 
-    public static MBeanProcessor getProcessor(String app, String objectName) {
+    public static MbeanProcessor getProcessor(String app, String objectName) {
         switch (app) {
             case "kafka":
                 return KafkaJmxValidator.getProcessor(objectName);

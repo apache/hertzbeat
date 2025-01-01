@@ -14,19 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hertzbeat.collector.collect.jmx.kafkaJmx;
+
+package org.apache.hertzbeat.collector.collect.jmx.kafkajmx;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.collect.jmx.MBeanProcessor;
-import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor.KafkaCommonProcessor;
-import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor.KafkaReplicaManageProcessor;
-import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor.kafkaBytesInAndOutPerSecProcessor;
+import org.apache.hertzbeat.collector.collect.jmx.MbeanProcessor;
+import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor.KafkaBytesInAndOutPerSecProcessor;
+import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor.KafkaCommonProcessor;
+import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor.KafkaReplicaManageProcessor;
+
 
 import lombok.Getter;
 
+/**
+ * KafkaJmxValidator
+ */
 @Getter
 public enum KafkaJmxValidator {
 
@@ -92,7 +97,7 @@ public enum KafkaJmxValidator {
      * @param objectName The objectName to process
      * @return The corresponding MBeanProcessor instance, or null if not available
      */
-    public static MBeanProcessor getProcessor(String objectName) {
+    public static MbeanProcessor getProcessor(String objectName) {
         KafkaJmxValidator validator = fromObjectName(objectName);
         if (validator == null) {
             return null;
@@ -100,7 +105,7 @@ public enum KafkaJmxValidator {
         switch (validator) {
             case BYTES_IN_PER_SEC:
             case BYTES_OUT_PER_SEC:
-                return new kafkaBytesInAndOutPerSecProcessor();
+                return new KafkaBytesInAndOutPerSecProcessor();
             case REPLICA_MANAGE:
                 return new KafkaReplicaManageProcessor();
             case KAFKA_CONTROLLER:

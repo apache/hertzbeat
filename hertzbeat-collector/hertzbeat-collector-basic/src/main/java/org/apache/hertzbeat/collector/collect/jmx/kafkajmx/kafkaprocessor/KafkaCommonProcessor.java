@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor;
+
+package org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor;
 
 import java.io.IOException;
 import java.util.Map;
@@ -28,42 +29,33 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 
-import org.apache.hertzbeat.collector.collect.jmx.MBeanProcessor;
+import org.apache.hertzbeat.collector.collect.jmx.MbeanProcessor;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData;
-import org.apache.hertzbeat.common.entity.message.CollectRep.ValueRow.Builder;
+import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
+import org.apache.hertzbeat.common.entity.message.CollectRep.ValueRow;
 
 /**
- * @author doveLin <lindefu@kuaishou.com>
- * Created on 2025-01-01
+ * KafkaCommonProcessor
  */
-public class KafkaReplicaManageProcessor implements MBeanProcessor {
 
-    private static final String FAILED_ISR_UPDATES_PER_SEC = "FailedIsrUpdatesPerSec";
-    private static final String ISR_EXPANDS_PER_SEC = "IsrExpandsPerSec";
-    private static final String ISR_SHRINKS_PER_SEC = "IsrShrinksPerSec";
+public class KafkaCommonProcessor implements MbeanProcessor {
 
     Boolean completeFlag = false;
 
     @Override
-    public void preProcess(MetricsData.Builder builder, Metrics metrics) {
+    public void preProcess(Builder builder, Metrics metrics) {
 
     }
 
     @Override
-    public void process(MBeanServerConnection serverConnection, ObjectInstance objectInstance, Set<ObjectInstance> objectInstanceSet,
-            ObjectName objectName, Map<String, String> attributeValueMap, Builder valueRowBuilder) {
+    public void process(MBeanServerConnection serverConnection, ObjectInstance objectInstance,
+            Set<ObjectInstance> objectInstanceSet, ObjectName objectName, Map<String, String> attributeValueMap,
+            ValueRow.Builder valueRowBuilder) {
         for (ObjectInstance instance : objectInstanceSet) {
             ObjectName currentObjectName = instance.getObjectName();
             try {
                 AttributeList attributes = serverConnection.getAttributes(currentObjectName, new String[] {"Value"});
-                if (FAILED_ISR_UPDATES_PER_SEC.equals(currentObjectName.getKeyProperty("name"))
-                        || ISR_EXPANDS_PER_SEC.equals(currentObjectName.getKeyProperty("name"))
-                        || ISR_SHRINKS_PER_SEC.equals(currentObjectName.getKeyProperty("name"))) {
-                    attributes = serverConnection.getAttributes(currentObjectName, new String[] {"Count"});
-                }
                 Object value = null;
-
                 if (attributes != null && !attributes.isEmpty()) {
                     Attribute attribute = (Attribute) attributes.get(0);
                     if (attribute != null) {
@@ -83,5 +75,4 @@ public class KafkaReplicaManageProcessor implements MBeanProcessor {
     public Boolean isCollectionComplete() {
         return completeFlag;
     }
-
 }

@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hertzbeat.collector.collect.jmx;
+
+package org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor;
 
 import java.util.Map;
 import java.util.Set;
@@ -23,29 +24,35 @@ import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 
+import org.apache.hertzbeat.collector.collect.jmx.MbeanProcessor;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 
 /**
- * @author doveLin <lindefu@kuaishou.com>
- * Created on 2025-01-01
+ * kafkaBytesInAndOutPerSecProcessor
  */
-public interface MBeanProcessor {
+public class KafkaBytesInAndOutPerSecProcessor implements MbeanProcessor {
 
-    /**
-     * Theoretically, any customized requirement can be handled in preProcess, bypassing the general JMX collection method.
-     */
-    void preProcess(CollectRep.MetricsData.Builder builder, Metrics metrics);
+    Boolean completeFlag = false;
 
-    /**
-     * Additional customized tasks, depending on the general JMX collection method.
-     */
-    void process(MBeanServerConnection serverConnection, ObjectInstance objectInstance,
-            Set<ObjectInstance> objectInstanceSet, ObjectName objectName, Map<String, String> attributeValueMap, CollectRep.ValueRow.Builder valueRowBuilder);
+    @Override
+    public void preProcess(Builder builder, Metrics metrics) {
 
-    /**
-     * Indicator of whether the collection is complete.
-     */
-    Boolean isCollectionComplete();
+    }
+
+    @Override
+    public void process(MBeanServerConnection serverConnection,
+            ObjectInstance objectInstance, Set<ObjectInstance> objectInstanceSet, ObjectName objectName,
+            Map<String, String> attributeValueMap, CollectRep.ValueRow.Builder valueRowBuilder) {
+        String topic = objectName.getKeyProperty("topic");
+        attributeValueMap.put("topic", topic);
+    }
+
+    @Override
+    public Boolean isCollectionComplete() {
+        return completeFlag;
+    }
+
 }
 

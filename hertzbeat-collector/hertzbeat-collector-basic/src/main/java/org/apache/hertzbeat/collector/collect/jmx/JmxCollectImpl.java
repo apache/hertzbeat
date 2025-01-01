@@ -97,7 +97,7 @@ public class JmxCollectImpl extends AbstractCollect {
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
             // Whether to use customized JMX
-            MBeanProcessor processor = null;
+            MbeanProcessor processor = null;
             if (CustomizedJmxFactory.validate(builder.getApp(), jmxProtocol.getObjectName())) {
                 processor = CustomizedJmxFactory.getProcessor(builder.getApp(), jmxProtocol.getObjectName());
                 if (processor != null) {
