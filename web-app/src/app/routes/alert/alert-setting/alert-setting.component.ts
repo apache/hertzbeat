@@ -220,6 +220,7 @@ export class AlertSettingComponent implements OnInit {
     if (translationSearchList.length === 0 && trimSearch) {
       translationSearchList.push(trimSearch);
     }
+
     let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
@@ -251,6 +252,7 @@ export class AlertSettingComponent implements OnInit {
     this.define = new AlertDefine();
     this.define.type = type;
     this.define.tags = [];
+    // Set default period for periodic alert
     if (type === 'periodic') {
       this.define.period = 300;
     }
@@ -489,17 +491,20 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
+            // Set default period for periodic alert if not set
             if (this.define.type === 'periodic' && !this.define.period) {
               this.define.period = 300;
             }
+            // Set default type as realtime if not set
             if (!this.define.type) {
               this.define.type = 'realtime';
             }
             if (this.define.type == 'realtime') {
+              // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
               this.cascadeOnChange(this.cascadeValues);
-              // wait for the cascadeValues to be set
+              // Wait for cascade values to be set
               setTimeout(() => {
                 if (this.cascadeValues[1] === 'availability') {
                   this.isExpr = false;
@@ -508,6 +513,7 @@ export class AlertSettingComponent implements OnInit {
                 }
               });
             }
+            // Initialize tags array if undefined
             if (this.define.tags == undefined) {
               this.define.tags = [];
             }
