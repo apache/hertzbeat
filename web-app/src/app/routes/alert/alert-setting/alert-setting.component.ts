@@ -475,10 +475,10 @@ export class AlertSettingComponent implements OnInit {
           if (message.code === 0) {
             this.define = message.data;
             this.cascadeValues = this.exprToCascadeValues(this.define.expr);
+            this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
             this.cascadeOnChange(this.cascadeValues);
             // wait for the cascadeValues to be set
             setTimeout(() => {
-              this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
               if (this.cascadeValues[1] === 'availability') {
                 this.isExpr = false;
               } else {
@@ -1051,11 +1051,10 @@ export class AlertSettingComponent implements OnInit {
 
       // If cannot parse as visual rules, switch to expression mode
       this.isExpr = true;
-      this.resetQbDataDefault();
     } catch (e) {
       console.warn('Failed to parse threshold expr:', e);
+      this.notifySvc.error('Parse threshold expr to visual error', '');
       this.isExpr = true;
-      this.resetQbDataDefault();
     }
   }
 
