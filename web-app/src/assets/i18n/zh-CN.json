@@ -807,5 +807,11 @@
   "alert.setting.type.periodic.desc": "周期性执行 PromQL 查询，根据结果触发阈值告警",
   "alert.setting.period": "执行周期",
   "alert.setting.period.tip": "周期性执行阈值计算的时间间隔，单位秒，最小60秒",
-  "alert.setting.period.placeholder": "请输入执行周期，最小60秒"
+  "alert.setting.period.placeholder": "请输入执行周期，最小60秒",
+  "alert.setting.bind.monitors": "关联监控",
+  "alert.setting.bind.monitors.tip": "配置此阈值规则应用到指定监控任务,默认不关联应用全部",
+  "alert.setting.bind.available": "可选监控",
+  "alert.setting.bind.selected": "已选监控",
+  "alert.setting.bind.manage": "管理关联监控",
+  "alert.setting.bind.need-save": "请先选择指标类型再进行监控关联"
 }

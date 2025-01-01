@@ -947,36 +947,9 @@ export class AlertSettingComponent implements OnInit {
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
   transferData: TransferItem[] = [];
-  currentAlertDefineId!: number;
+  bindExpr: string = '';
+  selectedMonitorIds = new Set<number>();
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
-  onOpenConnectModal(alertDefineId: number, app: string) {
-    this.isConnectModalVisible = true;
-    this.currentAlertDefineId = alertDefineId;
-    zip(this.alertDefineSvc.getAlertDefineMonitorsBind(alertDefineId), this.monitorSvc.getMonitorsByApp(app))
-      .pipe(
-        map(([defineBindData, monitorData]: [Message<AlertDefineBind[]>, Message<Monitor[]>]) => {
-          let bindRecode: Record<number, string> = {};
-          if (defineBindData.data != undefined) {
-            defineBindData.data.forEach(bind => {
-              bindRecode[bind.monitorId] = bind.monitor.name;
-            });
-          }
-          let listTmp: any[] = [];
-          if (monitorData.data != undefined) {
-            monitorData.data.forEach(monitor => {
-              listTmp.push({
-                id: monitor.id,
-                name: monitor.name,
-                key: monitor.id,
-                direction: bindRecode[monitor.id] == undefined ? 'left' : 'right'
-              });
-            });
-          }
-          return listTmp;
-        })
-      )
-      .subscribe(list => (this.transferData = list));
-  }
   onConnectModalCancel() {
     this.isConnectModalVisible = false;
   }
@@ -984,44 +957,22 @@ export class AlertSettingComponent implements OnInit {
     this.isSwitchExportTypeModalVisible = false;
   }
   onConnectModalOk() {
-    this.isConnectModalOkLoading = true;
-    let defineBinds: AlertDefineBind[] = [];
-    this.transferData.forEach(item => {
-      if (item.direction == 'right') {
-        let bind = new AlertDefineBind();
-        bind.alertDefineId = this.currentAlertDefineId;
-        bind.monitorId = item.id;
-        defineBinds.push(bind);
-      }
-    });
-    const applyBind$ = this.alertDefineSvc
-      .applyAlertDefineMonitorsBind(this.currentAlertDefineId, defineBinds)
-      .pipe(
-        finalize(() => {
-          applyBind$.unsubscribe();
-          this.isConnectModalOkLoading = false;
-        })
-      )
-      .subscribe(
-        message => {
-          this.isConnectModalOkLoading = false;
-          if (message.code === 0) {
-            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
-            this.isConnectModalVisible = false;
-            this.loadAlertDefineTable();
-          } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
-          }
-        },
-        error => {
-          this.isConnectModalOkLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
-        }
-      );
+    // Update expression with new monitor bindings
+    this.updateFinalExpr();
+    this.isConnectModalVisible = false;
   }
   change(ret: TransferChange): void {
     const listKeys = ret.list.map(l => l.key);
     const hasOwnKey = (e: TransferItem): boolean => e.hasOwnProperty('key');
+
+    // Update selectedMonitorIds based on transfer changes
+    if (ret.to === 'right') {
+      listKeys.forEach(key => this.selectedMonitorIds.add(key));
+    } else {
+      listKeys.forEach(key => this.selectedMonitorIds.delete(key));
+    }
+
+    // Update transfer data UI
     this.transferData = this.transferData.map(e => {
       if (listKeys.includes(e.key) && hasOwnKey(e)) {
         if (ret.to === 'left') {
@@ -1031,19 +982,6 @@ export class AlertSettingComponent implements OnInit {
         }
       }
       return e;
-    });
-  }
-  filterMetrics(currentMetrics: any[], cascadeValues: any): any[] {
-    if (cascadeValues.length !== 3) {
-      return currentMetrics;
-    }
-    // sort the cascadeValues[2] to first
-    return currentMetrics.sort((a, b) => {
-      if (a.value !== cascadeValues[2]) {
-        return 1;
-      } else {
-        return -1;
-      }
     });
   }
   // end -- associate alert definition and monitoring model
@@ -1118,25 +1056,16 @@ export class AlertSettingComponent implements OnInit {
   }
 
   public updateFinalExpr(): void {
-    // Build base expression (app/metric)
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
-
-    // Build threshold expression
     let thresholdExpr = '';
     if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
       thresholdExpr = this.userExpr;
     }
 
-    // Merge expressions
-    if (baseExpr && thresholdExpr) {
-      this.define.expr = `${baseExpr} && (${thresholdExpr})`;
-    } else if (baseExpr) {
-      this.define.expr = baseExpr;
-    } else if (thresholdExpr) {
-      this.define.expr = thresholdExpr;
-    } else {
-      this.define.expr = '';
-    }
+    const monitorBindExpr = this.generateMonitorBindExpr();
+    const exprs = [baseExpr, thresholdExpr, monitorBindExpr].filter(e => e);
+
+    this.define.expr = exprs.length > 1 ? exprs.join(' && ') : exprs[0];
   }
 
   onEnvVarClick(env: { name: string; description: string }) {
@@ -1192,5 +1121,60 @@ export class AlertSettingComponent implements OnInit {
         textarea.setSelectionRange(newPos, newPos);
       });
     }
+  }
+
+  // Parse monitor IDs from expression
+  private parseMonitorIdsFromExpr(expr: string) {
+    const idPattern = /equals\(id,\s*"(\d+)"\)/g;
+    let match;
+    this.selectedMonitorIds.clear();
+    while ((match = idPattern.exec(expr)) !== null) {
+      this.selectedMonitorIds.add(Number(match[1]));
+    }
+  }
+
+  // Generate monitor binding expression
+  private generateMonitorBindExpr(): string {
+    if (this.selectedMonitorIds.size === 0) return '';
+    const idExprs = Array.from(this.selectedMonitorIds)
+      .map(id => `equals(id, "${id}")`)
+      .join(' or ');
+    return this.selectedMonitorIds.size > 1 ? `(${idExprs})` : idExprs;
+  }
+
+  // Load monitor binds
+  loadMonitorBinds() {
+    // Parse monitor IDs from expr first
+    if (this.define.expr) {
+      this.parseMonitorIdsFromExpr(this.define.expr);
+    }
+
+    // Only need to load monitor list
+    if (this.cascadeValues.length < 2) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('alert.setting.bind.need-save'), '');
+      return;
+    }
+    this.monitorSvc.getMonitorsByApp(this.cascadeValues[0]).subscribe(message => {
+      if (message.code === 0) {
+        const monitors = message.data;
+        // Create transfer items with direction based on selectedMonitorIds
+        this.transferData = monitors.map(item => ({
+          key: item.id,
+          title: item.name,
+          description: item.host,
+          direction: this.selectedMonitorIds.has(item.id) ? 'right' : 'left'
+        }));
+      }
+    });
+  }
+
+  showConnectModal() {
+    if (this.cascadeValues.length < 2) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('alert.setting.bind.need-save'), '');
+      return;
+    }
+    this.isConnectModalVisible = true;
+    // Load monitors after getting alert define
+    this.loadMonitorBinds();
   }
 }
