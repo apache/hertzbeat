@@ -474,6 +474,9 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
+            if (!this.define.type) {
+              this.define.type = 'realtime';
+            }
             this.cascadeValues = this.exprToCascadeValues(this.define.expr);
             this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
             this.cascadeOnChange(this.cascadeValues);
@@ -562,79 +565,6 @@ export class AlertSettingComponent implements OnInit {
     return exprs.join(` ${ruleset.condition} `);
   }
 
-  private parseRule1(str: string): any {
-    if (str.startsWith('(')) {
-      let start = str.indexOf('(');
-      let operatorPrefix = str.indexOf(' ');
-      let fieldString = str.substring(start + 1, operatorPrefix);
-      if (fieldString.indexOf('(') === -1 && fieldString.indexOf(')') === -1 && fieldString.indexOf('!') === -1) {
-        let operatorSuffix = fieldString.length + 2 + str.substring(operatorPrefix + 1).indexOf(' ');
-        return {
-          rst: {
-            field: fieldString.trim(),
-            operator: str.substring(operatorPrefix, operatorSuffix).trim(),
-            value: str.substring(operatorSuffix + 1, str.indexOf(')')).trim()
-          },
-          pos: str.indexOf(')') + 1
-        };
-      }
-    }
-    return {
-      pos: 0
-    };
-  }
-
-  private parseRule2(str: string): any {
-    if (str.startsWith('exists') || str.startsWith('!exists')) {
-      let start = str.indexOf('(');
-      let end = str.indexOf(')');
-      return {
-        rst: {
-          field: str.substring(start + 1, end).trim(),
-          operator: str.substring(0, start).trim()
-        },
-        pos: end + 1
-      };
-    }
-    return {
-      pos: 0
-    };
-  }
-
-  private parseRule3(str: string): any {
-    if (
-      str.startsWith('matches') ||
-      str.startsWith('!matches') ||
-      str.startsWith('contains') ||
-      str.startsWith('!contains') ||
-      str.startsWith('equals') ||
-      str.startsWith('!equals')
-    ) {
-      let start = str.indexOf('(');
-      let end = str.indexOf(')');
-      let comma = str.indexOf(',');
-      return {
-        rst: {
-          field: str.substring(start + 1, comma).trim(),
-          operator: str.substring(0, start).trim(),
-          value: str.substring(comma + 2, end - 1).trim() // remove double quotes
-        },
-        pos: end + 1
-      };
-    }
-    return {
-      pos: 0
-    };
-  }
-
-  private filterEmptyRules(ruleset: RuleSet): RuleSet | Rule {
-    if (ruleset.rules.length === 1 && (ruleset.rules[0] as RuleSet).rules) {
-      return ruleset.rules[0];
-    } else {
-      return ruleset;
-    }
-  }
-
   private expr2ruleset(expr: string): RuleSet {
     if (!expr || !expr.trim()) {
       return { condition: 'and', rules: [] };
@@ -647,13 +577,13 @@ export class AlertSettingComponent implements OnInit {
       const findOperator = (str: string): { operator: string; position: number } | null => {
         let bracketCount = 0;
         let i = 0;
-        
+
         while (i < str.length) {
           const char = str[i];
-          
+
           if (char === '(') bracketCount++;
           else if (char === ')') bracketCount--;
-          
+
           // Only look for operators at bracket level 0
           if (bracketCount === 0) {
             if (str.substring(i).startsWith(' and ')) {
@@ -671,7 +601,7 @@ export class AlertSettingComponent implements OnInit {
       // Helper function: validate and extract bracket content
       const extractBracketContent = (str: string): string | null => {
         if (!str.startsWith('(') || !str.endsWith(')')) return null;
-        
+
         let bracketCount = 0;
         for (let i = 0; i < str.length; i++) {
           if (str[i] === '(') bracketCount++;
@@ -770,7 +700,6 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
-  // 修改 parseExprToRule 方法，增强解析能力
   private parseExprToRule(expr: string): Rule | null {
     try {
       expr = expr.trim();

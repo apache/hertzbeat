@@ -22,6 +22,8 @@ import { TagItem } from './NoticeRule';
 export class AlertDefine {
   id!: number;
   name!: string;
+  // realtime, periodic
+  type: string = 'realtime';
   expr!: string;
   times: number = 3;
   tags!: TagItem[];
@@ -31,6 +33,5 @@ export class AlertDefine {
   modifier!: string;
   gmtCreate!: number;
   gmtUpdate!: number;
-  preset: boolean = true;
   priority: number = 2;
 }
