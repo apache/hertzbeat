@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.JexlExpression;
@@ -58,6 +61,9 @@ public class RealTimeAlertCalculator {
     private static final String KEY_METRICS = "__metrics__";
     private static final String KEY_PRIORITY = "__priority__";
     private static final String KEY_CODE = "__code__";
+    private static final String KEY_AVAILABLE  = "__available__";
+    private static final String UP = "up";
+    private static final String DOWN = "down";
     private static final String KEY_ROW = "__row__";
 
     /**
@@ -114,39 +120,46 @@ public class RealTimeAlertCalculator {
 
     private void calculate(CollectRep.MetricsData metricsData) {
         long currentTimeMilli = System.currentTimeMillis();
-        long instance = metricsData.getId();
+        String instance = String.valueOf(metricsData.getId());
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
-        Integer priority = metricsData.getPriority();
+        int priority = metricsData.getPriority();
         String code = metricsData.getCode().name();
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
-        // todo filter some thresholds by app metrics instance
-        
-        
-        
+        // Filter thresholds by app, metrics and instance
+        thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance);
         Map<String, Object> commonContext = new HashMap<>(8);
         commonContext.put(KEY_INSTANCE, instance);
         commonContext.put(KEY_APP, app);
         commonContext.put(KEY_PRIORITY, priority);
         commonContext.put(KEY_CODE, code);
         commonContext.put(KEY_METRICS, metrics);
-        
+        if (priority == 0) {
+            commonContext.put(KEY_AVAILABLE, metricsData.getCode() == CollectRep.Code.SUCCESS ? UP : DOWN);
+        }
         List<CollectRep.Field> fields = metricsData.getFields();
         Map<String, Object> fieldValueMap = new HashMap<>(8);
         int valueRowCount = metricsData.getValuesCount();
         for (AlertDefine define : thresholds) {
+            if (define.getLabels() == null) {
+                define.setLabels(new HashMap<>(8));
+            }
+            if (define.getAnnotations() == null) {
+                define.setAnnotations(new HashMap<>(8));
+            }
+            fieldValueMap.clear();
+            fieldValueMap.putAll(commonContext);
             final String expr = define.getExpr();
             if (StringUtils.isBlank(expr)) {
                 continue;
             }
-            fieldValueMap.putAll(commonContext);
             {
                 // trigger the expr before the metrics data, due the available up down or others
                 try {
                     boolean match = execAlertExpression(fieldValueMap, expr);
                     try {
                         Map<String, String> fingerPrints = new HashMap<>(8);
-                        fingerPrints.put(CommonConstants.LABEL_INSTANCE, String.valueOf(instance));
+                        fingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
                         fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
                         fingerPrints.putAll(define.getLabels());
                         if (match) {
@@ -171,7 +184,7 @@ public class RealTimeAlertCalculator {
                 fieldValueMap.put(KEY_ROW, valueRowCount);
                 fieldValueMap.putAll(commonContext);
                 fingerPrints.clear();
-                fingerPrints.put(CommonConstants.LABEL_INSTANCE, String.valueOf(instance));
+                fingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
                 fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
                 fingerPrints.putAll(define.getLabels());
                 for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
@@ -217,6 +230,57 @@ public class RealTimeAlertCalculator {
                 } catch (Exception ignored) {}
             }
         }
+    }
+
+    /**
+     * Filter alert definitions by app, metrics and instance
+     * @param thresholds Alert definitions to filter
+     * @param app Current app name
+     * @param metrics Current metrics name
+     * @param instance Current instance id
+     * @return Filtered alert definitions
+     */
+    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, String instance) {
+        return thresholds.stream()
+                .filter(define -> {
+                    if (StringUtils.isBlank(define.getExpr())) {
+                        return false;
+                    }
+                    String expr = define.getExpr();
+
+                    // Extract and check app
+                    String appPattern = "equals\\(app,\"([^\"]+)\"\\)";
+                    Pattern appRegex = Pattern.compile(appPattern);
+                    Matcher appMatcher = appRegex.matcher(expr);
+                    // If no app specified in expr, skip app check
+                    if (appMatcher.find() && !app.equals(appMatcher.group(1))) {
+                        return false;
+                    }
+
+                    // Extract and check instance
+                    String instancePattern = "equals\\(id,\"(\\d+)\"\\)";
+                    Pattern instanceRegex = Pattern.compile(instancePattern);
+                    Matcher instanceMatcher = instanceRegex.matcher(expr);
+                    // If instance specified in expr, must match current instance
+                    while (instanceMatcher.find()) {
+                        if (Objects.equals(instance, instanceMatcher.group(1))) {
+                            return true;
+                        }
+                    }
+                    // If no instance specified in expr, continue checking metrics
+                    if (expr.contains("equals(id,")) {
+                        return false;
+                    }
+
+                    // For other metrics
+                    String metricsPattern = "equals\\(metric,\"([^\"]+)\"\\)";
+                    Pattern metricsRegex = Pattern.compile(metricsPattern);
+                    Matcher metricsMatcher = metricsRegex.matcher(expr);
+                    // If no metrics specified in expr, return true
+                    // If metrics specified, must match current metrics
+                    return !metricsMatcher.find() || metrics.equals(metricsMatcher.group(1));
+                })
+                .collect(Collectors.toList());
     }
 
     private void handleRecoveredAlert(Map<String, String> fingerprints) {

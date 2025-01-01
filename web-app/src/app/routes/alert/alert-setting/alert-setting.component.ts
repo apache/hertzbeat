@@ -248,6 +248,8 @@ export class AlertSettingComponent implements OnInit {
     this.define = new AlertDefine();
     this.define.type = type;
     this.define.tags = [];
+    this.userExpr = '';
+    this.selectedMonitorIds = new Set<number>();
     // Set default period for periodic alert
     if (type === 'periodic') {
       this.define.period = 300;
@@ -820,7 +822,7 @@ export class AlertSettingComponent implements OnInit {
                 };
               });
               let fixedItem = {
-                value: 'system_value_row_count',
+                value: '__row__',
                 type: 0,
                 label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
               };
@@ -944,7 +946,6 @@ export class AlertSettingComponent implements OnInit {
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
   transferData: TransferItem[] = [];
-  bindExpr: string = '';
   selectedMonitorIds = new Set<number>();
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
   onConnectModalCancel() {
@@ -988,10 +989,10 @@ export class AlertSettingComponent implements OnInit {
 
     // Special handling for availability metrics
     if (values[1] === 'availability') {
-      return `equals(app,"${values[0]}") && equals(availability,"up")`;
+      return `equals(__app__,"${values[0]}") && equals(__available__,"down")`;
     }
 
-    return `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
+    return `equals(__app__,"${values[0]}") && equals(__metrics__,"${values[1]}")`;
   }
 
   public exprToCascadeValues(expr: string | undefined): string[] {
@@ -999,9 +1000,9 @@ export class AlertSettingComponent implements OnInit {
     if (!expr) {
       return values;
     }
-    const appMatch = expr.match(/equals\(app,"([^"]+)"\)/);
-    const metricMatch = expr.match(/equals\(metric,"([^"]+)"\)/);
-    const availabilityMatch = expr.match(/equals\(availability,"up"\)/);
+    const appMatch = expr.match(/equals\(__app__,"([^"]+)"\)/);
+    const metricMatch = expr.match(/equals\(__metrics__,"([^"]+)"\)/);
+    const availabilityMatch = expr.match(/equals\(__available__,"down"\)/);
     if (!appMatch) {
       return values;
     }
@@ -1022,12 +1023,12 @@ export class AlertSettingComponent implements OnInit {
     return (
       expr
         // Remove app/metric/availability expressions
-        .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
-        .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
-        .replace(/equals\(availability,"up"\)\s*&&\s*/, '')
+        .replace(/equals\(__app__,"[^"]+"\)\s*&&\s*/, '')
+        .replace(/equals\(__metrics__,"[^"]+"\)\s*&&\s*/, '')
+        .replace(/equals\(__availabile__,"down"\)\s*&&\s*/, '')
         // Remove monitor binding expressions - both single and multiple
-        .replace(/&&\s*\(?(equals\(id,\s*"\d+"\)(\s*or\s*equals\(id,\s*"\d+"\))*)\)?/, '')
-        .replace(/\(?(equals\(id,\s*"\d+"\)(\s*or\s*equals\(id,\s*"\d+"\))*)\)?\s*&&\s*/, '')
+        .replace(/&&\s*\(?(equals\(__instance__,\s*"\d+"\)(\s*or\s*equals\(__instance__,\s*"\d+"\))*)\)?/, '')
+        .replace(/\(?(equals\(__instance__,\s*"\d+"\)(\s*or\s*equals\(__instance__,\s*"\d+"\))*)\)?\s*&&\s*/, '')
         // Clean up any remaining && at start/end
         .replace(/^\s*&&\s*/, '')
         .replace(/\s*&&\s*$/, '')
@@ -1128,7 +1129,7 @@ export class AlertSettingComponent implements OnInit {
 
   // Parse monitor IDs from expression
   private parseMonitorIdsFromExpr(expr: string) {
-    const idPattern = /equals\(id,\s*"(\d+)"\)/g;
+    const idPattern = /equals\(__instance__,\s*"(\d+)"\)/g;
     let match;
     this.selectedMonitorIds.clear();
     while ((match = idPattern.exec(expr)) !== null) {
@@ -1140,7 +1141,7 @@ export class AlertSettingComponent implements OnInit {
   private generateMonitorBindExpr(): string {
     if (this.selectedMonitorIds.size === 0) return '';
     const idExprs = Array.from(this.selectedMonitorIds)
-      .map(id => `equals(id, "${id}")`)
+      .map(id => `equals(__instance__, "${id}")`)
       .join(' or ');
     return this.selectedMonitorIds.size > 1 ? `(${idExprs})` : idExprs;
   }

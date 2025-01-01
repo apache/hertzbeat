@@ -22,8 +22,6 @@ import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
  * AlertDefine Dao
@@ -42,26 +40,4 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * @return alarm defines
      */
     List<AlertDefine> findAlertDefinesByType(String type);
-
-    /**
-     * Query the default alarm thresholds based on the monitoring metrics type
-     * @param app monitoring type
-     * @param metric metrics
-     * @return alarm defines
-     */
-    List<AlertDefine> queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(String app, String metric);
-    
-
-    /**
-     * Query the alarm definition list associated with the monitoring ID
-     * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @return Alarm Definition List
-     */
-    @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id "
-            + "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
-    List<AlertDefine> queryAlertDefinesByMonitor(@Param(value = "monitorId") Long monitorId,
-                                                 @Param(value = "app") String app,
-                                                 @Param(value = "metrics") String metrics);
 }
