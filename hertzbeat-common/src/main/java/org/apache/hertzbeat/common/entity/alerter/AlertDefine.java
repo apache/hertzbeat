@@ -65,19 +65,20 @@ public class AlertDefine {
     @NotNull
     private String name;
 
-    @Schema(title = "Monitoring Type", example = "linux", accessMode = READ_WRITE) 
-    @Size(max = 100)
-    private String app;
+    @Schema(title = "Monitoring Type", example = "linux", accessMode = READ_WRITE)
+    @Deprecated
+    private String app = "";
 
     @Schema(title = "Metrics", example = "cpu", accessMode = READ_WRITE)
-    @Size(max = 100)
-    private String metric;
+    @Deprecated
+    private String metric = "";
 
     @Schema(title = "Monitoring Metrics Field", example = "usage", accessMode = READ_WRITE)
-    @Size(max = 100)
+    @Deprecated
     private String field;
 
     @Schema(title = "Is Apply All Default", example = "false", accessMode = READ_WRITE)
+    @Deprecated
     private boolean preset;
 
     @Schema(title = "Rule Type: realtime, periodic", example = "0")
@@ -93,6 +94,7 @@ public class AlertDefine {
 
     @Schema(title = "Alarm Level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning",
             example = "1", accessMode = READ_WRITE)
+    @Deprecated
     private Byte priority;
 
     @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",

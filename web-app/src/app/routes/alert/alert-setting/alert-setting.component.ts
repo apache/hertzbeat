@@ -28,8 +28,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
-import { EMPTY, zip } from 'rxjs';
-import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
+import { zip } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
@@ -57,6 +57,10 @@ export class AlertSettingComponent implements OnInit {
     private formBuilder: FormBuilder
   ) {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
+    this.qbFormCtrl.valueChanges.subscribe(() => {
+      this.userExpr = this.ruleset2expr(this.qbFormCtrl.value);
+      this.updateFinalExpr();
+    });
   }
   @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
   search!: string;
@@ -101,6 +105,30 @@ export class AlertSettingComponent implements OnInit {
   appMap = new Map<string, string>();
   appEntries: Array<{ value: any; key: string }> = [];
 
+  templateEnvVars = [
+    { name: '${app}', description: 'alert.setting.template.vars.app' },
+    { name: '${metric}', description: 'alert.setting.template.vars.metric' },
+    { name: '${field}', description: 'alert.setting.template.vars.field' },
+    { name: '${value}', description: 'alert.setting.template.vars.value' },
+    { name: '${threshold}', description: 'alert.setting.template.vars.threshold' },
+    { name: '${tags}', description: 'alert.setting.template.vars.tags' },
+    { name: '${time}', description: 'alert.setting.template.vars.time' }
+  ];
+
+  commonOperators = [
+    { value: '==', description: 'alert.setting.expr.operator.equals' },
+    { value: '!=', description: 'alert.setting.expr.operator.not-equals' },
+    { value: '>', description: 'alert.setting.expr.operator.greater' },
+    { value: '>=', description: 'alert.setting.expr.operator.greater-equals' },
+    { value: '<', description: 'alert.setting.expr.operator.less' },
+    { value: '<=', description: 'alert.setting.expr.operator.less-equals' },
+    { value: '&&', description: 'alert.setting.expr.operator.and' },
+    { value: '||', description: 'alert.setting.expr.operator.or' },
+    { value: '()', description: 'alert.setting.expr.operator.brackets' }
+  ];
+
+  isSelectTypeModalVisible = false;
+
   ngOnInit(): void {
     this.loadAlertDefineTable();
     // query monitoring hierarchy
@@ -115,15 +143,34 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.appHierarchies = message.data;
+            // Modify hierarchy structure
             this.appHierarchies.forEach(item => {
-              if (item.children == undefined) {
-                item.children = [];
+              if (item.children) {
+                // Save original field information
+                item.children.forEach((metric: any) => {
+                  if (metric.children) {
+                    metric.fields = metric.children;
+                  }
+                  // Set as leaf node
+                  metric.isLeaf = true;
+                  // Delete children property
+                  delete metric.children;
+                });
+                // Add availability option
+                item.children.unshift({
+                  value: AVAILABILITY,
+                  label: this.i18nSvc.fanyi('monitor.availability'),
+                  isLeaf: true
+                });
+              } else {
+                item.children = [
+                  {
+                    value: AVAILABILITY,
+                    label: this.i18nSvc.fanyi('monitor.availability'),
+                    isLeaf: true
+                  }
+                ];
               }
-              item.children.unshift({
-                value: AVAILABILITY,
-                label: this.i18nSvc.fanyi('monitor.availability'),
-                isLeaf: true
-              });
             });
           } else {
             console.warn(message.msg);
@@ -173,6 +220,7 @@ export class AlertSettingComponent implements OnInit {
     if (translationSearchList.length === 0 && trimSearch) {
       translationSearchList.push(trimSearch);
     }
+
     let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
@@ -196,12 +244,26 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onNewAlertDefine() {
+    this.isSelectTypeModalVisible = true;
+  }
+
+  onSelectAlertType(type: string) {
+    this.isSelectTypeModalVisible = false;
     this.define = new AlertDefine();
+    this.define.type = type;
     this.define.tags = [];
+    // Set default period for periodic alert
+    if (type === 'periodic') {
+      this.define.period = 300;
+    }
     this.resetQbDataDefault();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
+  }
+
+  onSelectTypeModalCancel() {
+    this.isSelectTypeModalVisible = false;
   }
 
   onEditOneAlertDefine(alertDefineId: number) {
@@ -235,45 +297,6 @@ export class AlertSettingComponent implements OnInit {
         error => {
           this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
-        }
-      );
-  }
-
-  editAlertDefine(alertDefineId: number) {
-    if (this.isLoadingEdit !== -1) return;
-    this.isLoadingEdit = alertDefineId;
-    this.isManageModalAdd = false;
-    this.isManageModalOkLoading = false;
-    // 查询告警定义信息
-    const getDefine$ = this.alertDefineSvc
-      .getAlertDefine(alertDefineId)
-      .pipe(
-        finalize(() => {
-          getDefine$.unsubscribe();
-          this.isLoadingEdit = -1;
-          this.isManageModalVisible = true;
-        })
-      )
-      .subscribe(
-        message => {
-          if (message.code === 0) {
-            this.define = message.data;
-            if (this.define.field) {
-              this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
-            } else {
-              this.cascadeValues = [this.define.app, this.define.metric];
-            }
-            if (this.define.tags == undefined) {
-              this.define.tags = [];
-            }
-            this.cascadeOnChange(this.cascadeValues);
-            this.renderAlertRuleExpr(this.define.expr);
-          } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
-          }
-        },
-        error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), error.msg);
         }
       );
   }
@@ -447,6 +470,62 @@ export class AlertSettingComponent implements OnInit {
   cascadeValues: string[] = [];
   currentMetrics: any[] = [];
   isExpr = false;
+  userExpr!: string;
+
+  editAlertDefine(alertDefineId: number) {
+    if (this.isLoadingEdit !== -1) return;
+    this.isLoadingEdit = alertDefineId;
+    this.isManageModalAdd = false;
+    this.isManageModalOkLoading = false;
+
+    const getDefine$ = this.alertDefineSvc
+      .getAlertDefine(alertDefineId)
+      .pipe(
+        finalize(() => {
+          getDefine$.unsubscribe();
+          this.isLoadingEdit = -1;
+          this.isManageModalVisible = true;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.define = message.data;
+            // Set default period for periodic alert if not set
+            if (this.define.type === 'periodic' && !this.define.period) {
+              this.define.period = 300;
+            }
+            // Set default type as realtime if not set
+            if (!this.define.type) {
+              this.define.type = 'realtime';
+            }
+            if (this.define.type == 'realtime') {
+              // Parse expression to cascade values
+              this.cascadeValues = this.exprToCascadeValues(this.define.expr);
+              this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+              this.cascadeOnChange(this.cascadeValues);
+              // Wait for cascade values to be set
+              setTimeout(() => {
+                if (this.cascadeValues[1] === 'availability') {
+                  this.isExpr = false;
+                } else {
+                  this.tryParseThresholdExpr(this.userExpr);
+                }
+              });
+            }
+            // Initialize tags array if undefined
+            if (this.define.tags == undefined) {
+              this.define.tags = [];
+            }
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), error.msg);
+        }
+      );
+  }
 
   private getOperatorsByType(type: number): string[] {
     if (type === 0 || type === 3) {
@@ -458,142 +537,237 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private rule2expr(rule: Rule): string {
-    if (rule.operator == 'exists' || rule.operator == '!exists') {
-      return `${rule.operator}(${rule.field})`;
+    if (!rule.field) return '';
+
+    switch (rule.operator) {
+      case 'exists':
+      case '!exists':
+        return `${rule.operator}(${rule.field})`;
+
+      case 'equals':
+      case '!equals':
+      case 'contains':
+      case '!contains':
+      case 'matches':
+      case '!matches':
+        return `${rule.operator}(${rule.field}, "${rule.value}")`;
+
+      case '>':
+      case '>=':
+      case '<':
+      case '<=':
+      case '==':
+      case '!=':
+        // 如果字段包含方法调用
+        if (rule.field.includes('.') && rule.field.includes('()')) {
+          return `${rule.field} ${rule.operator} ${rule.value}`;
+        }
+        return `${rule.field} ${rule.operator} ${rule.value}`;
+
+      default:
+        return '';
     }
-    const fieldObject = this.qbConfig.fields[rule.field];
-    if (parseInt(fieldObject.type) === 1) {
-      return `${rule.operator}(${rule.field},"${rule.value}")`;
-    }
-    return `(${rule.field} ${rule.operator} ${rule.value})`;
   }
 
   private ruleset2expr(ruleset: RuleSet): string {
-    if (ruleset.rules.length === 0) {
+    if (!ruleset.rules || ruleset.rules.length === 0) {
       return '';
     }
-    return `(${ruleset.rules
-      .map((rule: any) => (!!(rule as RuleSet).rules ? this.ruleset2expr(rule as RuleSet) : this.rule2expr(rule as Rule)))
-      .filter((s: any) => !!s)
-      .join(` ${ruleset.condition} `)})`;
-  }
 
-  private parseRule1(str: string): any {
-    if (str.startsWith('(')) {
-      let start = str.indexOf('(');
-      let operatorPrefix = str.indexOf(' ');
-      let fieldString = str.substring(start + 1, operatorPrefix);
-      if (fieldString.indexOf('(') === -1 && fieldString.indexOf(')') === -1 && fieldString.indexOf('!') === -1) {
-        let operatorSuffix = fieldString.length + 2 + str.substring(operatorPrefix + 1).indexOf(' ');
-        return {
-          rst: {
-            field: fieldString.trim(),
-            operator: str.substring(operatorPrefix, operatorSuffix).trim(),
-            value: str.substring(operatorSuffix + 1, str.indexOf(')')).trim()
-          },
-          pos: str.indexOf(')') + 1
-        };
-      }
-    }
-    return {
-      pos: 0
-    };
-  }
+    const exprs = ruleset.rules
+      .map(rule => {
+        if ('condition' in rule) {
+          // Always wrap nested RuleSet with brackets
+          const nestedExpr = this.ruleset2expr(rule as RuleSet);
+          return nestedExpr ? `(${nestedExpr})` : '';
+        } else {
+          // Single rule doesn't need brackets
+          return this.rule2expr(rule as Rule);
+        }
+      })
+      .filter(expr => expr);
 
-  private parseRule2(str: string): any {
-    if (str.startsWith('exists') || str.startsWith('!exists')) {
-      let start = str.indexOf('(');
-      let end = str.indexOf(')');
-      return {
-        rst: {
-          field: str.substring(start + 1, end).trim(),
-          operator: str.substring(0, start).trim()
-        },
-        pos: end + 1
-      };
-    }
-    return {
-      pos: 0
-    };
-  }
-
-  private parseRule3(str: string): any {
-    if (
-      str.startsWith('matches') ||
-      str.startsWith('!matches') ||
-      str.startsWith('contains') ||
-      str.startsWith('!contains') ||
-      str.startsWith('equals') ||
-      str.startsWith('!equals')
-    ) {
-      let start = str.indexOf('(');
-      let end = str.indexOf(')');
-      let comma = str.indexOf(',');
-      return {
-        rst: {
-          field: str.substring(start + 1, comma).trim(),
-          operator: str.substring(0, start).trim(),
-          value: str.substring(comma + 2, end - 1).trim() // remove double quotes
-        },
-        pos: end + 1
-      };
-    }
-    return {
-      pos: 0
-    };
-  }
-
-  private filterEmptyRules(ruleset: RuleSet): RuleSet | Rule {
-    if (ruleset.rules.length === 1 && (ruleset.rules[0] as RuleSet).rules) {
-      return ruleset.rules[0];
-    } else {
-      return ruleset;
-    }
+    // Join with condition operator
+    return exprs.join(` ${ruleset.condition} `);
   }
 
   private expr2ruleset(expr: string): RuleSet {
-    let ruleset = { rules: [] as any[], condition: 'and' };
-    let current = ruleset;
-    let stack: any[] = [];
-    for (let i = 0, j = expr.length; i < j; ) {
-      if (expr[i] === '(' && this.parseRule1(expr.substring(i)).pos === 0) {
-        stack.push(current);
-        current = { rules: [] as any[], condition: 'and' };
-        i++;
-      } else if (expr[i] === 'a' && expr[i + 1] === 'n' && expr[i + 2] === 'd') {
-        current.condition = 'and';
-        i += 3;
-      } else if (expr[i] === 'o' && expr[i + 1] === 'r') {
-        current.condition = 'or';
-        i += 2;
-      } else if (expr[i] === ')') {
-        let parent = stack.pop();
-        parent.rules.push(this.filterEmptyRules(current));
-        current = parent;
-        i++;
-      } else {
-        let rule = this.parseRule1(expr.substring(i));
-        if (rule.pos) {
-          current.rules.push(rule.rst);
-          i += rule.pos;
-          continue;
-        }
-        rule = this.parseRule2(expr.substring(i));
-        if (rule.pos) {
-          current.rules.push(rule.rst);
-          i += rule.pos;
-          continue;
-        }
-        rule = this.parseRule3(expr.substring(i));
-        if (rule.pos) {
-          current.rules.push(rule.rst);
-          i += rule.pos;
-          continue;
-        }
-        i++;
-      }
+    if (!expr || !expr.trim()) {
+      return { condition: 'and', rules: [] };
     }
-    return this.filterEmptyRules(ruleset) as RuleSet;
+
+    try {
+      console.log('Parsing expression:', expr);
+
+      // Helper function: find operator position considering brackets
+      const findOperator = (str: string): { operator: string; position: number } | null => {
+        let bracketCount = 0;
+        let i = 0;
+
+        while (i < str.length) {
+          const char = str[i];
+
+          if (char === '(') bracketCount++;
+          else if (char === ')') bracketCount--;
+
+          // Only look for operators at bracket level 0
+          if (bracketCount === 0) {
+            if (str.substring(i).startsWith(' and ')) {
+              return { operator: 'and', position: i };
+            }
+            if (str.substring(i).startsWith(' or ')) {
+              return { operator: 'or', position: i };
+            }
+          }
+          i++;
+        }
+        return null;
+      };
+
+      // Helper function: validate and extract bracket content
+      const extractBracketContent = (str: string): string | null => {
+        if (!str.startsWith('(') || !str.endsWith(')')) return null;
+
+        let bracketCount = 0;
+        for (let i = 0; i < str.length; i++) {
+          if (str[i] === '(') bracketCount++;
+          if (str[i] === ')') bracketCount--;
+          if (bracketCount < 0) return null;
+        }
+        return bracketCount === 0 ? str.slice(1, -1) : null;
+      };
+
+      // Helper function: parse expression recursively
+      const parseExpr = (str: string): RuleSet | Rule | null => {
+        str = str.trim();
+        if (!str) return null;
+
+        console.log('Parsing sub-expression:', str);
+
+        // Try to parse as a single rule first
+        const rule = this.parseExprToRule(str);
+        if (rule) {
+          console.log('Parsed as rule:', rule);
+          return rule;
+        }
+
+        // Look for top-level AND/OR
+        const operatorInfo = findOperator(str);
+        if (operatorInfo) {
+          const { operator, position } = operatorInfo;
+          const left = str.substring(0, position).trim();
+          const right = str.substring(position + (operator === 'and' ? 5 : 4)).trim();
+
+          console.log(`Found ${operator} operator, splitting:`, { left, right });
+
+          const ruleset: RuleSet = {
+            condition: operator,
+            rules: []
+          };
+
+          const leftResult = parseExpr(left);
+          const rightResult = parseExpr(right);
+
+          if (leftResult) {
+            console.log('Adding left result:', leftResult);
+            ruleset.rules.push(leftResult);
+          }
+          if (rightResult) {
+            console.log('Adding right result:', rightResult);
+            ruleset.rules.push(rightResult);
+          }
+
+          return ruleset;
+        }
+
+        // If no top-level operator found, try parsing bracketed content
+        const bracketContent = extractBracketContent(str);
+        if (bracketContent) {
+          console.log('Found bracketed content:', bracketContent);
+          const result = parseExpr(bracketContent);
+          if (result) {
+            // If it's already a RuleSet, keep the structure
+            if ('condition' in result) {
+              console.log('Returning nested ruleset:', result);
+              return result;
+            } else {
+              // Create a new RuleSet for single rule to maintain bracket structure
+              console.log('Creating ruleset for bracketed rule:', result);
+              return {
+                condition: 'and',
+                rules: [result]
+              };
+            }
+          }
+        }
+
+        return null;
+      };
+
+      const result = parseExpr(expr);
+      if (!result) {
+        console.warn('Failed to parse expression, returning empty ruleset');
+        return { condition: 'and', rules: [] };
+      }
+
+      if ('condition' in result) {
+        console.log('Final ruleset:', result);
+        return result;
+      } else {
+        console.log('Creating final ruleset for single rule:', result);
+        return {
+          condition: 'and',
+          rules: [result]
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse expression:', e);
+      return { condition: 'and', rules: [] };
+    }
+  }
+
+  private parseExprToRule(expr: string): Rule | null {
+    try {
+      expr = expr.trim();
+
+      // Parse exists/!exists
+      const existsMatch = expr.match(/^(!)?exists\(([^)]+)\)$/);
+      if (existsMatch) {
+        const [_, not, field] = existsMatch;
+        return {
+          field,
+          operator: not ? '!exists' : 'exists'
+        };
+      }
+
+      // Parse string functions (equals, contains, matches)
+      const funcMatch = expr.match(/^(!)?(?:equals|contains|matches)\(([^,]+),\s*"([^"]+)"\)$/);
+      if (funcMatch) {
+        const [_, not, field, value] = funcMatch;
+        const func = expr.match(/(?:equals|contains|matches)/)?.[0] || '';
+        return {
+          field,
+          operator: not ? `!${func}` : func,
+          value
+        };
+      }
+
+      // Parse numeric comparisons
+      const compareMatch = expr.match(/^(\w+(?:\.\w+)*)\s*([><=!]+)\s*(-?\d+(?:\.\d+)?)$/);
+      if (compareMatch) {
+        const [_, field, operator, value] = compareMatch;
+        return {
+          field,
+          operator,
+          value: Number(value)
+        };
+      }
+
+      return null;
+    } catch (e) {
+      console.error('Failed to parse rule:', e);
+      return null;
+    }
   }
 
   getOperatorLabelByType = (operator: string) => {
@@ -627,20 +801,26 @@ export class AlertSettingComponent implements OnInit {
   };
 
   cascadeOnChange(values: string[]): void {
-    this.resetQbDataDefault();
-    if (values == null || values.length != 3) {
+    if (!values || values.length < 2) {
+      this.resetQbDataDefault();
       return;
     }
     this.appHierarchies.forEach(hierarchy => {
       if (hierarchy.value == values[0]) {
-        hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
+        hierarchy.children.forEach((metrics: { value: string; fields?: any[] }) => {
           if (metrics.value == values[1]) {
             this.currentMetrics = [];
-            if (metrics.children) {
+            // 如果不是可用性指标且有字段信息，则加载指标字段
+            if (metrics.value !== 'availability' && metrics.fields) {
               let fields: any = {};
-              metrics.children.forEach(item => {
+              metrics.fields.forEach(item => {
                 this.currentMetrics.push(item);
-                fields[item.value] = { name: item.label, type: item.type, unit: item.unit, operators: this.getOperatorsByType(item.type) };
+                fields[item.value] = {
+                  name: item.label,
+                  type: item.type,
+                  unit: item.unit,
+                  operators: this.getOperatorsByType(item.type)
+                };
               });
               let fixedItem = {
                 value: 'system_value_row_count',
@@ -648,40 +828,29 @@ export class AlertSettingComponent implements OnInit {
                 label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
               };
               this.currentMetrics.push(fixedItem);
-              fields[fixedItem.value] = { name: fixedItem.label, type: fixedItem.type, operators: this.getOperatorsByType(fixedItem.type) };
+              fields[fixedItem.value] = {
+                name: fixedItem.label,
+                type: fixedItem.type,
+                operators: this.getOperatorsByType(fixedItem.type)
+              };
               this.qbConfig = { ...this.qbConfig, fields };
             }
           }
         });
       }
     });
+    this.updateFinalExpr();
   }
 
   switchAlertRuleShow() {
-    if (this.isExpr) {
-      let expr = this.ruleset2expr(this.qbData);
-      if (expr != '') {
-        this.define.expr = expr;
+    if (!this.isExpr) {
+      try {
+        this.tryParseThresholdExpr(this.userExpr);
+      } catch (e) {
+        this.notifySvc.error('Parse threshold expr to visual error', '');
+        console.warn('Parse Threshold Expr to Visual error:', e);
+        this.resetQbDataDefault();
       }
-    }
-  }
-
-  renderAlertRuleExpr(expr: string) {
-    if (expr == undefined || expr == '') {
-      return;
-    }
-    if (expr.indexOf('||') > 0 || expr.indexOf(' + ') > 0 || expr.indexOf(' - ') > 0) {
-      this.isExpr = true;
-      return;
-    }
-    try {
-      this.resetQbData(this.expr2ruleset(expr));
-      this.isExpr = false;
-    } catch (e) {
-      console.error(e);
-      this.isExpr = true;
-      this.resetQbDataDefault();
-      return;
     }
   }
 
@@ -721,20 +890,6 @@ export class AlertSettingComponent implements OnInit {
       return;
     }
     this.isManageModalOkLoading = true;
-    this.define.app = this.cascadeValues[0];
-    this.define.metric = this.cascadeValues[1];
-    if (this.cascadeValues.length == 3) {
-      this.define.field = this.cascadeValues[2];
-      if (!this.isExpr) {
-        let expr = this.ruleset2expr(this.qbData);
-        if (expr != '') {
-          this.define.expr = expr;
-        }
-      }
-    } else {
-      this.define.expr = '';
-      this.define.field = '';
-    }
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc
         .newAlertDefine(this.define)
@@ -892,4 +1047,150 @@ export class AlertSettingComponent implements OnInit {
     });
   }
   // end -- associate alert definition and monitoring model
+
+  private cascadeValuesToExpr(values: string[]): string {
+    if (!values || values.length < 2) return '';
+
+    // Special handling for availability metrics
+    if (values[1] === 'availability') {
+      return `equals(app,"${values[0]}") && equals(availability,"up")`;
+    }
+
+    return `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
+  }
+
+  public exprToCascadeValues(expr: string | undefined): string[] {
+    const values: string[] = [];
+    if (!expr) {
+      return values;
+    }
+    const appMatch = expr.match(/equals\(app,"([^"]+)"\)/);
+    const metricMatch = expr.match(/equals\(metric,"([^"]+)"\)/);
+    const availabilityMatch = expr.match(/equals\(availability,"up"\)/);
+    if (!appMatch) {
+      return values;
+    }
+    values.push(appMatch[1]);
+    // If availability expression exists, add 'availability'
+    if (availabilityMatch) {
+      values.push('availability');
+    } else if (metricMatch) {
+      values.push(metricMatch[1]);
+    }
+    return values;
+  }
+
+  // remove the app/metric/availability condition from the expression
+  private removeAppMetricFieldExpr(expr: string | undefined): string {
+    if (!expr) return '';
+
+    return expr
+      .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
+      .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
+      .replace(/equals\(availability,"up"\)\s*&&\s*/, '') // Remove availability expression
+      .replace(/^\s*&&\s*/, '')
+      .replace(/\s*&&\s*$/, '');
+  }
+
+  private tryParseThresholdExpr(expr: string | undefined): void {
+    if (!expr || !expr.trim()) {
+      this.resetQbDataDefault();
+      this.isExpr = false;
+      return;
+    }
+
+    try {
+      // First try to parse as visual rules
+      const ruleset = this.expr2ruleset(expr);
+      if (ruleset && ruleset.rules && ruleset.rules.length > 0) {
+        this.resetQbData(ruleset);
+        this.isExpr = false;
+        return;
+      }
+
+      // If cannot parse as visual rules, switch to expression mode
+      this.isExpr = true;
+    } catch (e) {
+      console.warn('Failed to parse threshold expr:', e);
+      this.notifySvc.error('Parse threshold expr to visual error', '');
+      this.isExpr = true;
+    }
+  }
+
+  public updateFinalExpr(): void {
+    // Build base expression (app/metric)
+    const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
+
+    // Build threshold expression
+    let thresholdExpr = '';
+    if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
+      thresholdExpr = this.userExpr;
+    }
+
+    // Merge expressions
+    if (baseExpr && thresholdExpr) {
+      this.define.expr = `${baseExpr} && (${thresholdExpr})`;
+    } else if (baseExpr) {
+      this.define.expr = baseExpr;
+    } else if (thresholdExpr) {
+      this.define.expr = thresholdExpr;
+    } else {
+      this.define.expr = '';
+    }
+  }
+
+  onEnvVarClick(env: { name: string; description: string }) {
+    // Insert environment variable at cursor position
+    const textarea = document.getElementById('template') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+
+      this.define.template = `${before} ${env.name} ${after}`;
+
+      // Restore cursor position
+      setTimeout(() => {
+        textarea.focus();
+        const newCursorPos = start + env.name.length + 2;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      });
+    }
+  }
+
+  // Handle variable click event
+  onExprVarClick(item: { value: string; description?: string }) {
+    const textarea = document.getElementById('expr') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+
+      // Special handling for brackets
+      let insertText = item.value;
+      if (item.value === '()') {
+        insertText = '()';
+        // If text is selected, wrap it with brackets
+        if (start !== end) {
+          insertText = `(${text.substring(start, end)})`;
+        }
+      }
+
+      this.userExpr = `${before} ${insertText} ${after}`;
+
+      // Restore cursor position
+      setTimeout(() => {
+        textarea.focus();
+        const newPos =
+          item.value === '()' && start === end
+            ? start + 1 // Place cursor between brackets
+            : start + insertText.length + 2; // Place cursor after inserted content
+        textarea.setSelectionRange(newPos, newPos);
+      });
+    }
+  }
 }

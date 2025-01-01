@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -91,10 +92,12 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
         // todo
         if (StringUtils.hasText(alertDefine.getExpr())) {
-            try {
-                JexlExpressionRunner.compile(alertDefine.getExpr());
-            } catch (Exception e) {
-                throw new IllegalArgumentException("alert expr error: " + e.getMessage());
+            if (ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
+                try {
+                    JexlExpressionRunner.compile(alertDefine.getExpr());
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("alert expr error: " + e.getMessage());
+                }   
             }
         }
     }
