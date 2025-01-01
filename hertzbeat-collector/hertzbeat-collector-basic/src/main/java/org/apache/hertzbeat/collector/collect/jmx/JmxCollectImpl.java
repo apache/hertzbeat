@@ -21,13 +21,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -54,11 +51,9 @@ import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.Metrics.Field;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -101,7 +96,7 @@ public class JmxCollectImpl extends AbstractCollect {
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
-
+            // Whether to use customized JMX
             MBeanProcessor processor = null;
             if (CustomizedJmxFactory.validate(builder.getApp(), jmxProtocol.getObjectName())) {
                 processor = CustomizedJmxFactory.getProcessor(builder.getApp(), jmxProtocol.getObjectName());
@@ -120,7 +115,6 @@ public class JmxCollectImpl extends AbstractCollect {
             Set<String> attributeNameSet = metrics.getAliasFields().stream()
                     .map(field -> field.split(SUB_ATTRIBUTE)[0]).collect(Collectors.toSet());
             Set<ObjectInstance> objectInstanceSet = serverConnection.queryMBeans(objectName, null);
-
             for (ObjectInstance objectInstance : objectInstanceSet) {
                 ObjectName currentObjectName = objectInstance.getObjectName();
                 MBeanInfo beanInfo = serverConnection.getMBeanInfo(currentObjectName);
