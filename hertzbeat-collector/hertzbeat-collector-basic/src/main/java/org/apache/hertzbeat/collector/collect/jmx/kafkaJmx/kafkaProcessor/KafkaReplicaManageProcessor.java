@@ -27,7 +27,8 @@ public class KafkaReplicaManageProcessor implements MBeanProcessor {
     private static final String ISR_EXPANDS_PER_SEC = "IsrExpandsPerSec";
     private static final String ISR_SHRINKS_PER_SEC = "IsrShrinksPerSec";
 
-    Boolean CompleteFlag = false;
+    Boolean completeFlag = false;
+
     @Override
     public void preProcess(MetricsData.Builder builder, Metrics metrics) {
 
@@ -59,12 +60,12 @@ public class KafkaReplicaManageProcessor implements MBeanProcessor {
                 throw new RuntimeException(e);
             }
         }
-        CompleteFlag =true;
+        completeFlag = true;
     }
 
     @Override
     public Boolean isCollectionComplete() {
-        return CompleteFlag;
+        return completeFlag;
     }
 
 }

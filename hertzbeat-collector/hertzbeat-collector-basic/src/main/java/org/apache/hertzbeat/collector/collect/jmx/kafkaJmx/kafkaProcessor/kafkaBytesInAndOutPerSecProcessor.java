@@ -16,9 +16,10 @@ import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder
  * @author doveLin <lindefu@kuaishou.com>
  * Created on 2025-01-01
  */
-public class KafkaBytesInAndOutPerSecProcessor implements MBeanProcessor {
+public class kafkaBytesInAndOutPerSecProcessor implements MBeanProcessor {
 
-    Boolean CompleteFlag = false;
+    Boolean completeFlag = false;
+
     @Override
     public void preProcess(Builder builder, Metrics metrics) {
 
@@ -34,7 +35,7 @@ public class KafkaBytesInAndOutPerSecProcessor implements MBeanProcessor {
 
     @Override
     public Boolean isCollectionComplete() {
-        return CompleteFlag;
+        return completeFlag;
     }
 
 }

@@ -23,7 +23,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep.ValueRow;
  */
 public class KafkaCommonProcessor implements MBeanProcessor {
 
-    Boolean CompleteFlag = false;
+    Boolean completeFlag = false;
     @Override
     public void preProcess(Builder builder, Metrics metrics) {
 
@@ -50,11 +50,11 @@ public class KafkaCommonProcessor implements MBeanProcessor {
                 throw new RuntimeException(e);
             }
         }
-        CompleteFlag =true;
+        completeFlag = true;
     }
 
     @Override
     public Boolean isCollectionComplete() {
-        return CompleteFlag;
+        return completeFlag;
     }
 }

@@ -129,7 +129,7 @@ public class JmxCollectImpl extends AbstractCollect {
                 Map<String, String> attributeValueMap = extractAttributeValue(attributeList);
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 if (processor != null) {
-                    processor.process(serverConnection,objectInstance, objectInstanceSet,
+                    processor.process(serverConnection, objectInstance, objectInstanceSet,
                             currentObjectName, attributeValueMap, valueRowBuilder);
                 }
                 for (String aliasField : metrics.getAliasFields()) {

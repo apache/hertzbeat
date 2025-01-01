@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.jmx.MBeanProcessor;
-import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor.KafkaBytesInAndOutPerSecProcessor;
 import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor.KafkaCommonProcessor;
 import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor.KafkaReplicaManageProcessor;
+import org.apache.hertzbeat.collector.collect.jmx.kafkaJmx.kafkaProcessor.kafkaBytesInAndOutPerSecProcessor;
 
 import lombok.Getter;
 
@@ -84,7 +84,7 @@ public enum KafkaJmxValidator {
         switch (validator) {
             case BYTES_IN_PER_SEC:
             case BYTES_OUT_PER_SEC:
-                return new KafkaBytesInAndOutPerSecProcessor();
+                return new kafkaBytesInAndOutPerSecProcessor();
             case REPLICA_MANAGE:
                 return new KafkaReplicaManageProcessor();
             case KAFKA_CONTROLLER:
