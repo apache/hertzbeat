@@ -140,22 +140,14 @@
         <div class="actions">
           <button
             nz-button
-            nzType="primary"
             (click)="onEditOneAlertDefine(data.id)"
             nz-tooltip
             [nzLoading]="isLoadingEdit === data.id"
-            [nzTooltipTitle]="'alert.setting.edit' | i18n"
+            [nzTooltipTitle]="data.type == 'realtime' ? ('alert.setting.edit.realtime' | i18n) : ('alert.setting.edit.periodic' | i18n)"
           >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
-          <button
-            nz-button
-            nzDanger
-            nzType="primary"
-            (click)="onDeleteOneAlertDefine(data.id)"
-            nz-tooltip
-            [nzTooltipTitle]="'alert.setting.delete' | i18n"
-          >
+          <button nz-button (click)="onDeleteOneAlertDefine(data.id)" nz-tooltip [nzTooltipTitle]="'alert.setting.delete' | i18n">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
           </button>
         </div>
