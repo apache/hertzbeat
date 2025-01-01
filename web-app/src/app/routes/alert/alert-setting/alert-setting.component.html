@@ -28,16 +28,12 @@
 
 <app-toolbar>
   <ng-template #left>
-    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+    <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
     <button nz-button nzType="primary" (click)="onNewAlertDefine()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'alert.setting.new' | i18n }}
-    </button>
-    <button nz-button nzType="primary" nzDanger (click)="onDeleteAlertDefines()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'alert.setting.delete' | i18n }}
+      {{ 'common.button.new' | i18n }}
     </button>
 
     <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
@@ -46,16 +42,22 @@
     <nz-dropdown-menu #more_menu="nzDropdownMenu">
       <ul nz-menu>
         <li nz-menu-item>
-          <button nz-button nzType="primary" (click)="onExportDefines()">
+          <button nz-button (click)="onDeleteAlertDefines()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button (click)="onExportDefines()">
             <i nz-icon nzType="export" nzTheme="outline"></i>
-            {{ 'alert.setting.export' | i18n }}
+            {{ 'common.button.export' | i18n }}
           </button>
         </li>
         <li nz-menu-item>
           <nz-upload nzAction="/alert/defines/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportDefines($event)">
-            <button nz-button nzType="primary">
+            <button nz-button>
               <i nz-icon nzType="import" nzTheme="outline"></i>
-              {{ 'alert.setting.import' | i18n }}
+              {{ 'common.button.import' | i18n }}
             </button>
           </nz-upload>
         </li>
