@@ -803,6 +803,9 @@
   "alert.setting.expr.operator.or": "或",
   "alert.setting.expr.operator.brackets": "括号",
   "alert.setting.new": "新增阈值",
-  "alert.setting.type.realtime.desc": "实时计算指标数据，触发阈值时立即告警",
-  "alert.setting.type.periodic.desc": "周期性执行 PromQL 查询，触发阈值时告警"
+  "alert.setting.type.realtime.desc": "实时计算采集的指标数据，触发阈值时立即告警",
+  "alert.setting.type.periodic.desc": "周期性执行 PromQL 查询，根据结果触发阈值告警",
+  "alert.setting.period": "执行周期",
+  "alert.setting.period.tip": "周期性执行阈值计算的时间间隔，单位秒，最小60秒",
+  "alert.setting.period.placeholder": "请输入执行周期，最小60秒"
 }

@@ -25,6 +25,8 @@ export class AlertDefine {
   // realtime, periodic
   type: string = 'realtime';
   expr!: string;
+  // unit second
+  period: number = 300;
   times: number = 3;
   tags!: TagItem[];
   enable: boolean = true;

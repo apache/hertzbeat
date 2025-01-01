@@ -251,6 +251,9 @@ export class AlertSettingComponent implements OnInit {
     this.define = new AlertDefine();
     this.define.type = type;
     this.define.tags = [];
+    if (type === 'periodic') {
+      this.define.period = 300;
+    }
     this.resetQbDataDefault();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
@@ -486,6 +489,9 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
+            if (this.define.type === 'periodic' && !this.define.period) {
+              this.define.period = 300;
+            }
             if (!this.define.type) {
               this.define.type = 'realtime';
             }

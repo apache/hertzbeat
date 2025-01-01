@@ -439,6 +439,28 @@
           </nz-textarea-count>
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'periodic'">
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="period" [nzTooltipTitle]="'alert.setting.period.tip' | i18n">
+          {{ 'alert.setting.period' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-input-group nzCompact>
+            <nz-input-number
+              [(ngModel)]="define.period"
+              required
+              [nzMin]="60"
+              [nzStep]="60"
+              name="period"
+              id="period"
+              [nzPlaceHolder]="'alert.setting.period.placeholder' | i18n"
+            >
+            </nz-input-number>
+            <div class="ant-input-group-addon" style="width: 40px; text-align: center;">
+              {{ 'common.time.unit.second' | i18n }}
+            </div>
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="priority" [nzTooltipTitle]="'alert.setting.priority.tip' | i18n">
           {{ 'alert.priority' | i18n }}
