@@ -130,6 +130,9 @@ public class RealTimeAlertCalculator {
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
         // Filter thresholds by app, metrics and instance
         thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance);
+        if (thresholds.isEmpty()) {
+            return;
+        }
         Map<String, Object> commonContext = new HashMap<>(8);
         commonContext.put(KEY_INSTANCE, instance);
         commonContext.put(KEY_APP, app);
@@ -162,6 +165,7 @@ public class RealTimeAlertCalculator {
                     try {
                         Map<String, String> fingerPrints = new HashMap<>(8);
                         fingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
+                        // here use the alert name as finger, not care the alert name may be changed
                         fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
                         fingerPrints.putAll(define.getLabels());
                         if (match) {
@@ -250,27 +254,34 @@ public class RealTimeAlertCalculator {
                     }
                     String expr = define.getExpr();
 
-                    // Extract and check app
+                    // Extract and check app - required
                     Matcher appMatcher = APP_PATTERN.matcher(expr);
-                    // If no app specified in expr, skip app check
-                    if (appMatcher.find() && !app.equals(appMatcher.group(1))) {
+                    if (!appMatcher.find() || !app.equals(appMatcher.group(1))) {
                         return false;
                     }
 
-                    // Extract and check instance
+                    // Extract and check metrics - optional
+                    Matcher metricsMatcher = METRICS_PATTERN.matcher(expr);
+                    if (metricsMatcher.find() && !metrics.equals(metricsMatcher.group(1))) {
+                        return false;
+                    }
+
+                    // Extract and check instance - optional with multiple values
                     Matcher instanceMatcher = INSTANCE_PATTERN.matcher(expr);
-                    // If instance specified in expr, must match current instance
+                    // If no instance specified in expr, accept all instances
+                    if (!instanceMatcher.find()) {
+                        return true;
+                    }
+                    
+                    // Reset matcher to check all instances
+                    instanceMatcher.reset();
+                    // If instances specified, current instance must match one of them
                     while (instanceMatcher.find()) {
                         if (Objects.equals(instance, instanceMatcher.group(1))) {
                             return true;
                         }
                     }
-                    
-                    // For other metrics
-                    Matcher metricsMatcher = METRICS_PATTERN.matcher(expr);
-                    // If no metrics specified in expr, return true
-                    // If metrics specified, must match current metrics
-                    return !metricsMatcher.find() || metrics.equals(metricsMatcher.group(1));
+                    return false;
                 })
                 .collect(Collectors.toList());
     }

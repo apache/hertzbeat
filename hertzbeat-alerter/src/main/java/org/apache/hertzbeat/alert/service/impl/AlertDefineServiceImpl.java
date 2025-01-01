@@ -78,7 +78,6 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
-        // todo
         if (StringUtils.hasText(alertDefine.getExpr())) {
             if (ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
                 try {
@@ -86,6 +85,13 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                 } catch (Exception e) {
                     throw new IllegalArgumentException("alert expr error: " + e.getMessage());
                 }   
+            }
+        }
+        // the name of the alarm rule is unique
+        Optional<AlertDefine> optional = alertDefineDao.findAlertDefineByName(alertDefine.getName());
+        if (optional.isPresent()) {
+            if (!isModify || !optional.get().getId().equals(alertDefine.getId())) {
+                throw new IllegalArgumentException("alert name already exists");
             }
         }
     }

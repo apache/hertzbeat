@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.dao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,11 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * @return alarm defines
      */
     List<AlertDefine> findAlertDefinesByTypeAndEnableTrue(String type);
+
+    /**
+     * Query the alarm define by name
+     * @param name alarm name
+     * @return alarm define
+     */
+    Optional<AlertDefine> findAlertDefineByName(String name);
 }
