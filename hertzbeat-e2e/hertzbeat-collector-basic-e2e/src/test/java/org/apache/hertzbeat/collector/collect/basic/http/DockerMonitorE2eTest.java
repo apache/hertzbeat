@@ -20,20 +20,17 @@ package org.apache.hertzbeat.collector.collect.basic.http;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollectE2eTest;
 import org.apache.hertzbeat.collector.collect.http.HttpCollectImpl;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
-import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.ResourceUtils;
@@ -42,7 +39,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.util.stream.Collectors;
 
 /**
  * Integration test for Docker monitoring functionality
@@ -50,27 +46,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class DockerMonitorE2eTest {
+public class DockerMonitorE2eTest extends AbstractCollectE2eTest {
 
     private static final int MOCK_SERVER_PORT = 52375;
     private static final String LOCALHOST = "127.0.0.1";
     private static HttpServer mockServer;
 
-    @InjectMocks
-    private AppServiceImpl appService;
-
-    private HttpCollectImpl httpCollector;
-    private Metrics metricsTemplate;
-
-    @Mock
-    private ObjectStoreConfigServiceImpl objectStoreConfigService;
-
     @BeforeEach
     public void setUp() throws Exception {
-        // Initialize services
-        appService.run();
-        httpCollector = new HttpCollectImpl();
-        metricsTemplate = new Metrics();
+        super.setUp();
+        collect = new HttpCollectImpl();
 
         // Setup mock server and endpoints
         mockServer = HttpServer.create(new InetSocketAddress(MOCK_SERVER_PORT), 0);
@@ -109,18 +94,18 @@ public class DockerMonitorE2eTest {
     @Test
     public void testDockerMonitor() {
         Job dockerJob = appService.getAppDefine("docker");
-        dockerJob.getMetrics().forEach(this::validateMetricsCollection);
+        dockerJob.getMetrics().forEach(metricsDef -> {
+            // Skip metrics containing "^o^" as parameter substitution is not supported in e2e tests
+            if (metricsDef.getHttp().getUrl().contains("^o^")) {
+                return;
+            }
+            validateMetricsCollection(metricsDef, metricsDef.getName());
+        });
     }
 
-    private void validateMetricsCollection(Metrics metricsDef) {
-        // Skip metrics containing "^o^" as parameter substitution is not supported in e2e tests
-        if (metricsDef.getHttp().getUrl().contains("^o^")) {
-            return;
-        }
-
-        String metricName = metricsDef.getName();
-
-        // Setup HTTP protocol and collect metrics
+    @Override
+    protected Protocol buildProtocol(Metrics metricsDef) {
+        // Setup HTTP protocol
         HttpProtocol protocol = new HttpProtocol();
         protocol.setHost(LOCALHOST);
         protocol.setPort(String.valueOf(MOCK_SERVER_PORT));
@@ -128,27 +113,14 @@ public class DockerMonitorE2eTest {
         protocol.setParseType(metricsDef.getHttp().getParseType());
         protocol.setParseScript(metricsDef.getHttp().getParseScript());
         protocol.setUrl(metricsDef.getHttp().getUrl());
+        return protocol;
+    }
 
-        metricsTemplate.setHttp(protocol);
-        metricsTemplate.setAliasFields(metricsDef.getAliasFields() == null ? metricsDef.getFields().stream()
-                        .map(Metrics.Field::getField)
-                        .collect(Collectors.toList()) : metricsDef.getAliasFields());
-
-        // Collect and validate metrics
-        CollectRep.MetricsData.Builder metricsData = CollectRep.MetricsData.newBuilder();
-        httpCollector.collect(metricsData, metricsTemplate);
-
-        // Validate results
-        Assertions.assertTrue(metricsData.getValuesList().size() > 0,
-                String.format("%s metrics values should not be empty", metricName));
-
-        CollectRep.ValueRow firstRow = metricsData.getValuesList().get(0);
-        for (int i = 0; i < firstRow.getColumnsCount(); i++) {
-            Assertions.assertFalse(firstRow.getColumns(i).isEmpty(),
-                    String.format("%s metric column %d should not be empty", metricName, i));
-        }
-
-        log.info("{} metrics validation passed", metricName);
+    @Override
+    protected CollectRep.MetricsData.Builder collectMetrics(Metrics metricsDef) {
+        HttpProtocol protocol = (HttpProtocol) buildProtocol(metricsDef);
+        metrics.setHttp(protocol);
+        return collectMetricsData(metrics, metricsDef);
     }
 
     @AfterAll

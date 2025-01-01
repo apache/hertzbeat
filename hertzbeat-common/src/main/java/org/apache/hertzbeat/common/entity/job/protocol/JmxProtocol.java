@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class JmxProtocol implements CommonRequestProtocol {
+public class JmxProtocol implements CommonRequestProtocol, Protocol {
     /**
      * JMX host ip or domain name
      */

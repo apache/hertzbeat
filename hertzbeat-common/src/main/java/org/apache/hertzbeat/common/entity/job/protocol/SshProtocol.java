@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SshProtocol implements CommonRequestProtocol {
+public class SshProtocol implements CommonRequestProtocol, Protocol {
 
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST

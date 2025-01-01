@@ -36,6 +36,13 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-collector-common-e2e</artifactId>
+            <version>${hertzbeat.version}</version>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-collector-basic</artifactId>
             <version>${hertzbeat.version}</version>
             <scope>test</scope>

@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RedfishProtocol implements CommonRequestProtocol {
+public class RedfishProtocol implements CommonRequestProtocol, Protocol {
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
