@@ -20,6 +20,7 @@ package org.apache.hertzbeat.common.cache;
 import java.time.Duration;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 
@@ -78,5 +79,29 @@ public final class CacheFactory {
      */
     public static void clearAlertSilenceCache() {
         COMMON_CACHE.remove(CommonConstants.CACHE_ALERT_SILENCE);
+    }
+
+    /**
+     * get alert define cache
+     * @return caffeine cache
+     */
+    @SuppressWarnings("unchecked")
+    public static List<AlertDefine> getAlertDefineCache() {
+        return (List<AlertDefine>) COMMON_CACHE.get(CommonConstants.CACHE_ALERT_DEFINE);
+    }
+
+    /**
+     * set alert define cache
+     * @param alertDefines alert defines
+     */
+    public static void setAlertDefineCache(List<AlertDefine> alertDefines) {
+        COMMON_CACHE.put(CommonConstants.CACHE_ALERT_DEFINE, alertDefines);
+    }
+    
+    /**
+     * clear alert define cache
+     */
+    public static void clearAlertDefineCache() {
+        COMMON_CACHE.remove(CommonConstants.CACHE_ALERT_DEFINE);
     }
 }

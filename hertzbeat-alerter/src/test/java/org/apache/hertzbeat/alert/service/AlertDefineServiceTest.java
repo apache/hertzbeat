@@ -79,12 +79,7 @@ class AlertDefineServiceTest {
 
         this.alertDefine = AlertDefine.builder()
                 .id(1L)
-                .app("app")
-                .metric("test")
-                .field("test")
-                .preset(false)
                 .expr("1 > 0")
-                .priority((byte) 1)
                 .times(1)
                 .template("template")
                 .creator("tom")
@@ -154,40 +149,9 @@ class AlertDefineServiceTest {
     }
 
     @Test
-    void getMonitorBindAlertDefines() {
-        Specification<AlertDefine> specification = mock(Specification.class);
-        when(alertDefineDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
-        assertNotNull(alertDefineService.getMonitorBindAlertDefines(specification, PageRequest.of(1, 1)));
-    }
-
-    @Test
-    void applyBindAlertDefineMonitors() {
-        long id = 1L;
-        doNothing().when(alertDefineBindDao).deleteAlertDefineBindsByAlertDefineIdEquals(id);
-        when(alertDefineBindDao.saveAll(alertDefineMonitorBinds)).thenReturn(alertDefineMonitorBinds);
-        assertDoesNotThrow(() -> alertDefineService.applyBindAlertDefineMonitors(id, alertDefineMonitorBinds));
-    }
-
-    @Test
-    void testGetMonitorBindAlertDefines() {
-        List<AlertDefine> alertDefineList = new ArrayList<>();
-        alertDefineList.add(this.alertDefine);
-        when(alertDefineDao.queryAlertDefinesByMonitor(1L, "app", "test")).thenReturn(alertDefineList);
-        when(alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue("app", "test")).thenReturn(alertDefineList);
-        assertNotNull(alertDefineService.getMonitorBindAlertDefines(1L, "app", "test"));
-    }
-
-    @Test
     void getAlertDefines() {
         when(alertDefineDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
         assertNotNull(alertDefineService.getAlertDefines(null, null, null, "id", "desc", 1, 10));
         verify(alertDefineDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
-    }
-
-    @Test
-    void getBindAlertDefineMonitors() {
-        long id = 1L;
-        when(alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(id)).thenReturn(alertDefineMonitorBinds);
-        assertDoesNotThrow(() -> alertDefineService.getBindAlertDefineMonitors(id));
     }
 }

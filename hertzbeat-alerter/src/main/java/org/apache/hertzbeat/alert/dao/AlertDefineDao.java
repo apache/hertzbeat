@@ -37,6 +37,13 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
     void deleteAlertDefinesByIdIn(Set<Long> alertDefineIds);
 
     /**
+     * Query the alarm define by type
+     * @param type alarm type 
+     * @return alarm defines
+     */
+    List<AlertDefine> findAlertDefinesByType(String type);
+
+    /**
      * Query the default alarm thresholds based on the monitoring metrics type
      * @param app monitoring type
      * @param metric metrics

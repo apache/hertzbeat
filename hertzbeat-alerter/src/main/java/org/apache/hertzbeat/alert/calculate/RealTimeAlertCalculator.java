@@ -50,10 +50,15 @@ import org.springframework.util.CollectionUtils;
 @Component
 @Slf4j
 public class RealTimeAlertCalculator {
-
-    private static final String SYSTEM_VALUE_ROW_COUNT = "system_value_row_count";
     
     private static final int CALCULATE_THREADS = 3;
+    
+    private static final String KEY_INSTANCE = "__instance__";
+    private static final String KEY_APP = "__app__";
+    private static final String KEY_METRICS = "__metrics__";
+    private static final String KEY_PRIORITY = "__priority__";
+    private static final String KEY_CODE = "__code__";
+    private static final String KEY_ROW = "__row__";
 
     /**
      * The alarm in the process is triggered
@@ -114,15 +119,17 @@ public class RealTimeAlertCalculator {
         String metrics = metricsData.getMetrics();
         Integer priority = metricsData.getPriority();
         String code = metricsData.getCode().name();
-        // todo get all alert define cache
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
         // todo filter some thresholds by app metrics instance
+        
+        
+        
         Map<String, Object> commonContext = new HashMap<>(8);
-        commonContext.put("instance", instance);
-        commonContext.put("app", app);
-        commonContext.put("priority", priority);
-        commonContext.put("code", code);
-        commonContext.put("metrics", metrics);
+        commonContext.put(KEY_INSTANCE, instance);
+        commonContext.put(KEY_APP, app);
+        commonContext.put(KEY_PRIORITY, priority);
+        commonContext.put(KEY_CODE, code);
+        commonContext.put(KEY_METRICS, metrics);
         
         List<CollectRep.Field> fields = metricsData.getFields();
         Map<String, Object> fieldValueMap = new HashMap<>(8);
@@ -161,7 +168,7 @@ public class RealTimeAlertCalculator {
                     continue;
                 }
                 fieldValueMap.clear();
-                fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
+                fieldValueMap.put(KEY_ROW, valueRowCount);
                 fieldValueMap.putAll(commonContext);
                 fingerPrints.clear();
                 fingerPrints.put(CommonConstants.LABEL_INSTANCE, String.valueOf(instance));
