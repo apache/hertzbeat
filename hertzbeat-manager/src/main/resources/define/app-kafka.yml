@@ -267,6 +267,38 @@ metrics:
       objectName: kafka.server:type=ReplicaManager,name=LeaderCount
       url: ^_^url^_^
 
+  - name: broker_leader_count1
+    i18n:
+      zh-CN: Broker领导者数量1
+      en-US: Broker Leader Count
+    priority: 5
+    fields:
+      - field: LeaderCount
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
+      - field: PartitionCount
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    aliasFields:
+      - Value->LeaderCount
+      - Value->PartitionCount
+    calculates:
+      - LeaderCount=Value->LeaderCount
+      - PartitionCount=Value->PartitionCount
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=ReplicaManager,name=*
+      url: ^_^url^_^
+
   - name: broker_handler_avg_percent
     i18n:
       zh-CN: Broker处理器平均百分比
@@ -317,6 +349,83 @@ metrics:
       # jmx mbean object name
       objectName: kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent
       url: ^_^url^_^
+
+  - name: kafka_replica_manager_metrics
+    i18n:
+      zh-CN: Kafka副本管理器指标
+      en-US: Kafka Replica Manager Metrics
+    priority: 6
+    fields:
+      - field: AtMinIsrPartitionCount
+        type: 0
+        i18n:
+          zh-CN: 达到最小ISR的分区数
+          en-US: At Min ISR Partition Count
+      - field: FailedIsrUpdatesPerSec
+        type: 0
+        i18n:
+          zh-CN: 每秒失败ISR更新数
+          en-US: Failed ISR Updates Per Sec
+      - field: IsrExpandsPerSec
+        type: 0
+        i18n:
+          zh-CN: 每秒ISR扩展数
+          en-US: ISR Expands Per Sec
+      - field: IsrShrinksPerSec
+        type: 0
+        i18n:
+          zh-CN: 每秒ISR收缩数
+          en-US: ISR Shrinks Per Sec
+      - field: LeaderCount
+        type: 0
+        i18n:
+          zh-CN: 领导者数量
+          en-US: Leader Count
+      - field: OfflineReplicaCount
+        type: 0
+        i18n:
+          zh-CN: 离线副本数量
+          en-US: Offline Replica Count
+      - field: PartitionCount
+        type: 0
+        i18n:
+          zh-CN: 分区总数
+          en-US: Partition Count
+      - field: PartitionsWithLateTransactionsCount
+        type: 0
+        i18n:
+          zh-CN: 含有延迟交易的分区数
+          en-US: Partitions With Late Transactions Count
+      - field: ProducerIdCount
+        type: 0
+        i18n:
+          zh-CN: 生产者ID数量
+          en-US: Producer ID Count
+      - field: ReassigningPartitions
+        type: 0
+        i18n:
+          zh-CN: 正在重新分配的分区数
+          en-US: Reassigning Partitions
+      - field: UnderMinIsrPartitionCount
+        type: 0
+        i18n:
+          zh-CN: 低于最小ISR的分区数
+          en-US: Under Min ISR Partition Count
+      - field: UnderReplicatedPartitions
+        type: 0
+        i18n:
+          zh-CN: 副本数低于预期的分区数量
+          en-US: Under Replicated Partitions
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=ReplicaManager,name=*
+      url: ^_^url^_^
+
 
   - name: total_topic_bytes_in_persec
     i18n:
@@ -375,7 +484,7 @@ metrics:
       en-US: Topic Bytes In PerSec
     priority: 7
     fields:
-      - field: TopicName
+      - field: topic
         type: 1
         i18n:
           zh-CN: 主题名称

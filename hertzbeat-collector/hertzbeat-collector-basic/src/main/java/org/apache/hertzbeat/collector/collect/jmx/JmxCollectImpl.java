@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -100,7 +101,6 @@ public class JmxCollectImpl extends AbstractCollect {
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
-
             // Create a jndi remote connection
             JMXConnector jmxConnector = getConnectSession(jmxProtocol);
 

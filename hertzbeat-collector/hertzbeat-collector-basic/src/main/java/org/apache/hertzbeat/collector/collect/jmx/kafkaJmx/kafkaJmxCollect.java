@@ -4,6 +4,7 @@ package org.apache.hertzbeat.collector.collect.jmx.kafkaJmx;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,6 +56,9 @@ public class kafkaJmxCollect implements CustomizedJmxCollect {
         try {
             for (ObjectInstance objectInstance : request.getObjectInstanceSet()) {
                 ObjectName currentObjectName = objectInstance.getObjectName();
+
+                Hashtable<String, String> keyPropertyList = currentObjectName.getKeyPropertyList();
+                String s = keyPropertyList.get("topic");
 
                 String topic = currentObjectName.getKeyProperty("topic");
                 MBeanInfo beanInfo = serverConnection.getMBeanInfo(currentObjectName);
