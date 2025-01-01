@@ -503,6 +503,7 @@ export class AlertSettingComponent implements OnInit {
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);
+              this.parseMonitorIdsFromExpr(this.define.expr);
               this.cascadeOnChange(this.cascadeValues);
               // Wait for cascade values to be set
               setTimeout(() => {
@@ -1018,16 +1019,23 @@ export class AlertSettingComponent implements OnInit {
     return values;
   }
 
-  // remove the app/metric/availability condition from the expression
+  // Remove app/metric/availability and monitor binding expressions
   private exprToUserExpr(expr: string | undefined): string {
     if (!expr) return '';
 
-    return expr
-      .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
-      .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
-      .replace(/equals\(availability,"up"\)\s*&&\s*/, '') // Remove availability expression
-      .replace(/^\s*&&\s*/, '')
-      .replace(/\s*&&\s*$/, '');
+    return (
+      expr
+        // Remove app/metric/availability expressions
+        .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
+        .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
+        .replace(/equals\(availability,"up"\)\s*&&\s*/, '')
+        // Remove monitor binding expressions - both single and multiple
+        .replace(/&&\s*\(?(equals\(id,\s*"\d+"\)(\s*or\s*equals\(id,\s*"\d+"\))*)\)?/, '')
+        .replace(/\(?(equals\(id,\s*"\d+"\)(\s*or\s*equals\(id,\s*"\d+"\))*)\)?\s*&&\s*/, '')
+        // Clean up any remaining && at start/end
+        .replace(/^\s*&&\s*/, '')
+        .replace(/\s*&&\s*$/, '')
+    );
   }
 
   private tryParseThresholdExpr(expr: string | undefined): void {

@@ -812,6 +812,6 @@
   "alert.setting.bind.monitors.tip": "配置此阈值规则应用到指定监控任务,默认不关联应用全部",
   "alert.setting.bind.available": "可选监控",
   "alert.setting.bind.selected": "已选监控",
-  "alert.setting.bind.manage": "管理关联监控",
+  "alert.setting.bind.manage": "关联监控",
   "alert.setting.bind.need-save": "请先选择指标类型再进行监控关联"
 }
