@@ -35,6 +35,7 @@ import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
 import { formatTagName } from '../../shared/utils/common-util';
+import {SingleAlert} from "../../pojo/SingleAlert";
 
 @Component({
   selector: 'app-dashboard',
@@ -174,7 +175,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   collectorsTabSelectedIndex = 0;
 
   // alert list
-  alerts!: Alert[];
+  alerts!: SingleAlert[];
   alertContentLoading: boolean = false;
 
   ngOnInit(): void {
@@ -570,7 +571,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   refreshAlertContentList(): void {
     this.alertContentLoading = true;
     let alertsInit$ = this.alertSvc
-      .loadGroupAlerts(undefined, undefined, 0, 10)
+      .loadAlerts('firing', undefined, 0, 10)
       .pipe(finalize(() => (this.alertContentLoading = false)))
       .subscribe(
         message => {

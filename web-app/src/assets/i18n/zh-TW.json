@@ -264,7 +264,7 @@
   "alert.center.monitor": "所屬監控",
   "alert.center.priority": "級別",
   "alert.center.content": "告警內容",
-  "alert.center.tags": "標簽",
+  "alert.center.labels": "標簽",
   "alert.center.status": "狀態",
   "alert.center.time": "告警時間",
   "alert.center.time.tip": "此告警期間累計觸發 {{times}} 次告警",

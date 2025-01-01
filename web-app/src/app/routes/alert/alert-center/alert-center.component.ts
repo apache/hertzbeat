@@ -24,7 +24,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 
-import { Alert } from '../../../pojo/Alert';
+import { GroupAlert } from '../../../pojo/GroupAlert';
 import { Tag } from '../../../pojo/Tag';
 import { AlertService } from '../../../service/alert.service';
 
@@ -44,7 +44,7 @@ export class AlertCenterComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  alerts!: Alert[];
+  alerts!: GroupAlert[];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
   filterStatus: string = 'firing';
@@ -71,19 +71,6 @@ export class AlertCenterComponent implements OnInit {
           this.alerts = page.content;
           this.pageIndex = page.number + 1;
           this.total = page.totalElements;
-          if (this.alerts) {
-            this.alerts.forEach(item => {
-              item.tmp = [];
-              if (item.tags != undefined) {
-                Object.keys(item.tags).forEach(name => {
-                  item.tmp.push({
-                    name: name,
-                    tagValue: item.tags[name]
-                  });
-                });
-              }
-            });
-          }
         } else {
           console.warn(message.msg);
         }
@@ -268,5 +255,9 @@ export class AlertCenterComponent implements OnInit {
     } else {
       return tag.name;
     }
+  }
+
+  recordEntries(record: Record<any, any>) {
+    return Object.entries(record);
   }
 }

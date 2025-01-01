@@ -251,7 +251,7 @@
   "alert.center.monitor": "Belong Monitor",
   "alert.center.priority": "Priority",
   "alert.center.content": "Alert Content",
-  "alert.center.tags": "Tags",
+  "alert.center.labels": "Tags",
   "alert.center.status": "Status",
   "alert.center.time": "Alert Time",
   "alert.center.time.tip": "Alerts were triggered {{times}} times during this alert period",

@@ -106,6 +106,9 @@ public class AlarmGroupReduce {
      * Process single alert and group by defined rules
      */
     public void processGroupAlert(SingleAlert alert) {
+        // Generate alert fingerprint
+        String fingerprint = generateAlertFingerprint(alert);
+        alert.setFingerprint(fingerprint);
         Map<String, String> labels = alert.getLabels();
         if (labels == null || labels.isEmpty() || groupDefines.isEmpty()) {
             sendSingleAlert(alert);
@@ -153,10 +156,7 @@ public class AlarmGroupReduce {
             newCache.setAlertFingerprints(new HashMap<>());
             return newCache;
         });
-        
-        // Generate alert fingerprint
-        String fingerprint = generateAlertFingerprint(alert);
-        
+        String fingerprint = alert.getFingerprint();
         // Check if this is a duplicate alert
         SingleAlert existingAlert = cache.getAlertFingerprints().get(fingerprint);
         if (existingAlert != null) {

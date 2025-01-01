@@ -63,6 +63,26 @@ public class AlertServiceImpl implements AlertService {
     private AlarmCommonReduce alarmCommonReduce;
 
     @Override
+    public Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
+        Specification<SingleAlert> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (status != null) {
+                Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
+                andList.add(predicate);
+            }
+            if (search != null && !search.isEmpty()) {
+                Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + search + "%");
+                andList.add(predicateContent);
+            }
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
+        };
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
+        return singleAlertDao.findAll(specification, pageRequest);
+    }
+
+    @Override
     public Page<GroupAlert> getGroupAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize) {
         Specification<GroupAlert> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();

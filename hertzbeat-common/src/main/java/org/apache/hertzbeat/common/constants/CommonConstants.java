@@ -321,6 +321,11 @@ public interface CommonConstants {
     String CACHE_ALERT_SILENCE = "alert_silence";
 
     /**
+     * cache key alert define
+     */
+    String CACHE_ALERT_DEFINE = "alert_define";
+
+    /**
      * cache key alert converge
      */
     String CACHE_ALERT_GROUP_CONVERGE = "alert_group_converge";

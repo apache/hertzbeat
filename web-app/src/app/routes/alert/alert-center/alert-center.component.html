@@ -98,77 +98,31 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="17%">{{ 'alert.center.target' | i18n }}</th>
-      <th nzAlign="center" nzWidth="9%">{{ 'alert.center.priority' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'alert.center.content' | i18n }}</th>
-      <th nzAlign="center" nzWidth="17%">{{ 'alert.center.tags' | i18n }}</th>
+      <th nzAlign="center" nzWidth="17%">{{ 'alert.center.labels' | i18n }}</th>
       <th nzAlign="center" nzWidth="9%">{{ 'alert.center.status' | i18n }}</th>
-      <th nzAlign="center" nzWidth="12%">{{ 'alert.center.time' | i18n }}</th>
       <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let data of fixedTable.data">
+    @for (data of fixedTable.data; track data) {
+    <tr>
       <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">{{ renderAlertTarget(data.target) }}</td>
-      <td nzAlign="center">
-        <nz-tag *ngIf="data.priority == 0" nzColor="red">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.0' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.priority == 1" nzColor="orange">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.1' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.priority == 2" nzColor="yellow">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.2' | i18n }}</span>
-        </nz-tag>
-      </td>
-      <td nzAlign="left">{{ data.content }}</td>
-      <td nzAlign="left">
-        <span *ngFor="let tag of data?.tmp; let i = index">
-          <a [routerLink]="['/monitors/' + tag.tagValue]" *ngIf="tag.name == 'monitorId'">
-            <nz-tag class="hoverClass" nzColor="magenta" style="margin-top: 2px">
-              <span nz-icon nzType="area-chart"></span>
-              {{ sliceTagName(tag) }}
-            </nz-tag>
-          </a>
-          <nz-tag *ngIf="tag.name != 'monitorId'" style="margin-top: 2px">
-            {{ sliceTagName(tag) }}
+      <td [nzExpand]="true" nzAlign="center">
+        <span *ngFor="let label of recordEntries(data.groupLabels); let i = index">
+          <nz-tag style="margin-top: 2px">
+            {{ label[0] + ':' + label[1] }}
           </nz-tag>
         </span>
       </td>
       <td nzAlign="center">
-        <nz-tag [nzColor]="data.status == 3 ? '' : 'orange'">
-          {{ 'alert.status.' + data.status | i18n }}
-        </nz-tag>
-      </td>
-      <td nzAlign="center">
-        <nz-tag nz-tooltip [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }" nzTooltipPlacement="top">
-          {{ 'alert.center.first-time' | i18n }} : {{ data.firstAlarmTime | date : 'YYYY-MM-dd HH:mm:ss' }}
-        </nz-tag>
-        <span
-          nz-icon
-          nzType="arrow-down"
-          nzTheme="outline"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }"
-          nzTooltipPlacement="left"
-        ></span>
-        <nz-tag
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }"
-          nzTooltipPlacement="bottom"
-          nzColor="processing"
-        >
-          {{ 'alert.center.last-time' | i18n }} : {{ data.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss' }}
+        <nz-tag>
+          {{ data.status | i18n }}
         </nz-tag>
       </td>
       <td nzAlign="center">
         <div class="actions">
           <button
-            *ngIf="data.status != 3"
+            *ngIf="data.status != 'firing'"
             nz-button
             nzType="primary"
             (click)="onMarkReadOneAlert(data.id)"
@@ -178,7 +132,7 @@
             <i nz-icon nzType="down-circle" nzTheme="outline"></i>
           </button>
           <button
-            *ngIf="data.status == 3"
+            *ngIf="data.status == 'firing'"
             nz-button
             nzType="primary"
             nzDanger
@@ -201,6 +155,33 @@
         </div>
       </td>
     </tr>
+    <tr [nzExpand]="true">
+      <nz-table #innerTable [nzData]="data.alerts" nzSize="middle" [nzShowPagination]="false">
+        <thead>
+          <tr>
+            <th>Content</th>
+            <th>Labels</th>
+            <th>Status</th>
+            <th>Active Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let alert of innerTable.data">
+            <td>{{ alert.content }}</td>
+            <td>
+              <span *ngFor="let label of recordEntries(alert.labels); let i = index">
+                <nz-tag style="margin-top: 2px">
+                  {{ label[0] + ':' + label[1] }}
+                </nz-tag>
+              </span>
+            </td>
+            <td>{{ alert.status }}</td>
+            <td>{{ alert.activeAt }}</td>
+          </tr></tbody
+        >
+      </nz-table>
+    </tr>
+    }
   </tbody>
 </nz-table>
 

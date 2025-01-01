@@ -390,6 +390,17 @@
           </ngx-query-builder>
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'realtime'">
+        <nz-form-label [nzSpan]="7" nzFor="monitors" [nzTooltipTitle]="'alert.setting.bind.monitors.tip' | i18n">
+          {{ 'alert.setting.bind.monitors' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <button nz-button (click)="showConnectModal()">
+            <i nz-icon nzType="link" nzTheme="outline"></i>
+            {{ 'alert.setting.bind.manage' | i18n }}
+          </button>
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item *ngIf="define.type == 'realtime'">
         <nz-form-label [nzSpan]="7" nzFor="previewExpr">
           {{ 'alert.setting.preview.expr' | i18n }}
@@ -579,7 +590,7 @@
         <tbody>
           <tr *ngFor="let data of t.data" (click)="onItemSelect(data)">
             <td [nzChecked]="!!data.checked" (nzCheckedChange)="onItemSelect(data)"></td>
-            <td>{{ data.name }}</td>
+            <td>{{ data.title }}</td>
           </tr>
         </tbody>
       </nz-table>

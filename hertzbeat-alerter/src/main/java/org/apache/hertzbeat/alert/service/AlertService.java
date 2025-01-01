@@ -30,6 +30,18 @@ import org.springframework.data.domain.Page;
 public interface AlertService {
 
     /**
+     * get and query single alerts
+     * @param status status
+     * @param search search
+     * @param sort sort
+     * @param order order
+     * @param pageIndex pageIndex
+     * @param pageSize pageSize
+     * @return single alerts
+     */
+    Page<SingleAlert> getSingleAlerts(String status, String search, String sort, String order, int pageIndex, int pageSize);
+    
+    /**
      * Dynamic conditional query
      * @param status        Alarm Status
      * @param sort          Sort field

@@ -28,13 +28,9 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
-import { zip } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
-import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
-import { Message } from '../../../pojo/Message';
-import { Monitor } from '../../../pojo/Monitor';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
@@ -252,6 +248,8 @@ export class AlertSettingComponent implements OnInit {
     this.define = new AlertDefine();
     this.define.type = type;
     this.define.tags = [];
+    this.userExpr = '';
+    this.selectedMonitorIds = new Set<number>();
     // Set default period for periodic alert
     if (type === 'periodic') {
       this.define.period = 300;
@@ -502,7 +500,8 @@ export class AlertSettingComponent implements OnInit {
             if (this.define.type == 'realtime') {
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
-              this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+              this.userExpr = this.exprToUserExpr(this.define.expr);
+              this.parseMonitorIdsFromExpr(this.define.expr);
               this.cascadeOnChange(this.cascadeValues);
               // Wait for cascade values to be set
               setTimeout(() => {
@@ -823,7 +822,7 @@ export class AlertSettingComponent implements OnInit {
                 };
               });
               let fixedItem = {
-                value: 'system_value_row_count',
+                value: '__row__',
                 type: 0,
                 label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
               };
@@ -947,36 +946,8 @@ export class AlertSettingComponent implements OnInit {
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
   transferData: TransferItem[] = [];
-  currentAlertDefineId!: number;
+  selectedMonitorIds = new Set<number>();
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
-  onOpenConnectModal(alertDefineId: number, app: string) {
-    this.isConnectModalVisible = true;
-    this.currentAlertDefineId = alertDefineId;
-    zip(this.alertDefineSvc.getAlertDefineMonitorsBind(alertDefineId), this.monitorSvc.getMonitorsByApp(app))
-      .pipe(
-        map(([defineBindData, monitorData]: [Message<AlertDefineBind[]>, Message<Monitor[]>]) => {
-          let bindRecode: Record<number, string> = {};
-          if (defineBindData.data != undefined) {
-            defineBindData.data.forEach(bind => {
-              bindRecode[bind.monitorId] = bind.monitor.name;
-            });
-          }
-          let listTmp: any[] = [];
-          if (monitorData.data != undefined) {
-            monitorData.data.forEach(monitor => {
-              listTmp.push({
-                id: monitor.id,
-                name: monitor.name,
-                key: monitor.id,
-                direction: bindRecode[monitor.id] == undefined ? 'left' : 'right'
-              });
-            });
-          }
-          return listTmp;
-        })
-      )
-      .subscribe(list => (this.transferData = list));
-  }
   onConnectModalCancel() {
     this.isConnectModalVisible = false;
   }
@@ -984,44 +955,22 @@ export class AlertSettingComponent implements OnInit {
     this.isSwitchExportTypeModalVisible = false;
   }
   onConnectModalOk() {
-    this.isConnectModalOkLoading = true;
-    let defineBinds: AlertDefineBind[] = [];
-    this.transferData.forEach(item => {
-      if (item.direction == 'right') {
-        let bind = new AlertDefineBind();
-        bind.alertDefineId = this.currentAlertDefineId;
-        bind.monitorId = item.id;
-        defineBinds.push(bind);
-      }
-    });
-    const applyBind$ = this.alertDefineSvc
-      .applyAlertDefineMonitorsBind(this.currentAlertDefineId, defineBinds)
-      .pipe(
-        finalize(() => {
-          applyBind$.unsubscribe();
-          this.isConnectModalOkLoading = false;
-        })
-      )
-      .subscribe(
-        message => {
-          this.isConnectModalOkLoading = false;
-          if (message.code === 0) {
-            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
-            this.isConnectModalVisible = false;
-            this.loadAlertDefineTable();
-          } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
-          }
-        },
-        error => {
-          this.isConnectModalOkLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
-        }
-      );
+    // Update expression with new monitor bindings
+    this.updateFinalExpr();
+    this.isConnectModalVisible = false;
   }
   change(ret: TransferChange): void {
     const listKeys = ret.list.map(l => l.key);
     const hasOwnKey = (e: TransferItem): boolean => e.hasOwnProperty('key');
+
+    // Update selectedMonitorIds based on transfer changes
+    if (ret.to === 'right') {
+      listKeys.forEach(key => this.selectedMonitorIds.add(key));
+    } else {
+      listKeys.forEach(key => this.selectedMonitorIds.delete(key));
+    }
+
+    // Update transfer data UI
     this.transferData = this.transferData.map(e => {
       if (listKeys.includes(e.key) && hasOwnKey(e)) {
         if (ret.to === 'left') {
@@ -1033,19 +982,6 @@ export class AlertSettingComponent implements OnInit {
       return e;
     });
   }
-  filterMetrics(currentMetrics: any[], cascadeValues: any): any[] {
-    if (cascadeValues.length !== 3) {
-      return currentMetrics;
-    }
-    // sort the cascadeValues[2] to first
-    return currentMetrics.sort((a, b) => {
-      if (a.value !== cascadeValues[2]) {
-        return 1;
-      } else {
-        return -1;
-      }
-    });
-  }
   // end -- associate alert definition and monitoring model
 
   private cascadeValuesToExpr(values: string[]): string {
@@ -1053,10 +989,10 @@ export class AlertSettingComponent implements OnInit {
 
     // Special handling for availability metrics
     if (values[1] === 'availability') {
-      return `equals(app,"${values[0]}") && equals(availability,"up")`;
+      return `equals(__app__,"${values[0]}") && equals(__available__,"down")`;
     }
 
-    return `equals(app,"${values[0]}") && equals(metric,"${values[1]}")`;
+    return `equals(__app__,"${values[0]}") && equals(__metrics__,"${values[1]}")`;
   }
 
   public exprToCascadeValues(expr: string | undefined): string[] {
@@ -1064,9 +1000,9 @@ export class AlertSettingComponent implements OnInit {
     if (!expr) {
       return values;
     }
-    const appMatch = expr.match(/equals\(app,"([^"]+)"\)/);
-    const metricMatch = expr.match(/equals\(metric,"([^"]+)"\)/);
-    const availabilityMatch = expr.match(/equals\(availability,"up"\)/);
+    const appMatch = expr.match(/equals\(__app__,"([^"]+)"\)/);
+    const metricMatch = expr.match(/equals\(__metrics__,"([^"]+)"\)/);
+    const availabilityMatch = expr.match(/equals\(__available__,"down"\)/);
     if (!appMatch) {
       return values;
     }
@@ -1080,16 +1016,23 @@ export class AlertSettingComponent implements OnInit {
     return values;
   }
 
-  // remove the app/metric/availability condition from the expression
-  private removeAppMetricFieldExpr(expr: string | undefined): string {
+  // Remove app/metric/availability and monitor binding expressions
+  private exprToUserExpr(expr: string | undefined): string {
     if (!expr) return '';
 
-    return expr
-      .replace(/equals\(app,"[^"]+"\)\s*&&\s*/, '')
-      .replace(/equals\(metric,"[^"]+"\)\s*&&\s*/, '')
-      .replace(/equals\(availability,"up"\)\s*&&\s*/, '') // Remove availability expression
-      .replace(/^\s*&&\s*/, '')
-      .replace(/\s*&&\s*$/, '');
+    return (
+      expr
+        // Remove app/metric/availability expressions
+        .replace(/equals\(__app__,"[^"]+"\)\s*&&\s*/, '')
+        .replace(/equals\(__metrics__,"[^"]+"\)\s*&&\s*/, '')
+        .replace(/equals\(__availabile__,"down"\)\s*&&\s*/, '')
+        // Remove monitor binding expressions - both single and multiple
+        .replace(/&&\s*\(?(equals\(__instance__,\s*"\d+"\)(\s*or\s*equals\(__instance__,\s*"\d+"\))*)\)?/, '')
+        .replace(/\(?(equals\(__instance__,\s*"\d+"\)(\s*or\s*equals\(__instance__,\s*"\d+"\))*)\)?\s*&&\s*/, '')
+        // Clean up any remaining && at start/end
+        .replace(/^\s*&&\s*/, '')
+        .replace(/\s*&&\s*$/, '')
+    );
   }
 
   private tryParseThresholdExpr(expr: string | undefined): void {
@@ -1118,25 +1061,15 @@ export class AlertSettingComponent implements OnInit {
   }
 
   public updateFinalExpr(): void {
-    // Build base expression (app/metric)
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
-
-    // Build threshold expression
+    const monitorBindExpr = this.generateMonitorBindExpr();
     let thresholdExpr = '';
     if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
       thresholdExpr = this.userExpr;
     }
+    const exprList = [baseExpr, monitorBindExpr, thresholdExpr].filter(e => e);
 
-    // Merge expressions
-    if (baseExpr && thresholdExpr) {
-      this.define.expr = `${baseExpr} && (${thresholdExpr})`;
-    } else if (baseExpr) {
-      this.define.expr = baseExpr;
-    } else if (thresholdExpr) {
-      this.define.expr = thresholdExpr;
-    } else {
-      this.define.expr = '';
-    }
+    this.define.expr = exprList.length > 1 ? exprList.join(' && ') : exprList[0];
   }
 
   onEnvVarClick(env: { name: string; description: string }) {
@@ -1192,5 +1125,49 @@ export class AlertSettingComponent implements OnInit {
         textarea.setSelectionRange(newPos, newPos);
       });
     }
+  }
+
+  // Parse monitor IDs from expression
+  private parseMonitorIdsFromExpr(expr: string) {
+    const idPattern = /equals\(__instance__,\s*"(\d+)"\)/g;
+    let match;
+    this.selectedMonitorIds.clear();
+    while ((match = idPattern.exec(expr)) !== null) {
+      this.selectedMonitorIds.add(Number(match[1]));
+    }
+  }
+
+  // Generate monitor binding expression
+  private generateMonitorBindExpr(): string {
+    if (this.selectedMonitorIds.size === 0) return '';
+    const idExprs = Array.from(this.selectedMonitorIds)
+      .map(id => `equals(__instance__, "${id}")`)
+      .join(' or ');
+    return this.selectedMonitorIds.size > 1 ? `(${idExprs})` : idExprs;
+  }
+
+  // Load monitor binds
+  showConnectModal() {
+    if (this.cascadeValues.length < 2) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('alert.setting.bind.need-save'), '');
+      return;
+    }
+    // Parse monitor IDs from expr first
+    if (this.define.expr) {
+      this.parseMonitorIdsFromExpr(this.define.expr);
+    }
+    this.monitorSvc.getMonitorsByApp(this.cascadeValues[0]).subscribe(message => {
+      if (message.code === 0) {
+        const monitors = message.data;
+        // Create transfer items with direction based on selectedMonitorIds
+        this.transferData = monitors.map(item => ({
+          key: item.id,
+          title: item.name,
+          description: item.host,
+          direction: this.selectedMonitorIds.has(item.id) ? 'right' : 'left'
+        }));
+      }
+    });
+    this.isConnectModalVisible = true;
   }
 }

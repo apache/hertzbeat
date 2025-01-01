@@ -48,16 +48,12 @@ public class AlarmSilenceReduce {
     public void silenceAlarm(GroupAlert groupAlert) {
         List<AlertSilence> alertSilenceList = CacheFactory.getAlertSilenceCache();
         if (alertSilenceList == null) {
-            alertSilenceList = alertSilenceDao.findAll();
+            alertSilenceList = alertSilenceDao.findAlertSilencesByEnableTrue();
             CacheFactory.setAlertSilenceCache(alertSilenceList);
         }
         
         // Check each silence rule
         for (AlertSilence alertSilence : alertSilenceList) {
-            if (!alertSilence.isEnable()) {
-                continue;
-            }
-            
             // Check if alert matches silence rule
             boolean match = alertSilence.isMatchAll();
             if (!match && groupAlert.getGroupLabels() != null) {
