@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class NtpProtocol implements CommonRequestProtocol {
+public class NtpProtocol implements CommonRequestProtocol, Protocol {
     /**
      * NTP host ip address or domain name
      */
