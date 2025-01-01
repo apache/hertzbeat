@@ -502,7 +502,7 @@ export class AlertSettingComponent implements OnInit {
             if (this.define.type == 'realtime') {
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
-              this.userExpr = this.removeAppMetricFieldExpr(this.define.expr);
+              this.userExpr = this.exprToUserExpr(this.define.expr);
               this.cascadeOnChange(this.cascadeValues);
               // Wait for cascade values to be set
               setTimeout(() => {
@@ -1019,7 +1019,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   // remove the app/metric/availability condition from the expression
-  private removeAppMetricFieldExpr(expr: string | undefined): string {
+  private exprToUserExpr(expr: string | undefined): string {
     if (!expr) return '';
 
     return expr
@@ -1057,15 +1057,14 @@ export class AlertSettingComponent implements OnInit {
 
   public updateFinalExpr(): void {
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
+    const monitorBindExpr = this.generateMonitorBindExpr();
     let thresholdExpr = '';
     if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
       thresholdExpr = this.userExpr;
     }
+    const exprList = [baseExpr, monitorBindExpr, thresholdExpr].filter(e => e);
 
-    const monitorBindExpr = this.generateMonitorBindExpr();
-    const exprs = [baseExpr, thresholdExpr, monitorBindExpr].filter(e => e);
-
-    this.define.expr = exprs.length > 1 ? exprs.join(' && ') : exprs[0];
+    this.define.expr = exprList.length > 1 ? exprList.join(' && ') : exprList[0];
   }
 
   onEnvVarClick(env: { name: string; description: string }) {
@@ -1143,16 +1142,14 @@ export class AlertSettingComponent implements OnInit {
   }
 
   // Load monitor binds
-  loadMonitorBinds() {
-    // Parse monitor IDs from expr first
-    if (this.define.expr) {
-      this.parseMonitorIdsFromExpr(this.define.expr);
-    }
-
-    // Only need to load monitor list
+  showConnectModal() {
     if (this.cascadeValues.length < 2) {
       this.notifySvc.warning(this.i18nSvc.fanyi('alert.setting.bind.need-save'), '');
       return;
+    }
+    // Parse monitor IDs from expr first
+    if (this.define.expr) {
+      this.parseMonitorIdsFromExpr(this.define.expr);
     }
     this.monitorSvc.getMonitorsByApp(this.cascadeValues[0]).subscribe(message => {
       if (message.code === 0) {
@@ -1166,15 +1163,6 @@ export class AlertSettingComponent implements OnInit {
         }));
       }
     });
-  }
-
-  showConnectModal() {
-    if (this.cascadeValues.length < 2) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('alert.setting.bind.need-save'), '');
-      return;
-    }
     this.isConnectModalVisible = true;
-    // Load monitors after getting alert define
-    this.loadMonitorBinds();
   }
 }
