@@ -31,7 +31,7 @@
     <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-    <button nz-button nzType="primary" (click)="onNewAlertDefine()">
+    <button nz-button nzType="primary" (click)="onNewAlertDefine('realtime')">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
@@ -406,6 +406,37 @@
           <nz-card [nzBordered]="false" class="preview-expr-card">
             <pre>{{ define.expr }}</pre>
           </nz-card>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'periodic'" [ngStyle]="{ marginBottom: '5px' }">
+        <nz-form-label [nzSpan]="7" nzFor="promql" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
+          {{ 'alert.setting.rule' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
+            <nz-radio-group [ngModel]="'periodic'" nzButtonStyle="solid" id="promql">
+              <label nz-radio-button [nzValue]="'periodic'">
+                {{ 'PromQL' | i18n }}
+              </label>
+            </nz-radio-group>
+          </ng-container>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'periodic'">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea
+              [(ngModel)]="define.expr"
+              required
+              rows="3"
+              nz-input
+              name="periodic_expr"
+              id="periodic_expr"
+              [placeholder]="'alert.setting.expr.example' | i18n"
+            >
+            </textarea>
+          </nz-textarea-count>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

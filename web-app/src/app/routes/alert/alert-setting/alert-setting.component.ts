@@ -240,8 +240,9 @@ export class AlertSettingComponent implements OnInit {
     );
   }
 
-  onNewAlertDefine() {
+  onNewAlertDefine(type: string) {
     this.define = new AlertDefine();
+    this.define.type = type;
     this.define.tags = [];
     this.resetQbDataDefault();
     this.isManageModalAdd = true;
