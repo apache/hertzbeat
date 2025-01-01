@@ -541,13 +541,25 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private ruleset2expr(ruleset: RuleSet): string {
-    if (ruleset.rules.length === 0) {
+    if (!ruleset.rules || ruleset.rules.length === 0) {
       return '';
     }
-    return `(${ruleset.rules
-      .map((rule: any) => (!!(rule as RuleSet).rules ? this.ruleset2expr(rule as RuleSet) : this.rule2expr(rule as Rule)))
-      .filter((s: any) => !!s)
-      .join(` ${ruleset.condition} `)})`;
+
+    const exprs = ruleset.rules
+      .map(rule => {
+        if ('condition' in rule) {
+          // Always wrap nested RuleSet with brackets
+          const nestedExpr = this.ruleset2expr(rule as RuleSet);
+          return nestedExpr ? `(${nestedExpr})` : '';
+        } else {
+          // Single rule doesn't need brackets
+          return this.rule2expr(rule as Rule);
+        }
+      })
+      .filter(expr => expr);
+
+    // Join with condition operator
+    return exprs.join(` ${ruleset.condition} `);
   }
 
   private parseRule1(str: string): any {
@@ -623,92 +635,184 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
-  private expr2ruleset(expr: string | undefined): RuleSet {
-    // 处理空值情况
-    if (!expr || expr.trim() === '') {
+  private expr2ruleset(expr: string): RuleSet {
+    if (!expr || !expr.trim()) {
       return { condition: 'and', rules: [] };
     }
 
-    // 移除可能的外层括号
-    expr = expr.replace(/^\((.*)\)$/, '$1').trim();
+    try {
+      console.log('Parsing expression:', expr);
 
-    let ruleset: RuleSet = { condition: 'and', rules: [] };
-
-    // 处理 AND/OR 连接的多个条件
-    const parts = expr.split(/\s+(and|or)\s+/i);
-    if (parts.length > 1) {
-      ruleset.condition = expr.toLowerCase().includes(' and ') ? 'and' : 'or';
-
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i].trim();
-        if (!part || part.toLowerCase() === 'and' || part.toLowerCase() === 'or') continue;
-
-        // 解析单个规则
-        const rule = this.parseExprToRule(part);
-        if (rule) {
-          ruleset.rules.push(rule);
+      // Helper function: find operator position considering brackets
+      const findOperator = (str: string): { operator: string; position: number } | null => {
+        let bracketCount = 0;
+        let i = 0;
+        
+        while (i < str.length) {
+          const char = str[i];
+          
+          if (char === '(') bracketCount++;
+          else if (char === ')') bracketCount--;
+          
+          // Only look for operators at bracket level 0
+          if (bracketCount === 0) {
+            if (str.substring(i).startsWith(' and ')) {
+              return { operator: 'and', position: i };
+            }
+            if (str.substring(i).startsWith(' or ')) {
+              return { operator: 'or', position: i };
+            }
+          }
+          i++;
         }
-      }
-    } else {
-      // 单个条件的情况
-      const rule = this.parseExprToRule(expr);
-      if (rule) {
-        ruleset.rules.push(rule);
-      }
-    }
+        return null;
+      };
 
-    return ruleset;
+      // Helper function: validate and extract bracket content
+      const extractBracketContent = (str: string): string | null => {
+        if (!str.startsWith('(') || !str.endsWith(')')) return null;
+        
+        let bracketCount = 0;
+        for (let i = 0; i < str.length; i++) {
+          if (str[i] === '(') bracketCount++;
+          if (str[i] === ')') bracketCount--;
+          if (bracketCount < 0) return null;
+        }
+        return bracketCount === 0 ? str.slice(1, -1) : null;
+      };
+
+      // Helper function: parse expression recursively
+      const parseExpr = (str: string): RuleSet | Rule | null => {
+        str = str.trim();
+        if (!str) return null;
+
+        console.log('Parsing sub-expression:', str);
+
+        // Try to parse as a single rule first
+        const rule = this.parseExprToRule(str);
+        if (rule) {
+          console.log('Parsed as rule:', rule);
+          return rule;
+        }
+
+        // Look for top-level AND/OR
+        const operatorInfo = findOperator(str);
+        if (operatorInfo) {
+          const { operator, position } = operatorInfo;
+          const left = str.substring(0, position).trim();
+          const right = str.substring(position + (operator === 'and' ? 5 : 4)).trim();
+
+          console.log(`Found ${operator} operator, splitting:`, { left, right });
+
+          const ruleset: RuleSet = {
+            condition: operator,
+            rules: []
+          };
+
+          const leftResult = parseExpr(left);
+          const rightResult = parseExpr(right);
+
+          if (leftResult) {
+            console.log('Adding left result:', leftResult);
+            ruleset.rules.push(leftResult);
+          }
+          if (rightResult) {
+            console.log('Adding right result:', rightResult);
+            ruleset.rules.push(rightResult);
+          }
+
+          return ruleset;
+        }
+
+        // If no top-level operator found, try parsing bracketed content
+        const bracketContent = extractBracketContent(str);
+        if (bracketContent) {
+          console.log('Found bracketed content:', bracketContent);
+          const result = parseExpr(bracketContent);
+          if (result) {
+            // If it's already a RuleSet, keep the structure
+            if ('condition' in result) {
+              console.log('Returning nested ruleset:', result);
+              return result;
+            } else {
+              // Create a new RuleSet for single rule to maintain bracket structure
+              console.log('Creating ruleset for bracketed rule:', result);
+              return {
+                condition: 'and',
+                rules: [result]
+              };
+            }
+          }
+        }
+
+        return null;
+      };
+
+      const result = parseExpr(expr);
+      if (!result) {
+        console.warn('Failed to parse expression, returning empty ruleset');
+        return { condition: 'and', rules: [] };
+      }
+
+      if ('condition' in result) {
+        console.log('Final ruleset:', result);
+        return result;
+      } else {
+        console.log('Creating final ruleset for single rule:', result);
+        return {
+          condition: 'and',
+          rules: [result]
+        };
+      }
+    } catch (e) {
+      console.error('Failed to parse expression:', e);
+      return { condition: 'and', rules: [] };
+    }
   }
 
   // 修改 parseExprToRule 方法，增强解析能力
   private parseExprToRule(expr: string): Rule | null {
-    // 移除可能的括号
-    expr = expr.replace(/^\((.*)\)$/, '$1').trim();
+    try {
+      expr = expr.trim();
 
-    // 1. 解析比较运算符表达式：field > value 或 field >= value 等
-    const compareMatch = expr.match(/^(\w+)\s*([><=!]+)\s*(\d+(?:\.\d+)?)$/);
-    if (compareMatch) {
-      const [_, field, operator, value] = compareMatch;
-      return {
-        field,
-        operator,
-        value: parseFloat(value)
-      };
+      // Parse exists/!exists
+      const existsMatch = expr.match(/^(!)?exists\(([^)]+)\)$/);
+      if (existsMatch) {
+        const [_, not, field] = existsMatch;
+        return {
+          field,
+          operator: not ? '!exists' : 'exists'
+        };
+      }
+
+      // Parse string functions (equals, contains, matches)
+      const funcMatch = expr.match(/^(!)?(?:equals|contains|matches)\(([^,]+),\s*"([^"]+)"\)$/);
+      if (funcMatch) {
+        const [_, not, field, value] = funcMatch;
+        const func = expr.match(/(?:equals|contains|matches)/)?.[0] || '';
+        return {
+          field,
+          operator: not ? `!${func}` : func,
+          value
+        };
+      }
+
+      // Parse numeric comparisons
+      const compareMatch = expr.match(/^(\w+(?:\.\w+)*)\s*([><=!]+)\s*(-?\d+(?:\.\d+)?)$/);
+      if (compareMatch) {
+        const [_, field, operator, value] = compareMatch;
+        return {
+          field,
+          operator,
+          value: Number(value)
+        };
+      }
+
+      return null;
+    } catch (e) {
+      console.error('Failed to parse rule:', e);
+      return null;
     }
-
-    // 2. 解析 exists/!exists
-    const existsMatch = expr.match(/^(!?exists)\(([^)]+)\)$/);
-    if (existsMatch) {
-      const [_, operator, field] = existsMatch;
-      return {
-        field,
-        operator
-      };
-    }
-
-    // 3. 解析字符串函数：equals/contains/matches
-    const funcMatch = expr.match(/^(!?(?:equals|contains|matches))\(([^,]+),\s*"([^"]+)"\)$/);
-    if (funcMatch) {
-      const [_, operator, field, value] = funcMatch;
-      return {
-        field,
-        operator,
-        value
-      };
-    }
-
-    // 4. 解析特殊格式：field.method() > value
-    const methodMatch = expr.match(/^(\w+)\.(\w+)\(\)\s*([><=!]+)\s*(\d+(?:\.\d+)?)$/);
-    if (methodMatch) {
-      const [_, field, method, operator, value] = methodMatch;
-      return {
-        field: `${field}.${method}()`,
-        operator,
-        value: parseFloat(value)
-      };
-    }
-
-    return null;
   }
 
   getOperatorLabelByType = (operator: string) => {
