@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DnsProtocol implements CommonRequestProtocol {
+public class DnsProtocol implements CommonRequestProtocol, Protocol {
     private String dnsServerIP;
     private String port;
     private String address;

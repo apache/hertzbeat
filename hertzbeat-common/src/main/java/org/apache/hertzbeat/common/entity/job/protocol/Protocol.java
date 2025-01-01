@@ -17,52 +17,8 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * rocketmq protocol
+ * Base class for all protocols
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class RocketmqProtocol implements CommonRequestProtocol, Protocol {
-
-    /**
-     * rocketmq namesrv host
-     */
-    private String namesrvHost;
-
-    /**
-     * rocketmq namesrv port
-     */
-    private String namesrvPort;
-
-    /**
-     * accessKey
-     */
-    private String accessKey;
-
-    /**
-     * secretKey
-     */
-    private String secretKey;
-
-    /**
-     * jsonpath解析脚本
-     */
-    private String parseScript;
-
-    @Override
-    public void setHost(String host) {
-        this.namesrvHost = host;
-    }
-
-    @Override
-    public void setPort(String port) {
-        this.namesrvPort = port;
-    }
+public interface Protocol {
 }

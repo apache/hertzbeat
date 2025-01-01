@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ScriptProtocol implements CommonRequestProtocol {
+public class ScriptProtocol implements CommonRequestProtocol, Protocol {
     /**
      * OS charset
      */
