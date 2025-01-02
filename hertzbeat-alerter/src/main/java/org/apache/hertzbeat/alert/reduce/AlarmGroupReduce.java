@@ -56,6 +56,11 @@ public class AlarmGroupReduce {
      * Default repeat interval 4h
      */
     private static final long DEFAULT_REPEAT_INTERVAL = 4 * 60 * 60 * 1000L;
+
+    /**
+     * Milliseconds per second
+     */
+    private static final long MS_PER_SECOND = 1000L;
     
     private final AlarmInhibitReduce alarmInhibitReduce;
     
@@ -106,9 +111,6 @@ public class AlarmGroupReduce {
      * Process single alert and group by defined rules
      */
     public void processGroupAlert(SingleAlert alert) {
-        // Generate alert fingerprint
-        String fingerprint = generateAlertFingerprint(alert);
-        alert.setFingerprint(fingerprint);
         Map<String, String> labels = alert.getLabels();
         if (labels == null || labels.isEmpty() || groupDefines.isEmpty()) {
             sendSingleAlert(alert);
@@ -177,30 +179,6 @@ public class AlarmGroupReduce {
         }
     }
     
-    /**
-     * Generate fingerprint for alert to identify duplicates
-     * Fingerprint is based on labels and annotations excluding timestamp related fields
-     */
-    private String generateAlertFingerprint(SingleAlert alert) {
-        Map<String, String> labels = new HashMap<>(alert.getLabels());
-        // Remove timestamp related fields
-        labels.remove("timestamp");
-        labels.remove("start_at");
-        labels.remove("active_at");
-        
-        Map<String, String> annotations = alert.getAnnotations();
-        
-        return labels.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getKey() + ":" + e.getValue())
-                .collect(Collectors.joining(","))
-                + "#"
-                + (annotations != null ? annotations.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getKey() + ":" + e.getValue())
-                .collect(Collectors.joining(",")) : "");
-    }
-    
     private void sendGroupAlert(GroupAlertCache cache) {
         if (cache.getAlerts().isEmpty()) {
             return;
@@ -212,7 +190,8 @@ public class AlarmGroupReduce {
         // For firing alerts, check repeat interval
         if ("firing".equals(status)) {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-            long repeatInterval = ruleConfig != null ? ruleConfig.getRepeatInterval() : DEFAULT_REPEAT_INTERVAL;
+            long repeatInterval = ruleConfig.getRepeatInterval() != null
+                    ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
             
             // Skip if within repeat interval
             if (cache.getLastRepeatTime() > 0 
@@ -235,8 +214,8 @@ public class AlarmGroupReduce {
     
     private boolean shouldSendGroup(GroupAlertCache cache, long now) {
         AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-        long groupWait = ruleConfig != null ? ruleConfig.getGroupWait() : DEFAULT_GROUP_WAIT;
-        long groupInterval = ruleConfig != null ? ruleConfig.getGroupInterval() : DEFAULT_GROUP_INTERVAL;
+        long groupWait = ruleConfig != null ? ruleConfig.getGroupWait() * MS_PER_SECOND : DEFAULT_GROUP_WAIT;
+        long groupInterval = ruleConfig != null ? ruleConfig.getGroupInterval() * MS_PER_SECOND : DEFAULT_GROUP_INTERVAL;
         
         // First wait time reached
         if (cache.getLastSendTime() == 0 

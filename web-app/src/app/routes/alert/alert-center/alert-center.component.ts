@@ -25,13 +25,12 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 
 import { GroupAlert } from '../../../pojo/GroupAlert';
-import { Tag } from '../../../pojo/Tag';
 import { AlertService } from '../../../service/alert.service';
 
 @Component({
   selector: 'app-alert-center',
   templateUrl: './alert-center.component.html',
-  styles: []
+  styleUrl: './alert-center.component.less'
 })
 export class AlertCenterComponent implements OnInit {
   constructor(
@@ -44,7 +43,7 @@ export class AlertCenterComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  alerts!: GroupAlert[];
+  groupAlerts!: GroupAlert[];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
   filterStatus: string = 'firing';
@@ -64,11 +63,14 @@ export class AlertCenterComponent implements OnInit {
     let alertsInit$ = this.alertSvc.loadGroupAlerts(this.filterStatus, this.filterContent, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedAlertIds.clear();
         if (message.code === 0) {
           let page = message.data;
-          this.alerts = page.content;
+          this.groupAlerts = page.content;
+          this.groupAlerts.forEach(alert => {
+            if (alert.alerts == undefined) {
+              alert.alerts = [];
+            }
+          });
           this.pageIndex = page.number + 1;
           this.total = page.totalElements;
         } else {
@@ -82,26 +84,6 @@ export class AlertCenterComponent implements OnInit {
         console.error(error.msg);
       }
     );
-  }
-
-  renderAlertTarget(target: string): string {
-    if (target == undefined || target === '') {
-      return target;
-    }
-    const targets = target.split('.');
-    if (targets.length === 3) {
-      let app = this.i18nSvc.fanyi(`monitor.app.${targets[0]}`);
-      let metrics = this.i18nSvc.fanyi(`monitor.app.${targets[0]}.metrics.${targets[1]}`);
-      let metric = this.i18nSvc.fanyi(`monitor.app.${targets[0]}.metrics.${targets[1]}.metric.${targets[2]}`);
-      let value = app == `monitor.app.${targets[0]}` ? targets[0] : app;
-      value += ` / ${metrics == `monitor.app.${targets[0]}.metrics.${targets[1]}` ? targets[1] : metrics}`;
-      value += ` / ${metric == `monitor.app.${targets[0]}.metrics.${targets[1]}.metric.${targets[2]}` ? targets[2] : metric}`;
-      return value;
-    }
-    if (target === 'availability') {
-      return this.i18nSvc.fanyi('monitor.availability');
-    }
-    return target;
   }
 
   onDeleteAlerts() {
@@ -229,7 +211,7 @@ export class AlertCenterComponent implements OnInit {
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
-      this.alerts.forEach(monitor => this.checkedAlertIds.add(monitor.id));
+      this.groupAlerts.forEach(monitor => this.checkedAlertIds.add(monitor.id));
     } else {
       this.checkedAlertIds.clear();
     }
@@ -241,21 +223,7 @@ export class AlertCenterComponent implements OnInit {
       this.checkedAlertIds.delete(monitorId);
     }
   }
-  onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
-    this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-    this.loadAlertsTable();
-  }
   // end: List multiple choice paging
-
-  sliceTagName(tag: Tag): string {
-    if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
-      return `${tag.name}:${tag.tagValue}`;
-    } else {
-      return tag.name;
-    }
-  }
 
   recordEntries(record: Record<any, any>) {
     return Object.entries(record);

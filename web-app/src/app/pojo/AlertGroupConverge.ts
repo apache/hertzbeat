@@ -17,16 +17,17 @@
  * under the License.
  */
 
-import { TagItem } from './NoticeRule';
-
 export class AlertGroupConverge {
   id!: number;
   name!: string;
   enable: boolean = true;
-  matchAll: boolean = true;
-  priorities!: number[];
-  tags!: TagItem[];
-  evalInterval: number = 14400;
+  groupLabels!: string[];
+  // 30 seconds
+  groupWait: number = 30;
+  // 5 minutes
+  groupInterval: number = 300;
+  // 4 hours
+  repeatInterval: number = 14400;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;

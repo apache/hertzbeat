@@ -69,15 +69,15 @@ public class AlertGroupConverge {
     @Column(name = "group_labels", length = 1024)
     private List<String> groupLabels;
     
-    @Schema(title = "Initial wait time before sending first group alert (ms)", example = "30000")
+    @Schema(title = "Initial wait time before sending first group alert (s)", example = "30")
     @Column(name = "group_wait")
     private Long groupWait;
     
-    @Schema(title = "Interval between group alert sends (ms)", example = "300000")
+    @Schema(title = "Interval between group alert sends (s)", example = "300")
     @Column(name = "group_interval")
     private Long groupInterval;
     
-    @Schema(title = "Interval for repeating firing alerts (ms), set to 0 to disable repeating", example = "9000000")
+    @Schema(title = "Interval for repeating firing alerts (s), set to 0 to disable repeating", example = "9000")
     @Column(name = "repeat_interval")
     private Long repeatInterval;
 
