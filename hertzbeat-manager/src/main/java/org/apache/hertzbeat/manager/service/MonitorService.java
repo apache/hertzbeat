@@ -154,13 +154,6 @@ public interface MonitorService {
     List<Monitor> getAppMonitors(String app);
 
     /**
-     * Get monitor able metrics based on App name, not passed to get all metrics
-     * @param app app name
-     * @return metrics
-     */
-    List<String> getMonitorMetrics(String app);
-
-    /**
      * Export Monitoring Configuration
      * @param ids  monitor id list
      * @param type file type

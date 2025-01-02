@@ -23,22 +23,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,13 +52,8 @@ class AlertDefineServiceTest {
 
     private AlertDefine alertDefine;
 
-    private List<AlertDefineMonitorBind> alertDefineMonitorBinds;
-
     @Mock
     private AlertDefineDao alertDefineDao;
-
-    @Mock
-    private AlertDefineBindDao alertDefineBindDao;
 
     @Mock
     private List<AlertDefineImExportService> alertDefineImExportServiceList;
@@ -75,7 +64,6 @@ class AlertDefineServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(this.alertDefineService, "alertDefineDao", alertDefineDao);
-        ReflectionTestUtils.setField(this.alertDefineService, "alertDefineBindDao", alertDefineBindDao);
 
         this.alertDefine = AlertDefine.builder()
                 .id(1L)
@@ -85,22 +73,6 @@ class AlertDefineServiceTest {
                 .creator("tom")
                 .modifier("tom")
                 .build();
-
-        this.alertDefineMonitorBinds = Collections.singletonList(
-                AlertDefineMonitorBind.builder()
-                        .id(1L)
-                        .alertDefineId(this.alertDefine.getId())
-                        .monitorId(1L)
-                        .monitor(
-                                Monitor.builder()
-                                        .id(1L)
-                                        .app("app")
-                                        .host("localhost")
-                                        .name("monitor")
-                                        .build()
-                        )
-                        .build()
-        );
     }
 
     @Test

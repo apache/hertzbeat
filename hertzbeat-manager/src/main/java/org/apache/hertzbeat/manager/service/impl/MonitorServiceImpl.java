@@ -183,11 +183,6 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public List<String> getMonitorMetrics(String app) {
-        return appService.getAppDefineMetricNames(app);
-    }
-
-    @Override
     public void export(List<Long> ids, String type, HttpServletResponse res) throws Exception {
         var imExportService = imExportServiceMap.get(type);
         if (imExportService == null) {

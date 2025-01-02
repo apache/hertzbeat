@@ -30,12 +30,12 @@ import { finalize } from 'rxjs/operators';
 import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
 import { CollectorSummary } from '../../pojo/CollectorSummary';
+import { SingleAlert } from '../../pojo/SingleAlert';
 import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
 import { formatTagName } from '../../shared/utils/common-util';
-import {SingleAlert} from "../../pojo/SingleAlert";
 
 @Component({
   selector: 'app-dashboard',
