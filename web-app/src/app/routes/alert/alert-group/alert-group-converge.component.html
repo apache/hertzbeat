@@ -89,7 +89,7 @@
           <button
             nz-button
             nzType="primary"
-            (click)="onEditGroupConverge(data.id)"
+            (click)="editGroupConverge(data.id)"
             nz-tooltip
             [nzTooltipTitle]="'alert.group-converge.edit' | i18n"
           >
@@ -144,7 +144,7 @@
         >
           {{ 'alert.group-converge.group-labels' | i18n }}
         </nz-form-label>
-        <nz-form-control [nzSpan]="8">
+        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <div class="labels-container">
             <div *ngFor="let label of groupConverge.groupLabels; let i = index" class="label-item">
               <input
@@ -152,6 +152,7 @@
                 [(ngModel)]="groupConverge.groupLabels[i]"
                 name="label{{ i }}"
                 [placeholder]="'alert.group-converge.group-labels.placeholder' | i18n"
+                required
               />
               <div class="button-group">
                 <button nz-button nzType="link" nzDanger (click)="removeLabel(i)" class="action-btn">
@@ -229,7 +230,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8">
           <nz-input-number
-            [(ngModel)]="groupConverge.reapInterval"
+            [(ngModel)]="groupConverge.repeatInterval"
             [nzMin]="0"
             [nzStep]="3600"
             [nzPlaceHolder]="'14400'"

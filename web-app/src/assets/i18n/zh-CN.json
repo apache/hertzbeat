@@ -522,6 +522,8 @@
   "common.button.detect": "测试",
   "common.button.cancel": "取消",
   "common.button.return": "返回",
+  "common.button.ok": "确定",
+  "common.button.confirm": "确认",
   "common.button.help": "帮助",
   "common.button.new": "新增",
   "common.button.import": "导入",

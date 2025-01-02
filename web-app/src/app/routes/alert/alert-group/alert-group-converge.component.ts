@@ -28,7 +28,6 @@ import { finalize } from 'rxjs/operators';
 
 import { AlertGroupConverge } from '../../../pojo/AlertGroupConverge';
 import { AlertGroupService } from '../../../service/alert-group.service';
-import { TagService } from '../../../service/tag.service';
 
 @Component({
   selector: 'app-alert-converge',
@@ -206,14 +205,10 @@ export class AlertGroupConvergeComponent implements OnInit {
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   groupConverge: AlertGroupConverge = new AlertGroupConverge();
-  convergeDates!: Date[];
 
   onNewGroupConverge() {
     this.groupConverge = new AlertGroupConverge();
     this.groupConverge.groupLabels = [''];
-    this.groupConverge.groupWait = 30; // 30秒
-    this.groupConverge.groupInterval = 300; // 5分钟
-    this.groupConverge.reapInterval = 14400; // 4小时
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -222,23 +217,15 @@ export class AlertGroupConvergeComponent implements OnInit {
     this.isManageModalVisible = false;
   }
 
-  onEditGroupConverge(convergeId: number) {
-    if (convergeId == null) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
-      return;
-    }
-    this.editGroupConverge(convergeId);
-  }
-
   editGroupConverge(convergeId: number) {
     this.isManageModalAdd = false;
-    this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
     const getConverge$ = this.alertConvergeService
       .getAlertGroupConverge(convergeId)
       .pipe(
         finalize(() => {
           getConverge$.unsubscribe();
+          this.isManageModalVisible = true;
         })
       )
       .subscribe(
@@ -246,7 +233,6 @@ export class AlertGroupConvergeComponent implements OnInit {
           if (message.code === 0) {
             this.groupConverge = message.data;
             this.isManageModalVisible = true;
-            this.isManageModalAdd = false;
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
           }
@@ -257,6 +243,7 @@ export class AlertGroupConvergeComponent implements OnInit {
       );
   }
   onManageModalOk() {
+    // Validate required form fields
     if (this.ruleForm?.invalid) {
       Object.values(this.ruleForm.controls).forEach(control => {
         if (control.invalid) {
@@ -266,6 +253,32 @@ export class AlertGroupConvergeComponent implements OnInit {
       });
       return;
     }
+
+    // Validate strategy name is not empty
+    if (!this.groupConverge.name?.trim()) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('validation.required'), this.i18nSvc.fanyi('alert.group-converge.name'));
+      return;
+    }
+
+    // Validate group labels
+    if (!this.groupConverge.groupLabels || this.groupConverge.groupLabels.length === 0) {
+      this.notifySvc.warning(
+        this.i18nSvc.fanyi('validation.required'),
+        this.i18nSvc.fanyi('alert.group-converge.group-labels')
+      );
+      return;
+    }
+
+    // Validate label values are not empty
+    const emptyLabels = this.groupConverge.groupLabels.some(label => !label?.trim());
+    if (emptyLabels) {
+      this.notifySvc.warning(
+        this.i18nSvc.fanyi('validation.required'),
+        this.i18nSvc.fanyi('alert.group-converge.group-labels')
+      );
+      return;
+    }
+
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertConvergeService
