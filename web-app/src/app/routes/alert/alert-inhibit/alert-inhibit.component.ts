@@ -51,6 +51,8 @@ export class AlertInhibitComponent implements OnInit {
   tableLoading: boolean = true;
   checkedConvergeIds = new Set<number>();
 
+  commonLabels: string[] = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];
+
   ngOnInit(): void {
     this.loadInhibitTable();
   }
