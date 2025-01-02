@@ -256,13 +256,6 @@ export class AlertGroupConvergeComponent implements OnInit {
       return;
     }
 
-    // Validate strategy name is not empty
-    if (!this.groupConverge.name?.trim()) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('validation.required'), this.i18nSvc.fanyi('alert.group-converge.name'));
-      return;
-    }
-
-    // 验证并处理标签
     const validLabels = this.groupConverge.groupLabels.filter(label => label && label.trim().length > 0).map(label => label.trim());
 
     if (validLabels.length === 0) {

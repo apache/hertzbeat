@@ -158,8 +158,8 @@
             <div *ngFor="let label of groupConverge.groupLabels; let i = index" class="label-item">
               <input
                 nz-input
-                [(ngModel)]="groupConverge.groupLabels[i]"
                 [ngModelOptions]="{ standalone: true }"
+                [(ngModel)]="groupConverge.groupLabels[i]"
                 [placeholder]="'alert.group-converge.group-labels.placeholder' | i18n"
                 required
               />
