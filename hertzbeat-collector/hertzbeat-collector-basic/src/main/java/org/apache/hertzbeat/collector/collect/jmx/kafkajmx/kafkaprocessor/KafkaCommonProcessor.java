@@ -46,8 +46,8 @@ public class KafkaCommonProcessor implements MbeanProcessor {
     @Override
     public void preProcess(Builder builder, Metrics metrics) {
         JmxProtocol jmx = metrics.getJmx();
-        if (metrics.getJmx().getObjectName() != null &&
-                metrics.getJmx().getObjectName().contains("GroupMetadataManager")) {
+        if (metrics.getJmx().getObjectName() != null
+                && metrics.getJmx().getObjectName().contains("GroupMetadataManager")) {
             jmx.setObjectName("kafka.*:type=GroupMetadataManager,name=*");
         }
     }
