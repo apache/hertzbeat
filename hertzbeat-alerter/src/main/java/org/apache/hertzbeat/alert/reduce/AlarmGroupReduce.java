@@ -106,9 +106,6 @@ public class AlarmGroupReduce {
      * Process single alert and group by defined rules
      */
     public void processGroupAlert(SingleAlert alert) {
-        // Generate alert fingerprint
-        String fingerprint = generateAlertFingerprint(alert);
-        alert.setFingerprint(fingerprint);
         Map<String, String> labels = alert.getLabels();
         if (labels == null || labels.isEmpty() || groupDefines.isEmpty()) {
             sendSingleAlert(alert);
@@ -175,30 +172,6 @@ public class AlarmGroupReduce {
             cache.getAlerts().clear();
             cache.getAlertFingerprints().clear();
         }
-    }
-    
-    /**
-     * Generate fingerprint for alert to identify duplicates
-     * Fingerprint is based on labels and annotations excluding timestamp related fields
-     */
-    private String generateAlertFingerprint(SingleAlert alert) {
-        Map<String, String> labels = new HashMap<>(alert.getLabels());
-        // Remove timestamp related fields
-        labels.remove("timestamp");
-        labels.remove("start_at");
-        labels.remove("active_at");
-        
-        Map<String, String> annotations = alert.getAnnotations();
-        
-        return labels.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getKey() + ":" + e.getValue())
-                .collect(Collectors.joining(","))
-                + "#"
-                + (annotations != null ? annotations.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getKey() + ":" + e.getValue())
-                .collect(Collectors.joining(",")) : "");
     }
     
     private void sendGroupAlert(GroupAlertCache cache) {
