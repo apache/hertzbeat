@@ -210,9 +210,7 @@ export class AlertGroupConvergeComponent implements OnInit {
 
   onNewGroupConverge() {
     this.groupConverge = new AlertGroupConverge();
-    let now = new Date();
-    now.setHours(now.getHours() + 6);
-    this.convergeDates = [new Date(), now];
+    this.groupConverge.groupLabels = [''];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -312,6 +310,30 @@ export class AlertGroupConvergeComponent implements OnInit {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
+    }
+  }
+
+  customLabel: string = '';
+
+  addLabel() {
+    if (!this.groupConverge.groupLabels) {
+      this.groupConverge.groupLabels = [];
+    }
+    if (this.groupConverge.groupLabels.length < 5) {
+      this.groupConverge.groupLabels.push('');
+    }
+  }
+
+  removeLabel(index: number) {
+    if (this.groupConverge.groupLabels.length > 1) {
+      this.groupConverge.groupLabels.splice(index, 1);
+    }
+  }
+
+  addCustomLabel(index: number) {
+    if (this.customLabel) {
+      this.groupConverge.groupLabels[index] = this.customLabel;
+      this.customLabel = '';
     }
   }
 }

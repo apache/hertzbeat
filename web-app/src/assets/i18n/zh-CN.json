@@ -819,6 +819,9 @@
   "alert.group-converge.repeat-interval": "重复间隔",
   "alert.group-converge.seconds": "秒",
   "alert.group-converge.group-labels": "分组标签",
-  "alert.group-converge.group-labels.placeholder": "请输入标签key,支持输入多个,按回车或逗号分隔",
-  "alert.group-converge.group-labels.tip": "根据告警标签对告警消息进行分组,支持多个标签"
+  "alert.group-converge.group-labels.placeholder": "请输入标签key",
+  "alert.group-converge.group-labels.tip": "根据告警标签对告警消息进行分组,支持多个标签",
+  "alert.group-converge.group-labels.add": "添加标签",
+  "alert.group-converge.group-labels.input": "输入自定义标签后按回车",
+  "alert.group-converge.group-labels.placeholder": "请选择或输入标签"
 }

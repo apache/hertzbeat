@@ -136,15 +136,29 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="10" nzFor="groupLabels" nzRequired="true">{{ 'alert.group-converge.group-labels' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="8">
-          <nz-select
-            [(ngModel)]="groupConverge.groupLabels"
-            nzMode="tags"
-            [nzTokenSeparators]="[',']"
-            name="groupLabels"
-            id="groupLabels"
-            [nzPlaceHolder]="'alert.group-converge.group-labels.placeholder' | i18n"
-            required>
-          </nz-select>
+          <div class="labels-container">
+            <div *ngFor="let label of groupConverge.groupLabels; let i = index" class="label-item">
+              <input 
+                nz-input
+                [(ngModel)]="groupConverge.groupLabels[i]"
+                name="label{{i}}"
+                [placeholder]="'alert.group-converge.group-labels.placeholder' | i18n"
+              />
+              <div class="button-group">
+                <button nz-button nzType="link" nzDanger (click)="removeLabel(i)" class="action-btn">
+                  <i nz-icon nzType="minus-circle" nzTheme="outline"></i>
+                </button>
+                <button 
+                  *ngIf="i === groupConverge.groupLabels.length - 1 && groupConverge.groupLabels.length < 5" 
+                  nz-button 
+                  nzType="link" 
+                  (click)="addLabel()" 
+                  class="action-btn add-btn">
+                  <i nz-icon nzType="plus-circle" nzTheme="outline"></i>
+                </button>
+              </div>
+            </div>
+          </div>
         </nz-form-control>
       </nz-form-item>
 
