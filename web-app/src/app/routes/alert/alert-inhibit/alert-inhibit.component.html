@@ -153,19 +153,19 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.source_labels.tip' | i18n">
+        <nz-form-label [nzSpan]="7" nzFor="sourceLabels" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.source_labels.tip' | i18n">
           {{ 'alert.inhibit.source_labels' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12">
-          <app-key-value-input [(ngModel)]="alertInhibit.sourceLabels" name="sourceLabels" required></app-key-value-input>
+          <app-labels-input [(ngModel)]="alertInhibit.sourceLabels" name="sourceLabels" required></app-labels-input>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.target_labels.tip' | i18n">
+        <nz-form-label [nzSpan]="7" nzFor="targetLabels" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.target_labels.tip' | i18n">
           {{ 'alert.inhibit.target_labels' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12">
-          <app-key-value-input [(ngModel)]="alertInhibit.targetLabels" name="targetLabels" required></app-key-value-input>
+          <app-labels-input [(ngModel)]="alertInhibit.targetLabels" name="targetLabels" required></app-labels-input>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
