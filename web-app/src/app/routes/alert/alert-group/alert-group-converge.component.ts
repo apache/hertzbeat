@@ -225,13 +225,15 @@ export class AlertGroupConvergeComponent implements OnInit {
       .pipe(
         finalize(() => {
           getConverge$.unsubscribe();
-          this.isManageModalVisible = true;
         })
       )
       .subscribe(
         message => {
           if (message.code === 0) {
             this.groupConverge = message.data;
+            if (!Array.isArray(this.groupConverge.groupLabels) || this.groupConverge.groupLabels.length === 0) {
+              this.groupConverge.groupLabels = [''];
+            }
             this.isManageModalVisible = true;
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
@@ -260,8 +262,12 @@ export class AlertGroupConvergeComponent implements OnInit {
       return;
     }
 
-    // Validate group labels
-    if (!this.groupConverge.groupLabels || this.groupConverge.groupLabels.length === 0) {
+    // 验证并处理标签
+    const validLabels = this.groupConverge.groupLabels
+      .filter(label => label && label.trim().length > 0)
+      .map(label => label.trim());
+
+    if (validLabels.length === 0) {
       this.notifySvc.warning(
         this.i18nSvc.fanyi('validation.required'),
         this.i18nSvc.fanyi('alert.group-converge.group-labels')
@@ -269,15 +275,10 @@ export class AlertGroupConvergeComponent implements OnInit {
       return;
     }
 
-    // Validate label values are not empty
-    const emptyLabels = this.groupConverge.groupLabels.some(label => !label?.trim());
-    if (emptyLabels) {
-      this.notifySvc.warning(
-        this.i18nSvc.fanyi('validation.required'),
-        this.i18nSvc.fanyi('alert.group-converge.group-labels')
-      );
-      return;
-    }
+    // 更新处理后的标签
+    this.groupConverge.groupLabels = validLabels;
+
+    console.log('Submitting groupConverge:', JSON.stringify(this.groupConverge));
 
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {
@@ -329,27 +330,29 @@ export class AlertGroupConvergeComponent implements OnInit {
     }
   }
 
-  customLabel: string = '';
-
   addLabel() {
-    if (!this.groupConverge.groupLabels) {
+    if (!Array.isArray(this.groupConverge.groupLabels)) {
       this.groupConverge.groupLabels = [];
     }
     if (this.groupConverge.groupLabels.length < 5) {
-      this.groupConverge.groupLabels.push('');
+      this.groupConverge.groupLabels = [...this.groupConverge.groupLabels, ''];
     }
   }
 
   removeLabel(index: number) {
     if (this.groupConverge.groupLabels.length > 1) {
-      this.groupConverge.groupLabels.splice(index, 1);
+      this.groupConverge.groupLabels = [
+        ...this.groupConverge.groupLabels.slice(0, index),
+        ...this.groupConverge.groupLabels.slice(index + 1)
+      ];
     }
   }
 
-  addCustomLabel(index: number) {
-    if (this.customLabel) {
-      this.groupConverge.groupLabels[index] = this.customLabel;
-      this.customLabel = '';
+  updateLabel(index: number, value: string) {
+    if (!Array.isArray(this.groupConverge.groupLabels)) {
+      this.groupConverge.groupLabels = [''];
     }
+    this.groupConverge.groupLabels = [...this.groupConverge.groupLabels];
+    this.groupConverge.groupLabels[index] = value;
   }
 }

@@ -150,7 +150,7 @@
               <input
                 nz-input
                 [(ngModel)]="groupConverge.groupLabels[i]"
-                name="label{{ i }}"
+                [ngModelOptions]="{standalone: true}"
                 [placeholder]="'alert.group-converge.group-labels.placeholder' | i18n"
                 required
               />
