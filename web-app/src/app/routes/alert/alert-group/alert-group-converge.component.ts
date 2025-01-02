@@ -27,7 +27,6 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
 import { AlertGroupConverge } from '../../../pojo/AlertGroupConverge';
-import { TagItem } from '../../../pojo/NoticeRule';
 import { AlertGroupService } from '../../../service/alert-group.service';
 import { TagService } from '../../../service/tag.service';
 
@@ -41,7 +40,6 @@ export class AlertGroupConvergeComponent implements OnInit {
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private alertConvergeService: AlertGroupService,
-    private tagService: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -50,19 +48,19 @@ export class AlertGroupConvergeComponent implements OnInit {
   pageSize: number = 8;
   total: number = 0;
   search!: string;
-  converges!: AlertGroupConverge[];
+  groupConverges!: AlertGroupConverge[];
   tableLoading: boolean = true;
   checkedConvergeIds = new Set<number>();
 
   ngOnInit(): void {
-    this.loadAlertConvergeTable();
+    this.loadGroupConvergeTable();
   }
 
   sync() {
-    this.loadAlertConvergeTable();
+    this.loadGroupConvergeTable();
   }
 
-  loadAlertConvergeTable() {
+  loadGroupConvergeTable() {
     this.tableLoading = true;
     let alertDefineInit$ = this.alertConvergeService.getAlertGroupConverges(this.search, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
@@ -71,7 +69,7 @@ export class AlertGroupConvergeComponent implements OnInit {
         this.checkedConvergeIds.clear();
         if (message.code === 0) {
           let page = message.data;
-          this.converges = page.content;
+          this.groupConverges = page.content;
           this.pageIndex = page.number + 1;
           this.total = page.totalElements;
         } else {
@@ -86,7 +84,7 @@ export class AlertGroupConvergeComponent implements OnInit {
     );
   }
 
-  updateAlertConverge(alertConverge: AlertGroupConverge) {
+  updateGroupConverge(alertConverge: AlertGroupConverge) {
     this.tableLoading = true;
     const updateDefine$ = this.alertConvergeService
       .editAlertGroupConverge(alertConverge)
@@ -103,7 +101,7 @@ export class AlertGroupConvergeComponent implements OnInit {
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
           }
-          this.loadAlertConvergeTable();
+          this.loadGroupConvergeTable();
           this.tableLoading = false;
         },
         error => {
@@ -113,7 +111,7 @@ export class AlertGroupConvergeComponent implements OnInit {
       );
   }
 
-  onDeleteAlertConverges() {
+  onDeleteGroupConverges() {
     if (this.checkedConvergeIds == null || this.checkedConvergeIds.size === 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
@@ -125,11 +123,11 @@ export class AlertGroupConvergeComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteAlertConverges(this.checkedConvergeIds)
+      nzOnOk: () => this.deleteGroupConverges(this.checkedConvergeIds)
     });
   }
 
-  onDeleteOneAlertConverge(id: number) {
+  onDeleteOneGroupConverge(id: number) {
     let ids = new Set<number>();
     ids.add(id);
     this.modal.confirm({
@@ -139,11 +137,11 @@ export class AlertGroupConvergeComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteAlertConverges(ids)
+      nzOnOk: () => this.deleteGroupConverges(ids)
     });
   }
 
-  deleteAlertConverges(convergeIds: Set<number>) {
+  deleteGroupConverges(convergeIds: Set<number>) {
     if (convergeIds == null || convergeIds.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
@@ -155,7 +153,7 @@ export class AlertGroupConvergeComponent implements OnInit {
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
           this.updatePageIndex(convergeIds.size);
-          this.loadAlertConvergeTable();
+          this.loadGroupConvergeTable();
         } else {
           this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
@@ -178,7 +176,7 @@ export class AlertGroupConvergeComponent implements OnInit {
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
-      this.converges.forEach(item => this.checkedConvergeIds.add(item.id));
+      this.groupConverges.forEach(item => this.checkedConvergeIds.add(item.id));
     } else {
       this.checkedConvergeIds.clear();
     }
@@ -199,7 +197,7 @@ export class AlertGroupConvergeComponent implements OnInit {
     const { pageSize, pageIndex, sort, filter } = params;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    this.loadAlertConvergeTable();
+    this.loadGroupConvergeTable();
   }
   // end: List multiple choice paging
 
@@ -207,14 +205,11 @@ export class AlertGroupConvergeComponent implements OnInit {
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
-  converge: AlertGroupConverge = new AlertGroupConverge();
-  searchTag!: string;
-  tagsOption: any[] = [];
-  matchTags: string[] = [];
+  groupConverge: AlertGroupConverge = new AlertGroupConverge();
   convergeDates!: Date[];
 
-  onNewAlertConverge() {
-    this.converge = new AlertGroupConverge();
+  onNewGroupConverge() {
+    this.groupConverge = new AlertGroupConverge();
     let now = new Date();
     now.setHours(now.getHours() + 6);
     this.convergeDates = [new Date(), now];
@@ -226,15 +221,15 @@ export class AlertGroupConvergeComponent implements OnInit {
     this.isManageModalVisible = false;
   }
 
-  onEditAlertConverge(convergeId: number) {
+  onEditGroupConverge(convergeId: number) {
     if (convergeId == null) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
-    this.editAlertConverge(convergeId);
+    this.editGroupConverge(convergeId);
   }
 
-  editAlertConverge(convergeId: number) {
+  editGroupConverge(convergeId: number) {
     this.isManageModalAdd = false;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -248,23 +243,9 @@ export class AlertGroupConvergeComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.converge = message.data;
+            this.groupConverge = message.data;
             this.isManageModalVisible = true;
             this.isManageModalAdd = false;
-            this.matchTags = [];
-            if (this.converge.tags != undefined) {
-              this.converge.tags.forEach(item => {
-                let tag = `${item.name}`;
-                if (item.value != undefined) {
-                  tag = `${tag}:${item.value}`;
-                }
-                this.matchTags.push(tag);
-                this.tagsOption.push({
-                  value: tag,
-                  label: tag
-                });
-              });
-            }
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
           }
@@ -284,26 +265,10 @@ export class AlertGroupConvergeComponent implements OnInit {
       });
       return;
     }
-    this.converge.tags = [];
-    this.matchTags.forEach(tag => {
-      let tmp: string[] = tag.split(':');
-      let tagItem = new TagItem();
-      if (tmp.length == 1) {
-        tagItem.name = tmp[0];
-        this.converge.tags.push(tagItem);
-      } else if (tmp.length == 2) {
-        tagItem.name = tmp[0];
-        tagItem.value = tmp[1];
-        this.converge.tags.push(tagItem);
-      }
-    });
-    if (this.converge.priorities != undefined) {
-      this.converge.priorities = this.converge.priorities.filter(item => item != null && item != 9);
-    }
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertConvergeService
-        .newAlertGroupConverge(this.converge)
+        .newAlertGroupConverge(this.groupConverge)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();
@@ -315,7 +280,7 @@ export class AlertGroupConvergeComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-              this.loadAlertConvergeTable();
+              this.loadGroupConvergeTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
             }
@@ -326,7 +291,7 @@ export class AlertGroupConvergeComponent implements OnInit {
         );
     } else {
       const modalOk$ = this.alertConvergeService
-        .editAlertGroupConverge(this.converge)
+        .editAlertGroupConverge(this.groupConverge)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();
@@ -338,7 +303,7 @@ export class AlertGroupConvergeComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-              this.loadAlertConvergeTable();
+              this.loadGroupConvergeTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
@@ -347,58 +312,6 @@ export class AlertGroupConvergeComponent implements OnInit {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
-    }
-  }
-
-  onPrioritiesChange() {
-    if (this.converge.priorities != undefined) {
-      let isAll = false;
-      this.converge.priorities.forEach(item => {
-        if (item == 9) {
-          isAll = true;
-        }
-      });
-      if (isAll) {
-        this.converge.priorities = [9, 0, 1, 2];
-      }
-    }
-  }
-
-  loadTagsOption() {
-    let tagsInit$ = this.tagService.loadTags(this.searchTag, undefined, 0, 1000).subscribe(
-      message => {
-        if (message.code === 0) {
-          let page = message.data;
-          this.tagsOption = [];
-          if (page.content != undefined) {
-            page.content.forEach(item => {
-              let tag = `${item.name}`;
-              if (item.tagValue != undefined) {
-                tag = `${tag}:${item.tagValue}`;
-              }
-              this.tagsOption.push({
-                value: tag,
-                label: tag
-              });
-            });
-          }
-        } else {
-          console.warn(message.msg);
-        }
-        tagsInit$.unsubscribe();
-      },
-      error => {
-        tagsInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
-  }
-
-  sliceTagName(tag: any): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
-    } else {
-      return tag.name;
     }
   }
 }
