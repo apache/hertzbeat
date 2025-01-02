@@ -126,7 +126,9 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #ruleForm="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="10" nzFor="rule_name" nzRequired="true">{{ 'alert.group-converge.name' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="10" nzFor="rule_name" nzRequired="true" [nzTooltipTitle]="'alert.group-converge.name.tip' | i18n">
+          {{ 'alert.group-converge.name' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="groupConverge.name" nz-input required name="rule_name" type="text" id="rule_name" />
         </nz-form-control>
@@ -134,26 +136,34 @@
 
       <!-- 分组标签 -->
       <nz-form-item>
-        <nz-form-label [nzSpan]="10" nzFor="groupLabels" nzRequired="true">{{ 'alert.group-converge.group-labels' | i18n }}</nz-form-label>
+        <nz-form-label
+          [nzSpan]="10"
+          nzFor="groupLabels"
+          nzRequired="true"
+          [nzTooltipTitle]="'alert.group-converge.group-labels.tip' | i18n"
+        >
+          {{ 'alert.group-converge.group-labels' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="8">
           <div class="labels-container">
             <div *ngFor="let label of groupConverge.groupLabels; let i = index" class="label-item">
-              <input 
+              <input
                 nz-input
                 [(ngModel)]="groupConverge.groupLabels[i]"
-                name="label{{i}}"
+                name="label{{ i }}"
                 [placeholder]="'alert.group-converge.group-labels.placeholder' | i18n"
               />
               <div class="button-group">
                 <button nz-button nzType="link" nzDanger (click)="removeLabel(i)" class="action-btn">
                   <i nz-icon nzType="minus-circle" nzTheme="outline"></i>
                 </button>
-                <button 
-                  *ngIf="i === groupConverge.groupLabels.length - 1 && groupConverge.groupLabels.length < 5" 
-                  nz-button 
-                  nzType="link" 
-                  (click)="addLabel()" 
-                  class="action-btn add-btn">
+                <button
+                  *ngIf="i === groupConverge.groupLabels.length - 1 && groupConverge.groupLabels.length < 5"
+                  nz-button
+                  nzType="link"
+                  (click)="addLabel()"
+                  class="action-btn add-btn"
+                >
                   <i nz-icon nzType="plus-circle" nzTheme="outline"></i>
                 </button>
               </div>
@@ -164,15 +174,19 @@
 
       <!-- 分组等待时间 -->
       <nz-form-item>
-        <nz-form-label [nzSpan]="10" nzFor="groupWait" nzRequired="true">{{ 'alert.group-converge.group-wait' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="10" nzFor="groupWait" nzRequired="true" [nzTooltipTitle]="'alert.group-converge.group-wait.tip' | i18n">
+          {{ 'alert.group-converge.group-wait' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="8">
           <nz-input-number
             [(ngModel)]="groupConverge.groupWait"
             [nzMin]="0"
-            [nzStep]="1"
+            [nzStep]="30"
+            [nzPlaceHolder]="'30'"
             name="groupWait"
             id="groupWait"
-            required>
+            required
+          >
           </nz-input-number>
           <span class="ant-form-text">{{ 'alert.group-converge.seconds' | i18n }}</span>
         </nz-form-control>
@@ -180,15 +194,24 @@
 
       <!-- 分组间隔时间 -->
       <nz-form-item>
-        <nz-form-label [nzSpan]="10" nzFor="groupInterval" nzRequired="true">{{ 'alert.group-converge.group-interval' | i18n }}</nz-form-label>
+        <nz-form-label
+          [nzSpan]="10"
+          nzFor="groupInterval"
+          nzRequired="true"
+          [nzTooltipTitle]="'alert.group-converge.group-interval.tip' | i18n"
+        >
+          {{ 'alert.group-converge.group-interval' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="8">
           <nz-input-number
             [(ngModel)]="groupConverge.groupInterval"
             [nzMin]="0"
-            [nzStep]="60"
+            [nzStep]="300"
+            [nzPlaceHolder]="'300'"
             name="groupInterval"
             id="groupInterval"
-            required>
+            required
+          >
           </nz-input-number>
           <span class="ant-form-text">{{ 'alert.group-converge.seconds' | i18n }}</span>
         </nz-form-control>
@@ -196,15 +219,24 @@
 
       <!-- 重复告警间隔 -->
       <nz-form-item>
-        <nz-form-label [nzSpan]="10" nzFor="reapInterval" nzRequired="true">{{ 'alert.group-converge.repeat-interval' | i18n }}</nz-form-label>
+        <nz-form-label
+          [nzSpan]="10"
+          nzFor="reapInterval"
+          nzRequired="true"
+          [nzTooltipTitle]="'alert.group-converge.repeat-interval.tip' | i18n"
+        >
+          {{ 'alert.group-converge.repeat-interval' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="8">
           <nz-input-number
             [(ngModel)]="groupConverge.reapInterval"
             [nzMin]="0"
             [nzStep]="3600"
+            [nzPlaceHolder]="'14400'"
             name="reapInterval"
             id="reapInterval"
-            required>
+            required
+          >
           </nz-input-number>
           <span class="ant-form-text">{{ 'alert.group-converge.seconds' | i18n }}</span>
         </nz-form-control>

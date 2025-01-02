@@ -211,6 +211,9 @@ export class AlertGroupConvergeComponent implements OnInit {
   onNewGroupConverge() {
     this.groupConverge = new AlertGroupConverge();
     this.groupConverge.groupLabels = [''];
+    this.groupConverge.groupWait = 30; // 30秒
+    this.groupConverge.groupInterval = 300; // 5分钟
+    this.groupConverge.reapInterval = 14400; // 4小时
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;

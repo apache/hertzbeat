@@ -22,9 +22,9 @@ export class AlertGroupConverge {
   name!: string;
   enable: boolean = true;
   groupLabels!: string[];
-  groupWait: number = 0;
-  groupInterval: number = 0;
-  reapInterval: number = 0;
+  groupWait: number = 30;
+  groupInterval: number = 300;
+  reapInterval: number = 14400;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;
