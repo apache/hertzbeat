@@ -92,7 +92,6 @@
         <button
           *ngIf="group.status != 'firing'"
           nz-button
-          nzType="primary"
           (click)="onMarkReadOneAlert(group.id)"
           nz-tooltip
           [nzTooltipTitle]="'alert.center.deal' | i18n"
@@ -102,8 +101,6 @@
         <button
           *ngIf="group.status == 'firing'"
           nz-button
-          nzType="primary"
-          nzDanger
           (click)="onMarkUnReadOneAlert(group.id)"
           nz-tooltip
           [nzTooltipTitle]="'alert.center.no-deal' | i18n"
@@ -112,7 +109,6 @@
         </button>
         <button
           nz-button
-          nzType="primary"
           nzDanger
           (click)="onDeleteOneAlert(group.id)"
           nz-tooltip

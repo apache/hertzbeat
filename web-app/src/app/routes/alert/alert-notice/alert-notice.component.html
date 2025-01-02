@@ -32,7 +32,6 @@
       <ng-template #left>
         <button (click)="syncReceiver()" nz-button nzType="primary">
           <i nz-icon nzTheme="outline" nzType="sync"></i>
-          {{ 'common.refresh' | i18n }}
         </button>
 
         <button (click)="onNewNoticeReceiver()" nz-button nzType="primary">
@@ -142,16 +141,24 @@
               >
                 <i nz-icon nzTheme="outline" nzType="edit"></i>
               </button>
-              <button
-                (click)="onDeleteOneNoticeReceiver(data.id)"
-                [nzTooltipTitle]="'alert.notice.receiver.delete' | i18n"
-                nz-button
-                nz-tooltip
-                nzDanger
-                nzType="primary"
-              >
-                <i nz-icon nzTheme="outline" nzType="delete"></i>
+              <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+                <span nz-icon nzType="ellipsis"></span>
               </button>
+              <nz-dropdown-menu #more_menu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item>
+                    <button
+                      (click)="onDeleteOneNoticeReceiver(data.id)"
+                      [nzTooltipTitle]="'alert.notice.receiver.delete' | i18n"
+                      nz-button
+                      nz-tooltip
+                      nzDanger
+                    >
+                      <i nz-icon nzTheme="outline" nzType="delete"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
             </div>
           </td>
         </tr>
@@ -163,7 +170,6 @@
       <ng-template #left>
         <button (click)="syncRule()" nz-button nzType="primary">
           <i nz-icon nzTheme="outline" nzType="sync"></i>
-          {{ 'common.refresh' | i18n }}
         </button>
 
         <button (click)="onNewNoticeRule()" nz-button nzType="primary">
@@ -217,16 +223,24 @@
               >
                 <i nz-icon nzTheme="outline" nzType="edit"></i>
               </button>
-              <button
-                (click)="onDeleteOneNoticeRule(data.id)"
-                [nzTooltipTitle]="'alert.notice.rule.delete' | i18n"
-                nz-button
-                nz-tooltip
-                nzDanger
-                nzType="primary"
-              >
-                <i nz-icon nzTheme="outline" nzType="delete"></i>
+              <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+                <span nz-icon nzType="ellipsis"></span>
               </button>
+              <nz-dropdown-menu #more_menu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item>
+                    <button
+                      (click)="onDeleteOneNoticeRule(data.id)"
+                      [nzTooltipTitle]="'alert.notice.rule.delete' | i18n"
+                      nz-button
+                      nz-tooltip
+                      nzDanger
+                    >
+                      <i nz-icon nzTheme="outline" nzType="delete"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
             </div>
           </td>
         </tr>
@@ -238,7 +252,6 @@
       <ng-template #left>
         <button (click)="syncTemplate()" nz-button nzType="primary">
           <i nz-icon nzTheme="outline" nzType="sync"></i>
-          {{ 'common.refresh' | i18n }}
         </button>
         <button (click)="onNewNoticeTemplate()" nz-button nzType="primary">
           <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
