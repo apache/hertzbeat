@@ -35,10 +35,19 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
-    <button nz-button (click)="onDeleteGroupConverges()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'common.button.delete' | i18n }}
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
     </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nz-button (click)="onDeleteGroupConverges()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <app-multi-func-input
@@ -150,7 +159,7 @@
               <input
                 nz-input
                 [(ngModel)]="groupConverge.groupLabels[i]"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 [placeholder]="'alert.group-converge.group-labels.placeholder' | i18n"
                 required
               />

@@ -263,15 +263,10 @@ export class AlertGroupConvergeComponent implements OnInit {
     }
 
     // 验证并处理标签
-    const validLabels = this.groupConverge.groupLabels
-      .filter(label => label && label.trim().length > 0)
-      .map(label => label.trim());
+    const validLabels = this.groupConverge.groupLabels.filter(label => label && label.trim().length > 0).map(label => label.trim());
 
     if (validLabels.length === 0) {
-      this.notifySvc.warning(
-        this.i18nSvc.fanyi('validation.required'),
-        this.i18nSvc.fanyi('alert.group-converge.group-labels')
-      );
+      this.notifySvc.warning(this.i18nSvc.fanyi('validation.required'), this.i18nSvc.fanyi('alert.group-converge.group-labels'));
       return;
     }
 
@@ -335,24 +330,16 @@ export class AlertGroupConvergeComponent implements OnInit {
       this.groupConverge.groupLabels = [];
     }
     if (this.groupConverge.groupLabels.length < 5) {
-      this.groupConverge.groupLabels = [...this.groupConverge.groupLabels, ''];
+      const newLabels = [...this.groupConverge.groupLabels];
+      newLabels.push('');
+      this.groupConverge.groupLabels = newLabels;
     }
   }
 
   removeLabel(index: number) {
     if (this.groupConverge.groupLabels.length > 1) {
-      this.groupConverge.groupLabels = [
-        ...this.groupConverge.groupLabels.slice(0, index),
-        ...this.groupConverge.groupLabels.slice(index + 1)
-      ];
+      const newLabels = [...this.groupConverge.groupLabels.slice(0, index), ...this.groupConverge.groupLabels.slice(index + 1)];
+      this.groupConverge.groupLabels = newLabels;
     }
-  }
-
-  updateLabel(index: number, value: string) {
-    if (!Array.isArray(this.groupConverge.groupLabels)) {
-      this.groupConverge.groupLabels = [''];
-    }
-    this.groupConverge.groupLabels = [...this.groupConverge.groupLabels];
-    this.groupConverge.groupLabels[index] = value;
   }
 }
