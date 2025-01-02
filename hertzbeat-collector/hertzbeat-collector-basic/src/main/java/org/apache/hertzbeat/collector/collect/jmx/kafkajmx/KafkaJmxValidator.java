@@ -35,15 +35,15 @@ import lombok.Getter;
 @Getter
 public enum KafkaJmxValidator {
 
-    BYTES_IN_PER_SEC("kafka\\.server:type=BrokerTopicMetrics,name=BytesInPerSec,topic=.*"),
+    BYTES_IN_PER_SEC("kafka\\.server:type=BrokerTopicMetrics,name=BytesInPerSec,topic=\\*"),
 
-    BYTES_OUT_PER_SEC("kafka\\.server:type=BrokerTopicMetrics,name=BytesOutPerSec,topic=.*"),
+    BYTES_OUT_PER_SEC("kafka\\.server:type=BrokerTopicMetrics,name=BytesOutPerSec,topic=\\*"),
 
-    REPLICA_MANAGE("kafka\\.server:type=ReplicaManager,name=.*"),
+    REPLICA_MANAGE("kafka\\.server:type=ReplicaManager,name=\\*"),
 
-    KAFKA_CONTROLLER("kafka\\.controller:type=KafkaController,name=.*"),
+    KAFKA_CONTROLLER("kafka\\.controller:type=KafkaController,name=\\*"),
 
-    GROUP_METADATA_MANAGE("kafka\\..*:type=GroupMetadataManager,name=.*");
+    GROUP_METADATA_MANAGE("kafka\\..*:type=GroupMetadataManager,name=\\*");
 
     private final String objectNamePattern;
 
