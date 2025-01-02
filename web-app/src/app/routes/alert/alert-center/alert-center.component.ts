@@ -30,7 +30,7 @@ import { AlertService } from '../../../service/alert.service';
 @Component({
   selector: 'app-alert-center',
   templateUrl: './alert-center.component.html',
-  styles: []
+  styleUrl: './alert-center.component.less'
 })
 export class AlertCenterComponent implements OnInit {
   constructor(
