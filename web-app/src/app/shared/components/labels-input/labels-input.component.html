@@ -19,10 +19,10 @@
 
 <div *ngFor="let item of keyValues; let i = index" nz-row>
   <div nz-col nzSpan="10">
-    <input nz-input [placeholder]="keyAlias" [(ngModel)]="item.key" (ngModelChange)="onChange()" />
+    <input nz-input [placeholder]="keyAlias" [(ngModel)]="item.key" (ngModelChange)="emitChange()" />
   </div>
   <div nz-col nzSpan="11">
-    <input nz-input [placeholder]="valueAlias" [(ngModel)]="item.value" (ngModelChange)="onChange()" />
+    <input nz-input [placeholder]="valueAlias" [(ngModel)]="item.value" (ngModelChange)="emitChange()" />
   </div>
   <div nz-col nzSpan="3">
     <i nz-icon nzType="plus-circle" class="dynamic-button" *ngIf="i === 0" (click)="addNew($event)"></i>

@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 interface KeyValuePair {
   key: string;
@@ -8,25 +9,51 @@ interface KeyValuePair {
 @Component({
   selector: 'app-labels-input',
   templateUrl: './labels-input.component.html',
-  styleUrl: './labels-input.component.less'
+  styleUrl: './labels-input.component.less',
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => LabelsInputComponent),
+      multi: true
+    }
+  ]
 })
-export class LabelsInputComponent implements OnInit {
+export class LabelsInputComponent implements OnInit, ControlValueAccessor {
   constructor() {}
-
-  @Input() value!: Record<string, string>;
-  @Output() readonly valueChange = new EventEmitter<Record<string, string>>();
 
   @Input() keyAlias: string = 'Key';
   @Input() valueAlias: string = 'Value';
 
   keyValues: KeyValuePair[] = [];
 
-  ngOnInit(): void {
-    this.keyValues = Object.entries(this.value || {}).map(([key, value]) => ({
+  // ControlValueAccessor 接口实现
+  private onChange: any = () => {};
+  private onTouched: any = () => {};
+
+  writeValue(value: Record<string, string>): void {
+    this.keyValues = Object.entries(value || {}).map(([key, value]) => ({
       key,
       value
     }));
 
+    if (this.keyValues.length === 0) {
+      this.addNew();
+    }
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    // 如果需要处理禁用状态，可以在这里实现
+  }
+
+  ngOnInit(): void {
     if (this.keyValues.length === 0) {
       this.addNew();
     }
@@ -48,16 +75,18 @@ export class LabelsInputComponent implements OnInit {
     }
     if (this.keyValues.length > 1) {
       this.keyValues.splice(index, 1);
+      this.emitChange();
     }
   }
 
-  onChange() {
+  emitChange() {
     const result: Record<string, string> = {};
     this.keyValues.forEach(item => {
       if (item.key?.trim()) {
         result[item.key] = item.value || '';
       }
     });
-    this.valueChange.emit(result);
+    this.onChange(result);
+    this.onTouched();
   }
 }
