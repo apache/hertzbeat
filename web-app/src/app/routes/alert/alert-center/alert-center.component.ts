@@ -25,7 +25,6 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 
 import { GroupAlert } from '../../../pojo/GroupAlert';
-import { Tag } from '../../../pojo/Tag';
 import { AlertService } from '../../../service/alert.service';
 
 @Component({
@@ -82,26 +81,6 @@ export class AlertCenterComponent implements OnInit {
         console.error(error.msg);
       }
     );
-  }
-
-  renderAlertTarget(target: string): string {
-    if (target == undefined || target === '') {
-      return target;
-    }
-    const targets = target.split('.');
-    if (targets.length === 3) {
-      let app = this.i18nSvc.fanyi(`monitor.app.${targets[0]}`);
-      let metrics = this.i18nSvc.fanyi(`monitor.app.${targets[0]}.metrics.${targets[1]}`);
-      let metric = this.i18nSvc.fanyi(`monitor.app.${targets[0]}.metrics.${targets[1]}.metric.${targets[2]}`);
-      let value = app == `monitor.app.${targets[0]}` ? targets[0] : app;
-      value += ` / ${metrics == `monitor.app.${targets[0]}.metrics.${targets[1]}` ? targets[1] : metrics}`;
-      value += ` / ${metric == `monitor.app.${targets[0]}.metrics.${targets[1]}.metric.${targets[2]}` ? targets[2] : metric}`;
-      return value;
-    }
-    if (target === 'availability') {
-      return this.i18nSvc.fanyi('monitor.availability');
-    }
-    return target;
   }
 
   onDeleteAlerts() {
@@ -248,14 +227,6 @@ export class AlertCenterComponent implements OnInit {
     this.loadAlertsTable();
   }
   // end: List multiple choice paging
-
-  sliceTagName(tag: Tag): string {
-    if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
-      return `${tag.name}:${tag.tagValue}`;
-    } else {
-      return tag.name;
-    }
-  }
 
   recordEntries(record: Record<any, any>) {
     return Object.entries(record);
