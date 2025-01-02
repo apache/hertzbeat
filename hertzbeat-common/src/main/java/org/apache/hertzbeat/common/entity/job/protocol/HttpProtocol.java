@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class HttpProtocol implements CommonRequestProtocol {
+public class HttpProtocol implements CommonRequestProtocol, Protocol {
     /**
      * Peer host ip or domain name
      */

@@ -23,6 +23,11 @@ package org.apache.hertzbeat.common.constants;
 public enum GeneralConfigTypeEnum {
 
     /**
+     * mute config
+     */
+    mute,
+
+    /**
      * template config
      */
     template,
@@ -50,5 +55,5 @@ public enum GeneralConfigTypeEnum {
     /**
      * system store config
      */
-    oss;
+    oss
 }

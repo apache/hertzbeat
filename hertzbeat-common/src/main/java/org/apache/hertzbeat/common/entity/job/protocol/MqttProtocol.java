@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MqttProtocol implements CommonRequestProtocol {
+public class MqttProtocol implements CommonRequestProtocol, Protocol {
 
     /**
      * ip address or domain name of the peer host

@@ -18,20 +18,18 @@
 package org.apache.hertzbeat.collector.collect.basic.ssh;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollectE2eTest;
 import org.apache.hertzbeat.collector.collect.ssh.SshCollectImpl;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
-import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -40,11 +38,9 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -52,7 +48,7 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class SshCollectE2eTest {
+public class SshCollectE2eTest extends AbstractCollectE2eTest {
     private static final String UBUNTU_IMAGE = "rastasheep/ubuntu-sshd:18.04";
     private static final String HOST = "127.0.0.1";
     private static final String ROOT_USER = "root";
@@ -61,14 +57,6 @@ public class SshCollectE2eTest {
 
     private static GenericContainer<?> linuxContainer;
 
-    @InjectMocks
-    private AppServiceImpl appService;
-
-    @Mock
-    private ObjectStoreConfigServiceImpl objectStoreConfigService;
-
-    private SshCollectImpl sshCollect;
-    private Metrics metrics;
     private Integer mappedPort;
     private String password;
 
@@ -81,10 +69,8 @@ public class SshCollectE2eTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        // Initialize services and components
-        appService.run();
-        sshCollect = new SshCollectImpl();
-        metrics = new Metrics();
+        super.setUp();
+        collect = new SshCollectImpl();
         password = generateRandomPassword();
 
         // Set up and start container
@@ -99,51 +85,23 @@ public class SshCollectE2eTest {
 
     @Test
     public void testSshCollect() throws ExecutionException, InterruptedException, TimeoutException {
-        // Verify container running status
         Assertions.assertTrue(linuxContainer.isRunning(), "Ubuntu container should be running");
 
-        // Get Ubuntu app definition
         Job ubuntuJob = appService.getAppDefine("ubuntu");
-        List<Metrics> metricsDefinitions = ubuntuJob.getMetrics();
-
-        metricsDefinitions.forEach(this::testMetricsCollection);
+        ubuntuJob.getMetrics().forEach(metricsDef -> 
+            validateMetricsCollection(metricsDef, metricsDef.getName()));
     }
 
-    private void testMetricsCollection(Metrics metricsDef) {
-        String name = metricsDef.getName();
-        CollectRep.MetricsData.Builder builder = executeCollection(metricsDef);
-
-        // Verify CPU metrics
-        Assertions.assertTrue(builder.getValuesList().size() > 0, name + " metrics values should not be empty");
-        CollectRep.ValueRow valueRow = builder.getValuesList().get(0);
-
-        // Verify all columns have values
-        for (int i = 0; i < valueRow.getColumnsCount(); i++) {
-            Assertions.assertFalse(valueRow.getColumns(i).isEmpty(),
-                    String.format("%s metric column %d should not be empty", name, i));
-        }
-
-        log.info(name + " metrics validation passed");
-    }
-
-    private CollectRep.MetricsData.Builder executeCollection(Metrics metricsDef) {
+    @Override
+    protected CollectRep.MetricsData.Builder collectMetrics(Metrics metricsDef) {
         // Build SSH protocol configuration
-        SshProtocol sshProtocol = buildSshProtocol(metricsDef);
+        SshProtocol sshProtocol = (SshProtocol) buildProtocol(metricsDef);
         metrics.setSsh(sshProtocol);
-
-        // Set field aliases
-        metrics.setAliasFields(metricsDef.getAliasFields() == null ? metricsDef.getFields().stream()
-                        .map(Metrics.Field::getField)
-                        .collect(Collectors.toList()) :
-                metricsDef.getAliasFields());
-
-        // Execute collection
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        sshCollect.collect(builder, metrics);
-        return builder;
+        return collectMetricsData(metrics, metricsDef);
     }
 
-    private SshProtocol buildSshProtocol(Metrics metricsDef) {
+    @Override
+    protected Protocol buildProtocol(Metrics metricsDef) {
         SshProtocol sshProtocol = new SshProtocol();
         sshProtocol.setHost(HOST);
         sshProtocol.setPort(mappedPort.toString());
