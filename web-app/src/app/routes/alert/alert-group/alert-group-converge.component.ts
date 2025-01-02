@@ -51,6 +51,8 @@ export class AlertGroupConvergeComponent implements OnInit {
   tableLoading: boolean = true;
   checkedConvergeIds = new Set<number>();
 
+  commonLabels: string[] = ['alertname', 'instance', 'job', 'severity', 'service', 'host', 'env'];
+
   ngOnInit(): void {
     this.loadGroupConvergeTable();
   }
@@ -256,18 +258,6 @@ export class AlertGroupConvergeComponent implements OnInit {
       return;
     }
 
-    const validLabels = this.groupConverge.groupLabels.filter(label => label && label.trim().length > 0).map(label => label.trim());
-
-    if (validLabels.length === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('validation.required'), this.i18nSvc.fanyi('alert.group-converge.group-labels'));
-      return;
-    }
-
-    // 更新处理后的标签
-    this.groupConverge.groupLabels = validLabels;
-
-    console.log('Submitting groupConverge:', JSON.stringify(this.groupConverge));
-
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertConvergeService
@@ -315,24 +305,6 @@ export class AlertGroupConvergeComponent implements OnInit {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
-    }
-  }
-
-  addLabel() {
-    if (!Array.isArray(this.groupConverge.groupLabels)) {
-      this.groupConverge.groupLabels = [];
-    }
-    if (this.groupConverge.groupLabels.length < 5) {
-      const newLabels = [...this.groupConverge.groupLabels];
-      newLabels.push('');
-      this.groupConverge.groupLabels = newLabels;
-    }
-  }
-
-  removeLabel(index: number) {
-    if (this.groupConverge.groupLabels.length > 1) {
-      const newLabels = [...this.groupConverge.groupLabels.slice(0, index), ...this.groupConverge.groupLabels.slice(index + 1)];
-      this.groupConverge.groupLabels = newLabels;
     }
   }
 }

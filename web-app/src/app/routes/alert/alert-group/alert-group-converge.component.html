@@ -159,46 +159,26 @@
         </nz-form-control>
       </nz-form-item>
 
-      <!-- 分组标签 -->
       <nz-form-item>
-        <nz-form-label
-          [nzSpan]="7"
-          nzFor="groupLabels"
-          nzRequired="true"
-          [nzTooltipTitle]="'alert.group-converge.group-labels.tip' | i18n"
-        >
+        <nz-form-label [nzSpan]="7" nzFor="groupLabels" nzRequired="true" [nzTooltipTitle]="'alert.group-converge.group-labels.tip' | i18n">
           {{ 'alert.group-converge.group-labels' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <div class="labels-container">
-            <div *ngFor="let label of groupConverge.groupLabels; let i = index" class="label-item">
-              <input
-                nz-input
-                [ngModelOptions]="{ standalone: true }"
-                [(ngModel)]="groupConverge.groupLabels[i]"
-                [placeholder]="'alert.group-converge.group-labels.placeholder' | i18n"
-                required
-              />
-              <div class="button-group">
-                <button nz-button nzType="link" nzDanger (click)="removeLabel(i)" class="action-btn">
-                  <i nz-icon nzType="minus-circle" nzTheme="outline"></i>
-                </button>
-                <button
-                  *ngIf="i === groupConverge.groupLabels.length - 1 && groupConverge.groupLabels.length < 5"
-                  nz-button
-                  nzType="link"
-                  (click)="addLabel()"
-                  class="action-btn add-btn"
-                >
-                  <i nz-icon nzType="plus-circle" nzTheme="outline"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+          <nz-select
+            [(ngModel)]="groupConverge.groupLabels"
+            name="groupLabels"
+            nzMode="tags"
+            [nzTokenSeparators]="[',']"
+            [nzMaxMultipleCount]="10"
+            nzAllowClear
+            required
+            nzPlaceHolder="{{ 'alert.inhibit.equal_labels.placeholder' | i18n }}"
+          >
+            <nz-option *ngFor="let label of commonLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
+          </nz-select>
         </nz-form-control>
       </nz-form-item>
 
-      <!-- 分组等待时间 -->
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="groupWait" nzRequired="true" [nzTooltipTitle]="'alert.group-converge.group-wait.tip' | i18n">
           {{ 'alert.group-converge.group-wait' | i18n }}
@@ -218,7 +198,6 @@
         </nz-form-control>
       </nz-form-item>
 
-      <!-- 分组间隔时间 -->
       <nz-form-item>
         <nz-form-label
           [nzSpan]="7"
@@ -243,7 +222,6 @@
         </nz-form-control>
       </nz-form-item>
 
-      <!-- 重复告警间隔 -->
       <nz-form-item>
         <nz-form-label
           [nzSpan]="7"
@@ -268,7 +246,6 @@
         </nz-form-control>
       </nz-form-item>
 
-      <!-- 是否启用 -->
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
