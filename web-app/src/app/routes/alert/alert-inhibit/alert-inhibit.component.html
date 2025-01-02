@@ -177,16 +177,14 @@
             [(ngModel)]="alertInhibit.equalLabels"
             name="equalLabels"
             nzMode="tags"
-            [nzTokenSeparators]="[',', ' ']"
-            [nzMaxTagCount]="3"
-            [nzMaxTagPlaceholder]="tagPlaceHolder"
+            [nzTokenSeparators]="[',']"
+            [nzMaxMultipleCount]="10"
             nzAllowClear
             required
             nzPlaceHolder="{{ 'alert.inhibit.equal_labels.placeholder' | i18n }}"
           >
             <nz-option *ngFor="let label of commonLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
           </nz-select>
-          <ng-template #tagPlaceHolder let-selectedList> 还有 {{ selectedList.length }} 个标签 </ng-template>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
