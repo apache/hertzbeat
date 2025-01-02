@@ -90,8 +90,8 @@ public class RealTimeAlertCalculator {
         this.dataQueue = dataQueue;
         this.alarmCommonReduce = alarmCommonReduce;
         this.alertDefineService = alertDefineService;
-        this.pendingAlertMap = new ConcurrentHashMap<>(16);
-        this.firingAlertMap = new ConcurrentHashMap<>(16);
+        this.pendingAlertMap = new ConcurrentHashMap<>(8);
+        this.firingAlertMap = new ConcurrentHashMap<>(8);
         // Initialize firing stateAlertMap
         List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
         for (SingleAlert singleAlert : singleAlerts) {
@@ -337,8 +337,8 @@ public class RealTimeAlertCalculator {
                 // Reached trigger times threshold, change to firing status
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
                 firingAlertMap.put(fingerprint, existingAlert);
-                alarmCommonReduce.reduceAndSendAlarm(existingAlert);
                 pendingAlertMap.remove(fingerprint);
+                alarmCommonReduce.reduceAndSendAlarm(existingAlert);
             }
         }
     }

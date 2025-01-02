@@ -56,6 +56,11 @@ public class AlarmGroupReduce {
      * Default repeat interval 4h
      */
     private static final long DEFAULT_REPEAT_INTERVAL = 4 * 60 * 60 * 1000L;
+
+    /**
+     * Milliseconds per second
+     */
+    private static final long MS_PER_SECOND = 1000L;
     
     private final AlarmInhibitReduce alarmInhibitReduce;
     
@@ -185,7 +190,8 @@ public class AlarmGroupReduce {
         // For firing alerts, check repeat interval
         if ("firing".equals(status)) {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-            long repeatInterval = ruleConfig != null ? ruleConfig.getRepeatInterval() : DEFAULT_REPEAT_INTERVAL;
+            long repeatInterval = ruleConfig.getRepeatInterval() != null
+                    ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
             
             // Skip if within repeat interval
             if (cache.getLastRepeatTime() > 0 
@@ -208,8 +214,8 @@ public class AlarmGroupReduce {
     
     private boolean shouldSendGroup(GroupAlertCache cache, long now) {
         AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
-        long groupWait = ruleConfig != null ? ruleConfig.getGroupWait() : DEFAULT_GROUP_WAIT;
-        long groupInterval = ruleConfig != null ? ruleConfig.getGroupInterval() : DEFAULT_GROUP_INTERVAL;
+        long groupWait = ruleConfig != null ? ruleConfig.getGroupWait() * MS_PER_SECOND : DEFAULT_GROUP_WAIT;
+        long groupInterval = ruleConfig != null ? ruleConfig.getGroupInterval() * MS_PER_SECOND : DEFAULT_GROUP_INTERVAL;
         
         // First wait time reached
         if (cache.getLastSendTime() == 0 
