@@ -231,7 +231,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
 
         List<Metrics.Field> fields = metrics.getFields();
-        List<String> aliasFields = metrics.getAliasFields();
+        List<String> aliasFields = Optional.ofNullable(metrics.getAliasFields()).orElseGet(Collections::emptyList);
         Map<String, String> aliasFieldValueMap = new HashMap<>(8);
         Map<String, Object> fieldValueMap = new HashMap<>(8);
         Map<String, Object> stringTypefieldValueMap = new HashMap<>(8);
