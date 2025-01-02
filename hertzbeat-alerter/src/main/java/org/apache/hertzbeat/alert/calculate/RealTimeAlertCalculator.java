@@ -126,7 +126,7 @@ public class RealTimeAlertCalculator {
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
         int priority = metricsData.getPriority();
-        String code = metricsData.getCode().name();
+        int code = metricsData.getCode().getNumber();
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
         // Filter thresholds by app, metrics and instance
         thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance);
