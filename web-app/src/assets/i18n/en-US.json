@@ -2,7 +2,7 @@
   "menu": {
     "main": "Main",
     "lang": "Language",
-    "dashboard": "DashBoard",
+    "dashboard": "Dashboard",
     "search.placeholder": "Search：Monitoring Task: Name、Host etc",
     "fullscreen": "Full Screen",
     "fullscreen.exit": "Exit",
