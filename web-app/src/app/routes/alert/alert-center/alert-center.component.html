@@ -107,13 +107,7 @@
         >
           <i nz-icon nzType="up-circle" nzTheme="outline"></i>
         </button>
-        <button
-          nz-button
-          nzDanger
-          (click)="onDeleteOneAlert(group.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.delete' | i18n"
-        >
+        <button nz-button nzDanger (click)="onDeleteOneAlert(group.id)" nz-tooltip [nzTooltipTitle]="'alert.center.delete' | i18n">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
         </button>
       </div>
