@@ -31,6 +31,7 @@ import javax.management.ReflectionException;
 
 import org.apache.hertzbeat.collector.collect.jmx.MbeanProcessor;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 import org.apache.hertzbeat.common.entity.message.CollectRep.ValueRow;
 
@@ -44,7 +45,11 @@ public class KafkaCommonProcessor implements MbeanProcessor {
 
     @Override
     public void preProcess(Builder builder, Metrics metrics) {
-
+        JmxProtocol jmx = metrics.getJmx();
+        if (metrics.getJmx().getObjectName() != null &&
+                metrics.getJmx().getObjectName().contains("GroupMetadataManager")) {
+            jmx.setObjectName("kafka.*:type=GroupMetadataManager,name=*");
+        }
     }
 
     @Override
