@@ -77,22 +77,30 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="16%">{{ 'alert.group-converge.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'alert.group-converge.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="16%">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.group-converge.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.group-converge.group-labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-wait' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-interval' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.repeat-interval' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.group-converge.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedConvergeIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
-        <span> {{ data.name }} </span>
+        <span>{{ data.name }}</span>
       </td>
+      <td nzAlign="center">
+        <nz-tag *ngFor="let label of data.groupLabels">{{ label }}</nz-tag>
+      </td>
+      <td nzAlign="center"> {{ data.groupWait }}{{ 'alert.group-converge.seconds' | i18n }} </td>
+      <td nzAlign="center"> {{ data.groupInterval }}{{ 'alert.group-converge.seconds' | i18n }} </td>
+      <td nzAlign="center"> {{ data.repeatInterval }}{{ 'alert.group-converge.seconds' | i18n }} </td>
       <td nzAlign="center">
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateGroupConverge(data)" name="enable"></nz-switch>
       </td>
-      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
         <div class="actions">
           <button
