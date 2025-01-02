@@ -78,6 +78,9 @@
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.inhibit.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.inhibit.source_labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.inhibit.target_labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.inhibit.equal_labels' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.inhibit.enable' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -85,8 +88,15 @@
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedConvergeIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td nzAlign="center">{{ data.name }}</td>
       <td nzAlign="center">
-        <span>{{ data.name }}</span>
+        <nz-tag *ngFor="let item of data.sourceLabels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag *ngFor="let item of data.targetLabels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag *ngFor="let label of data.equalLabels">{{ label }}</nz-tag>
       </td>
       <td nzAlign="center">
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateInhibit(data)" name="enable"></nz-switch>
@@ -135,16 +145,47 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #ruleForm="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="10" nzFor="rule_name" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.name.tip' | i18n">
+        <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.name.tip' | i18n">
           {{ 'alert.inhibit.name' | i18n }}
         </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="alertInhibit.name" nz-input required name="rule_name" type="text" id="rule_name" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="10" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="8">
+        <nz-form-label [nzSpan]="7" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.source_labels.tip' | i18n">
+          {{ 'alert.inhibit.source_labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <app-key-value-input [(ngModel)]="alertInhibit.sourceLabels" name="sourceLabels" required></app-key-value-input>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.target_labels.tip' | i18n">
+          {{ 'alert.inhibit.target_labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <app-key-value-input [(ngModel)]="alertInhibit.targetLabels" name="targetLabels" required></app-key-value-input>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.equal_labels.tip' | i18n">
+          {{ 'alert.inhibit.equal_labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-select
+            [(ngModel)]="alertInhibit.equalLabels"
+            name="equalLabels"
+            nzMode="tags"
+            nzPlaceHolder="{{ 'alert.inhibit.equal_labels.placeholder' | i18n }}"
+            required
+          >
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12">
           <nz-switch [(ngModel)]="alertInhibit.enable" name="enable" id="enable"></nz-switch>
         </nz-form-control>
       </nz-form-item>
