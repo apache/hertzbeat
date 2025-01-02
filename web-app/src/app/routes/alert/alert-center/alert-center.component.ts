@@ -43,7 +43,7 @@ export class AlertCenterComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  alerts!: GroupAlert[];
+  groupAlerts!: GroupAlert[];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
   filterStatus: string = 'firing';
@@ -63,11 +63,14 @@ export class AlertCenterComponent implements OnInit {
     let alertsInit$ = this.alertSvc.loadGroupAlerts(this.filterStatus, this.filterContent, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedAlertIds.clear();
         if (message.code === 0) {
           let page = message.data;
-          this.alerts = page.content;
+          this.groupAlerts = page.content;
+          this.groupAlerts.forEach(alert => {
+            if (alert.alerts == undefined) {
+              alert.alerts = [];
+            }
+          });
           this.pageIndex = page.number + 1;
           this.total = page.totalElements;
         } else {
@@ -208,7 +211,7 @@ export class AlertCenterComponent implements OnInit {
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
-      this.alerts.forEach(monitor => this.checkedAlertIds.add(monitor.id));
+      this.groupAlerts.forEach(monitor => this.checkedAlertIds.add(monitor.id));
     } else {
       this.checkedAlertIds.clear();
     }
@@ -219,12 +222,6 @@ export class AlertCenterComponent implements OnInit {
     } else {
       this.checkedAlertIds.delete(monitorId);
     }
-  }
-  onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
-    this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-    this.loadAlertsTable();
   }
   // end: List multiple choice paging
 
