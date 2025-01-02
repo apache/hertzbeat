@@ -20,9 +20,9 @@ package org.apache.hertzbeat.collector.dispatch;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.jexl3.JexlExpression;
-import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
+import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
@@ -34,6 +34,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.Pair;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,7 +44,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.springframework.util.CollectionUtils;
 
 /**
  * metrics collection
@@ -142,7 +142,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
             List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
-                .getInstance().collect(response, metrics);
+                    .getInstance().collect(response, metrics);
             validateResponse(metricsData.stream().findFirst().orElse(null));
             collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
             return;
@@ -153,10 +153,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         AbstractCollect abstractCollect = CollectStrategyFactory.invoke(metrics.getProtocol());
         if (abstractCollect == null) {
             log.error("[Dispatcher] - not support this: app: {}, metrics: {}, protocol: {}.",
-                app, metrics.getName(), metrics.getProtocol());
+                    app, metrics.getName(), metrics.getProtocol());
             response.setCode(CollectRep.Code.FAIL);
             response.setMsg("not support " + app + ", "
-                + metrics.getName() + ", " + metrics.getProtocol());
+                    + metrics.getName() + ", " + metrics.getProtocol());
         } else {
             try {
                 abstractCollect.preCheck(metrics);
@@ -192,7 +192,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * @param metrics     Metrics configuration
      * @param collectData Data collection
      */
-    private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
+    public void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
         List<CollectRep.Field> fieldList = new LinkedList<>();
         for (Metrics.Field field : metrics.getFields()) {
@@ -216,19 +216,19 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         // eg: database_pages=Database pages unconventional mapping
         Map<String, String> fieldAliasMap = new HashMap<>(8);
         Map<String, JexlExpression> fieldExpressionMap = metrics.getCalculates()
-            .stream()
-            .map(cal -> transformCal(cal, fieldAliasMap))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (JexlExpression) arr[1], (oldValue, newValue) -> newValue));
+                .stream()
+                .map(cal -> transformCal(cal, fieldAliasMap))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (JexlExpression) arr[1], (oldValue, newValue) -> newValue));
 
         if (metrics.getUnits() == null) {
             metrics.setUnits(Collections.emptyList());
         }
         Map<String, Pair<String, String>> fieldUnitMap = metrics.getUnits()
-            .stream()
-            .map(this::transformUnit)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
+                .stream()
+                .map(this::transformUnit)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
 
         List<Metrics.Field> fields = metrics.getFields();
         List<String> aliasFields = metrics.getAliasFields();
@@ -245,7 +245,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     aliasFieldValueMap.put(aliasField, aliasFieldValue);
                     // whether the alias field is a number
                     CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                        .extractDoubleAndUnitFromStr(aliasFieldValue);
+                            .extractDoubleAndUnitFromStr(aliasFieldValue);
                     if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
                         fieldValueMap.put(aliasField, doubleAndUnit.getValue());
                         if (doubleAndUnit.getUnit() != null) {
@@ -290,8 +290,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     } catch (Exception e) {
                         log.info("[calculates execute warning] {}.", e.getMessage());
                         value = Optional.ofNullable(fieldValueMap.get(expression.getSourceText()))
-                                        .map(String::valueOf)
-                                        .orElse(null);
+                                .map(String::valueOf)
+                                .orElse(null);
                     }
                 } else {
                     // does not exist then map the alias value
@@ -306,7 +306,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         final byte fieldType = field.getType();
                         if (fieldType == CommonConstants.TYPE_NUMBER) {
                             CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                .extractDoubleAndUnitFromStr(value);
+                                    .extractDoubleAndUnitFromStr(value);
                             final Double tempValue = doubleAndUnit == null ? null : doubleAndUnit.getValue();
                             value = tempValue == null ? null : String.valueOf(tempValue);
                             aliasFieldUnit = doubleAndUnit == null ? null : doubleAndUnit.getUnit();
@@ -453,7 +453,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     private void setNewThreadName(long monitorId, String app, long startTime, Metrics metrics) {
         String builder = monitorId + "-" + app + "-" + metrics.getName()
-            + "-" + String.valueOf(startTime).substring(9);
+                + "-" + String.valueOf(startTime).substring(9);
         Thread.currentThread().setName(builder);
     }
 
