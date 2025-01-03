@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class IpmiProtocol implements CommonRequestProtocol {
+public class IpmiProtocol implements CommonRequestProtocol, Protocol {
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */

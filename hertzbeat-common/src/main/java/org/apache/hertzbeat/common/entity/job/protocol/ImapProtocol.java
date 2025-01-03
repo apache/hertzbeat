@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ImapProtocol implements CommonRequestProtocol {
+public class ImapProtocol implements CommonRequestProtocol, Protocol {
     /**
      * Receiving server address
      */
