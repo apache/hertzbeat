@@ -24,7 +24,7 @@ keywords: [Open Source Monitoring System, Open Source Database Monitoring, DORIS
 
 #### Metric Set:doris_be_load_channel_count
 
-| Metric Name	  | Metric Unit |        Metric help description          |
+| Metric Name      | Metric Unit |        Metric help description          |
 |-------|------|-----------------------|
 | value | None     | The current number of load channels |
 
