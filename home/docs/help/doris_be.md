@@ -1,170 +1,170 @@
 ---
-id: doris_be  
-title: 监控：DORIS数据库BE监控      
-sidebar_label: DORIS数据库BE  
-keywords: [开源监控系统, 开源数据库监控, DORIS数据库BE监控]
+id: doris_be
+title: Monitoring DORIS Database BE Monitoring
+sidebar_label: DORIS Database BE
+keywords: [Open Source Monitoring System, Open Source Database Monitoring, DORIS Database BE Monitoring]
 ---
 
-> 对DORIS数据库FE的通用性能指标进行采集监控。支持DORIS2.0.0。
+> Collect and monitor general performance metrics for DORIS database BE. Supports DORIS 2.0.0.
 
-### 配置参数
+### Pre-monitoring operations
 
-|  参数名称  |                       参数帮助描述                        |
+|  Parameter Name  |                        Parameter Description                       |
 |--------|-----------------------------------------------------|
-| 监控Host | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://) |
-| 任务名称   | 标识此监控的名称，名称需要保证唯一性                                  |
-| 端口     | 数据库对外提供的端口，默认为8040                                  |
-| 查询超时时间 | 设置连接未响应的超时时间，单位ms毫秒，默认3000毫秒                        |
-| 数据库名称  | 数据库实例名称，可选                                          |
-| 采集间隔   | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                      |
-| 是否探测   | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                    |
-| 描述备注   | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                         |
+| Monitor Host | The monitored target's IPV4, IPV6, or domain name. Note: Without the protocol header (e.g., https://, http://) |
+| Task Name           | A unique name identifying this monitoring task                                  |
+| Port                | The port provided by the database to the outside, default is 8040 ,get the value of the`http_port` configuration item                               |
+| Query Timeout       | The timeout for the connection to not respond, in milliseconds, default is 3000 milliseconds                            |
+| Database Name       | Optional database instance name                                        |
+| Collection Interval | The interval between periodic data collections for monitoring, in seconds, with a minimum interval of 30 seconds                               |
+| Probe Required      | Whether to probe and check the availability of monitoring before adding new monitoring, continue with the addition or modification operation only if the probe is successful      |
+| Description         | Additional notes and descriptions for this monitoring task                      |
 
-### 采集指标
+### Collection Indicators
 
-#### 指标集合：doris_be_load_channel_count
+#### Metric Set:doris_be_load_channel_count
 
-| 指标名称  | 指标单位 |        指标帮助描述         |
+| Metric Name      | Metric Unit |        Metric help description          |
 |-------|------|-----------------------|
-| value | 无    | 当前打开的 load channel 个数 |
+| value | None     | The current number of load channels |
 
-#### 指标集合：doris_be_memtable_flush_total
+#### Metric Set:doris_be_memtable_flush_total
 
-| 指标名称  | 指标单位 |       指标帮助描述       |
+| Metric Name  | Metric Unit |       Metric help description       |
 |-------|------|--------------------|
-| value | 无    | memtable写入磁盘的个数累计值 |
+| value | None    | Cumulative number of memtable writes to disk |
 
-#### 指标集合：doris_be_plan_fragment_count
+#### Metric Set:doris_be_plan_fragment_count
 
-| 指标名称  | 指标单位 |            指标帮助描述            |
+| Metric Name  | Metric Unit |            Metric help description            |
 |-------|------|------------------------------|
-| value | 无    | 当前已接收的 fragment instance 的数量 |
+| value | None    | Number of fragment instances currently received |
 
-#### 指标集合：doris_be_process_thread_num
+#### Metric Set:doris_be_process_thread_num
 
-| 指标名称  | 指标单位 |             指标帮助描述              |
+| Metric Name  | Metric Unit |             Metric help description              |
 |-------|------|---------------------------------|
-| value | 无    | BE 进程线程数。通过 `/proc/pid/task` 采集 |
+| value | None    | Number of BE process threads, collected through /proc/pid/task |
 
-#### 指标集合：doris_be_query_scan_rows
+#### Metric Set:doris_be_query_scan_rows
 
-| 指标名称  | 指标单位 |                                    指标帮助描述                                    |
+| Metric Name  | Metric Unit |                                    Metric help description                                    |
 |-------|------|------------------------------------------------------------------------------|
-| value | 无    | 读取行数的累计值。这里只统计读取 Olap 表的数据量。并且是 RawRowsRead（部分数据行可能被索引跳过，并没有真正读取，但仍会记录到这个值中） |
+| value | None    | Cumulative number of rows read. This only counts the data volume read from OLAP tables, and it represents RawRowsRead (some data rows may be skipped by the index and not actually read, but they are still recorded in this value). |
 
-#### 指标集合：doris_be_result_buffer_block_count
+#### Metric Set:doris_be_result_buffer_block_count
 
-| 指标名称  | 指标单位 |       指标帮助描述        |
+| Metric Name  | Metric Unit |       Metric help description        |
 |-------|------|---------------------|
-| value | 无    | 当前查询结果缓存中的 query 个数 |
+| value | None    | Number of queries in the current query result cache |
 
-#### 指标集合：doris_be_send_batch_thread_pool_queue_size
+#### Metric Set:doris_be_send_batch_thread_pool_queue_size
 
-| 指标名称  | 指标单位 |       指标帮助描述        |
+| Metric Name  | Metric Unit |       Metric help description        |
 |-------|------|---------------------|
-| value | 无    | 导入时用于发送数据包的线程池的排队个数 |
+| value | None    | Number of tasks in the queue of the thread pool used for sending data packets during import |
 
-#### 指标集合：doris_be_tablet_base_max_compaction_score
+#### Metric Set:doris_be_tablet_base_max_compaction_score
 
-| 指标名称  | 指标单位 |           指标帮助描述            |
+| Metric Name  | Metric Unit |           Metric help description            |
 |-------|------|-----------------------------|
-| value | 无    | 当前最大的 Base Compaction Score |
+| value | None    | Current maximum Base Compaction Score |
 
-#### 指标集合：doris_be_timeout_canceled_fragment_count
+#### Metric Set:doris_be_timeout_canceled_fragment_count
 
-| 指标名称  | 指标单位 |              指标帮助描述              |
+| Metric Name  | Metric Unit |              Metric help description              |
 |-------|------|----------------------------------|
-| value | 无    | 因超时而被取消的 fragment instance 数量累计值 |
+| value | None    | Cumulative number of fragment instances cancelled due to timeout |
 
-#### 指标集合：doris_be_load_rows
+#### Metric Set:doris_be_load_rows
 
-| 指标名称  | 指标单位 |         指标帮助描述         |
+| Metric Name  | Metric Unit |         Metric help description         |
 |-------|------|------------------------|
-| value | 无    | 通过 tablet sink 发送的行数累计 |
+| value | None    | Cumulative number of rows sent through tablet sink |
 
-#### 指标集合：doris_be_all_rowsets_num
+#### Metric Set:doris_be_all_rowsets_num
 
-| 指标名称  | 指标单位 |     指标帮助描述      |
+| Metric Name  | Metric Unit |     Metric help description      |
 |-------|------|-----------------|
-| value | 无    | 当前所有 rowset 的个数 |
+| value | None    | Current number of rowsets |
 
-#### 指标集合：doris_be_all_segments_num
+#### Metric Set:doris_be_all_segments_num
 
-| 指标名称  | 指标单位 |      指标帮助描述      |
+| Metric Name  | Metric Unit |      Metric help description      |
 |-------|------|------------------|
-| value | 无    | 当前所有 segment 的个数 |
+| value | None    | Current number of segments |
 
-#### 指标集合：doris_be_heavy_work_max_threads
+#### Metric Set:doris_be_heavy_work_max_threads
 
-| 指标名称  | 指标单位 |      指标帮助描述       |
+| Metric Name  | Metric Unit |      Metric help description       |
 |-------|------|-------------------|
-| value | 无    | brpc heavy线程池线程个数 |
+| value | None    | Number of threads in the brpc heavy thread pool |
 
-#### 指标集合：doris_be_light_work_max_threads
+#### Metric Set:doris_be_light_work_max_threads
 
-| 指标名称  | 指标单位 |      指标帮助描述       |
+| Metric Name  | Metric Unit |      Metric help description       |
 |-------|------|-------------------|
-| value | 无    | brpc light线程池线程个数 |
+| value | None    | Number of threads in the brpc light thread pool|
 
-#### 指标集合：doris_be_heavy_work_pool_queue_size
+#### Metric Set:doris_be_heavy_work_pool_queue_size
 
-| 指标名称  | 指标单位 |             指标帮助描述              |
+| Metric Name  | Metric Unit |             Metric help description              |
 |-------|------|---------------------------------|
-| value | 无    | brpc heavy线程池队列最大长度,超过则阻塞提交work |
+| value | None    | Maximum queue length of the brpc heavy thread pool; if exceeded, work submissions will be blocked |
 
-#### 指标集合：doris_be_light_work_pool_queue_size
+#### Metric Set:doris_be_light_work_pool_queue_size
 
-| 指标名称  | 指标单位 |             指标帮助描述              |
+| Metric Name  | Metric Unit |             Metric help description              |
 |-------|------|---------------------------------|
-| value | 无    | brpc light线程池队列最大长度,超过则阻塞提交work |
+| value | None    | Maximum queue length of the brpc light thread pool; if exceeded, work submissions will be blocked |
 
-#### 指标集合：doris_be_heavy_work_active_threads
+#### Metric Set:doris_be_heavy_work_active_threads
 
-| 指标名称  | 指标单位 |       指标帮助描述       |
+| Metric Name  | Metric Unit |       Metric help description       |
 |-------|------|--------------------|
-| value | 无    | brpc heavy线程池活跃线程数 |
+| value | None    | Number of active threads in the brpc heavy thread pool |
 
-#### 指标集合：doris_be_light_work_active_threads
+#### Metric Set:doris_be_light_work_active_threads
 
-| 指标名称  | 指标单位 |       指标帮助描述       |
+| Metric Name  | Metric Unit |       Metric help description       |
 |-------|------|--------------------|
-| value | 无    | brpc light线程池活跃线程数 |
+| value | None    | Number of active threads in the brpc light thread pool |
 
-#### 指标集合：doris_be_compaction_bytes_total
+#### Metric Set:doris_be_compaction_bytes_total
 
-|    指标名称    | 指标单位 |            指标帮助描述            |
+|    Metric Name    | Metric Unit |            Metric help description            |
 |------------|------|------------------------------|
-| base       | 字节   | Base Compaction 的数据量累计       |
-| cumulative | 字节   | Cumulative Compaction 的数据量累计 |
+| base       | Bytes   | Cumulative data volume of Base Compaction       |
+| cumulative | Bytes   | Cumulative data volume of Cumulative Compaction |
 
-#### 指标集合：doris_be_disks_avail_capacity
+#### Metric Set:doris_be_disks_avail_capacity
 
-| 指标名称  | 指标单位 |                   指标帮助描述                   |
+| Metric Name  | Metric Unit |                   Metric help description                   |
 |-------|------|--------------------------------------------|
-| path  | 无    | 指定数据目录                                     |
-| value | 字节   | `{path="/path1/"}` 表示 `/path1` 目录所在磁盘的剩余空间 |
+| path  | None    | Specify data directory                                    |
+| value | Bytes   | {path="/path1/"} represents the remaining disk space of the /path1 directory's disk. |
 
-#### 指标集合：doris_be_disks_total_capacity
+#### Metric Set:doris_be_disks_total_capacity
 
-| 指标名称  | 指标单位 |                   指标帮助描述                   |
+| Metric Name  | Metric Unit |                   Metric help description                   |
 |-------|------|--------------------------------------------|
-| path  | 无    | 指定数据目录                                     |
-| value | 字节   | `{path="/path1/"}` 表示 `/path1` 目录所在磁盘的全部空间 |
+| path  | None    | Specify data directory                                    |
+| value | Bytes   | {path="/path1/"} represents the total disk space of the disk where the /path1 directory is located. |
 
-#### 指标集合：doris_be_local_bytes_read_total
+#### Metric Set:doris_be_local_bytes_read_total
 
-| 指标名称  | 指标单位 |           指标帮助描述           |
+| Metric Name  | Metric Unit |           Metric help description           |
 |-------|------|----------------------------|
-| value | 字节   | 由 `LocalFileReader` 读取的字节数 |
+| value | Bytes   | Number of bytes read by LocalFileReader |
 
-#### 指标集合：doris_be_local_bytes_written_total
+#### Metric Set:doris_be_local_bytes_written_total
 
-| 指标名称  | 指标单位 |           指标帮助描述           |
+| Metric Name  | Metric Unit |           Metric help description           |
 |-------|------|----------------------------|
-| value | 字节   | 由 `LocalFileWriter` 写入的字节数 |
+| value | Bytes   | Number of bytes written by LocalFileWriter |
 
-#### 指标集合：doris_be_memory_allocated_bytes
+#### Metric Set:doris_be_memory_allocated_bytes
 
-| 指标名称  | 指标单位 |                  指标帮助描述                  |
+| Metric Name  | Metric Unit |                  Metric help description                  |
 |-------|------|------------------------------------------|
-| value | 字节   | BE 进程物理内存大小，取自 `/proc/self/status/VmRSS` |
+| value | Bytes   | Physical memory size of the BE process, retrieved from /proc/self/status/VmRSS |
