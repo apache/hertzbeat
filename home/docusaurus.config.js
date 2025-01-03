@@ -22,12 +22,17 @@ module.exports = {
     repoUrl,
     cdnUrl,
   },
-  clientModules: [path.resolve(__dirname, './src/pages/components/Matomo.js')],
   i18n: {
     defaultLocale: 'en',
     locales: ['zh-cn', 'en'],
   },
   themeConfig: {
+    matomo: {
+      matomoUrl: 'https://analytics.apache.org/',
+      siteId: 'ID',
+      phpLoader: 'matomo.php',
+      jsLoader: 'matomo.js',
+    },
     image: '/img/hertzbeat-logo.svg',
     liveCodeBlock: {
       playgroundPosition: 'bottom',
@@ -345,6 +350,7 @@ module.exports = {
         fromExtensions: ['html'],
       },
     ],
+    'docusaurus-plugin-matomo',
     '@docusaurus/plugin-ideal-image',
     [
       '@docusaurus/plugin-pwa',
