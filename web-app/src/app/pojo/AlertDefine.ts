@@ -28,6 +28,7 @@ export class AlertDefine {
   // unit second
   period: number = 300;
   times: number = 3;
+  // severity: info, warning, critical, emergency, fatal
   labels!: Record<string, string>;
   annotations!: Record<string, string>;
   enable: boolean = true;

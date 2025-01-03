@@ -298,7 +298,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       xAxis: {
         type: 'category',
-        data: [this.i18nSvc.fanyi('alert.priority.2'), this.i18nSvc.fanyi('alert.priority.1'), this.i18nSvc.fanyi('alert.priority.0')]
+        data: [this.i18nSvc.fanyi('alert.severity.2'), this.i18nSvc.fanyi('alert.severity.1'), this.i18nSvc.fanyi('alert.severity.0')]
       },
       yAxis: {
         type: 'value'
