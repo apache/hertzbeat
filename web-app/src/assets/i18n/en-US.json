@@ -225,7 +225,7 @@
   "alert.silence.type.once": "One Time Silence",
   "alert.silence.type.cyc": "Periodic Silence",
   "alert.silence.type": "Silence Type",
-  "alert.silence.tags": "Tag Match",
+  "alert.silence.labels": "Tag Match",
   "alert.silence.time": "Silence Period",
   "alert.silence.times": "Silenced Alerts Num",
   "alert.silence.enable": "Enable Silence",

@@ -226,7 +226,7 @@
   "alert.silence.type.once": "一次性静默",
   "alert.silence.type.cyc": "周期性静默",
   "alert.silence.type": "静默类型",
-  "alert.silence.tags": "匹配标签",
+  "alert.silence.labels": "匹配标签",
   "alert.silence.time": "静默时段",
   "alert.silence.times": "已静默告警数",
   "alert.silence.enable": "启用静默策略",
