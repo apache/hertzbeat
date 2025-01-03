@@ -21,47 +21,43 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.collector.collect.jmx.JmxValidator;
 import org.apache.hertzbeat.collector.collect.jmx.MbeanProcessor;
 import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor.KafkaBytesInAndOutPerSecProcessor;
 import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor.KafkaCommonProcessor;
 import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.kafkaprocessor.KafkaReplicaManageProcessor;
 
 
-import lombok.Getter;
+
+import java.util.function.Supplier;
+
 
 /**
  * KafkaJmxValidator
  */
-@Getter
-public enum KafkaJmxValidator {
 
-    BYTES_IN_PER_SEC("kafka\\.server:type=BrokerTopicMetrics,name=BytesInPerSec,topic=\\*"),
+public class KafkaJmxValidator implements JmxValidator {
 
-    BYTES_OUT_PER_SEC("kafka\\.server:type=BrokerTopicMetrics,name=BytesOutPerSec,topic=\\*"),
-
-    REPLICA_MANAGE("kafka\\.server:type=ReplicaManager,name=\\*"),
-
-    KAFKA_CONTROLLER("kafka\\.controller:type=KafkaController,name=\\*"),
-
-    GROUP_METADATA_MANAGE("kafka\\..*:type=GroupMetadataManager,name=\\*");
-
-    private final String objectNamePattern;
-
-    KafkaJmxValidator(String objectNamePattern) {
-        this.objectNamePattern = objectNamePattern;
-    }
-
-    private static final Map<String, KafkaJmxValidator> OBJECT_NAME_MAP;
+    // Map of object name patterns to their corresponding processor suppliers
+    private static final Map<String, Supplier<MbeanProcessor>> OBJECT_NAME_MAP;
 
     static {
-        Map<String, KafkaJmxValidator> map = new HashMap<>();
-        for (KafkaJmxValidator validator : KafkaJmxValidator.values()) {
-            map.put(validator.objectNamePattern, validator);
-        }
+        Map<String, Supplier<MbeanProcessor>> map = new HashMap<>();
+        map.put("kafka\\.server:type=BrokerTopicMetrics,name=BytesInPerSec,topic=\\*",
+                KafkaBytesInAndOutPerSecProcessor::new);
+        map.put("kafka\\.server:type=BrokerTopicMetrics,name=BytesOutPerSec,topic=\\*",
+                KafkaBytesInAndOutPerSecProcessor::new);
+        map.put("kafka\\.server:type=ReplicaManager,name=\\*",
+                KafkaReplicaManageProcessor::new);
+        map.put("kafka\\.controller:type=KafkaController,name=\\*",
+                KafkaCommonProcessor::new);
+        map.put("kafka\\..*:type=GroupMetadataManager,name=\\*",
+                KafkaCommonProcessor::new);
         OBJECT_NAME_MAP = Collections.unmodifiableMap(map);
     }
 
-    public static boolean isValid(String objectName) {
+    @Override
+    public boolean isValid(String objectName) {
         if (StringUtils.isBlank(objectName)) {
             return false;
         }
@@ -69,40 +65,16 @@ public enum KafkaJmxValidator {
                 .anyMatch(pattern -> objectName.matches(pattern));
     }
 
-    public static KafkaJmxValidator fromObjectName(String objectName) {
+    @Override
+    public MbeanProcessor getProcessor(String objectName) {
         if (StringUtils.isBlank(objectName)) {
             return null;
         }
         return OBJECT_NAME_MAP.entrySet().stream()
                 .filter(entry -> objectName.matches(entry.getKey()))
-                .map(Map.Entry::getValue)
+                .map(entry -> entry.getValue().get())
                 .findFirst()
                 .orElse(null);
-    }
-
-    /**
-     * Returns the MBeanProcessor instance needed for the given objectName
-     *
-     * @param objectName The objectName to process
-     * @return The corresponding MBeanProcessor instance, or null if not available
-     */
-    public static MbeanProcessor getProcessor(String objectName) {
-        KafkaJmxValidator validator = fromObjectName(objectName);
-        if (validator == null) {
-            return null;
-        }
-        switch (validator) {
-            case BYTES_IN_PER_SEC:
-            case BYTES_OUT_PER_SEC:
-                return new KafkaBytesInAndOutPerSecProcessor();
-            case REPLICA_MANAGE:
-                return new KafkaReplicaManageProcessor();
-            case KAFKA_CONTROLLER:
-            case GROUP_METADATA_MANAGE:
-                return new KafkaCommonProcessor();
-            default:
-                return null;
-        }
     }
 }
 

@@ -137,10 +137,8 @@ public class JmxCollectImpl extends AbstractCollect {
                     valueRowBuilder.addColumn(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
                 }
                 builder.addValueRow(valueRowBuilder.build());
-                if (processor != null) {
-                    if (processor.isCollectionComplete()) {
-                        return;
-                    }
+                if (processor != null && processor.isCollectionComplete()) {
+                    return;
                 }
             }
         } catch (IOException exception) {

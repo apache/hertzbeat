@@ -17,7 +17,11 @@
 
 package org.apache.hertzbeat.collector.collect.jmx;
 
-import java.util.List;
+
+import java.util.Collections;
+import java.util.HashMap;
+
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.KafkaJmxValidator;
@@ -26,38 +30,61 @@ import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.KafkaJmxValidator;
  * Please register the components you need to customize here
  */
 
+
 public class CustomizedJmxFactory {
 
-    private static final List<String> ALLOWED_APPS = List.of("kafka");
+    // Map associating app names with their corresponding JmxValidator
+    private static final Map<String, JmxValidator> VALIDATOR_MAP;
 
-    // Validate app and its corresponding name and objectName
+    static {
+        Map<String, JmxValidator> map = new HashMap<>();
+        // Register validator for "kafka"
+        map.put("kafka", new KafkaJmxValidator());
+
+        // Future validators for other apps can be added here
+        // Example for "zookeeper":
+        // map.put("zookeeper", new ZookeeperJmxValidator());
+
+        VALIDATOR_MAP = Collections.unmodifiableMap(map);
+    }
+
+    /**
+     * Validates the object name using the validator associated with the specified app.
+     *
+     * @param app         The application name.
+     * @param objectName  The JMX object name to validate.
+     * @return true if the validator deems the object name valid, false otherwise.
+     */
     public static boolean validate(String app, String objectName) {
-        if (StringUtils.isBlank(app) || !isValidApp(app)) {
+        if (StringUtils.isBlank(app) || StringUtils.isBlank(objectName)) {
             return false;
         }
 
-        switch (app.toLowerCase()) {
-            case "kafka":
-                return KafkaJmxValidator.isValid(objectName);
-            default:
-                return false;
+        JmxValidator validator = VALIDATOR_MAP.get(app.toLowerCase());
+        if (validator == null) {
+            return false;
         }
+
+        return validator.isValid(objectName);
     }
 
-    // Check if the app exists in the predefined list
-    private static boolean isValidApp(String app) {
-        return ALLOWED_APPS.contains(app.toLowerCase());
-    }
-
-
+    /**
+     * Retrieves the appropriate processor for the given object name using the validator associated with the specified app.
+     *
+     * @param app         The application name.
+     * @param objectName  The JMX object name for which to retrieve the processor.
+     * @return The corresponding MbeanProcessor instance, or null if none are applicable.
+     */
     public static MbeanProcessor getProcessor(String app, String objectName) {
-        switch (app) {
-            case "kafka":
-                return KafkaJmxValidator.getProcessor(objectName);
-            default:
-                return null;
+        if (StringUtils.isBlank(app) || StringUtils.isBlank(objectName)) {
+            return null;
         }
+
+        JmxValidator validator = VALIDATOR_MAP.get(app.toLowerCase());
+        if (validator == null) {
+            return null;
+        }
+
+        return validator.getProcessor(objectName);
     }
-
 }
-
