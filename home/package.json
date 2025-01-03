@@ -32,7 +32,9 @@
     "aos": "^2.3.4",
     "clsx": "1.2.1",
     "color": "3.2.1",
+    "docusaurus-plugin-matomo": "^0.0.8",
     "file-loader": "6.2.0",
+    "markdownlint-cli2": "^0.13.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-slick": "0.29.0",
@@ -41,8 +43,7 @@
     "swiper": "7.4.1",
     "url-loader": "4.1.1",
     "workbox-routing": "6.5.3",
-    "workbox-strategies": "6.5.3",
-    "markdownlint-cli2": "^0.13.0"
+    "workbox-strategies": "6.5.3"
   },
   "browserslist": {
     "production": [
