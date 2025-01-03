@@ -27,6 +27,7 @@ export class NoticeRule {
   enable: boolean = true;
   // forward all or not
   filterAll: boolean = true;
+  labels!: Record<string, string>;
   // filter alert level
   priorities!: number[];
   tags!: TagItem[];
