@@ -52,7 +52,7 @@ const COMPONENTS: Array<Type<void>> = [
   AlertNoticeComponent,
   AlertSilenceComponent,
   AlertInhibitComponent,
-  AlertGroupConvergeComponent
+  AlertGroupConvergeComponent,
   AlertNoticeReceiverComponent,
   AlertNoticeRuleComponent,
   AlertNoticeTemplateComponent

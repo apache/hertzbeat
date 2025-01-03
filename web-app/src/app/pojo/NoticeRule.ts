@@ -28,9 +28,6 @@ export class NoticeRule {
   // forward all or not
   filterAll: boolean = true;
   labels!: Record<string, string>;
-  // filter alert level
-  priorities!: number[];
-  tags!: TagItem[];
   days!: number[];
   periodStart!: Date;
   periodEnd!: Date;
@@ -38,9 +35,4 @@ export class NoticeRule {
   modifier!: string;
   gmtCreate!: number;
   gmtUpdate!: number;
-}
-
-export class TagItem {
-  name!: string;
-  value!: string;
 }

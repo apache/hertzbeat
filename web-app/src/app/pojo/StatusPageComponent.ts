@@ -17,8 +17,6 @@
  * under the License.
  */
 
-import { TagItem } from './NoticeRule';
-
 export class StatusPageComponent {
   id!: number;
   orgId!: number;

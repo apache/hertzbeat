@@ -27,7 +27,6 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
 import { AlertSilence } from '../../../pojo/AlertSilence';
-import { TagItem } from '../../../pojo/NoticeRule';
 import { AlertSilenceService } from '../../../service/alert-silence.service';
 
 @Component({
