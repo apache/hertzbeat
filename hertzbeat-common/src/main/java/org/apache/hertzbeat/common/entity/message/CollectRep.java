@@ -661,7 +661,7 @@ public final class CollectRep {
             }
 
             public Builder setColumns(List<String> columns) {
-                columns = columns;
+                this.columns = columns;
                 return this;
             }
 
