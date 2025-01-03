@@ -17,11 +17,14 @@
   ~ under the License.
 -->
 
-<div *ngFor="let item of keyValues; let i = index" nz-row>
+<div style="margin-bottom: 2px; margin-top: 2px" *ngFor="let item of keyValues; let i = index" nz-row>
   <div nz-col nzSpan="10">
     <input nz-input [placeholder]="keyAlias" [(ngModel)]="item.key" (ngModelChange)="emitChange()" />
   </div>
-  <div nz-col nzSpan="11">
+  <div style="text-align: center; font-weight: bolder" nz-col nzSpan="1">
+    <span>:</span>
+  </div>
+  <div nz-col nzSpan="10">
     <input nz-input [placeholder]="valueAlias" [(ngModel)]="item.value" (ngModelChange)="emitChange()" />
   </div>
   <div nz-col nzSpan="3">
