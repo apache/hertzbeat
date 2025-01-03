@@ -33,6 +33,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -83,4 +84,10 @@ public class SingleAlert {
 
     @Schema(title = "End At, when status is resolved has", example = "null")
     private Long endAt;
+
+    @Override
+    public SingleAlert clone() {
+        // deep clone
+        return JsonUtil.fromJson(JsonUtil.toJson(this), SingleAlert.class);
+    }
 }

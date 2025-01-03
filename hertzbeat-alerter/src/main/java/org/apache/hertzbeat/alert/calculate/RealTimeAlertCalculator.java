@@ -65,6 +65,7 @@ public class RealTimeAlertCalculator {
     private static final String KEY_ROW = "__row__";
 
     private static final Pattern APP_PATTERN = Pattern.compile("equals\\(__app__,\"([^\"]+)\"\\)");
+    private static final Pattern AVAILABLE_PATTERN = Pattern.compile("equals\\(__available__,\"([^\"]+)\"\\)");
     private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\"(\\d+)\"\\)");
     private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
@@ -96,6 +97,7 @@ public class RealTimeAlertCalculator {
         List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
         for (SingleAlert singleAlert : singleAlerts) {
             String fingerprint = calculateFingerprint(singleAlert.getLabels());
+            singleAlert.setId(null);
             firingAlertMap.put(fingerprint, singleAlert);
         }
         startCalculate();
@@ -129,7 +131,7 @@ public class RealTimeAlertCalculator {
         int code = metricsData.getCode().getNumber();
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
         // Filter thresholds by app, metrics and instance
-        thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance);
+        thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance, priority);
         if (thresholds.isEmpty()) {
             return;
         }
@@ -161,7 +163,7 @@ public class RealTimeAlertCalculator {
             {
                 // trigger the expr before the metrics data, due the available up down or others
                 try {
-                    boolean match = execAlertExpression(fieldValueMap, expr);
+                    boolean match = execAlertExpression(fieldValueMap, expr, true);
                     try {
                         Map<String, String> fingerPrints = new HashMap<>(8);
                         fingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
@@ -171,11 +173,11 @@ public class RealTimeAlertCalculator {
                         if (match) {
                             // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
                             afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define);
-                            // if the threshold is triggered, ignore other data rows
-                            continue;
                         } else {
                             handleRecoveredAlert(fingerPrints);
                         }
+                        // if this threshold pre compile success, ignore blew
+                        continue;
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
                     }
@@ -223,7 +225,7 @@ public class RealTimeAlertCalculator {
                     }
                 }
                 try {
-                    boolean match = execAlertExpression(fieldValueMap, expr);
+                    boolean match = execAlertExpression(fieldValueMap, expr, false);
                     try {
                         if (match) {
                             afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define);
@@ -240,13 +242,15 @@ public class RealTimeAlertCalculator {
 
     /**
      * Filter alert definitions by app, metrics and instance
+     *
      * @param thresholds Alert definitions to filter
-     * @param app Current app name
-     * @param metrics Current metrics name
-     * @param instance Current instance id
+     * @param app        Current app name
+     * @param metrics    Current metrics name
+     * @param instance   Current instance id
+     * @param priority  Current priority
      * @return Filtered alert definitions
      */
-    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, String instance) {
+    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, String instance, int priority) {
         return thresholds.stream()
                 .filter(define -> {
                     if (StringUtils.isBlank(define.getExpr())) {
@@ -258,6 +262,14 @@ public class RealTimeAlertCalculator {
                     Matcher appMatcher = APP_PATTERN.matcher(expr);
                     if (!appMatcher.find() || !app.equals(appMatcher.group(1))) {
                         return false;
+                    }
+                    
+                    // Extract and check available - required
+                    if (priority != 0) {
+                        Matcher availableMatcher = AVAILABLE_PATTERN.matcher(expr);
+                        if (availableMatcher.find()) {
+                            return false;
+                        }
                     }
 
                     // Extract and check metrics - optional
@@ -292,7 +304,7 @@ public class RealTimeAlertCalculator {
         if (firingAlert != null) {
             firingAlert.setEndAt(System.currentTimeMillis());
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
-            alarmCommonReduce.reduceAndSendAlarm(firingAlert);
+            alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
         pendingAlertMap.remove(fingerprint);
     }
@@ -322,7 +334,7 @@ public class RealTimeAlertCalculator {
             if (requiredTimes <= 1) {
                 newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
                 firingAlertMap.put(fingerprint, newAlert);
-                alarmCommonReduce.reduceAndSendAlarm(newAlert);
+                alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
             } else {
                 // Otherwise put into pending queue first
                 pendingAlertMap.put(fingerprint, newAlert);
@@ -335,15 +347,15 @@ public class RealTimeAlertCalculator {
             // Check if required trigger times reached
             if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
                 // Reached trigger times threshold, change to firing status
+                pendingAlertMap.remove(fingerprint);
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
                 firingAlertMap.put(fingerprint, existingAlert);
-                pendingAlertMap.remove(fingerprint);
-                alarmCommonReduce.reduceAndSendAlarm(existingAlert);
+                alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }
     }
 
-    private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr) {
+    private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr, boolean ignoreJexlException) {
         Boolean match;
         JexlExpression expression;
         try {
@@ -359,7 +371,11 @@ public class RealTimeAlertCalculator {
         try {
             match = (Boolean) JexlExpressionRunner.evaluate(expression, fieldValueMap);
         } catch (JexlException jexlException) {
-            log.warn("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
+            if (ignoreJexlException) {
+                log.debug("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
+            } else {
+                log.error("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());   
+            }
             throw jexlException;
         } catch (Exception e) {
             log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
