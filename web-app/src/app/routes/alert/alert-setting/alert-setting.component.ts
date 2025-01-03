@@ -247,7 +247,6 @@ export class AlertSettingComponent implements OnInit {
     this.isSelectTypeModalVisible = false;
     this.define = new AlertDefine();
     this.define.type = type;
-    this.define.tags = [];
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     // Set default period for periodic alert
@@ -469,6 +468,7 @@ export class AlertSettingComponent implements OnInit {
   currentMetrics: any[] = [];
   isExpr = false;
   userExpr!: string;
+  severity!: string;
 
   editAlertDefine(alertDefineId: number) {
     if (this.isLoadingEdit !== -1) return;
@@ -489,6 +489,9 @@ export class AlertSettingComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
+            if (this.define.labels && this.define.labels['severity']) {
+              this.severity = this.define.labels['severity'];
+            }
             // Set default period for periodic alert if not set
             if (this.define.type === 'periodic' && !this.define.period) {
               this.define.period = 300;
@@ -511,10 +514,6 @@ export class AlertSettingComponent implements OnInit {
                   this.tryParseThresholdExpr(this.userExpr);
                 }
               });
-            }
-            // Initialize tags array if undefined
-            if (this.define.tags == undefined) {
-              this.define.tags = [];
             }
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
@@ -851,6 +850,13 @@ export class AlertSettingComponent implements OnInit {
         this.resetQbDataDefault();
       }
     }
+  }
+
+  onSeverityChange() {
+    if (!this.define.labels) {
+      this.define.labels = {};
+    }
+    this.define.labels['severity'] = this.severity;
   }
 
   onManageModalCancel() {

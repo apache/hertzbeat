@@ -17,8 +17,6 @@
  * under the License.
  */
 
-import { TagItem } from './NoticeRule';
-
 export class AlertDefine {
   id!: number;
   name!: string;
@@ -30,7 +28,9 @@ export class AlertDefine {
   // unit second
   period: number = 300;
   times: number = 3;
-  tags!: TagItem[];
+  // severity: info, warning, critical, emergency, fatal
+  labels!: Record<string, string>;
+  annotations!: Record<string, string>;
   enable: boolean = true;
   template!: string;
   creator!: string;

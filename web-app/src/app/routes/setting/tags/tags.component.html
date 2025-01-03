@@ -60,73 +60,38 @@
   </ng-template>
 </app-toolbar>
 
-<nz-table
-  #fixedTable
-  [nzData]="tags"
-  [nzPageIndex]="pageIndex"
-  [nzPageSize]="pageSize"
-  [nzTotal]="total"
-  nzFrontPagination="false"
-  [nzLoading]="tableLoading"
-  nzShowSizeChanger
-  [nzShowTotal]="rangeTemplate"
-  [nzPageSizeOptions]="[8, 15, 25]"
-  (nzQueryParams)="onTablePageChange($event)"
-  nzShowPagination="true"
-  [nzScroll]="{ x: '1240px' }"
->
-  <thead>
-    <tr>
-      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.value' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.description' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'tag.update-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let data of fixedTable.data">
-      <td nzAlign="center" nzLeft [nzChecked]="checkedTagIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">
-        <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
-          <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger" class="hoverClass">
-            {{ formatTagName(data) }}
-          </nz-tag>
-        </a>
-      </td>
-      <td nzAlign="center">{{ data.name }}</td>
-      <td nzAlign="center">{{ data.tagValue }}</td>
-      <td nzAlign="center">{{ data.description }}</td>
-      <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center">
-        <div class="actions">
-          <button nz-button nzType="primary" (click)="onEditOneTag(data)" nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n">
-            <i nz-icon nzType="edit" nzTheme="outline"></i>
-          </button>
-          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-            <span nz-icon nzType="ellipsis"></span>
-          </button>
-          <nz-dropdown-menu #more_menu="nzDropdownMenu">
-            <ul nz-menu>
-              <li nz-menu-item>
-                <button nz-button nzDanger (click)="onDeleteOneTag(data.id)">
-                  <i nz-icon nzType="delete" nzTheme="outline"></i>
-                  {{ 'common.button.delete' | i18n }}
-                </button>
-              </li>
-            </ul>
-          </nz-dropdown-menu>
+<div class="tag-cards-container">
+  <nz-row [nzGutter]="[12, 12]">
+    <nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4" *ngFor="let data of tags">
+      <nz-card [nzActions]="[editAction, deleteAction]" [nzBorderless]="true" class="tag-card">
+        <div class="tag-header">
+          <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
+            <nz-tag [nzColor]="data.color" class="tag-name">
+              {{ formatTagName(data) }}
+            </nz-tag>
+          </a>
         </div>
-      </td>
-    </tr>
-  </tbody>
-</nz-table>
 
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+        <div class="tag-description" *ngIf="data.description">
+          {{ data.description }}
+        </div>
 
-<!-- new or update TAG pop-up box -->
+        <ng-template #editAction>
+          <span nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n" (click)="onEditOneTag(data)">
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </span>
+        </ng-template>
+
+        <ng-template #deleteAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.button.delete' | i18n" (click)="onDeleteOneTag(data.id)">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </span>
+        </ng-template>
+      </nz-card>
+    </nz-col>
+  </nz-row>
+</div>
+
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
   [nzTitle]="isManageModalAdd ? ('tag.new' | i18n) : ('tag.edit' | i18n)"
@@ -184,3 +149,5 @@
     </form>
   </div>
 </nz-modal>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>

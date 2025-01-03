@@ -101,6 +101,11 @@ public interface CommonConstants {
      * Alarm severity label key
      */
     String LABEL_ALERT_SEVERITY = "severity";
+
+    /**
+     * Alarm severity fatal level
+     */
+    String LABEL_ALERT_FATAL = "fatal";
     
     /**
      * alarm severity emergency level

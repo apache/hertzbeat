@@ -64,7 +64,6 @@ export class MonitorNewComponent implements OnInit {
     private collectorSvc: CollectorService
   ) {
     this.monitor = new Monitor();
-    this.monitor.tags = [];
     this.grafanaDashboard = new GrafanaDashboard();
   }
 

@@ -24,7 +24,7 @@ export class StatusPageComponent {
   orgId!: number;
   name!: string;
   description!: string;
-  tag!: TagItem;
+  labels!: Record<string, string>;
   // calculate status method: 0-auto 1-manual
   method: number = 0;
   // config state when use manual method: 0-Normal 1-Abnormal 2-unknown

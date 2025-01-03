@@ -36,7 +36,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,10 +65,6 @@ class NoticeConfigControllerTest {
 
 
     public NoticeRule getNoticeRule() {
-        TagItem tagItem = new TagItem();
-        tagItem.setName("key1");
-        tagItem.setValue("value1");
-
         NoticeRule noticeRule = new NoticeRule();
         noticeRule.setId(87584674384L);
         noticeRule.setName("dispatch-1");
