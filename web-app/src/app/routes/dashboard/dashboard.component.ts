@@ -27,7 +27,6 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { fromEvent } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
 import { CollectorSummary } from '../../pojo/CollectorSummary';
 import { SingleAlert } from '../../pojo/SingleAlert';

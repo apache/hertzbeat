@@ -542,17 +542,9 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" [nzFor]="'tags'" [nzTooltipTitle]="'tag.bind.tip' | i18n">{{ 'tag.bind' | i18n }} </nz-form-label>
-        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-          <app-form-field
-            [item]="{
-              field: 'tags',
-              type: 'tags-selection'
-            }"
-            [extra]="{ tag_mode: 'closeable' }"
-            [name]="'tags'"
-            [(ngModel)]="define.tags"
-          />
+        <nz-form-label nzSpan="7" [nzFor]="'labels'" [nzTooltipTitle]="'label.bind.tip' | i18n">{{ 'label.bind' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <app-labels-input [(ngModel)]="define.labels" name="labels"></app-labels-input>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

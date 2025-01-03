@@ -247,7 +247,6 @@ export class AlertSettingComponent implements OnInit {
     this.isSelectTypeModalVisible = false;
     this.define = new AlertDefine();
     this.define.type = type;
-    this.define.tags = [];
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     // Set default period for periodic alert
@@ -511,10 +510,6 @@ export class AlertSettingComponent implements OnInit {
                   this.tryParseThresholdExpr(this.userExpr);
                 }
               });
-            }
-            // Initialize tags array if undefined
-            if (this.define.tags == undefined) {
-              this.define.tags = [];
             }
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
