@@ -38,6 +38,9 @@ import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
 import { AlertInhibitComponent } from './alert-inhibit/alert-inhibit.component';
+import { AlertNoticeReceiverComponent } from './alert-notice/alert-notice-receiver/alert-notice-receiver.component';
+import { AlertNoticeRuleComponent } from './alert-notice/alert-notice-rule/alert-notice-rule.component';
+import { AlertNoticeTemplateComponent } from './alert-notice/alert-notice-template/alert-notice-template.component';
 import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
@@ -50,6 +53,9 @@ const COMPONENTS: Array<Type<void>> = [
   AlertSilenceComponent,
   AlertInhibitComponent,
   AlertGroupConvergeComponent
+  AlertNoticeReceiverComponent,
+  AlertNoticeRuleComponent,
+  AlertNoticeTemplateComponent
 ];
 
 @NgModule({
