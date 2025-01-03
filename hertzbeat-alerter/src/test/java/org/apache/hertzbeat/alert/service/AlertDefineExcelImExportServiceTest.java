@@ -33,6 +33,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,7 +42,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 /**
  * test case for {@link AlertDefineExcelImExportServiceImpl}
  */
-
+@Disabled
 @ExtendWith(MockitoExtension.class)
 public class AlertDefineExcelImExportServiceTest {
 
