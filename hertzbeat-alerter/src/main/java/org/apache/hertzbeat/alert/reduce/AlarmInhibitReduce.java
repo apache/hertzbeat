@@ -197,7 +197,7 @@ public class AlarmInhibitReduce {
      * Check if equal labels have same values in both alerts
      * @param source Alarm used to suppress other alarms
      * @param target Alarm that may be suppressed
-     * @param equalLabels Need to be equal labels:
+     * @param equalLabels Need to be equal labels
      */
     private boolean matchEqualLabels(GroupAlert source, GroupAlert target, List<String> equalLabels) {
         if (source == null || target == null) {
