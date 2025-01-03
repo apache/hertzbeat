@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, forwardRef } from '@angular/core';
+import { Component, Input, OnInit, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 interface KeyValuePair {
@@ -26,7 +26,7 @@ export class LabelsInputComponent implements OnInit, ControlValueAccessor {
 
   keyValues: KeyValuePair[] = [];
 
-  // ControlValueAccessor 接口实现
+  // ControlValueAccessor
   private onChange: any = () => {};
   private onTouched: any = () => {};
 
@@ -50,7 +50,7 @@ export class LabelsInputComponent implements OnInit, ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    // 如果需要处理禁用状态，可以在这里实现
+    // set disabled state here
   }
 
   ngOnInit(): void {
@@ -86,7 +86,11 @@ export class LabelsInputComponent implements OnInit, ControlValueAccessor {
         result[item.key] = item.value || '';
       }
     });
-    this.onChange(result);
+    if (Object.keys(result).length === 0 || Object.values(result).every(v => v === '')) {
+      this.onChange(null);
+    } else {
+      this.onChange(result);
+    }
     this.onTouched();
   }
 }
