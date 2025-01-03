@@ -17,11 +17,25 @@
  * under the License.
  */
 
-import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-@Component({
-  selector: 'app-alert-notice',
-  templateUrl: './alert-notice.component.html',
-  styles: []
-})
-export class AlertNoticeComponent {}
+import { AlertNoticeReceiverComponent } from './alert-notice-receiver.component';
+
+describe('AlertNoticeReceiverComponent', () => {
+  let component: AlertNoticeReceiverComponent;
+  let fixture: ComponentFixture<AlertNoticeReceiverComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AlertNoticeReceiverComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(AlertNoticeReceiverComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
