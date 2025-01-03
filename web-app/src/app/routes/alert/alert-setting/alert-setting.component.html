@@ -543,8 +543,16 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" [nzFor]="'labels'" [nzTooltipTitle]="'label.bind.tip' | i18n">{{ 'label.bind' | i18n }} </nz-form-label>
-        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-control nzSpan="12">
           <app-labels-input [(ngModel)]="define.labels" name="labels"></app-labels-input>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'annotations'" [nzTooltipTitle]="'annotation.bind.tip' | i18n"
+          >{{ 'annotation.bind' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12">
+          <app-labels-input [(ngModel)]="define.annotations" name="annotations"></app-labels-input>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

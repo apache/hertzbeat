@@ -29,6 +29,7 @@ export class AlertDefine {
   period: number = 300;
   times: number = 3;
   labels!: Record<string, string>;
+  annotations!: Record<string, string>;
   enable: boolean = true;
   template!: string;
   creator!: string;
