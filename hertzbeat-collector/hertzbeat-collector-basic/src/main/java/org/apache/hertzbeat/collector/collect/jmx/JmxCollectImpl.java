@@ -74,6 +74,7 @@ public class JmxCollectImpl extends AbstractCollect {
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     private final ClassLoader jmxClassLoader;
+
     
     public JmxCollectImpl() {
         jmxClassLoader = new JmxClassLoader(ClassLoader.getSystemClassLoader());
@@ -95,16 +96,25 @@ public class JmxCollectImpl extends AbstractCollect {
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
-
+            // Whether to use customized JMX
+            MbeanProcessor processor = null;
+            if (CustomizedJmxFactory.validate(builder.getApp(), jmxProtocol.getObjectName())) {
+                processor = CustomizedJmxFactory.getProcessor(builder.getApp(), jmxProtocol.getObjectName());
+                if (processor != null) {
+                    processor.preProcess(builder, metrics);
+                    if (processor.isCollectionComplete()) {
+                        return;
+                    }
+                }
+            }
             // Create a jndi remote connection
             JMXConnector jmxConnector = getConnectSession(jmxProtocol);
-
             MBeanServerConnection serverConnection = jmxConnector.getMBeanServerConnection();
             ObjectName objectName = new ObjectName(jmxProtocol.getObjectName());
 
-            Set<ObjectInstance> objectInstanceSet = serverConnection.queryMBeans(objectName, null);
             Set<String> attributeNameSet = metrics.getAliasFields().stream()
                     .map(field -> field.split(SUB_ATTRIBUTE)[0]).collect(Collectors.toSet());
+            Set<ObjectInstance> objectInstanceSet = serverConnection.queryMBeans(objectName, null);
             for (ObjectInstance objectInstance : objectInstanceSet) {
                 ObjectName currentObjectName = objectInstance.getObjectName();
                 MBeanInfo beanInfo = serverConnection.getMBeanInfo(currentObjectName);
@@ -118,11 +128,18 @@ public class JmxCollectImpl extends AbstractCollect {
 
                 Map<String, String> attributeValueMap = extractAttributeValue(attributeList);
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                if (processor != null) {
+                    processor.process(serverConnection, objectInstance, objectInstanceSet,
+                            currentObjectName, attributeValueMap, valueRowBuilder);
+                }
                 for (String aliasField : metrics.getAliasFields()) {
                     String fieldValue = attributeValueMap.get(aliasField);
                     valueRowBuilder.addColumn(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
                 }
                 builder.addValueRow(valueRowBuilder.build());
+                if (processor != null && processor.isCollectionComplete()) {
+                    return;
+                }
             }
         } catch (IOException exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
