@@ -20,10 +20,11 @@ package org.apache.hertzbeat.alert.controller;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import org.apache.hertzbeat.alert.dto.GeneralCloudAlertReport;
+import java.util.HashMap;
 import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -108,13 +109,20 @@ class AlertReportControllerTest {
 
     @Test
     void addNewAlertReport() throws Exception {
-        GeneralCloudAlertReport generalCloudAlertReport = new GeneralCloudAlertReport();
-        generalCloudAlertReport.setAlertDateTime("2023-02-22T07:27:15.404000000Z");
-
+        SingleAlert singleAlert = SingleAlert.builder()
+                .fingerprint("fingerprint")
+                .labels(new HashMap<>())
+                .annotations(new HashMap<>())
+                .content("content")
+                .status("firing")
+                .triggerTimes(1)
+                .startAt(1734005477630L)
+                .activeAt(1734005477630L)
+                .build();
         mockMvc.perform(MockMvcRequestBuilders
                         .post("/api/alerts/report")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(generalCloudAlertReport))
+                        .content(JsonUtil.toJson(singleAlert))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))

@@ -24,7 +24,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
@@ -76,12 +75,6 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public Alert pollAlertsData() {
-        // todo will remove this
-        return null;
-    }
-
-    @Override
     public CollectRep.MetricsData pollMetricsDataToAlerter() {
         try {
             return syncCommands.rpop(metricsDataQueueNameToAlerter);
@@ -99,11 +92,6 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
             log.error(e.getMessage());
             return null;
         }
-    }
-
-    @Override
-    public void sendAlertsData(Alert alert) {
-        // will remove this todo
     }
 
     @Override

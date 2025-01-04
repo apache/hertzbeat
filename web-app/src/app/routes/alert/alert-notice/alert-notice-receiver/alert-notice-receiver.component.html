@@ -21,7 +21,6 @@
   <ng-template #left>
     <button (click)="syncReceiver()" nz-button nzType="primary">
       <i nz-icon nzTheme="outline" nzType="sync"></i>
-      {{ 'common.refresh' | i18n }}
     </button>
 
     <button (click)="onNewNoticeReceiver()" nz-button nzType="primary">
@@ -137,7 +136,6 @@
             nz-button
             nz-tooltip
             nzDanger
-            nzType="primary"
           >
             <i nz-icon nzTheme="outline" nzType="delete"></i>
           </button>
@@ -441,7 +439,7 @@
       </nz-form-item>
       <nz-form-item>
         <nz-form-control [nzOffset]="7" [nzSpan]="12">
-          <button (click)="onSendAlertTestMsg()" [nzLoading]="isSendTestButtonLoading" nz-button nzDanger nzType="primary">
+          <button (click)="onSendAlertTestMsg()" [nzLoading]="isSendTestButtonLoading" nz-button nzDanger>
             <i nz-icon nzTheme="outline" nzType="send"></i>
             {{ 'alert.notice.send-test' | i18n }}
           </button>
