@@ -35,19 +35,6 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
-    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-      <span nz-icon nzType="ellipsis"></span>
-    </button>
-    <nz-dropdown-menu #more_menu="nzDropdownMenu">
-      <ul nz-menu>
-        <li nz-menu-item>
-          <button nz-button nzDanger (click)="onDeleteTags()">
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
-            {{ 'common.button.delete' | i18n }}
-          </button>
-        </li>
-      </ul>
-    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <app-multi-func-input
@@ -149,5 +136,3 @@
     </form>
   </div>
 </nz-modal>
-
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
