@@ -113,6 +113,7 @@ public class AlarmGroupReduce {
                         sendGroupAlert(cache);
                         cache.setLastSendTime(now);
                         cache.getAlerts().clear();
+                        cache.getAlertFingerprints().clear();
                     }
                 });
             } catch (Exception e) {
