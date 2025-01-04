@@ -28,9 +28,34 @@
       {{ 'alert.notice.template.new' | i18n }}
     </button>
   </ng-template>
+  <ng-template #right>
+    <nz-select
+      class="mobile-hide"
+      [nzPlaceHolder]="'monitor.status' | i18n"
+      [(ngModel)]="preset"
+      (ngModelChange)="onPresetStatusChanged()"
+    >
+      <nz-option [nzLabel]="'alert.notice.template.preset.true' | i18n" [nzValue]="true"></nz-option>
+      <nz-option [nzLabel]="'alert.notice.template.preset.false' | i18n" [nzValue]="false"></nz-option>
+    </nz-select>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      [placeholder]="'alert.notice.template.name' | i18n"
+      [(value)]="name"
+      (valueChange)="onSearch()"
+    />
+  </ng-template>
 </app-toolbar>
 <nz-table
   #templateFixedTable
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
   [nzData]="templates"
   [nzLoading]="templateTableLoading"
   [nzScroll]="{ x: '1240px' }"
@@ -144,6 +169,9 @@
     </tr>
   </tbody>
 </nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
 <!-- new or update notice template pop-up box -->
 <nz-modal
   (nzOnCancel)="onManageTemplateModalCancel()"

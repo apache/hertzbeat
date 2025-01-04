@@ -17,16 +17,7 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import com.google.common.collect.Lists;
-import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
@@ -44,7 +35,25 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 
 /**
  * Test case for {@link NoticeConfigService}
@@ -63,26 +72,130 @@ class NoticeConfigServiceTest {
     @InjectMocks
     private NoticeConfigServiceImpl noticeConfigService;
 
+    private NoticeReceiver receiver1;
+    private NoticeReceiver receiver2;
+    private NoticeTemplate template1;
+    private NoticeTemplate template2;
+    private NoticeRule rule1;
+    private NoticeRule rule2;
+
     @BeforeEach
     void setUp() {
+        receiver1 = new NoticeReceiver();
+        receiver1.setId(1L);
+        receiver1.setName("Receiver1");
+
+        receiver2 = new NoticeReceiver();
+        receiver2.setId(2L);
+        receiver2.setName("Receiver2");
+
+        template1 = new NoticeTemplate();
+        template1.setId(1L);
+        template1.setName("Template1");
+
+        template2 = new NoticeTemplate();
+        template2.setId(2L);
+        template2.setName("Template2");
+
+        rule1 = new NoticeRule();
+        rule1.setId(1L);
+        rule1.setName("Rule1");
+
+        rule2 = new NoticeRule();
+        rule2.setId(2L);
+        rule2.setName("Rule2");
     }
 
     @Test
     void getNoticeReceivers() {
-        noticeConfigService.getNoticeReceivers(null);
-        verify(noticeReceiverDao, times(1)).findAll(any(Specification.class));
+        Page<NoticeReceiver> receiverPage = new PageImpl<>(
+                Arrays.asList(receiver1, receiver2),
+                PageRequest.of(0, 8, Sort.by(Sort.Direction.DESC, "id")),
+                2
+        );
+
+        when(noticeReceiverDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(receiverPage);
+
+        Page<NoticeReceiver> result = noticeConfigService.getNoticeReceivers("Receiver", 0, 8);
+
+        assertEquals(2, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(8, result.getSize());
+        assertEquals(0, result.getNumber());
+        assertEquals(receiver1, result.getContent().get(0));
+        assertEquals(receiver2, result.getContent().get(1));
+
+        verify(noticeReceiverDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllNoticeReceivers() {
+        when(noticeReceiverDao.findAll()).thenReturn(Arrays.asList(receiver1, receiver2));
+
+        List<NoticeReceiver> result = noticeConfigService.getAllNoticeReceivers();
+
+        assertEquals(2, result.size());
+        assertEquals(receiver1, result.get(0));
+        assertEquals(receiver2, result.get(1));
+
+        verify(noticeReceiverDao, times(1)).findAll();
     }
 
     @Test
     void getNoticeTemplates() {
-        noticeConfigService.getNoticeTemplates(null);
-        verify(noticeTemplateDao, times(1)).findAll(any(Specification.class));
+        Page<NoticeTemplate> templatePage = new PageImpl<>(
+                Arrays.asList(template1, template2),
+                PageRequest.of(0, 8, Sort.by(Sort.Direction.DESC, "id")),
+                2
+        );
+
+        when(noticeTemplateDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(templatePage);
+
+        Page<NoticeTemplate> result = noticeConfigService.getNoticeTemplates("Template", false, 0, 8);
+
+        assertEquals(2, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(8, result.getSize());
+        assertEquals(0, result.getNumber());
+        assertEquals(template1, result.getContent().get(0));
+        assertEquals(template2, result.getContent().get(1));
+
+        verify(noticeTemplateDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+    }
+
+    @Test
+    void getAllNoticeTemplates() {
+        when(noticeTemplateDao.findAll()).thenReturn(Arrays.asList(template1, template2));
+
+        List<NoticeTemplate> result = noticeConfigService.getAllNoticeTemplates();
+
+        assert result.size() >= 2;
+        assertEquals(template1, result.get(result.size() - 2));
+        assertEquals(template2, result.get(result.size() - 1));
+
+        verify(noticeTemplateDao, times(1)).findAll();
     }
 
     @Test
     void getNoticeRules() {
-        noticeConfigService.getNoticeRules(null);
-        verify(noticeRuleDao, times(1)).findAll(any(Specification.class));
+        Page<NoticeRule> rulePage = new PageImpl<>(
+                Arrays.asList(rule1, rule2),
+                PageRequest.of(0, 8, Sort.by(Sort.Direction.DESC, "id")),
+                2
+        );
+
+        when(noticeRuleDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(rulePage);
+
+        Page<NoticeRule> result = noticeConfigService.getNoticeRules("Rule", 0, 8);
+
+        assertEquals(2, result.getTotalElements());
+        assertEquals(1, result.getTotalPages());
+        assertEquals(8, result.getSize());
+        assertEquals(0, result.getNumber());
+        assertEquals(rule1, result.getContent().get(0));
+        assertEquals(rule2, result.getContent().get(1));
+
+        verify(noticeRuleDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
     }
 
     @Test
