@@ -18,12 +18,16 @@
 package org.apache.hertzbeat.alert.reduce;
 
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -31,14 +35,13 @@ import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 /**
  * Alarm group reduce
  * refer from prometheus, code with @cursor
  */
-@Service
+@Component
 @Slf4j
 public class AlarmGroupReduce {
 
@@ -61,6 +64,11 @@ public class AlarmGroupReduce {
      * Milliseconds per second
      */
     private static final long MS_PER_SECOND = 1000L;
+
+    /**
+     * Check interval for group send ms
+     */
+    private static final long CHECK_INTERVAL = 1000L;
     
     private final AlarmInhibitReduce alarmInhibitReduce;
     
@@ -84,6 +92,33 @@ public class AlarmGroupReduce {
         this.groupCacheMap = new ConcurrentHashMap<>(8);
         List<AlertGroupConverge> groupConverges = alertGroupConvergeDao.findAlertGroupConvergesByEnableIsTrue();
         refreshGroupDefines(groupConverges);
+        startCheckAndSendGroups();
+    }
+
+    private void startCheckAndSendGroups() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("Check alarm groups calculate has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .setDaemon(true)
+                .setNameFormat("alarm-group-calculate-%d")
+                .build();
+        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        scheduledExecutor.scheduleAtFixedRate(() -> {
+            try {
+                long now = System.currentTimeMillis();
+                groupCacheMap.forEach((groupKey, cache) -> {
+                    if (shouldSendGroup(cache, now)) {
+                        sendGroupAlert(cache);
+                        cache.setLastSendTime(now);
+                        cache.getAlerts().clear();
+                    }
+                });
+            } catch (Exception e) {
+                log.error("Check alarm groups calculate has exception.: {}", e.getMessage(), e);
+            }
+        }, 10000, CHECK_INTERVAL, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -93,18 +128,6 @@ public class AlarmGroupReduce {
     public void refreshGroupDefines(List<AlertGroupConverge> groupDefines) {
         this.groupDefines.clear();
         groupDefines.forEach(define -> this.groupDefines.put(define.getName(), define));
-    }
-    
-    @Scheduled(fixedRate = 1000)
-    public void checkAndSendGroups() {
-        long now = System.currentTimeMillis();
-        groupCacheMap.forEach((groupKey, cache) -> {
-            if (shouldSendGroup(cache, now)) {
-                sendGroupAlert(cache);
-                cache.setLastSendTime(now);
-                cache.getAlerts().clear();
-            }
-        });
     }
     
     /**
@@ -146,12 +169,13 @@ public class AlarmGroupReduce {
             extractedLabels.put(labelKey, alert.getLabels().get(labelKey));
         }
         
-        // Generate group key with define name prefix
-        String groupKey = defineName + ":" + generateGroupKey(extractedLabels);
+        // Generate group key 
+        String groupKey = generateGroupKey(extractedLabels);
         
         // Get or create group cache
         GroupAlertCache cache = groupCacheMap.computeIfAbsent(groupKey, k -> {
             GroupAlertCache newCache = new GroupAlertCache();
+            newCache.setGroupKey(groupKey);
             newCache.setGroupLabels(extractedLabels);
             newCache.setGroupDefineName(defineName);
             newCache.setCreateTime(System.currentTimeMillis());
@@ -202,6 +226,7 @@ public class AlarmGroupReduce {
         }
         
         GroupAlert groupAlert = GroupAlert.builder()
+                .groupKey(cache.getGroupKey())
                 .groupLabels(cache.getGroupLabels())
                 .commonLabels(extractCommonLabels(cache.getAlerts()))
                 .commonAnnotations(extractCommonAnnotations(cache.getAlerts()))
@@ -235,7 +260,9 @@ public class AlarmGroupReduce {
     
     private void sendSingleAlert(SingleAlert alert) {
         // Wrap single alert as group alert
+        String groupKey = generateGroupKey(alert.getLabels());
         GroupAlert groupAlert = GroupAlert.builder()
+                .groupKey(groupKey)
                 .groupLabels(alert.getLabels())
                 .commonLabels(alert.getLabels())
                 .commonAnnotations(alert.getAnnotations())
@@ -285,6 +312,7 @@ public class AlarmGroupReduce {
     @Data
     private static class GroupAlertCache {
         private String groupDefineName;
+        private String groupKey;
         private Map<String, String> groupLabels;
         private List<SingleAlert> alerts = new ArrayList<>();
         private Map<String, SingleAlert> alertFingerprints = new HashMap<>();

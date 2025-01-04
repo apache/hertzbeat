@@ -27,13 +27,13 @@ import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 /**
  * Silence alert handler
  * Refer from prometheus alert silencing mechanism
  */
-@Service
+@Component
 @RequiredArgsConstructor
 public class AlarmSilenceReduce {
 

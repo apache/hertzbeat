@@ -22,7 +22,7 @@ import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,7 @@ import lombok.AllArgsConstructor;
  * inhibit alarm
  * refer from prometheus, code with @cursor
  */
-@Service
+@Component
 @Slf4j
 public class AlarmInhibitReduce {
 

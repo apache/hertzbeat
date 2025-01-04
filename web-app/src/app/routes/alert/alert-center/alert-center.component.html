@@ -120,7 +120,7 @@
           *ngFor="let item of group.alerts"
           [nzHeader]="alertHeader"
           [nzExtra]="alertExtra"
-          [nzActive]="true"
+          [nzActive]="false"
           [nzExpandedIcon]="expandedIcon"
         >
           <ng-template #alertHeader>
@@ -145,7 +145,7 @@
 
           <!-- Annotations -->
           <div class="detail-section" *ngIf="item.annotations">
-            <div class="section-title">{{ 'alert.center.annotations' | i18n }}</div>
+            <div class="section-title">{{ 'annotation' | i18n }}</div>
             <div class="alert-annotations">
               <div *ngFor="let anno of recordEntries(item.annotations)" class="annotation-item">
                 <span class="annotation-key">{{ anno[0] }}:</span>

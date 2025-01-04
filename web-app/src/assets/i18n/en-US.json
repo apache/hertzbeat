@@ -131,9 +131,9 @@
       "2": "Restored",
       "3": "Processed"
     },
-    "priority": {
-      "": "Alarm Priority",
-      "all": "All Priority",
+    "severity": {
+      "": "Alarm Severity",
+      "all": "All Severity",
       "0": "Emergency",
       "1": "Critical",
       "2": "Warning"
