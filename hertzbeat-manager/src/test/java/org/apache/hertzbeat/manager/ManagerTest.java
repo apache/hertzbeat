@@ -23,7 +23,7 @@ import javax.annotation.Resource;
 import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
-import org.apache.hertzbeat.alert.calculate.CalculateAlarm;
+import org.apache.hertzbeat.alert.calculate.RealTimeAlertCalculator;
 import org.apache.hertzbeat.alert.controller.AlertDefineController;
 import org.apache.hertzbeat.alert.controller.AlertDefinesController;
 import org.apache.hertzbeat.alert.controller.AlertsController;
@@ -43,7 +43,7 @@ import org.apache.hertzbeat.common.config.CommonConfig;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
-import org.apache.hertzbeat.manager.service.TencentSmsClient;
+import org.apache.hertzbeat.alert.service.TencentSmsClient;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
 import org.apache.hertzbeat.warehouse.store.history.iotdb.IotDbDataStorage;
@@ -72,7 +72,7 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(AlertDefineController.class));
         assertNotNull(ctx.getBean(AlerterWorkerPool.class));
         assertNotNull(ctx.getBean(AlerterProperties.class));
-        assertNotNull(ctx.getBean(CalculateAlarm.class));
+        assertNotNull(ctx.getBean(RealTimeAlertCalculator.class));
         assertNotNull(ctx.getBean(AlertsController.class));
         assertNotNull(ctx.getBean(AlertDefinesController.class));
 

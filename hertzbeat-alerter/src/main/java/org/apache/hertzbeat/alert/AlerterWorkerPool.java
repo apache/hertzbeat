@@ -44,7 +44,7 @@ public class AlerterWorkerPool {
     private void initWorkExecutor() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("workerExecutor has uncaughtException.");
+                    log.error("Alerter workerExecutor has uncaughtException.");
                     log.error(throwable.getMessage(), throwable);
                 })
                 .setDaemon(true)
@@ -62,7 +62,7 @@ public class AlerterWorkerPool {
     private void initNotifyExecutor() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("notifyExecutor has uncaughtException.");
+                    log.error("Alerter notifyExecutor has uncaughtException.");
                     log.error(throwable.getMessage(), throwable);
                 })
                 .setDaemon(true)

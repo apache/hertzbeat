@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,4 +36,10 @@ public interface AlertSilenceDao extends JpaRepository<AlertSilence, Long>, JpaS
      */
     @Modifying
     void deleteAlertSilencesByIdIn(Set<Long> silenceIds);
+
+    /**
+     * find enabled alert silence
+     * @return enabled alert silence list
+     */
+    List<AlertSilence> findAlertSilencesByEnableTrue();
 }

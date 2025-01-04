@@ -156,8 +156,6 @@
   <nz-tag style="margin-left: 6px">{{ 'common.time.unit.second' | i18n }}</nz-tag>
 </ng-container>
 
-<app-tags-select *ngIf="item.type === 'tags-selection'" [mode]="extra.tag_mode" [(value)]="value" (valueChange)="onChange($event)" />
-
 <nz-textarea-count *ngIf="item.type === 'textarea-limit'" [nzMaxCharacterCount]="extra.textarea_limit || 100">
   <textarea
     [(ngModel)]="value"

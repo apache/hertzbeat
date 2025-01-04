@@ -19,7 +19,6 @@ package org.apache.hertzbeat.alert.service.impl;
 
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,8 +28,6 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -97,15 +94,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         }
     }
 
-    private List<TagItem> extractTagDataFromRow(Cell cell) {
-        String jsonStr = getCellValueAsString(cell);
-        if (StringUtils.hasText(jsonStr)) {
-            return JsonUtil.fromJson(jsonStr, new TypeReference<>() {
-            });
-        }
-        return null;
-    }
-
 
     private String getCellValueAsString(Cell cell) {
         if (cell == null) {
@@ -161,7 +149,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         alertDefineDTO.setExpr(getCellValueAsString(row.getCell(4)));
         alertDefineDTO.setPriority(getCellValueAsByte(row.getCell(5)));
         alertDefineDTO.setTimes(getCellValueAsInteger(row.getCell(6)));
-        alertDefineDTO.setTags(extractTagDataFromRow(row.getCell(7)));
+        // todo labels
         alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(8)));
         alertDefineDTO.setRecoverNotice(getCellValueAsBoolean(row.getCell(9)));
         alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(10)));
@@ -211,12 +199,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                 priorityCell.setCellStyle(cellStyle);
                 Cell timesCell = row.createCell(6);
                 timesCell.setCellValue(alertDefineDTO.getTimes());
-                Cell tagCell = row.createCell(7);
-                // get tags
-                List<TagItem> tagList = alertDefineDTO.getTags();
-                String tagValue = tagList == null || tagList.isEmpty() ? "" : JsonUtil.toJson(tagList);
-                tagCell.setCellValue(tagValue);
-                tagCell.setCellStyle(cellStyle);
+                // todo labels
                 Cell enableCell = row.createCell(8);
                 enableCell.setCellValue(alertDefineDTO.getEnable() != null
                         && alertDefineDTO.getEnable());

@@ -1,0 +1,257 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'alert.help.converge' | i18n"
+  [guild_link]="'alert.help.converge.link' | i18n"
+  [module_name]="'menu.alert.group'"
+  [icon_name]="'filter'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <button nz-button nzType="primary" (click)="onNewGroupConverge()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'common.button.new' | i18n }}
+    </button>
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
+    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nzDanger nz-button (click)="onDeleteGroupConverges()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
+  </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      [placeholder]="'alert.group-converge.name' | i18n"
+      [(value)]="search"
+      (valueChange)="loadGroupConvergeTable()"
+    />
+  </ng-template>
+</app-toolbar>
+
+<nz-table
+  #fixedTable
+  [nzData]="groupConverges"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  [nzLoading]="tableLoading"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzScroll]="{ x: '1240px' }"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.group-converge.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.group-converge.group-labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-wait' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-interval' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.repeat-interval' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.group-converge.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of fixedTable.data">
+      <td nzAlign="center" nzLeft [nzChecked]="checkedConvergeIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td nzAlign="center">
+        <span>{{ data.name }}</span>
+      </td>
+      <td nzAlign="center">
+        <nz-tag *ngFor="let label of data.groupLabels">{{ label }}</nz-tag>
+      </td>
+      <td nzAlign="center"> {{ data.groupWait }}{{ 'alert.group-converge.seconds' | i18n }} </td>
+      <td nzAlign="center"> {{ data.groupInterval }}{{ 'alert.group-converge.seconds' | i18n }} </td>
+      <td nzAlign="center"> {{ data.repeatInterval }}{{ 'alert.group-converge.seconds' | i18n }} </td>
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateGroupConverge(data)" name="enable"></nz-switch>
+      </td>
+      <td nzAlign="center">
+        <div class="actions">
+          <button
+            nz-button
+            nzType="primary"
+            (click)="editGroupConverge(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.group-converge.edit' | i18n"
+          >
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </button>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
+          </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button
+                  nz-button
+                  nzDanger
+                  (click)="onDeleteOneGroupConverge(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'alert.group-converge.delete' | i18n"
+                >
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<!-- new or update alert-converge pop-up box -->
+<nz-modal
+  [(nzVisible)]="isManageModalVisible"
+  [nzTitle]="isManageModalAdd ? ('alert.group-converge.new' | i18n) : ('alert.group-converge.edit' | i18n)"
+  (nzOnCancel)="onManageModalCancel()"
+  (nzOnOk)="onManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="40%"
+  [nzOkLoading]="isManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #ruleForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true" [nzTooltipTitle]="'alert.group-converge.name.tip' | i18n">
+          {{ 'alert.group-converge.name' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="groupConverge.name" nz-input required name="rule_name" type="text" id="rule_name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="groupLabels" nzRequired="true" [nzTooltipTitle]="'alert.group-converge.group-labels.tip' | i18n">
+          {{ 'alert.group-converge.group-labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            [(ngModel)]="groupConverge.groupLabels"
+            name="groupLabels"
+            nzMode="tags"
+            [nzTokenSeparators]="[',']"
+            [nzMaxMultipleCount]="10"
+            nzAllowClear
+            required
+            nzPlaceHolder="{{ 'alert.inhibit.equal_labels.placeholder' | i18n }}"
+          >
+            <nz-option *ngFor="let label of commonLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="groupWait" nzRequired="true" [nzTooltipTitle]="'alert.group-converge.group-wait.tip' | i18n">
+          {{ 'alert.group-converge.group-wait' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-input-number
+            [(ngModel)]="groupConverge.groupWait"
+            [nzMin]="0"
+            [nzStep]="30"
+            [nzPlaceHolder]="'30'"
+            name="groupWait"
+            id="groupWait"
+            required
+          >
+          </nz-input-number>
+          <span class="ant-form-text">{{ 'alert.group-converge.seconds' | i18n }}</span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label
+          [nzSpan]="7"
+          nzFor="groupInterval"
+          nzRequired="true"
+          [nzTooltipTitle]="'alert.group-converge.group-interval.tip' | i18n"
+        >
+          {{ 'alert.group-converge.group-interval' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-input-number
+            [(ngModel)]="groupConverge.groupInterval"
+            [nzMin]="0"
+            [nzStep]="300"
+            [nzPlaceHolder]="'300'"
+            name="groupInterval"
+            id="groupInterval"
+            required
+          >
+          </nz-input-number>
+          <span class="ant-form-text">{{ 'alert.group-converge.seconds' | i18n }}</span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label
+          [nzSpan]="7"
+          nzFor="reapInterval"
+          nzRequired="true"
+          [nzTooltipTitle]="'alert.group-converge.repeat-interval.tip' | i18n"
+        >
+          {{ 'alert.group-converge.repeat-interval' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-input-number
+            [(ngModel)]="groupConverge.repeatInterval"
+            [nzMin]="0"
+            [nzStep]="3600"
+            [nzPlaceHolder]="'14400'"
+            name="reapInterval"
+            id="reapInterval"
+            required
+          >
+          </nz-input-number>
+          <span class="ant-form-text">{{ 'alert.group-converge.seconds' | i18n }}</span>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="groupConverge.enable" name="enable" id="enable"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

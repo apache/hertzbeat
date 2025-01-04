@@ -31,23 +31,6 @@
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-
-    <button nz-button nzType="primary" (click)="onMarkReadAlerts()">
-      <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-      {{ 'alert.center.deal' | i18n }}
-    </button>
-    <button nz-button nzType="primary" nzDanger (click)="onMarkUnReadAlerts()" class="mobile-hide">
-      <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-      {{ 'alert.center.no-deal' | i18n }}
-    </button>
-    <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()" class="mobile-hide">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'alert.center.delete' | i18n }}
-    </button>
-    <button nz-button nzType="primary" nzDanger (click)="onClearAllAlerts()">
-      <i nz-icon nzType="clear" nzTheme="outline"></i>
-      {{ 'alert.center.clear' | i18n }}
-    </button>
   </ng-template>
   <ng-template #right>
     <nz-select
@@ -57,10 +40,10 @@
       [(ngModel)]="filterPriority"
       (ngModelChange)="loadAlertsTable()"
     >
-      <nz-option [nzLabel]="'alert.priority.all' | i18n" [nzValue]="9"></nz-option>
-      <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
-      <nz-option [nzLabel]="'alert.priority.1' | i18n" [nzValue]="1"></nz-option>
-      <nz-option [nzLabel]="'alert.priority.0' | i18n" [nzValue]="0"></nz-option>
+      <nz-option [nzLabel]="'alert.severity.all' | i18n" [nzValue]="9"></nz-option>
+      <nz-option [nzLabel]="'alert.severity.2' | i18n" [nzValue]="2"></nz-option>
+      <nz-option [nzLabel]="'alert.severity.1' | i18n" [nzValue]="1"></nz-option>
+      <nz-option [nzLabel]="'alert.severity.0' | i18n" [nzValue]="0"></nz-option>
     </nz-select>
     <nz-select
       class="mobile-hide"
@@ -69,10 +52,10 @@
       [(ngModel)]="filterStatus"
       (ngModelChange)="loadAlertsTable()"
     >
-      <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="9"></nz-option>
-      <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="0"></nz-option>
-      <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="2"></nz-option>
-      <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="3"></nz-option>
+      <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="'all'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="'emergency'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="'critical'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="'warning'"></nz-option>
     </nz-select>
     <app-multi-func-input
       groupStyle="width: 250px;"
@@ -84,128 +67,123 @@
   </ng-template>
 </app-toolbar>
 
-<nz-table
-  #fixedTable
-  [nzData]="alerts"
-  [nzPageIndex]="pageIndex"
-  [nzPageSize]="pageSize"
-  [nzTotal]="total"
-  nzFrontPagination="false"
-  [nzLoading]="tableLoading"
-  nzShowSizeChanger
-  [nzShowTotal]="rangeTemplate"
-  [nzPageSizeOptions]="[8, 15, 25]"
-  (nzQueryParams)="onTablePageChange($event)"
-  nzShowPagination="true"
-  [nzScroll]="{ x: '1240px' }"
->
-  <thead>
-    <tr>
-      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="17%">{{ 'alert.center.target' | i18n }}</th>
-      <th nzAlign="center" nzWidth="9%">{{ 'alert.center.priority' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'alert.center.content' | i18n }}</th>
-      <th nzAlign="center" nzWidth="17%">{{ 'alert.center.tags' | i18n }}</th>
-      <th nzAlign="center" nzWidth="9%">{{ 'alert.center.status' | i18n }}</th>
-      <th nzAlign="center" nzWidth="12%">{{ 'alert.center.time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let data of fixedTable.data">
-      <td nzAlign="center" nzLeft [nzChecked]="checkedAlertIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">{{ renderAlertTarget(data.target) }}</td>
-      <td nzAlign="center">
-        <nz-tag *ngIf="data.priority == 0" nzColor="red">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.0' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.priority == 1" nzColor="orange">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.1' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.priority == 2" nzColor="yellow">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.2' | i18n }}</span>
-        </nz-tag>
-      </td>
-      <td nzAlign="left">{{ data.content }}</td>
-      <td nzAlign="left">
-        <span *ngFor="let tag of data?.tmp; let i = index">
-          <a [routerLink]="['/monitors/' + tag.tagValue]" *ngIf="tag.name == 'monitorId'">
-            <nz-tag class="hoverClass" nzColor="magenta" style="margin-top: 2px">
-              <span nz-icon nzType="area-chart"></span>
-              {{ sliceTagName(tag) }}
-            </nz-tag>
-          </a>
-          <nz-tag *ngIf="tag.name != 'monitorId'" style="margin-top: 2px">
-            {{ sliceTagName(tag) }}
+<div class="alert-cards">
+  <nz-card *ngFor="let group of groupAlerts" class="alert-card" [class]="'status-' + group.status" [nzBordered]="false">
+    <!-- Alert Group Header -->
+    <div class="alert-header">
+      <div class="alert-info">
+        <div class="alert-labels">
+          <nz-tag *ngFor="let label of recordEntries(group.groupLabels)">
+            {{ label[0] + ':' + label[1] }}
           </nz-tag>
-        </span>
-      </td>
-      <td nzAlign="center">
-        <nz-tag [nzColor]="data.status == 3 ? '' : 'orange'">
-          {{ 'alert.status.' + data.status | i18n }}
-        </nz-tag>
-      </td>
-      <td nzAlign="center">
-        <nz-tag nz-tooltip [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }" nzTooltipPlacement="top">
-          {{ 'alert.center.first-time' | i18n }} : {{ data.firstAlarmTime | date : 'YYYY-MM-dd HH:mm:ss' }}
-        </nz-tag>
-        <span
-          nz-icon
-          nzType="arrow-down"
-          nzTheme="outline"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }"
-          nzTooltipPlacement="left"
-        ></span>
-        <nz-tag
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.time.tip' | i18n : { times: data.times }"
-          nzTooltipPlacement="bottom"
-          nzColor="processing"
-        >
-          {{ 'alert.center.last-time' | i18n }} : {{ data.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss' }}
-        </nz-tag>
-      </td>
-      <td nzAlign="center">
-        <div class="actions">
-          <button
-            *ngIf="data.status != 3"
-            nz-button
-            nzType="primary"
-            (click)="onMarkReadOneAlert(data.id)"
-            nz-tooltip
-            [nzTooltipTitle]="'alert.center.deal' | i18n"
-          >
-            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-          </button>
-          <button
-            *ngIf="data.status == 3"
-            nz-button
-            nzType="primary"
-            nzDanger
-            (click)="onMarkUnReadOneAlert(data.id)"
-            nz-tooltip
-            [nzTooltipTitle]="'alert.center.no-deal' | i18n"
-          >
-            <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-          </button>
-          <button
-            nz-button
-            nzType="primary"
-            nzDanger
-            (click)="onDeleteOneAlert(data.id)"
-            nz-tooltip
-            [nzTooltipTitle]="'alert.center.delete' | i18n"
-          >
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
-          </button>
         </div>
-      </td>
-    </tr>
-  </tbody>
-</nz-table>
+        <div class="alert-meta-info">
+          <span class="alert-time">
+            <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
+            {{ group.gmtCreate | date : 'yyyy-MM-dd HH:mm:ss' }}
+          </span>
+          <span class="alert-count" *ngIf="group?.alerts">
+            <i nz-icon nzType="alert" nzTheme="outline"></i>
+            {{ 'alert.center.time.tip' | i18n : { times: group?.alerts?.length } }}
+          </span>
+        </div>
+      </div>
+      <div class="alert-actions">
+        <button
+          *ngIf="group.status != 'firing'"
+          nz-button
+          (click)="onMarkReadOneAlert(group.id)"
+          nz-tooltip
+          [nzTooltipTitle]="'alert.center.deal' | i18n"
+        >
+          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+        </button>
+        <button
+          *ngIf="group.status == 'firing'"
+          nz-button
+          (click)="onMarkUnReadOneAlert(group.id)"
+          nz-tooltip
+          [nzTooltipTitle]="'alert.center.no-deal' | i18n"
+        >
+          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+        </button>
+        <button nz-button nzDanger (click)="onDeleteOneAlert(group.id)" nz-tooltip [nzTooltipTitle]="'alert.center.delete' | i18n">
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+        </button>
+      </div>
+    </div>
 
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+    <!-- Alert Details -->
+    <div class="alert-details">
+      <nz-collapse nzGhost>
+        <nz-collapse-panel
+          *ngFor="let item of group.alerts"
+          [nzHeader]="alertHeader"
+          [nzExtra]="alertExtra"
+          [nzActive]="false"
+          [nzExpandedIcon]="expandedIcon"
+        >
+          <ng-template #alertHeader>
+            <div class="alert-content">{{ item.content }}</div>
+          </ng-template>
+          <ng-template #alertExtra>
+            <div class="alert-time">{{ item.activeAt | date : 'yyyy-MM-dd HH:mm:ss' }}</div>
+          </ng-template>
+          <ng-template #expandedIcon let-active>
+            <i nz-icon [nzType]="active ? 'caret-down' : 'caret-right'"></i>
+          </ng-template>
+
+          <!-- Labels -->
+          <div class="detail-section" *ngIf="item.labels">
+            <div class="section-title">{{ 'alert.center.labels' | i18n }}</div>
+            <div class="alert-labels">
+              <nz-tag *ngFor="let label of recordEntries(item.labels)">
+                {{ label[0] + ':' + label[1] }}
+              </nz-tag>
+            </div>
+          </div>
+
+          <!-- Annotations -->
+          <div class="detail-section" *ngIf="item.annotations">
+            <div class="section-title">{{ 'annotation' | i18n }}</div>
+            <div class="alert-annotations">
+              <div *ngFor="let anno of recordEntries(item.annotations)" class="annotation-item">
+                <span class="annotation-key">{{ anno[0] }}:</span>
+                <span class="annotation-value">{{ anno[1] }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time Info -->
+          <div class="detail-section">
+            <div class="section-title">{{ 'alert.center.time' | i18n }}</div>
+            <div class="time-info">
+              <div class="time-item">
+                <span class="time-label">{{ 'alert.center.first-time' | i18n }}:</span>
+                <span class="time-value">{{ item.startAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
+              </div>
+              <div class="time-item">
+                <span class="time-label">{{ 'alert.center.last-time' | i18n }}:</span>
+                <span class="time-value">{{ item.activeAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
+              </div>
+            </div>
+          </div>
+        </nz-collapse-panel>
+      </nz-collapse>
+    </div>
+  </nz-card>
+</div>
+
+<nz-pagination
+  class="pagination"
+  [nzTotal]="total"
+  [(nzPageIndex)]="pageIndex"
+  [(nzPageSize)]="pageSize"
+  [nzShowSizeChanger]="true"
+  [nzShowQuickJumper]="true"
+  [nzShowTotal]="rangeTemplate"
+  (nzPageIndexChange)="loadAlertsTable()"
+  (nzPageSizeChange)="loadAlertsTable()"
+></nz-pagination>
+
+<ng-template #rangeTemplate let-range="range" let-total> {{ 'common.total' | i18n }} {{ total }} </ng-template>

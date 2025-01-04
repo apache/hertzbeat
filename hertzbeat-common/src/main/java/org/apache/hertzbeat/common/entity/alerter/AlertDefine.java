@@ -19,7 +19,6 @@ package org.apache.hertzbeat.common.entity.alerter;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-import com.google.common.base.Objects;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -29,18 +28,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -65,58 +60,48 @@ public class AlertDefine {
     @Schema(title = "Threshold Id", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "Monitoring Type", example = "linux", accessMode = READ_WRITE)
+    @Schema(title = "Alert Rule Name", example = "high_cpu_usage", accessMode = READ_WRITE)
     @Size(max = 100)
     @NotNull
-    private String app;
+    private String name;
 
-    @Schema(title = "Monitoring Metrics", example = "cpu", accessMode = READ_WRITE)
-    @Size(max = 100)
-    @NotNull
-    private String metric;
-
-    @Schema(title = "Monitoring Metrics Field", example = "usage", accessMode = READ_WRITE)
-    @Size(max = 100)
-    private String field;
-
-    @Schema(title = "Is Apply All Default", example = "false", accessMode = READ_WRITE)
-    private boolean preset;
+    @Schema(title = "Rule Type: realtime, periodic", example = "0")
+    private String type;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
     @Size(max = 2048)
     @Column(length = 2048)
     private String expr;
 
-    @Schema(title = "Alarm Level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning",
-            example = "1", accessMode = READ_WRITE)
-    @Min(0)
-    @Max(2)
-    private byte priority;
-
+    @Schema(title = "Execution Period (seconds) - For periodic rules", example = "300")
+    private Integer period;
+    
     @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",
             example = "3", accessMode = READ_WRITE)
-    @Min(0)
-    @Max(10)
     private Integer times;
     
-    @Schema(description = "Tags(status:success,env:prod)", example = "{name: key1, value: value1}",
+    @Schema(description = "labels(status:success,env:prod,priority:critical)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
-    @Convert(converter = JsonTagListAttributeConverter.class)
+    @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 2048)
-    private List<TagItem> tags;
+    private Map<String, String> labels;
 
-    @Schema(title = "Is Enable", example = "true", accessMode = READ_WRITE)
-    private boolean enable = true;
-    
-    @Schema(title = "Is Send Alarm Recover Notice", example = "false", accessMode = READ_WRITE)
-    @Column(columnDefinition = "boolean default false")
-    private boolean recoverNotice = false;
+    @Schema(title = "Annotations", example = "summary: High CPU usage")
+    @Convert(converter = JsonMapAttributeConverter.class)
+    @Column(length = 4096)
+    private Map<String, String> annotations;
 
-    @Schema(title = "Alarm Template", example = "linux {monitor_name}: {monitor_id} cpu usage high",
-            accessMode = READ_WRITE)
+    @Schema(title = "Alert Content Template", example = "Instance {{ $labels.instance }} CPU usage is {{ $value }}%")
     @Size(max = 2048)
     @Column(length = 2048)
     private String template;
+
+    @Schema(title = "Data Source Type", example = "PROMETHEUS")
+    @Size(max = 100)
+    private String datasource;
+
+    @Schema(title = "Is Enabled", example = "true")
+    private boolean enable = true;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
@@ -133,23 +118,4 @@ public class AlertDefine {
     @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof AlertDefine)) {
-            return false;
-        }
-        AlertDefine that = (AlertDefine) o;
-        return priority == that.priority && Objects.equal(app, that.app) && Objects.equal(metric, that.metric)
-                && Objects.equal(field, that.field) && Objects.equal(expr, that.expr)
-                && Objects.equal(times, that.times) && Objects.equal(template, that.template);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(app, metric, field, expr, priority, times, template);
-    }
 }

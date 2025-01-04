@@ -27,9 +27,7 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
 import { AlertSilence } from '../../../pojo/AlertSilence';
-import { TagItem } from '../../../pojo/NoticeRule';
 import { AlertSilenceService } from '../../../service/alert-silence.service';
-import { TagService } from '../../../service/tag.service';
 
 @Component({
   selector: 'app-alert-silence',
@@ -41,7 +39,6 @@ export class AlertSilenceComponent implements OnInit {
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private alertSilenceService: AlertSilenceService,
-    private tagService: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -208,8 +205,6 @@ export class AlertSilenceComponent implements OnInit {
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   silence: AlertSilence = new AlertSilence();
-  searchTag!: string;
-  tagsOption: any[] = [];
   matchTags: string[] = [];
   silenceDates!: Date[];
   dayCheckOptions = [
@@ -269,19 +264,6 @@ export class AlertSilenceComponent implements OnInit {
             this.isManageModalVisible = true;
             this.isManageModalAdd = false;
             this.matchTags = [];
-            if (this.silence.tags != undefined) {
-              this.silence.tags.forEach(item => {
-                let tag = `${item.name}`;
-                if (item.value != undefined) {
-                  tag = `${tag}:${item.value}`;
-                }
-                this.matchTags.push(tag);
-                this.tagsOption.push({
-                  value: tag,
-                  label: tag
-                });
-              });
-            }
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
           }
@@ -300,22 +282,6 @@ export class AlertSilenceComponent implements OnInit {
         }
       });
       return;
-    }
-    this.silence.tags = [];
-    this.matchTags.forEach(tag => {
-      let tmp: string[] = tag.split(':');
-      let tagItem = new TagItem();
-      if (tmp.length == 1) {
-        tagItem.name = tmp[0];
-        this.silence.tags.push(tagItem);
-      } else if (tmp.length == 2) {
-        tagItem.name = tmp[0];
-        tagItem.value = tmp[1];
-        this.silence.tags.push(tagItem);
-      }
-    });
-    if (this.silence.priorities != undefined) {
-      this.silence.priorities = this.silence.priorities.filter(item => item != null && item != 9);
     }
     if (this.silence.type === 0) {
       this.silence.periodStart = this.silenceDates[0];
@@ -373,58 +339,6 @@ export class AlertSilenceComponent implements OnInit {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
-    }
-  }
-
-  onPrioritiesChange() {
-    if (this.silence.priorities != undefined) {
-      let isAll = false;
-      this.silence.priorities.forEach(item => {
-        if (item == 9) {
-          isAll = true;
-        }
-      });
-      if (isAll) {
-        this.silence.priorities = [9, 0, 1, 2];
-      }
-    }
-  }
-
-  loadTagsOption() {
-    let tagsInit$ = this.tagService.loadTags(this.searchTag, undefined, 0, 1000).subscribe(
-      message => {
-        if (message.code === 0) {
-          let page = message.data;
-          this.tagsOption = [];
-          if (page.content != undefined) {
-            page.content.forEach(item => {
-              let tag = `${item.name}`;
-              if (item.tagValue != undefined) {
-                tag = `${tag}:${item.tagValue}`;
-              }
-              this.tagsOption.push({
-                value: tag,
-                label: tag
-              });
-            });
-          }
-        } else {
-          console.warn(message.msg);
-        }
-        tagsInit$.unsubscribe();
-      },
-      error => {
-        tagsInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
-  }
-
-  sliceTagName(tag: any): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
-    } else {
-      return tag.name;
     }
   }
 }

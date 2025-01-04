@@ -20,7 +20,6 @@ package org.apache.hertzbeat.manager.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.reset;
@@ -33,9 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.TagDao;
-import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.apache.hertzbeat.manager.service.impl.TagServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,9 +54,6 @@ class TagServiceTest {
     
     @Mock
     private TagDao tagDao;
-    
-    @Mock
-    private TagMonitorBindDao tagMonitorBindDao;
     
     @Test
     void addTags() {
@@ -95,13 +89,5 @@ class TagServiceTest {
     @Test
     void deleteTags() {
         assertDoesNotThrow(() -> tagService.deleteTags(new HashSet<>(1)));
-    }
-    
-    @Test
-    void deleteUsingTags() {
-        when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(1L);
-        HashSet<Long> set = new HashSet<>(1);
-        set.add(1L);
-        assertThrows(CommonException.class, () -> tagService.deleteTags(set));
     }
 }

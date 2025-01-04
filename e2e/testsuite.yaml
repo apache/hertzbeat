@@ -302,13 +302,13 @@ items:
       Authorization: Bearer {{.login.data.token}}
 - name: deleteAlertDefine
   request:
-    api: /api/alert/defines?ids={{(index .listAlertDefines.data.content 0).id | int64}}
+    api: /api/alert/defines?ids=1
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}
-- name: listAlertConverges
+- name: listAlertGroupConverges
   request:
-    api: /api/alert/converges
+    api: /api/alert/groups
     header:
       Authorization: Bearer {{.login.data.token}}
 - name: listAlertSilences
@@ -316,9 +316,9 @@ items:
     api: /api/alert/silences
     header:
       Authorization: Bearer {{.login.data.token}}
-- name: listAlerts
+- name: listGroupAlerts
   request:
-    api: /api/alerts
+    api: /api/alerts/group
     header:
       Authorization: Bearer {{.login.data.token}}
 - name: listReceivers

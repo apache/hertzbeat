@@ -17,8 +17,6 @@
  * under the License.
  */
 
-import { TagItem } from './NoticeRule';
-
 export class AlertSilence {
   id!: number;
   name!: string;
@@ -26,8 +24,7 @@ export class AlertSilence {
   matchAll: boolean = true;
   type: number = 0;
   times!: number;
-  priorities!: number[];
-  tags!: TagItem[];
+  labels!: Record<string, string>;
   days!: number[];
   periodStart: Date = new Date();
   periodEnd: Date = new Date();

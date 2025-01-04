@@ -92,9 +92,6 @@ export class MonitorEditComponent implements OnInit {
               });
               this.paramValueMap = paramValueMap;
             }
-            if (this.monitor.tags == undefined) {
-              this.monitor.tags = [];
-            }
           } else {
             console.warn(message.msg);
             this.notifySvc.error(this.i18nSvc.fanyi('monitors.not-found'), message.msg);

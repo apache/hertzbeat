@@ -55,4 +55,129 @@
       flex-shrink: 0;
     }
   }
+
+  .actions {
+    button {
+      margin-right: 8px;
+    }
+  }
+
+  .preview-expr-card {
+    background-color: #f6f6f6;
+    ::ng-deep .ant-card-body {
+      padding: 12px;
+    }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: #666;
+    }
+  }
+
+  .template-input-wrapper {
+    position: relative;
+
+    .env-vars-dropdown {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 1;
+
+      button {
+        padding: 4px;
+        border: none;
+        background: transparent;
+
+        i {
+          font-size: 16px;
+          color: rgba(0, 0, 0, 0.45);
+          transition: color 0.3s;
+        }
+
+        &:hover i {
+          color: #1890ff;
+        }
+      }
+    }
+  }
+
+  .env-vars-menu {
+    min-width: 240px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 4px 0;
+
+    .ant-dropdown-menu-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+
+      &:hover {
+        background: #f5f5f5;
+      }
+
+      .env-var-name {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        color: #1890ff;
+        margin-right: 12px;
+        font-size: 13px;
+      }
+
+      .env-var-desc {
+        color: rgba(0, 0, 0, 0.65);
+        font-size: 12px;
+        flex: 1;
+      }
+    }
+
+    .env-var-type {
+      margin-left: 8px;
+      font-size: 11px;
+    }
+
+    .ant-divider {
+      margin: 4px 0;
+    }
+  }
+
+  .alert-type-options {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+
+    .alert-type-card {
+      width: 160px;
+      text-align: center;
+      cursor: pointer;
+
+      i {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+      }
+
+      p {
+        color: #666;
+        font-size: 12px;
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .ant-input-group-addon {
+    color: rgba(0, 0, 0, 0.65);
+    padding: 4px 11px;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.5715;
+    text-align: center;
+    background-color: #fafafa;
+    border: 1px solid #d9d9d9;
+    border-left: none;
+    border-radius: 0 2px 2px 0;
+  }
 }

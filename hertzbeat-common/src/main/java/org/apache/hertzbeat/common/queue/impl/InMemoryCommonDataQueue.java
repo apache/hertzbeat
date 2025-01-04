@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.DisposableBean;
@@ -43,14 +42,12 @@ import org.springframework.context.annotation.Primary;
 @Slf4j
 @Primary
 public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {
-
-    private final LinkedBlockingQueue<Alert> alertDataQueue;
+    
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
 
     public InMemoryCommonDataQueue() {
-        alertDataQueue = new LinkedBlockingQueue<>();
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToStorageQueue = new LinkedBlockingQueue<>();
         serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
@@ -58,25 +55,14 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
 
     public Map<String, Integer> getQueueSizeMetricsInfo() {
         Map<String, Integer> metrics = new HashMap<>(8);
-        metrics.put("alertDataQueue", alertDataQueue.size());
         metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
         metrics.put("metricsDataToStorageQueue", metricsDataToStorageQueue.size());
         return metrics;
     }
 
     @Override
-    public void sendAlertsData(Alert alert) {
-        alertDataQueue.offer(alert);
-    }
-
-    @Override
     public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
         return serviceDiscoveryDataQueue.take();
-    }
-
-    @Override
-    public Alert pollAlertsData() throws InterruptedException {
-        return alertDataQueue.take();
     }
 
     @Override
@@ -106,7 +92,6 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
 
     @Override
     public void destroy() {
-        alertDataQueue.clear();
         metricsDataToAlertQueue.clear();
         metricsDataToStorageQueue.clear();
         serviceDiscoveryDataQueue.clear();

@@ -23,103 +23,89 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
+import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
 import org.apache.hertzbeat.common.cache.CacheFactory;
-import org.apache.hertzbeat.common.cache.CommonCacheService;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.springframework.stereotype.Service;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.springframework.stereotype.Component;
 
 /**
- * silence alarm
+ * Silence alert handler
+ * Refer from prometheus alert silencing mechanism
  */
-@Service
+@Component
 @RequiredArgsConstructor
 public class AlarmSilenceReduce {
 
     private final AlertSilenceDao alertSilenceDao;
+    private final AlertNoticeDispatch dispatcherAlarm;
 
     /**
-     * alert silence filter data
-     * @param alert alert
-     * @return true when not filter
+     * Process alert with silence rules
+     * If alert matches any active silence rule, it will be silenced
+     * @param groupAlert The alert to be processed
      */
-    @SuppressWarnings("unchecked")
-    public boolean filterSilence(Alert alert) {
-        CommonCacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
-        List<AlertSilence> alertSilenceList = (List<AlertSilence>) silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE);
+    public void silenceAlarm(GroupAlert groupAlert) {
+        List<AlertSilence> alertSilenceList = CacheFactory.getAlertSilenceCache();
         if (alertSilenceList == null) {
-            alertSilenceList = alertSilenceDao.findAll();
-            silenceCache.put(CommonConstants.CACHE_ALERT_SILENCE, alertSilenceList);
+            alertSilenceList = alertSilenceDao.findAlertSilencesByEnableTrue();
+            CacheFactory.setAlertSilenceCache(alertSilenceList);
         }
+        
+        // Check each silence rule
         for (AlertSilence alertSilence : alertSilenceList) {
-            if (!alertSilence.isEnable()) {
-                continue;
-            }
-            // if match the silence rule, return
+            // Check if alert matches silence rule
             boolean match = alertSilence.isMatchAll();
-            if (!match) {
-                List<TagItem> tags = alertSilence.getTags();
-                if (alert.getTags() != null && !alert.getTags().isEmpty()) {
-                    Map<String, String> alertTagMap = alert.getTags();
-                    match = tags.stream().anyMatch(item -> {
-                        if (alertTagMap.containsKey(item.getName())) {
-                            String tagValue = alertTagMap.get(item.getName());
-                            if (tagValue == null && item.getValue() == null) {
-                                return true;
-                            } else {
-                                return tagValue != null && tagValue.equals(item.getValue());
-                            }
-                        } else {
-                            return false;
-                        }
-                    });
-                } else {
-                    match = true;
-                }
-                if (match && alertSilence.getPriorities() != null && !alertSilence.getPriorities().isEmpty()) {
-                    match = alertSilence.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
-                }
+            if (!match && groupAlert.getGroupLabels() != null) {
+                Map<String, String> labels = alertSilence.getLabels();
+                Map<String, String> alertLabels = groupAlert.getGroupLabels();
+                match = labels.entrySet().stream().anyMatch(item -> 
+                    alertLabels.containsKey(item.getKey()) && item.getValue().equals(alertLabels.get(item.getKey())));
             }
+            
             if (match) {
+                LocalDateTime now = LocalDateTime.now();
                 if (alertSilence.getType() == 0) {
-                    // once time
-                    return checkAndSave(LocalDateTime.now(), alertSilence);
+                    // One-time silence rule
+                    if (checkAndSave(now, alertSilence)) {
+                        continue;
+                    }
+                    // Alert is silenced
+                    return;
                 } else if (alertSilence.getType() == 1) {
-                    // cyc time
-                    int currentDayOfWeek = LocalDateTime.now().toLocalDate().getDayOfWeek().getValue();
-                    if (alertSilence.getDays() != null && !alertSilence.getDays().isEmpty()) {
-                        boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-                        if (dayMatch) {
-                            return checkAndSave(LocalDateTime.now(), alertSilence);
-                        }
+                    // Cyclic silence rule
+                    int currentDayOfWeek = now.getDayOfWeek().getValue();
+                    if (alertSilence.getDays() != null && alertSilence.getDays().contains((byte) currentDayOfWeek) 
+                            && !checkAndSave(now, alertSilence)) {
+                        // Alert is silenced
+                        return;
                     }
                 }
             }
         }
-        return true;
+        
+        // No matching silence rule, forward the alert
+        dispatcherAlarm.dispatchAlarm(groupAlert);
     }
 
     /**
-     * Check AlertSilence start and end match, to save alertSilence obj.
-     * @param times         LocalDateTime.
-     * @param alertSilence  {@link AlertSilence}
-     * @return boolean
+     * Check if alert time is within silence period and update silence rule counter
+     * @param now Current time
+     * @param alertSilence Silence rule to check
+     * @return true if alert should not be silenced, false if alert should be silenced
      */
-    private boolean checkAndSave(LocalDateTime times, AlertSilence alertSilence) {
-
-        boolean startMatch = alertSilence.getPeriodStart() == null || times.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-        boolean endMatch = alertSilence.getPeriodEnd() == null || times.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+    private boolean checkAndSave(LocalDateTime now, AlertSilence alertSilence) {
+        boolean startMatch = alertSilence.getPeriodStart() == null 
+                || now.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+        boolean endMatch = alertSilence.getPeriodEnd() == null 
+                || now.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
 
         if (startMatch && endMatch) {
-
             int time = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
             alertSilence.setTimes(time + 1);
             alertSilenceDao.save(alertSilence);
             return false;
         }
-
         return true;
     }
 }

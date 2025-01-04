@@ -17,57 +17,85 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
-import java.util.HashMap;
-import java.util.List;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Service;
 
 /**
- * reduce alarm and send alert data
+ * common reduce alarm worker
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AlarmCommonReduce {
+    
+    private final AlarmGroupReduce alarmGroupReduce;
+    
+    private ThreadPoolExecutor workerExecutor;
 
-    private final AlarmSilenceReduce alarmSilenceReduce;
-	
-    private final AlarmConvergeReduce alarmConvergeReduce;
-
-    private final CommonDataQueue dataQueue;
-
-    private final AlertMonitorDao alertMonitorDao;
-
-    public void reduceAndSendAlarm(Alert alert) {
-        alert.setTimes(1);
-        Map<String, String> tags = alert.getTags();
-        if (tags == null) {
-            tags = new HashMap<>(8);
-            alert.setTags(tags);
-        }
-        String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
-        if (monitorIdStr == null) {
-            log.debug("receiver extern alarm message: {}", alert);
-        } else {
-            long monitorId = Long.parseLong(monitorIdStr);
-            List<Tag> tagList = alertMonitorDao.findMonitorIdBindTags(monitorId);
-            for (Tag tag : tagList) {
-                if (!tags.containsKey(tag.getName())) {
-                    tags.put(tag.getName(), tag.getTagValue());
-                }
-            }
-        }
-        // converge -> silence
-        if (alarmConvergeReduce.filterConverge(alert) && alarmSilenceReduce.filterSilence(alert)) {
-            dataQueue.sendAlertsData(alert);
-        }
+    public AlarmCommonReduce(AlarmGroupReduce alarmGroupReduce) {
+        initWorkExecutor();
+        this.alarmGroupReduce = alarmGroupReduce;
     }
 
+    private void initWorkExecutor() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("alerter-reduce-worker has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .setDaemon(true)
+                .setNameFormat("alerter-reduce-worker-%d")
+                .build();
+        workerExecutor = new ThreadPoolExecutor(2,
+                2,
+                10,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
+                threadFactory,
+                new ThreadPoolExecutor.AbortPolicy());
+    }
+
+
+    public void reduceAndSendAlarm(SingleAlert alert) {
+        workerExecutor.execute(reduceAlarmTask(alert));
+    }
+    
+    Runnable reduceAlarmTask(SingleAlert alert) {
+        return () -> {
+            try {
+                // Generate alert fingerprint
+                String fingerprint = generateAlertFingerprint(alert.getLabels());
+                alert.setFingerprint(fingerprint);
+                alarmGroupReduce.processGroupAlert(alert);
+            } catch (Exception e) {
+                log.error("Reduce alarm failed: {}", e.getMessage());
+            }
+        };
+    }
+
+    /**
+     * Generate fingerprint for alert to identify duplicates
+     * Fingerprint is based on labels excluding timestamp related fields
+     */
+    private String generateAlertFingerprint(Map<String, String> labels) {
+        // Remove timestamp related fields
+        labels.remove("timestamp");
+        labels.remove("start_at");
+        labels.remove("active_at");
+        return labels.entrySet().stream()
+                .filter(e -> !"timestamp".equals(e.getKey())
+                        && !"starts_at".equals(e.getKey()) && !"actives_at".equals(e.getKey())
+                        && !"end_at".equals(e.getKey()) && !"ends_at".equals(e.getKey())
+                        && !"start_at".equals(e.getKey()) && !"active_at".equals(e.getKey()))
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + ":" + e.getValue())
+                .collect(Collectors.joining(","));
+    }
 }

@@ -37,13 +37,16 @@ public class JexlExpressionRunnerTest {
     void evaluate() {
         Map<String, Object> context = new HashMap<String, Object>();
         context.put("age", 2);
+        context.put("__age__", 2);
 
         String expression = "1 + 2";
         String expressionWithParam = "1 + age";
+        String expressionWithName = "1 + __age__";
 
         assertEquals(3, JexlExpressionRunner.evaluate(expression));
         assertEquals(3, JexlExpressionRunner.evaluate(expression, context));
         assertEquals(3, JexlExpressionRunner.evaluate(expressionWithParam, context));
+        assertEquals(3, JexlExpressionRunner.evaluate(expressionWithName, context));
 
         assertThrows(NullPointerException.class, () -> {
             JexlExpressionRunner.evaluate(expression, null);

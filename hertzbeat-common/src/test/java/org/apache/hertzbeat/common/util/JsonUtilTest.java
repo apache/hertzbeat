@@ -20,13 +20,10 @@ package org.apache.hertzbeat.common.util;
 import static org.apache.hertzbeat.common.util.JsonUtil.isJsonStr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -36,23 +33,16 @@ class JsonUtilTest {
 
     @Test
     void toJson() {
-        List<TagItem> tagList = new ArrayList<>(4);
-        TagItem proTag = new TagItem("test", "pro");
-        tagList.add(proTag);
-        tagList.add(new TagItem("test", "dev"));
-
-        assertEquals("[{\"name\":\"test\",\"value\":\"pro\"},{\"name\":\"test\",\"value\":\"dev\"}]",
-                JsonUtil.toJson(tagList));
+        Map<String, String> map = Map.of("test", "pro");
+        
+        assertEquals("{\"test\":\"pro\"}",
+                JsonUtil.toJson(map));
 
         assertNull(JsonUtil.toJson(null));
     }
 
     @Test
     void testFromJson() {
-        String jsonStr = "[{\"name\":\"test\",\"value\":\"pro\"},{\"name\":\"test\",\"value\":\"dev\"}]";
-        List<TagItem> tagItems = JsonUtil.fromJson(jsonStr, new TypeReference<>() {
-        });
-        assertEquals("[TagItem(name=test, value=pro), TagItem(name=test, value=dev)]", tagItems.toString());
         assertNull(JsonUtil.fromJson("", new TypeReference<>() {
         }));
         assertNull(JsonUtil.fromJson(null, new TypeReference<>() {
@@ -62,7 +52,6 @@ class JsonUtilTest {
         assertNull(JsonUtil.fromJson(" ", String.class));
         assertNull(JsonUtil.fromJson(" "));
         assertNull(JsonUtil.fromJson(null));
-        assertNotNull(JsonUtil.fromJson(jsonStr));
         assertNull(JsonUtil.fromJson("invalid"));
     }
 

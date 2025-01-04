@@ -20,9 +20,13 @@
 import { Component, EventEmitter, Input, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
-import { TagItem } from '../../../pojo/NoticeRule';
 import { Tag } from '../../../pojo/Tag';
 import { TagService } from '../../../service/tag.service';
+
+export class TagItem {
+  name!: string;
+  value!: string;
+}
 
 @Component({
   selector: 'app-tags-select',

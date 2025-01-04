@@ -59,15 +59,11 @@ public class SdMonitorOperator {
                 .collect(Collectors.toList());
     }
 
-    public static MonitorBind buildSdSubMonitorBind(SdMonitorParam sdMonitorParam, long monitorId, List<Tag> tags) {
+    public static MonitorBind buildSdSubMonitorBind(SdMonitorParam sdMonitorParam, long monitorId, Map<String, String> labels) {
         if (Objects.isNull(sdMonitorParam.getBizId())) {
             return null;
         }
-
-        tags.add(Tag.builder().name(CommonConstants.TAG_AUTO_CREATED)
-                .tagValue(String.valueOf(sdMonitorParam.getBizId()))
-                .type(CommonConstants.TAG_TYPE_AUTO_GENERATE)
-                .build());
+        labels.put(CommonConstants.TAG_AUTO_CREATED, String.valueOf(sdMonitorParam.getBizId()));
         return MonitorBind.builder()
                 .id(SnowFlakeIdGenerator.generateId())
                 .bizId(sdMonitorParam.getBizId())
@@ -89,15 +85,11 @@ public class SdMonitorOperator {
                 .build();
     }
 
-    public static Job constructSdJobAndTag(SdMonitorParam sdMonitorParam, List<Tag> tags, Job appDefine) {
+    public static Job constructSdJobAndTag(SdMonitorParam sdMonitorParam, Map<String, String> labels, Job appDefine) {
         if (Objects.isNull(sdMonitorParam.getSdParam())) {
             return appDefine;
         }
-
-        tags.add(Tag.builder().name(CommonConstants.TAG_SD_MAIN_MONITOR)
-                .tagValue(ServiceDiscoveryProtocol.Type.getType(sdMonitorParam.getSdParam().getField()).name())
-                .type(CommonConstants.TAG_TYPE_AUTO_GENERATE)
-                .build());
+        labels.put(CommonConstants.TAG_SD_MAIN_MONITOR, ServiceDiscoveryProtocol.Type.getType(sdMonitorParam.getSdParam().getField()).name());
         return constructSdJob(appDefine, sdMonitorParam.getSdParam());
     }
 

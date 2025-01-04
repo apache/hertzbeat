@@ -17,20 +17,12 @@
 
 package org.apache.hertzbeat.common.queue;
 
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * common data queue
  */
 public interface CommonDataQueue {
-
-    /**
-     * poll alert data
-     * @return alert data
-     * @throws InterruptedException when poll timeout
-     */
-    Alert pollAlertsData() throws InterruptedException;
 
     /**
      * poll collect metrics data for alerter
@@ -45,12 +37,6 @@ public interface CommonDataQueue {
      * @throws InterruptedException when poll timeout
      */
     CollectRep.MetricsData pollMetricsDataToStorage() throws InterruptedException;
-    
-    /**
-     * offer alert data
-     * @param alert alert data
-     */
-    void sendAlertsData(Alert alert);
 
     /**
      * poll service discovery data

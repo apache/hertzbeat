@@ -21,9 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-import org.apache.hertzbeat.common.entity.manager.NoticeRule;
+import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
+import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,12 +50,10 @@ class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
                 .gmtUpdate(LocalDateTime.now())
                 .modifier("mock")
                 .creator("mock")
-                .priorities(Collections.emptyList())
                 .receiverId(List.of(1L))
                 .receiverName(List.of("mock receiver"))
                 .templateId(1L)
                 .receiverName(List.of("mock template"))
-                .tags(Collections.emptyList())
                 .build();
         enabled = noticeRuleDao.saveAndFlush(enabled);
         assertNotNull(enabled);
@@ -70,12 +68,10 @@ class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
                 .gmtUpdate(LocalDateTime.now())
                 .modifier("mock")
                 .creator("mock")
-                .priorities(Collections.emptyList())
                 .receiverId(List.of(1L))
                 .receiverName(List.of("mock receiver"))
                 .templateId(1L)
                 .receiverName(List.of("mock template"))
-                .tags(Collections.emptyList())
                 .build();
         disabled = noticeRuleDao.saveAndFlush(disabled);
         assertNotNull(disabled);

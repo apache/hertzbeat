@@ -26,11 +26,10 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../../pojo/NoticeReceiver';
-import { NoticeRule, TagItem } from '../../../../pojo/NoticeRule';
+import { NoticeRule } from '../../../../pojo/NoticeRule';
 import { NoticeReceiverService } from '../../../../service/notice-receiver.service';
 import { NoticeRuleService } from '../../../../service/notice-rule.service';
 import { NoticeTemplateService } from '../../../../service/notice-template.service';
-import { TagService } from '../../../../service/tag.service';
 
 @Component({
   selector: 'app-alert-notice-rule',
@@ -47,9 +46,6 @@ export class AlertNoticeRuleComponent implements OnInit {
   rule: NoticeRule = new NoticeRule();
   switchReceiver!: NoticeReceiver;
   receiversOption: any[] = [];
-  searchTag!: string;
-  tagsOption: any[] = [];
-  filterTags: string[] = [];
   isLimit: boolean = false;
   @ViewChild('ruleForm', { static: false }) ruleForm: NgForm | undefined;
 
@@ -69,7 +65,6 @@ export class AlertNoticeRuleComponent implements OnInit {
     private modal: NzModalService,
     private noticeTemplateSvc: NoticeTemplateService,
     private noticeRuleSvc: NoticeRuleService,
-    private tagService: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -176,20 +171,6 @@ export class AlertNoticeRuleComponent implements OnInit {
             this.templatesOption.push({
               value: -1,
               label: this.i18nSvc.fanyi('alert.notice.template.preset.true')
-            });
-          }
-          this.filterTags = [];
-          if (rule.tags != undefined) {
-            rule.tags.forEach(item => {
-              let tag = `${item.name}`;
-              if (item.value != undefined) {
-                tag = `${tag}:${item.value}`;
-              }
-              this.filterTags.push(tag);
-              this.tagsOption.push({
-                value: tag,
-                label: tag
-              });
             });
           }
         } else {
@@ -336,50 +317,6 @@ export class AlertNoticeRuleComponent implements OnInit {
     );
   }
 
-  loadTagsOption() {
-    let tagsInit$ = this.tagService.loadTags(this.searchTag, undefined, 0, 1000).subscribe(
-      message => {
-        if (message.code === 0) {
-          let page = message.data;
-          this.tagsOption = [];
-          if (page.content != undefined) {
-            page.content.forEach(item => {
-              let tag = `${item.name}`;
-              if (item.tagValue != undefined) {
-                tag = `${tag}:${item.tagValue}`;
-              }
-              this.tagsOption.push({
-                value: tag,
-                label: tag
-              });
-            });
-          }
-        } else {
-          console.warn(message.msg);
-        }
-        tagsInit$.unsubscribe();
-      },
-      error => {
-        tagsInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
-  }
-
-  onPrioritiesChange() {
-    if (this.rule.priorities != undefined) {
-      let isAll = false;
-      this.rule.priorities.forEach(item => {
-        if (item == 9) {
-          isAll = true;
-        }
-      });
-      if (isAll) {
-        this.rule.priorities = [9, 0, 1, 2];
-      }
-    }
-  }
-
   onManageRuleModalCancel() {
     this.isManageRuleModalVisible = false;
   }
@@ -439,22 +376,6 @@ export class AlertNoticeRuleComponent implements OnInit {
     } else {
       this.rule.templateId = null;
       this.rule.templateName = null;
-    }
-    this.rule.tags = [];
-    this.filterTags.forEach(tag => {
-      let tmp: string[] = tag.split(':');
-      let tagItem = new TagItem();
-      if (tmp.length == 1) {
-        tagItem.name = tmp[0];
-        this.rule.tags.push(tagItem);
-      } else if (tmp.length == 2) {
-        tagItem.name = tmp[0];
-        tagItem.value = tmp[1];
-        this.rule.tags.push(tagItem);
-      }
-    });
-    if (this.rule.priorities != undefined) {
-      this.rule.priorities = this.rule.priorities.filter(item => item != null && item != 9);
     }
     this.isManageRuleModalOkLoading = true;
     if (this.isManageRuleModalAdd) {

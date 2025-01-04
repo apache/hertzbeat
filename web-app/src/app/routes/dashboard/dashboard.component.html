@@ -396,24 +396,21 @@
     <nz-spin [nzSpinning]="alertContentLoading">
       <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow: hidden">
         <nz-timeline nzMode="left">
-          <nz-timeline-item
-            *ngFor="let alert of alerts; let i = index"
-            [nzLabel]="(alert.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
-          >
+          <nz-timeline-item *ngFor="let alert of alerts; let i = index" [nzLabel]="(alert.activeAt | date : 'YYYY-MM-dd HH:mm:ss')?.trim()">
             <p style="font-weight: 400">
-              <nz-tag *ngIf="alert.priority == 0" nzColor="red">
-                <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.priority.0' | i18n }}</span>
-              </nz-tag>
-              <nz-tag *ngIf="alert.priority == 1" nzColor="orange">
-                <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.priority.1' | i18n }}</span>
-              </nz-tag>
-              <nz-tag *ngIf="alert.priority == 2" nzColor="yellow">
-                <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.priority.2' | i18n }}</span>
-              </nz-tag>
-              <span>[{{ alert.tags.monitorName }}] </span>
+              <!--              <nz-tag *ngIf="alert.severity == 0" nzColor="red">-->
+              <!--                <i nz-icon nzType="bell" nzTheme="outline"></i>-->
+              <!--                <span>{{ 'alert.severity.0' | i18n }}</span>-->
+              <!--              </nz-tag>-->
+              <!--              <nz-tag *ngIf="alert.severity == 1" nzColor="orange">-->
+              <!--                <i nz-icon nzType="bell" nzTheme="outline"></i>-->
+              <!--                <span>{{ 'alert.severity.1' | i18n }}</span>-->
+              <!--              </nz-tag>-->
+              <!--              <nz-tag *ngIf="alert.severity == 2" nzColor="yellow">-->
+              <!--                <i nz-icon nzType="bell" nzTheme="outline"></i>-->
+              <!--                <span>{{ 'alert.severity.2' | i18n }}</span>-->
+              <!--              </nz-tag>-->
+              <!--              <span>[{{ alert.tags.monitorName }}] </span>-->
               {{ alert.content }}
             </p>
           </nz-timeline-item>

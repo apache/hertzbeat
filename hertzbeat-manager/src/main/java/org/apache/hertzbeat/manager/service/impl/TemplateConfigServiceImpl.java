@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
-import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.stereotype.Service;

@@ -27,7 +27,7 @@ import java.util.stream.LongStream;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,28 +71,23 @@ class AlertsControllerTest {
     void getAlerts() throws Exception {
         String sortField = "id";
         String orderType = "desc";
-        Byte priority = 1;
-        Byte status = 1;
-        Long monitorId = 1L;
+        String status = "firing";
         String content = "test";
         int pageIndex = 0;
         int pageSize = 10;
 
-        Page<Alert> alertPage = new PageImpl<>(
-                Collections.singletonList(Alert.builder().build()),
+        Page<GroupAlert> alertPage = new PageImpl<>(
+                Collections.singletonList(GroupAlert.builder().build()),
                 PageRequest.of(pageIndex, pageSize, Sort.by(sortField).descending()),
                 ids.size()
         );
-        Mockito.when(alertService.getAlerts(ids, monitorId, priority, status, content, sortField, orderType, pageIndex, pageSize))
+        Mockito.when(alertService.getGroupAlerts(status, content, sortField, orderType, pageIndex, pageSize))
                 .thenReturn(alertPage);
 
         mockMvc.perform(MockMvcRequestBuilders
-                        .get("/api/alerts")
-                        .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
-                        .param("monitorId", String.valueOf(monitorId))
-                        .param("priority", String.valueOf(priority))
-                        .param("status", String.valueOf(status))
-                        .param("content", content)
+                        .get("/api/alerts/group")
+                        .param("status", status)
+                        .param("search", content)
                         .param("sort", sortField)
                         .param("order", orderType)
                         .param("pageIndex", String.valueOf(pageIndex))
@@ -105,10 +100,10 @@ class AlertsControllerTest {
     }
 
     @Test
-    void deleteAlerts() throws Exception {
+    void deleteGroupAlerts() throws Exception {
         mockMvc.perform(
                         MockMvcRequestBuilders
-                                .delete("/api/alerts")
+                                .delete("/api/alerts/group")
                                 .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
                 )
                 .andExpect(status().isOk())
@@ -118,22 +113,10 @@ class AlertsControllerTest {
     }
 
     @Test
-    void clearAllAlerts() throws Exception {
+    void applyGroupAlertStatus() throws Exception {
         mockMvc.perform(
                         MockMvcRequestBuilders
-                                .delete("/api/alerts/clear")
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(content().json("{\"data\":null,\"msg\":null,\"code\":0}"))
-                .andReturn();
-    }
-
-    @Test
-    void applyAlertDefinesStatus() throws Exception {
-        mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .put("/api/alerts/status/1")
+                                .put("/api/alerts/group/status/resolved")
                                 .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
                 )
                 .andExpect(status().isOk())

@@ -27,8 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
-import org.apache.hertzbeat.common.cache.CommonCacheService;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -111,7 +109,6 @@ public class AlertSilenceServiceImpl implements AlertSilenceService {
     }
 
     private void clearAlertSilencesCache() {
-        CommonCacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
-        silenceCache.remove(CommonConstants.CACHE_ALERT_SILENCE);
+        CacheFactory.clearAlertSilenceCache();
     }
 }

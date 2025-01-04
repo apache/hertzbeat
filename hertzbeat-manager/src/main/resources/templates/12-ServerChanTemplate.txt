@@ -1,9 +1,45 @@
-#### [${title}]
-##### **${targetLabel}** : ${target}
-<#if (monitorId??)>##### **${monitorIdLabel}** : ${monitorId} </#if>
-<#if (monitorName??)>##### **${monitorNameLabel}** : ${monitorName} </#if>
-<#if (monitorHost??)>##### **${monitorHostLabel}** : ${monitorHost} </#if>
-##### **${priorityLabel}** : ${priority}
-##### **${triggerTimeLabel}** : ${triggerTime}
-<#if (restoreTimeLabel??)>##### **${restoreTimeLabel}** : ${restoreTime} </#if>
-##### **${contentLabel}** : ${content}
+## 🔔 HertzBeat Alert Notification
+
+### Alert Summary
+> - Status: ${status}
+<#if commonLabels??>
+<#if commonLabels.severity??>
+> - Severity: ${commonLabels.severity?switch("critical", "❤️ Critical", "warning", "💛 Warning", "info", "💚 Info", "Unknown")}
+</#if>
+<#if commonLabels.alertname??>
+> - Alert Name: ${commonLabels.alertname}
+</#if>
+</#if>
+
+### Alert Details
+<#list alerts as alert>
+#### Alert ${alert?index + 1}
+<#if alert.labels??>
+<#list alert.labels?keys as key>
+> - ${key}: ${alert.labels[key]}
+</#list>
+</#if>
+<#if alert.content?? && alert.content != "">
+> - Content: ${alert.content}
+</#if>
+> - Trigger Count: ${alert.triggerTimes}
+> - Start Time: ${(alert.startAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}
+> - Last Trigger: ${(alert.activeAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}
+<#if alert.endAt??>
+> - End Time: ${(alert.endAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}
+</#if>
+
+<#if alert.annotations?? && alert.annotations?size gt 0>
+##### Additional Information
+<#list alert.annotations?keys as key>
+> - ${key}: ${alert.annotations[key]}
+</#list>
+</#if>
+</#list>
+
+<#if commonAnnotations?? && commonAnnotations?size gt 0>
+### Common Information
+<#list commonAnnotations?keys as key>
+> - ${key}: ${commonAnnotations[key]}
+</#list>
+</#if>

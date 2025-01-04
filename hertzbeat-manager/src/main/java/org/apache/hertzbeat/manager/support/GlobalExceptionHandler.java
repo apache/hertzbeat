@@ -26,7 +26,7 @@ import javax.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
-import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
+import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.manager.support.exception.MonitorMetricsException;

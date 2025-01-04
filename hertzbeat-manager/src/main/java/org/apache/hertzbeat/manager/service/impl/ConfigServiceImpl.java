@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.ConfigService;
-import org.apache.hertzbeat.manager.service.GeneralConfigService;
+import org.apache.hertzbeat.base.service.GeneralConfigService;
 import org.springframework.stereotype.Component;
 
 

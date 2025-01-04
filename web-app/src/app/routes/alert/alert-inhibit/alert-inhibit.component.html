@@ -1,0 +1,198 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'alert.help.inhibit' | i18n"
+  [guild_link]="'alert.help.inhibit.link' | i18n"
+  [module_name]="'menu.alert.inhibit'"
+  [icon_name]="'filter'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <button nz-button nzType="primary" (click)="onNewInhibit()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'common.button.new' | i18n }}
+    </button>
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
+    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nzDanger nz-button (click)="onDeleteInhibits()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
+  </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      [placeholder]="'alert.inhibit.name' | i18n"
+      [(value)]="search"
+      (valueChange)="loadInhibitTable()"
+    />
+  </ng-template>
+</app-toolbar>
+
+<nz-table
+  #fixedTable
+  [nzData]="inhibits"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  [nzLoading]="tableLoading"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzScroll]="{ x: '1240px' }"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.inhibit.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.inhibit.source_labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.inhibit.target_labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.inhibit.equal_labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.inhibit.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of fixedTable.data">
+      <td nzAlign="center" nzLeft [nzChecked]="checkedConvergeIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td nzAlign="center">{{ data.name }}</td>
+      <td nzAlign="center">
+        <nz-tag *ngFor="let item of data.sourceLabels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag *ngFor="let item of data.targetLabels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-tag *ngFor="let label of data.equalLabels">{{ label }}</nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateInhibit(data)" name="enable"></nz-switch>
+      </td>
+      <td nzAlign="center">
+        <div class="actions">
+          <button nz-button nzType="primary" (click)="editInhibit(data.id)" nz-tooltip [nzTooltipTitle]="'alert.inhibit.edit' | i18n">
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </button>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
+          </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button
+                  nz-button
+                  nzDanger
+                  (click)="onDeleteOneInhibit(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'alert.inhibit.delete' | i18n"
+                >
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<!-- new or update alert-converge pop-up box -->
+<nz-modal
+  [(nzVisible)]="isManageModalVisible"
+  [nzTitle]="isManageModalAdd ? ('alert.inhibit.new' | i18n) : ('alert.inhibit.edit' | i18n)"
+  (nzOnCancel)="onManageModalCancel()"
+  (nzOnOk)="onManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="40%"
+  [nzOkLoading]="isManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #ruleForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.name.tip' | i18n">
+          {{ 'alert.inhibit.name' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="alertInhibit.name" nz-input required name="rule_name" type="text" id="rule_name" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="sourceLabels" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.source_labels.tip' | i18n">
+          {{ 'alert.inhibit.source_labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <app-labels-input [(ngModel)]="alertInhibit.sourceLabels" name="sourceLabels" required></app-labels-input>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="targetLabels" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.target_labels.tip' | i18n">
+          {{ 'alert.inhibit.target_labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <app-labels-input [(ngModel)]="alertInhibit.targetLabels" name="targetLabels" required></app-labels-input>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired="true" [nzTooltipTitle]="'alert.inhibit.equal_labels.tip' | i18n">
+          {{ 'alert.inhibit.equal_labels' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-select
+            [(ngModel)]="alertInhibit.equalLabels"
+            name="equalLabels"
+            nzMode="tags"
+            [nzTokenSeparators]="[',']"
+            [nzMaxMultipleCount]="10"
+            nzAllowClear
+            required
+            nzPlaceHolder="{{ 'alert.inhibit.equal_labels.placeholder' | i18n }}"
+          >
+            <nz-option *ngFor="let label of commonLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-switch [(ngModel)]="alertInhibit.enable" name="enable" id="enable"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

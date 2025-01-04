@@ -43,6 +43,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- base -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-base</artifactId>
+        </dependency>        
         <!-- data warehouse -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
@@ -181,17 +186,6 @@
             <version>${easy-poi.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.huaweicloud.sdk</groupId>
-            <artifactId>huaweicloud-sdk-smn</artifactId>
-            <version>${huawei.sdk.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.openeuler</groupId>
-                    <artifactId>bgmprovider</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>com.huaweicloud</groupId>
             <artifactId>esdk-obs-java</artifactId>
             <version>${huawei.obs.version}</version>
@@ -199,25 +193,6 @@
                 <exclusion>
                     <groupId>org.openeuler</groupId>
                     <artifactId>bgmprovider</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- sms -->
-        <dependency>
-            <groupId>com.tencentcloudapi</groupId>
-            <artifactId>tencentcloud-sdk-java-sms</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.squareup.okhttp</groupId>
-                    <artifactId>logging-interceptor</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.squareup.okhttp</groupId>
-                    <artifactId>okhttp</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.squareup.okio</groupId>
-                    <artifactId>okio</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

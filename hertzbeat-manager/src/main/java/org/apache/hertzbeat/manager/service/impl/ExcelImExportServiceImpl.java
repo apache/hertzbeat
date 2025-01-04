@@ -19,18 +19,21 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -141,12 +144,13 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         monitor.setStatus(getCellValueAsByte(row.getCell(4)));
         monitor.setDescription(getCellValueAsString(row.getCell(5)));
 
-        String tagsString = getCellValueAsString(row.getCell(6));
-        if (StringUtils.isNotBlank(tagsString)) {
-            List<Long> tags = Arrays.stream(tagsString.split(","))
-                    .map(Long::parseLong)
-                    .collect(Collectors.toList());
-            monitor.setTags(tags);
+        String labelsString = getCellValueAsString(row.getCell(6));
+        if (StringUtils.isNotBlank(labelsString)) {
+            try {
+                TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+                Map<String, String> labels = JsonUtil.fromJson(labelsString, typeReference);
+                monitor.setLabels(labels);
+            } catch (Exception ignored) {}
         }
         monitor.setCollector(getCellValueAsString(row.getCell(7)));
 
@@ -255,7 +259,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         descriptionCell.setCellValue(monitorDTO.getDescription());
                         descriptionCell.setCellStyle(cellStyle);
                         Cell tagsCell = row.createCell(6);
-                        tagsCell.setCellValue(monitorDTO.getTags().stream().map(Object::toString).collect(Collectors.joining(",")));
+                        tagsCell.setCellValue(JsonUtil.toJson(monitorDTO.getLabels()));
                         tagsCell.setCellStyle(cellStyle);
                         Cell collectorCell = row.createCell(7);
                         collectorCell.setCellValue(monitorDTO.getCollector());

@@ -594,5 +594,19 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     );
   }
 
-  protected readonly sliceTagName = formatTagName;
+  getLabelColor(key: string): string {
+    const colors = ['blue', 'green', 'orange', 'purple', 'cyan'];
+    const index = Math.abs(this.hashString(key)) % colors.length;
+    return colors[index];
+  }
+
+  private hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return hash;
+  }
 }

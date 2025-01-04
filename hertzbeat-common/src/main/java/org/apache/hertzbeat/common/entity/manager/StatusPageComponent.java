@@ -17,7 +17,9 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -27,10 +29,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.alerter.JsonMapAttributeConverter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -64,10 +68,11 @@ public class StatusPageComponent {
 
     @Schema(title = "component desc", example = "TanCloud Gateway")
     private String description;
-    
-    @Schema(title = "component match single tag", example = "{labelName:labelValue}")
-    @Convert(converter = JsonTagAttributeConverter.class)
-    private TagItem tag;
+
+    @Schema(title = "component label", example = "{env:test}", accessMode = READ_WRITE)
+    @Convert(converter = JsonMapAttributeConverter.class)
+    @Column(length = 4096)
+    private Map<String, String> labels;
 
     @Schema(title = "calculate status method: 0-auto 1-manual", example = "0")
     private byte method;

@@ -19,13 +19,9 @@ package org.apache.hertzbeat.alert.service;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -77,40 +73,7 @@ public interface AlertDefineService {
      * @throws RuntimeException Exception thrown during deletion 
      */
     void deleteAlertDefines(Set<Long> alertIds) throws RuntimeException;
-
-    /**
-     * Dynamic conditional query 
-     * @param specification Query conditions 
-     * @param pageRequest Paging parameters 
-     * @return The query results 
-     */
-    Page<AlertDefine> getMonitorBindAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
-
-    /**
-     * Association between application alarm schedule and monitoring 
-     * @param alertId Alarm Definition ID 
-     * @param alertDefineBinds correlation 
-     */
-    void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineMonitorBind> alertDefineBinds);
-
-    /**
-     * Query the alarm definitions that match the specified metrics associated with the monitoring ID
-     * @param monitorId Monitor the ID 
-     * @param app Monitoring type 
-     * @param metrics metrics
-     * @return field - define[]
-     */
-    Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics);
-
-    /**
-     * Query the alarm definitions that match the specified metrics associated with the monitoring ID
-     * @param monitorId Monitor the ID 
-     * @param app Monitoring type 
-     * @param metrics metrics
-     * @return field - define[]
-     */
-    AlertDefine getMonitorBindAlertAvaDefine(long monitorId, String app, String metrics);
-
+    
     /**
      * Dynamic conditional query
      * @param defineIds     Alarm Definition ID List
@@ -123,13 +86,6 @@ public interface AlertDefineService {
      * @return The query results 
      */
     Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, Byte priority, String sort, String order, int pageIndex, int pageSize);
-
-    /**
-     * Query the associated monitoring list information based on the alarm definition ID
-     * @param alertDefineId Alarm Definition ID 
-     * @return Associated information about the monitoring list 
-     */
-    List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId);
 
     /**
      * Export file configuration of specified type based on ID list and export file type
@@ -146,4 +102,11 @@ public interface AlertDefineService {
      * @throws Exception An exception was thrown during the importConfig
      */
     void importConfig(MultipartFile file) throws Exception;
+
+    /**
+     * Get the real-time alarm definition list
+     * @return Real-time alarm definition list
+     */
+    List<AlertDefine> getRealTimeAlertDefines();
+    
 }

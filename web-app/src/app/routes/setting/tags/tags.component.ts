@@ -32,7 +32,8 @@ import { formatTagName } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-setting-tags',
-  templateUrl: './tags.component.html'
+  templateUrl: './tags.component.html',
+  styleUrls: ['./tags.component.less']
 })
 export class SettingTagsComponent implements OnInit {
   @ViewChild('tagForm', { static: false }) tagForm: NgForm | undefined;
@@ -253,4 +254,14 @@ export class SettingTagsComponent implements OnInit {
   }
   // end 新增修改告警定义model
   protected readonly formatTagName = formatTagName;
+
+  onPageIndexChange(index: number): void {
+    this.pageIndex = index;
+    this.loadTagsTable();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.loadTagsTable();
+  }
 }

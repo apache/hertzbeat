@@ -1,0 +1,62 @@
+.labels-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+
+  .label-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    input {
+      flex: 1;
+    }
+
+    .button-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      .action-btn {
+        padding: 4px 8px;
+        height: 32px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        i {
+          font-size: 16px;
+        }
+      }
+
+      .add-btn {
+        color: #1890ff;
+      }
+    }
+  }
+}
+
+// 让所有输入框宽度一致
+:host ::ng-deep {
+  .ant-form-item-control-input {
+    width: 100%;
+  }
+  
+  .ant-input-number {
+    width: 100%;
+  }
+
+  // 优化输入框样式
+  .ant-input {
+    border-radius: 4px;
+  }
+
+  // 优化按钮hover效果
+  .action-btn {
+    &:hover {
+      background: rgba(0, 0, 0, 0.018);
+    }
+  }
+}

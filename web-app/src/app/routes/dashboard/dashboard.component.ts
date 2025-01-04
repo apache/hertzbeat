@@ -27,9 +27,9 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { fromEvent } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
 import { CollectorSummary } from '../../pojo/CollectorSummary';
+import { SingleAlert } from '../../pojo/SingleAlert';
 import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
@@ -174,7 +174,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   collectorsTabSelectedIndex = 0;
 
   // alert list
-  alerts!: Alert[];
+  alerts!: SingleAlert[];
   alertContentLoading: boolean = false;
 
   ngOnInit(): void {
@@ -298,7 +298,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       xAxis: {
         type: 'category',
-        data: [this.i18nSvc.fanyi('alert.priority.2'), this.i18nSvc.fanyi('alert.priority.1'), this.i18nSvc.fanyi('alert.priority.0')]
+        data: [this.i18nSvc.fanyi('alert.severity.2'), this.i18nSvc.fanyi('alert.severity.1'), this.i18nSvc.fanyi('alert.severity.0')]
       },
       yAxis: {
         type: 'value'
@@ -570,7 +570,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   refreshAlertContentList(): void {
     this.alertContentLoading = true;
     let alertsInit$ = this.alertSvc
-      .loadAlerts(undefined, undefined, undefined, 0, 10)
+      .loadAlerts('firing', undefined, 0, 10)
       .pipe(finalize(() => (this.alertContentLoading = false)))
       .subscribe(
         message => {

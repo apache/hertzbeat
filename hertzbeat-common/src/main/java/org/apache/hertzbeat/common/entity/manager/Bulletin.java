@@ -74,12 +74,6 @@ public class Bulletin {
     @Convert(converter = JsonMapListAttributeConverter.class)
     private Map<String, List<String>> fields;
 
-    @Schema(description = "Tags(status:success,env:prod)", example = "{name: key1, value: value1}",
-            accessMode = READ_WRITE)
-    @Convert(converter = JsonTagListAttributeConverter.class)
-    @Column(length = 2048)
-    private List<TagItem> tags;
-
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_WRITE)
     @CreatedBy
     private String creator;
