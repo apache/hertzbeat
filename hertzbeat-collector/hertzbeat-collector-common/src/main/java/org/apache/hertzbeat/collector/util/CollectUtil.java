@@ -438,7 +438,7 @@ public final class CollectUtil {
     /**
      * convert 16 hexString to byte[]
      * eg: 302c0201010409636f6d6d756e697479a11c020419e502e7020100020100300e300c06082b060102010102000500
-     * 16进制字符串不区分大小写，返回的数组相同
+     * Hexadecimal strings are case-insensitive, and the returned arrays are the same
      * @param hexString 16 hexString
      * @return byte[]
      */
