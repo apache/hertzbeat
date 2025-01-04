@@ -48,7 +48,7 @@
     "advanced": {
       "": "高级",
       "collector": "采集集群",
-      "tags": "标签管理",
+      "labels": "标签管理",
       "define": "监控模版",
       "status": "状态页面",
       "plugins": "插件管理"
@@ -514,6 +514,7 @@
   "common.notify.clear-success": "清理成功!",
   "common.notify.clear-fail": "清理失败!",
   "common.notify.copy-success": "复制成功!",
+  "common.notify.copy-fail": "复制失败!",
   "common.notify.export-success": "导出成功!",
   "common.notify.export-fail": "导出失败!",
   "common.notify.import-success": "导入成功!",
@@ -574,8 +575,8 @@
   "label": "标签",
   "label.bind": "绑定标签",
   "label.bind.tip": "您可以使用标签进行监控资源的分类管理， 例如给资源分别绑定生产环境、测试环境的标签。",
-  "tag.help": "标签在 HertzBeat 中无处不在，我们可以应用标签在资源分组，规则下的标签匹配等场景。标签管理用于对标签的统一管理维护，包含新增，删除，编辑等操作。<br>例如：您可以使用标签对监控资源进行分类管理，给资源分别绑定生产环境、测试环境的标签，在告警通知时通过标签匹配不同的通知人。",
-  "tag.help.link": "https://hertzbeat.apache.org/zh-cn/docs/",
+  "labels.help": "标签在 HertzBeat 中无处不在，我们可以应用标签在资源分组，规则下的标签匹配等场景。标签管理用于对标签的统一管理维护，包含新增，删除，编辑等操作。<br>例如：您可以使用标签对监控资源进行分类管理，给资源分别绑定生产环境、测试环境的标签，在告警通知时通过标签匹配不同的通知人。",
+  "labels.help.link": "https://hertzbeat.apache.org/zh-cn/docs/",
   "annotation": "注解",
   "annotation.bind": "绑定注解",
   "annotation.bind.tip": "您可以使用注解对实体信息进行标记，例如给资源绑定重要事件的注解。",

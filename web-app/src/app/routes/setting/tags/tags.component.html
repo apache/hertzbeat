@@ -18,9 +18,9 @@
 -->
 
 <app-help-message-show
-  [help_message_content]="'tag.help' | i18n"
-  [guild_link]="'tag.help.link' | i18n"
-  [module_name]="'menu.advanced.tags'"
+  [help_message_content]="'labels.help' | i18n"
+  [guild_link]="'labels.help.link' | i18n"
+  [module_name]="'menu.advanced.labels'"
   [icon_name]="'tags'"
 ></app-help-message-show>
 
@@ -28,10 +28,10 @@
 
 <app-toolbar>
   <ng-template #left>
-    <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
+    <button nz-button nzType="primary" nzSize="small" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-    <button nz-button nzType="primary" (click)="onNewTag()">
+    <button nz-button nzType="primary" nzSize="small" (click)="onNewTag()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
@@ -48,20 +48,28 @@
 </app-toolbar>
 
 <div class="tag-cards-container">
-  <nz-row [nzGutter]="[12, 12]">
+  <nz-row [nzGutter]="[8, 8]">
     <nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4" *ngFor="let data of tags">
-      <nz-card [nzActions]="[editAction, deleteAction]" [nzBorderless]="true" class="tag-card">
-        <div class="tag-header">
-          <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
-            <nz-tag [nzColor]="data.color" class="tag-name">
-              {{ formatTagName(data) }}
-            </nz-tag>
-          </a>
+      <nz-card [nzActions]="[copyAction, editAction, deleteAction]" [nzBorderless]="true" class="tag-card" [nzSize]="'small'">
+        <div class="tag-content">
+          <div class="tag-header">
+            <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
+              <nz-tag [nzColor]="data.color" class="tag-name" style="font-size: 14px; padding: 4px 8px;">
+                {{ formatTagName(data) }}
+              </nz-tag>
+            </a>
+          </div>
+
+          <div class="tag-description" *ngIf="data.description">
+            {{ data.description }}
+          </div>
         </div>
 
-        <div class="tag-description" *ngIf="data.description">
-          {{ data.description }}
-        </div>
+        <ng-template #copyAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.copy.button' | i18n" (click)="copyTagValue(data)">
+            <i nz-icon nzType="copy" nzTheme="outline"></i>
+          </span>
+        </ng-template>
 
         <ng-template #editAction>
           <span nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n" (click)="onEditOneTag(data)">

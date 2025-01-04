@@ -199,10 +199,10 @@
           "link": "/setting/collector"
         },
         {
-          "text": "tags",
-          "i18n": "menu.advanced.tags",
+          "text": "labels",
+          "i18n": "menu.advanced.labels",
           "icon": "anticon-tags",
-          "link": "/setting/tags"
+          "link": "/setting/labels"
         },
         {
           "text": "plugins",

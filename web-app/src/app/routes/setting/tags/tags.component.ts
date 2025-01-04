@@ -201,4 +201,13 @@ export class SettingTagsComponent implements OnInit {
   }
   // end 新增修改告警定义model
   protected readonly formatTagName = formatTagName;
+
+  copyTagValue(tag: any) {
+    const tagText = this.formatTagName(tag);
+    navigator.clipboard.writeText(tagText).then(() => {
+      this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
+    }).catch(() => {
+      this.notifySvc.error(this.i18nSvc.fanyi('common.notify.copy-fail'), '');
+    });
+  }
 }
