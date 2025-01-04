@@ -80,7 +80,7 @@
           <i nz-icon nzType="save" nzTheme="outline"></i>
           {{ 'define.save-apply' | i18n }}
         </button>
-        <button *ngIf="currentApp != null" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
+        <button *ngIf="currentApp != null" nz-button nzDanger (click)="onDeleteDefineYml()">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
           {{ 'define.delete' | i18n : { app: currentApp } }}
         </button>

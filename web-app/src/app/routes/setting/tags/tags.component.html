@@ -18,9 +18,9 @@
 -->
 
 <app-help-message-show
-  [help_message_content]="'tag.help' | i18n"
-  [guild_link]="'tag.help.link' | i18n"
-  [module_name]="'menu.advanced.tags'"
+  [help_message_content]="'labels.help' | i18n"
+  [guild_link]="'labels.help.link' | i18n"
+  [module_name]="'menu.advanced.labels'"
   [icon_name]="'tags'"
 ></app-help-message-show>
 
@@ -35,25 +35,12 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
-    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-      <span nz-icon nzType="ellipsis"></span>
-    </button>
-    <nz-dropdown-menu #more_menu="nzDropdownMenu">
-      <ul nz-menu>
-        <li nz-menu-item>
-          <button nz-button nzDanger (click)="onDeleteTags()">
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
-            {{ 'common.button.delete' | i18n }}
-          </button>
-        </li>
-      </ul>
-    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <app-multi-func-input
       class="mobile-hide"
       groupStyle="width: 250px;"
-      [placeholder]="'tag.search' | i18n"
+      [placeholder]="'label.search' | i18n"
       [(value)]="search"
       (valueChange)="loadTagsTable()"
     />
@@ -61,23 +48,31 @@
 </app-toolbar>
 
 <div class="tag-cards-container">
-  <nz-row [nzGutter]="[12, 12]">
+  <nz-row [nzGutter]="[8, 8]">
     <nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4" *ngFor="let data of tags">
-      <nz-card [nzActions]="[editAction, deleteAction]" [nzBorderless]="true" class="tag-card">
-        <div class="tag-header">
-          <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
-            <nz-tag [nzColor]="data.color" class="tag-name">
-              {{ formatTagName(data) }}
-            </nz-tag>
-          </a>
+      <nz-card [nzActions]="[copyAction, editAction, deleteAction]" [nzBorderless]="true" class="tag-card" [nzSize]="'small'">
+        <div class="tag-content">
+          <div class="tag-header">
+            <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
+              <nz-tag [nzColor]="data.color" class="tag-name" style="font-size: 14px; padding: 4px 8px">
+                {{ formatTagName(data) }}
+              </nz-tag>
+            </a>
+          </div>
+
+          <div class="tag-description" *ngIf="data.description">
+            {{ data.description }}
+          </div>
         </div>
 
-        <div class="tag-description" *ngIf="data.description">
-          {{ data.description }}
-        </div>
+        <ng-template #copyAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.copy.button' | i18n" (click)="copyTagValue(data)">
+            <i nz-icon nzType="copy" nzTheme="outline"></i>
+          </span>
+        </ng-template>
 
         <ng-template #editAction>
-          <span nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n" (click)="onEditOneTag(data)">
+          <span nz-tooltip [nzTooltipTitle]="'label.edit' | i18n" (click)="onEditOneTag(data)">
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </span>
         </ng-template>
@@ -94,7 +89,7 @@
 
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="isManageModalAdd ? ('tag.new' | i18n) : ('tag.edit' | i18n)"
+  [nzTitle]="isManageModalAdd ? ('label.new' | i18n) : ('label.edit' | i18n)"
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
@@ -138,7 +133,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="tag.name != undefined">
-        <nz-form-label [nzSpan]="7" nzFor="color">{{ 'tag.display' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="color">{{ 'label.display' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-tag *ngIf="tag.tagValue == undefined || tag.tagValue.trim() == ''" [nzColor]="tag.color">{{ tag.name }}</nz-tag>
           <nz-tag *ngIf="tag.tagValue != undefined && tag.tagValue.trim() != ''" [nzColor]="tag.color">{{
@@ -149,5 +144,3 @@
     </form>
   </div>
 </nz-modal>
-
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>

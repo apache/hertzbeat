@@ -314,7 +314,6 @@ public class RealTimeAlertCalculator {
         String fingerprint = calculateFingerprint(fingerPrints);
         SingleAlert existingAlert = pendingAlertMap.get(fingerprint);
         Map<String, String> labels = new HashMap<>(8);
-        Map<String, String> annotations = new HashMap<>(4);
         fieldValueMap.putAll(define.getLabels());
         labels.putAll(fingerPrints);
         int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
@@ -322,7 +321,8 @@ public class RealTimeAlertCalculator {
             // First time triggering alert, create new alert and set to pending status
             SingleAlert newAlert = SingleAlert.builder()
                     .labels(labels)
-                    .annotations(annotations)
+                    // todo render var content in annotations
+                    .annotations(define.getAnnotations())
                     .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                     .status(CommonConstants.ALERT_STATUS_PENDING)
                     .triggerTimes(1) 
