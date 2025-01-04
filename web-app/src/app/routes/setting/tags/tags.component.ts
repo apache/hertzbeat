@@ -204,10 +204,13 @@ export class SettingTagsComponent implements OnInit {
 
   copyTagValue(tag: any) {
     const tagText = this.formatTagName(tag);
-    navigator.clipboard.writeText(tagText).then(() => {
-      this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
-    }).catch(() => {
-      this.notifySvc.error(this.i18nSvc.fanyi('common.notify.copy-fail'), '');
-    });
+    navigator.clipboard
+      .writeText(tagText)
+      .then(() => {
+        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
+      })
+      .catch(() => {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.copy-fail'), '');
+      });
   }
 }
