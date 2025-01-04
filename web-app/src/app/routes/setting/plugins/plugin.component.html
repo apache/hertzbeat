@@ -35,11 +35,19 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'plugin.upload' | i18n }}
     </button>
-
-    <button nz-button nzType="primary" nzDanger (click)="onDeletePlugins()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'plugin.delete' | i18n }}
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
     </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nz-button nzDanger (click)="onDeletePlugins()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'plugin.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <app-multi-func-input
@@ -102,14 +110,7 @@
           >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
-          <button
-            nz-button
-            nzType="primary"
-            nzDanger
-            (click)="onDeleteOnePlugin(data.id)"
-            nz-tooltip
-            [nzTooltipTitle]="'plugin.delete' | i18n"
-          >
+          <button nz-button nzDanger (click)="onDeleteOnePlugin(data.id)" nz-tooltip [nzTooltipTitle]="'plugin.delete' | i18n">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
           </button>
         </div>

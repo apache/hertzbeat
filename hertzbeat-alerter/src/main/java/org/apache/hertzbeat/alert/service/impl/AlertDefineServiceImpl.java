@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,16 +25,13 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
-import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,14 +51,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Alarm definition management interface implementation
@@ -73,12 +68,6 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Autowired
     private AlertDefineDao alertDefineDao;
 
-    @Autowired
-    private AlertDefineBindDao alertDefineBindDao;
-
-    @Autowired
-    private AlertMonitorDao alertMonitorDao;
-
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
 
     private static final String CONTENT_TYPE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
@@ -89,12 +78,20 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
-        // todo
         if (StringUtils.hasText(alertDefine.getExpr())) {
-            try {
-                JexlExpressionRunner.compile(alertDefine.getExpr());
-            } catch (Exception e) {
-                throw new IllegalArgumentException("alert expr error: " + e.getMessage());
+            if (ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
+                try {
+                    JexlExpressionRunner.compile(alertDefine.getExpr());
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("alert expr error: " + e.getMessage());
+                }   
+            }
+        }
+        // the name of the alarm rule is unique
+        Optional<AlertDefine> optional = alertDefineDao.findAlertDefineByName(alertDefine.getName());
+        if (optional.isPresent()) {
+            if (!isModify || !optional.get().getId().equals(alertDefine.getId())) {
+                throw new IllegalArgumentException("alert name already exists");
             }
         }
     }
@@ -102,16 +99,19 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void addAlertDefine(AlertDefine alertDefine) throws RuntimeException {
         alertDefineDao.save(alertDefine);
+        CacheFactory.clearAlertDefineCache();
     }
 
     @Override
     public void modifyAlertDefine(AlertDefine alertDefine) throws RuntimeException {
         alertDefineDao.save(alertDefine);
+        CacheFactory.clearAlertDefineCache();
     }
 
     @Override
     public void deleteAlertDefine(long alertId) throws RuntimeException {
         alertDefineDao.deleteById(alertId);
+        CacheFactory.clearAlertDefineCache();
     }
 
     @Override
@@ -123,43 +123,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void deleteAlertDefines(Set<Long> alertIds) throws RuntimeException {
         alertDefineDao.deleteAlertDefinesByIdIn(alertIds);
-    }
-
-    @Override
-    public Page<AlertDefine> getMonitorBindAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest) {
-        return alertDefineDao.findAll(specification, pageRequest);
-    }
-
-    @Override
-    public void applyBindAlertDefineMonitors(Long alertId, List<AlertDefineMonitorBind> alertDefineBinds) {
-        // todo checks whether the alarm definition and monitoring exist
-        if (!alertDefineBindDao.existsById(alertId)){
-            alertDefineBindDao.deleteAlertDefineBindsByAlertDefineIdEquals(alertId);
-        }
-        // Delete all associations of this alarm
-        alertDefineBindDao.deleteAlertDefineBindsByAlertDefineIdEquals(alertId);
-        // Save the associated
-        alertDefineBindDao.saveAll(alertDefineBinds);
-    }
-
-    @Override
-    public Map<String, List<AlertDefine>> getMonitorBindAlertDefines(long monitorId, String app, String metrics) {
-        List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, app, metrics);
-        List<AlertDefine> defaultDefines = alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(app, metrics);
-        defines.addAll(defaultDefines);
-        Set<AlertDefine> defineSet = defines.stream().filter(item -> item.getField() != null).collect(Collectors.toSet());
-        // The alarm thresholds are defined in ascending order of the alarm severity from 0 to 3.
-        // The lower the number, the higher the alarm is. That is, the alarm is calculated from the highest alarm threshold
-        return defineSet.stream().sorted(Comparator.comparing(AlertDefine::getPriority))
-                .collect(Collectors.groupingBy(AlertDefine::getField));
-    }
-
-    @Override
-    public AlertDefine getMonitorBindAlertAvaDefine(long monitorId, String app, String metrics) {
-        List<AlertDefine> defines = alertDefineDao.queryAlertDefinesByMonitor(monitorId, app, metrics);
-        List<AlertDefine> defaultDefines = alertDefineDao.queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(app, metrics);
-        defines.addAll(defaultDefines);
-        return defines.stream().findFirst().orElse(null);
+        CacheFactory.clearAlertDefineCache();
     }
 
     @Override
@@ -214,28 +178,6 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId) {
-        List<AlertDefineMonitorBind> defineMonitorBinds = alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
-        if (defineMonitorBinds == null || defineMonitorBinds.isEmpty()) {
-            return defineMonitorBinds;
-        }
-        List<Long> needLoadMonitorIds = defineMonitorBinds.stream()
-                .filter(bind -> bind.getMonitor() == null)
-                .map(AlertDefineMonitorBind::getMonitorId).toList();
-        if (needLoadMonitorIds.isEmpty()) {
-            return defineMonitorBinds;
-        }
-        Map<Long, Monitor> monitorMap = alertMonitorDao.findAllById(needLoadMonitorIds)
-                .stream().collect(Collectors.toMap(Monitor::getId, Function.identity()));
-        for (AlertDefineMonitorBind bind : defineMonitorBinds) {
-            if (bind.getMonitor() == null) {
-                bind.setMonitor(monitorMap.get(bind.getMonitorId()));
-            }
-        }
-        return defineMonitorBinds;
-    }
-
-    @Override
     public void export(List<Long> ids, String type, HttpServletResponse res) throws Exception {
         var imExportService = alertDefineImExportServiceMap.get(type);
         if (imExportService == null) {
@@ -259,5 +201,15 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         }
         var imExportService = alertDefineImExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
+    }
+
+    @Override
+    public List<AlertDefine> getRealTimeAlertDefines() {
+        List<AlertDefine> alertDefines = CacheFactory.getAlertDefineCache();
+        if (alertDefines == null) {
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(ALERT_THRESHOLD_TYPE_REALTIME);
+            CacheFactory.setAlertDefineCache(alertDefines);
+        }
+        return alertDefines;
     }
 }

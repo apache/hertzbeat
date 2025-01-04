@@ -21,9 +21,7 @@ import cn.afterturn.easypoi.excel.annotation.Excel;
 import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.List;
 import lombok.Data;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 
 /**
  * Data transfer object for alert configuration
@@ -48,8 +46,6 @@ public class AlertDefineDTO {
     private Byte priority;
     @Excel(name = "Times")
     private Integer times;
-    @Excel(name = "Tags")
-    private List<TagItem> tags;
     @Excel(name = "Enable")
     private Boolean enable;
     @Excel(name = "RecoverNotice")

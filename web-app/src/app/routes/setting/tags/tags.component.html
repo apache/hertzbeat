@@ -18,9 +18,9 @@
 -->
 
 <app-help-message-show
-  [help_message_content]="'tag.help' | i18n"
-  [guild_link]="'tag.help.link' | i18n"
-  [module_name]="'menu.advanced.tags'"
+  [help_message_content]="'labels.help' | i18n"
+  [guild_link]="'labels.help.link' | i18n"
+  [module_name]="'menu.advanced.labels'"
   [icon_name]="'tags'"
 ></app-help-message-show>
 
@@ -33,85 +33,63 @@
     </button>
     <button nz-button nzType="primary" (click)="onNewTag()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'tag.new' | i18n }}
-    </button>
-
-    <button nz-button nzType="primary" nzDanger (click)="onDeleteTags()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'tag.delete' | i18n }}
+      {{ 'common.button.new' | i18n }}
     </button>
   </ng-template>
   <ng-template #right>
     <app-multi-func-input
       class="mobile-hide"
       groupStyle="width: 250px;"
-      [placeholder]="'tag.search' | i18n"
+      [placeholder]="'label.search' | i18n"
       [(value)]="search"
       (valueChange)="loadTagsTable()"
     />
   </ng-template>
 </app-toolbar>
 
-<nz-table
-  #fixedTable
-  [nzData]="tags"
-  [nzPageIndex]="pageIndex"
-  [nzPageSize]="pageSize"
-  [nzTotal]="total"
-  nzFrontPagination="false"
-  [nzLoading]="tableLoading"
-  nzShowSizeChanger
-  [nzShowTotal]="rangeTemplate"
-  [nzPageSizeOptions]="[8, 15, 25]"
-  (nzQueryParams)="onTablePageChange($event)"
-  nzShowPagination="true"
-  [nzScroll]="{ x: '1240px' }"
->
-  <thead>
-    <tr>
-      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.value' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'tag.description' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'tag.update-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let data of fixedTable.data">
-      <td nzAlign="center" nzLeft [nzChecked]="checkedTagIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">
-        <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
-          <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger" class="hoverClass">
-            {{ formatTagName(data) }}
-          </nz-tag>
-        </a>
-      </td>
-      <td nzAlign="center">{{ data.name }}</td>
-      <td nzAlign="center">{{ data.tagValue }}</td>
-      <td nzAlign="center">{{ data.description }}</td>
-      <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center">
-        <div class="actions">
-          <button nz-button nzType="primary" (click)="onEditOneTag(data)" nz-tooltip [nzTooltipTitle]="'tag.edit' | i18n">
-            <i nz-icon nzType="edit" nzTheme="outline"></i>
-          </button>
-          <button nz-button nzType="primary" nzDanger (click)="onDeleteOneTag(data.id)" nz-tooltip [nzTooltipTitle]="'tag.delete' | i18n">
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
-          </button>
+<div class="tag-cards-container">
+  <nz-row [nzGutter]="[8, 8]">
+    <nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4" *ngFor="let data of tags">
+      <nz-card [nzActions]="[copyAction, editAction, deleteAction]" [nzBorderless]="true" class="tag-card" [nzSize]="'small'">
+        <div class="tag-content">
+          <div class="tag-header">
+            <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
+              <nz-tag [nzColor]="data.color" class="tag-name" style="font-size: 14px; padding: 4px 8px">
+                {{ formatTagName(data) }}
+              </nz-tag>
+            </a>
+          </div>
+
+          <div class="tag-description" *ngIf="data.description">
+            {{ data.description }}
+          </div>
         </div>
-      </td>
-    </tr>
-  </tbody>
-</nz-table>
 
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+        <ng-template #copyAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.copy.button' | i18n" (click)="copyTagValue(data)">
+            <i nz-icon nzType="copy" nzTheme="outline"></i>
+          </span>
+        </ng-template>
 
-<!-- new or update TAG pop-up box -->
+        <ng-template #editAction>
+          <span nz-tooltip [nzTooltipTitle]="'label.edit' | i18n" (click)="onEditOneTag(data)">
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </span>
+        </ng-template>
+
+        <ng-template #deleteAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.button.delete' | i18n" (click)="onDeleteOneTag(data.id)">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </span>
+        </ng-template>
+      </nz-card>
+    </nz-col>
+  </nz-row>
+</div>
+
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="isManageModalAdd ? ('tag.new' | i18n) : ('tag.edit' | i18n)"
+  [nzTitle]="isManageModalAdd ? ('label.new' | i18n) : ('label.edit' | i18n)"
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
@@ -155,7 +133,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="tag.name != undefined">
-        <nz-form-label [nzSpan]="7" nzFor="color">{{ 'tag.display' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="color">{{ 'label.display' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-tag *ngIf="tag.tagValue == undefined || tag.tagValue.trim() == ''" [nzColor]="tag.color">{{ tag.name }}</nz-tag>
           <nz-tag *ngIf="tag.tagValue != undefined && tag.tagValue.trim() != ''" [nzColor]="tag.color">{{

@@ -202,6 +202,29 @@ public final class CollectUtil {
                 .collect(Collectors.toSet());
     }
 
+    private static String replaceSpecialCharacterIfNeeded(String value,
+                                                          String replacePattern, Matcher matcher,
+                                                          Map<String, Configmap> configmap) {
+        matcher.reset();
+        while (matcher.find()) {
+            String group = matcher.group();
+            String replaceField = group.replaceAll(replacePattern, "");
+            Configmap param = configmap.get(replaceField);
+            if (param == null) {
+                continue;
+            }
+            if (param.getValue() != null) {
+                value = value.replace(group, (String) param.getValue());
+            } else if (group.length() == value.length()) {
+                value = null;
+                break;
+            } else {
+                value = value.replace(group, "");
+            }
+        }
+        return value;
+    }
+
     /**
      * replace cry placeholder to metrics
      *
@@ -230,34 +253,20 @@ public final class CollectUtil {
                 Map.Entry<String, JsonElement> entry = iterator.next();
                 JsonElement element = entry.getValue();
                 // Replace normal VALUE value
-                if (element.isJsonPrimitive()) {
-                    // Check if there are special characters Replace
-                    String value = element.getAsString();
-                    Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (cryingMatcher.find()) {
-                        cryingMatcher.reset();
-                        while (cryingMatcher.find()) {
-                            String group = cryingMatcher.group();
-                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER_REX, "");
-                            Configmap param = configmap.get(replaceField);
-                            if (param != null) {
-                                if (param.getValue() == null) {
-                                    if (group.length() == value.length()) {
-                                        value = null;
-                                        break;
-                                    } else {
-                                        value = value.replace(group, "");
-                                    }
-                                } else {
-                                    value = value.replace(group, (String) param.getValue());
-                                }
-                            }
-                        }
-                        jsonObject.addProperty(entry.getKey(), value);
-                    }
-                } else {
+                if (!element.isJsonPrimitive()) {
                     jsonObject.add(entry.getKey(), replaceCryPlaceholder(entry.getValue(), configmap));
+                    continue;
                 }
+                // Replace normal VALUE value
+                // Check if there are special characters Replace
+                String value = element.getAsString();
+                Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
+                if (!cryingMatcher.find()) {
+                    continue;
+                }
+                // Replace special characters
+                value = replaceSpecialCharacterIfNeeded(value, CRYING_PLACEHOLDER_REX, cryingMatcher, configmap);
+                jsonObject.addProperty(entry.getKey(), value);
             }
         } else if (jsonElement.isJsonArray()) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();
@@ -265,34 +274,22 @@ public final class CollectUtil {
             int index = 0;
             while (iterator.hasNext()) {
                 JsonElement element = iterator.next();
-                if (element.isJsonPrimitive()) {
-                    // Check if there are special characters Replace
-                    String value = element.getAsString();
-                    Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (cryingMatcher.find()) {
-                        cryingMatcher.reset();
-                        while (cryingMatcher.find()) {
-                            String group = cryingMatcher.group();
-                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER_REX, "");
-                            Configmap param = configmap.get(replaceField);
-                            if (param != null) {
-                                if (param.getValue() == null) {
-                                    if (group.length() == value.length()) {
-                                        value = null;
-                                        break;
-                                    } else {
-                                        value = value.replace(group, "");
-                                    }
-                                } else {
-                                    value = value.replace(group, (String) param.getValue());
-                                }
-                            }
-                        }
-                        jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
-                    }
-                } else {
+
+                if (!element.isJsonPrimitive()) {
                     jsonArray.set(index, replaceCryPlaceholder(element, configmap));
+                    index++;
+                    continue;
                 }
+                // Check if there are special characters Replace
+                String value = element.getAsString();
+                Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
+                if (!cryingMatcher.find()) {
+                    index++;
+                    continue;
+                }
+                // Replace special characters
+                value = replaceSpecialCharacterIfNeeded(value, CRYING_PLACEHOLDER_REX, cryingMatcher, configmap);
+                jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
                 index++;
             }
         }
@@ -335,34 +332,19 @@ public final class CollectUtil {
                     continue;
                 }
                 // Replace normal VALUE value
-                if (element.isJsonPrimitive()) {
-                    // Check if there are special characters Replace
-                    String value = element.getAsString();
-                    Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (smilingMatcher.find()) {
-                        smilingMatcher.reset();
-                        while (smilingMatcher.find()) {
-                            String group = smilingMatcher.group();
-                            String replaceField = group.replaceAll(SMILING_PLACEHOLDER_REX, "");
-                            Configmap param = configmap.get(replaceField);
-                            if (param != null) {
-                                if (param.getValue() == null) {
-                                    if (group.length() == value.length()) {
-                                        value = null;
-                                        break;
-                                    } else {
-                                        value = value.replace(group, "");
-                                    }
-                                } else {
-                                    value = value.replace(group, (String) param.getValue());
-                                }
-                            }
-                        }
-                        jsonObject.addProperty(entry.getKey(), value);
-                    }
-                } else {
+                if (!element.isJsonPrimitive()) {
                     jsonObject.add(entry.getKey(), replaceSmilingPlaceholder(entry.getValue(), configmap));
+                    continue;
                 }
+                // Check if there are special characters Replace
+                String value = element.getAsString();
+                Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
+                if (!smilingMatcher.find()) {
+                    continue;
+                }
+                // Replace special characters
+                value = replaceSpecialCharacterIfNeeded(value, SMILING_PLACEHOLDER_REX, smilingMatcher, configmap);
+                jsonObject.addProperty(entry.getKey(), value);
             }
         } else if (jsonElement.isJsonArray()) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();

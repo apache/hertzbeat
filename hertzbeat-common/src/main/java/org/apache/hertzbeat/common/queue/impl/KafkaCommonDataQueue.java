@@ -26,11 +26,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.common.serialize.AlertDeserializer;
-import org.apache.hertzbeat.common.serialize.AlertSerializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataDeserializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -58,19 +55,15 @@ import org.springframework.context.annotation.Configuration;
 )
 @Slf4j
 public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
-
-    private final ReentrantLock alertLock = new ReentrantLock();
+    
     private final ReentrantLock metricDataToAlertLock = new ReentrantLock();
     private final ReentrantLock metricDataToStorageLock = new ReentrantLock();
     private final ReentrantLock serviceDiscoveryDataLock = new ReentrantLock();
-    private final LinkedBlockingQueue<Alert> alertDataQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
     private final CommonProperties.KafkaProperties kafka;
     private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
-    private KafkaProducer<Long, Alert> alertDataProducer;
-    private KafkaConsumer<Long, Alert> alertDataConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToStorageConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> serviceDiscoveryDataConsumer;
@@ -81,7 +74,6 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             throw new IllegalArgumentException("please config common.queue.kafka props");
         }
         this.kafka = properties.getQueue().getKafka();
-        alertDataQueue = new LinkedBlockingQueue<>();
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToStorageQueue = new LinkedBlockingQueue<>();
         serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
@@ -95,7 +87,6 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
             producerConfig.put(ProducerConfig.RETRIES_CONFIG, 3);
             metricsDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new KafkaMetricsDataSerializer());
-            alertDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new AlertSerializer());
 
             Map<String, Object> consumerConfig = new HashMap<>(4);
             consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
@@ -104,11 +95,6 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             // 15 minute
             consumerConfig.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "900000");
             consumerConfig.put("group.id", "default-consumer");
-
-            Map<String, Object> alertConsumerConfig = new HashMap<>(consumerConfig);
-            alertConsumerConfig.put("group.id", "alert-consumer");
-            alertDataConsumer = new KafkaConsumer<>(alertConsumerConfig, new LongDeserializer(), new AlertDeserializer());
-            alertDataConsumer.subscribe(Collections.singletonList(kafka.getAlertsDataTopic()));
 
             Map<String, Object> metricsToAlertConsumerConfig = new HashMap<>(consumerConfig);
             metricsToAlertConsumerConfig.put("group.id", "metrics-alert-consumer");
@@ -132,23 +118,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public void sendAlertsData(Alert alert) {
-        if (alertDataProducer != null) {
-            alertDataProducer.send(new ProducerRecord<>(kafka.getAlertsDataTopic(), alert));
-        } else {
-            log.error("kafkaAlertProducer is not enable");
-        }
-    }
-
-    @Override
     public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
         return genericPollDataFunction(serviceDiscoveryDataQueue, serviceDiscoveryDataConsumer, serviceDiscoveryDataLock);
-    }
-
-    @Override
-    public Alert pollAlertsData() throws InterruptedException {
-        return genericPollDataFunction(alertDataQueue, alertDataConsumer, alertLock);
-
     }
 
     @Override
@@ -225,12 +196,6 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     public void destroy() throws Exception {
         if (metricsDataProducer != null) {
             metricsDataProducer.close();
-        }
-        if (alertDataProducer != null) {
-            alertDataProducer.close();
-        }
-        if (alertDataConsumer != null) {
-            alertDataConsumer.close();
         }
         if (metricsDataToAlertConsumer != null) {
             metricsDataToAlertConsumer.close();
