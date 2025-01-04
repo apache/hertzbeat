@@ -28,12 +28,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -84,6 +89,22 @@ public class SingleAlert {
 
     @Schema(title = "End At, when status is resolved has", example = "null")
     private Long endAt;
+
+    @Schema(title = "The creator of this record", example = "tom")
+    @CreatedBy
+    private String creator;
+
+    @Schema(title = "This record was last modified by", example = "tom")
+    @LastModifiedBy
+    private String modifier;
+
+    @Schema(title = "This record creation time (millisecond timestamp)")
+    @CreatedDate
+    private LocalDateTime gmtCreate;
+
+    @Schema(title = "Record the latest modification time (timestamp in milliseconds)")
+    @LastModifiedDate
+    private LocalDateTime gmtUpdate;
 
     @Override
     public SingleAlert clone() {

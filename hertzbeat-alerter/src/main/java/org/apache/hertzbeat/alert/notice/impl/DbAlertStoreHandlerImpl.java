@@ -65,6 +65,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
                     singleAlert.setActiveAt(existAlert.getActiveAt());
                 }
                 singleAlert.setTriggerTimes(existAlert.getTriggerTimes() + 1);
+                singleAlert.setGmtCreate(existAlert.getGmtCreate());
             }
             // Save new/updated alert
             alertFingerprints.add(singleAlert.getFingerprint());
@@ -89,6 +90,7 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             }
             // Update alert group ID
             groupAlert.setId(existGroupAlert.getId());
+            groupAlert.setGmtCreate(existGroupAlert.getGmtCreate());
         }
         
         // 4. Save alert group

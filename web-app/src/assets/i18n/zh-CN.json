@@ -258,6 +258,7 @@
   "alert.center.time.tip": "此告警期间累计触发 {{times}} 次告警",
   "alert.center.first-time": "开始",
   "alert.center.last-time": "最新",
+  "alert.center.end-time": "结束",
   "alert.center.confirm.delete": "请确认是否删除!",
   "alert.center.confirm.clear-all": "请确认是否清空所有告警记录!",
   "alert.center.notify.no-mark": "未选中任何待标记项!",

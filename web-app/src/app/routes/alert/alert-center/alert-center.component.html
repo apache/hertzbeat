@@ -36,18 +36,6 @@
     <nz-select
       class="mobile-hide"
       nzAllowClear
-      [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
-      [(ngModel)]="filterPriority"
-      (ngModelChange)="loadAlertsTable()"
-    >
-      <nz-option [nzLabel]="'alert.severity.all' | i18n" [nzValue]="9"></nz-option>
-      <nz-option [nzLabel]="'alert.severity.2' | i18n" [nzValue]="2"></nz-option>
-      <nz-option [nzLabel]="'alert.severity.1' | i18n" [nzValue]="1"></nz-option>
-      <nz-option [nzLabel]="'alert.severity.0' | i18n" [nzValue]="0"></nz-option>
-    </nz-select>
-    <nz-select
-      class="mobile-hide"
-      nzAllowClear
       [nzPlaceHolder]="'alert.center.filter-status' | i18n"
       [(ngModel)]="filterStatus"
       (ngModelChange)="loadAlertsTable()"
@@ -80,33 +68,29 @@
         <div class="alert-meta-info">
           <span class="alert-time">
             <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
-            {{ group.gmtCreate | date : 'yyyy-MM-dd HH:mm:ss' }}
-          </span>
-          <span class="alert-count" *ngIf="group?.alerts">
-            <i nz-icon nzType="alert" nzTheme="outline"></i>
-            {{ 'alert.center.time.tip' | i18n : { times: group?.alerts?.length } }}
+            {{ group.gmtUpdate | date : 'yyyy-MM-dd HH:mm:ss' }}
           </span>
         </div>
       </div>
       <div class="alert-actions">
-        <button
-          *ngIf="group.status != 'firing'"
-          nz-button
-          (click)="onMarkReadOneAlert(group.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.deal' | i18n"
-        >
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          *ngIf="group.status == 'firing'"
-          nz-button
-          (click)="onMarkUnReadOneAlert(group.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.no-deal' | i18n"
-        >
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        </button>
+        <!--        <button-->
+        <!--          *ngIf="group.status != 'firing'"-->
+        <!--          nz-button-->
+        <!--          (click)="onMarkReadOneAlert(group.id)"-->
+        <!--          nz-tooltip-->
+        <!--          [nzTooltipTitle]="'alert.center.deal' | i18n"-->
+        <!--        >-->
+        <!--          <i nz-icon nzType="down-circle" nzTheme="outline"></i>-->
+        <!--        </button>-->
+        <!--        <button-->
+        <!--          *ngIf="group.status == 'firing'"-->
+        <!--          nz-button-->
+        <!--          (click)="onMarkUnReadOneAlert(group.id)"-->
+        <!--          nz-tooltip-->
+        <!--          [nzTooltipTitle]="'alert.center.no-deal' | i18n"-->
+        <!--        >-->
+        <!--          <i nz-icon nzType="up-circle" nzTheme="outline"></i>-->
+        <!--        </button>-->
         <button nz-button nzDanger (click)="onDeleteOneAlert(group.id)" nz-tooltip [nzTooltipTitle]="'alert.center.delete' | i18n">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
         </button>
@@ -117,6 +101,7 @@
     <div class="alert-details">
       <nz-collapse nzGhost>
         <nz-collapse-panel
+          #panel
           *ngFor="let item of group.alerts"
           [nzHeader]="alertHeader"
           [nzExtra]="alertExtra"
@@ -127,11 +112,21 @@
             <div class="alert-content">{{ item.content }}</div>
           </ng-template>
           <ng-template #alertExtra>
-            <div class="alert-time">{{ item.activeAt | date : 'yyyy-MM-dd HH:mm:ss' }}</div>
+            <div class="alert-time">{{
+              item.endAt ? (item.endAt | date : 'yyyy-MM-dd HH:mm:ss') : (item.activeAt | date : 'yyyy-MM-dd HH:mm:ss')
+            }}</div>
           </ng-template>
-          <ng-template #expandedIcon let-active>
-            <i nz-icon [nzType]="active ? 'caret-down' : 'caret-right'"></i>
+          <ng-template #expandedIcon>
+            <i nz-icon [nzType]="panel.nzActive ? 'caret-down' : 'caret-right'"></i>
           </ng-template>
+
+          <!-- Trigger Times -->
+          <div class="detail-section" *ngIf="item.triggerTimes">
+            <span class="alert-count" *ngIf="group?.alerts">
+              <i style="margin-right: 4px" nz-icon nzType="alert" nzTheme="outline"></i>
+              {{ 'alert.center.time.tip' | i18n : { times: item.triggerTimes } }}
+            </span>
+          </div>
 
           <!-- Labels -->
           <div class="detail-section" *ngIf="item.labels">
@@ -162,9 +157,13 @@
                 <span class="time-label">{{ 'alert.center.first-time' | i18n }}:</span>
                 <span class="time-value">{{ item.startAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
               </div>
-              <div class="time-item">
+              <div *ngIf="item.activeAt" class="time-item">
                 <span class="time-label">{{ 'alert.center.last-time' | i18n }}:</span>
                 <span class="time-value">{{ item.activeAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
+              </div>
+              <div *ngIf="item.endAt" class="time-item">
+                <span class="time-label">{{ 'alert.center.end-time' | i18n }}:</span>
+                <span class="time-value">{{ item.endAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
               </div>
             </div>
           </div>

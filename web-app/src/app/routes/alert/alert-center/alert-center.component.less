@@ -29,7 +29,7 @@
 
     .alert-info {
       flex: 1;
-      
+
       .alert-labels {
         display: flex;
         flex-wrap: wrap;
@@ -40,7 +40,7 @@
           border-radius: 2px;
         }
       }
-      
+
       .alert-meta-info {
         display: flex;
         gap: 16px;
@@ -52,7 +52,7 @@
           margin-right: 4px;
         }
 
-        .alert-time, .alert-count {
+        .alert-time {
           display: flex;
           align-items: center;
         }
@@ -97,7 +97,7 @@
             padding: 8px 12px;
             align-items: center;
             cursor: pointer;
-            
+
             &:hover {
               background-color: #fafafa;
             }
@@ -121,7 +121,7 @@
 
           .ant-collapse-content {
             border-top: 1px solid #f0f0f0;
-            
+
             .ant-collapse-content-box {
               padding: 12px;
             }
@@ -142,6 +142,13 @@
         color: #595959;
         margin-bottom: 8px;
         font-weight: 500;
+      }
+
+      .alert-count {
+        display: flex;
+        align-items: center;
+        color: #8c8c8c;
+        font-size: 12px;
       }
     }
 
@@ -201,11 +208,11 @@
   &.status-firing {
     border-left-color: #ff4d4f;
   }
-  
+
   &.status-resolved {
     border-left-color: #52c41a;
   }
-  
+
   &.status-pending {
     border-left-color: #faad14;
   }
