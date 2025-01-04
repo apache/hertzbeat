@@ -102,13 +102,9 @@ export class AlertSettingComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
 
   templateEnvVars = [
-    { name: '${app}', description: 'alert.setting.template.vars.app' },
-    { name: '${metric}', description: 'alert.setting.template.vars.metric' },
-    { name: '${field}', description: 'alert.setting.template.vars.field' },
-    { name: '${value}', description: 'alert.setting.template.vars.value' },
-    { name: '${threshold}', description: 'alert.setting.template.vars.threshold' },
-    { name: '${tags}', description: 'alert.setting.template.vars.tags' },
-    { name: '${time}', description: 'alert.setting.template.vars.time' }
+    { name: '${__app__}', description: 'alert.setting.template.vars.app' },
+    { name: '${__metrics__}', description: 'alert.setting.template.vars.metrics' },
+    { name: '${__instance__}', description: 'alert.setting.template.vars.instance' }
   ];
 
   commonOperators = [
@@ -1078,7 +1074,7 @@ export class AlertSettingComponent implements OnInit {
     this.define.expr = exprList.length > 1 ? exprList.join(' && ') : exprList[0];
   }
 
-  onEnvVarClick(env: { name: string; description: string }) {
+  onEnvVarClick(env: { name: string; description?: string; value?: string }) {
     // Insert environment variable at cursor position
     const textarea = document.getElementById('template') as HTMLTextAreaElement;
     if (textarea) {
@@ -1087,6 +1083,9 @@ export class AlertSettingComponent implements OnInit {
       const text = textarea.value;
       const before = text.substring(0, start);
       const after = text.substring(end);
+      if (env.value) {
+        env.name = `\${${env.value}}`;
+      }
 
       this.define.template = `${before} ${env.name} ${after}`;
 
