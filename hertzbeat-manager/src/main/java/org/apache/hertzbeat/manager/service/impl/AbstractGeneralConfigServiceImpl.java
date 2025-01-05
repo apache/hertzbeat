@@ -22,8 +22,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
-import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
-import org.apache.hertzbeat.manager.service.GeneralConfigService;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.base.service.GeneralConfigService;
 import org.springframework.transaction.annotation.Transactional;
 
 /**

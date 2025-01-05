@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.YamlImExportServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,7 +90,7 @@ class YamlImExportServiceTest {
         paramDTO.setField("Test");
         paramDTO.setValue("Test");
         AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
-        monitorDTO.setTags(List.of(1L, 2L));
+        monitorDTO.setLabels(Map.of("env", "prod"));
         monitorDTO.setIntervals(1);
         monitorDTO.setStatus((byte) 1);
         AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto1 = new AbstractImExportServiceImpl.ExportMonitorDTO();

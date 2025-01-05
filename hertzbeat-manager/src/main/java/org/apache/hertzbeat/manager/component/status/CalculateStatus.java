@@ -18,8 +18,6 @@
 package org.apache.hertzbeat.manager.component.status;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.ListJoin;
 import jakarta.persistence.criteria.Predicate;
 import java.time.Duration;
 import java.time.Instant;
@@ -37,14 +35,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.manager.config.StatusProperties;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.StatusPageComponentDao;
@@ -104,37 +99,34 @@ public class CalculateStatus {
                     List<StatusPageComponent> pageComponentList = statusPageComponentDao.findByOrgId(orgId);
                     Set<Byte> stateSet = new HashSet<>(8);
                     for (StatusPageComponent component : pageComponentList) {
-                        byte state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL;
+                        byte state;
                         if (component.getMethod() == CommonConstants.STATUS_PAGE_CALCULATE_METHOD_MANUAL) {
                             state = component.getConfigState();
                         } else {
-                            TagItem tagItem = component.getTag();
-                            if (tagItem != null) {
-                                Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
-                                    List<Predicate> andList = new ArrayList<>();
-                                    ListJoin<Monitor, Tag> tagJoin = root
-                                            .join(root.getModel()
-                                                    .getList("tags", Tag.class), JoinType.LEFT);
-                                    if (StringUtils.isNotBlank(tagItem.getValue())) {
-                                        andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
-                                        andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagItem.getValue()));
-                                    } else {
-                                        andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
-                                    }
-                                    Predicate[] andPredicates = new Predicate[andList.size()];
-                                    Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
-                                    return query.where(andPredicate).getRestriction();
-                                };
-                                List<Monitor> monitorList = monitorDao.findAll(specification);
-                                state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN;
-                                for (Monitor monitor : monitorList) {
-                                    if (monitor.getStatus() == CommonConstants.MONITOR_DOWN_CODE) {
-                                        state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL;
-                                        break;
-                                    } else if (monitor.getStatus() == CommonConstants.MONITOR_UP_CODE) {
-                                        state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL;
-                                    }
-                                }   
+                            Map<String, String> labels = component.getLabels();
+                            if (labels == null || labels.isEmpty()) {
+                                continue;
+                            }
+                            Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
+                                List<Predicate> predicates = new ArrayList<>();
+                                // create every label condition
+                                labels.forEach((key, value) -> {
+                                    String pattern = String.format("%%\"%s\":\"%s\"%%", key, value);
+                                    predicates.add(criteriaBuilder.like(root.get("labels"), pattern));
+                                });
+
+                                // use or connect them
+                                return criteriaBuilder.or(predicates.toArray(new Predicate[0]));
+                            };
+                            List<Monitor> monitorList = monitorDao.findAll(specification);
+                            state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN;
+                            for (Monitor monitor : monitorList) {
+                                if (monitor.getStatus() == CommonConstants.MONITOR_DOWN_CODE) {
+                                    state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL;
+                                    break;
+                                } else if (monitor.getStatus() == CommonConstants.MONITOR_UP_CODE) {
+                                    state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL;
+                                }
                             }
                         }
                         stateSet.add(state);

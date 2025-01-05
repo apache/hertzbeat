@@ -25,7 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -50,47 +51,49 @@ public class AlertsController {
     private AlertService alertService;
 
     @GetMapping
-    @Operation(summary = "Get a list of alarm information based on query filter items", description = "according to the query filter items to obtain a list of alarm information")
-    public ResponseEntity<Message<Page<Alert>>> getAlerts(
-            @Parameter(description = "Alarm ID List", example = "6565466456") @RequestParam(required = false) List<Long> ids,
-            @Parameter(description = "Alarm monitor object ID", example = "6565463543") @RequestParam(required = false) Long monitorId,
-            @Parameter(description = "Alarm level", example = "6565463543") @RequestParam(required = false) Byte priority,
-            @Parameter(description = "Alarm Status", example = "6565463543") @RequestParam(required = false) Byte status,
-            @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String content,
+    @Operation(summary = "Query Alarms")
+    public ResponseEntity<Message<Page<SingleAlert>>> getAlerts(
+            @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
+            @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
             @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<Alert> alertPage = alertService.getAlerts(ids, monitorId, priority, status, content, sort, order, pageIndex, pageSize);
+        Page<SingleAlert> alertPage = alertService.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertPage));
     }
 
-    @DeleteMapping
-    @Operation(summary = "Delete alarms in batches", description = "according to the alarm ID list to delete the alarm information in batches")
+    @GetMapping("/group")
+    @Operation(summary = "Query Group Alarms")
+    public ResponseEntity<Message<Page<GroupAlert>>> getGroupAlerts(
+            @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
+            @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
+            @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "id") String sort,
+            @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
+            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+        Page<GroupAlert> alertPage = alertService.getGroupAlerts(status, search, sort, order, pageIndex, pageSize);
+        return ResponseEntity.ok(Message.success(alertPage));
+    }
+
+    @DeleteMapping("/group")
+    @Operation(summary = "Delete group alarms in batches", description = "according to the alarm ID list to delete the alarm information in batches")
     public ResponseEntity<Message<Void>> deleteAlerts(
             @Parameter(description = "Alarm List ID", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
-            alertService.deleteAlerts(new HashSet<>(ids));
+            alertService.deleteGroupAlerts(new HashSet<>(ids));
         }
         Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
     }
 
-    @DeleteMapping("/clear")
-    @Operation(summary = "Delete alarms in batches", description = "delete all alarm information")
-    public ResponseEntity<Message<Void>> clearAllAlerts() {
-        alertService.clearAlerts();
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
-    }
-
-    @PutMapping(path = "/status/{status}")
+    @PutMapping(path = "/group/status/{status}")
     @Operation(summary = "Batch modify alarm status, set read and unread", description = "Batch modify alarm status, set read and unread")
     public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
-            @Parameter(description = "Alarm status value", example = "0") @PathVariable Byte status,
+            @Parameter(description = "Alarm status value", example = "resolved") @PathVariable String status,
             @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && status != null && !ids.isEmpty()) {
-            alertService.editAlertStatus(status, ids);
+            alertService.editGroupAlertStatus(status, ids);
         }
         Message<Void> message = Message.success();
         return ResponseEntity.ok(message);

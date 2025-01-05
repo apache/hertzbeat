@@ -54,32 +54,32 @@
     <nz-dropdown-menu #more_menu="nzDropdownMenu">
       <ul nz-menu>
         <li nz-menu-item>
-          <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
+          <button nz-button (click)="onEnableManageMonitors()" class="mobile-hide">
             <i nz-icon nzType="play-circle" nzTheme="outline"></i>
             {{ 'monitors.enable' | i18n }}
           </button>
         </li>
         <li nz-menu-item>
-          <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()" class="mobile-hide">
+          <button nz-button (click)="onCancelManageMonitors()" class="mobile-hide">
             <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
             {{ 'monitors.cancel' | i18n }}
           </button>
         </li>
         <li nz-menu-item>
-          <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
+          <button nz-button nzDanger (click)="onDeleteMonitors()">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
             {{ 'monitors.delete-monitor' | i18n }}
           </button>
         </li>
         <li nz-menu-item>
-          <button nz-button nzType="primary" (click)="onExportMonitors()">
+          <button nz-button (click)="onExportMonitors()">
             <i nz-icon nzType="export" nzTheme="outline"></i>
             {{ 'monitors.export' | i18n }}
           </button>
         </li>
         <li nz-menu-item>
           <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
-            <button nz-button nzType="primary">
+            <button nz-button>
               <i nz-icon nzType="import" nzTheme="outline"></i>
               {{ 'monitors.import' | i18n }}
             </button>
@@ -150,7 +150,7 @@
       <th nzAlign="center" nzWidth="10%" nzColumnKey="status" [nzSortFn]="true">{{ 'monitor.status' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'monitor.host' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'monitor.app' | i18n }}</th>
-      <th nzAlign="center" nzWidth="21%">{{ 'tag' | i18n }}</th>
+      <th nzAlign="center" nzWidth="21%">{{ 'label' | i18n }}</th>
       <th nzAlign="center" nzWidth="14%" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -201,11 +201,9 @@
         </a>
       </td>
       <td nzAlign="left">
-        <a *ngFor="let tag of data?.tags; let i = index" routerLink="/monitors" [queryParams]="{ tag: sliceTagName(tag) }">
-          <nz-tag style="margin-top: 2px" [nzColor]="tag?.color" class="hoverClass">
-            {{ sliceTagName(tag) }}
-          </nz-tag>
-        </a>
+        <nz-tag *ngFor="let label of data.labels | keyvalue" style="margin-top: 2px" [nzColor]="getLabelColor(label.key)">
+          {{ label.key }}:{{ label.value }}
+        </nz-tag>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
@@ -233,7 +231,6 @@
                 <button
                   *ngIf="data.status == 0"
                   nz-button
-                  nzType="primary"
                   (click)="onEnableManageOneMonitor(data.id)"
                   nz-tooltip
                   [nzTooltipTitle]="'monitors.enable' | i18n"
@@ -245,8 +242,6 @@
                 <button
                   *ngIf="data.status != 0"
                   nz-button
-                  nzDanger
-                  nzType="primary"
                   (click)="onCancelManageOneMonitor(data.id)"
                   nz-tooltip
                   [nzTooltipTitle]="'monitors.cancel' | i18n"
@@ -257,7 +252,6 @@
               <li nz-menu-item>
                 <button
                   nz-button
-                  nzType="primary"
                   nzDanger
                   (click)="onDeleteOneMonitor(data.id)"
                   nz-tooltip

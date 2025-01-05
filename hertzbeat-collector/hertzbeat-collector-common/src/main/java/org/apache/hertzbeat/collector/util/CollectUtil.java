@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.util;
 
 import com.beetstra.jutf7.CharsetProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -29,11 +30,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +61,11 @@ public final class CollectUtil {
     private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
     private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b", "Ki", "Mi", "Gi");
+    private static final Gson GSON = new Gson();
+    /**
+     * Regularly verifying whether a string is a combination of numbers and units
+     */
+    private static final String DOUBLE_AND_UNIT_CHECK_REGEX = "^[.\\d+" + String.join("", UNIT_SYMBOLS) + "]+$";
 
     /**
      * private constructor, not allow to create instance.
@@ -65,12 +74,8 @@ public final class CollectUtil {
     }
 
     /**
-     * Regularly verifying whether a string is a combination of numbers and units
-     */
-    private static final String DOUBLE_AND_UNIT_CHECK_REGEX = "^[.\\d+" + String.join("", UNIT_SYMBOLS) + "]+$";
-
-    /**
      * count match keyword number
+     *
      * @param content content
      * @param keyword keyword
      * @return match num
@@ -135,31 +140,6 @@ public final class CollectUtil {
     }
 
     /**
-     * double and unit
-     */
-    public static final class DoubleAndUnit {
-
-        private Double value;
-        private String unit;
-
-        public Double getValue() {
-            return value;
-        }
-
-        public void setValue(Double value) {
-            this.value = value;
-        }
-
-        public String getUnit() {
-            return unit;
-        }
-
-        public void setUnit(String unit) {
-            this.unit = unit;
-        }
-    }
-
-    /**
      * get timeout integer
      *
      * @param timeout timeout str
@@ -194,7 +174,6 @@ public final class CollectUtil {
         return CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField);
     }
 
-
     /**
      * is contains cryPlaceholder ^o^xxx^o^
      *
@@ -212,6 +191,7 @@ public final class CollectUtil {
 
     /**
      * match existed cry placeholder fields ^o^field^o^
+     *
      * @param jsonElement json element
      * @return match field str
      */
@@ -220,6 +200,42 @@ public final class CollectUtil {
         return CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(jsonStr).results()
                 .map(item -> item.group().replaceAll(CRYING_PLACEHOLDER_REX, ""))
                 .collect(Collectors.toSet());
+    }
+
+    private static String replaceSpecialCharacterIfNeeded(String value,
+                                                          String replacePattern, Matcher matcher,
+                                                          Map<String, Configmap> configmap) {
+        matcher.reset();
+        while (matcher.find()) {
+            String group = matcher.group();
+            String replaceField = group.replaceAll(replacePattern, "");
+            Configmap param = configmap.get(replaceField);
+            if (param == null) {
+                continue;
+            }
+            if (param.getValue() != null) {
+                value = value.replace(group, (String) param.getValue());
+            } else if (group.length() == value.length()) {
+                value = null;
+                break;
+            } else {
+                value = value.replace(group, "");
+            }
+        }
+        return value;
+    }
+
+    /**
+     * replace cry placeholder to metrics
+     *
+     * @param metricItem metric item
+     * @param configmap  configmap
+     * @return metrics
+     */
+    public static Metrics replaceCryPlaceholderToMetrics(Metrics metricItem, Map<String, Configmap> configmap) {
+        JsonElement metricJson = GSON.toJsonTree(metricItem);
+        CollectUtil.replaceCryPlaceholder(metricJson, configmap);
+        return GSON.fromJson(metricJson, Metrics.class);
     }
 
     /**
@@ -237,34 +253,20 @@ public final class CollectUtil {
                 Map.Entry<String, JsonElement> entry = iterator.next();
                 JsonElement element = entry.getValue();
                 // Replace normal VALUE value
-                if (element.isJsonPrimitive()) {
-                    // Check if there are special characters Replace
-                    String value = element.getAsString();
-                    Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (cryingMatcher.find()) {
-                        cryingMatcher.reset();
-                        while (cryingMatcher.find()) {
-                            String group = cryingMatcher.group();
-                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER_REX, "");
-                            Configmap param = configmap.get(replaceField);
-                            if (param != null) {
-                                if (param.getValue() == null) {
-                                    if (group.length() == value.length()) {
-                                        value = null;
-                                        break;
-                                    } else {
-                                        value = value.replace(group, "");
-                                    }
-                                } else {
-                                    value = value.replace(group, (String) param.getValue());
-                                }
-                            }
-                        }
-                        jsonObject.addProperty(entry.getKey(), value);
-                    }
-                } else {
+                if (!element.isJsonPrimitive()) {
                     jsonObject.add(entry.getKey(), replaceCryPlaceholder(entry.getValue(), configmap));
+                    continue;
                 }
+                // Replace normal VALUE value
+                // Check if there are special characters Replace
+                String value = element.getAsString();
+                Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
+                if (!cryingMatcher.find()) {
+                    continue;
+                }
+                // Replace special characters
+                value = replaceSpecialCharacterIfNeeded(value, CRYING_PLACEHOLDER_REX, cryingMatcher, configmap);
+                jsonObject.addProperty(entry.getKey(), value);
             }
         } else if (jsonElement.isJsonArray()) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();
@@ -272,34 +274,22 @@ public final class CollectUtil {
             int index = 0;
             while (iterator.hasNext()) {
                 JsonElement element = iterator.next();
-                if (element.isJsonPrimitive()) {
-                    // Check if there are special characters Replace
-                    String value = element.getAsString();
-                    Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (cryingMatcher.find()) {
-                        cryingMatcher.reset();
-                        while (cryingMatcher.find()) {
-                            String group = cryingMatcher.group();
-                            String replaceField = group.replaceAll(CRYING_PLACEHOLDER_REX, "");
-                            Configmap param = configmap.get(replaceField);
-                            if (param != null) {
-                                if (param.getValue() == null) {
-                                    if (group.length() == value.length()) {
-                                        value = null;
-                                        break;
-                                    } else {
-                                        value = value.replace(group, "");
-                                    }
-                                } else {
-                                    value = value.replace(group, (String) param.getValue());
-                                }
-                            }
-                        }
-                        jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
-                    }
-                } else {
+
+                if (!element.isJsonPrimitive()) {
                     jsonArray.set(index, replaceCryPlaceholder(element, configmap));
+                    index++;
+                    continue;
                 }
+                // Check if there are special characters Replace
+                String value = element.getAsString();
+                Matcher cryingMatcher = CRYING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
+                if (!cryingMatcher.find()) {
+                    index++;
+                    continue;
+                }
+                // Replace special characters
+                value = replaceSpecialCharacterIfNeeded(value, CRYING_PLACEHOLDER_REX, cryingMatcher, configmap);
+                jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
                 index++;
             }
         }
@@ -342,34 +332,19 @@ public final class CollectUtil {
                     continue;
                 }
                 // Replace normal VALUE value
-                if (element.isJsonPrimitive()) {
-                    // Check if there are special characters Replace
-                    String value = element.getAsString();
-                    Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
-                    if (smilingMatcher.find()) {
-                        smilingMatcher.reset();
-                        while (smilingMatcher.find()) {
-                            String group = smilingMatcher.group();
-                            String replaceField = group.replaceAll(SMILING_PLACEHOLDER_REX, "");
-                            Configmap param = configmap.get(replaceField);
-                            if (param != null) {
-                                if (param.getValue() == null) {
-                                    if (group.length() == value.length()) {
-                                        value = null;
-                                        break;
-                                    } else {
-                                        value = value.replace(group, "");
-                                    }
-                                } else {
-                                    value = value.replace(group, (String) param.getValue());
-                                }
-                            }
-                        }
-                        jsonObject.addProperty(entry.getKey(), value);
-                    }
-                } else {
+                if (!element.isJsonPrimitive()) {
                     jsonObject.add(entry.getKey(), replaceSmilingPlaceholder(entry.getValue(), configmap));
+                    continue;
                 }
+                // Check if there are special characters Replace
+                String value = element.getAsString();
+                Matcher smilingMatcher = SMILING_PLACEHOLDER_REGEX_PATTERN.matcher(value);
+                if (!smilingMatcher.find()) {
+                    continue;
+                }
+                // Replace special characters
+                value = replaceSpecialCharacterIfNeeded(value, SMILING_PLACEHOLDER_REX, smilingMatcher, configmap);
+                jsonObject.addProperty(entry.getKey(), value);
             }
         } else if (jsonElement.isJsonArray()) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();
@@ -431,6 +406,27 @@ public final class CollectUtil {
         return uri;
     }
 
+    public static List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {
+        if (metricsData.getValuesCount() <= 0 || metricsData.getFieldsCount() <= 0) {
+            return new LinkedList<>();
+        }
+        List<Map<String, Configmap>> mapList = new LinkedList<>();
+        for (CollectRep.ValueRow valueRow : metricsData.getValues()) {
+            if (valueRow.getColumnsCount() != metricsData.getFieldsCount()) {
+                continue;
+            }
+            Map<String, Configmap> configmapMap = new HashMap<>(valueRow.getColumnsCount());
+            int index = 0;
+            for (CollectRep.Field field : metricsData.getFields()) {
+                String value = valueRow.getColumns(index);
+                index++;
+                Configmap configmap = new Configmap(field.getName(), value, Integer.valueOf(field.getType()).byteValue());
+                configmapMap.put(field.getName(), configmap);
+            }
+            mapList.add(configmapMap);
+        }
+        return mapList;
+    }
 
     public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
 
@@ -461,21 +457,48 @@ public final class CollectUtil {
 
     /**
      * convert original string to UTF-7 String
+     *
      * @param original original text
-     * @param charset encode charset
+     * @param charset  encode charset
      * @return String
      */
-    public  static  String stringEncodeUtf7String(String original, String charset) {
+    public static String stringEncodeUtf7String(String original, String charset) {
         return new String(original.getBytes(new CharsetProvider().charsetForName(charset)), StandardCharsets.US_ASCII);
     }
 
     /**
      * convert UTF-7 string to original String
+     *
      * @param encoded encoded String
      * @param charset encode charset
      * @return String
      */
-    public  static  String utf7StringDecodeString(String encoded, String charset) {
+    public static String utf7StringDecodeString(String encoded, String charset) {
         return new String(encoded.getBytes(StandardCharsets.US_ASCII), new CharsetProvider().charsetForName(charset));
+    }
+
+    /**
+     * double and unit
+     */
+    public static final class DoubleAndUnit {
+
+        private Double value;
+        private String unit;
+
+        public Double getValue() {
+            return value;
+        }
+
+        public void setValue(Double value) {
+            this.value = value;
+        }
+
+        public String getUnit() {
+            return unit;
+        }
+
+        public void setUnit(String unit) {
+            this.unit = unit;
+        }
     }
 }
