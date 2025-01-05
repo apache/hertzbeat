@@ -1,10 +1,30 @@
+/* 调整工具栏布局 */
+:host ::ng-deep app-toolbar {
+  .center-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 0 16px;
+
+    button {
+      flex-shrink: 0;
+    }
+
+    nz-select {
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+  }
+}
+
 .search-wrapper {
   display: flex;
   justify-content: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 12px 0;
+  padding: 0;
 }
 
 .search-input {
@@ -12,26 +32,25 @@
 
   :global {
     .ant-input {
-      height: 48px;
-      font-size: 15px;
-      border-radius: 8px;
-      padding: 4px 16px 4px 48px;
+      height: 40px;
+      font-size: 14px;
+      border-radius: 6px;
+      padding: 4px 11px 4px 40px;
     }
 
     .ant-input-prefix {
       color: rgba(0, 0, 0, 0.45);
-      font-size: 20px;
-      margin-right: 12px;
-      margin-left: 16px;
+      font-size: 16px;
+      margin-right: 8px;
+      margin-left: 12px;
     }
 
     .ant-input-affix-wrapper {
-      border-radius: 8px;
-      border-width: 2px;
+      border-radius: 6px;
       
       &:hover, &:focus {
         border-color: #40a9ff;
-        box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
       }
     }
   }

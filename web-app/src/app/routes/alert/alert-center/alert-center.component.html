@@ -28,33 +28,37 @@
 
 <app-toolbar>
   <ng-template #center>
-    <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-      <i nz-icon nzType="sync" nzTheme="outline"></i>
-    </button>
-    <div class="search-wrapper">
-      <nz-input-group [nzPrefix]="prefixTemplate" class="search-input">
-        <input
-          type="text"
-          nz-input
-          [(ngModel)]="filterContent"
-          (ngModelChange)="loadAlertsTable()"
-          [placeholder]="'alert.center.search' | i18n"
-        />
-      </nz-input-group>
-      <ng-template #prefixTemplate>
-        <i nz-icon nzType="search"></i>
-      </ng-template>
+    <div class="center-content">
+      <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+        <i nz-icon nzType="sync" nzTheme="outline"></i>
+      </button>
+
+      <div class="search-wrapper">
+        <nz-input-group [nzPrefix]="prefixTemplate" class="search-input">
+          <input
+            type="text"
+            nz-input
+            [(ngModel)]="filterContent"
+            (ngModelChange)="loadAlertsTable()"
+            [placeholder]="'alert.center.search' | i18n"
+          />
+        </nz-input-group>
+        <ng-template #prefixTemplate>
+          <i nz-icon nzType="search"></i>
+        </ng-template>
+      </div>
+
+      <nz-select
+        class="mobile-hide"
+        nzAllowClear
+        [nzPlaceHolder]="'alert.center.filter-status' | i18n"
+        [(ngModel)]="filterStatus"
+        (ngModelChange)="loadAlertsTable()"
+      >
+        <nz-option [nzLabel]="'alert.status.firing' | i18n" [nzValue]="'firing'"></nz-option>
+        <nz-option [nzLabel]="'alert.status.resolved' | i18n" [nzValue]="'resolved'"></nz-option>
+      </nz-select>
     </div>
-    <nz-select
-      class="mobile-hide"
-      nzAllowClear
-      [nzPlaceHolder]="'alert.center.filter-status' | i18n"
-      [(ngModel)]="filterStatus"
-      (ngModelChange)="loadAlertsTable()"
-    >
-      <nz-option [nzLabel]="'alert.status.firing' | i18n" [nzValue]="'firing'"></nz-option>
-      <nz-option [nzLabel]="'alert.status.resolved' | i18n" [nzValue]="'resolved'"></nz-option>
-    </nz-select>
   </ng-template>
 </app-toolbar>
 
