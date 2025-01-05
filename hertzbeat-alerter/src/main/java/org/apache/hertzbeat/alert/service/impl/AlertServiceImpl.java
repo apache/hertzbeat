@@ -70,12 +70,28 @@ public class AlertServiceImpl implements AlertService {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicate);
             }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+            List<Predicate> orList = new ArrayList<>();
             if (search != null && !search.isEmpty()) {
                 Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + search + "%");
-                andList.add(predicateContent);
+                orList.add(predicateContent);
+                Predicate predicateLabels = criteriaBuilder.like(root.get("labels"), "%" + search + "%");
+                orList.add(predicateLabels);
+                Predicate predicateAnnotation = criteriaBuilder.like(root.get("annotations"), "%" + search + "%");
+                orList.add(predicateAnnotation);
             }
-            Predicate[] predicates = new Predicate[andList.size()];
-            return criteriaBuilder.and(andList.toArray(predicates));
+            Predicate[] orPredicates = new Predicate[orList.size()];
+            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
+            } else {
+                return query.where(andPredicate, orPredicate).getRestriction();
+            }
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
@@ -90,12 +106,28 @@ public class AlertServiceImpl implements AlertService {
                 Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicate);
             }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+            List<Predicate> orList = new ArrayList<>();
             if (search != null && !search.isEmpty()) {
-                Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + search + "%");
-                andList.add(predicateContent);
+                Predicate predicateContent = criteriaBuilder.like(root.get("groupLabels"), "%" + search + "%");
+                orList.add(predicateContent);
+                Predicate predicateLabels = criteriaBuilder.like(root.get("commonLabels"), "%" + search + "%");
+                orList.add(predicateLabels);
+                Predicate predicateAnnotation = criteriaBuilder.like(root.get("commonAnnotations"), "%" + search + "%");
+                orList.add(predicateAnnotation);
             }
-            Predicate[] predicates = new Predicate[andList.size()];
-            return criteriaBuilder.and(andList.toArray(predicates));
+            Predicate[] orPredicates = new Predicate[orList.size()];
+            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
+            } else {
+                return query.where(andPredicate, orPredicate).getRestriction();
+            }
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);

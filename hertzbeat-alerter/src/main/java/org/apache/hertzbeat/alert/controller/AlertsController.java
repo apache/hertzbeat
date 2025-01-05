@@ -88,7 +88,7 @@ public class AlertsController {
     }
 
     @PutMapping(path = "/group/status/{status}")
-    @Operation(summary = "Batch modify alarm status, set read and unread", description = "Batch modify alarm status, set read and unread")
+    @Operation(summary = "Batch modify alarm status, set firing or resolved", description = "Batch modify alarm status, set firing or resolved")
     public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
             @Parameter(description = "Alarm status value", example = "resolved") @PathVariable String status,
             @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {

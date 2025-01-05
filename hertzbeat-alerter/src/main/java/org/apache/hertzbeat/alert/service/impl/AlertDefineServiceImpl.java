@@ -127,7 +127,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, Byte priority, String sort, String order, int pageIndex, int pageSize) {
+    public Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, String sort, String order, int pageIndex, int pageSize) {
         // parse translation content list
         ObjectMapper objectMapper = new ObjectMapper();
         List<String> searchList = Collections.emptyList();
@@ -154,20 +154,16 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                 for (String searchContent : finalSearchList) {
                     searchContent = searchContent.toLowerCase();
                     Predicate predicate = criteriaBuilder.or(
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("app")), "%" + searchContent + "%"),
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("metric")), "%" + searchContent + "%"),
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("field")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + searchContent + "%"),
                             criteriaBuilder.like(criteriaBuilder.lower(root.get("expr")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("labels")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("annotations")), "%" + searchContent + "%"),
                             criteriaBuilder.like(criteriaBuilder.lower(root.get("template")), "%" + searchContent + "%")
                     );
                     searchPredicates.add(predicate);
                 }
                 // all search keywords are connected with or
                 andList.add(criteriaBuilder.or(searchPredicates.toArray(new Predicate[0])));
-            }
-            if (priority != null) {
-                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
-                andList.add(predicate);
             }
             Predicate[] predicates = new Predicate[andList.size()];
             return criteriaBuilder.and(andList.toArray(predicates));

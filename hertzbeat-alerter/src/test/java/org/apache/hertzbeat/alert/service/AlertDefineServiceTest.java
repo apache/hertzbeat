@@ -123,7 +123,7 @@ class AlertDefineServiceTest {
     @Test
     void getAlertDefines() {
         when(alertDefineDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
-        assertNotNull(alertDefineService.getAlertDefines(null, null, null, "id", "desc", 1, 10));
+        assertNotNull(alertDefineService.getAlertDefines(null, null, "id", "desc", 1, 10));
         verify(alertDefineDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
     }
 }
