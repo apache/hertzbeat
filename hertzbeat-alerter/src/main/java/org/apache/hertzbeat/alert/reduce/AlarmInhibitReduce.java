@@ -17,11 +17,14 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -47,6 +50,11 @@ public class AlarmInhibitReduce {
      */
     private static final long SOURCE_ALERT_TTL = 4 * 60 * 60 * 1000L;
 
+    /**
+     * Interval for checking and cleaning up expired source alerts
+     */
+    private static final long CHECK_INTERVAL = 60_000L;
+
     private final AlarmSilenceReduce alarmSilenceReduce;
 
     private final Map<Long, AlertInhibit> inhibitRules;
@@ -64,6 +72,29 @@ public class AlarmInhibitReduce {
         sourceAlertCache = new ConcurrentHashMap<>(8);
         List<AlertInhibit> inhibits = alertInhibitDao.findAlertInhibitsByEnableIsTrue();
         refreshInhibitRules(inhibits);
+        startScheduledCleanupCache();
+    }
+
+    private void startScheduledCleanupCache() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("Scheduled clean up inhibit cache has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .setDaemon(true)
+                .setNameFormat("inhibit-clean-up-%d")
+                .build();
+        ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        // Scheduled cleanup of all expired source alerts
+        scheduledExecutor.scheduleAtFixedRate(() -> {
+            try {
+                sourceAlertCache.values().forEach(this::cleanupExpiredEntries);
+                // Remove empty rule caches
+                sourceAlertCache.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+            } catch (Exception e) {
+                log.error("Error during scheduled cleanup", e);
+            }
+        }, CHECK_INTERVAL, CHECK_INTERVAL, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -75,12 +106,8 @@ public class AlarmInhibitReduce {
             log.warn("Attempted to refresh inhibit rules with null list.");
             return;
         }
-        try {
-            this.inhibitRules.clear();
-            rules.forEach(rule -> this.inhibitRules.put(rule.getId(), rule));
-        } catch (Exception e) {
-            log.error("Error refreshing inhibit rules", e);
-        }
+        this.inhibitRules.clear();
+        rules.forEach(rule -> this.inhibitRules.put(rule.getId(), rule));
     }
 
     /**
@@ -126,15 +153,10 @@ public class AlarmInhibitReduce {
             log.warn("Received null alert or rule in isSourceAlert");
             return false;
         }
-        try {
-            if (!"firing".equals(alert.getStatus())) {
-                return false;
-            }
-            return matchLabels(alert.getCommonLabels(), rule.getSourceLabels());
-        } catch (Exception e) {
-            log.error("Error checking if alert is source alert", e);
+        if (!"firing".equals(alert.getStatus())) {
             return false;
         }
+        return matchLabels(alert.getCommonLabels(), rule.getSourceLabels());
     }
 
     /**
@@ -146,32 +168,27 @@ public class AlarmInhibitReduce {
             log.warn("Received null alert in shouldInhibit");
             return false;
         }
-        try {
-            if ("resolved".equals(alert.getStatus())) {
-                return false;
-            }
-
-            for (AlertInhibit rule : inhibitRules.values()) {
-                if (!matchLabels(alert.getCommonLabels(), rule.getTargetLabels())) {
-                    continue;
-                }
-
-                List<GroupAlert> sourceAlerts = getActiveSourceAlerts(rule);
-                if (sourceAlerts.isEmpty()) {
-                    continue;
-                }
-
-                for (GroupAlert source : sourceAlerts) {
-                    if (matchEqualLabels(source, alert, rule.getEqualLabels())) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            log.error("Error checking if alert should be inhibited", e);
+        if ("resolved".equals(alert.getStatus())) {
             return false;
         }
+
+        for (AlertInhibit rule : inhibitRules.values()) {
+            if (!matchLabels(alert.getCommonLabels(), rule.getTargetLabels())) {
+                continue;
+            }
+
+            List<GroupAlert> sourceAlerts = getActiveSourceAlerts(rule);
+            if (sourceAlerts.isEmpty()) {
+                continue;
+            }
+
+            for (GroupAlert source : sourceAlerts) {
+                if (matchEqualLabels(source, alert, rule.getEqualLabels())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -184,13 +201,8 @@ public class AlarmInhibitReduce {
             log.warn("Received null alertLabels or requiredLabels in matchLabels");
             return false;
         }
-        try {
-            return requiredLabels.entrySet().stream()
-                    .allMatch(entry -> entry.getValue().equals(alertLabels.get(entry.getKey())));
-        } catch (Exception e) {
-            log.error("Error matching labels", e);
-            return false;
-        }
+        return requiredLabels.entrySet().stream()
+                .allMatch(entry -> entry.getValue().equals(alertLabels.get(entry.getKey())));
     }
 
     /**
@@ -204,22 +216,17 @@ public class AlarmInhibitReduce {
             log.warn("Received null source or target in matchEqualLabels");
             return false;
         }
-        try {
-            if (equalLabels == null || equalLabels.isEmpty()) {
-                return true;
-            }
-            Map<String, String> sourceLabels = source.getCommonLabels();
-            Map<String, String> targetLabels = target.getCommonLabels();
-
-            return equalLabels.stream().allMatch(label -> {
-                String sourceValue = sourceLabels.get(label);
-                String targetValue = targetLabels.get(label);
-                return sourceValue != null && sourceValue.equals(targetValue);
-            });
-        } catch (Exception e) {
-            log.error("Error matching equal labels", e);
-            return false;
+        if (equalLabels == null || equalLabels.isEmpty()) {
+            return true;
         }
+        Map<String, String> sourceLabels = source.getCommonLabels();
+        Map<String, String> targetLabels = target.getCommonLabels();
+
+        return equalLabels.stream().allMatch(label -> {
+            String sourceValue = sourceLabels.get(label);
+            String targetValue = targetLabels.get(label);
+            return sourceValue != null && sourceValue.equals(targetValue);
+        });
     }
 
     /**
@@ -232,23 +239,19 @@ public class AlarmInhibitReduce {
             log.warn("Received null alert or rule in cacheSourceAlert");
             return;
         }
-        try {
-            Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.computeIfAbsent(
-                    rule.getId(),
-                    k -> new ConcurrentHashMap<>()
-            );
+        Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.computeIfAbsent(
+                rule.getId(),
+                k -> new ConcurrentHashMap<>()
+        );
 
-            String fingerprint = generateAlertFingerprint(alert);
-            SourceAlertEntry entry = new SourceAlertEntry(
-                    alert,
-                    System.currentTimeMillis(),
-                    System.currentTimeMillis() + SOURCE_ALERT_TTL
-            );
-            ruleCache.put(fingerprint, entry);
-            cleanupExpiredEntries(ruleCache);
-        } catch (Exception e) {
-            log.error("Error caching source alert", e);
-        }
+        String fingerprint = generateAlertFingerprint(alert);
+        SourceAlertEntry entry = new SourceAlertEntry(
+                alert,
+                System.currentTimeMillis(),
+                System.currentTimeMillis() + SOURCE_ALERT_TTL
+        );
+        ruleCache.put(fingerprint, entry);
+        cleanupExpiredEntries(ruleCache);
     }
 
     /**
@@ -260,21 +263,16 @@ public class AlarmInhibitReduce {
             log.warn("Received null rule in getActiveSourceAlerts");
             return Collections.emptyList();
         }
-        try {
-            Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.get(rule.getId());
-            if (ruleCache == null || ruleCache.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            long now = System.currentTimeMillis();
-            return ruleCache.values().stream()
-                    .filter(entry -> entry.getExpiryTime() > now)
-                    .map(SourceAlertEntry::getAlert)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("Error getting active source alerts", e);
+        Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.get(rule.getId());
+        if (ruleCache == null || ruleCache.isEmpty()) {
             return Collections.emptyList();
         }
+
+        long now = System.currentTimeMillis();
+        return ruleCache.values().stream()
+                .filter(entry -> entry.getExpiryTime() > now)
+                .map(SourceAlertEntry::getAlert)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -286,18 +284,13 @@ public class AlarmInhibitReduce {
             log.warn("Received null alert in generateAlertFingerprint");
             return "";
         }
-        try {
-            Map<String, String> labels = new HashMap<>(alert.getCommonLabels());
-            labels.remove("timestamp");
+        Map<String, String> labels = new HashMap<>(alert.getCommonLabels());
+        labels.remove("timestamp");
 
-            return labels.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .map(e -> e.getKey() + ":" + e.getValue())
-                    .collect(Collectors.joining(","));
-        } catch (Exception e) {
-            log.error("Error generating alert fingerprint", e);
-            return "";
-        }
+        return labels.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + ":" + e.getValue())
+                .collect(Collectors.joining(","));
     }
 
     /**
@@ -309,26 +302,8 @@ public class AlarmInhibitReduce {
             log.warn("Received null cache in cleanupExpiredEntries");
             return;
         }
-        try {
-            long now = System.currentTimeMillis();
-            cache.entrySet().removeIf(entry -> entry.getValue().getExpiryTime() <= now);
-        } catch (Exception e) {
-            log.error("Error cleaning up expired entries", e);
-        }
-    }
-
-    /**
-     * Scheduled cleanup of all expired source alerts
-     */
-    @Scheduled(fixedRate = 60_000) // Run every minute
-    public void scheduledCleanup() {
-        try {
-            sourceAlertCache.values().forEach(this::cleanupExpiredEntries);
-            // Remove empty rule caches
-            sourceAlertCache.entrySet().removeIf(entry -> entry.getValue().isEmpty());
-        } catch (Exception e) {
-            log.error("Error during scheduled cleanup", e);
-        }
+        long now = System.currentTimeMillis();
+        cache.entrySet().removeIf(entry -> entry.getValue().getExpiryTime() <= now);
     }
 
     /**
