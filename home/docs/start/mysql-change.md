@@ -6,7 +6,16 @@ sidebar_label: Meta Store MYSQL
 
 MYSQL is a reliable relational database. In addition to default built-in H2 database, Apache HertzBeat (incubating) allow you to use MYSQL to store structured relational data such as monitoring information, alarm information and configuration information.
 
-> If you have the MYSQL environment, can be directly to database creation step.
+> If you already have a MySQL environment and the MySQL version meets the requirements, you can skip directly to the database creation step.
+
+### Supported MySQL Versions
+
+Please ensure you are using a supported MySQL version. HertzBeat only supports MySQL 5.7+ or 8 versions. You can check the MySQL version with the following command:
+
+```shell
+$ mysql --version
+mysql  Ver 8.0.25 for Linux on x86_64 (MySQL Community Server - GPL)
+```
 
 ### Install MYSQL via Docker
 
