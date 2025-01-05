@@ -21,7 +21,6 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, MenuService } from '@delon/theme';
-import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -33,7 +32,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { formatTagName, findDeepestSelected } from '../../../shared/utils/common-util';
+import { findDeepestSelected } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-list',
@@ -47,7 +46,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private monitorSvc: MonitorService,
-    private messageSvc: NzMessageService,
     private storageSvc: MemoryStorageService,
     private appDefineSvc: AppDefineService,
     private menuService: MenuService,
@@ -495,7 +493,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   // end: List multiple choice paging
 
   notifyCopySuccess() {
-    this.messageSvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), { nzDuration: 800 });
+    this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
   }
 
   /**
