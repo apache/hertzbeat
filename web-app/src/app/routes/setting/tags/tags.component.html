@@ -54,7 +54,7 @@
         <div class="tag-content">
           <div class="tag-header">
             <a routerLink="/monitors" [queryParams]="{ labels: formatTagName(data) }">
-              <nz-tag [nzColor]="data.color" class="tag-name" style="font-size: 14px; padding: 4px 8px">
+              <nz-tag [nzColor]="data.color" class="tag-name">
                 {{ formatTagName(data) }}
               </nz-tag>
             </a>
