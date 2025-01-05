@@ -142,6 +142,11 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     public void deleteGroupAlerts(HashSet<Long> ids) {
+        List<GroupAlert> groupAlerts = groupAlertDao.findGroupAlertsByIdIn(ids);
+        for (GroupAlert groupAlert : groupAlerts) {
+            List<String> firingAlerts = groupAlert.getAlertFingerprints();
+            singleAlertDao.deleteSingleAlertsByFingerprintIn(firingAlerts);
+        }
         groupAlertDao.deleteGroupAlertsByIdIn(ids);
     }
 
