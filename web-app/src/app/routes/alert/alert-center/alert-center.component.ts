@@ -204,8 +204,4 @@ export class AlertCenterComponent implements OnInit {
       }
     );
   }
-
-  recordEntries(record: Record<any, any>) {
-    return Object.entries(record);
-  }
 }

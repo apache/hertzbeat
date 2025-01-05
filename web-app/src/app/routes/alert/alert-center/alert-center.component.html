@@ -68,9 +68,7 @@
     <div class="alert-header">
       <div class="alert-info">
         <div class="alert-labels">
-          <nz-tag *ngFor="let label of recordEntries(group.groupLabels)">
-            {{ label[0] + ':' + label[1] }}
-          </nz-tag>
+          <nz-tag *ngFor="let item of group.groupLabels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
         </div>
         <div class="alert-meta-info">
           <span class="alert-time">
@@ -139,9 +137,7 @@
           <div class="detail-section" *ngIf="item.labels">
             <div class="section-title">{{ 'alert.center.labels' | i18n }}</div>
             <div class="alert-labels">
-              <nz-tag *ngFor="let label of recordEntries(item.labels)">
-                {{ label[0] + ':' + label[1] }}
-              </nz-tag>
+              <nz-tag *ngFor="let label of item.labels | keyvalue">{{ label.key }}:{{ label.value }}</nz-tag>
             </div>
           </div>
 
@@ -149,9 +145,9 @@
           <div class="detail-section" *ngIf="item.annotations">
             <div class="section-title">{{ 'annotation' | i18n }}</div>
             <div class="alert-annotations">
-              <div *ngFor="let anno of recordEntries(item.annotations)" class="annotation-item">
-                <span class="annotation-key">{{ anno[0] }}:</span>
-                <span class="annotation-value">{{ anno[1] }}</span>
+              <div *ngFor="let anno of item.annotations | keyvalue" class="annotation-item">
+                <span class="annotation-key">{{ anno.key }}:</span>
+                <span class="annotation-value">{{ anno.value }}</span>
               </div>
             </div>
           </div>

@@ -96,7 +96,7 @@
       <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.type' | i18n }}</th>
       <th nzAlign="center" nzWidth="24%">{{ 'alert.setting.expr' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'alert.setting.template' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.severity' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'label.bind' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.enable' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -120,18 +120,7 @@
       </td>
       <td nzAlign="center">{{ data.template }}</td>
       <td nzAlign="center">
-        <nz-tag *ngIf="data.labels?.severity == 'emergency'" nzColor="red">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.severity.0' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.labels?.severity == 'critical'" nzColor="orange">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.severity.1' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.labels?.severity == 'warning'" nzColor="yellow">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.severity.2' | i18n }}</span>
-        </nz-tag>
+        <nz-tag *ngFor="let item of data.labels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
       </td>
       <td nzAlign="center">
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
