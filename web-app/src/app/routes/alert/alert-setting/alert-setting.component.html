@@ -463,21 +463,17 @@
           {{ 'alert.setting.period' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-input-group nzCompact>
-            <nz-input-number
-              [(ngModel)]="define.period"
-              required
-              [nzMin]="60"
-              [nzStep]="60"
-              name="period"
-              id="period"
-              [nzPlaceHolder]="'alert.setting.period.placeholder' | i18n"
-            >
-            </nz-input-number>
-            <div class="ant-input-group-addon" style="width: 40px; text-align: center">
-              {{ 'common.time.unit.second' | i18n }}
-            </div>
-          </nz-input-group>
+          <nz-input-number
+            [(ngModel)]="define.period"
+            required
+            [nzMin]="60"
+            [nzStep]="60"
+            name="period"
+            id="period"
+            [nzPlaceHolder]="'alert.setting.period.placeholder' | i18n"
+          >
+          </nz-input-number>
+          <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
