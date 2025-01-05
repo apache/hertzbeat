@@ -1,3 +1,50 @@
+.search-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 12px 0;
+}
+
+.search-input {
+  width: 100%;
+
+  :global {
+    .ant-input {
+      height: 48px;
+      font-size: 15px;
+      border-radius: 8px;
+      padding: 4px 16px 4px 48px;
+    }
+
+    .ant-input-prefix {
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 20px;
+      margin-right: 12px;
+      margin-left: 16px;
+    }
+
+    .ant-input-affix-wrapper {
+      border-radius: 8px;
+      border-width: 2px;
+      
+      &:hover, &:focus {
+        border-color: #40a9ff;
+        box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+      }
+    }
+  }
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 768px) {
+  .search-wrapper {
+    max-width: 100%;
+    padding: 12px 16px;
+  }
+}
+
 .alert-cards {
   display: flex;
   flex-direction: column;

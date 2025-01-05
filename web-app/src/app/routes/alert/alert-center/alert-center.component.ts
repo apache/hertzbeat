@@ -22,7 +22,6 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { NzTableQueryParams } from 'ng-zorro-antd/table';
 
 import { GroupAlert } from '../../../pojo/GroupAlert';
 import { AlertService } from '../../../service/alert.service';
@@ -46,8 +45,7 @@ export class AlertCenterComponent implements OnInit {
   groupAlerts!: GroupAlert[];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
-  filterStatus: string = 'firing';
-  filterPriority: number = 9;
+  filterStatus!: string;
   filterContent: string | undefined;
 
   ngOnInit(): void {
@@ -206,24 +204,6 @@ export class AlertCenterComponent implements OnInit {
       }
     );
   }
-
-  // begin: List multiple choice paging
-  checkedAll: boolean = false;
-  onAllChecked(checked: boolean) {
-    if (checked) {
-      this.groupAlerts.forEach(monitor => this.checkedAlertIds.add(monitor.id));
-    } else {
-      this.checkedAlertIds.clear();
-    }
-  }
-  onItemChecked(monitorId: number, checked: boolean) {
-    if (checked) {
-      this.checkedAlertIds.add(monitorId);
-    } else {
-      this.checkedAlertIds.delete(monitorId);
-    }
-  }
-  // end: List multiple choice paging
 
   recordEntries(record: Record<any, any>) {
     return Object.entries(record);

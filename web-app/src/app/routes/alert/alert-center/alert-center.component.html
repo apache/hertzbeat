@@ -27,12 +27,24 @@
 <nz-divider></nz-divider>
 
 <app-toolbar>
-  <ng-template #left>
-    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+  <ng-template #center>
+    <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
-  </ng-template>
-  <ng-template #right>
+    <div class="search-wrapper">
+      <nz-input-group [nzPrefix]="prefixTemplate" class="search-input">
+        <input
+          type="text"
+          nz-input
+          [(ngModel)]="filterContent"
+          (ngModelChange)="loadAlertsTable()"
+          [placeholder]="'alert.center.search' | i18n"
+        />
+      </nz-input-group>
+      <ng-template #prefixTemplate>
+        <i nz-icon nzType="search"></i>
+      </ng-template>
+    </div>
     <nz-select
       class="mobile-hide"
       nzAllowClear
@@ -40,18 +52,9 @@
       [(ngModel)]="filterStatus"
       (ngModelChange)="loadAlertsTable()"
     >
-      <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="'all'"></nz-option>
-      <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="'emergency'"></nz-option>
-      <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="'critical'"></nz-option>
-      <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="'warning'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.firing' | i18n" [nzValue]="'firing'"></nz-option>
+      <nz-option [nzLabel]="'alert.status.resolved' | i18n" [nzValue]="'resolved'"></nz-option>
     </nz-select>
-    <app-multi-func-input
-      groupStyle="width: 250px;"
-      class="mobile-hide"
-      [placeholder]="'alert.center.search' | i18n"
-      [(value)]="filterContent"
-      (keydown.enter)="loadAlertsTable()"
-    />
   </ng-template>
 </app-toolbar>
 

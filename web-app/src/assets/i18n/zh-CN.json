@@ -126,9 +126,8 @@
     "status": {
       "": "告警状态",
       "all": "全部状态",
-      "0": "未处理",
-      "2": "已恢复",
-      "3": "已处理"
+      "firing": "告警中",
+      "resolved": "已恢复"
     },
     "severity": {
       "": "告警级别",
@@ -852,5 +851,6 @@
   "alert.inhibit.edit": "编辑抑制规则",
   "alert.inhibit.delete": "删除抑制规则",
   "alert.help.inhibit": "告警抑制用于配置告警之间的抑制关系。当某个告警发生时，可以抑制其他告警的产生。例如，当服务器宕机时，可以抑制该服务器上的所有告警。",
-  "alert.help.inhibit.link": "https://hertzbeat.apache.org/zh-cn/docs/help/alert_inhibit"
+  "alert.help.inhibit.link": "https://hertzbeat.apache.org/zh-cn/docs/help/alert_inhibit",
+  "alert.center.tag.search.placeholder": "搜索标签..."
 }

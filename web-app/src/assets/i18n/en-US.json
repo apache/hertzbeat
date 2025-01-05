@@ -127,9 +127,8 @@
     "status": {
       "": "Alert Status",
       "all": "All Status",
-      "0": "Pending",
-      "2": "Restored",
-      "3": "Processed"
+      "firing": "Firing",
+      "resolved": "Resolved"
     },
     "severity": {
       "": "Alarm Severity",
