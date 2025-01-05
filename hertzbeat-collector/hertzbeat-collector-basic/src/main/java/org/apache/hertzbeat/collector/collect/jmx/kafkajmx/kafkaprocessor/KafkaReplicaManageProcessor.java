@@ -38,7 +38,6 @@ import org.apache.hertzbeat.common.entity.message.CollectRep.ValueRow.Builder;
 /**
  * KafkaReplicaManageProcessor
  */
-
 public class KafkaReplicaManageProcessor implements MbeanProcessor {
 
     private static final String FAILED_ISR_UPDATES_PER_SEC = "FailedIsrUpdatesPerSec";

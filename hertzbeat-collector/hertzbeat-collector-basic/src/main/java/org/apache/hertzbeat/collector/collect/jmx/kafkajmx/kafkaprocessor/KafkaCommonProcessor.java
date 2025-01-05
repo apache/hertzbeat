@@ -38,7 +38,6 @@ import org.apache.hertzbeat.common.entity.message.CollectRep.ValueRow;
 /**
  * KafkaCommonProcessor
  */
-
 public class KafkaCommonProcessor implements MbeanProcessor {
 
     Boolean completeFlag = false;

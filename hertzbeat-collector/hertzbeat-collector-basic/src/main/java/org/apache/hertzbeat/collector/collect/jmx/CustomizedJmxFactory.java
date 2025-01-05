@@ -29,8 +29,6 @@ import org.apache.hertzbeat.collector.collect.jmx.kafkajmx.KafkaJmxValidator;
 /**
  * Please register the components you need to customize here
  */
-
-
 public class CustomizedJmxFactory {
 
     // Map associating app names with their corresponding JmxValidator
