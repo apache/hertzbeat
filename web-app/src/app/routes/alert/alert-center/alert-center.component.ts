@@ -60,7 +60,6 @@ export class AlertCenterComponent implements OnInit {
     this.tableLoading = true;
     let alertsInit$ = this.alertSvc.loadGroupAlerts(this.filterStatus, this.filterContent, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
-        this.tableLoading = false;
         if (message.code === 0) {
           let page = message.data;
           this.groupAlerts = page.content;
@@ -74,6 +73,7 @@ export class AlertCenterComponent implements OnInit {
         } else {
           console.warn(message.msg);
         }
+        this.tableLoading = false;
         alertsInit$.unsubscribe();
       },
       error => {

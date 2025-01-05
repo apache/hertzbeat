@@ -57,7 +57,7 @@ export class AlertService {
       httpParams = httpParams.append('status', status);
     }
     if (search != undefined && search != '' && search.trim() != '') {
-      httpParams = httpParams.append('content', search.trim());
+      httpParams = httpParams.append('search', search.trim());
     }
     const options = { params: httpParams };
     return this.http.get<Message<Page<SingleAlert>>>(alerts_uri, options);
@@ -83,7 +83,7 @@ export class AlertService {
       httpParams = httpParams.append('status', status);
     }
     if (search != undefined && search != '' && search.trim() != '') {
-      httpParams = httpParams.append('content', search.trim());
+      httpParams = httpParams.append('search', search.trim());
     }
     const options = { params: httpParams };
     return this.http.get<Message<Page<GroupAlert>>>(alerts_group_uri, options);

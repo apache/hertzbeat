@@ -39,7 +39,7 @@
             type="text"
             nz-input
             [(ngModel)]="filterContent"
-            (ngModelChange)="loadAlertsTable()"
+            (keydown.enter)="loadAlertsTable()"
             [placeholder]="'alert.center.search' | i18n"
           />
         </nz-input-group>
