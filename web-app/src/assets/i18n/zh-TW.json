@@ -256,7 +256,7 @@
   "alert.center.clear": "一鍵清空",
   "alert.center.deal": "標記已處理",
   "alert.center.no-deal": "標記未處理",
-  "alert.center.search": "搜索告警內容",
+  "alert.center.search": "搜索告警",
   "alert.center.filter-status": "告警狀態",
   "alert.center.filter-priority": "告警級別",
   "alert.center.target": "告警對象",

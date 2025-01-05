@@ -243,7 +243,7 @@
   "alert.center.clear": "Clear All",
   "alert.center.deal": "Mark Processed",
   "alert.center.no-deal": "Mark Pending",
-  "alert.center.search": "Search Alert Content",
+  "alert.center.search": "Search Alert",
   "alert.center.filter-status": "Alert Status",
   "alert.center.filter-priority": "Alert Priority",
   "alert.center.target": "Metric Target",

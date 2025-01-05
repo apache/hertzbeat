@@ -244,7 +244,7 @@
   "alert.center.clear": "一键清空",
   "alert.center.deal": "标记已处理",
   "alert.center.no-deal": "标记未处理",
-  "alert.center.search": "搜索告警内容",
+  "alert.center.search": "搜索告警",
   "alert.center.filter-status": "告警状态",
   "alert.center.filter-priority": "告警级别",
   "alert.center.target": "告警对象",
