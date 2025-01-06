@@ -614,12 +614,6 @@
 >
   <ng-container *nzModalContent>
     <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('YAML')" [nzLoading]="exportYamlButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'alert.export.use-type' | i18n : { type: 'YAML' } }}
-      </button>
-    </p>
-    <p style="text-align: center">
       <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('JSON')" [nzLoading]="exportJsonButtonLoading">
         <span nz-icon nzType="download"></span>
         {{ 'alert.export.use-type' | i18n : { type: 'JSON' } }}
