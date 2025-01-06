@@ -160,7 +160,10 @@ alerter:
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
-
+  # alert inhibit ttl unit ms, default 14400000(4 hours)
+  inhibit:
+    ttl: 14400000
+    
 scheduler:
   server:
     enabled: true
