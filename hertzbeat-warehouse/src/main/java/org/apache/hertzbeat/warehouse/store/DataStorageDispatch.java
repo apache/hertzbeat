@@ -95,7 +95,6 @@ public class DataStorageDispatch {
         monitorDownStatusCache.addAll(ids);
     }
     
-    @Transactional
     protected void calculateMonitorStatus(CollectRep.MetricsData metricsData) {
         if (metricsData.getPriority() == 0) {
             long id = metricsData.getId();
