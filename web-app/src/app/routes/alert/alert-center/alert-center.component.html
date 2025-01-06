@@ -114,7 +114,10 @@
           [nzExpandedIcon]="expandedIcon"
         >
           <ng-template #alertHeader>
-            <div class="alert-content">{{ item.content }}</div>
+            <div class="alert-content">
+              <nz-tag *ngIf="item.labels.alertname" style="font-size: 14px; margin-right: 8px">{{ item.labels.alertname }}</nz-tag>
+              <span>{{ item.content }}</span>
+            </div>
           </ng-template>
           <ng-template #alertExtra>
             <div class="alert-time">{{
