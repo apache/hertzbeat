@@ -21,10 +21,14 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -32,7 +36,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Collections;
 import java.util.stream.Collectors;
-import java.util.HashMap;
 
 import lombok.Data;
 import lombok.AllArgsConstructor;
@@ -44,21 +47,22 @@ import lombok.AllArgsConstructor;
 @Component
 @Slf4j
 public class AlarmInhibitReduce {
-
-    /**
-     * Default TTL for source alerts (4 hours)
-     */
-    private static final long SOURCE_ALERT_TTL = 4 * 60 * 60 * 1000L;
-
+    
     /**
      * Interval for checking and cleaning up expired source alerts
      */
     private static final long CHECK_INTERVAL = 60_000L;
 
+    /**
+     * alarm silence
+     */
     private final AlarmSilenceReduce alarmSilenceReduce;
 
+    /**
+     * rule cache
+     */
     private final Map<Long, AlertInhibit> inhibitRules;
-
+    
     /**
      * Cache for source alerts
      * key: ruleId
@@ -66,8 +70,17 @@ public class AlarmInhibitReduce {
      */
     private final Map<Long, Map<String, SourceAlertEntry>> sourceAlertCache;
 
-    public AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao) {
+    /**
+     * Default TTL for source alerts (4 hours)
+     */
+    private static long SOURCE_ALERT_TTL = 4 * 60 * 60 * 1000L;
+    
+    public AlarmInhibitReduce(AlarmSilenceReduce alarmSilenceReduce, AlertInhibitDao alertInhibitDao
+            , AlerterProperties alerterProperties) {
         this.alarmSilenceReduce = alarmSilenceReduce;
+        if (alerterProperties.getInhibit() != null && alerterProperties.getInhibit().getTtl() > 0) {
+            SOURCE_ALERT_TTL = alerterProperties.getInhibit().getTtl();   
+        }
         inhibitRules = new ConcurrentHashMap<>(8);
         sourceAlertCache = new ConcurrentHashMap<>(8);
         List<AlertInhibit> inhibits = alertInhibitDao.findAlertInhibitsByEnableIsTrue();
@@ -94,7 +107,7 @@ public class AlarmInhibitReduce {
             } catch (Exception e) {
                 log.error("Error during scheduled cleanup", e);
             }
-        }, CHECK_INTERVAL, CHECK_INTERVAL, java.util.concurrent.TimeUnit.MILLISECONDS);
+        }, CHECK_INTERVAL, CHECK_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -126,18 +139,22 @@ public class AlarmInhibitReduce {
                 return;
             }
 
-            for (AlertInhibit rule : inhibitRules.values()) {
-                if (isSourceAlert(groupAlert, rule)) {
-                    cacheSourceAlert(groupAlert, rule);
+            // Process each individual alert
+            for (var alert : groupAlert.getAlerts()) {
+                for (AlertInhibit rule : inhibitRules.values()) {
+                    if (isSourceAlert(alert, rule)) {
+                        cacheSourceAlert(alert, rule);
+                    }
                 }
             }
 
-            if (shouldInhibit(groupAlert)) {
-                log.debug("Alert {} is inhibited", groupAlert);
-                return;
-            }
+            // Filter out inhibited alerts
+            groupAlert.getAlerts().removeIf(this::shouldInhibit);
 
-            alarmSilenceReduce.silenceAlarm(groupAlert);
+            // Continue processing if there are remaining alerts
+            if (!groupAlert.getAlerts().isEmpty()) {
+                alarmSilenceReduce.silenceAlarm(groupAlert);
+            }
         } catch (Exception e) {
             log.error("Error inhibiting alarm for {}", groupAlert, e);
         }
@@ -145,25 +162,25 @@ public class AlarmInhibitReduce {
 
     /**
      * Check if alert matches inhibit rule source labels
-     * @param alert Grouped and pending alerts to be processed
+     * @param alert Single alert to be processed
      * @param rule The rule of inhibition
      */
-    private boolean isSourceAlert(GroupAlert alert, AlertInhibit rule) {
+    private boolean isSourceAlert(SingleAlert alert, AlertInhibit rule) {
         if (alert == null || rule == null) {
             log.warn("Received null alert or rule in isSourceAlert");
             return false;
         }
-        if (!"firing".equals(alert.getStatus())) {
+        if (!CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) {
             return false;
         }
-        return matchLabels(alert.getCommonLabels(), rule.getSourceLabels());
+        return matchLabels(alert.getLabels(), rule.getSourceLabels());
     }
 
     /**
      * Check if alert should be inhibited by any active source alerts
-     * @param alert Grouped and pending alerts to be processed
+     * @param alert Single alert to be processed
      */
-    private boolean shouldInhibit(GroupAlert alert) {
+    private boolean shouldInhibit(SingleAlert alert) {
         if (alert == null) {
             log.warn("Received null alert in shouldInhibit");
             return false;
@@ -173,16 +190,16 @@ public class AlarmInhibitReduce {
         }
 
         for (AlertInhibit rule : inhibitRules.values()) {
-            if (!matchLabels(alert.getCommonLabels(), rule.getTargetLabels())) {
+            if (!matchLabels(alert.getLabels(), rule.getTargetLabels())) {
                 continue;
             }
 
-            List<GroupAlert> sourceAlerts = getActiveSourceAlerts(rule);
+            List<SingleAlert> sourceAlerts = getActiveSourceAlerts(rule);
             if (sourceAlerts.isEmpty()) {
                 continue;
             }
 
-            for (GroupAlert source : sourceAlerts) {
+            for (SingleAlert source : sourceAlerts) {
                 if (matchEqualLabels(source, alert, rule.getEqualLabels())) {
                     return true;
                 }
@@ -207,11 +224,11 @@ public class AlarmInhibitReduce {
 
     /**
      * Check if equal labels have same values in both alerts
-     * @param source Alarm used to suppress other alarms
-     * @param target Alarm that may be suppressed
+     * @param source Alert used to suppress other alerts
+     * @param target Alert that may be suppressed
      * @param equalLabels Need to be equal labels
      */
-    private boolean matchEqualLabels(GroupAlert source, GroupAlert target, List<String> equalLabels) {
+    private boolean matchEqualLabels(SingleAlert source, SingleAlert target, List<String> equalLabels) {
         if (source == null || target == null) {
             log.warn("Received null source or target in matchEqualLabels");
             return false;
@@ -219,8 +236,8 @@ public class AlarmInhibitReduce {
         if (equalLabels == null || equalLabels.isEmpty()) {
             return true;
         }
-        Map<String, String> sourceLabels = source.getCommonLabels();
-        Map<String, String> targetLabels = target.getCommonLabels();
+        Map<String, String> sourceLabels = source.getLabels();
+        Map<String, String> targetLabels = target.getLabels();
 
         return equalLabels.stream().allMatch(label -> {
             String sourceValue = sourceLabels.get(label);
@@ -231,10 +248,10 @@ public class AlarmInhibitReduce {
 
     /**
      * Cache source alert for inhibit rule
-     * @param alert Grouped and pending alerts to be processed
+     * @param alert Single alert to be processed
      * @param rule The rule of inhibition
      */
-    private void cacheSourceAlert(GroupAlert alert, AlertInhibit rule) {
+    private void cacheSourceAlert(SingleAlert alert, AlertInhibit rule) {
         if (alert == null || rule == null) {
             log.warn("Received null alert or rule in cacheSourceAlert");
             return;
@@ -243,22 +260,22 @@ public class AlarmInhibitReduce {
                 rule.getId(),
                 k -> new ConcurrentHashMap<>()
         );
-
-        String fingerprint = generateAlertFingerprint(alert);
+        
         SourceAlertEntry entry = new SourceAlertEntry(
                 alert,
                 System.currentTimeMillis(),
                 System.currentTimeMillis() + SOURCE_ALERT_TTL
         );
-        ruleCache.put(fingerprint, entry);
+        ruleCache.put(alert.getFingerprint(), entry);
         cleanupExpiredEntries(ruleCache);
     }
 
     /**
      * Get active source alerts for inhibit rule
      * @param rule The rule of inhibition
+     * @return List of active source alerts
      */
-    private List<GroupAlert> getActiveSourceAlerts(AlertInhibit rule) {
+    private List<SingleAlert> getActiveSourceAlerts(AlertInhibit rule) {
         if (rule == null) {
             log.warn("Received null rule in getActiveSourceAlerts");
             return Collections.emptyList();
@@ -273,24 +290,6 @@ public class AlarmInhibitReduce {
                 .filter(entry -> entry.getExpiryTime() > now)
                 .map(SourceAlertEntry::getAlert)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Generate fingerprint for alert deduplication
-     * @param alert Grouped and pending alerts to be processed
-     */
-    private String generateAlertFingerprint(GroupAlert alert) {
-        if (alert == null) {
-            log.warn("Received null alert in generateAlertFingerprint");
-            return "";
-        }
-        Map<String, String> labels = new HashMap<>(alert.getCommonLabels());
-        labels.remove("timestamp");
-
-        return labels.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getKey() + ":" + e.getValue())
-                .collect(Collectors.joining(","));
     }
 
     /**
@@ -312,7 +311,7 @@ public class AlarmInhibitReduce {
     @Data
     @AllArgsConstructor
     private static class SourceAlertEntry {
-        private final GroupAlert alert;
+        private final SingleAlert alert;
         private final long createTime;
         private final long expiryTime;
     }

@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
 import org.apache.hertzbeat.common.entity.alerter.AlertInhibit;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
@@ -64,6 +65,9 @@ class AlarmInhibitReduceTest {
     
     @Mock
     private AlarmSilenceReduce alarmSilenceReduce;
+    
+    @Mock
+    private AlerterProperties alerterProperties;
 
     private AlarmInhibitReduce alarmInhibitReduce;
 
@@ -72,7 +76,8 @@ class AlarmInhibitReduceTest {
         MockitoAnnotations.openMocks(this);
         when(alertInhibitDao.findAlertInhibitsByEnableIsTrue())
             .thenReturn(Collections.emptyList());
-        alarmInhibitReduce = new AlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao);
+        when(alerterProperties.getInhibit().getTtl()).thenReturn(60000L);
+        alarmInhibitReduce = new AlarmInhibitReduce(alarmSilenceReduce, alertInhibitDao, alerterProperties);
     }
 
     @Test
