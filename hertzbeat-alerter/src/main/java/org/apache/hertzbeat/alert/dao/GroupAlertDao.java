@@ -53,4 +53,11 @@ public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpeci
     @Modifying
     @Query("update GroupAlert set status = :status where id in :ids")
     void updateGroupAlertsStatus(@Param(value = "status") String status, @Param(value = "ids") List<Long> ids);
+
+    /**
+     * find group alerts by id list
+     * @param ids ids
+     * @return group alerts
+     */
+    List<GroupAlert> findGroupAlertsByIdIn(HashSet<Long> ids);
 }

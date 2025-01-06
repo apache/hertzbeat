@@ -90,9 +90,9 @@ class MonitorDaoTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    void findMonitorsByStatusNotInAndAndJobIdNotNull() {
+    void findMonitorsByStatusNotInAndJobIdNotNull() {
         List<Byte> bytes = Arrays.asList((byte) 2, (byte) 3);
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(bytes);
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndJobIdNotNull(bytes);
         assertNotNull(monitors);
         assertEquals(1, monitors.size());
     }

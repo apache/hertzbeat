@@ -20,8 +20,6 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.ListJoin;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
@@ -556,7 +554,7 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag) {
+    public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String search, Byte status, String sort, String order, int pageIndex, int pageSize, String labels) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (!CollectionUtils.isEmpty(monitorIds)) {
@@ -574,32 +572,30 @@ public class MonitorServiceImpl implements MonitorService {
                 Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
                 andList.add(predicateStatus);
             }
-
-            if (StringUtils.isNotBlank(tag)) {
-                String[] tagArr = tag.split(":");
-                String tagName = tagArr[0];
-                ListJoin<Monitor, Tag> tagJoin = root
-                        .join(root.getModel()
-                                .getList("tags", org.apache.hertzbeat.common.entity.manager.Tag.class), JoinType.LEFT);
-                if (tagArr.length == TAG_LENGTH) {
-                    String tagValue = tagArr[1];
-                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
-                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
-                } else {
-                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
-                }
-            }
             Predicate[] andPredicates = new Predicate[andList.size()];
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (StringUtils.isNotBlank(host)) {
-                Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
+            if (StringUtils.isNotBlank(search)) {
+                Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + search + "%");
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
                 orList.add(predicateHost);
-            }
-            if (StringUtils.isNotBlank(name)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 orList.add(predicateName);
+            }
+            if (StringUtils.isNotBlank(labels)) {
+                String[] labelAres = labels.split(",");
+                for (String label : labelAres) {
+                    String[] labelArr = label.split(":");
+                    String labelName = labelArr[0];
+                    String labelValue = labelArr.length == 2 ? labelArr[1] : null;
+                    // create every label condition
+                    if (labelValue == null) {
+                        orList.add(criteriaBuilder.like(root.get("labels"), "%" + labelName + "%"));
+                    } else {
+                        String pattern = String.format("%%\"%s\":\"%s\"%%", labelName, labelValue);
+                        orList.add(criteriaBuilder.like(root.get("labels"), pattern));
+                    }
+                }
             }
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));

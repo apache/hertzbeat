@@ -67,4 +67,11 @@ public interface SingleAlertDao extends JpaRepository<SingleAlert, Long>, JpaSpe
     @Modifying
     @Query("update SingleAlert set status = :status where id in :ids")
     void updateSingleAlertsStatus(@Param(value = "status") String status, @Param(value = "ids") List<Long> ids);
+
+    /**
+     * delete alerts by fingerprint list
+     * @param firingAlerts fingerprint list
+     */
+    @Modifying
+    void deleteSingleAlertsByFingerprintIn(List<String> firingAlerts);
 }

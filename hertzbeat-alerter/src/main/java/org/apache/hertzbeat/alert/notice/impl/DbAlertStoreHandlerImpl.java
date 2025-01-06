@@ -17,13 +17,17 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.notice.AlertStoreHandler;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.stereotype.Component;
@@ -46,53 +50,74 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             log.error("The Group Alerts is empty, ignore store");
             return;
         }
-        // 1. Find if there is an existing alert group
+        // 1. Find existing alert group
         GroupAlert existGroupAlert = groupAlertDao.findByGroupKey(groupAlert.getGroupKey());
         
-        // 2. Process single alerts
-        List<String> alertFingerprints = new LinkedList<>();
+        // 2. Process individual alerts
+        Set<String> alertFingerprints = new HashSet<>(8);
         groupAlert.getAlerts().forEach(singleAlert -> {
-            // Check if there is an existing alert with same fingerprint
             SingleAlert existAlert = singleAlertDao.findByFingerprint(singleAlert.getFingerprint());
             if (existAlert != null) {
                 // Update existing alert
                 singleAlert.setId(existAlert.getId());
-                singleAlert.setStartAt(existAlert.getStartAt());
-                // If status changed from resolved to firing, update activeAt
-                if ("resolved".equals(existAlert.getStatus()) && "firing".equals(singleAlert.getStatus())) {
-                    singleAlert.setActiveAt(System.currentTimeMillis());
-                } else {
+                singleAlert.setGmtCreate(existAlert.getGmtCreate());
+                
+                // Status transition logic
+                if (CommonConstants.ALERT_STATUS_FIRING.equals(singleAlert.getStatus())) {
+                    if (!CommonConstants.ALERT_STATUS_RESOLVED.equals(existAlert.getStatus())) {
+                        singleAlert.setStartAt(existAlert.getStartAt());
+                        singleAlert.setTriggerTimes(existAlert.getTriggerTimes() + singleAlert.getTriggerTimes());
+                    } 
+                } else if (CommonConstants.ALERT_STATUS_RESOLVED.equals(singleAlert.getStatus())) {
+                    // Transition to resolved state
+                    if (singleAlert.getEndAt() == null) {
+                        singleAlert.setEndAt(System.currentTimeMillis());   
+                    }
+                    singleAlert.setStartAt(existAlert.getStartAt());
                     singleAlert.setActiveAt(existAlert.getActiveAt());
+                    singleAlert.setTriggerTimes(existAlert.getTriggerTimes());
                 }
-                singleAlert.setTriggerTimes(existAlert.getTriggerTimes() + 1);
             }
-            // Save new/updated alert
             alertFingerprints.add(singleAlert.getFingerprint());
             singleAlertDao.save(singleAlert);
         });
         
-        // 3. If there is an existing alert group, handle resolved alerts
+        // 3. Process resolved alerts
         if (existGroupAlert != null) {
             List<String> existFingerprints = existGroupAlert.getAlertFingerprints();
             if (existFingerprints != null) {
-                for (String fingerprint : existFingerprints) {
-                    if (!alertFingerprints.contains(fingerprint)) {
-                        // Old alert not in new alert list, mark as resolved
-                        SingleAlert alert = singleAlertDao.findByFingerprint(fingerprint);
-                        if (alert != null && !"resolved".equals(alert.getStatus())) {
-                            alert.setStatus("resolved");
-                            alert.setEndAt(System.currentTimeMillis());
-                            singleAlertDao.save(alert);
-                        }
-                    }
+                alertFingerprints.addAll(existFingerprints);
+            }
+            // Merge group information
+            groupAlert.setId(existGroupAlert.getId());
+            groupAlert.setGmtCreate(existGroupAlert.getGmtCreate());
+            // Merge other historical information to preserve
+            Map<String, String> existCommonLabels = existGroupAlert.getCommonLabels();
+            if (existCommonLabels != null) {
+                Map<String, String> commonLabels = groupAlert.getCommonLabels();
+                if (commonLabels != null) {
+                    // filter common label in commonLabels and existCommonLabels
+                    commonLabels = commonLabels.entrySet().stream()
+                            .filter(entry -> existCommonLabels.containsKey(entry.getKey()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    groupAlert.setCommonLabels(commonLabels);
                 }
             }
-            // Update alert group ID
-            groupAlert.setId(existGroupAlert.getId());
+            Map<String, String> existCommonAnnotations = existGroupAlert.getCommonAnnotations();
+            if (existCommonAnnotations != null) {
+                Map<String, String> commonAnnotations = groupAlert.getCommonAnnotations();
+                if (commonAnnotations != null) {
+                    // filter common annotation in commonAnnotations and existCommonAnnotations
+                    commonAnnotations = commonAnnotations.entrySet().stream()
+                            .filter(entry -> existCommonAnnotations.containsKey(entry.getKey()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    groupAlert.setCommonAnnotations(commonAnnotations);
+                }
+            }
         }
         
         // 4. Save alert group
-        groupAlert.setAlertFingerprints(alertFingerprints);
+        groupAlert.setAlertFingerprints(alertFingerprints.stream().toList());
         groupAlertDao.save(groupAlert);
     }
 }

@@ -27,7 +27,7 @@ export class SingleAlert {
   startAt!: number;
   endAt!: number;
   activeAt!: number;
-  triggerTime!: number;
+  triggerTimes!: number;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;

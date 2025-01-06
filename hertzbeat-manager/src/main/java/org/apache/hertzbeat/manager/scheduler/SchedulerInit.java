@@ -96,7 +96,7 @@ public class SchedulerInit implements CommandLineRunner {
                 .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(List.of(CommonConstants.MONITOR_PAUSED_CODE));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndJobIdNotNull(List.of(CommonConstants.MONITOR_PAUSED_CODE));
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findAll();
         final Set<Long> sdMonitorIds = monitorBindDao.findAllByType(CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR).stream()
                 .map(MonitorBind::getBizId)
