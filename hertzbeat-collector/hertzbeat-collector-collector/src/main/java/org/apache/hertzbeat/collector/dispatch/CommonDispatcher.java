@@ -119,7 +119,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             workerPool.executeJob(metricsCollect);
                         }
                     } catch (RejectedExecutionException rejected) {
-                        log.info("[Dispatcher]-the worker pool is full, reject this metrics task，put in queue again.");
+                        log.warn("[Dispatcher]-the worker pool is full, reject this metrics task，put in queue again.");
                         if (metricsCollect != null) {
                             metricsCollect.setRunPriority((byte) (metricsCollect.getRunPriority() + 1));
                             jobRequestQueue.addJob(metricsCollect);

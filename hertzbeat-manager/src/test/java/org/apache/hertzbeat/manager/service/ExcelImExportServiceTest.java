@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.ExcelImExportServiceImpl;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -81,7 +82,7 @@ class ExcelImExportServiceTest {
         monitorDTO.setHost("Host1");
         monitorDTO.setIntervals(10);
         monitorDTO.setStatus((byte) 1);
-        monitorDTO.setTags(List.of(1L, 2L));
+        monitorDTO.setLabels(Map.of("env", "prod"));
 
         AbstractImExportServiceImpl.ParamDTO paramDTO = new AbstractImExportServiceImpl.ParamDTO();
         paramDTO.setField("field1");

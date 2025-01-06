@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
@@ -102,21 +101,4 @@ public class MonitorController {
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         return ResponseEntity.ok(Message.success("Detect success."));
     }
-
-    @PostMapping("/optional")
-    @Operation(summary = "Add a monitor that can select metrics", description = "Add a monitor that can select metrics")
-    public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto) {
-        monitorService.validate(monitorDto, false);
-        monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(), monitorDto.getMonitor(), monitorDto.getParams());
-        return ResponseEntity.ok(Message.success("Add success"));
-    }
-
-    @GetMapping(value = {"/metric/{app}", "/metric"})
-    @Operation(summary = "get app metric", description = "Obtain indicators that can be monitored by the app based on the app name")
-    public ResponseEntity<Message<List<String>>> getMonitorMetrics(
-            @PathVariable(value = "app", required = false) String app) {
-        List<String> metricNames = monitorService.getMonitorMetrics(app);
-        return ResponseEntity.ok(Message.success(metricNames));
-    }
-
 }

@@ -78,7 +78,6 @@ class AlertDefineJsonImExportServiceTest {
         alertDefine.setExpr("Expr1");
         alertDefine.setPriority((byte) 1);
         alertDefine.setTimes(1);
-        alertDefine.setTags(List.of());
         alertDefine.setEnable(true);
         alertDefine.setRecoverNotice(true);
         alertDefine.setTemplate("Template1");

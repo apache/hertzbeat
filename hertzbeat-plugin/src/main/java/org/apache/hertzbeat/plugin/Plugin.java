@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.plugin;
 
-import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 
 /**
  * Plugin
@@ -27,5 +27,5 @@ public interface Plugin {
     /**
      * execute when alert
      */
-    void alert(Alert alert);
+    void alert(GroupAlert alert);
 }

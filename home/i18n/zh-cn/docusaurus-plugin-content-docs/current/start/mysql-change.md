@@ -6,9 +6,18 @@ sidebar_label: 元数据存储Mysql
 
 MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。
 
-注意⚠️ 使用外置Mysql数据库替换内置H2数据库为可选项，但建议生产环境配置，以提供更好的性能
+注意⚠️ 使用外置MySQL数据库替换内置H2数据库为可选项，但建议生产环境配置，以提供更好的性能
 
-> 如果您已有MYSQL环境，可直接跳到数据库创建那一步。
+> 如果您已有MYSQL环境，并且MYSQL版本符合要求，可直接跳到数据库创建那一步。
+
+### 支持的MYSQL版本
+
+请确保使用支持的 MySQL 版本。HertzBeat 仅支持 MySQL 5.7+ 或 8 版本。你可以通过以下命令查看 MySQL 版本：
+
+```shell
+$ mysql --version
+mysql  Ver 8.0.25 for Linux on x86_64 (MySQL Community Server - GPL)
+```
 
 ### 通过Docker方式安装MYSQL
 
@@ -21,7 +30,7 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
    Docker version 20.10.12, build e91ed57
    ```
 
-2. Docker安装MYSQl
+2. Docker安装MYSQL
 
    ```shell
    $ docker run -d --name mysql \
