@@ -194,11 +194,9 @@
             </nz-tag>
           </td>
           <td nzAlign="center">
-            <a routerLink="/monitors" [queryParams]="{ tag: sliceTagName(data.tag) }">
-              <nz-tag class="hoverClass">
-                {{ sliceTagName(data.tag) }}
-              </nz-tag>
-            </a>
+            <nz-tag *ngFor="let label of data.labels | keyvalue" style="margin-top: 2px" [nzColor]="getLabelColor(label.key)">
+              {{ label.key }}:{{ label.value }}
+            </nz-tag>
           </td>
           <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -214,7 +212,6 @@
               </button>
               <button
                 nz-button
-                nzType="primary"
                 nzDanger
                 (click)="onDeleteOneComponent(data.id)"
                 nz-tooltip
@@ -302,7 +299,6 @@
               </button>
               <button
                 nz-button
-                nzType="primary"
                 nzDanger
                 (click)="onDeleteOneIncident(data.id)"
                 nz-tooltip
@@ -377,19 +373,7 @@
           'status.component.tag' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-select
-            [(ngModel)]="matchTag"
-            (nzOpenChange)="loadTagsOption()"
-            [nzOptions]="tagsOption"
-            [nzMaxTagCount]="5"
-            [nzDropdownMatchSelectWidth]="false"
-            nzShowSearch
-            [nzPlaceHolder]="'alert.notice.rule.tag.placeholder' | i18n"
-            required
-            name="tag"
-            id="tag"
-          >
-          </nz-select>
+          <app-labels-input [(ngModel)]="currentStatusComponent.labels" name="sourceLabels" required></app-labels-input>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="currentStatusComponent.method == 1">

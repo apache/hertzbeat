@@ -86,7 +86,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
 
                     Long monitorId = metricsData.getId();
                     final Monitor mainMonitor = monitorDao.findMonitorsByIdIn(Sets.newHashSet(monitorId)).get(0);
-                    mainMonitor.setTags(mainMonitor.getTags().stream().filter(tag -> tag.getType() != CommonConstants.TAG_TYPE_AUTO_GENERATE).collect(Collectors.toList()));
+                    mainMonitor.getLabels().remove(CommonConstants.TAG_SD_MAIN_MONITOR);
                     // collector
                     final Optional<CollectorMonitorBind> collectorBind = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(mainMonitor.getId());
                     String collector = collectorBind.map(CollectorMonitorBind::getCollector).orElse(null);

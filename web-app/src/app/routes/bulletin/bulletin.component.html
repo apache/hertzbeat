@@ -33,21 +33,27 @@
     </button>
     <button nz-button nzType="primary" (click)="onNewBulletinDefine()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'bulletin.new' | i18n }}
+      {{ 'common.button.new' | i18n }}
     </button>
-    <!--TODO: Wait until the backend interface is improved before releasing it.-->
-    <!--<button *ngIf="currentDefine" nz-button nzType="primary" (click)="onEditBulletinDefine()">
-      <i nz-icon nzType="edit" nzTheme="outline"></i>
-      {{ 'bulletin.edit' | i18n }}
-    </button>-->
-    <button *ngIf="currentBulletin" nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'bulletin.delete' | i18n }}
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
     </button>
-    <button *ngIf="currentBulletin" nz-button nzType="primary" nzDanger (click)="onBatchDeleteBulletinDefines()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'bulletin.batch.delete' | i18n }}
-    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li *ngIf="currentBulletin" nz-menu-item>
+          <button nz-button nzDanger (click)="onDeleteBulletinDefines()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+        <li *ngIf="currentBulletin" nz-menu-item>
+          <button nz-button nzDanger (click)="onBatchDeleteBulletinDefines()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'bulletin.batch.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">

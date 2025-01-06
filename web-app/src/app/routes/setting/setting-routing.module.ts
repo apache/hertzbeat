@@ -31,7 +31,7 @@ import { StatusComponent } from './status/status.component';
 import { SettingTagsComponent } from './tags/tags.component';
 
 const routes: Routes = [
-  { path: 'tags', component: SettingTagsComponent },
+  { path: 'labels', component: SettingTagsComponent },
   { path: 'plugins', component: SettingPluginsComponent },
   { path: 'collector', component: CollectorComponent },
   { path: 'status', component: StatusComponent },

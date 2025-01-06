@@ -28,7 +28,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.memory.BufferAllocator;
@@ -277,10 +276,6 @@ public final class CollectRep {
         
         public RowWrapper readRow() {
             final Iterator<Row> rowIterator = table.iterator();
-
-            if (!rowIterator.hasNext()) {
-                throw new NoSuchElementException("No data found! ");
-            }
             List<org.apache.arrow.vector.types.pojo.Field> fields = table.getSchema().getFields();
             return new RowWrapper(null, rowIterator, fields, -1);
         }

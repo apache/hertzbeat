@@ -19,7 +19,6 @@ package org.apache.hertzbeat.collector.dispatch;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,6 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,7 +87,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private final List<UnitConvert> unitConvertList;
 
     private final WorkerPool workerPool;
-    
+
     private final String collectorIdentity;
 
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
@@ -121,7 +119,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             workerPool.executeJob(metricsCollect);
                         }
                     } catch (RejectedExecutionException rejected) {
-                        log.info("[Dispatcher]-the worker pool is full, reject this metrics task，put in queue again.");
+                        log.warn("[Dispatcher]-the worker pool is full, reject this metrics task，put in queue again.");
                         if (metricsCollect != null) {
                             metricsCollect.setRunPriority((byte) (metricsCollect.getRunPriority() + 1));
                             jobRequestQueue.addJob(metricsCollect);
@@ -146,7 +144,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             log.error("Common Dispatcher error: {}.", e.getMessage(), e);
         }
     }
-    
+
     private void monitorCollectTaskTimeout() {
         try {
             // Detect whether the collection unit of each metrics has timed out for 4 minutes,
@@ -194,7 +192,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                         new MetricsTime(System.currentTimeMillis(), metrics, timeout));
             } else {
                 metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));   
+                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
             }
         });
     }
@@ -243,7 +241,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             } else if (!metricsSet.isEmpty()) {
                 // The execution of the current level metrics is completed, and the execution of the next level metrics starts
                 // use pre collect metrics data to replace next metrics config params
-                List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(metricsData);
+                List<Map<String, Configmap>> configmapList = CollectUtil.getConfigmapFromPreCollectData(metricsData);
                 if (configmapList.size() == ENV_CONFIG_SIZE) {
                     job.addEnvConfigmaps(configmapList.get(0));
                 }
@@ -267,9 +265,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                             Map<String, Configmap> preConfigMap = configmapList.get(index);
                             configmap.putAll(preConfigMap);
                         }
-                        JsonElement metricJson = GSON.toJsonTree(metricItem);
-                        CollectUtil.replaceCryPlaceholder(metricJson, configmap);
-                        Metrics metric = GSON.fromJson(metricJson, Metrics.class);
+                        Metrics metric = CollectUtil.replaceCryPlaceholderToMetrics(metricItem, configmap);
                         metric.setSubTaskNum(subTaskNumAtomic);
                         metric.setSubTaskId(index);
                         metric.setSubTaskDataRef(metricsDataReference);
@@ -338,7 +334,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 interval = interval <= 0 ? 0 : interval;
                 // Reset Construction Execution Metrics Task View 
                 job.constructPriorMetrics();
-                timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);   
+                timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
             }
             // it is an asynchronous periodic cyclic task, directly response the collected data
             metricsDataList.forEach(commonDataQueue::sendMetricsData);
@@ -347,30 +343,9 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // and the result listener is notified of the combination of all metrics data
             timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
         }
-        
+
     }
 
-    private List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {
-        if (metricsData.getValuesCount() <= 0 || metricsData.getFieldsCount() <= 0) {
-            return new LinkedList<>();
-        }
-        List<Map<String, Configmap>> mapList = new LinkedList<>();
-        for (CollectRep.ValueRow valueRow : metricsData.getValues()) {
-            if (valueRow.getColumnsCount() != metricsData.getFieldsCount()) {
-                continue;
-            }
-            Map<String, Configmap> configmapMap = new HashMap<>(valueRow.getColumnsCount());
-            int index = 0;
-            for (CollectRep.Field field : metricsData.getFields()) {
-                String value = valueRow.getColumns(index);
-                index++;
-                Configmap configmap = new Configmap(field.getName(), value, Integer.valueOf(field.getType()).byteValue());
-                configmapMap.put(field.getName(), configmap);
-            }
-            mapList.add(configmapMap);
-        }
-        return mapList;
-    }
 
     /**
      * Metrics times.

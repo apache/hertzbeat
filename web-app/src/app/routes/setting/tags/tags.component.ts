@@ -23,7 +23,6 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
 import { Tag } from '../../../pojo/Tag';
@@ -32,7 +31,8 @@ import { formatTagName } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-setting-tags',
-  templateUrl: './tags.component.html'
+  templateUrl: './tags.component.html',
+  styleUrls: ['./tags.component.less']
 })
 export class SettingTagsComponent implements OnInit {
   @ViewChild('tagForm', { static: false }) tagForm: NgForm | undefined;
@@ -44,12 +44,9 @@ export class SettingTagsComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
-  pageIndex: number = 1;
-  pageSize: number = 8;
   total: number = 0;
   tags!: Tag[];
   tableLoading: boolean = false;
-  checkedTagIds = new Set<number>();
   // used for filtering tag name or tag value
   search: string | undefined;
 
@@ -63,43 +60,24 @@ export class SettingTagsComponent implements OnInit {
 
   loadTagsTable() {
     this.tableLoading = true;
-    let tagsInit$ = this.tagService.loadTags(this.search, 1, this.pageIndex - 1, this.pageSize).subscribe(
+    let labelsInit$ = this.tagService.loadTags(this.search, 1, 0, 9999).subscribe(
       message => {
         this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedTagIds.clear();
         if (message.code === 0) {
           let page = message.data;
           this.tags = page.content;
-          this.pageIndex = page.number + 1;
           this.total = page.totalElements;
         } else {
           console.warn(message.msg);
         }
-        tagsInit$.unsubscribe();
+        labelsInit$.unsubscribe();
       },
       error => {
         this.tableLoading = false;
-        tagsInit$.unsubscribe();
+        labelsInit$.unsubscribe();
         console.error(error.msg);
       }
     );
-  }
-
-  onDeleteTags() {
-    if (this.checkedTagIds == null || this.checkedTagIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
-      return;
-    }
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('common.confirm.delete-batch'),
-      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
-      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
-      nzOkDanger: true,
-      nzOkType: 'primary',
-      nzClosable: false,
-      nzOnOk: () => this.deleteTags(this.checkedTagIds)
-    });
   }
 
   onDeleteOneTag(tagId: number) {
@@ -123,7 +101,6 @@ export class SettingTagsComponent implements OnInit {
         deleteTags$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.updatePageIndex(tagIds.size);
           this.loadTagsTable();
         } else {
           this.tableLoading = false;
@@ -137,35 +114,6 @@ export class SettingTagsComponent implements OnInit {
       }
     );
   }
-
-  updatePageIndex(delSize: number) {
-    const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
-    this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
-  }
-
-  // begin: List multiple choice paging
-  checkedAll: boolean = false;
-  onAllChecked(checked: boolean) {
-    if (checked) {
-      this.tags.forEach(monitor => this.checkedTagIds.add(monitor.id));
-    } else {
-      this.checkedTagIds.clear();
-    }
-  }
-  onItemChecked(monitorId: number, checked: boolean) {
-    if (checked) {
-      this.checkedTagIds.add(monitorId);
-    } else {
-      this.checkedTagIds.delete(monitorId);
-    }
-  }
-  onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
-    this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-    this.loadTagsTable();
-  }
-  // end: List multiple choice paging
 
   // start 新增修改Tag model
   isManageModalVisible = false;
@@ -253,4 +201,16 @@ export class SettingTagsComponent implements OnInit {
   }
   // end 新增修改告警定义model
   protected readonly formatTagName = formatTagName;
+
+  copyTagValue(tag: any) {
+    const tagText = this.formatTagName(tag);
+    navigator.clipboard
+      .writeText(tagText)
+      .then(() => {
+        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
+      })
+      .catch(() => {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.copy-fail'), '');
+      });
+  }
 }
