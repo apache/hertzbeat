@@ -302,6 +302,8 @@ public class RealTimeAlertCalculator {
         String fingerprint = calculateFingerprint(fingerprints);
         SingleAlert firingAlert = firingAlertMap.remove(fingerprint);
         if (firingAlert != null) {
+            // todo consider multi times to tig for resolved alert
+            firingAlert.setTriggerTimes(1);
             firingAlert.setEndAt(System.currentTimeMillis());
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());

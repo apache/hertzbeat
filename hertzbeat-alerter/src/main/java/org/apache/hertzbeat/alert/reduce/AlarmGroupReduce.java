@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.reduce;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -112,7 +114,6 @@ public class AlarmGroupReduce {
                     if (shouldSendGroup(cache, now)) {
                         sendGroupAlert(cache);
                         cache.setLastSendTime(now);
-                        cache.getAlerts().clear();
                         cache.getAlertFingerprints().clear();
                     }
                 });
@@ -180,7 +181,7 @@ public class AlarmGroupReduce {
             newCache.setGroupLabels(extractedLabels);
             newCache.setGroupDefineName(defineName);
             newCache.setCreateTime(System.currentTimeMillis());
-            newCache.setAlertFingerprints(new HashMap<>());
+            newCache.setAlertFingerprints(new ConcurrentHashMap<>(8));
             return newCache;
         });
         String fingerprint = alert.getFingerprint();
@@ -188,32 +189,31 @@ public class AlarmGroupReduce {
         SingleAlert existingAlert = cache.getAlertFingerprints().get(fingerprint);
         if (existingAlert != null) {
             // Update existing alert timestamp
-            existingAlert.setActiveAt(System.currentTimeMillis());
+            alert.setStartAt(existingAlert.getStartAt());
+            cache.getAlertFingerprints().put(fingerprint, alert);
             return;
         }
         
         // Add new alert
         cache.getAlertFingerprints().put(fingerprint, alert);
-        cache.getAlerts().add(alert);
         
         if (shouldSendGroupImmediately(cache)) {
             sendGroupAlert(cache);
             cache.setLastSendTime(System.currentTimeMillis());
-            cache.getAlerts().clear();
             cache.getAlertFingerprints().clear();
         }
     }
     
     private void sendGroupAlert(GroupAlertCache cache) {
-        if (cache.getAlerts().isEmpty()) {
+        if (cache.getAlertFingerprints().isEmpty()) {
             return;
         }
         
         long now = System.currentTimeMillis();
-        String status = determineGroupStatus(cache.getAlerts());
+        String status = determineGroupStatus(cache.getAlertFingerprints().values());
         
         // For firing alerts, check repeat interval
-        if ("firing".equals(status)) {
+        if (CommonConstants.ALERT_STATUS_FIRING.equals(status)) {
             AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
             long repeatInterval = ruleConfig.getRepeatInterval() != null
                     ? ruleConfig.getRepeatInterval() * MS_PER_SECOND : DEFAULT_REPEAT_INTERVAL;
@@ -229,9 +229,9 @@ public class AlarmGroupReduce {
         GroupAlert groupAlert = GroupAlert.builder()
                 .groupKey(cache.getGroupKey())
                 .groupLabels(cache.getGroupLabels())
-                .commonLabels(extractCommonLabels(cache.getAlerts()))
-                .commonAnnotations(extractCommonAnnotations(cache.getAlerts()))
-                .alerts(new ArrayList<>(cache.getAlerts()))
+                .commonLabels(extractCommonLabels(cache.getAlertFingerprints().values()))
+                .commonAnnotations(extractCommonAnnotations(cache.getAlertFingerprints().values()))
+                .alerts(new ArrayList<>(cache.getAlertFingerprints().values()))
                 .status(status)
                 .build();
 
@@ -255,8 +255,8 @@ public class AlarmGroupReduce {
     
     private boolean shouldSendGroupImmediately(GroupAlertCache cache) {
         // Check if all alerts are resolved
-        return cache.getAlerts().stream()
-                .allMatch(alert -> "resolved".equals(alert.getStatus()));
+        return cache.getAlertFingerprints().values().stream()
+                .allMatch(alert -> CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus()));
     }
     
     private void sendSingleAlert(SingleAlert alert) {
@@ -281,9 +281,12 @@ public class AlarmGroupReduce {
                 .collect(Collectors.joining(","));
     }
     
-    private Map<String, String> extractCommonLabels(List<SingleAlert> alerts) {
+    private Map<String, String> extractCommonLabels(Collection<SingleAlert> alerts) {
         // Extract common labels from all alerts
-        Map<String, String> common = new HashMap<>(alerts.get(0).getLabels());
+        if (alerts.isEmpty()) {
+            return new HashMap<>(8);
+        }
+        Map<String, String> common = new HashMap<>(alerts.stream().findFirst().get().getLabels());
         alerts.forEach(alert -> {
             common.keySet().removeIf(key -> 
                 !alert.getLabels().containsKey(key) 
@@ -292,9 +295,12 @@ public class AlarmGroupReduce {
         return common;
     }
     
-    private Map<String, String> extractCommonAnnotations(List<SingleAlert> alerts) {
+    private Map<String, String> extractCommonAnnotations(Collection<SingleAlert> alerts) {
         // Extract common annotations from all alerts
-        Map<String, String> common = new HashMap<>(alerts.get(0).getAnnotations());
+        if (alerts.isEmpty()) {
+            return new HashMap<>(8);
+        }
+        Map<String, String> common = new HashMap<>(alerts.stream().findFirst().get().getAnnotations());
         alerts.forEach(alert -> {
             common.keySet().removeIf(key -> 
                 !alert.getAnnotations().containsKey(key) 
@@ -303,11 +309,11 @@ public class AlarmGroupReduce {
         return common;
     }
     
-    private String determineGroupStatus(List<SingleAlert> alerts) {
+    private String determineGroupStatus(Collection<SingleAlert> alerts) {
         // If any alert is firing, group is firing
         return alerts.stream()
-                .anyMatch(alert -> "firing".equals(alert.getStatus())) 
-                ? "firing" : "resolved";
+                .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())) 
+                ? CommonConstants.ALERT_STATUS_FIRING : CommonConstants.ALERT_STATUS_RESOLVED;
     }
     
     @Data
@@ -315,8 +321,7 @@ public class AlarmGroupReduce {
         private String groupDefineName;
         private String groupKey;
         private Map<String, String> groupLabels;
-        private List<SingleAlert> alerts = new ArrayList<>();
-        private Map<String, SingleAlert> alertFingerprints = new HashMap<>();
+        private Map<String, SingleAlert> alertFingerprints = new ConcurrentHashMap<>(8);
         private long createTime;
         private long lastSendTime;
         private long lastRepeatTime;

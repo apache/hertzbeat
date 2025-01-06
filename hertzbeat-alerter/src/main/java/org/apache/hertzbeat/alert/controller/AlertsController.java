@@ -55,7 +55,7 @@ public class AlertsController {
     public ResponseEntity<Message<Page<SingleAlert>>> getAlerts(
             @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
             @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
-            @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "id") String sort,
+            @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "gmtUpdate") String sort,
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
@@ -68,7 +68,7 @@ public class AlertsController {
     public ResponseEntity<Message<Page<GroupAlert>>> getGroupAlerts(
             @Parameter(description = "Alarm Status", example = "resolved") @RequestParam(required = false) String status,
             @Parameter(description = "Alarm content fuzzy query", example = "linux") @RequestParam(required = false) String search,
-            @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "id") String sort,
+            @Parameter(description = "Sort field, default id", example = "name") @RequestParam(defaultValue = "gmtUpdate") String sort,
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
@@ -88,7 +88,7 @@ public class AlertsController {
     }
 
     @PutMapping(path = "/group/status/{status}")
-    @Operation(summary = "Batch modify alarm status, set read and unread", description = "Batch modify alarm status, set read and unread")
+    @Operation(summary = "Batch modify alarm status, set firing or resolved", description = "Batch modify alarm status, set firing or resolved")
     public ResponseEntity<Message<Void>> applyAlertDefinesStatus(
             @Parameter(description = "Alarm status value", example = "resolved") @PathVariable String status,
             @Parameter(description = "Alarm List IDS", example = "6565463543") @RequestParam(required = false) List<Long> ids) {

@@ -29,6 +29,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonStringListAttributeConverter;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -81,6 +86,22 @@ public class GroupAlert {
     @Convert(converter = JsonStringListAttributeConverter.class)
     @Column(length = 2048)
     private List<String> alertFingerprints;
+
+    @Schema(title = "The creator of this record", example = "tom")
+    @CreatedBy
+    private String creator;
+
+    @Schema(title = "This record was last modified by", example = "tom")
+    @LastModifiedBy
+    private String modifier;
+
+    @Schema(title = "This record creation time (millisecond timestamp)")
+    @CreatedDate
+    private LocalDateTime gmtCreate;
+
+    @Schema(title = "Record the latest modification time (timestamp in milliseconds)")
+    @LastModifiedDate
+    private LocalDateTime gmtUpdate;
 
     @Transient
     private List<SingleAlert> alerts;

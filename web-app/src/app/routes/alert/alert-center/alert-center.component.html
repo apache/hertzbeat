@@ -27,43 +27,38 @@
 <nz-divider></nz-divider>
 
 <app-toolbar>
-  <ng-template #left>
-    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-      <i nz-icon nzType="sync" nzTheme="outline"></i>
-    </button>
-  </ng-template>
-  <ng-template #right>
-    <nz-select
-      class="mobile-hide"
-      nzAllowClear
-      [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
-      [(ngModel)]="filterPriority"
-      (ngModelChange)="loadAlertsTable()"
-    >
-      <nz-option [nzLabel]="'alert.severity.all' | i18n" [nzValue]="9"></nz-option>
-      <nz-option [nzLabel]="'alert.severity.2' | i18n" [nzValue]="2"></nz-option>
-      <nz-option [nzLabel]="'alert.severity.1' | i18n" [nzValue]="1"></nz-option>
-      <nz-option [nzLabel]="'alert.severity.0' | i18n" [nzValue]="0"></nz-option>
-    </nz-select>
-    <nz-select
-      class="mobile-hide"
-      nzAllowClear
-      [nzPlaceHolder]="'alert.center.filter-status' | i18n"
-      [(ngModel)]="filterStatus"
-      (ngModelChange)="loadAlertsTable()"
-    >
-      <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="'all'"></nz-option>
-      <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="'emergency'"></nz-option>
-      <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="'critical'"></nz-option>
-      <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="'warning'"></nz-option>
-    </nz-select>
-    <app-multi-func-input
-      groupStyle="width: 250px;"
-      class="mobile-hide"
-      [placeholder]="'alert.center.search' | i18n"
-      [(value)]="filterContent"
-      (keydown.enter)="loadAlertsTable()"
-    />
+  <ng-template #center>
+    <div class="center-content">
+      <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+        <i nz-icon nzType="sync" nzTheme="outline"></i>
+      </button>
+
+      <div class="search-wrapper">
+        <nz-input-group [nzPrefix]="prefixTemplate" class="search-input">
+          <input
+            type="text"
+            nz-input
+            [(ngModel)]="filterContent"
+            (keydown.enter)="loadAlertsTable()"
+            [placeholder]="'alert.center.search' | i18n"
+          />
+        </nz-input-group>
+        <ng-template #prefixTemplate>
+          <i nz-icon nzType="search"></i>
+        </ng-template>
+      </div>
+
+      <nz-select
+        class="mobile-hide"
+        nzAllowClear
+        [nzPlaceHolder]="'alert.center.filter-status' | i18n"
+        [(ngModel)]="filterStatus"
+        (ngModelChange)="loadAlertsTable()"
+      >
+        <nz-option [nzLabel]="'alert.status.firing' | i18n" [nzValue]="'firing'"></nz-option>
+        <nz-option [nzLabel]="'alert.status.resolved' | i18n" [nzValue]="'resolved'"></nz-option>
+      </nz-select>
+    </div>
   </ng-template>
 </app-toolbar>
 
@@ -73,40 +68,34 @@
     <div class="alert-header">
       <div class="alert-info">
         <div class="alert-labels">
-          <nz-tag *ngFor="let label of recordEntries(group.groupLabels)">
-            {{ label[0] + ':' + label[1] }}
-          </nz-tag>
+          <nz-tag *ngFor="let item of group.groupLabels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
         </div>
         <div class="alert-meta-info">
           <span class="alert-time">
             <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
-            {{ group.gmtCreate | date : 'yyyy-MM-dd HH:mm:ss' }}
-          </span>
-          <span class="alert-count" *ngIf="group?.alerts">
-            <i nz-icon nzType="alert" nzTheme="outline"></i>
-            {{ 'alert.center.time.tip' | i18n : { times: group?.alerts?.length } }}
+            {{ group.gmtUpdate | date : 'yyyy-MM-dd HH:mm:ss' }}
           </span>
         </div>
       </div>
       <div class="alert-actions">
-        <button
-          *ngIf="group.status != 'firing'"
-          nz-button
-          (click)="onMarkReadOneAlert(group.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.deal' | i18n"
-        >
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          *ngIf="group.status == 'firing'"
-          nz-button
-          (click)="onMarkUnReadOneAlert(group.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.no-deal' | i18n"
-        >
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        </button>
+        <!--        <button-->
+        <!--          *ngIf="group.status != 'firing'"-->
+        <!--          nz-button-->
+        <!--          (click)="onMarkReadOneAlert(group.id)"-->
+        <!--          nz-tooltip-->
+        <!--          [nzTooltipTitle]="'alert.center.deal' | i18n"-->
+        <!--        >-->
+        <!--          <i nz-icon nzType="down-circle" nzTheme="outline"></i>-->
+        <!--        </button>-->
+        <!--        <button-->
+        <!--          *ngIf="group.status == 'firing'"-->
+        <!--          nz-button-->
+        <!--          (click)="onMarkUnReadOneAlert(group.id)"-->
+        <!--          nz-tooltip-->
+        <!--          [nzTooltipTitle]="'alert.center.no-deal' | i18n"-->
+        <!--        >-->
+        <!--          <i nz-icon nzType="up-circle" nzTheme="outline"></i>-->
+        <!--        </button>-->
         <button nz-button nzDanger (click)="onDeleteOneAlert(group.id)" nz-tooltip [nzTooltipTitle]="'alert.center.delete' | i18n">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
         </button>
@@ -117,6 +106,7 @@
     <div class="alert-details">
       <nz-collapse nzGhost>
         <nz-collapse-panel
+          #panel
           *ngFor="let item of group.alerts"
           [nzHeader]="alertHeader"
           [nzExtra]="alertExtra"
@@ -124,22 +114,33 @@
           [nzExpandedIcon]="expandedIcon"
         >
           <ng-template #alertHeader>
-            <div class="alert-content">{{ item.content }}</div>
+            <div class="alert-content">
+              <nz-tag *ngIf="item.labels.alertname" style="font-size: 14px; margin-right: 8px">{{ item.labels.alertname }}</nz-tag>
+              <span>{{ item.content }}</span>
+            </div>
           </ng-template>
           <ng-template #alertExtra>
-            <div class="alert-time">{{ item.activeAt | date : 'yyyy-MM-dd HH:mm:ss' }}</div>
+            <div class="alert-time">{{
+              item.endAt ? (item.endAt | date : 'yyyy-MM-dd HH:mm:ss') : (item.activeAt | date : 'yyyy-MM-dd HH:mm:ss')
+            }}</div>
           </ng-template>
-          <ng-template #expandedIcon let-active>
-            <i nz-icon [nzType]="active ? 'caret-down' : 'caret-right'"></i>
+          <ng-template #expandedIcon>
+            <i nz-icon [nzType]="panel.nzActive ? 'caret-down' : 'caret-right'"></i>
           </ng-template>
+
+          <!-- Trigger Times -->
+          <div class="detail-section" *ngIf="item.triggerTimes">
+            <span class="alert-count" *ngIf="group?.alerts">
+              <i style="margin-right: 4px" nz-icon nzType="alert" nzTheme="outline"></i>
+              {{ 'alert.center.time.tip' | i18n : { times: item.triggerTimes } }}
+            </span>
+          </div>
 
           <!-- Labels -->
           <div class="detail-section" *ngIf="item.labels">
             <div class="section-title">{{ 'alert.center.labels' | i18n }}</div>
             <div class="alert-labels">
-              <nz-tag *ngFor="let label of recordEntries(item.labels)">
-                {{ label[0] + ':' + label[1] }}
-              </nz-tag>
+              <nz-tag *ngFor="let label of item.labels | keyvalue">{{ label.key }}:{{ label.value }}</nz-tag>
             </div>
           </div>
 
@@ -147,9 +148,9 @@
           <div class="detail-section" *ngIf="item.annotations">
             <div class="section-title">{{ 'annotation' | i18n }}</div>
             <div class="alert-annotations">
-              <div *ngFor="let anno of recordEntries(item.annotations)" class="annotation-item">
-                <span class="annotation-key">{{ anno[0] }}:</span>
-                <span class="annotation-value">{{ anno[1] }}</span>
+              <div *ngFor="let anno of item.annotations | keyvalue" class="annotation-item">
+                <span class="annotation-key">{{ anno.key }}:</span>
+                <span class="annotation-value">{{ anno.value }}</span>
               </div>
             </div>
           </div>
@@ -162,9 +163,13 @@
                 <span class="time-label">{{ 'alert.center.first-time' | i18n }}:</span>
                 <span class="time-value">{{ item.startAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
               </div>
-              <div class="time-item">
+              <div *ngIf="item.activeAt" class="time-item">
                 <span class="time-label">{{ 'alert.center.last-time' | i18n }}:</span>
                 <span class="time-value">{{ item.activeAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
+              </div>
+              <div *ngIf="item.endAt" class="time-item">
+                <span class="time-label">{{ 'alert.center.end-time' | i18n }}:</span>
+                <span class="time-value">{{ item.endAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
               </div>
             </div>
           </div>

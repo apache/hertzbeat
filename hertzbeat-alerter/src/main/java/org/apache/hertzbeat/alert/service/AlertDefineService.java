@@ -78,14 +78,13 @@ public interface AlertDefineService {
      * Dynamic conditional query
      * @param defineIds     Alarm Definition ID List
      * @param search        Search-Target Expr Template
-     * @param priority      Alarm Definition Severity
      * @param sort          Sort field
      * @param order         Sort mode: asc: ascending, desc: descending
      * @param pageIndex     List current page
      * @param pageSize      Number of list pages
      * @return The query results 
      */
-    Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, Byte priority, String sort, String order, int pageIndex, int pageSize);
+    Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, String sort, String order, int pageIndex, int pageSize);
 
     /**
      * Export file configuration of specified type based on ID list and export file type

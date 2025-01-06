@@ -58,7 +58,7 @@ public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificati
      * @param status Monitor Status
      * @return Monitor List
      */
-    List<Monitor> findMonitorsByStatusNotInAndAndJobIdNotNull(List<Byte> status);
+    List<Monitor> findMonitorsByStatusNotInAndJobIdNotNull(List<Byte> status);
 
     /**
      * Query monitoring by monitoring name

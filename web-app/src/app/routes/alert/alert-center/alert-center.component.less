@@ -1,3 +1,68 @@
+/* 调整工具栏布局 */
+:host ::ng-deep app-toolbar {
+  .center-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 0 16px;
+
+    button {
+      flex-shrink: 0;
+    }
+
+    nz-select {
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.search-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.search-input {
+  width: 100%;
+
+  :global {
+    .ant-input {
+      height: 40px;
+      font-size: 14px;
+      border-radius: 6px;
+      padding: 4px 11px 4px 40px;
+    }
+
+    .ant-input-prefix {
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 16px;
+      margin-right: 8px;
+      margin-left: 12px;
+    }
+
+    .ant-input-affix-wrapper {
+      border-radius: 6px;
+
+      &:hover, &:focus {
+        border-color: #40a9ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .search-wrapper {
+    max-width: 100%;
+    padding: 12px 16px;
+  }
+}
+
 .alert-cards {
   display: flex;
   flex-direction: column;
@@ -29,7 +94,7 @@
 
     .alert-info {
       flex: 1;
-      
+
       .alert-labels {
         display: flex;
         flex-wrap: wrap;
@@ -40,7 +105,7 @@
           border-radius: 2px;
         }
       }
-      
+
       .alert-meta-info {
         display: flex;
         gap: 16px;
@@ -52,7 +117,7 @@
           margin-right: 4px;
         }
 
-        .alert-time, .alert-count {
+        .alert-time {
           display: flex;
           align-items: center;
         }
@@ -97,7 +162,7 @@
             padding: 8px 12px;
             align-items: center;
             cursor: pointer;
-            
+
             &:hover {
               background-color: #fafafa;
             }
@@ -121,7 +186,7 @@
 
           .ant-collapse-content {
             border-top: 1px solid #f0f0f0;
-            
+
             .ant-collapse-content-box {
               padding: 12px;
             }
@@ -142,6 +207,13 @@
         color: #595959;
         margin-bottom: 8px;
         font-weight: 500;
+      }
+
+      .alert-count {
+        display: flex;
+        align-items: center;
+        color: #8c8c8c;
+        font-size: 12px;
       }
     }
 
@@ -201,11 +273,11 @@
   &.status-firing {
     border-left-color: #ff4d4f;
   }
-  
+
   &.status-resolved {
     border-left-color: #52c41a;
   }
-  
+
   &.status-pending {
     border-left-color: #faad14;
   }

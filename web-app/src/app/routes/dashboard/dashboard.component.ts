@@ -113,8 +113,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       );
   }
 
-  onTagCloudClick(data: CloudData): void {
-    this.router.navigate(['/monitors'], { queryParams: { tag: data.text } });
+  onLabelCloudClick(data: CloudData): void {
+    this.router.navigate(['/monitors'], { queryParams: { labels: data.text } });
   }
 
   // start -- quantitative information summary

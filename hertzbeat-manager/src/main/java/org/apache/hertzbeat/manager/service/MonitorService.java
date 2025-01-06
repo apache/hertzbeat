@@ -102,17 +102,16 @@ public interface MonitorService {
      * Dynamic conditional query
      * @param monitorIds Monitor ID List
      * @param app       Monitor Type
-     * @param name      Monitor Name support fuzzy query
-     * @param host      Monitor Host support fuzzy query
+     * @param search      Monitor Host support fuzzy query
      * @param status    Monitor Status 0:no monitor,1:usable,2:disabled,9:all status
      * @param sort      Sort Field
      * @param order     Sort mode eg:asc desc
      * @param pageIndex List current page
      * @param pageSize  Number of list pagination
-     * @param tag       Monitor tag
+     * @param labels    Monitor labels
      * @return Search Result
      */
-    Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag);
+    Page<Monitor> getMonitors(List<Long> monitorIds, String app, String search, Byte status, String sort, String order, int pageIndex, int pageSize, String labels);
 
     /**
      * Unmanaged monitoring items in batches according to the monitoring ID list

@@ -109,8 +109,8 @@ export class MonitorService {
 
   public searchMonitors(
     app: string | undefined,
-    tag: string | undefined,
-    searchValue: string,
+    labels: string | undefined,
+    search: string,
     status: number,
     pageIndex: number,
     pageSize: number,
@@ -125,8 +125,8 @@ export class MonitorService {
       pageIndex: pageIndex,
       pageSize: pageSize
     });
-    if (tag != undefined) {
-      httpParams = httpParams.append('tag', tag);
+    if (labels != undefined) {
+      httpParams = httpParams.append('labels', labels);
     }
     if (status != undefined && status != 9) {
       httpParams = httpParams.append('status', status);
@@ -140,9 +140,8 @@ export class MonitorService {
         order: sortOrder == 'ascend' ? 'asc' : 'desc'
       });
     }
-    if (searchValue != undefined && searchValue != '' && searchValue.trim() != '') {
-      httpParams = httpParams.append('name', searchValue);
-      httpParams = httpParams.append('host', searchValue);
+    if (search != undefined && search != '' && search.trim() != '') {
+      httpParams = httpParams.append('search', search);
     }
     const options = { params: httpParams };
     return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
