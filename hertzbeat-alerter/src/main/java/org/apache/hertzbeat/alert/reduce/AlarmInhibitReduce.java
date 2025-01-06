@@ -185,7 +185,7 @@ public class AlarmInhibitReduce {
             log.warn("Received null alert in shouldInhibit");
             return false;
         }
-        if ("resolved".equals(alert.getStatus())) {
+        if (CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
             return false;
         }
 
