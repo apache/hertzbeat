@@ -48,7 +48,7 @@ export class AlertService {
     // HttpParams is unmodifiable, so we need to save the return value of append/set
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
-      sort: 'id',
+      sort: 'gmtUpdate',
       order: 'desc',
       pageIndex: pageIndex,
       pageSize: pageSize
@@ -74,7 +74,7 @@ export class AlertService {
     // HttpParams is unmodifiable, so we need to save the return value of append/set
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
-      sort: 'id',
+      sort: 'gmtUpdate',
       order: 'desc',
       pageIndex: pageIndex,
       pageSize: pageSize
