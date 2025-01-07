@@ -216,7 +216,7 @@ public class ConsistentHash {
      * @return collector node
      */
     public Node dispatchJob(String dispatchKey, Long jobId) {
-        if (dispatchKey == null || StringUtils.isBlank(dispatchKey)) {
+        if (StringUtils.isBlank(dispatchKey)) {
             log.error("The dispatch key can not null.");
             return null;
         }
@@ -231,7 +231,7 @@ public class ConsistentHash {
      * @return collector node
      */
     public Node preDispatchJob(String dispatchKey) {
-        if (dispatchKey == null || StringUtils.isBlank(dispatchKey)) {
+        if (StringUtils.isBlank(dispatchKey)) {
             log.error("The dispatch key can not null.");
             return null;
         }
