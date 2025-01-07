@@ -96,11 +96,9 @@ class YamlImExportServiceTest {
         AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto1 = new AbstractImExportServiceImpl.ExportMonitorDTO();
         exportMonitorDto1.setParams(List.of(paramDTO));
         exportMonitorDto1.setMonitor(monitorDTO);
-        exportMonitorDto1.setMetrics(List.of("Test1", "Test2"));
         AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto2 = new AbstractImExportServiceImpl.ExportMonitorDTO();
         exportMonitorDto2.setParams(List.of(paramDTO));
         exportMonitorDto2.setMonitor(monitorDTO);
-        exportMonitorDto2.setMetrics(List.of("Test1", "Test2"));
 
         List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = Arrays.asList(
                 exportMonitorDto1,
