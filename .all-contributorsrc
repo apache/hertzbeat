@@ -2171,6 +2171,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "simonsigre",
+      "name": "Simon Sigré",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14932913?v=4",
+      "profile": "https://simonsigre.com/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

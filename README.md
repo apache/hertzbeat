@@ -489,6 +489,7 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lctking"><img src="https://avatars.githubusercontent.com/u/168249998?v=4?s=100" width="100px;" alt="nullwli"/><br /><sub><b>nullwli</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lctking" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://simonsigre.com/"><img src="https://avatars.githubusercontent.com/u/14932913?v=4?s=100" width="100px;" alt="Simon Sigré"/><br /><sub><b>Simon Sigré</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=simonsigre" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
