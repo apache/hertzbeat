@@ -491,6 +491,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://simonsigre.com/"><img src="https://avatars.githubusercontent.com/u/14932913?v=4?s=100" width="100px;" alt="Simon Sigré"/><br /><sub><b>Simon Sigré</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=simonsigre" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.ponfee.cn/"><img src="https://avatars.githubusercontent.com/u/46117331?v=4?s=100" width="100px;" alt="ponfee"/><br /><sub><b>ponfee</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ponfee" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Vedant7789"><img src="https://avatars.githubusercontent.com/u/147625492?v=4?s=100" width="100px;" alt="Vedant7789"/><br /><sub><b>Vedant7789</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Vedant7789" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Craaaaazy77"><img src="https://avatars.githubusercontent.com/u/23025522?v=4?s=100" width="100px;" alt="Craaaaazy77"/><br /><sub><b>Craaaaazy77</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Craaaaazy77" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
