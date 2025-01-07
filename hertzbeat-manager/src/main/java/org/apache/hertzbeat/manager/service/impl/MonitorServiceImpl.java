@@ -863,7 +863,6 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             // create grafana dashboard
             if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null && grafanaDashboard.isEnabled()) {
                 dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
