@@ -2180,6 +2180,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ponfee",
+      "name": "ponfee",
+      "avatar_url": "https://avatars.githubusercontent.com/u/46117331?v=4",
+      "profile": "http://www.ponfee.cn/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
