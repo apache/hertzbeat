@@ -112,6 +112,9 @@ class ObjectStoreConfigServiceTest {
                 objectStoreConfigService.validateObsEndpoint("https://obs.someotherdomain.com"));
         assertThrows(IllegalArgumentException.class, () ->
                 objectStoreConfigService.validateObsEndpoint("https://obs.myhuaweicloud.com.abc.com"));
+        assertThrows(IllegalArgumentException.class, () ->
+                objectStoreConfigService.validateObsEndpoint("https://obs.xxxmyhuaweicloud.com"));
+
 
         // 3. Using internal network addresses
         assertThrows(IllegalArgumentException.class, () ->
