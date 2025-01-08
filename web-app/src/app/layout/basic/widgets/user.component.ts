@@ -70,9 +70,13 @@ import { CONSTANTS } from '../../../shared/constants';
           <nz-divider nzType="vertical"></nz-divider>
           <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat (incubating)</a>
         </div>
-        <label style="margin-top: 16px;color:gray;font-size:13px" (ngModelChange)="onNotShowAgainChange($event)"
-               nz-checkbox [(ngModel)]="notShowAgain">{{ 'about.not-show-next-login' | i18n }}
-          </label>
+        <label
+          style="margin-top: 16px;color:gray;font-size:13px"
+          (ngModelChange)="onNotShowAgainChange($event)"
+          nz-checkbox
+          [(ngModel)]="notShowAgain"
+          >{{ 'about.not-show-next-login' | i18n }}
+        </label>
         <nz-divider></nz-divider>
         <div style="margin-top: 10px; font-weight: bolder">
           <span nz-icon nzType="github"></span>
@@ -114,7 +118,10 @@ export class HeaderUserComponent {
   private readonly notShowAgainKey = 'NOT_SHOW_ABOUT_NEXT_LOGIN';
 
   constructor(private settings: SettingsService, private router: Router, private localStorageSvc: LocalStorageService) {
-    this.notShowAgain = this.localStorageSvc.getData(this.notShowAgainKey)!==null?JSON.parse(<string>this.localStorageSvc.getData(this.notShowAgainKey)):false;
+    this.notShowAgain =
+      this.localStorageSvc.getData(this.notShowAgainKey) !== null
+        ? JSON.parse(<string>this.localStorageSvc.getData(this.notShowAgainKey))
+        : false;
     // @ts-ignore
     if (router.getCurrentNavigation()?.previousNavigation?.finalUrl.toString() === '/passport/login' && !this.notShowAgain) {
       this.showAndCloseAboutModal();
@@ -123,7 +130,7 @@ export class HeaderUserComponent {
 
   logout(): void {
     let tmp = this.localStorageSvc.getData(this.notShowAgainKey);
-    if(tmp === null){
+    if (tmp === null) {
       tmp = 'false';
     }
     this.localStorageSvc.clear();
