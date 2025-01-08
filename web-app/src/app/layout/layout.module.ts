@@ -46,38 +46,40 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzListComponent, NzListItemActionComponent, NzListItemComponent, NzListItemMetaComponent } from 'ng-zorro-antd/list';
 import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
+import { NzCheckboxComponent } from ‘ng-zorro-antd/checkbox’;
 const PASSPORT = [LayoutPassportComponent];
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    AlainThemeModule.forChild(),
-    ThemeBtnModule,
-    SettingDrawerModule,
-    LayoutDefaultModule,
-    GlobalFooterModule,
-    NzDropDownModule,
-    NzInputModule,
-    NzAutocompleteModule,
-    NzGridModule,
-    NzFormModule,
-    NzSpinModule,
-    NzBadgeModule,
-    NzAvatarModule,
-    NzIconModule,
-    NzButtonModule,
-    NzModalModule,
-    NzTagModule,
-    NzDividerModule,
-    NzListComponent,
-    NzListItemComponent,
-    NzListItemMetaComponent,
-    NzStringTemplateOutletDirective,
-    NzListItemActionComponent,
-    NzTooltipDirective
-  ],
+    imports: [
+        CommonModule,
+        FormsModule,
+        RouterModule,
+        AlainThemeModule.forChild(),
+        ThemeBtnModule,
+        SettingDrawerModule,
+        LayoutDefaultModule,
+        GlobalFooterModule,
+        NzDropDownModule,
+        NzInputModule,
+        NzAutocompleteModule,
+        NzGridModule,
+        NzFormModule,
+        NzSpinModule,
+        NzBadgeModule,
+        NzAvatarModule,
+        NzIconModule,
+        NzButtonModule,
+        NzModalModule,
+        NzTagModule,
+        NzDividerModule,
+        NzListComponent,
+        NzListItemComponent,
+        NzListItemMetaComponent,
+        NzStringTemplateOutletDirective,
+        NzListItemActionComponent,
+        NzTooltipDirective,
+        NzCheckboxComponent
+    ],
   declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT],
   exports: [...COMPONENTS, ...PASSPORT]
 })
