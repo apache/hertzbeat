@@ -1170,4 +1170,8 @@ export class AlertSettingComponent implements OnInit {
     });
     this.isConnectModalVisible = true;
   }
+  onFilterChange(): void {
+    this.pageIndex = 1;
+    this.loadAlertDefineTable();
+  }
 }
