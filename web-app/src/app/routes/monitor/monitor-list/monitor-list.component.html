@@ -273,28 +273,31 @@
 <nz-modal
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'monitors.export.switch-type' | i18n"
-  nzOkDisabled="true"
-  [nzFooter]="switchExportTypeModalFooter"
+  (nzOnCancel)="isSwitchExportTypeModalVisible = false"
+  nzWidth="600px"
+  [nzFooter]="null"
 >
   <ng-container *nzModalContent>
-    <!--    <p style="text-align: center">-->
-    <!--      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('YAML')" [nzLoading]="exportYamlButtonLoading">-->
-    <!--        <span nz-icon nzType="download"></span>-->
-    <!--        {{ 'monitors.export.use-type' | i18n : { type: 'YAML' } }}-->
-    <!--      </button>-->
-    <!--    </p>-->
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('JSON')" [nzLoading]="exportJsonButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'monitors.export.use-type' | i18n : { type: 'JSON' } }}
-      </button>
-    </p>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportMonitors('EXCEL')" [nzLoading]="exportExcelButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'monitors.export.use-type' | i18n : { type: 'EXCEL' } }}
-      </button>
-    </p>
+    <div class="export-type-container">
+      <div class="export-type-card" (click)="exportMonitors('JSON')" [class.loading]="exportJsonButtonLoading">
+        <div class="export-type-icon">
+          <i nz-icon nzType="code" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>JSON</h3>
+          <p>{{ 'monitors.export.use-type' | i18n : { type: 'JSON' } }}</p>
+        </div>
+      </div>
+      <div class="export-type-card" (click)="exportMonitors('EXCEL')" [class.loading]="exportExcelButtonLoading">
+        <div class="export-type-icon">
+          <i nz-icon nzType="file-excel" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>EXCEL</h3>
+          <p>{{ 'monitors.export.use-type' | i18n : { type: 'EXCEL' } }}</p>
+        </div>
+      </div>
+    </div>
   </ng-container>
 </nz-modal>
 

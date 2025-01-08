@@ -111,6 +111,7 @@
           [nzHeader]="alertHeader"
           [nzExtra]="alertExtra"
           [nzActive]="false"
+          [style]="'border-left-color:' + (item.status == 'firing' ? '#ff4d4f' : '#52c41a')"
           [nzExpandedIcon]="expandedIcon"
         >
           <ng-template #alertHeader>
@@ -134,6 +135,16 @@
               <i style="margin-right: 4px" nz-icon nzType="alert" nzTheme="outline"></i>
               {{ 'alert.center.time.tip' | i18n : { times: item.triggerTimes } }}
             </span>
+          </div>
+
+          <!-- Status -->
+          <div class="detail-section">
+            <div class="section-title">{{ 'alert.center.status' | i18n }}</div>
+            <div class="alert-status">
+              <nz-tag [nzColor]="item.status === 'firing' ? 'error' : 'success'">
+                {{ item.status === 'firing' ? ('alert.status.firing' | i18n) : ('alert.status.resolved' | i18n) }}
+              </nz-tag>
+            </div>
           </div>
 
           <!-- Labels -->
