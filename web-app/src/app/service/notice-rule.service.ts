@@ -48,4 +48,8 @@ export class NoticeRuleService {
   public getNoticeRules(): Observable<Message<NoticeRule[]>> {
     return this.http.get<Message<NoticeRule[]>>(notice_rules_uri);
   }
+
+  public getNoticeRuleById(ruleId: number): Observable<Message<NoticeRule>> {
+    return this.http.get<Message<NoticeRule>>(`${notice_rule_uri}/${ruleId}`);
+  }
 }

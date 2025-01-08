@@ -56,15 +56,14 @@ public class MonitorsController {
     public ResponseEntity<Message<Page<Monitor>>> getMonitors(
             @Parameter(description = "Monitor ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
             @Parameter(description = "Monitor Type", example = "linux") @RequestParam(required = false) final String app,
-            @Parameter(description = "Monitor Name support fuzzy query", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
-            @Parameter(description = "Monitor Host support fuzzy query", example = "127.0.0.1") @RequestParam(required = false) final String host,
             @Parameter(description = "Monitor Status 0:no monitor,1:usable,2:disabled,9:all status", example = "1") @RequestParam(required = false) final Byte status,
+            @Parameter(description = "Monitor Host support fuzzy query", example = "127.0.0.1") @RequestParam(required = false) final String search,
+            @Parameter(description = "Monitor labels ", example = "env:prod,instance:22") @RequestParam(required = false) final String labels,
             @Parameter(description = "Sort Field ", example = "name") @RequestParam(defaultValue = "gmtCreate") final String sort,
             @Parameter(description = "Sort mode eg:asc desc", example = "desc") @RequestParam(defaultValue = "desc") final String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pagination ", example = "8") @RequestParam(defaultValue = "8") int pageSize,
-            @Parameter(description = "Monitor tag ", example = "env:prod") @RequestParam(required = false) final String tag) {
-        Page<Monitor> monitorPage = monitorService.getMonitors(ids, app, name, host, status, sort, order, pageIndex, pageSize, tag);
+            @Parameter(description = "Number of list pagination ", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+        Page<Monitor> monitorPage = monitorService.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
         return ResponseEntity.ok(Message.success(monitorPage));
     }
 
@@ -117,7 +116,7 @@ public class MonitorsController {
     @Operation(summary = "export monitor config", description = "export monitor config")
     public void export(
             @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam List<Long> ids,
-            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
+            @Parameter(description = "Export Type:JSON,EXCEL") @RequestParam(defaultValue = "JSON") String type,
             HttpServletResponse res) throws Exception {
         monitorService.export(ids, type, res);
     }

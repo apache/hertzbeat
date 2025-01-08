@@ -28,6 +28,7 @@
     <artifactId>hertzbeat-e2e</artifactId>
     <packaging>pom</packaging>
     <modules>
+        <module>hertzbeat-collector-common-e2e</module>
         <module>hertzbeat-collector-kafka-e2e</module>
         <module>hertzbeat-collector-basic-e2e</module>
     </modules>

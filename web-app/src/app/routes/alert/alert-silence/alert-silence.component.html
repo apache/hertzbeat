@@ -33,12 +33,21 @@
     </button>
     <button nz-button nzType="primary" (click)="onNewAlertSilence()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'alert.silence.new' | i18n }}
+      {{ 'common.button.new' | i18n }}
     </button>
-    <button nz-button nzType="primary" nzDanger (click)="onDeleteAlertSilences()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'alert.silence.delete' | i18n }}
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
     </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nz-button nzDanger (click)="onDeleteAlertSilences()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <app-multi-func-input
@@ -70,7 +79,6 @@
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="14%">{{ 'alert.silence.type' | i18n }}</th>
-      <th nzAlign="center" nzWidth="14%">{{ 'alert.silence.tags' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.times' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.enable' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
@@ -90,16 +98,6 @@
         <nz-tag *ngIf="data.type == 1" nzColor="processing">
           <i nz-icon nzType="sync" nzTheme="outline"></i>
           <span>{{ 'alert.silence.type.cyc' | i18n }}</span>
-        </nz-tag>
-      </td>
-      <td nzAlign="center" *ngIf="!data.matchAll">
-        <nz-tag nzColor="processing" style="margin-top: 2px" *ngFor="let tag of data.tags; let i = index">
-          {{ sliceTagName(tag) }}
-        </nz-tag>
-      </td>
-      <td nzAlign="center" *ngIf="data.matchAll">
-        <nz-tag nzColor="warning">
-          {{ 'alert.silence.match-all' | i18n }}
         </nz-tag>
       </td>
       <td nzAlign="center">
@@ -122,16 +120,24 @@
           >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
-          <button
-            nz-button
-            nzDanger
-            nzType="primary"
-            (click)="onDeleteOneAlertSilence(data.id)"
-            nz-tooltip
-            [nzTooltipTitle]="'alert.silence.delete' | i18n"
-          >
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
           </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button
+                  nz-button
+                  nzDanger
+                  (click)="onDeleteOneAlertSilence(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'alert.silence.delete' | i18n"
+                >
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
         </div>
       </td>
     </tr>
@@ -165,46 +171,9 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="!silence.matchAll">
-        <nz-form-label nzSpan="7" nzFor="tags">{{ 'alert.silence.tags' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-select
-            [(ngModel)]="matchTags"
-            [nzDisabled]="silence.matchAll"
-            (nzOpenChange)="loadTagsOption()"
-            [nzOptions]="tagsOption"
-            [nzMaxTagCount]="5"
-            [nzDropdownMatchSelectWidth]="false"
-            nzShowSearch
-            nzMode="multiple"
-            nzAllowClear
-            [nzPlaceHolder]="'alert.notice.rule.tag.placeholder' | i18n"
-            required
-            name="tags"
-            id="tags"
-          >
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item *ngIf="!silence.matchAll">
-        <nz-form-label nzSpan="7" nzFor="priorities">{{ 'alert.silence.priority' | i18n }}</nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-select
-            [(ngModel)]="silence.priorities"
-            [nzDisabled]="silence.matchAll"
-            (ngModelChange)="onPrioritiesChange()"
-            nzShowSearch
-            nzMode="multiple"
-            nzAllowClear
-            [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
-            required
-            name="priorities"
-            id="priorities"
-          >
-            <nz-option [nzLabel]="'alert.priority.all' | i18n" [nzValue]="9"></nz-option>
-            <nz-option [nzLabel]="'alert.priority.0' | i18n" [nzValue]="0"></nz-option>
-            <nz-option [nzLabel]="'alert.priority.1' | i18n" [nzValue]="1"></nz-option>
-            <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
-          </nz-select>
+        <nz-form-label nzSpan="7" nzFor="labels" nzRequired="true">{{ 'alert.silence.labels' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <app-labels-input [(ngModel)]="silence.labels" name="labels" required></app-labels-input>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

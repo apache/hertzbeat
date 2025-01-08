@@ -1,0 +1,195 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-toolbar>
+  <ng-template #left>
+    <button (click)="syncRule()" nz-button nzType="primary">
+      <i nz-icon nzTheme="outline" nzType="sync"></i>
+    </button>
+
+    <button (click)="onNewNoticeRule()" nz-button nzType="primary">
+      <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
+      {{ 'alert.notice.rule.new' | i18n }}
+    </button>
+  </ng-template>
+</app-toolbar>
+<nz-table #ruleFixedTable [nzData]="rules" [nzLoading]="ruleTableLoading" [nzScroll]="{ x: '1240px' }" nzFrontPagination="false">
+  <thead>
+    <tr>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.rule.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.receiver.people' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.notice.rule.all' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.notice.rule.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of ruleFixedTable.data">
+      <td nzAlign="center">
+        <span>{{ data.name }}</span>
+      </td>
+      <td nzAlign="center">
+        <span>{{ data.receiverName }}</span>
+      </td>
+      <td nzAlign="center">
+        <span *ngIf="data.templateId">{{ data.templateName }}</span>
+        <nz-tag *ngIf="!data.templateId" nzColor="default">
+          <span>{{ 'alert.notice.template.preset.true' | i18n }}</span>
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="data.filterAll" (ngModelChange)="updateNoticeRule(data)"></nz-switch>
+      </td>
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateNoticeRule(data)"></nz-switch>
+      </td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">
+        <div class="actions">
+          <button
+            (click)="onEditOneNoticeRule(data)"
+            [nzTooltipTitle]="'alert.notice.rule.edit' | i18n"
+            nz-button
+            nz-tooltip
+            nzType="primary"
+          >
+            <i nz-icon nzTheme="outline" nzType="edit"></i>
+          </button>
+          <button
+            (click)="onDeleteOneNoticeRule(data.id)"
+            [nzTooltipTitle]="'alert.notice.rule.delete' | i18n"
+            nz-button
+            nz-tooltip
+            nzDanger
+          >
+            <i nz-icon nzTheme="outline" nzType="delete"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<!-- new or update notice strategy pop-up box -->
+<nz-modal
+  (nzOnCancel)="onManageRuleModalCancel()"
+  (nzOnOk)="onManageRuleModalOk()"
+  [(nzVisible)]="isManageRuleModalVisible"
+  [nzOkLoading]="isManageRuleModalOkLoading"
+  [nzTitle]="isManageRuleModalAdd ? ('alert.notice.rule.new' | i18n) : ('alert.notice.rule.edit' | i18n)"
+  nzMaskClosable="false"
+  nzWidth="40%"
+>
+  <div *nzModalContent class="-inner-content">
+    <form #ruleForm="ngForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="rule_name" nzRequired="true">{{ 'alert.notice.rule.name' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="rule.name" id="rule_name" name="rule_name" nz-input required type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzFor="receiver" nzRequired="true" nzSpan="7">{{ 'alert.notice.receiver.people' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="12">
+          <nz-select
+            (nzOpenChange)="loadReceiversOption()"
+            [(ngModel)]="rule.receiverId"
+            (ngModelChange)="onSwitchReceiver()"
+            [nzOptions]="receiversOption"
+            nzMode="multiple"
+            id="receiver"
+            name="receiver"
+            [nzPlaceHolder]="'alert.notice.receiver.people.placeholder' | i18n"
+            nzShowSearch
+            required
+          >
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzFor="templates" nzRequired="false" nzSpan="7">{{ 'alert.notice.template' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-select
+            (nzOpenChange)="loadTemplatesOption()"
+            [(ngModel)]="rule.templateId"
+            [nzOptions]="templatesOption"
+            id="templates"
+            name="templates"
+            [nzPlaceHolder]="'alert.notice.template.placeholder' | i18n"
+            nzShowSearch
+            nzAllowClear
+          >
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzFor="filterAll" nzRequired="true" nzSpan="7">{{ 'alert.notice.rule.all' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="rule.filterAll" id="filterAll" name="filterAll"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="!rule.filterAll">
+        <nz-form-label nzFor="labels" nzSpan="7" nzRequired="true">{{ 'alert.notice.rule.tag' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <app-labels-input [(ngModel)]="rule.labels" name="labels" required></app-labels-input>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzFor="isLimit" nzSpan="7">{{ 'alert.notice.rule.period' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch
+            (ngModelChange)="onNoticeRuleLimitChange(isLimit)"
+            [(ngModel)]="isLimit"
+            [nzCheckedChildren]="'alert.notice.rule.period.custom' | i18n"
+            [nzUnCheckedChildren]="'alert.notice.rule.period.no-limit' | i18n"
+            id="isLimit"
+            name="isLimit"
+          ></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="isLimit">
+        <nz-form-label nzFor="days" nzSpan="7">{{ 'alert.notice.rule.period-chose' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-checkbox-group
+            (ngModelChange)="onNoticeRuleDaysChange(dayCheckOptions)"
+            [(ngModel)]="dayCheckOptions"
+            id="days"
+            name="days"
+          ></nz-checkbox-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzFor="time" nzSpan="7">{{ 'alert.notice.rule.time' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-time-picker [(ngModel)]="rule.periodStart" id="periodStart" name="periodStart" nzFormat="HH:mm"></nz-time-picker>
+          <span nz-icon nzTheme="outline" nzType="right-circle" style="margin-right: 6px; margin-left: 6px"></span>
+          <nz-time-picker [(ngModel)]="rule.periodEnd" id="periodEnd" name="periodEnd" nzFormat="HH:mm"></nz-time-picker>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzFor="enable" nzRequired="true" nzSpan="7">{{ 'alert.notice.rule.enable' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="rule.enable" id="enable" name="enable"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

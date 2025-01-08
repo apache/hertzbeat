@@ -1,0 +1,228 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-toolbar>
+  <ng-template #left>
+    <button (click)="syncTemplate()" nz-button nzType="primary">
+      <i nz-icon nzTheme="outline" nzType="sync"></i>
+    </button>
+    <button (click)="onNewNoticeTemplate()" nz-button nzType="primary">
+      <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
+      {{ 'alert.notice.template.new' | i18n }}
+    </button>
+  </ng-template>
+</app-toolbar>
+<nz-table
+  #templateFixedTable
+  [nzData]="templates"
+  [nzLoading]="templateTableLoading"
+  [nzScroll]="{ x: '1240px' }"
+  nzFrontPagination="false"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzWidth="25%">{{ 'alert.notice.template.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.preset' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of templateFixedTable.data">
+      <td nzAlign="center">
+        <span>{{ data.name }}</span>
+      </td>
+      <td nzAlign="center">
+        <span>
+          <nz-tag *ngIf="data.type == 0" nzColor="orange">
+            <span>{{ 'alert.notice.type.sms' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 1" nzColor="orange">
+            <span>{{ 'alert.notice.type.email' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 2" nzColor="orange">
+            <span>WebHook</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 3" nzColor="orange">
+            <span>{{ 'alert.notice.type.wechat' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 4" nzColor="orange">
+            <span>{{ 'alert.notice.type.WeCom-robot' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 5" nzColor="orange">
+            <span>{{ 'alert.notice.type.ding' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 6" nzColor="orange">
+            <span>{{ 'alert.notice.type.fei-shu' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 7" nzColor="orange">
+            <span>{{ 'alert.notice.type.telegram' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 8" nzColor="orange">
+            <span>{{ 'alert.notice.type.slack' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 9" nzColor="orange">
+            <span>{{ 'alert.notice.type.discord' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 10" nzColor="orange">
+            <span>{{ 'alert.notice.type.WeComApp' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 11" nzColor="orange">
+            <span>{{ 'alert.notice.type.smn' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 12" nzColor="orange">
+            <span>{{ 'alert.notice.type.serverchan' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="data.type == 13" nzColor="orange">
+            <span>{{ 'alert.notice.type.gotify' | i18n }}</span>
+          </nz-tag>
+        </span>
+      </td>
+      <td nzAlign="center">
+        <span>
+          <nz-tag *ngIf="data.preset" nzColor="default">
+            <span>{{ 'alert.notice.template.preset.true' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="!data.preset" nzColor="orange">
+            <span>{{ 'alert.notice.template.preset.false' | i18n }}</span>
+          </nz-tag>
+        </span>
+      </td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">
+        <div *ngIf="!data.preset" class="actions">
+          <button
+            (click)="onEditOneNoticeTemplate(data)"
+            [nzTooltipTitle]="'alert.notice.template.edit' | i18n"
+            nz-button
+            nz-tooltip
+            nzType="primary"
+          >
+            <i nz-icon nzTheme="outline" nzType="edit"></i>
+          </button>
+          <button
+            (click)="onDeleteOneNoticeTemplate(data.id)"
+            [nzTooltipTitle]="'alert.notice.template.delete' | i18n"
+            nz-button
+            nz-tooltip
+            nzDanger
+          >
+            <i nz-icon nzTheme="outline" nzType="delete"></i>
+          </button>
+        </div>
+        <div *ngIf="data.preset" class="actions">
+          <button
+            (click)="onShowOneNoticeTemplate(data)"
+            [nzTooltipTitle]="'alert.notice.template.show' | i18n"
+            nz-button
+            nz-tooltip
+            nzType="primary"
+          >
+            <i nz-icon nzTheme="outline" nzType="eye"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+<!-- new or update notice template pop-up box -->
+<nz-modal
+  (nzOnCancel)="onManageTemplateModalCancel()"
+  (nzOnOk)="onManageTemplateModalOk()"
+  [(nzVisible)]="isManageTemplateModalVisible"
+  [nzOkLoading]="isManageTemplateModalOkLoading"
+  [nzTitle]="isManageTemplateModalAdd ? ('alert.notice.template.new' | i18n) : ('alert.notice.template.edit' | i18n)"
+  nzMaskClosable="false"
+  nzWidth="45%"
+>
+  <div *nzModalContent class="-inner-content">
+    <form #templateForm="ngForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="4" nzFor="template_name" nzRequired="true">{{ 'alert.notice.template.name' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="18">
+          <input [(ngModel)]="template.name" id="template_name" name="template_name" nz-input required type="text" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzFor="type" nzRequired="true" nzSpan="4">{{ 'alert.notice.receiver.type' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="18">
+          <nz-select
+            [(ngModel)]="template.type"
+            [nzOptionOverflowSize]="10"
+            id="type1"
+            name="type"
+            [nzPlaceHolder]="'alert.notice.receiver.type.placeholder' | i18n"
+            required
+          >
+            <nz-option [nzLabel]="'alert.notice.type.sms' | i18n" [nzValue]="0"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.email' | i18n" [nzValue]="1"></nz-option>
+            <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.discord' | i18n" [nzValue]="9"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.slack' | i18n" [nzValue]="8"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeCom-robot' | i18n" [nzValue]="4"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.ding' | i18n" [nzValue]="5"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.fei-shu' | i18n" [nzValue]="6"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.telegram' | i18n" [nzValue]="7"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeComApp' | i18n" [nzValue]="10"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="4" nzFor="template_content" nzRequired="true">{{ 'alert.notice.template.content' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="18">
+          <textarea
+            [(ngModel)]="template.content"
+            id="template_content"
+            name="template_content"
+            nz-input
+            required
+            style="white-space: nowrap; height: 200px"
+            type="textarea"
+          ></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+<!-- notice template example pop-up box -->
+<nz-modal
+  (nzOnCancel)="onManageTemplateModalCancel()"
+  [(nzVisible)]="isShowTemplateModalVisible"
+  [nzTitle]="'alert.notice.template.content' | i18n"
+  [nzCancelText]="'common.button.return' | i18n"
+  [nzOkText]="null"
+  nzMaskClosable="false"
+  nzWidth="40%"
+>
+  <div *nzModalContent class="-inner-content">
+    <textarea
+      [(ngModel)]="template.content"
+      id="template_content_example"
+      name="template_content"
+      style="white-space: nowrap; overflow: scroll; width: 100%; height: 200px"
+      type="textarea"
+    ></textarea>
+  </div>
+</nz-modal>

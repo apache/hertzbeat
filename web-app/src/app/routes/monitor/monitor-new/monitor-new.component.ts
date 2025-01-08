@@ -64,7 +64,6 @@ export class MonitorNewComponent implements OnInit {
     private collectorSvc: CollectorService
   ) {
     this.monitor = new Monitor();
-    this.monitor.tags = [];
     this.grafanaDashboard = new GrafanaDashboard();
   }
 
@@ -210,8 +209,6 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onCancel() {
-    let app = this.monitor.app;
-    app = app ? app : '';
-    this.router.navigateByUrl(`/monitors?app=${app}`);
+    this.router.navigateByUrl(`/monitors`);
   }
 }

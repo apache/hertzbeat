@@ -1,0 +1,450 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-toolbar>
+  <ng-template #left>
+    <button (click)="syncReceiver()" nz-button nzType="primary">
+      <i nz-icon nzTheme="outline" nzType="sync"></i>
+    </button>
+
+    <button (click)="onNewNoticeReceiver()" nz-button nzType="primary">
+      <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
+      {{ 'alert.notice.receiver.new' | i18n }}
+    </button>
+  </ng-template>
+</app-toolbar>
+<nz-table #fixedTable [nzData]="receivers" [nzLoading]="receiverTableLoading" [nzScroll]="{ x: '1240px' }" nzFrontPagination="false">
+  <thead>
+    <tr>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.receiver.people' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.notice.receiver.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.notice.receiver.setting' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="25%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of fixedTable.data">
+      <td nzAlign="center">
+        <span>{{ data.name }}</span>
+      </td>
+      <td nzAlign="center">
+        <nz-tag *ngIf="data.type == 0" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.sms' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 1" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.email' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 2" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>WebHook</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 3" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.wechat' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 4" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.WeCom-robot' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 5" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.ding' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 6" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.fei-shu' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 7" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.telegram-bot' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 8" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.slack' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 9" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.discord' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 10" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.WeComApp' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 11" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.smn' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 12" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.serverchan' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 13" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.gotify' | i18n }}</span>
+        </nz-tag>
+      </td>
+      <td nzAlign="center">
+        <span *ngIf="data.type == 0">{{ data.phone }}</span>
+        <span *ngIf="data.type == 1">{{ data.email }}</span>
+        <span *ngIf="data.type == 2">{{ data.hookUrl }}</span>
+        <span *ngIf="data.type == 3">{{ data.wechatId }}</span>
+        <span *ngIf="data.type == 4">{{ data.wechatId }}</span>
+        <span *ngIf="data.type == 5">{{ data.accessToken }}</span>
+        <span *ngIf="data.type == 6">{{ data.wechatId }}</span>
+        <span *ngIf="data.type == 7">{{ data.tgBotToken }}<br />{{ data.tgUserId }}</span>
+        <span *ngIf="data.type == 8">{{ data.slackWebHookUrl }}</span>
+        <span *ngIf="data.type == 9">{{ data.discordChannelId }}<br />{{ data.discordBotToken }}</span>
+        <span *ngIf="data.type == 10">{{ data.corpId }}<br />{{ data.agentId }}<br />{{ data.appSecret }}</span>
+        <span *ngIf="data.type == 11">{{ data.smnAk }}</span>
+        <span *ngIf="data.type == 12">{{ data.serverChanToken }}</span>
+        <span *ngIf="data.type == 13">{{ data.gotifyToken }}</span>
+      </td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center">
+        <div class="actions">
+          <button
+            (click)="onEditOneNoticeReceiver(data)"
+            [nzTooltipTitle]="'alert.notice.receiver.edit' | i18n"
+            nz-button
+            nz-tooltip
+            nzType="primary"
+          >
+            <i nz-icon nzTheme="outline" nzType="edit"></i>
+          </button>
+          <button
+            (click)="onDeleteOneNoticeReceiver(data.id)"
+            [nzTooltipTitle]="'alert.notice.receiver.delete' | i18n"
+            nz-button
+            nz-tooltip
+            nzDanger
+          >
+            <i nz-icon nzTheme="outline" nzType="delete"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+<!-- new or update notice medium pop-up box -->
+<nz-modal
+  (nzOnCancel)="onManageReceiverModalCancel()"
+  (nzOnOk)="onManageReceiverModalOk()"
+  [(nzVisible)]="isManageReceiverModalVisible"
+  [nzOkLoading]="isManageReceiverModalOkLoading"
+  [nzTitle]="isManageReceiverModalAdd ? ('alert.notice.receiver.new' | i18n) : ('alert.notice.receiver.edit' | i18n)"
+  nzMaskClosable="false"
+  nzWidth="40%"
+>
+  <div *nzModalContent class="-inner-content">
+    <form #receiverForm="ngForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'alert.notice.receiver.people.name' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.name" id="name" name="name" nz-input required type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzFor="type" nzRequired="true" nzSpan="7">{{ 'alert.notice.receiver.type' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="12">
+          <nz-select
+            [(ngModel)]="receiver.type"
+            [nzOptionOverflowSize]="10"
+            id="type"
+            name="type"
+            [nzPlaceHolder]="'alert.notice.receiver.type.placeholder' | i18n"
+            required
+          >
+            <nz-option [nzLabel]="'alert.notice.type.sms' | i18n" [nzValue]="0"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.email' | i18n" [nzValue]="1"></nz-option>
+            <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.discord' | i18n" [nzValue]="9"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.slack' | i18n" [nzValue]="8"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeCom-robot' | i18n" [nzValue]="4"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.ding' | i18n" [nzValue]="5"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.fei-shu' | i18n" [nzValue]="6"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.telegram-bot' | i18n" [nzValue]="7"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeComApp' | i18n" [nzValue]="10"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 0">
+        <nz-form-label [nzRequired]="receiver.type === 0" [nzSpan]="7" nzFor="phone">{{ 'alert.notice.type.phone' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.phone.invalid' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.phone" [required]="receiver.type === 0" id="phone" name="phone" nz-input type="tel" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 1">
+        <nz-form-label [nzRequired]="receiver.type === 1" [nzSpan]="7" nzFor="email">{{ 'alert.notice.type.email' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.email.invalid' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.email" [required]="receiver.type === 1" email id="email" name="email" nz-input type="email" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 2">
+        <nz-form-label [nzRequired]="receiver.type === 2" [nzSpan]="7" nzFor="hookUrl">{{ 'alert.notice.type.url' | i18n }} </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.hookUrl" [required]="receiver.type === 2" id="hookUrl" name="hookUrl" nz-input type="url" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 3">
+        <nz-form-label [nzRequired]="receiver.type === 3" [nzSpan]="7" nzFor="wechatId"
+          >{{ 'alert.notice.type.wechat-id' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.wechatId" [required]="receiver.type === 3" name="wechatId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 4">
+        <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 4"
+          >{{ 'alert.notice.type.WeCom-robot-key' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="receiver.wechatId"
+            (ngModelChange)="onSplitTokenStr(4)"
+            nz-input
+            [required]="receiver.type === 4"
+            name="wechatId"
+            type="text"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 4">
+        <nz-form-label [nzSpan]="7" nzFor="phone">{{ 'alert.notice.type.phone' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.phone.invalid' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.phone" pattern="^(1\d{10})(,\s*1\d{10})*$" id="WePhone" name="phone" nz-input type="tel" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 4">
+        <nz-form-label [nzSpan]="7" nzFor="userId">{{ 'alert.notice.type.userId' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.userId" name="userId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 5">
+        <nz-form-label [nzSpan]="7" nzFor="accessToken" [nzRequired]="receiver.type === 5"
+          >{{ 'alert.notice.type.access-token' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="receiver.accessToken"
+            (ngModelChange)="onSplitTokenStr(5)"
+            nz-input
+            [required]="receiver.type === 5"
+            name="accessToken"
+            type="text"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 5">
+        <nz-form-label [nzSpan]="7" nzFor="phone">{{ 'alert.notice.type.phone' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.phone.invalid' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.phone" name="phone" pattern="^(1\d{10})(,\s*1\d{10})*$" nz-input type="tel" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 5">
+        <nz-form-label [nzSpan]="7" nzFor="userId">{{ 'alert.notice.type.userId' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.userId" name="userId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 6">
+        <nz-form-label [nzSpan]="7" nzFor="accessToken" [nzRequired]="receiver.type === 6"
+          >{{ 'alert.notice.type.fei-shu-key' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            [(ngModel)]="receiver.accessToken"
+            (ngModelChange)="onSplitTokenStr(6)"
+            nz-input
+            [required]="receiver.type === 6"
+            name="accessToken"
+            type="text"
+          />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 6">
+        <nz-form-label [nzSpan]="7" nzFor="userId">{{ 'alert.notice.type.userId' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.userId" name="userId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 7">
+        <nz-form-label [nzRequired]="receiver.type === 7" [nzSpan]="7" nzFor="tgBotToken"
+          >{{ 'alert.notice.type.telegram-bot-token' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="receiver.tgBotToken" nz-input [required]="receiver.type === 7" name="tgBotToken" type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 7">
+        <nz-form-label [nzRequired]="receiver.type === 7" [nzSpan]="7" nzFor="tgUserId"
+          >{{ 'alert.notice.type.telegram-bot-user-id' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.tgUserId" [required]="receiver.type === 7" name="tgUserId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 8">
+        <nz-form-label [nzRequired]="receiver.type === 8" [nzSpan]="7" nzFor="slackWebHookUrl"
+          >{{ 'alert.notice.type.slack-webHook-url' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.slackWebHookUrl" [required]="receiver.type === 8" name="slackWebHookUrl" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 9">
+        <nz-form-label [nzRequired]="receiver.type === 9" [nzSpan]="7" nzFor="discordBotToken"
+          >{{ 'alert.notice.type.discord-bot-token' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.discordBotToken" [required]="receiver.type === 9" name="discordBotToken" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 9">
+        <nz-form-label [nzRequired]="receiver.type === 9" [nzSpan]="7" nzFor="discordChannelId"
+          >{{ 'alert.notice.type.discord-channel-id' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.discordChannelId" [required]="receiver.type === 9" name="discordChannelId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzRequired]="receiver.type === 10" [nzSpan]="7" nzFor="corpId">
+          {{ 'alert.notice.type.WeComApp-corpId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.corpId" [required]="receiver.type === 10" name="corpId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzRequired]="receiver.type === 10" [nzSpan]="7" nzFor="agentId">
+          {{ 'alert.notice.type.WeComApp-agentId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.agentId" [required]="receiver.type === 10" name="agentId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzRequired]="receiver.type === 10" [nzSpan]="7" nzFor="appSecret">
+          {{ 'alert.notice.type.WeComApp-appSecret' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.appSecret" [required]="receiver.type === 10" name="appSecret" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="userId">
+          {{ 'alert.notice.type.WeComApp-userId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <input [(ngModel)]="receiver.userId" name="userId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="partyId">
+          {{ 'alert.notice.type.WeComApp-partyId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <input [(ngModel)]="receiver.partyId" name="partyId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="tagId">
+          {{ 'alert.notice.type.WeComApp-tagId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <input [(ngModel)]="receiver.tagId" name="tagId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzRequired]="receiver.type === 11" [nzSpan]="7" nzFor="smnAk">
+          {{ 'alert.notice.type.smn-ak' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.smnAk" [required]="receiver.type === 11" name="smnAk" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzRequired]="receiver.type === 11" [nzSpan]="7" nzFor="smnSk">
+          {{ 'alert.notice.type.smn-sk' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.smnSk" [required]="receiver.type === 11" name="smnSk" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzRequired]="receiver.type === 11" [nzSpan]="7" nzFor="smnProjectId">
+          {{ 'alert.notice.type.smn-projectId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.smnProjectId" [required]="receiver.type === 11" name="smnProjectId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzRequired]="receiver.type === 11" [nzSpan]="7" nzFor="smnRegion">
+          {{ 'alert.notice.type.smn-region' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.smnRegion" [required]="receiver.type === 11" name="smnRegion" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 11">
+        <nz-form-label [nzRequired]="receiver.type === 11" [nzSpan]="7" nzFor="smnTopicUrn">
+          {{ 'alert.notice.type.smn-topicUrn' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.smnTopicUrn" [required]="receiver.type === 11" name="smnTopicUrn" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 12">
+        <nz-form-label [nzRequired]="receiver.type === 12" [nzSpan]="7" nzFor="serverChanToken"
+          >{{ 'alert.notice.type.serverchan-token' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.serverChanToken" [required]="receiver.type === 12" name="serverChanToken" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 13">
+        <nz-form-label [nzRequired]="receiver.type === 13" [nzSpan]="7" nzFor="gotifyToken"
+          >{{ 'alert.notice.type.gotify-token' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.gotifyToken" [required]="receiver.type === 13" name="gotifyToken" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-control [nzOffset]="7" [nzSpan]="12">
+          <button (click)="onSendAlertTestMsg()" [nzLoading]="isSendTestButtonLoading" nz-button nzDanger>
+            <i nz-icon nzTheme="outline" nzType="send"></i>
+            {{ 'alert.notice.send-test' | i18n }}
+          </button>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

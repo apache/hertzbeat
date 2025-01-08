@@ -50,6 +50,10 @@ export class NoticeReceiverService {
     return this.http.get<Message<NoticeReceiver[]>>(notice_receivers_uri);
   }
 
+  public getReceiver(receiverId: number): Observable<Message<NoticeReceiver>> {
+    return this.http.get<Message<NoticeReceiver>>(`${notice_receiver_uri}/${receiverId}`);
+  }
+
   public sendAlertMsgToReceiver(body: NoticeReceiver): Observable<Message<any>> {
     return this.http.post<Message<any>>(notice_receiver_send_test_msg_uri, body);
   }

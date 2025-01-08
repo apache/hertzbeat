@@ -32,25 +32,35 @@
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
 
-    <button nz-button nzType="primary" nzDanger (click)="onDeployCollector()">
+    <button nz-button nzType="primary" (click)="onDeployCollector()">
       <i nz-icon nzType="deployment-unit" nzTheme="outline"></i>
       {{ 'collector.deploy' | i18n }}
     </button>
-
-    <button nz-button nzType="primary" (click)="onGoOnlineCollectors()">
-      <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-      {{ 'collector.online' | i18n }}
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
     </button>
-
-    <button nz-button nzType="primary" (click)="onGoOfflineCollectors()">
-      <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-      {{ 'collector.offline' | i18n }}
-    </button>
-
-    <button nz-button nzType="primary" nzDanger (click)="onDeleteCollectors()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'collector.delete' | i18n }}
-    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nz-button (click)="onGoOnlineCollectors()">
+            <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+            {{ 'collector.online' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button (click)="onGoOfflineCollectors()">
+            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+            {{ 'collector.offline' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button nzDanger (click)="onDeleteCollectors()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'collector.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <app-multi-func-input
@@ -160,7 +170,6 @@
           <button
             [disabled]="data.collector.name == 'main-default-collector'"
             nz-button
-            nzType="primary"
             nzDanger
             (click)="onDeleteOneCollector(data.collector.name)"
             nz-tooltip

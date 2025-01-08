@@ -44,8 +44,9 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -69,13 +70,13 @@ public class JmxCollectImpl extends AbstractCollect {
     private static final String IGNORED_STUB = "/stub/";
 
     private static final String SUB_ATTRIBUTE = "->";
-    
-    private final ConnectionCommonCache<CacheIdentifier, JmxConnect> connectionCommonCache;
+
+    private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     private final ClassLoader jmxClassLoader;
+
     
     public JmxCollectImpl() {
-        connectionCommonCache = new ConnectionCommonCache<>();
         jmxClassLoader = new JmxClassLoader(ClassLoader.getSystemClassLoader());
     }
 
@@ -95,16 +96,25 @@ public class JmxCollectImpl extends AbstractCollect {
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
-
+            // Whether to use customized JMX
+            MbeanProcessor processor = null;
+            if (CustomizedJmxFactory.validate(builder.getApp(), jmxProtocol.getObjectName())) {
+                processor = CustomizedJmxFactory.getProcessor(builder.getApp(), jmxProtocol.getObjectName());
+                if (processor != null) {
+                    processor.preProcess(builder, metrics);
+                    if (processor.isCollectionComplete()) {
+                        return;
+                    }
+                }
+            }
             // Create a jndi remote connection
             JMXConnector jmxConnector = getConnectSession(jmxProtocol);
-
             MBeanServerConnection serverConnection = jmxConnector.getMBeanServerConnection();
             ObjectName objectName = new ObjectName(jmxProtocol.getObjectName());
 
-            Set<ObjectInstance> objectInstanceSet = serverConnection.queryMBeans(objectName, null);
             Set<String> attributeNameSet = metrics.getAliasFields().stream()
                     .map(field -> field.split(SUB_ATTRIBUTE)[0]).collect(Collectors.toSet());
+            Set<ObjectInstance> objectInstanceSet = serverConnection.queryMBeans(objectName, null);
             for (ObjectInstance objectInstance : objectInstanceSet) {
                 ObjectName currentObjectName = objectInstance.getObjectName();
                 MBeanInfo beanInfo = serverConnection.getMBeanInfo(currentObjectName);
@@ -118,11 +128,18 @@ public class JmxCollectImpl extends AbstractCollect {
 
                 Map<String, String> attributeValueMap = extractAttributeValue(attributeList);
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                if (processor != null) {
+                    processor.process(serverConnection, objectInstance, objectInstanceSet,
+                            currentObjectName, attributeValueMap, valueRowBuilder);
+                }
                 for (String aliasField : metrics.getAliasFields()) {
                     String fieldValue = attributeValueMap.get(aliasField);
                     valueRowBuilder.addColumn(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
                 }
                 builder.addValueRow(valueRowBuilder.build());
+                if (processor != null && processor.isCollectionComplete()) {
+                    return;
+                }
             }
         } catch (IOException exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
@@ -184,10 +201,10 @@ public class JmxCollectImpl extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder().ip(jmxProtocol.getHost())
                 .port(jmxProtocol.getPort()).username(jmxProtocol.getUsername())
                 .password(jmxProtocol.getPassword()).build();
-        Optional<JmxConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         JMXConnector conn = null;
         if (cacheOption.isPresent()) {
-            JmxConnect jmxConnect = cacheOption.get();
+            JmxConnect jmxConnect = (JmxConnect) cacheOption.get();
             conn = jmxConnect.getConnection();
             try {
                 conn.getMBeanServerConnection();

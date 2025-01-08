@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RocketmqProtocol implements CommonRequestProtocol {
+public class RocketmqProtocol implements CommonRequestProtocol, Protocol {
 
     /**
      * rocketmq namesrv host

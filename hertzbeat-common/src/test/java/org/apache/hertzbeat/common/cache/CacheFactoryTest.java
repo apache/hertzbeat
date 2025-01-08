@@ -18,7 +18,9 @@
 package org.apache.hertzbeat.common.cache;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.LinkedList;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -27,8 +29,13 @@ import org.junit.jupiter.api.Test;
 public class CacheFactoryTest {
     @Test
     void common() {
-        assertNotNull(CacheFactory.getAlertConvergeCache());
+        CacheFactory.setNoticeCache(new LinkedList<>());
+        CacheFactory.setAlertSilenceCache(new LinkedList<>());
         assertNotNull(CacheFactory.getAlertSilenceCache());
         assertNotNull(CacheFactory.getNoticeCache());
+        CacheFactory.clearNoticeCache();
+        CacheFactory.clearAlertSilenceCache();
+        assertNull(CacheFactory.getAlertSilenceCache());
+        assertNull(CacheFactory.getNoticeCache());
     }
 }

@@ -55,12 +55,11 @@ public class AlertDefinesController {
     public ResponseEntity<Message<Page<AlertDefine>>> getAlertDefines(
             @Parameter(description = "Alarm Definition ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
             @Parameter(description = "Search-Target Expr Template", example = "x") @RequestParam(required = false) String search,
-            @Parameter(description = "Alarm Definition Severity", example = "6565463543") @RequestParam(required = false) Byte priority,
             @Parameter(description = "Sort field, default id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(ids, search, priority, sort, order, pageIndex, pageSize);
+        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(ids, search, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertDefinePage));
     }
 

@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MemcachedProtocol implements CommonRequestProtocol {
+public class MemcachedProtocol implements CommonRequestProtocol, Protocol {
 
     /**
      * MEMCACHED HOST IP ADDRESS OR DOMAIN NAME

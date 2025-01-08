@@ -22,18 +22,13 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.TagDao;
-import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.apache.hertzbeat.manager.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -52,9 +47,6 @@ public class TagServiceImpl implements TagService {
 
     @Autowired
     private TagDao tagDao;
-
-    @Autowired
-    private TagMonitorBindDao tagMonitorBindDao;
 
     @Override
     public void addTags(List<Tag> tags) {
@@ -127,23 +119,6 @@ public class TagServiceImpl implements TagService {
         if (CollectionUtils.isEmpty(ids)){
             return;
         }
-        if (tagMonitorBindDao.countByTagIdIn(ids) != 0) {
-            throw new CommonException("The tag is in use and cannot be deleted.");
-        }
         tagDao.deleteTagsByIdIn(ids);
     }
-
-    @Override
-    public List<Tag> listTag(Set<Long> ids) {
-        return tagDao.findByIdIn(ids);
-    }
-
-    @Override
-    public void deleteMonitorSystemTags(Monitor monitor) {
-        if (CollectionUtils.isNotEmpty(monitor.getTags())) {
-            List<Tag> tags = monitor.getTags().stream().filter(tag ->  Objects.nonNull(tag.getType()) && tag.getType() == (byte) 0).collect(Collectors.toList());
-            tagDao.deleteAll(tags);
-        }
-    }
-
 }

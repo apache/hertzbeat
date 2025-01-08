@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,6 +29,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.YamlImExportServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,17 +91,15 @@ class YamlImExportServiceTest {
         paramDTO.setField("Test");
         paramDTO.setValue("Test");
         AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
-        monitorDTO.setTags(List.of(1L, 2L));
+        monitorDTO.setLabels(Map.of("env", "prod"));
         monitorDTO.setIntervals(1);
         monitorDTO.setStatus((byte) 1);
         AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto1 = new AbstractImExportServiceImpl.ExportMonitorDTO();
         exportMonitorDto1.setParams(List.of(paramDTO));
         exportMonitorDto1.setMonitor(monitorDTO);
-        exportMonitorDto1.setMetrics(List.of("Test1", "Test2"));
         AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto2 = new AbstractImExportServiceImpl.ExportMonitorDTO();
         exportMonitorDto2.setParams(List.of(paramDTO));
         exportMonitorDto2.setMonitor(monitorDTO);
-        exportMonitorDto2.setMetrics(List.of("Test1", "Test2"));
 
         List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = Arrays.asList(
                 exportMonitorDto1,
@@ -110,7 +110,7 @@ class YamlImExportServiceTest {
         yamlImExportService.writeOs(monitorList, os);
 
         String output = os.toString();
-        assertTrue(output.contains("metrics:\n  - Test1"));
+        assertFalse(output.contains("metrics:\n  - Test1"));
         assertTrue(output.contains("  params:\n  - &id002\n    field: Test"));
     }
 

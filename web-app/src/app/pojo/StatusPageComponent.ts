@@ -17,14 +17,12 @@
  * under the License.
  */
 
-import { TagItem } from './NoticeRule';
-
 export class StatusPageComponent {
   id!: number;
   orgId!: number;
   name!: string;
   description!: string;
-  tag!: TagItem;
+  labels!: Record<string, string>;
   // calculate status method: 0-auto 1-manual
   method: number = 0;
   // config state when use manual method: 0-Normal 1-Abnormal 2-unknown
