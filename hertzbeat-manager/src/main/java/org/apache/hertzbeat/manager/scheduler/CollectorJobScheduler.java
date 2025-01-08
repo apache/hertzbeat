@@ -244,7 +244,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 .setIdentity(identity)
                 .build();
         ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg().toString())) {
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg().toStringUtf8())) {
             return false;
         }
         log.info("send offline collector message to {} success", identity);
@@ -264,7 +264,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 .setIdentity(identity)
                 .build();
         ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg().toString())) {
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg().toStringUtf8())) {
             return false;
         }
         log.info("send online collector message to {} success", identity);
