@@ -471,7 +471,7 @@ metrics:
   - name: topic_total_bytes_in_persec
     i18n:
       zh-CN: 每秒主题流入字节
-      en-US: Topic Bytes In PerSec
+      en-US: Total Bytes In Per Second
     priority: 7
     fields:
       - field: EventType
@@ -522,7 +522,7 @@ metrics:
   - name: each_topic_bytes_in_persec
     i18n:
       zh-CN: 各主题每秒流入字节
-      en-US: Topic Bytes In PerSec
+      en-US: Bytes In Per Topic Per Second
     priority: 7
     fields:
       - field: topic
@@ -578,7 +578,7 @@ metrics:
   - name: topic_bytes_out_persec
     i18n:
       zh-CN: 主题每秒流出字节
-      en-US: Topic Bytes Out PerSec
+      en-US: Total Bytes Out Per Second
     priority: 8
     fields:
       - field: EventType
@@ -629,7 +629,7 @@ metrics:
   - name: each_topic_bytes_out_persec
     i18n:
       zh-CN: 各主题每秒流出字节
-      en-US: Topic Bytes In PerSec
+      en-US: Bytes Out Per Topic Per Second
     priority: 9
     fields:
       - field: topic
