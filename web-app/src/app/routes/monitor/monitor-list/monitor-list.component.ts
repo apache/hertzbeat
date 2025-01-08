@@ -63,7 +63,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   checkedMonitorIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
   exportJsonButtonLoading = false;
-  exportYamlButtonLoading = false;
   exportExcelButtonLoading = false;
   filterContent!: string;
   filterStatus: number = 9;
@@ -333,15 +332,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       case 'EXCEL':
         this.exportExcelButtonLoading = true;
         break;
-      case 'YAML':
-        this.exportYamlButtonLoading = true;
-        break;
     }
     const exportMonitors$ = this.monitorSvc
       .exportMonitors(this.checkedMonitorIds, type)
       .pipe(
         finalize(() => {
-          this.exportYamlButtonLoading = false;
           this.exportExcelButtonLoading = false;
           this.exportJsonButtonLoading = false;
           exportMonitors$.unsubscribe();

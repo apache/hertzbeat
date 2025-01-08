@@ -579,8 +579,10 @@ public class MonitorServiceImpl implements MonitorService {
             if (StringUtils.isNotBlank(search)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + search + "%");
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
+                Predicate predicateId = criteriaBuilder.like(root.get("id"), "%" + search + "%");
                 orList.add(predicateHost);
                 orList.add(predicateName);
+                orList.add(predicateId);
             }
             if (StringUtils.isNotBlank(labels)) {
                 String[] labelAres = labels.split(",");
@@ -861,7 +863,6 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             // create grafana dashboard
             if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null && grafanaDashboard.isEnabled()) {
                 dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
