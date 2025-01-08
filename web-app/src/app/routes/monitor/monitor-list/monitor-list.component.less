@@ -1,3 +1,4 @@
+@import '@delon/theme/index';
 ::ng-deep {
   .monitor-select-menu-modal {
     .ant-spin-container {
@@ -5,4 +6,61 @@
       overflow: hidden;
     }
   }
+}
+
+.export-type-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.export-type-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.export-type-card:hover {
+  border-color: @primary-color;
+  box-shadow: 0 0 8px rgba(24, 144, 255, 0.2);
+}
+
+.export-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-right: 16px;
+  font-size: 24px;
+  color: @primary-color;
+  background: rgba(24, 144, 255, 0.1);
+  border-radius: 8px;
+}
+
+.export-type-info {
+  flex: 1;
+}
+
+.export-type-info h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.export-type-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.export-type-card.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

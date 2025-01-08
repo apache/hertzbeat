@@ -236,8 +236,6 @@ export class MonitorEditComponent implements OnInit {
   }
 
   onCancel() {
-    let app = this.monitor.app;
-    app = app ? app : '';
-    this.router.navigateByUrl(`/monitors?app=${app}`);
+    this.router.navigateByUrl(`/monitors`);
   }
 }
