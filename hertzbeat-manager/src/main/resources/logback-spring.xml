@@ -93,10 +93,9 @@
 
     <!-- Production environment configuration -->
     <springProfile name="prod">
-        <root level="DEBUG">
+        <root level="INFO">
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
-            <appender-ref ref="ConsoleAppender"/>
         </root>
         <!-- North log -->
         <Logger name="com.obs.services.AbstractClient" level="OFF"
