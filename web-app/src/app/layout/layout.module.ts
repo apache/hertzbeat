@@ -46,7 +46,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzListComponent, NzListItemActionComponent, NzListItemComponent, NzListItemMetaComponent } from 'ng-zorro-antd/list';
 import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
-import { NzCheckboxComponent } from ‘ng-zorro-antd/checkbox’;
+import { NzCheckboxComponent } from 'ng-zorro-antd/checkbox';
 const PASSPORT = [LayoutPassportComponent];
 
 @NgModule({
