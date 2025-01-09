@@ -29,7 +29,7 @@ module.exports = {
   themeConfig: {
     matomo: {
       matomoUrl: 'https://analytics.apache.org/',
-      siteId: 'ID',
+      siteId: '67',
       phpLoader: 'matomo.php',
       jsLoader: 'matomo.js',
     },
