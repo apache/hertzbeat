@@ -609,28 +609,30 @@
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'alert.export.switch-type' | i18n"
   (nzOnCancel)="onExportTypeModalCancel()"
-  nzOkDisabled="true"
-  [nzFooter]="switchExportTypeModalFooter"
+  nzWidth="600px"
+  [nzFooter]="null"
 >
   <ng-container *nzModalContent>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('YAML')" [nzLoading]="exportYamlButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'alert.export.use-type' | i18n : { type: 'YAML' } }}
-      </button>
-    </p>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('JSON')" [nzLoading]="exportJsonButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'alert.export.use-type' | i18n : { type: 'JSON' } }}
-      </button>
-    </p>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('EXCEL')" [nzLoading]="exportExcelButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'alert.export.use-type' | i18n : { type: 'EXCEL' } }}
-      </button>
-    </p>
+    <div class="export-type-container">
+      <div class="export-type-card" (click)="exportDefines('JSON')" [class.loading]="exportJsonButtonLoading">
+        <div class="export-type-icon">
+          <i nz-icon nzType="code" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>JSON</h3>
+          <p>{{ 'alert.export.use-type' | i18n : { type: 'JSON' } }}</p>
+        </div>
+      </div>
+      <div class="export-type-card" (click)="exportDefines('EXCEL')" [class.loading]="exportExcelButtonLoading">
+        <div class="export-type-icon">
+          <i nz-icon nzType="file-excel" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>EXCEL</h3>
+          <p>{{ 'alert.export.use-type' | i18n : { type: 'EXCEL' } }}</p>
+        </div>
+      </div>
+    </div>
   </ng-container>
 </nz-modal>
 

@@ -116,7 +116,7 @@ public class MonitorsController {
     @Operation(summary = "export monitor config", description = "export monitor config")
     public void export(
             @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam List<Long> ids,
-            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
+            @Parameter(description = "Export Type:JSON,EXCEL") @RequestParam(defaultValue = "JSON") String type,
             HttpServletResponse res) throws Exception {
         monitorService.export(ids, type, res);
     }

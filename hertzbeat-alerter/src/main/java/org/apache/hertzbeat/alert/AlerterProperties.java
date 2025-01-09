@@ -80,6 +80,11 @@ public class AlerterProperties {
     private EntranceProperties entrance;
 
     /**
+     * Inhibit configuration properties
+     */
+    private InhibitProperties inhibit;
+
+    /**
      * Data entry configuration properties
      */
     @Getter
@@ -103,6 +108,19 @@ public class AlerterProperties {
              */
             private boolean enabled = true;
         }
+    }
+
+    /**
+     * Inhibit configuration properties
+     */
+    @Getter
+    @Setter
+    public static class InhibitProperties {
+
+        /**
+         * inhibit rule cache ttl, default 4h
+         */
+        private long ttl = 4 * 60 * 60 * 1000L;
     }
 
 }

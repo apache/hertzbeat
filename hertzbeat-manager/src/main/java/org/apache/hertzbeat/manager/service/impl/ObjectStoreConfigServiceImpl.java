@@ -122,7 +122,7 @@ public class ObjectStoreConfigServiceImpl extends
             String host = url.getHost();
 
             // Verify whether it is a Huawei Cloud domain name
-            if (!host.endsWith("myhuaweicloud.com")) {
+            if (!host.endsWith(".myhuaweicloud.com")) {
                 throw new IllegalArgumentException("Invalid OBS endpoint domain. Only myhuaweicloud.com is allowed");
             }
         } catch (Exception e) {
