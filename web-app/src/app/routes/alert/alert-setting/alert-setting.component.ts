@@ -28,7 +28,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
-import { finalize, map } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineService } from '../../../service/alert-define.service';
@@ -68,7 +68,6 @@ export class AlertSettingComponent implements OnInit {
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
   exportJsonButtonLoading = false;
-  exportYamlButtonLoading = false;
   exportExcelButtonLoading = false;
   appHierarchies!: any[];
   switchExportTypeModalFooter: ModalButtonOptions[] = [
@@ -375,15 +374,11 @@ export class AlertSettingComponent implements OnInit {
       case 'EXCEL':
         this.exportExcelButtonLoading = true;
         break;
-      case 'YAML':
-        this.exportYamlButtonLoading = true;
-        break;
     }
     const exportDefines$ = this.alertDefineSvc
       .exportAlertDefines(this.checkedDefineIds, type)
       .pipe(
         finalize(() => {
-          this.exportYamlButtonLoading = false;
           this.exportExcelButtonLoading = false;
           this.exportJsonButtonLoading = false;
           exportDefines$.unsubscribe();

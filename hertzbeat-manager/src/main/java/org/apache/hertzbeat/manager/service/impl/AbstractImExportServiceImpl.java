@@ -108,7 +108,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                     return param;
                 })
                 .toList());
-        exportMonitor.setMetrics(dto.getMetrics());
         exportMonitor.getMonitor().setCollector(dto.getCollector());
         return exportMonitor;
     }
@@ -129,7 +128,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         if (exportMonitor.getMonitor() != null) {
             monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
         }
-        monitorDto.setMetrics(exportMonitor.metrics);
         if (exportMonitor.params != null) {
             monitorDto.setParams(exportMonitor.params.stream()
                     .map(it -> {
@@ -150,6 +148,9 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         return "hertzbeat_monitor_" + LocalDate.now();
     }
 
+    /**
+     * Export Monitor DTO
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -159,10 +160,11 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private MonitorDTO monitor;
         @ExcelCollection(name = "Params")
         private List<ParamDTO> params;
-        @ExcelCollection(name = "Metrics")
-        private List<String> metrics;
     }
 
+    /**
+     * Monitor DTO
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -180,12 +182,15 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private Byte status;
         @Excel(name = "Description")
         private String description;
-        @Excel(name = "labels")
+        @Excel(name = "Labels")
         private Map<String, String> labels;
         @Excel(name = "Collector")
         private String collector;
     }
 
+    /**
+     * Param DTO
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
