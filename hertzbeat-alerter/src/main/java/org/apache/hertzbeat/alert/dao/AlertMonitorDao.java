@@ -18,8 +18,8 @@
 package org.apache.hertzbeat.alert.dao;
 
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -36,12 +36,13 @@ public interface AlertMonitorDao extends JpaRepository<Monitor, Long>, JpaSpecif
      * @return Monitor the list
      */
     List<Monitor> findMonitorsByStatus(Byte status);
-    
+
+
     /**
-     * find monitor bind tags by monitorId
-     * @param monitorId monitorId
-     * @return bind tags
+     * Query the monitoring 
+     * @param id id
+     * @return monitor
      */
-    @Query("select tag from Tag tag join TagMonitorBind bind on bind.tagId = tag.id where bind.monitorId = :monitorId")
-    List<Tag> findMonitorIdBindTags(@Param(value = "monitorId") Long monitorId);
+    @Query("select monitor from Monitor monitor where monitor.id = :id")
+    Optional<Monitor> findMonitorById(@Param(value = "id") Long id);
 }

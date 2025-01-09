@@ -18,12 +18,11 @@
 package org.apache.hertzbeat.alert.dao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
  * AlertDefine Dao
@@ -37,31 +36,16 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
     void deleteAlertDefinesByIdIn(Set<Long> alertDefineIds);
 
     /**
-     * Query the default alarm thresholds based on the monitoring metrics type
-     * @param app monitoring type
-     * @param metric metrics
+     * Query the alarm define by type
+     * @param type alarm type 
      * @return alarm defines
      */
-    List<AlertDefine> queryAlertDefinesByAppAndMetricAndPresetTrueAndEnableTrue(String app, String metric);
+    List<AlertDefine> findAlertDefinesByTypeAndEnableTrue(String type);
 
     /**
-     * Query app metric alert define
-     * @param app app
-     * @param metric metric
-     * @return alert define
+     * Query the alarm define by name
+     * @param name alarm name
+     * @return alarm define
      */
-    List<AlertDefine> queryAlertDefineByAppAndMetric(String app, String metric);
-
-    /**
-     * Query the alarm definition list associated with the monitoring ID
-     * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @return Alarm Definition List
-     */
-    @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id "
-            + "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
-    List<AlertDefine> queryAlertDefinesByMonitor(@Param(value = "monitorId") Long monitorId,
-                                                 @Param(value = "app") String app,
-                                                 @Param(value = "metrics") String metrics);
+    Optional<AlertDefine> findAlertDefineByName(String name);
 }

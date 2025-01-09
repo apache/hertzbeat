@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.obs.services.ObsClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
-import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.springframework.beans.factory.InitializingBean;
@@ -122,7 +122,7 @@ public class ObjectStoreConfigServiceImpl extends
             String host = url.getHost();
 
             // Verify whether it is a Huawei Cloud domain name
-            if (!host.endsWith("myhuaweicloud.com")) {
+            if (!host.endsWith(".myhuaweicloud.com")) {
                 throw new IllegalArgumentException("Invalid OBS endpoint domain. Only myhuaweicloud.com is allowed");
             }
         } catch (Exception e) {

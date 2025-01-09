@@ -25,7 +25,7 @@ import java.util.Objects;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.TimeZoneUtil;
-import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;

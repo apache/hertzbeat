@@ -45,3 +45,13 @@ keywords: [open-source monitoring system, open-source message middleware monitor
 | PartitionNum  | None | Number of Partitions |
 | earliest      | None | Earliest Offset  |
 | latest        | None | Latest Offset    |
+
+#### Metric Set：consumer_detail
+
+|   Metric Name   | Unit | Help Description                   |
+|-----------|--|------------------------------------|
+| GroupId | None | Consumer Group Id                  |
+| Group Member Num     | None | Number of Consumer Instances       |
+| Subscribed Topic Name      | None | Topic Name Subscribed by the Group |
+| Offsets of Each Partition     | None | Offsets for Each Partition         |
+| Lag      | None | Lag of Consumer                    |
