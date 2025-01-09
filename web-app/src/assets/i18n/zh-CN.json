@@ -700,6 +700,7 @@
   "about.doc": "文档中心",
   "about.upgrade": "升级指引",
   "about.star": "点赞支持",
+  "about.not-show-next-login": "下次登录不再弹出此弹窗",
   "status.page": "状态页面",
   "status.org.name": "组织名称",
   "status.org.name.tip": "状态页面展示的组织团队名称,如 TanCloud",
