@@ -44,7 +44,8 @@
       "inhibit": "Alarm Inhibit",
       "setting": "Threshold Rule",
       "silence": "Alarm Silence",
-      "dispatch": "Notification"
+      "dispatch": "Notification",
+      "integration": "Integration",
     },
     "advanced": {
       "": "Advanced",

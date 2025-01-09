@@ -44,7 +44,8 @@
       "converge": "告警收斂",
       "inhibit": "告警抑制",
       "silence": "告警靜默",
-      "dispatch": "消息通知"
+      "dispatch": "消息通知",
+      "integration": "集成接入"
     },
     "bulletin": {
       "new": "新增看板項",
