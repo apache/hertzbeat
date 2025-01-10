@@ -153,7 +153,7 @@
           "text": "Integration",
           "i18n": "menu.alert.integration",
           "icon": "anticon-api",
-          "link": "/alert/integration"
+          "link": "/alert/integration/webhook"
         },
         {
           "text": "Group",
