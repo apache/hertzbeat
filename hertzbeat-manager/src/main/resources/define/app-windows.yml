@@ -403,7 +403,7 @@ metrics:
       - size=hrStorageSize * hrStorageAllocationUnits
       - free=(hrStorageSize - hrStorageUsed) * hrStorageAllocationUnits
       - used=hrStorageUsed * hrStorageAllocationUnits
-      - usage= hrStorageUsed / hrStorageSize * 100
+      - usage= hrStorageUsed / (hrStorageSize + 0.001) * 100
     units:
       - size=B->Mb
       - used=B->Mb
