@@ -302,4 +302,8 @@ export class AlertInhibitComponent implements OnInit {
         );
     }
   }
+  onFilterChange(): void {
+    this.pageIndex = 1;
+    this.loadInhibitTable();
+  }
 }

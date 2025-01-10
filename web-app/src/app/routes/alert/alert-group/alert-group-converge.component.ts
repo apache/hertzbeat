@@ -307,4 +307,8 @@ export class AlertGroupConvergeComponent implements OnInit {
         );
     }
   }
+  onFilterChange(): void {
+    this.pageIndex = 1;
+    this.loadGroupConvergeTable();
+  }
 }
