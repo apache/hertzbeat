@@ -694,6 +694,7 @@
   "about.doc": "Document",
   "about.upgrade": "Upgrade",
   "about.star": "Star",
+  "about.not-show-next-login": " Do not show this popup on next login",
   "status.page": "Status Page",
   "status.org.name": "Organization Name",
   "status.org.name.tip": "The name of the organization team displayed on the status page, such as TanCloud",
