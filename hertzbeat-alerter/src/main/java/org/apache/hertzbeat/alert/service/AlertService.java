@@ -83,17 +83,4 @@ public interface AlertService {
      * @return Alarm statistics information 
      */
     AlertSummary getAlertsSummary();
-
-    /**
-     * A third party reports an alarm 
-     * @param alertReport The alarm information 
-     */
-    void addNewAlertReport(SingleAlert alertReport);
-
-    /**
-     * Save external alarms of cloud services
-     * @param cloudServiceName cloud service name,Such as tencloud
-     * @param alertReport alert report json string
-     */
-    void addNewAlertReportFromCloud(String cloudServiceName, String alertReport);
 }

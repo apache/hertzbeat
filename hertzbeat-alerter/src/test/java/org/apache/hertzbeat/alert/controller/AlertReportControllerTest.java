@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.HashMap;
-import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
+import org.apache.hertzbeat.alert.dto.TencentCloudExternAlert;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -58,17 +58,17 @@ class AlertReportControllerTest {
 
     @Test
     void addNewAlertReportTencent() throws Exception {
-        TenCloudAlertReport.Dimensions dimensions = new TenCloudAlertReport.Dimensions();
+        TencentCloudExternAlert.Dimensions dimensions = new TencentCloudExternAlert.Dimensions();
         dimensions.setUnInstanceId("3333");
 
-        TenCloudAlertReport.AlarmObjInfo alarmObjInfo = new TenCloudAlertReport.AlarmObjInfo();
+        TencentCloudExternAlert.AlarmObjInfo alarmObjInfo = new TencentCloudExternAlert.AlarmObjInfo();
         alarmObjInfo.setRegion("Guangzhou");
         alarmObjInfo.setNamespace("Guangzhou1");
         alarmObjInfo.setAppId("1111");
         alarmObjInfo.setUin("2222");
         alarmObjInfo.setDimensions(dimensions);
 
-        TenCloudAlertReport.Conditions conditions = new TenCloudAlertReport.Conditions();
+        TencentCloudExternAlert.Conditions conditions = new TencentCloudExternAlert.Conditions();
         conditions.setMetricName("xx");
         conditions.setMetricShowName("xxx");
         conditions.setCalcType("a");
@@ -81,12 +81,12 @@ class AlertReportControllerTest {
         conditions.setEventName("CVS");
         conditions.setEventShowName("Core error");
 
-        TenCloudAlertReport.AlarmPolicyInfo alarmPolicyInfo = new TenCloudAlertReport.AlarmPolicyInfo();
+        TencentCloudExternAlert.AlarmPolicyInfo alarmPolicyInfo = new TencentCloudExternAlert.AlarmPolicyInfo();
         alarmPolicyInfo.setPolicyTypeCname("x");
         alarmPolicyInfo.setPolicyName("Test1");
         alarmPolicyInfo.setConditions(conditions);
 
-        TenCloudAlertReport report = TenCloudAlertReport.builder()
+        TencentCloudExternAlert report = TencentCloudExternAlert.builder()
                 .sessionId("123")
                 .alarmStatus("1")
                 .alarmType("event")

@@ -20,12 +20,12 @@ package org.apache.hertzbeat.alert.controller;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.service.AlertService;
-import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,23 +40,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(path = "/api/alerts/report", produces = {APPLICATION_JSON_VALUE})
 @Slf4j
 public class AlertReportController {
-
-    @Autowired
-    private AlertService alertService;
-
-    @PostMapping("/{cloud}")
-    @Operation(summary = "Interface for reporting external alarm information of cloud service")
-    public ResponseEntity<Message<Void>> addNewAlertReportFromCloud(@PathVariable("cloud") String cloudServiceName,
-                                                                    @RequestBody String alertReport) {
-        alertService.addNewAlertReportFromCloud(cloudServiceName, alertReport);
-        return ResponseEntity.ok(Message.success("Add report success"));
-    }
     
-    @PostMapping
-    @Operation(summary = "Interface for reporting external and general alarm information",
-            description = "The interface is used to report external and general alarm information")
-    public ResponseEntity<Message<Void>> addNewAlertReport(@RequestBody SingleAlert alertReport) {
-        alertService.addNewAlertReport(alertReport);
-        return ResponseEntity.ok(Message.success("Add report success"));
+    private final List<ExternAlertService> externAlertServiceList;
+
+    public AlertReportController(List<ExternAlertService> externAlertServiceList) {
+        this.externAlertServiceList = externAlertServiceList;
+    }
+
+    @PostMapping("/{source}")
+    @Operation(summary = "Api for receive external alarm information")
+    public ResponseEntity<Message<Void>> receiveExternAlert(@PathVariable(value = "source", required = false) String source, 
+                                                            @RequestBody String content) {
+        log.info("Receive extern alert from source: {}, content: {}", source, content);
+        if (!StringUtils.hasText(source)) {
+            source = "default";
+        }
+        for (ExternAlertService externAlertService : externAlertServiceList) {
+            if (externAlertService.supportSource().equals(source)) {
+                externAlertService.addExternAlert(content);
+                return ResponseEntity.ok(Message.success("Add extern alert success"));
+            }
+        }
+        log.warn("Not support extern alert from source: {}", source);
+        return ResponseEntity.ok(Message.success("Not support the " + source + " source alert"));
     }
 }
