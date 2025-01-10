@@ -61,17 +61,17 @@ export class AlertIntegrationComponent implements OnInit {
     this.route.params.subscribe(params => {
       const sourceId = params['source'];
       if (sourceId) {
-        // 查找匹配的数据源
+        // Find matching data source
         const source = this.dataSources.find(s => s.id === sourceId);
         if (source) {
           this.selectedSource = source;
         } else {
-          // 如果找不到匹配的数据源，使用第一个作为默认值
+          // If no matching source found, use the first one as default
           this.selectedSource = this.dataSources[0];
           this.router.navigate(['/alert/integration/', this.selectedSource.id]);
         }
       } else {
-        // 没有路由参数时使用第一个数据源
+        // When no route params, use the first data source
         this.selectedSource = this.dataSources[0];
         this.router.navigate(['/alert/integration/', this.selectedSource.id]);
       }

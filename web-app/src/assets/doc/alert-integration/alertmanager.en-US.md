@@ -5,3 +5,5 @@ HertzBeat is fully compatible with Prometheus alert data format. You can configu
 ## Prometheus Alert Configuration
 
 Add the following configuration to your Prometheus configuration file:
+
+```
