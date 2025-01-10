@@ -45,7 +45,7 @@
       "setting": "Threshold Rule",
       "silence": "Alarm Silence",
       "dispatch": "Notification",
-      "integration": "Integration",
+      "integration": "Integration"
     },
     "advanced": {
       "": "Advanced",

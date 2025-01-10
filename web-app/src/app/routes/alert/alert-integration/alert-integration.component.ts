@@ -25,6 +25,11 @@ const MARKDOWN_DOC_PATH = './assets/doc/alert-integration';
 export class AlertIntegrationComponent implements OnInit {
   dataSources: DataSource[] = [
     {
+      id: 'webhook',
+      name: this.i18nSvc.fanyi('alert.integration.source.webhook'),
+      icon: 'assets/logo.svg'
+    },
+    {
       id: 'prometheus',
       name: this.i18nSvc.fanyi('alert.integration.source.prometheus'),
       icon: 'assets/img/integration/prometheus.svg'
