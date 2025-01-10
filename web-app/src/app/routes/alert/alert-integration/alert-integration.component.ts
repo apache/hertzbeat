@@ -1,17 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
-import { I18nPipe } from '@delon/theme';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Component, Inject, OnInit } from '@angular/core';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN, I18nPipe } from '@delon/theme';
+import { SharedModule } from '@shared';
+import { NzDividerComponent } from 'ng-zorro-antd/divider';
 import { MarkdownModule } from 'ngx-markdown';
-import {NzDividerComponent} from "ng-zorro-antd/divider";
-import {SharedModule} from "@shared";
 
 interface DataSource {
   id: string;
   name: string;
   icon: string;
-  document: string;
 }
+
+const MARKDOWN_DOC_PATH = './assets/doc/alert-integration';
 
 @Component({
   selector: 'app-alert-integration',
@@ -24,73 +26,46 @@ export class AlertIntegrationComponent implements OnInit {
   dataSources: DataSource[] = [
     {
       id: 'prometheus',
-      name: 'Prometheus',
-      icon: 'assets/img/integration/prometheus.svg',
-      document: `# Prometheus
-
-HertzBeat 完全兼容 Prometheus 的告警数据格式，您可以通过配置 Prometheus 的告警规则将告警数据发送到 HertzBeat。
-
-## Prometheus 告警配置
-
-在 Prometheus 的配置文件中添加以下配置：
-
-\`\`\`yaml
-alerting:
-  alertmanagers:
-  - static_configs:
-    - targets:
-      - '<hertzbeat-url>/api/alert/prometheus/webhook'
-\`\`\`
-
-## 告警规则示例
-
-\`\`\`yaml
-groups:
-- name: example
-  rules:
-  - alert: HighRequestLatency
-    expr: job:request_latency_seconds:mean5m{job="myjob"} > 0.5
-    for: 10m
-    labels:
-      severity: page
-    annotations:
-      summary: High request latency
-\`\`\`
-
-更多信息请参考 [Prometheus 官方文档](https://prometheus.io/docs/alerting/latest/configuration/)。
-      `
+      name: this.i18nSvc.fanyi('alert.integration.source.prometheus'),
+      icon: 'assets/img/integration/prometheus.svg'
     },
     {
-      id: 'tencent-cloud',
-      name: '腾讯云',
-      icon: 'assets/img/integration/tencent.svg',
-      document: `# 腾讯云告警接入
-
-腾讯云可以通过配置告警回调将告警数据发送到 HertzBeat。
-
-## 配置步骤
-
-1. 登录腾讯云控制台
-2. 在告警策略中配置回调地址：\`<hertzbeat-url>/api/alert/tencent/webhook\`
-3. 选择推送内容模板...
-
-更多信息请参考腾讯云官方文档。
-      `
+      id: 'tencent',
+      name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
+      icon: 'assets/img/integration/tencent.svg'
     }
   ];
 
   selectedSource: DataSource | null = null;
+  markdownContent: string = '';
 
-  constructor() {
-    // 在构造函数中设置默认选中的数据源
+  constructor(private http: HttpClient, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {
     this.selectedSource = this.dataSources[0];
   }
 
   ngOnInit() {
-    // 不再需要在这里设置默认选中项，因为已经在构造函数中设置了
+    if (this.selectedSource) {
+      this.loadMarkdownContent(this.selectedSource);
+    }
   }
 
   selectSource(source: DataSource) {
     this.selectedSource = source;
+    this.loadMarkdownContent(source);
+  }
+
+  private loadMarkdownContent(source: DataSource) {
+    const lang = this.i18nSvc.currentLang;
+    const path = `${MARKDOWN_DOC_PATH}/${source.id}.${lang}.md`;
+
+    this.http.get(path, { responseType: 'text' }).subscribe({
+      next: content => {
+        this.markdownContent = content;
+      },
+      error: error => {
+        const enPath = `${MARKDOWN_DOC_PATH}/${source.id}.en-US.md`;
+        this.http.get(enPath, { responseType: 'text' }).subscribe(content => (this.markdownContent = content));
+      }
+    });
   }
 }

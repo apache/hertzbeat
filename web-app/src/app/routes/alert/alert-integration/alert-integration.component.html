@@ -44,7 +44,7 @@
   <div class="doc-content">
     <ng-container *ngIf="selectedSource">
       <h2>{{ selectedSource.name }}</h2>
-      <markdown [data]="selectedSource.document"></markdown>
+      <markdown [data]="markdownContent"></markdown>
     </ng-container>
   </div>
 </div>
