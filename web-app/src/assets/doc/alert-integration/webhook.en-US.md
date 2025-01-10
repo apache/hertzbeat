@@ -1,7 +1,52 @@
-# Prometheus Alert Integration
+HertzBeat provides an external API interface that allows external systems to push alert data to the HertzBeat alert platform via Webhook.
 
-HertzBeat is fully compatible with Prometheus alert data format. You can configure Prometheus alerting rules to send alerts to HertzBeat.
+---
 
-## Prometheus Alert Configuration
+### API Endpoint
 
-Add the following configuration to your Prometheus configuration file:
+`POST /api/alerts/report`
+
+---
+
+### Request Headers
+
+- `Content-Type`: `application/json`
+- `Authorization`: `Bearer ${token}`
+
+---
+
+### Request Body
+
+```json
+{
+  "labels": {
+    "alertname": "HighCPUUsage",
+    "priority": "critical",
+    "instance": "343483943"
+  },
+  "annotations": {
+    "summary": "High CPU usage detected"
+  },
+  "content": "The CPU usage on instance 343483943 is critically high.",
+  "status": "firing",
+  "triggerTimes": 3,
+  "startAt": "2025-01-10T12:00:00.000Z",
+  "activeAt": "2025-01-10T12:05:00.000Z",
+  "endAt": null
+}
+```
+
+Field Description
+•	labels: Alert labels
+•	alertname: Name of the alert rule
+•	priority: Alert priority (warning, critical)
+•	instance: Alert instance
+•	annotations: Alert annotation information
+•	summary: Alert summary
+•	description: Detailed description of the alert
+•	content: Alert content
+•	status: Alert status (firing, resolved)
+•	triggerTimes: Number of times the alert was triggered
+•	startAt: Start time of the alert
+•	activeAt: Time when the alert became active
+•	endAt: End time of the alert (if resolved)

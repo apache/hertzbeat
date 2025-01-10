@@ -35,10 +35,15 @@ export class AlertIntegrationComponent implements OnInit {
       icon: 'assets/img/integration/prometheus.svg'
     },
     {
-      id: 'tencent',
-      name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
-      icon: 'assets/img/integration/tencent.svg'
-    }
+      id: 'alertmanager',
+      name: this.i18nSvc.fanyi('alert.integration.source.alertmanager'),
+      icon: 'assets/img/integration/prometheus.svg'
+    },
+    // {
+    //   id: 'tencent',
+    //   name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
+    //   icon: 'assets/img/integration/tencent.svg'
+    // }
   ];
 
   selectedSource: DataSource | null = null;

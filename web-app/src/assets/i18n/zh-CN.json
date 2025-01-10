@@ -382,6 +382,7 @@
   "alert.integration.source": "集成告警源",
   "alert.integration.source.webhook": "默认Webhook",
   "alert.integration.source.prometheus": "Prometheus",
+  "alert.integration.source.alertmanager": "Alertmanager",
   "alert.integration.source.tencent": "腾讯云监控",
   "dashboard.alerts.title": "最近告警列表",
   "dashboard.alerts.title-no": "最近未处理告警",

@@ -1,32 +1,69 @@
-## 告警字段說明
+> 由于 Prometheus Server 本身并不支持 HTTP API 的告警发送，因此需要借助外部脚本或者 Alertmanager 来实现告警发送。  
+> 若使用 Alertmanager，可参考 **Alertmanager 集成文档**。这里提供非部署 Alertmanager 的 Prometheus Server 的告警配置方法。
 
-- `alert`: 告警規則名稱
-- `expr`: 告警觸發條件表達式
-- `for`: 告警持續時間閾值
-- `labels`: 告警標籤
-  - `severity`: 告警級別 (warning, critical)
-- `annotations`: 告警註釋信息
-  - `summary`: 告警摘要
-  - `description`: 告警詳細描述
+### Prometheus 告警配置
 
-## 驗證配置
+1. 編輯 Prometheus 配置文件 `prometheus.yml`，添加告警規則配置
+    ```yaml
+    rule_files:
+      - "rules/*.rules.yml"
+    ```
+    > `rules/*.rules.yml` 為告警規則文件路徑，可以根據實際情況修改
+> 2. 創建告警規則文件夾 `rules`，並創建告警規則文件 `rules/*.rules.yml`
+> 3. 編輯告警規則文件，添加告警規則配置
+> 4. 重新加載 Prometheus 配置
 
-1. 確保 Prometheus 配置正確並重新加載配置
-   ```bash
-   curl -X POST http://localhost:9090/-/reload
-   ```
+### 编写脚本自动发送告警
 
-2. 檢查 Prometheus 告警規則狀態
-   ```bash
-   curl http://localhost:9090/api/v1/rules
-   ```
+> 由于 Prometheus Server 本身并不支持 HTTP API 的告警发送，这里我们使用 Python 脚本来实现告警发送。
 
-3. 觸發測試告警並在 HertzBeat 告警中心查看
+1. 安装 Python requests 库
+    ```bash
+    pip install requests
+    ```
+2. 编写 Python 脚本 `send_alerts.py`
+```python
+import requests
 
-## 常見問題
+PROMETHEUS_URL = "http://<prometheus-host>:9090/api/v1/alerts"
+WEBHOOK_URL = "http://<hertzbeat-host>:1157/api/alerts/report/prometheus"
 
-1. 確保 HertzBeat URL 可以被 Prometheus 服務器訪問
-2. 檢查 Prometheus 日誌中是否有告警發送失敗的錯誤信息
-3. 驗證告警規則表達式的正確性
+def get_prometheus_alerts():
+    response = requests.get(PROMETHEUS_URL)
+    alerts = response.json()["data"]["alerts"]
+    return alerts
+
+def send_to_webhook(alert):
+    requests.post(WEBHOOK_URL, json=alert)
+
+if __name__ == "__main__":
+    alerts = get_prometheus_alerts()
+    for alert in alerts:
+        send_to_webhook(alert)
+        
+```
+3. 运行 Python 脚本
+    ```bash
+    python send_alerts.py
+    ```
+    > 该脚本会从 Prometheus Server 获取告警数据，并通过 Webhook 推送到 HertzBeat 告警平台。
+
+## 验证配置
+
+1. 确保 Prometheus 配置正确并重新加载配置
+    ```bash
+    curl -X POST http://localhost:9090/-/reload
+    ```
+2. 检查 Prometheus 告警规则状态
+    ```bash
+    curl http://localhost:9090/api/v1/rules
+    ```
+3. 触发测试告警并在 HertzBeat 告警中心查看
+
+## 常见问题
+
+- 确保 HertzBeat URL 可以被 Prometheus 服务器访问
+- 检查 Prometheus 日志中是否有告警发送失败的错误信息
+- 验证告警规则表达式的正确性
 
 更多信息請參考 [Prometheus 告警配置文檔](https://prometheus.io/docs/alerting/latest/configuration/)
