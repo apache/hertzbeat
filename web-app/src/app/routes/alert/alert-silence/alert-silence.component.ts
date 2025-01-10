@@ -341,4 +341,8 @@ export class AlertSilenceComponent implements OnInit {
         );
     }
   }
+  onFilterChange(): void {
+    this.pageIndex = 1;
+    this.loadAlertSilenceTable();
+  }
 }
