@@ -72,7 +72,13 @@ public class MemoryDataStorage extends AbstractRealTimeDataStorage {
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
+        Map<String, CollectRep.MetricsData> metricsDataMap =
+                monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
+
+        CollectRep.MetricsData oldMetricsData = metricsDataMap.get(metrics);
+        if (oldMetricsData != null) {
+            oldMetricsData.close();
+        }
         metricsDataMap.put(metrics, metricsData);
     }
 
