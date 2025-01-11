@@ -6,7 +6,11 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, I18nPipe } from '@delon/theme';
 import { SharedModule } from '@shared';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { MarkdownModule } from 'ngx-markdown';
+
+import { AuthService } from '../../../service/auth.service';
+import {NzModalService} from "ng-zorro-antd/modal";
 
 interface DataSource {
   id: string;
@@ -49,10 +53,14 @@ export class AlertIntegrationComponent implements OnInit {
 
   selectedSource: DataSource | null = null;
   markdownContent: string = '';
+  token: string = '';
 
   constructor(
     private http: HttpClient,
+    private authSvc: AuthService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private notifySvc: NzNotificationService,
+    private modal: NzModalService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -86,6 +94,16 @@ export class AlertIntegrationComponent implements OnInit {
     this.selectedSource = source;
     this.loadMarkdownContent(source);
     this.router.navigate(['/alert/integration', source.id]);
+  }
+
+  public generateToken() {
+    this.authSvc.generateToken().subscribe(message => {
+      if (message.code === 0) {
+        this.token = message.data?.token;
+      } else {
+        this.notifySvc.warning('Failed generate token', message.msg);
+      }
+    });
   }
 
   private loadMarkdownContent(source: DataSource) {
