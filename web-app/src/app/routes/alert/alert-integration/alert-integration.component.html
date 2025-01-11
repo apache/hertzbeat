@@ -43,8 +43,30 @@
   </div>
   <div class="doc-content">
     <ng-container *ngIf="selectedSource">
-      <h2>{{ selectedSource.name }}</h2>
+      <div style="display: flex; justify-content: space-between">
+        <h2>{{ selectedSource.name }}</h2>
+        <button [nzLoading]="generateLoading" nz-button (click)="generateToken()" style="margin-right: 16px">{{
+          'alert.integration.new-token' | i18n
+        }}</button>
+      </div>
       <markdown [data]="markdownContent"></markdown>
     </ng-container>
   </div>
 </div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzMaskClosable="false"
+  nzWidth="40%"
+  nzTitle="API 认证 Token"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="handleOk()"
+  [nzOkText]="null"
+  [nzCancelText]="'common.button.return' | i18n"
+>
+  <div *nzModalContent class="-inner-content">
+    <p>'The token you generated that can be used to access the HertzBeat API.'</p>
+    <code>{{ token }}</code>
+    <p>此内容只会展示一次，请妥善保存Token.</p>
+  </div>
+</nz-modal>

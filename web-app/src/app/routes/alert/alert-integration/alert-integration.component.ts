@@ -6,11 +6,11 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, I18nPipe } from '@delon/theme';
 import { SharedModule } from '@shared';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { MarkdownModule } from 'ngx-markdown';
 
 import { AuthService } from '../../../service/auth.service';
-import {NzModalService} from "ng-zorro-antd/modal";
 
 interface DataSource {
   id: string;
@@ -54,6 +54,8 @@ export class AlertIntegrationComponent implements OnInit {
   selectedSource: DataSource | null = null;
   markdownContent: string = '';
   token: string = '';
+  isModalVisible: boolean = false;
+  generateLoading: boolean = false;
 
   constructor(
     private http: HttpClient,
@@ -97,13 +99,26 @@ export class AlertIntegrationComponent implements OnInit {
   }
 
   public generateToken() {
+    this.generateLoading = true;
     this.authSvc.generateToken().subscribe(message => {
       if (message.code === 0) {
         this.token = message.data?.token;
+        this.isModalVisible = true;
       } else {
-        this.notifySvc.warning('Failed generate token', message.msg);
+        this.notifySvc.warning('Failed to generate token', message.msg);
       }
+      this.generateLoading = false;
     });
+  }
+
+  handleCancel(): void {
+    this.isModalVisible = false;
+    this.token = '';
+  }
+
+  handleOk(): void {
+    this.isModalVisible = false;
+    this.token = '';
   }
 
   private loadMarkdownContent(source: DataSource) {

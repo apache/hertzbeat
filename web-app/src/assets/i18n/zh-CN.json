@@ -384,6 +384,7 @@
   "alert.integration.source.prometheus": "Prometheus",
   "alert.integration.source.alertmanager": "Alertmanager",
   "alert.integration.source.tencent": "腾讯云监控",
+  "alert.integration.new-token": "点击生成 Token",
   "dashboard.alerts.title": "最近告警列表",
   "dashboard.alerts.title-no": "最近未处理告警",
   "dashboard.alerts.no": "暂无未处理告警",
