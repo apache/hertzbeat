@@ -24,8 +24,8 @@
   "content": "The CPU usage on instance 343483943 is critically high.",
   "status": "firing",
   "triggerTimes": 3,
-  "startAt": "2025-01-10T12:00:00.000Z",
-  "activeAt": "2025-01-10T12:05:00.000Z",
+  "startAt": 1736580031832,
+  "activeAt": 1736580039832,
   "endAt": null
 }
 ```

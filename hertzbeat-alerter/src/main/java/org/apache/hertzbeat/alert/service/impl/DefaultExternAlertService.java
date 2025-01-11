@@ -40,7 +40,7 @@ public class DefaultExternAlertService implements ExternAlertService {
         SingleAlert alert = JsonUtil.fromJson(content, SingleAlert.class);
         if (alert == null) {
             log.warn("parse extern alert content failed! content: {}", content);
-            return;
+            throw new IllegalArgumentException("parse extern alert content failed!");
         }
         alarmCommonReduce.reduceAndSendAlarm(alert);
     }
