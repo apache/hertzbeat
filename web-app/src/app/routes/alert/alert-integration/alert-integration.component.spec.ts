@@ -9,9 +9,8 @@ describe('AlertIntegrationComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AlertIntegrationComponent]
-    })
-    .compileComponents();
-    
+    }).compileComponents();
+
     fixture = TestBed.createComponent(AlertIntegrationComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
