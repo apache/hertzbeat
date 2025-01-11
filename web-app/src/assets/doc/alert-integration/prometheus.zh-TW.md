@@ -37,9 +37,12 @@ def send_to_webhook(alert):
     requests.post(WEBHOOK_URL, json=alert)
 
 if __name__ == "__main__":
-    alerts = get_prometheus_alerts()
-    for alert in alerts:
-        send_to_webhook(alert)
+    while True:
+        alerts = get_prometheus_alerts()
+        for alert in alerts:
+            send_to_webhook(alert)
+        # 设置定时任务，例如每 300 秒即 5 分钟执行一次
+        time.sleep(300)  
         
 ```
 3. 運行 Python 腳本

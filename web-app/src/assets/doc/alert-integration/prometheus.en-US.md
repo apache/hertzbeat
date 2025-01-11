@@ -43,9 +43,12 @@ def send_to_webhook(alert):
     requests.post(WEBHOOK_URL, json=alert)
 
 if __name__ == "__main__":
-    alerts = get_prometheus_alerts()
-    for alert in alerts:
-        send_to_webhook(alert)
+    while True:
+        alerts = get_prometheus_alerts()
+        for alert in alerts:
+            send_to_webhook(alert)
+        # schedule cyclic task, every 300s once
+        time.sleep(300)  
         
 ```
 3. Run Python script
