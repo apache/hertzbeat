@@ -17,16 +17,20 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dto.PrometheusExternAlert;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
- * Default external alarm service impl
+ * Prometheus external alarm service impl
  */
 @Slf4j
 @Service
@@ -38,13 +42,38 @@ public class PrometheusExternAlertService implements ExternAlertService {
 
     @Override
     public void addExternAlert(String content) {
-        SingleAlert alert = JsonUtil.fromJson(content, SingleAlert.class);
-        // todo parse prometheus alert content
+        
+        PrometheusExternAlert alert = JsonUtil.fromJson(content, PrometheusExternAlert.class);
         if (alert == null) {
-            log.warn("parse extern alert content failed! content: {}", content);
+            log.warn("parse prometheus extern alert content failed! content: {}", content);
             return;
         }
-        alarmCommonReduce.reduceAndSendAlarm(alert);
+        Map<String, String> annotations = alert.getAnnotations();
+        if (annotations == null) {
+            annotations = new HashMap<>(8);
+        }
+        if (StringUtils.hasText(alert.getGeneratorURL())) {
+            annotations.put("generatorURL", alert.getGeneratorURL());
+        }
+        String description = annotations.get("description");
+        if (description == null) {
+            description = annotations.get("summary");
+        }
+        if (description == null) {
+            description = annotations.values().stream().findFirst().orElse("");
+        }
+        
+        SingleAlert singleAlert = SingleAlert.builder()
+                .content(description)
+                .status(alert.getStatus())
+                .activeAt(alert.getActiveAt())
+                .startAt(alert.getStartsAt())
+                .endAt(alert.getEndsAt())
+                .labels(alert.getLabels())
+                .annotations(alert.getAnnotations())
+                .build();
+        
+        alarmCommonReduce.reduceAndSendAlarm(singleAlert);
     }
 
     @Override
