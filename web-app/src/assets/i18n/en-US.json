@@ -9,7 +9,7 @@
     "clear.local.storage": "Clear Local Storage",
     "monitor": {
       "": "Monitoring",
-      "center": "Monitor Center",
+      "center": "Monitors",
       "bulletin": "Bulletin",
       "service": "Service Monitor",
       "db": "DB Monitor",
@@ -38,26 +38,26 @@
     },
     "alert": {
       "": "Alerting",
-      "center": "Alarm Center",
-      "group": "Group Converge",
-      "converge": "Alarm Converge",
-      "inhibit": "Alarm Inhibit",
-      "setting": "Threshold Rule",
-      "silence": "Alarm Silence",
+      "center": "Alarms",
+      "group": "Group",
+      "converge": "Converge",
+      "inhibit": "Inhibit",
+      "setting": "Threshold",
+      "silence": "Silence",
       "dispatch": "Notification",
       "integration": "Integration"
     },
     "advanced": {
       "": "Advanced",
-      "collector": "Collector Cluster",
-      "labels": "Labels Manage",
-      "define": "Monitor Template",
-      "status": "Status Page",
-      "plugins": "Plugins Manage"
+      "collector": "Collector",
+      "labels": "Labels",
+      "define": "Template",
+      "status": "Status",
+      "plugins": "Plugins"
     },
     "extras": {
       "": "More",
-      "help": "Help Center",
+      "help": "Help",
       "setting": "Setting",
       "settings": "Settings",
       "about": "About"
@@ -382,6 +382,10 @@
   "alert.integration.source.prometheus": "Prometheus",
   "alert.integration.source.alertmanager": "Alertmanager",
   "alert.integration.source.tencent": "Tencent Cloud",
+  "alert.integration.token.new": "Click to Generate Token",
+  "alert.integration.token.desc": "Token you generated that can be used to access the HertzBeat API.",
+  "alert.integration.token.title": "Access Token",
+  "alert.integration.token.notice": "Token only be displayed once. Please keep your token secure. Do not share it with others.",
   "dashboard.alerts.title": "Recently Alarms List",
   "dashboard.alerts.title-no": "Recently Pending Alarms",
   "dashboard.alerts.no": "No Pending Alarms",
