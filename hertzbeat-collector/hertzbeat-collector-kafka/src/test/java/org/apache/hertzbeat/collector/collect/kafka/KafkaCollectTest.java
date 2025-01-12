@@ -78,12 +78,20 @@ public class KafkaCollectTest {
             collect.collect(builder, null);
         });
 
+        KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
+        Metrics metrics = Metrics.builder().kclient(kafka).build();
+        //test if not kafka command
         assertDoesNotThrow(() -> {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
-            Metrics metrics = Metrics.builder().kclient(kafka).build();
             collect.collect(builder, metrics);
         });
+        //test kafka command
+        assertDoesNotThrow(() -> {
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            metrics.getKclient().setCommand("topic-list");
+            collect.collect(builder, metrics);
+        });
+
     }
 
     @Test

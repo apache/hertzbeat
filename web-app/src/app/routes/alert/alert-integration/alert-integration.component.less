@@ -1,0 +1,59 @@
+.alert-integration-container {
+  display: flex;
+  height: 100%;
+  background: #fff;
+  border-radius: 4px;
+  
+  .data-sources {
+    width: 240px;
+    border-right: 1px solid #f0f0f0;
+    padding: 16px;
+    
+    h2 {
+      margin-bottom: 16px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .source-list {
+      .source-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.3s;
+        
+        &:hover {
+          background: #f5f5f5;
+        }
+        
+        &.active {
+          background: #e6f7ff;
+        }
+        
+        img {
+          width: 24px;
+          height: 24px;
+          margin-right: 8px;
+        }
+        
+        span {
+          color: #333;
+        }
+      }
+    }
+  }
+  
+  .doc-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    
+    h2 {
+      margin-bottom: 24px;
+      font-size: 20px;
+      font-weight: 500;
+    }
+  }
+}

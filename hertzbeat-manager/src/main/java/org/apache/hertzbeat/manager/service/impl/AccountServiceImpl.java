@@ -20,8 +20,10 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
 import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
+import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
+import com.usthe.sureness.util.SurenessContextHolder;
 import io.jsonwebtoken.Claims;
 import java.util.HashMap;
 import java.util.List;
@@ -103,7 +105,19 @@ public class AccountServiceImpl implements AccountService {
         return new RefreshTokenResponse(issueToken, issueRefresh);
     }
 
-    private String issueToken(String userId, List<String> roles, long expirationMillis) {
+    @Override
+    public String generateToken() throws AuthenticationException {
+        SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
+        String userId = String.valueOf(subjectSum.getPrincipal());
+        SurenessAccount account = accountProvider.loadAccount(userId);
+        if (account == null) {
+            throw new AuthenticationException("Not Exists This Token Mapping Account");
+        }
+        List<String> roles = account.getOwnRoles();
+        return issueToken(userId, roles, null);
+    }
+
+    private String issueToken(String userId, List<String> roles, Long expirationMillis) {
         Map<String, Object> customClaimMap = new HashMap<>(1);
         customClaimMap.put("refresh", true);
         return JsonWebTokenUtil.issueJwt(userId, expirationMillis, roles, customClaimMap);

@@ -17,29 +17,25 @@
  * under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Message } from '../pojo/Message';
+import { AlertIntegrationComponent } from './alert-integration.component';
 
-const account_auth_refresh_uri = '/account/auth/refresh';
-const account_token = '/account/token';
+describe('AlertIntegrationComponent', () => {
+  let component: AlertIntegrationComponent;
+  let fixture: ComponentFixture<AlertIntegrationComponent>;
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  constructor(private http: HttpClient) {}
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [AlertIntegrationComponent]
+    }).compileComponents();
 
-  public refreshToken(refreshToken: string): Observable<Message<any>> {
-    let body = {
-      token: refreshToken
-    };
-    return this.http.post<Message<any>>(`${account_auth_refresh_uri}`, body);
-  }
+    fixture = TestBed.createComponent(AlertIntegrationComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
 
-  public generateToken(): Observable<Message<any>> {
-    return this.http.post<Message<any>>(`${account_token}` + '/generate', {});
-  }
-}
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
