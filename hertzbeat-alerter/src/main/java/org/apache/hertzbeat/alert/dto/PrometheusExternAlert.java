@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.alert.dto;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
