@@ -1,78 +1,41 @@
-# Prometheus Alert Integration
+可以在 Prometheus Server 的 Alertmanager 配置中直接配置 HertzBeat 的服务地址，使用 HertzBeat 替换 Alertmanager 直接来接收处理 Prometheus Server 的告警信息。
 
-HertzBeat is fully compatible with Prometheus alert data format. You can configure Prometheus alerting rules to send alerts to HertzBeat.
+### Prometheus Service Configuration
 
-## Prometheus Alert Configuration
+- Edit the Prometheus configuration file `prometheus.yml` to add HertzBeat as the alert receiver configuration
+```yaml
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - hertzbeat-host:1157
+      authorization:
+        type: 'Bearer'
+        credentials: '{token}'
 
-> Since Prometheus Server itself doesn't support sending alerts via HTTP API, external scripts or Alertmanager are needed to implement alert sending.  
-> If using Alertmanager, please refer to the **Alertmanager Integration Documentation**. Here we provide the alert configuration method for Prometheus Server without deploying Alertmanager.
-
-### Prometheus Alert Configuration
-
-1. Edit Prometheus configuration file `prometheus.yml`, add alert rules configuration
-    ```yaml
-    rule_files:
-      - "rules/*.rules.yml"
-    ```
-    > `rules/*.rules.yml` is the path to alert rule files, which can be modified according to actual situations
-> 2. Create alert rules folder `rules` and create alert rule files `rules/*.rules.yml`
-> 3. Edit alert rule files, add alert rule configurations
-> 4. Reload Prometheus configuration
-
-### Write Scripts to Send Alerts Automatically
-
-> Since Prometheus Server itself doesn't support sending alerts via HTTP API, we'll use Python scripts to implement alert sending.
-
-1. Install Python requests library
-    ```bash
-    pip install requests
-    ```
-2. Write Python script `send_alerts.py`
-```python
-import requests
-
-PROMETHEUS_URL = "http://<prometheus-host>:9090/api/v1/alerts"
-WEBHOOK_URL = "http://<hertzbeat-host>:1157/api/alerts/report/prometheus"
-
-def get_prometheus_alerts():
-    response = requests.get(PROMETHEUS_URL)
-    alerts = response.json()["data"]["alerts"]
-    return alerts
-
-def send_to_webhook(alert):
-    requests.post(WEBHOOK_URL, json=alert)
-
-if __name__ == "__main__":
-    while True:
-        alerts = get_prometheus_alerts()
-        for alert in alerts:
-            send_to_webhook(alert)
-        # schedule cyclic task, every 300s once
-        time.sleep(300)  
-        
 ```
-3. Run Python script
-    ```bash
-    python send_alerts.py
-    ```
-    > This script will fetch alert data from Prometheus Server and push it to HertzBeat alert platform via Webhook.
+> `hertzbeat-host:1157` is the address and port of the HertzBeat Server, modify according to the actual situation, and ensure network connectivity.
+> `{token}` is the authorization Token for the HertzBeat Server, replace the value after applying for a new Token.
+
+- Reload and start the Prometheus Server 
 
 ## Verify Configuration
 
-1. Ensure Prometheus configuration is correct and reload configuration
+1. Ensure the Prometheus configuration is correct and reload the configuration
     ```bash
     curl -X POST http://localhost:9090/-/reload
     ```
-2. Check Prometheus alert rules status
+2. Check the status of Prometheus alert rules
     ```bash
     curl http://localhost:9090/api/v1/rules
     ```
-3. Trigger test alerts and check in HertzBeat alert center
+3. Trigger a test alert and check in the HertzBeat alert center.
 
 ## Common Issues
 
-- Ensure HertzBeat URL is accessible from Prometheus server
-- Check Prometheus logs for alert sending failure error messages
-- Verify the correctness of alert rule expressions
+- Ensure the HertzBeat URL is accessible from the Prometheus server.
+- Check the Prometheus logs for any error messages regarding alert sending failures.
+- Verify the correctness of the alert rule expressions.
 
-For more information, please refer to [Prometheus Alerting Documentation](https://prometheus.io/docs/alerting/latest/configuration/)
+For more information, please refer to the [Prometheus Alert Configuration Documentation](https://prometheus.io/docs/alerting/latest/configuration/)
