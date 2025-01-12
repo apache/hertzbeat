@@ -6,19 +6,21 @@ This document describes how to send alerts from Prometheus AlertManager to the H
 
 1. Add the webhook configuration to the Alertmanager configuration file.
 
-    ```yaml
-    receivers:
-      - name: 'webhook'
-        webhook_configs:
-          - url: 'http://${hertzbeat_host}:1157/api/alerts/report/alertmanager'
-            http_config:
-              headers:
-              Authorization: 'Bearer {token}'
-            send_resolved: true
-    ```
-- `http://${hertzbeat_ip}:8080/api/alerts/report` is the webhook interface address provided by HertzBeat.
+```yaml
+receivers:
+  - name: 'webhook'
+    webhook_configs:
+      - url: 'http://${hertzbeat_host}:1157/api/alerts/report/alertmanager'
+        send_resolved: true
+        http_config:
+          authorization: 
+            type: 'Bearer'
+            credentials: '{token}'
+```
+
+- `http://${hertzbeat_host}:1157/api/alerts/report/alertmanager` is the webhook interface address provided by HertzBeat.
 - `send_resolved: true` indicates that alert recovery information will be sent.
-- The {token} in `Authorization` is the token provided by HertzBeat.
+- The {token} in `credentials` is the token provided by HertzBeat.
 
 2. Restart the Alertmanager service.
 
