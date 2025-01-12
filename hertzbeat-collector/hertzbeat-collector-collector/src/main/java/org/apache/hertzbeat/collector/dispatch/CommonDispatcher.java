@@ -183,18 +183,21 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         Job job = timerTask.getJob();
         job.constructPriorMetrics();
         Set<Metrics> metricsSet = job.getNextCollectMetrics(null, true);
-        metricsSet.forEach(metrics -> {
-            MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
-                    collectorIdentity, unitConvertList);
-            jobRequestQueue.addJob(metricsCollect);
-            if (metrics.getPrometheus() != null) {
-                metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
-            } else {
-                metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
-            }
-        });
+        // Avoid NullPointerException
+        if (null != metricsSet){
+            metricsSet.forEach(metrics -> {
+                MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
+                        collectorIdentity, unitConvertList);
+                jobRequestQueue.addJob(metricsCollect);
+                if (metrics.getPrometheus() != null) {
+                    metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
+                            new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                } else {
+                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
+                            new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+                }
+            });
+        }
     }
 
     @Override
