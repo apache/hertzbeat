@@ -130,6 +130,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   onFilterSearchMonitors() {
     this.tableLoading = true;
+    this.pageIndex = 1;
     let filter$ = this.monitorSvc
       .searchMonitors(this.app, this.labels, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize)
       .subscribe(

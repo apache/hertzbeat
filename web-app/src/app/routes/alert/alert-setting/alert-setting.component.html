@@ -69,7 +69,7 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.setting.search' | i18n"
       [(value)]="search"
-      (keydown.enter)="loadAlertDefineTable()"
+      (keydown.enter)="onFilterChange()"
     />
   </ng-template>
 </app-toolbar>
