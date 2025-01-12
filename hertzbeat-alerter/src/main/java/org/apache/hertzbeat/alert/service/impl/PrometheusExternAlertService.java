@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,14 +68,22 @@ public class PrometheusExternAlertService implements ExternAlertService {
             if (description == null) {
                 description = annotations.values().stream().findFirst().orElse("");
             }
-            String status = alert.getStatus() == null ? CommonConstants.ALERT_STATUS_FIRING : alert.getStatus();
+            Map<String, String> labels = alert.getLabels();
+            if (labels == null) {
+                labels = new HashMap<>(8);
+            }
+            labels.put("__source__", "prometheus");
+            String status = CommonConstants.ALERT_STATUS_FIRING;
+            if (alert.getEndsAt() != null && alert.getEndsAt().isBefore(Instant.now())) {
+                status = CommonConstants.ALERT_STATUS_RESOLVED;
+            }
             SingleAlert singleAlert = SingleAlert.builder()
                     .content(description)
                     .status(status)
-                    .activeAt(alert.getActiveAt() != null ? alert.getActiveAt().getEpochSecond() : null)
-                    .startAt(alert.getStartsAt() != null ? alert.getStartsAt().getEpochSecond() : null)
-                    .endAt(alert.getEndsAt() != null ? alert.getEndsAt().getEpochSecond() : null)
-                    .labels(alert.getLabels())
+                    .activeAt(alert.getActiveAt() != null ? alert.getActiveAt().toEpochMilli() : null)
+                    .startAt(alert.getStartsAt() != null ? alert.getStartsAt().toEpochMilli() : null)
+                    .endAt(alert.getEndsAt() != null ? alert.getEndsAt().toEpochMilli() : null)
+                    .labels(labels)
                     .annotations(alert.getAnnotations())
                     .triggerTimes(1)
                     .build();
