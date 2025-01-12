@@ -79,6 +79,7 @@ public class AlertManagerExternAlertService implements ExternAlertService {
                     .endAt(prometheusAlert.getEndsAt() != null ? prometheusAlert.getEndsAt().getEpochSecond() : null)
                     .labels(prometheusAlert.getLabels())
                     .annotations(prometheusAlert.getAnnotations())
+                    .triggerTimes(1)
                     .build();
 
             alarmCommonReduce.reduceAndSendAlarm(singleAlert);

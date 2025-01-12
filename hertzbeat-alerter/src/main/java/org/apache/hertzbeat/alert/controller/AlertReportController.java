@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.controller;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -31,7 +30,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -39,7 +37,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Extern Alarm Manage API")
 @RestController
-@RequestMapping(path = "/api/alerts/report", produces = {APPLICATION_JSON_VALUE})
 @Slf4j
 public class AlertReportController {
     
@@ -49,7 +46,7 @@ public class AlertReportController {
         this.externAlertServiceList = externAlertServiceList;
     }
 
-    @PostMapping("/{source}")
+    @PostMapping("/api/alerts/report/{source}")
     @Operation(summary = "Api for receive external alarm information")
     public ResponseEntity<Message<Void>> receiveExternAlert(@PathVariable(value = "source") String source, 
                                                             @RequestBody String content) {
@@ -74,7 +71,7 @@ public class AlertReportController {
                 .body(Message.fail(CommonConstants.FAIL_CODE, "Not support the " + source + " source alert"));
     }
 
-    @PostMapping
+    @PostMapping("/api/alerts/report")
     @Operation(summary = "Api for receive default external alarm information")
     public ResponseEntity<Message<Void>> receiveDefaultExternAlert(@RequestBody String content) {
         log.info("Receive default extern alert content: {}", content);
@@ -93,5 +90,26 @@ public class AlertReportController {
         log.error("Not support default extern alert");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Message.success("Not support the default source alert"));
+    }
+
+    @PostMapping("/api/v2/alerts")
+    @Operation(summary = "Api for receive external alarm information")
+    public ResponseEntity<Message<Void>> receivePrometheusServerAlert(@RequestBody String content) {
+        log.info("Receive prometheus server alert, content: {}", content);
+        ExternAlertService externAlertService = externAlertServiceList.stream()
+                .filter(item -> "prometheus".equals(item.supportSource())).findFirst().orElse(null);
+        if (externAlertService != null) {
+            try {
+                externAlertService.addExternAlert(content);
+                return ResponseEntity.ok(Message.success("Add extern alert success"));
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Message.fail(CommonConstants.FAIL_CODE,
+                                "Add extern alert failed: " + e.getMessage()));
+            }
+        }
+        log.error("Not support prometheus extern alert");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Message.success("Not support the prometheus source alert"));
     }
 }

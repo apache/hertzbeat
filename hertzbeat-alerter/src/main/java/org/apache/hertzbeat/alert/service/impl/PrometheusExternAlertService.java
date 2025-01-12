@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.PrometheusExternAlert;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,38 +45,42 @@ public class PrometheusExternAlertService implements ExternAlertService {
 
     @Override
     public void addExternAlert(String content) {
-        
-        PrometheusExternAlert alert = JsonUtil.fromJson(content, PrometheusExternAlert.class);
-        if (alert == null) {
+
+        TypeReference<List<PrometheusExternAlert>> typeReference = new TypeReference<>() {};
+        List<PrometheusExternAlert> alerts = JsonUtil.fromJson(content, typeReference);
+        if (alerts == null || alerts.isEmpty()) {
             log.warn("parse prometheus extern alert content failed! content: {}", content);
             return;
         }
-        Map<String, String> annotations = alert.getAnnotations();
-        if (annotations == null) {
-            annotations = new HashMap<>(8);
+        for (PrometheusExternAlert alert : alerts) {
+            Map<String, String> annotations = alert.getAnnotations();
+            if (annotations == null) {
+                annotations = new HashMap<>(8);
+            }
+            if (StringUtils.hasText(alert.getGeneratorURL())) {
+                annotations.put("generatorURL", alert.getGeneratorURL());
+            }
+            String description = annotations.get("description");
+            if (description == null) {
+                description = annotations.get("summary");
+            }
+            if (description == null) {
+                description = annotations.values().stream().findFirst().orElse("");
+            }
+            String status = alert.getStatus() == null ? CommonConstants.ALERT_STATUS_FIRING : alert.getStatus();
+            SingleAlert singleAlert = SingleAlert.builder()
+                    .content(description)
+                    .status(status)
+                    .activeAt(alert.getActiveAt() != null ? alert.getActiveAt().getEpochSecond() : null)
+                    .startAt(alert.getStartsAt() != null ? alert.getStartsAt().getEpochSecond() : null)
+                    .endAt(alert.getEndsAt() != null ? alert.getEndsAt().getEpochSecond() : null)
+                    .labels(alert.getLabels())
+                    .annotations(alert.getAnnotations())
+                    .triggerTimes(1)
+                    .build();
+
+            alarmCommonReduce.reduceAndSendAlarm(singleAlert);   
         }
-        if (StringUtils.hasText(alert.getGeneratorURL())) {
-            annotations.put("generatorURL", alert.getGeneratorURL());
-        }
-        String description = annotations.get("description");
-        if (description == null) {
-            description = annotations.get("summary");
-        }
-        if (description == null) {
-            description = annotations.values().stream().findFirst().orElse("");
-        }
-        
-        SingleAlert singleAlert = SingleAlert.builder()
-                .content(description)
-                .status(alert.getStatus())
-                .activeAt(alert.getActiveAt() != null ? alert.getActiveAt().getEpochSecond() : null)
-                .startAt(alert.getStartsAt() != null ? alert.getStartsAt().getEpochSecond() : null)
-                .endAt(alert.getEndsAt() != null ? alert.getEndsAt().getEpochSecond() : null)
-                .labels(alert.getLabels())
-                .annotations(alert.getAnnotations())
-                .build();
-        
-        alarmCommonReduce.reduceAndSendAlarm(singleAlert);
     }
 
     @Override
