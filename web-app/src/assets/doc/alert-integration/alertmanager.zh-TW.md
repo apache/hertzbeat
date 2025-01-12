@@ -18,7 +18,7 @@ receivers:
 
 - `http://${hertzbeat_host}:1157/api/alerts/report/alertmanager` 為 HertzBeat 提供的 webhook 接口地址。
 - `send_resolved: true` 表示發送告警恢復信息。
-- `credentials` 內的 {token} 為 HertzBeat 提供的 token。
+- `credentials` 內的 `{token}` 為 HertzBeat 提供的 token。
 
 2. 重啟 Alertmanager 服務。
 

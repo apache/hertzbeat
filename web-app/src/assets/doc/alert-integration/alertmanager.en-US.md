@@ -20,7 +20,7 @@ receivers:
 
 - `http://${hertzbeat_host}:1157/api/alerts/report/alertmanager` is the webhook interface address provided by HertzBeat.
 - `send_resolved: true` indicates that alert recovery information will be sent.
-- The {token} in `credentials` is the token provided by HertzBeat.
+- The `{token}` in `credentials` is the token provided by HertzBeat.
 
 2. Restart the Alertmanager service.
 
