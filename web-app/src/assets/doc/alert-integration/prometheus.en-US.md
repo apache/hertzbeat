@@ -1,4 +1,4 @@
-可以在 Prometheus Server 的 Alertmanager 配置中直接配置 HertzBeat 的服务地址，使用 HertzBeat 替换 Alertmanager 直接来接收处理 Prometheus Server 的告警信息。
+Users can directly configure the HertzBeat service address in the Alertmanager configuration of the Prometheus Server to replace the Alertmanager for receiving and processing alerts from the Prometheus Server.
 
 ### Prometheus Service Configuration
 
