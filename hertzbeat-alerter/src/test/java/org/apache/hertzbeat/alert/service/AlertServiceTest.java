@@ -21,23 +21,19 @@ package org.apache.hertzbeat.alert.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
-import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.impl.AlertServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -96,37 +92,5 @@ class AlertServiceTest {
 
         assertDoesNotThrow(() -> alertService.getAlertsSummary());
         assertNotNull(alertService.getAlertsSummary());
-    }
-
-    @Test
-    void addNewAlertReport() {
-        SingleAlert alertReport = SingleAlert.builder()
-                .fingerprint("fingerprint")
-                .labels(new HashMap<>())
-                .annotations(new HashMap<>())
-                .content("content")
-                .status("firing")
-                .triggerTimes(1)
-                .startAt(1734005477630L)
-                .activeAt(1734005477630L)
-                .build();
-        assertDoesNotThrow(() -> alertService.addNewAlertReport(alertReport));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
-    }
-
-    @Test
-    void addNewAlertReportFromCloud() {
-        TenCloudAlertReport alertReport = TenCloudAlertReport.builder()
-                .firstOccurTime("2024-08-01 11:30:00")
-                .durationTime(100)
-                .build();
-        String reportJson = JsonUtil.toJson(alertReport);
-        assertDoesNotThrow(() -> alertService.addNewAlertReportFromCloud("tencloud", reportJson));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
-
-        alertService.addNewAlertReportFromCloud("alicloud", reportJson);
-        reset(alarmCommonReduce);
-        verify(alarmCommonReduce, times(0)).reduceAndSendAlarm(any(SingleAlert.class));
-
     }
 }
