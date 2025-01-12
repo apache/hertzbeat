@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.dto;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,11 +41,11 @@ public class PrometheusExternAlert {
 
     private String status;
 
-    private Long startsAt;
+    private Instant startsAt;
 
-    private Long activeAt;
+    private Instant activeAt;
 
-    private Long endsAt;
+    private Instant endsAt;
     
     private String generatorURL;
 }

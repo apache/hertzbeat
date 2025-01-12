@@ -66,9 +66,9 @@ public class PrometheusExternAlertService implements ExternAlertService {
         SingleAlert singleAlert = SingleAlert.builder()
                 .content(description)
                 .status(alert.getStatus())
-                .activeAt(alert.getActiveAt())
-                .startAt(alert.getStartsAt())
-                .endAt(alert.getEndsAt())
+                .activeAt(alert.getActiveAt() != null ? alert.getActiveAt().getEpochSecond() : null)
+                .startAt(alert.getStartsAt() != null ? alert.getStartsAt().getEpochSecond() : null)
+                .endAt(alert.getEndsAt() != null ? alert.getEndsAt().getEpochSecond() : null)
                 .labels(alert.getLabels())
                 .annotations(alert.getAnnotations())
                 .build();

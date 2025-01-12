@@ -74,9 +74,9 @@ public class AlertManagerExternAlertService implements ExternAlertService {
             SingleAlert singleAlert = SingleAlert.builder()
                     .content(description)
                     .status(prometheusAlert.getStatus())
-                    .activeAt(prometheusAlert.getActiveAt())
-                    .startAt(prometheusAlert.getStartsAt())
-                    .endAt(prometheusAlert.getEndsAt())
+                    .activeAt(prometheusAlert.getActiveAt() != null ? prometheusAlert.getActiveAt().getEpochSecond() : null)
+                    .startAt(prometheusAlert.getStartsAt() != null ? prometheusAlert.getStartsAt().getEpochSecond() : null)
+                    .endAt(prometheusAlert.getEndsAt() != null ? prometheusAlert.getEndsAt().getEpochSecond() : null)
                     .labels(prometheusAlert.getLabels())
                     .annotations(prometheusAlert.getAnnotations())
                     .build();
