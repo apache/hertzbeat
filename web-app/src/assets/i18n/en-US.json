@@ -256,7 +256,7 @@
   "alert.center.time": "Alert Time",
   "alert.center.time.tip": "Alerts were triggered {{times}} times during this alert period",
   "alert.center.first-time": "Start Time",
-  "alert.center.last-time": "Latest Time",
+  "alert.center.last-time": "Active Time",
   "alert.center.end-time": "End Time",
   "alert.center.confirm.delete": "Please confirm whether to delete!",
   "alert.center.confirm.clear-all": "Please confirm whether to clear all alerts!",

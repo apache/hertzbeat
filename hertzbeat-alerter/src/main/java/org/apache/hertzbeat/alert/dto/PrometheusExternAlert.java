@@ -42,8 +42,6 @@ public class PrometheusExternAlert {
 
     private Instant startsAt;
 
-    private Instant activeAt;
-
     private Instant endsAt;
     
     private String generatorURL;
