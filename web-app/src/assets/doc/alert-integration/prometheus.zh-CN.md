@@ -9,14 +9,14 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-            - hertzbeat-host:1157
+            - {hertzbeat_host}:1157
       authorization:
         type: 'Bearer'
         credentials: '{token}'
 
 ```
-> `hertzbeat-host:1157` 為 HertzBeat Server 地址和短裤，根据实际情况修改，需要保证网络连通性
-> `{token}` 为 HertzBeat Server 的授权 Token，申请新Token后替换值
+- `{hertzbeat_host}:1157` 為 HertzBeat Server 地址和短裤，根据实际情况修改，需要保证网络连通性
+- `{token}` 为 HertzBeat Server 的授权 Token，申请新 Token 后替换值
 
 - 重新加载启动 Prometheus Server 
 

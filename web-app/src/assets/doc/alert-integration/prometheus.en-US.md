@@ -9,14 +9,14 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-            - hertzbeat-host:1157
+            - {hertzbeat_host}:1157
       authorization:
         type: 'Bearer'
         credentials: '{token}'
 
 ```
-> `hertzbeat-host:1157` is the address and port of the HertzBeat Server, modify according to the actual situation, and ensure network connectivity.
-> `{token}` is the authorization Token for the HertzBeat Server, replace the value after applying for a new Token.
+- `{hertzbeat_host}:1157` is the address and port of the HertzBeat Server, modify according to the actual situation, and ensure network connectivity.
+- `{token}` is the authorization Token for the HertzBeat Server, replace the value after applying for a new Token.
 
 - Reload and start the Prometheus Server 
 

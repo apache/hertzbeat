@@ -8,7 +8,7 @@
 receivers:
   - name: 'webhook'
     webhook_configs:
-      - url: 'http://${hertzbeat_host}:1157/api/alerts/report/alertmanager'
+      - url: 'http://{hertzbeat_host}:1157/api/alerts/report/alertmanager'
         send_resolved: true
         http_config:
           authorization: 
@@ -16,7 +16,7 @@ receivers:
             credentials: '{token}'
 ```
 
-- `http://${hertzbeat_host}:1157/api/alerts/report/alertmanager` 為 HertzBeat 提供的 webhook 接口地址。
+- `http://{hertzbeat_host}:1157/api/alerts/report/alertmanager` 為 HertzBeat 提供的 webhook 接口地址。
 - `send_resolved: true` 表示發送告警恢復信息。
 - `credentials` 內的 `{token}` 為 HertzBeat 提供的 token。
 

@@ -10,7 +10,7 @@ This document describes how to send alerts from Prometheus AlertManager to the H
 receivers:
   - name: 'webhook'
     webhook_configs:
-      - url: 'http://${hertzbeat_host}:1157/api/alerts/report/alertmanager'
+      - url: 'http://{hertzbeat_host}:1157/api/alerts/report/alertmanager'
         send_resolved: true
         http_config:
           authorization: 
@@ -18,7 +18,7 @@ receivers:
             credentials: '{token}'
 ```
 
-- `http://${hertzbeat_host}:1157/api/alerts/report/alertmanager` is the webhook interface address provided by HertzBeat.
+- `http://{hertzbeat_host}:1157/api/alerts/report/alertmanager` is the webhook interface address provided by HertzBeat.
 - `send_resolved: true` indicates that alert recovery information will be sent.
 - The `{token}` in `credentials` is the token provided by HertzBeat.
 
