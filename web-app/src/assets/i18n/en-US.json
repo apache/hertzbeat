@@ -857,5 +857,10 @@
   "annotation": "Annotation",
   "annotation.bind": "Bind Annotation",
   "annotation.bind.tip": "You can use annotations to mark entity information, such as binding annotations of important events to resources.",
-  "label": "Label"
+  "label": "Label",
+  "monitors.copy": "Copy Monitor",
+  "monitors.copy-monitor": "Copy Monitor",
+  "monitors.copy.success": "Copy Monitor Success",
+  "monitors.copy.failed": "Copy Monitor Failed",
+  "monitors.copy.notify.one-select": "Only one monitor can be selected to copy"
 }

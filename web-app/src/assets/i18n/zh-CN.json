@@ -865,5 +865,10 @@
   "alert.inhibit.delete": "删除抑制规则",
   "alert.help.inhibit": "告警抑制用于配置告警之间的抑制关系。当某个告警发生时，可以抑制其他告警的产生。例如，当服务器宕机时，可以抑制该服务器上的所有告警。",
   "alert.help.inhibit.link": "https://hertzbeat.apache.org/zh-cn/docs/help/alert_inhibit",
-  "alert.center.tag.search.placeholder": "搜索标签..."
+  "alert.center.tag.search.placeholder": "搜索标签...",
+  "monitors.copy": "复制监控",
+  "monitors.copy-monitor": "复制监控",
+  "monitors.copy.success": "复制监控成功",
+  "monitors.copy.failed": "复制监控失败",
+  "monitors.copy.notify.one-select": "只能选择一个监控进行复制"
 }
