@@ -610,11 +610,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('monitors.copy.notify.one-select'), ''); 
+      this.notifySvc.warning(this.i18nSvc.fanyi('monitors.copy.notify.one-select'), '');
       return;
     }
     const monitorId = Array.from(this.checkedMonitorIds)[0];
-    
+
     this.monitorSvc.copyMonitor(monitorId).subscribe(
       message => {
         if (message.code === 0) {
