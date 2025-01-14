@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import org.apache.hertzbeat.alert.dto.AlertManagerExternAlert;
 import org.apache.hertzbeat.alert.dto.PrometheusExternAlert;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.ExternAlertService;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,15 +72,24 @@ public class AlertManagerExternAlertService implements ExternAlertService {
             if (description == null) {
                 description = annotations.values().stream().findFirst().orElse("");
             }
-
+            Map<String, String> labels = prometheusAlert.getLabels();
+            if (labels == null) {
+                labels = new HashMap<>(8);
+            }
+            labels.put("__source__", "alertmanager");
+            String status = CommonConstants.ALERT_STATUS_FIRING;
+            if (prometheusAlert.getEndsAt() != null && prometheusAlert.getEndsAt().isBefore(Instant.now())) {
+                status = CommonConstants.ALERT_STATUS_RESOLVED;
+            }
             SingleAlert singleAlert = SingleAlert.builder()
                     .content(description)
-                    .status(prometheusAlert.getStatus())
-                    .activeAt(prometheusAlert.getActiveAt())
-                    .startAt(prometheusAlert.getStartsAt())
-                    .endAt(prometheusAlert.getEndsAt())
-                    .labels(prometheusAlert.getLabels())
+                    .status(status)
+                    .activeAt(CommonConstants.ALERT_STATUS_FIRING.equals(status) ? Instant.now().toEpochMilli() : null)
+                    .startAt(prometheusAlert.getStartsAt() != null ? prometheusAlert.getStartsAt().toEpochMilli() : Instant.now().toEpochMilli())
+                    .endAt(CommonConstants.ALERT_STATUS_RESOLVED.equals(status) ? prometheusAlert.getEndsAt().toEpochMilli() : null)
+                    .labels(labels)
                     .annotations(prometheusAlert.getAnnotations())
+                    .triggerTimes(1)
                     .build();
 
             alarmCommonReduce.reduceAndSendAlarm(singleAlert);

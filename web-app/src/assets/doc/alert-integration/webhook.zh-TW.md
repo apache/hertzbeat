@@ -7,7 +7,7 @@
 ### 請求頭
 
 - `Content-Type`: `application/json`
-- `Authorization`: `Bearer ${token}`
+- `Authorization`: `Bearer {token}`
 
 ### 請求體
 
