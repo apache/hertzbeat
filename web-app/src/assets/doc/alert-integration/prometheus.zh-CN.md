@@ -1,55 +1,24 @@
-> 由于 Prometheus Server 本身并不支持 HTTP API 的告警发送，因此需要借助外部脚本或者 Alertmanager 来实现告警发送。  
-> 若使用 Alertmanager，可参考 **Alertmanager 集成文档**。这里提供非部署 Alertmanager 的 Prometheus Server 的告警配置方法。
+> 可以在 Prometheus Server 的 Alertmanager 配置中直接配置 HertzBeat 的服务地址，使用 HertzBeat 替换 Alertmanager 直接来接收处理 Prometheus Server 的告警信息。
 
-### Prometheus 告警配置
+### Prometheus 服务配置
 
-1. 編輯 Prometheus 配置文件 `prometheus.yml`，添加告警規則配置
-    ```yaml
-    rule_files:
-      - "rules/*.rules.yml"
-    ```
-    > `rules/*.rules.yml` 為告警規則文件路徑，可以根據實際情況修改
-> 2. 創建告警規則文件夾 `rules`，並創建告警規則文件 `rules/*.rules.yml`
-> 3. 編輯告警規則文件，添加告警規則配置
-> 4. 重新加載 Prometheus 配置
+- 編輯 Prometheus 配置文件 `prometheus.yml`，添加 HertzBeat 作为告警接收端配置
+```yaml
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - {hertzbeat_host}:1157
+      authorization:
+        type: 'Bearer'
+        credentials: '{token}'
 
-### 编写脚本自动发送告警
-
-> 由于 Prometheus Server 本身并不支持 HTTP API 的告警发送，这里我们使用 Python 脚本来实现告警发送。
-
-1. 安装 Python requests 库
-    ```bash
-    pip install requests
-    ```
-2. 编写 Python 脚本 `send_alerts.py`
-```python
-import requests
-
-PROMETHEUS_URL = "http://<prometheus-host>:9090/api/v1/alerts"
-WEBHOOK_URL = "http://<hertzbeat-host>:1157/api/alerts/report/prometheus"
-
-def get_prometheus_alerts():
-    response = requests.get(PROMETHEUS_URL)
-    alerts = response.json()["data"]["alerts"]
-    return alerts
-
-def send_to_webhook(alert):
-    requests.post(WEBHOOK_URL, json=alert)
-
-if __name__ == "__main__":
-    while True:
-        alerts = get_prometheus_alerts()
-        for alert in alerts:
-            send_to_webhook(alert)
-        # 设置定时任务，例如每 300 秒即 5 分钟执行一次
-        time.sleep(300)  
-        
 ```
-3. 运行 Python 脚本
-    ```bash
-    python send_alerts.py
-    ```
-    > 该脚本会从 Prometheus Server 获取告警数据，并通过 Webhook 推送到 HertzBeat 告警平台。
+- `{hertzbeat_host}:1157` 為 HertzBeat Server 地址和短裤，根据实际情况修改，需要保证网络连通性
+- `{token}` 为 HertzBeat Server 的授权 Token，申请新 Token 后替换值
+
+- 重新加载启动 Prometheus Server 
 
 ## 验证配置
 
