@@ -81,7 +81,9 @@
                         </#if>
                         <div class="info-item">Trigger Count: ${alert.triggerTimes!0}</div>
                         <div class="info-item">Start Time: ${((alert.startAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}</div>
-                        <div class="info-item">Last Trigger: ${((alert.activeAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}</div>
+                        <#if alert.activeAt?? && alert.activeAt gt 0>
+                            <div class="info-item">Active Time: ${((alert.activeAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}</div>
+                        </#if>
                         <#if alert.endAt?? && alert.endAt gt 0>
                             <div class="info-item">End Time: ${(alert.endAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}</div>
                         </#if>

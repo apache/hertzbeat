@@ -7,7 +7,7 @@
 ### 请求头
 
 - `Content-Type`: `application/json`
-- `Authorization`: `Bearer ${token}`
+- `Authorization`: `Bearer {token}`
 
 ### 请求体
 
