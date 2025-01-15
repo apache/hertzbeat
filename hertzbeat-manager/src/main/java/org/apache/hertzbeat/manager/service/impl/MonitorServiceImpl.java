@@ -22,20 +22,6 @@ import com.google.common.collect.Sets;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
@@ -83,6 +69,7 @@ import org.apache.hertzbeat.manager.service.TagService;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
@@ -96,6 +83,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * Monitoring and management service implementation
  */
@@ -103,54 +105,39 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class MonitorServiceImpl implements MonitorService {
-    private static final Long MONITOR_ID_TMP = 1000000000L;
-
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
-
+    private static final Long MONITOR_ID_TMP = 1000000000L;
     private static final byte ALL_MONITOR_STATUS = 9;
 
     private static final int TAG_LENGTH = 2;
 
     private static final String CONTENT_VALUE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
-
+    private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
     @Autowired
     private AppService appService;
-
     @Autowired
     private TagService tagService;
-
     @Autowired
     private CollectJobScheduling collectJobScheduling;
-
     @Autowired
     private MonitorDao monitorDao;
-
     @Autowired
     private ParamDao paramDao;
-
     @Autowired
     private MonitorBindDao monitorBindDao;
-
     @Autowired
     private CollectorDao collectorDao;
-
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
-
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
-
     @Autowired
     private ApplicationContext applicationContext;
-
     @Autowired
     private WarehouseService warehouseService;
-
     @Autowired
     private DashboardService dashboardService;
-
-    private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
@@ -453,7 +440,8 @@ public class MonitorServiceImpl implements MonitorService {
 
         try {
             detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // After the update is successfully released, refresh the database
         try {
@@ -704,7 +692,8 @@ public class MonitorServiceImpl implements MonitorService {
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             try {
                 detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         monitorDao.saveAll(unManagedMonitors);
     }
@@ -721,10 +710,14 @@ public class MonitorServiceImpl implements MonitorService {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
             appCount.setApp(item.getApp());
             switch (item.getStatus()) {
-                case CommonConstants.MONITOR_UP_CODE -> appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
-                case CommonConstants.MONITOR_DOWN_CODE -> appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
-                case CommonConstants.MONITOR_PAUSED_CODE -> appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
-                default -> {}
+                case CommonConstants.MONITOR_UP_CODE ->
+                        appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
+                case CommonConstants.MONITOR_DOWN_CODE ->
+                        appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
+                case CommonConstants.MONITOR_PAUSED_CODE ->
+                        appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
+                default -> {
+                }
             }
             appCountMap.put(item.getApp(), appCount);
         }
@@ -754,7 +747,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // deep copy original monitor to achieve persist in JPA
                 Monitor newMonitor = JsonUtil.fromJson(JsonUtil.toJson(monitor), Monitor.class);
                 if (newMonitor != null) {
-                    copyMonitor(newMonitor, params);   
+                    copyMonitor(newMonitor, params);
                 }
             }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
@@ -805,7 +798,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // Delivering a collection task
                 long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
-                monitorDao.save(monitor);   
+                monitorDao.save(monitor);
             } catch (Exception e) {
                 log.error("update monitor job error when template modify: {}.continue", e.getMessage(), e);
             }
@@ -851,7 +844,8 @@ public class MonitorServiceImpl implements MonitorService {
 
         try {
             detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         try {
             if (collector != null) {
@@ -1014,5 +1008,91 @@ public class MonitorServiceImpl implements MonitorService {
         return tags.stream()
                 .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void copyMonitor(Long id) {
+        // Get the source monitor information
+        Optional<Monitor> monitorOptional = monitorDao.findById(id);
+        if (monitorOptional.isEmpty()) {
+            throw new IllegalArgumentException("Monitor not found: " + id);
+        }
+        Monitor sourceMonitor = monitorOptional.get();
+
+        // Get the parameters of source monitor
+        List<Param> sourceParams = paramDao.findParamsByMonitorId(id);
+
+        // Create new monitor object
+        Monitor newMonitor = new Monitor();
+        // Copy basic properties, exclude ID, jobId and status
+        BeanUtils.copyProperties(sourceMonitor, newMonitor, "id", "jobId", "status");
+        // Set new name
+        newMonitor.setName(sourceMonitor.getName() + "_copy");
+        // Set initial status
+        newMonitor.setStatus(CommonConstants.MONITOR_UP_CODE);
+        // Set create and update time
+        newMonitor.setGmtCreate(LocalDateTime.now());
+        newMonitor.setGmtUpdate(LocalDateTime.now());
+        // Generate new ID using snowflake algorithm
+        newMonitor.setId(SnowFlakeIdGenerator.generateId());
+        // Save new monitor
+        newMonitor = monitorDao.save(newMonitor);
+
+        // Ensure ID is set
+        if (newMonitor.getId() == null) {
+            throw new RuntimeException("Failed to generate monitor ID");
+        }
+
+        // Copy parameters
+        if (!sourceParams.isEmpty()) {
+            List<Param> newParams = new ArrayList<>();
+            for (Param sourceParam : sourceParams) {
+                Param newParam = new Param();
+                BeanUtils.copyProperties(sourceParam, newParam, "id");
+                newParam.setMonitorId(newMonitor.getId());
+                newParams.add(newParam);
+            }
+            paramDao.saveAll(newParams);
+        }
+
+        try {
+            // Build collect job
+            Job appDefine = appService.getAppDefine(newMonitor.getApp());
+            if (CommonConstants.PROMETHEUS.equals(newMonitor.getApp())) {
+                appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + newMonitor.getName());
+            }
+            // Ensure using correct monitor ID
+            appDefine.setMonitorId(newMonitor.getId());
+            appDefine.setDefaultInterval(newMonitor.getIntervals());
+            appDefine.setCyclic(true);
+            appDefine.setTimestamp(System.currentTimeMillis());
+            List<Configmap> configmaps = sourceParams.stream()
+                    .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
+                    .collect(Collectors.toList());
+            appDefine.setConfigmap(configmaps);
+
+            // Get collector configuration from source monitor
+            Optional<CollectorMonitorBind> bindOptional =
+                    collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(sourceMonitor.getId());
+            String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElse(null);
+
+            // Dispatch collect job
+            long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+            newMonitor.setJobId(jobId);
+            monitorDao.save(newMonitor);
+
+            // Copy collector binding if exists
+            if (collector != null) {
+                CollectorMonitorBind newBind = CollectorMonitorBind.builder()
+                        .collector(collector)
+                        .monitorId(newMonitor.getId())
+                        .build();
+                collectorMonitorBindDao.save(newBind);
+            }
+        } catch (Exception e) {
+            log.error("Create collect job error: {}", e.getMessage(), e);
+            throw new RuntimeException("Create collect job failed: " + e.getMessage());
+        }
     }
 }
