@@ -118,7 +118,7 @@ params:
   - field: privateKeyPassphrase
     # name-param field display i18n name
     name:
-      zh-CN: 私钥密码
+      zh-CN: 密钥短语
       en-US: PrivateKey PassPhrase
     # type-param field type(most mapping the html input type)
     type: password
