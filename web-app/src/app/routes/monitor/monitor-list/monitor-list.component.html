@@ -85,6 +85,12 @@
             </button>
           </nz-upload>
         </li>
+        <li nz-menu-item>
+          <button nz-button (click)="copyMonitor()">
+            <i nz-icon nzType="copy" nzTheme="outline"></i>
+            {{ 'monitors.copy' | i18n }}
+          </button>
+        </li>
       </ul>
     </nz-dropdown-menu>
   </ng-template>

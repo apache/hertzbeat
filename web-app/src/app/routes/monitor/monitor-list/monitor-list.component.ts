@@ -603,4 +603,30 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     }
     return hash;
   }
+
+  copyMonitor() {
+    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
+      return;
+    }
+    if (this.checkedMonitorIds.size > 1) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('monitors.copy.notify.one-select'), '');
+      return;
+    }
+    const monitorId = Array.from(this.checkedMonitorIds)[0];
+
+    this.monitorSvc.copyMonitor(monitorId).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.notifySvc.success(this.i18nSvc.fanyi('monitors.copy.success'), '');
+          this.loadMonitorTable();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('monitors.copy.failed'), message.msg);
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('monitors.copy.failed'), error.msg);
+      }
+    );
+  }
 }

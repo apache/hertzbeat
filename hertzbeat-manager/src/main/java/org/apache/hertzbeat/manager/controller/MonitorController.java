@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +35,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitoring management API
@@ -100,5 +102,16 @@ public class MonitorController {
         monitorService.validate(monitorDto, null);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         return ResponseEntity.ok(Message.success("Detect success."));
+    }
+
+    @PostMapping("/copy/{id}")
+    @Operation(summary = "Copy Monitor", description = "Copy an existing monitor")
+    public ResponseEntity<Message<Void>> copyMonitor(@PathVariable("id") final Long id) {
+        try {
+            monitorService.copyMonitor(id);
+            return ResponseEntity.ok(Message.success("Copy monitor success"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Copy monitor failed: " + e.getMessage()));
+        }
     }
 }
