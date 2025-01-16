@@ -507,11 +507,11 @@ export class AlertSettingComponent implements OnInit {
               });
             }
           } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.query-fail'), message.msg);
           }
         },
         error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.query-fail'), error.msg);
         }
       );
   }
