@@ -86,6 +86,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.xml.sax.InputSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -247,8 +248,11 @@ public class HttpCollectImpl extends AbstractCollect {
         boolean isXmlFormat = true;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            // see https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            dbf.setXIncludeAware(false);
             DocumentBuilder db = dbf.newDocumentBuilder();
-            Document document = db.parse(new ByteArrayInputStream(resp.getBytes(StandardCharsets.UTF_8)));
+            Document document = db.parse(new InputSource(new StringReader(resp)));
             NodeList urlList = document.getElementsByTagName("url");
             for (int i = 0; i < urlList.getLength(); i++) {
                 Node urlNode = urlList.item(i);
