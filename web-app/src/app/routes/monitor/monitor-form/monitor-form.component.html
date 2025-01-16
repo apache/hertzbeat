@@ -131,7 +131,12 @@
       <nz-form-item>
         <nz-form-label nzSpan="7" [nzFor]="'labels'" [nzTooltipTitle]="'label.bind.tip' | i18n">{{ 'label.bind' | i18n }} </nz-form-label>
         <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-          <app-labels-input [(ngModel)]="monitor.labels" name="labels"></app-labels-input>
+          <app-labels-input
+            [(ngModel)]="monitor.labels"
+            name="labels"
+            [keyAlias]="'placeholder.key' | i18n"
+            [valueAlias]="'placeholder.value' | i18n"
+          ></app-labels-input>
         </nz-form-control>
       </nz-form-item>
 
@@ -140,7 +145,12 @@
           >{{ 'annotation.bind' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-          <app-labels-input [(ngModel)]="monitor.annotations" name="annotation"></app-labels-input>
+          <app-labels-input
+            [(ngModel)]="monitor.annotations"
+            name="annotation"
+            [keyAlias]="'placeholder.key' | i18n"
+            [valueAlias]="'placeholder.value' | i18n"
+          ></app-labels-input>
         </nz-form-control>
       </nz-form-item>
 
