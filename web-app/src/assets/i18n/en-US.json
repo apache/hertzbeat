@@ -570,7 +570,7 @@
   "menu.monitor.service": "Service Monitor",
   "menu.monitor.webserver": "Webserver Monitor",
   "menu.more": "More",
-  "menu.search.placeholder": "Search：Monitoring Task: Name、Host etc",
+  "menu.search.placeholder": "Search Monitoring Task Name、Host etc",
   "monitor": "Monitor",
   "monitor.advanced": "Advanced",
   "monitor.advanced.tip": "Advanced Setting Params",

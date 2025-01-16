@@ -570,7 +570,7 @@
   "menu.monitor.service": "應用服務監控",
   "menu.monitor.webserver": "Web伺服器監控",
   "menu.more": "更多",
-  "menu.search.placeholder": "搜索監控任務：任務名稱、HOST等",
+  "menu.search.placeholder": "搜索監控任務名稱、HOST等",
   "monitor": "監控",
   "monitor.app": "監控類型",
   "monitor.app.api": "HTTP API",

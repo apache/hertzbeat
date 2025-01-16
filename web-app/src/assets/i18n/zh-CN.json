@@ -566,7 +566,7 @@
   "menu.monitor.service": "应用服务监控",
   "menu.monitor.webserver": "Web服务器监控",
   "menu.more": "更多",
-  "menu.search.placeholder": "搜索监控任务：任务名称、HOST等",
+  "menu.search.placeholder": "搜索监控任务名称、HOST等",
   "monitor": "监控",
   "monitor.advanced": "高级设置",
   "monitor.advanced.tip": "设置高级可选参数",
