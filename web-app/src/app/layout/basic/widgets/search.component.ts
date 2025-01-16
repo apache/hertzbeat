@@ -48,8 +48,15 @@ import { MonitorService } from '../../../service/monitor.service';
         class="search-option"
       >
         <a>
-          {{ 'monitor.name' | i18n }} : {{ option.name }}
-          <span class="search-host">{{ 'monitor.host' | i18n }} : {{ option.host }}</span>
+          <div class="monitor-info">
+            <div>
+              <span class="monitor-name">{{ option.name }}</span>
+              <span class="monitor-host">{{ option.host }}</span>
+            </div>
+            <div class="monitor-labels">
+              <span *ngFor="let label of option.labels | keyvalue" class="monitor-label">{{ label.key + ' : ' + label.value }}</span>
+            </div>
+          </div>
         </a>
       </nz-auto-option>
     </nz-autocomplete>
