@@ -75,8 +75,8 @@
 
       <nz-collapse *ngIf="hasAdvancedParams" [nzGhost]="true" style="background: ghostwhite; margin-bottom: 24px">
         <ng-template #extraColHeader>
-          <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitors.advanced.tip' | i18n">
-            <span>{{ 'monitors.advanced' | i18n }}</span>
+          <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitor.advanced.tip' | i18n">
+            <span>{{ 'monitor.advanced' | i18n }}</span>
             <i nz-icon nzType="down-circle" nzTheme="outline"></i>
           </button>
         </ng-template>
@@ -200,7 +200,7 @@
             nzType="primary"
             type="submit"
             nz-tooltip
-            [nzTooltipTitle]="'monitors.detect.tip' | i18n"
+            [nzTooltipTitle]="'monitor.detect.tip' | i18n"
             (click)="onDetect(form.form)"
           >
             {{ 'common.button.detect' | i18n }}

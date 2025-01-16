@@ -166,11 +166,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       return item.value == app;
     });
     if (find == undefined) {
-      return this.i18nSvc.fanyi('monitor_icon.center');
+      return this.i18nSvc.fanyi('monitor.icon.center');
     }
-    let icon = this.i18nSvc.fanyi(`monitor_icon.${find.category}`);
-    if (icon == `monitor_icon.${find.category}`) {
-      return this.i18nSvc.fanyi('monitor_icon.center');
+    let icon = this.i18nSvc.fanyi(`monitor.icon.${find.category}`);
+    if (icon == `monitor.icon.${find.category}`) {
+      return this.i18nSvc.fanyi('monitor.icon.center');
     }
     return icon;
   }
@@ -610,7 +610,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('monitors.copy.notify.one-select'), '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('monitor.copy.notify.one-select'), '');
       return;
     }
     const monitorId = Array.from(this.checkedMonitorIds)[0];
@@ -618,14 +618,14 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     this.monitorSvc.copyMonitor(monitorId).subscribe(
       message => {
         if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('monitors.copy.success'), '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitor.copy.success'), '');
           this.loadMonitorTable();
         } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('monitors.copy.failed'), message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), message.msg);
         }
       },
       error => {
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.copy.failed'), error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), error.msg);
       }
     );
   }
