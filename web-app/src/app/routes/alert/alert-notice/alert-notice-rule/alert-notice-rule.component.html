@@ -36,7 +36,7 @@
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.receiver.people' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.notice.rule.all' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'alert.notice.rule.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'common.enable' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'common.edit-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -185,7 +185,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzFor="enable" nzRequired="true" nzSpan="7">{{ 'alert.notice.rule.enable' | i18n }} </nz-form-label>
+        <nz-form-label nzFor="enable" nzRequired="true" nzSpan="7">{{ 'common.enable' | i18n }} </nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="rule.enable" id="enable" name="enable"></nz-switch>
         </nz-form-control>

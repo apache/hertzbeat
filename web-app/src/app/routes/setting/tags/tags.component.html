@@ -72,7 +72,7 @@
         </ng-template>
 
         <ng-template #editAction>
-          <span nz-tooltip [nzTooltipTitle]="'label.edit' | i18n" (click)="onEditOneTag(data)">
+          <span nz-tooltip [nzTooltipTitle]="'common.button.edit' | i18n" (click)="onEditOneTag(data)">
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </span>
         </ng-template>
@@ -99,19 +99,19 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #tagForm="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'tag.name' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'label.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="tag.name" nz-input required name="name" type="text" id="name" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="value">{{ 'tag.value' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="value">{{ 'label.value' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="tag.tagValue" nz-input name="value" type="text" id="value" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="color">{{ 'tag.color' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="color">{{ 'label.color' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input
             [(colorPicker)]="tag.color"
