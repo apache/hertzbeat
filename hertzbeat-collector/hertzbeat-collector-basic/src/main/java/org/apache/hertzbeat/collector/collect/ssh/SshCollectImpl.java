@@ -56,6 +56,7 @@ import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
+import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.springframework.util.StringUtils;
@@ -322,7 +323,13 @@ public class SshCollectImpl extends AbstractCollect {
             clientSession.addPasswordIdentity(sshProtocol.getPassword());
         } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
             var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
-            SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), null)
+            FilePasswordProvider passwordProvider = (session, resource, index) -> {
+                if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
+                    return sshProtocol.getPrivateKeyPassphrase();
+                }
+                return null;
+            };
+            SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), passwordProvider)
                     .forEach(clientSession::addPublicKeyIdentity);
         }  // else auth with localhost private public key certificates
 
