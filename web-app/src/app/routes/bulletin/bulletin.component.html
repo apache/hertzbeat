@@ -57,16 +57,16 @@
   </ng-template>
   <ng-template #right>
     <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">
-      <span *ngIf="deadline > 0"> {{ 'monitors.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
-      <span *ngIf="deadline <= 0"> {{ 'monitors.detail.close-refresh' | i18n }} </span>
+      <span *ngIf="deadline > 0"> {{ 'monitor.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
+      <span *ngIf="deadline <= 0"> {{ 'monitor.detail.close-refresh' | i18n }} </span>
     </button>
     <nz-dropdown-menu #time_menu="nzDropdownMenu">
       <ul nz-menu>
-        <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 10 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 30 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 60 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 300 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitors.detail.close-refresh' | i18n }}</li>
+        <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 10 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 30 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 60 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 300 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitor.detail.close-refresh' | i18n }}</li>
       </ul>
     </nz-dropdown-menu>
   </ng-template>

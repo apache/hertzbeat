@@ -29,7 +29,7 @@ const routes: Routes = [
   { path: '', component: MonitorListComponent },
   { path: 'new', component: MonitorNewComponent },
   { path: ':monitorId/edit', component: MonitorEditComponent },
-  { path: ':monitorId', component: MonitorDetailComponent, data: { titleI18n: 'monitors.detail' } },
+  { path: ':monitorId', component: MonitorDetailComponent, data: { titleI18n: 'monitor.detail' } },
   { path: '**', component: MonitorListComponent }
 ];
 

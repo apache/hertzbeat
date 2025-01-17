@@ -36,7 +36,9 @@
       </div>
     </div>
     <div class="handover_button" *ngIf="isLoaded()">
-      <button class="handover_button_content" id="handover_button_self" (click)="handleButtonClick()">{{ collapse_expand | i18n }}</button>
+      <button class="handover_button_content" id="handover_button_self" (click)="handleButtonClick()">{{
+        'common.button.' + collapse_expand | i18n
+      }}</button>
       <i nz-icon (click)="handleButtonClick()">
         <svg viewBox="64 64 896 896" focusable="false" fill="#000000" width="1.12em" height="1.12em" data-icon="alert" aria-hidden="true">
           <path
@@ -54,7 +56,7 @@
     </div>
     <div class="help_link_content">
       <div class="flex help_link_nav">
-        <a class="help_message_nav_item" [href]="'question.link' | i18n" target="_blank">
+        <a class="help_message_nav_item" [href]="'https://hertzbeat.apache.org/docs/help/issue'" target="_blank">
           <i class="help_link_span" nz-icon nzType="question-circle"></i>
           <span class="hover_blue">{{ 'menu.link.question' | i18n }}</span>
         </a>
