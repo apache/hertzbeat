@@ -60,6 +60,11 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
      * Private key (optional)
      */
     private String privateKey;
+
+    /**
+     * private key passphrase (optional)
+     */
+    private String privateKeyPassphrase;
     
     /**
      * reuse connection session
