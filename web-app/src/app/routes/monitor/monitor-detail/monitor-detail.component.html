@@ -28,12 +28,12 @@
   <nz-breadcrumb-item>
     <a [routerLink]="['/monitors']" [queryParams]="{ app: app ? app : '' }">
       <i nz-icon nzType="reconciliation"></i>
-      <span>{{ 'monitors.list' | i18n }}</span>
+      <span>{{ 'monitor.list' | i18n }}</span>
     </a>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item>
     <span nz-icon nzType="pie-chart"></span>
-    <span>{{ 'monitors.detail' | i18n }}</span>
+    <span>{{ 'monitor.detail' | i18n }}</span>
   </nz-breadcrumb-item>
   <nz-breadcrumb-item *ngIf="!!app">
     <a routerLink="/setting/define" [queryParams]="{ app: app }">
@@ -53,7 +53,7 @@
         <nz-tab [nzTitle]="titleTemplate" (nzClick)="loadRealTimeMetric()">
           <ng-template #titleTemplate>
             <i nz-icon nzType="pic-right"></i>
-            {{ 'monitors.detail.realtime' | i18n }}
+            {{ 'monitor.detail.realtime' | i18n }}
           </ng-template>
           <div class="cards lists">
             <app-monitor-data-table
@@ -77,7 +77,7 @@
         <nz-tab [nzTitle]="title2Template" (nzClick)="loadMetricChart()">
           <ng-template #title2Template>
             <i nz-icon nzType="line-chart"></i>
-            {{ 'monitors.detail.history' | i18n }}
+            {{ 'monitor.detail.history' | i18n }}
           </ng-template>
           <div class="cards">
             <app-monitor-data-chart
@@ -108,8 +108,8 @@
 <ng-template #tab_extra_template>
   <nz-button-group class="mobile-hide">
     <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">
-      <span *ngIf="deadline > 0"> {{ 'monitors.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
-      <span *ngIf="deadline <= 0"> {{ 'monitors.detail.close-refresh' | i18n }} </span>
+      <span *ngIf="deadline > 0"> {{ 'monitor.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
+      <span *ngIf="deadline <= 0"> {{ 'monitor.detail.close-refresh' | i18n }} </span>
     </button>
     <button
       style="margin-left: 4px"
@@ -129,11 +129,11 @@
   </nz-button-group>
   <nz-dropdown-menu #time_menu="nzDropdownMenu">
     <ul nz-menu>
-      <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 10 } }} </li>
-      <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 30 } }} </li>
-      <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 60 } }} </li>
-      <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 300 } }} </li>
-      <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitors.detail.close-refresh' | i18n }}</li>
+      <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 10 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 30 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 60 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 300 } }} </li>
+      <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitor.detail.close-refresh' | i18n }}</li>
     </ul>
   </nz-dropdown-menu>
 </ng-template>

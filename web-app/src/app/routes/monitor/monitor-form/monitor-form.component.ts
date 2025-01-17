@@ -156,11 +156,11 @@ export class MonitorFormComponent implements OnChanges {
       if (portParam) {
         if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
           portParam.paramValue = 443;
-          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitors.new.notify.change-to-https'));
+          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-https'));
         }
         if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
           portParam.paramValue = 80;
-          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitors.new.notify.change-to-http'));
+          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-http'));
         }
       }
     }
