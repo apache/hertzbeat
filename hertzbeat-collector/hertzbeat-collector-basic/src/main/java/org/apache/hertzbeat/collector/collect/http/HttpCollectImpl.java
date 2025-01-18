@@ -286,9 +286,10 @@ public class HttpCollectImpl extends AbstractCollect {
             long startTime = System.currentTimeMillis();
             try {
                 HttpGet httpGet = new HttpGet(siteUrl);
-                CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet);
-                statusCode = response.getStatusLine().getStatusCode();
-                EntityUtils.consume(response.getEntity());
+                try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet)) {
+                    statusCode = response.getStatusLine().getStatusCode();
+                    EntityUtils.consume(response.getEntity());
+                }
             } catch (ClientProtocolException e1) {
                 if (e1.getCause() != null) {
                     errorMsg = e1.getCause().getMessage();
