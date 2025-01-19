@@ -9,7 +9,7 @@ keywords: [Open Source Monitoring System, Open Source Database Monitoring, StarR
 
 **Protocol: HTTP**
 
-### Pre-monitoring Operations 
+### Pre-monitoring Operations
 
 Check the `fe/conf/fe.conf` file to obtain the value of the `http_port` configuration item, which is used for monitoring.
 
@@ -69,7 +69,7 @@ Check the `fe/conf/fe.conf` file to obtain the value of the `http_port` configur
 |------------|-------------|------------------------|
 | value | None | Number of new load jobs |
 
-#### Metric Set: starrocks_fe_load_finished 
+#### Metric Set: starrocks_fe_load_finished
 
 | Metric Name | Metric Unit | Metric Help Description |
 |------------|-------------|------------------------|
@@ -133,4 +133,4 @@ Check the `fe/conf/fe.conf` file to obtain the value of the `http_port` configur
 
 | Metric Name | Metric Unit | Metric Help Description |
 |------------|-------------|------------------------|
-| value | None | Total number of FE connections | 
+| value | None | Total number of FE connections |

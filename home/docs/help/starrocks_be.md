@@ -9,7 +9,7 @@ keywords: [Open Source Monitoring System, Open Source Database Monitoring, StarR
 
 **Protocol: HTTP**
 
-### Pre-monitoring Operations 
+### Pre-monitoring Operations
 
 Check the `be/conf/be.conf` file to obtain the value of the `http_port` configuration item, which is used for monitoring.
 
@@ -109,4 +109,4 @@ Check the `be/conf/be.conf` file to obtain the value of the `http_port` configur
 
 | Metric Name | Metric Unit | Metric Help Description |
 |------------|-------------|------------------------|
-| value | Bytes | Number of bytes sent over the network | 
+| value | Bytes | Number of bytes sent over the network |
