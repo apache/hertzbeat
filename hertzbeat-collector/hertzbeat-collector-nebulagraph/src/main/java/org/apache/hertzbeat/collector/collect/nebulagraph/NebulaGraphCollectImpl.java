@@ -94,13 +94,11 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         String resp;
         long responseTime;
         HashMap<String, String> resultMap = new HashMap<>(64);
-        CloseableHttpResponse response;
         HttpContext httpContext = createHttpContext(nebulaGraph.getHost(), nebulaGraph.getPort());
         HttpUriRequest request = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
                 nebulaGraph.getUrl(), nebulaGraph.getTimeout());
-        try {
-            // Send an HTTP request to obtain response data
-            response = CommonHttpClient.getHttpClient().execute(request, httpContext);
+        // Send an HTTP request to obtain response data
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
