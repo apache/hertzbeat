@@ -89,9 +89,8 @@ public class PrometheusAutoCollectImpl {
         }
         HttpContext httpContext = createHttpContext(metrics.getPrometheus());
         HttpUriRequest request = createHttpRequest(metrics.getPrometheus());
-        try {
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
-                                                     .execute(request, httpContext);
+        try (CloseableHttpResponse response =
+             CommonHttpClient.getHttpClient().execute(request, httpContext)) {
             int statusCode = response.getStatusLine().getStatusCode();
             boolean isSuccessInvoke = defaultSuccessStatusCodes.contains(statusCode);
             log.debug("http response status: {}", statusCode);
