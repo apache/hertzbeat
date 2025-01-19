@@ -25,7 +25,7 @@ public interface NetworkConstants {
 
     String KEEP_ALIVE = "Keep-Alive";
 
-    String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36\")";
+    String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36";
 
     String IPV6 = "ipv6";
 
