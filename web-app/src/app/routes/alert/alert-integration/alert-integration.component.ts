@@ -154,4 +154,14 @@ export class AlertIntegrationComponent implements OnInit {
       }
     });
   }
+
+  copyToken() {
+    const el = document.createElement('textarea');
+    el.value = this.token;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), this.i18nSvc.fanyi('alert.integration.token.notice'));
+  }
 }

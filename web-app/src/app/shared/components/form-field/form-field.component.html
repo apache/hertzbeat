@@ -94,8 +94,8 @@
   [(value)]="value"
   (valueChange)="onChange($event)"
   [id]="item.field"
-  keyAlias="Header Name"
-  valueAlias="Header Value"
+  [keyAlias]="'monitor.headerName.tip' | i18n"
+  [valueAlias]="'monitor.headerValue.tip' | i18n"
 />
 
 <app-metrics-field-input

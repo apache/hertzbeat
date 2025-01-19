@@ -112,6 +112,7 @@ export class MonitorNewComponent implements OnInit {
                 }
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
+              define.placeholder = define.placeholder && this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
               if (define.hide) {
                 advancedParams.push(param);
                 advancedParamDefines.push(define);
