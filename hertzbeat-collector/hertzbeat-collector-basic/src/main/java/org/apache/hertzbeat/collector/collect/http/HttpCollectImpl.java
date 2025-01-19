@@ -153,7 +153,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     case DispatchConstants.PARSE_XML_PATH ->
                             parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     case DispatchConstants.PARSE_WEBSITE ->
-                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, response);
+                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime);
                     case DispatchConstants.PARSE_SITE_MAP ->
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_HEADER ->
@@ -222,8 +222,7 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private void parseResponseByWebsite(String resp, Metrics metrics, HttpProtocol http,
-                                        CollectRep.MetricsData.Builder builder, Long responseTime,
-                                        CloseableHttpResponse response) {
+                                        CollectRep.MetricsData.Builder builder, Long responseTime) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : metrics.getAliasFields()) {
