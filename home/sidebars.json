@@ -189,6 +189,8 @@
             "help/clickhouse",
             "help/doris_be",
             "help/doris_fe",
+            "help/starrocks_be",
+            "help/starrocks_fe",
             "help/elasticsearch",
             "help/flink",
             "help/flink_on_yarn",
