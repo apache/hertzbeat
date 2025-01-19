@@ -45,7 +45,7 @@
     <ng-container *ngIf="selectedSource">
       <div style="display: flex; justify-content: space-between">
         <h2>{{ selectedSource.name }}</h2>
-        <button [nzLoading]="generateLoading" nz-button (click)="generateToken()" style="margin-right: 16px">{{
+        <button [nzLoading]="generateLoading" nz-button nzType="primary" (click)="generateToken()" style="margin-right: 16px">{{
           'alert.integration.token.new' | i18n
         }}</button>
       </div>
@@ -61,17 +61,24 @@
   [nzTitle]="'alert.integration.token.title' | i18n"
   (nzOnCancel)="handleCancel()"
   (nzOnOk)="handleOk()"
-  [nzOkText]="null"
-  [nzCancelText]="'common.button.confirm' | i18n"
+  [nzOkText]="'common.button.confirm' | i18n"
+  [nzCancelText]="null"
 >
   <div *nzModalContent class="-inner-content">
     <div>
       <p>{{ 'alert.integration.token.desc' | i18n }}</p>
     </div>
     <div style="width: 100%">
-      <textarea rows="6" style="width: 100%; border-radius: 4px">{{ token }}</textarea>
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 8px">
+        <button nz-button nzType="primary" (click)="copyToken()">
+          {{ 'common.button.copy' | i18n }}
+        </button>
+      </div>
+      <div style="padding: 12px; border: 1px solid #d9d9d9; border-radius: 4px; background-color: #f5f5f5; word-wrap: break-word">
+        {{ token }}
+      </div>
     </div>
-    <div style="text-align: center; font-weight: lighter">
+    <div style="text-align: center; font-weight: lighter; margin-top: 16px">
       <p>{{ 'alert.integration.token.notice' | i18n }}</p>
     </div>
   </div>
