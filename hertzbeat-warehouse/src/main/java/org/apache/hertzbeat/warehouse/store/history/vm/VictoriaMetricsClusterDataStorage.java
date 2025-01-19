@@ -40,7 +40,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
@@ -49,6 +48,7 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
@@ -217,7 +217,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 if (StringUtils.hasText(vmInsertProps.username())
                         && StringUtils.hasText(vmInsertProps.password())) {
                     String authStr = vmInsertProps.username() + ":" + vmInsertProps.password();
-                    String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                    String encodedAuth = Base64Util.encode(authStr);
                     headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
                 }
                 StringBuilder stringBuilder = new StringBuilder();
@@ -262,8 +262,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
             if (StringUtils.hasText(vmSelectProps.username()) && StringUtils.hasText(vmSelectProps.password())) {
                 String authStr = vmSelectProps.username() + ":" + vmSelectProps.password();
-                String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)),
-                        StandardCharsets.UTF_8);
+                String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC
                         + SignConstants.BLANK + encodedAuth);
             }
@@ -358,8 +357,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
             if (StringUtils.hasText(vmSelectProps.username()) && StringUtils.hasText(vmSelectProps.password())) {
                 String authStr = vmSelectProps.username() + ":" + vmSelectProps.password();
-                String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)),
-                        StandardCharsets.UTF_8);
+                String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC
                         + SignConstants.BLANK + encodedAuth);
             }
