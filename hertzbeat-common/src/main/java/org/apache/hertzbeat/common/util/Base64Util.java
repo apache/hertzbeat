@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.util;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 /**
@@ -38,5 +39,9 @@ public final class Base64Util {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static String encode(String str) {
+        return Base64.getEncoder().encodeToString(str.getBytes(StandardCharsets.UTF_8));
     }
 }
