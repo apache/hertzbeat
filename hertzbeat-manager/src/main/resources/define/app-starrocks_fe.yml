@@ -1,0 +1,407 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: starrocks_fe
+# The monitoring i18n name
+name:
+  zh-CN: StarRocks FE
+  en-US: StarRocks FE
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 StarRocks 数据库FE的核心监控指标（JVM内存、线程、查询响应时间、编辑日志、加载任务、作业状态、事务状态、连接数等）进行测量监控。<br>您可以点击 "<i>新建 StarRocks FE</i>" 并进行配置，或者选择"<i>更多操作</i>"，导入已有配置。
+  en-US: Hertzbeat monitoring StarRocks FE through core performance metrics such as JVM memory, threads, query response time, edit logs, load jobs, job status, transaction status and connections. You could click the "<i>New StarRocks FE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 StarRocks 資料庫FE的核心監控指標（JVM記憶體、執行緒、查詢響應時間、編輯日誌、載入任務、作業狀態、事務狀態、連接數等）進行量測監控。<br>您可以點擊"<i>新建 StarRocks FE</i>"並進行配寘，或者選擇"<i>更多操作</i>"，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/starrocks_fe/
+  en-US: https://hertzbeat.apache.org/docs/help/starrocks_fe/
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标 Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # default value
+    defaultValue: 8030
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
+    required: false
+    # hide param-true or false
+    hide: true
+    defaultValue: 6000
+metrics:
+  - name: jvm_heap_size_bytes
+    i18n:
+      zh-CN: JVM堆内存
+      en-US: JVM Heap Size
+    priority: 0
+    fields:
+      - field: type
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_non_heap_size_bytes
+    i18n:
+      zh-CN: JVM非堆内存
+      en-US: JVM Non-Heap Size
+    priority: 1
+    fields:
+      - field: type
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_thread
+    i18n:
+      zh-CN: JVM线程
+      en-US: JVM Thread
+    priority: 2
+    fields:
+      - field: type
+        type: 1
+        label: true
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_query_err
+    i18n:
+      zh-CN: 查询失败数
+      en-US: Failed Queries
+    priority: 3
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_query_latency_ms
+    i18n:
+      zh-CN: 查询响应时间(ms)
+      en-US: Query Response Time(ms)
+    priority: 4
+    fields:
+      - field: quantile
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: ms
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_edit_log_write
+    i18n:
+      zh-CN: 编辑日志写入速率
+      en-US: Edit Log Write Rate
+    priority: 5
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_load_add
+    i18n:
+      zh-CN: 新增加载任务数
+      en-US: New Load Jobs
+    priority: 6
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_load_finished
+    i18n:
+      zh-CN: 完成加载任务数
+      en-US: Finished Load Jobs
+    priority: 7
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_job
+    i18n:
+      zh-CN: FE作业状态
+      en-US: FE Job Status
+    priority: 8
+    fields:
+      - field: job
+        type: 1
+        label: true
+      - field: type
+        type: 1
+        label: true
+      - field: state
+        type: 1
+        label: true
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_tablet_max_compaction_score
+    i18n:
+      zh-CN: 节点上最高的 Compaction Score
+      en-US: Max Compaction Score on Node
+    priority: 9
+    fields:
+      - field: backend
+        type: 1
+        label: true
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_meta_log_count
+    i18n:
+      zh-CN: 未做 Checkpoint 的 Edit Log 数量
+      en-US: Edit Log Count without Checkpoint
+    priority: 10
+    fields:
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_query_total
+    i18n:
+      zh-CN: 查询总数
+      en-US: Total Queries
+    priority: 11
+    fields:
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_request_total
+    i18n:
+      zh-CN: 请求总数
+      en-US: Total Requests
+    priority: 12
+    fields:
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_txn_reject
+    i18n:
+      zh-CN: 事务拒绝数
+      en-US: Rejected Transactions
+    priority: 13
+    fields:
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_txn_begin
+    i18n:
+      zh-CN: 事务开始数
+      en-US: Beginning Transactions
+    priority: 14
+    fields:
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_txn_success
+    i18n:
+      zh-CN: 事务成功数
+      en-US: Successful Transactions
+    priority: 15
+    fields:
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_txn_failed
+    i18n:
+      zh-CN: 事务失败数
+      en-US: Failed Transactions
+    priority: 16
+    fields:
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: starrocks_fe_connection_total
+    i18n:
+      zh-CN: 连接总数
+      en-US: Total Connections
+    priority: 17
+    fields:
+      - field: user
+        type: 1
+        label: true
+      - field: value
+        type: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
