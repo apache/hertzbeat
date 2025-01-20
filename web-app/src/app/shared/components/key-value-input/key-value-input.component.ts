@@ -17,18 +17,23 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-key-value-input',
   templateUrl: './key-value-input.component.html',
-  styleUrls: ['./key-value-input.component.less']
+  styleUrls: ['./key-value-input.component.less'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => KeyValueInputComponent),
+      multi: true
+    }
+  ]
 })
-export class KeyValueInputComponent implements OnInit {
+export class KeyValueInputComponent implements OnInit, ControlValueAccessor {
   constructor() {}
-
-  @Input() value!: any;
-  @Output() readonly valueChange = new EventEmitter<string>();
 
   @Input()
   keyAlias: string = 'Key';
@@ -37,20 +42,44 @@ export class KeyValueInputComponent implements OnInit {
 
   keyValues: any[] = [];
 
+  // ControlValueAccessor
+  private onChange: any = () => {};
+  private onTouched: any = () => {};
+
   ngOnInit(): void {
-    if (this.value == undefined) {
-      this.value = {
-        '': ''
-      };
-    } else {
-      this.value = JSON.parse(this.value);
+    if (this.keyValues.length === 0) {
+      this.addNew();
     }
-    Object.keys(this.value).map(item => {
-      this.keyValues.push({
-        key: item,
-        value: this.value[item]
-      });
-    });
+  }
+
+  writeValue(obj: string): void {
+    if (obj != undefined) {
+      let value = JSON.parse(obj);
+      if (value != null) {
+        this.keyValues = [];
+        Object.keys(value).map(item => {
+          this.keyValues.push({
+            key: item,
+            value: value[item]
+          });
+        });
+      }
+    }
+    if (this.keyValues.length === 0) {
+      this.addNew();
+    }
+  }
+
+  registerOnChange(fn: any): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    // set disabled state here
   }
 
   addNew(e?: MouseEvent) {
@@ -62,21 +91,29 @@ export class KeyValueInputComponent implements OnInit {
       value: ''
     });
   }
+
   removeCurrent(index: number, e?: MouseEvent) {
     if (e) {
       e.preventDefault();
     }
     if (this.keyValues.length > 1) {
       this.keyValues.splice(index, 1);
+      this.emitChange();
     }
   }
-  onChange() {
-    this.value = {};
+
+  emitChange() {
+    let value: Record<string, string> = {};
     this.keyValues.forEach(item => {
       if (item != null && item.key != null) {
-        this.value[item.key] = item.value;
+        value[item.key] = item.value;
       }
     });
-    this.valueChange.emit(JSON.stringify(this.value));
+    if (Object.keys(value).length === 0 || Object.values(value).every(v => v === '')) {
+      this.onChange(null);
+    } else {
+      this.onChange(JSON.stringify(value));
+    }
+    this.onTouched();
   }
 }
