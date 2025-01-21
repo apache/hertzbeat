@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -43,6 +43,8 @@ const AVAILABILITY = 'availability';
   styleUrls: ['./alert-setting.component.less']
 })
 export class AlertSettingComponent implements OnInit {
+  private savedSelectionStart = 0;
+  private savedSelectionEnd = 0;
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
@@ -1173,5 +1175,73 @@ export class AlertSettingComponent implements OnInit {
   onFilterChange(): void {
     this.pageIndex = 1;
     this.loadAlertDefineTable();
+  }
+
+  onDragStart(event: DragEvent, data: any): void {
+    if (!event.dataTransfer) return;
+
+    // 根据数据类型生成不同格式
+    let dragText = '';
+    if (this.isMetric(data)) {
+      dragText = `\${${data.value}}`; // 插入模板变量格式
+    } else {
+      dragText = data.name; // 环境变量直接使用名称
+    }
+
+    event.dataTransfer.setData('text/plain', dragText);
+
+    // 添加可视化反馈
+    (event.target as HTMLElement).classList.add('dragging-active');
+    this.saveTextareaSelection();
+  }
+
+  @HostListener('document:dragend', ['$event'])
+  onGlobalDragEnd(event: DragEvent) {
+    document.querySelectorAll('.dragging-active').forEach(el => {
+      el.classList.remove('dragging-active');
+    });
+  }
+
+  private isMetric(data: any): boolean {
+    return 'value' in data && 'label' in data;
+  }
+
+  private saveTextareaSelection(): void {
+    const textarea = document.getElementById('template') as HTMLTextAreaElement;
+    this.savedSelectionStart = textarea.selectionStart;
+    this.savedSelectionEnd = textarea.selectionEnd;
+  }
+
+  onTextareaDrop(event: DragEvent): void {
+    event.preventDefault();
+
+    // 添加空值检查
+    if (!event.dataTransfer) return;
+
+    const textarea = event.target as HTMLTextAreaElement;
+    const data = event.dataTransfer.getData('text/plain');
+    this.insertAtCursor(textarea, data);
+    this.define.template = textarea.value;
+  }
+
+  private insertAtCursor(textarea: HTMLTextAreaElement, text: string): void {
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+
+    const content = textarea.value;
+    textarea.value = content.substring(0, startPos) + text + content.substring(endPos, content.length);
+
+    const newPos = startPos + text.length;
+    textarea.selectionStart = newPos;
+    textarea.selectionEnd = newPos;
+  }
+
+  onTextareaDragOver(event: DragEvent): void {
+    event.preventDefault();
+    (event.target as HTMLElement).classList.add('drag-over');
+  }
+
+  onTextareaDragLeave(event: DragEvent): void {
+    (event.target as HTMLElement).classList.remove('drag-over');
   }
 }
