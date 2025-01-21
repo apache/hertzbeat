@@ -33,34 +33,40 @@
     </button>
     <button nz-button nzType="primary" (click)="onNewBulletinDefine()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'bulletin.new' | i18n }}
+      {{ 'common.button.new' | i18n }}
     </button>
-    <!--TODO: Wait until the backend interface is improved before releasing it.-->
-    <!--<button *ngIf="currentDefine" nz-button nzType="primary" (click)="onEditBulletinDefine()">
-      <i nz-icon nzType="edit" nzTheme="outline"></i>
-      {{ 'bulletin.edit' | i18n }}
-    </button>-->
-    <button *ngIf="currentBulletin" nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'bulletin.delete' | i18n }}
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
     </button>
-    <button *ngIf="currentBulletin" nz-button nzType="primary" nzDanger (click)="onBatchDeleteBulletinDefines()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'bulletin.batch.delete' | i18n }}
-    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li *ngIf="currentBulletin" nz-menu-item>
+          <button nz-button nzDanger (click)="onDeleteBulletinDefines()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+        <li *ngIf="currentBulletin" nz-menu-item>
+          <button nz-button nzDanger (click)="onBatchDeleteBulletinDefines()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'bulletin.batch.delete' | i18n }}
+          </button>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
     <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">
-      <span *ngIf="deadline > 0"> {{ 'monitors.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
-      <span *ngIf="deadline <= 0"> {{ 'monitors.detail.close-refresh' | i18n }} </span>
+      <span *ngIf="deadline > 0"> {{ 'monitor.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
+      <span *ngIf="deadline <= 0"> {{ 'monitor.detail.close-refresh' | i18n }} </span>
     </button>
     <nz-dropdown-menu #time_menu="nzDropdownMenu">
       <ul nz-menu>
-        <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 10 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 30 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 60 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 300 } }} </li>
-        <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitors.detail.close-refresh' | i18n }}</li>
+        <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 10 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 30 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 60 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitor.detail.config-refresh' | i18n : { time: 300 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitor.detail.close-refresh' | i18n }}</li>
       </ul>
     </nz-dropdown-menu>
   </ng-template>

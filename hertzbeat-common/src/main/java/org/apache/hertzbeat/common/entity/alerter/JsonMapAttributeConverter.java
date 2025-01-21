@@ -20,7 +20,9 @@ package org.apache.hertzbeat.common.entity.alerter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +41,7 @@ public class JsonMapAttributeConverter implements AttributeConverter<Map<String,
     @Override
     public Map<String, String> convertToEntityAttribute(String dbData) {
         TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
-        return JsonUtil.fromJson(dbData, typeReference);
+        Map<String, String> map = JsonUtil.fromJson(dbData, typeReference);
+        return Objects.requireNonNullElseGet(map, HashMap::new);
     }
 }

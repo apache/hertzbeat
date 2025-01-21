@@ -25,7 +25,7 @@ public interface NetworkConstants {
 
     String KEEP_ALIVE = "Keep-Alive";
 
-    String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36\")";
+    String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36";
 
     String IPV6 = "ipv6";
 
@@ -59,14 +59,8 @@ public interface NetworkConstants {
         int READ_TIME_OUT = 6 * 1000;
         int WRITE_TIME_OUT = 6 * 1000;
         int CONNECT_TIME_OUT = 6 * 1000;
-        int CHUNK_SIZE = 8196;
         int MAX_IDLE_CONNECTIONS = 20;
         int KEEP_ALIVE_TIMEOUT = 30 * 1000;
-        int HTTP_CLIENT_CONNECTION_MANAGER_MAX_PER_ROUTE = 20;
-        int HTTP_CLIENT_CONNECTION_MANAGER_MAX_TOTAL = 20;
-        int HTTPCLIENT_KEEP_ALIVE_DURATION = 30 * 1000;
-        int HTTP_CLIENT_CONNECTION_MANAGER_CLOSE_WAIT_TIME_MS = 1000;
-        int HTTP_CLIENT_CONNECTION_MANAGER_CLOSE_IDLE_TIME_S = 30;
     }
 
 }

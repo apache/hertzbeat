@@ -17,13 +17,10 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
@@ -38,6 +35,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitoring management API
@@ -103,20 +104,14 @@ public class MonitorController {
         return ResponseEntity.ok(Message.success("Detect success."));
     }
 
-    @PostMapping("/optional")
-    @Operation(summary = "Add a monitor that can select metrics", description = "Add a monitor that can select metrics")
-    public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto) {
-        monitorService.validate(monitorDto, false);
-        monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(), monitorDto.getMonitor(), monitorDto.getParams());
-        return ResponseEntity.ok(Message.success("Add success"));
+    @PostMapping("/copy/{id}")
+    @Operation(summary = "Copy Monitor", description = "Copy an existing monitor")
+    public ResponseEntity<Message<Void>> copyMonitor(@PathVariable("id") final Long id) {
+        try {
+            monitorService.copyMonitor(id);
+            return ResponseEntity.ok(Message.success("Copy monitor success"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Copy monitor failed: " + e.getMessage()));
+        }
     }
-
-    @GetMapping(value = {"/metric/{app}", "/metric"})
-    @Operation(summary = "get app metric", description = "Obtain indicators that can be monitored by the app based on the app name")
-    public ResponseEntity<Message<List<String>>> getMonitorMetrics(
-            @PathVariable(value = "app", required = false) String app) {
-        List<String> metricNames = monitorService.getMonitorMetrics(app);
-        return ResponseEntity.ok(Message.success(metricNames));
-    }
-
 }

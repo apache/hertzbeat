@@ -66,6 +66,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { SlickCarouselModule } from 'ngx-slick-carousel';
 import { TagCloudComponent } from 'angular-tag-cloud-module';
+import { MarkdownModule } from 'ngx-markdown';
 
 @NgModule({
   declarations: [AppComponent],
@@ -85,7 +86,8 @@ import { TagCloudComponent } from 'angular-tag-cloud-module';
     ReactiveFormsModule,
     NgxEchartsModule.forRoot({
       echarts: () => import('echarts')
-    })
+    }),
+    MarkdownModule.forRoot()
   ],
   providers: [...LANG_PROVIDES, ...INTERCEPTOR_PROVIDES, ...I18NSERVICE_PROVIDES, ...APP_INIT_PROVIDES],
   bootstrap: [AppComponent]

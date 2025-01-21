@@ -21,9 +21,8 @@ import cn.afterturn.easypoi.excel.annotation.Excel;
 import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.List;
+import java.util.Map;
 import lombok.Data;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 
 /**
  * Data transfer object for alert configuration
@@ -34,26 +33,22 @@ import org.apache.hertzbeat.common.entity.manager.TagItem;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ExcelTarget(value = "AlertDefineDTO")
 public class AlertDefineDTO {
-    @Excel(name = "App")
-    private String app;
-    @Excel(name = "Metric")
-    private String metric;
-    @Excel(name = "Field")
-    private String field;
-    @Excel(name = "Preset")
-    private Boolean preset;
+    @Excel(name = "Name")
+    private String name;
+    @Excel(name = "Type")
+    private String type;
     @Excel(name = "Expr")
     private String expr;
-    @Excel(name = "Priority")
-    private Byte priority;
+    @Excel(name = "Period")
+    private Integer period;
     @Excel(name = "Times")
     private Integer times;
-    @Excel(name = "Tags")
-    private List<TagItem> tags;
-    @Excel(name = "Enable")
-    private Boolean enable;
-    @Excel(name = "RecoverNotice")
-    private Boolean recoverNotice;
+    @Excel(name = "Labels")
+    private Map<String, String> labels;
+    @Excel(name = "Annotations")
+    private Map<String, String> annotations;
     @Excel(name = "Template")
     private String template;
+    @Excel(name = "Enable")
+    private Boolean enable;
 }

@@ -1,6 +1,6 @@
 ---
-id: spark  
-title: Monitoring Spark      
+id: spark
+title: Monitoring Spark
 sidebar_label: Spark Monitor
 keywords: [open source monitoring tool, open source java spark monitoring tool, monitoring spark metrics]
 ---
@@ -15,12 +15,12 @@ keywords: [open source monitoring tool, open source java spark monitoring tool, 
 
 Refer: <https://spark.apache.org/docs/latest/spark-standalone.html>
 
-**监控配置spark的监控主要分为Master、Worker、driver、executor监控。Master和Worker的监控在spark集群运行时即可监控，Driver和Excutor的监控需要针对某一个app来进行监控。**
-**如果都要监控，需要根据以下步骤来配置**
+**Monitoring configuration spark can be monitored by Master, Worker, driver, and executor. The Master and Worker can be monitored when the spark cluster is running, while the Driver and Excutor need to be monitored for an app.**
+**If you want to monitor them, perform the following steps to configure them**
 
-## 第一步
+## First step
 
-**修改$SPARK_HOME/conf/spark-env.sh，添加以下语句：**
+**Modify $SPARK_HOME/conf/spark-env.sh to add the following statement:**
 
 ```shell
 # JMX Port to use
@@ -30,12 +30,12 @@ SPARK_DAEMON_JAVA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxr
 export SPARK_DAEMON_JAVA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=8712 "
 ```
 
-语句中有$JMX_PORT，这个的值可以自定义，也可以获取一个随机数作为端口号。
-如果端口自定义为一个具体的值，而 spark 的 Master 和其中之一的 Worker 在同一台机器上，会出现端口冲突的情况。
+The statement contains $JMX_PORT, the value of which can be customized, or a random number can be obtained as the port number.
+If the port is customized to a specific value, and the spark Master and one of the workers are on the same machine, a port conflict will occur.
 
-## 第二步
+## The second step
 
-**vim $SPARK_HOME/conf/metrics.properties 添加如下内容**
+**vim $SPARK_HOME/conf/metrics.properties to add the following statement:**
 
 ```shell
 *.sink.jmx.class=org.apache.spark.metrics.sink.JmxSink
@@ -45,9 +45,9 @@ driver.source.jvm.class=org.apache.spark.metrics.source.JvmSource
 executor.source.jvm.class=org.apache.spark.metrics.source.JvmSource
 ```
 
-## 第三步
+## The third step
 
-**vim $SPARK_HOME/conf/spark-defaults.conf，添加以下项为driver和executor设置监控端口，在有程序运行的情况下，此端口会被打开。**
+**vim $SPARK_HOME/conf/spark-defaults.conf, add the following items to set the monitoring port for the driver and executor. This port will be opened when programs are running.**
 
 ```shell
 spark.metrics.conf /opt/bigdata/spark/conf/metrics.properties
@@ -58,7 +58,7 @@ spark.executor.extraJavaOptions -XX:+PrintGCDetails -Dcom.sun.management.jmxremo
 gement.jmxremote.port=8711
 ```
 
-在spark的Master和Worker正常运行以及spark-submit提交了一个程序的情况下，可以从linux中查询出端口号码。
+With spark's Master and Worker running properly and spark-Submit submitting a program, the port number can be queried from linux.
 
 ### Configuration parameter
 

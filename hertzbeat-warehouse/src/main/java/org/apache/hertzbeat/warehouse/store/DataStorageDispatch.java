@@ -19,6 +19,7 @@ package org.apache.hertzbeat.warehouse.store;
 
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
@@ -26,6 +27,8 @@ import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,19 +40,20 @@ public class DataStorageDispatch {
 
     private final CommonDataQueue commonDataQueue;
     private final WarehouseWorkerPool workerPool;
-
+    private final JdbcTemplate jdbcTemplate;
     private final RealTimeDataWriter realTimeDataWriter;
     private final Optional<HistoryDataWriter> historyDataWriter;
-
     private final PluginRunner pluginRunner;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
+                               JdbcTemplate jdbcTemplate,
                                Optional<HistoryDataWriter> historyDataWriter,
                                RealTimeDataWriter realTimeDataWriter,
                                PluginRunner pluginRunner) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
+        this.jdbcTemplate = jdbcTemplate;
         this.realTimeDataWriter = realTimeDataWriter;
         this.historyDataWriter = historyDataWriter;
         this.pluginRunner = pluginRunner;
@@ -65,6 +69,7 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
+                    calculateMonitorStatus(metricsData);
                     historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
                     pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
                     realTimeDataWriter.saveData(metricsData);
@@ -76,6 +81,29 @@ public class DataStorageDispatch {
             }
         };
         workerPool.executeJob(runnable);
+    }
+    
+    protected void calculateMonitorStatus(CollectRep.MetricsData metricsData) {
+        if (metricsData.getPriority() == 0) {
+            long id = metricsData.getId();
+            CollectRep.Code code = metricsData.getCode();
+            // query current status
+            String queryStatusSql = "SELECT status FROM hzb_monitor WHERE id = ?";
+            try {
+                int currentStatus = jdbcTemplate.queryForObject(queryStatusSql, Integer.class, id);
+                if (code == CollectRep.Code.SUCCESS && currentStatus == CommonConstants.MONITOR_DOWN_CODE) {
+                    // if collect success and current status is DOWN, update to UP
+                    String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ?";
+                    jdbcTemplate.update(sql, CommonConstants.MONITOR_UP_CODE, id);
+                } else if (code != CollectRep.Code.SUCCESS && currentStatus == CommonConstants.MONITOR_UP_CODE) {
+                    // if collect failed and current status is UP, update to DOWN
+                    String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ?";
+                    jdbcTemplate.update(sql, CommonConstants.MONITOR_DOWN_CODE, id);
+                }
+            } catch (EmptyResultDataAccessException ignored) {
+                // when query currentStatus result is null
+            }
+        }
     }
 
 

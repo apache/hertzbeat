@@ -27,6 +27,12 @@ module.exports = {
     locales: ['zh-cn', 'en'],
   },
   themeConfig: {
+    matomo: {
+      matomoUrl: 'https://analytics.apache.org/',
+      siteId: '67',
+      phpLoader: 'matomo.php',
+      jsLoader: 'matomo.js',
+    },
     image: '/img/hertzbeat-logo.svg',
     liveCodeBlock: {
       playgroundPosition: 'bottom',
@@ -344,6 +350,7 @@ module.exports = {
         fromExtensions: ['html'],
       },
     ],
+    'docusaurus-plugin-matomo',
     '@docusaurus/plugin-ideal-image',
     [
       '@docusaurus/plugin-pwa',

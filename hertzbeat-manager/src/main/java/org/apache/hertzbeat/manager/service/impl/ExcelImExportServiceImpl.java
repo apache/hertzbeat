@@ -19,23 +19,25 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -94,16 +96,9 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                     ExportMonitorDTO exportMonitor = new ExportMonitorDTO();
                     exportMonitor.setMonitor(monitor);
                     monitors.add(exportMonitor);
-                    String metrics = getCellValueAsString(row.getCell(11));
-                    if (StringUtils.isNotBlank(metrics)) {
-                        List<String> metricList = Arrays.stream(metrics.split(",")).collect(Collectors.toList());
-                        exportMonitor.setMetrics(metricList);
-                    }
                 }
             }
-
             List<List<ParamDTO>> paramsList = new ArrayList<>();
-
             for (int i = 0; i < startRowList.size(); i++) {
                 int startRowIndex = startRowList.get(i);
                 int endRowIndex = (i + 1 < startRowList.size()) ? startRowList.get(i + 1) : sheet.getLastRowNum() + 1;
@@ -119,7 +114,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         params.add(param);
                     }
                 }
-
                 paramsList.add(params);
             }
             for (int i = 0; i < monitors.size(); i++) {
@@ -141,16 +135,15 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         monitor.setStatus(getCellValueAsByte(row.getCell(4)));
         monitor.setDescription(getCellValueAsString(row.getCell(5)));
 
-        String tagsString = getCellValueAsString(row.getCell(6));
-        if (StringUtils.isNotBlank(tagsString)) {
-            List<Long> tags = Arrays.stream(tagsString.split(","))
-                    .map(Long::parseLong)
-                    .collect(Collectors.toList());
-            monitor.setTags(tags);
+        String labelsString = getCellValueAsString(row.getCell(6));
+        if (StringUtils.isNotBlank(labelsString)) {
+            try {
+                TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
+                Map<String, String> labels = JsonUtil.fromJson(labelsString, typeReference);
+                monitor.setLabels(labels);
+            } catch (Exception ignored) {}
         }
         monitor.setCollector(getCellValueAsString(row.getCell(7)));
-
-
         return monitor;
     }
 
@@ -218,9 +211,27 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
 
             Workbook workbook = WorkbookFactory.create(true);
             String sheetName = "Export Monitor";
-            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, ExportMonitorDTO.class);
+            Sheet sheet = workbook.createSheet(sheetName);
+            sheet.setDefaultColumnWidth(20);
+            sheet.setColumnWidth(6, 40 * 256);
+            sheet.setColumnWidth(10, 40 * 256);
+            // set header style
+            CellStyle headerCellStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerCellStyle.setFont(headerFont);
+            headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
             // set cell style
-            CellStyle cellStyle = ExcelExportUtils.setCellStyle(workbook);
+            CellStyle cellStyle = workbook.createCellStyle();
+            cellStyle.setAlignment(HorizontalAlignment.CENTER);
+            // set header
+            String[] headers = { "Name", "App", "Host", "Intervals", "Status", "Description", "Labels", "Collector", "Param-Field", "Param-Type", "Param-Value" };
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerCellStyle);
+            }
 
             // foreach monitor, each monitor object corresponds to a row of data
             int rowIndex = 1;
@@ -229,8 +240,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                 MonitorDTO monitorDTO = monitor.getMonitor();
                 // get monitor parameters
                 List<ParamDTO> paramList = monitor.getParams();
-                // get monitor metrics
-                List<String> metricList = monitor.getMetrics();
                 // merge monitor information and parameter information into one row
                 for (int i = 0; i < Math.max(paramList.size(), 1); i++) {
                     Row row = sheet.createRow(rowIndex++);
@@ -254,17 +263,12 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         Cell descriptionCell = row.createCell(5);
                         descriptionCell.setCellValue(monitorDTO.getDescription());
                         descriptionCell.setCellStyle(cellStyle);
-                        Cell tagsCell = row.createCell(6);
-                        tagsCell.setCellValue(monitorDTO.getTags().stream().map(Object::toString).collect(Collectors.joining(",")));
-                        tagsCell.setCellStyle(cellStyle);
+                        Cell labelsCell = row.createCell(6);
+                        labelsCell.setCellValue(JsonUtil.toJson(monitorDTO.getLabels()));
+                        labelsCell.setCellStyle(cellStyle);
                         Cell collectorCell = row.createCell(7);
                         collectorCell.setCellValue(monitorDTO.getCollector());
                         collectorCell.setCellStyle(cellStyle);
-                        if (metricList != null && i < metricList.size()) {
-                            Cell metricCell = row.createCell(11);
-                            metricCell.setCellValue(String.join(",", metricList));
-                            metricCell.setCellStyle(cellStyle);
-                        }
                     }
                     // Fill in parameter information
                     if (i < paramList.size()) {

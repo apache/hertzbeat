@@ -115,6 +115,18 @@ params:
     required: false
     # hide param-true or false
     hide: true
+  # field-param field key
+  - field: privateKeyPassphrase
+    # name-param field display i18n name
+    name:
+      zh-CN: 密钥短语
+      en-US: PrivateKey PassPhrase
+    # type-param field type(most mapping the html input type)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
 # collect metrics config list
 metrics:
   # metrics - basic, inner monitoring metrics (responseTime - response time)
@@ -158,6 +170,8 @@ metrics:
       password: ^_^password^_^
       # ssh private key
       privateKey: ^_^privateKey^_^
+      # ssh private key passphrase
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       # ssh run collect script
@@ -226,6 +240,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       script: "LANG=C lscpu | awk -F: '/Model name/ {print $2}' | awk 'NR==1';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
@@ -293,6 +308,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       script: free -m | awk 'BEGIN{print "total used free buff_cache available"} NR==2{print $2,$3,$4,$6,$7}'
@@ -337,6 +353,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       script: vmstat -D | awk 'NR==1{print $1}';vmstat -D | awk 'NR==2{print $1}';vmstat 1 1 | awk 'NR==3{print $10}';vmstat 1 1 | awk 'NR==3{print $9}';vmstat 1 1 | awk 'NR==3{print $16}'
@@ -376,6 +393,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
@@ -423,6 +441,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       script: df -m | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
@@ -464,6 +483,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       script: ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11
@@ -505,6 +525,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       script: ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11

@@ -89,6 +89,7 @@
         <module>hertzbeat-plugin</module>
         <module>hertzbeat-grafana</module>
         <module>hertzbeat-e2e</module>
+        <module>hertzbeat-base</module>
     </modules>
 
     <properties>
@@ -116,7 +117,7 @@
         <json-path.version>2.9.0</json-path.version>
         <gson.version>2.10.1</gson.version>
         <guava.version>32.1.2-jre</guava.version>
-        <protobuf.version>3.19.6</protobuf.version>
+        <protobuf.version>3.25.5</protobuf.version>
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
         <aliYun-sdk-java-sms.version>2.0.24</aliYun-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
@@ -143,17 +144,18 @@
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
+        <commons-compress.version>1.27.1</commons-compress.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <spotless.version>2.40.0</spotless.version>
         
         <easy-poi.version>4.3.0</easy-poi.version>
-        <poi.version>4.1.1</poi.version>
+        <poi.version>4.1.2</poi.version>
         <concurrentlinkedhashmap-lru.version>1.4.2</concurrentlinkedhashmap-lru.version>
         <sshd-core.version>2.13.1</sshd-core.version>
         <eddsa.version>0.3.0</eddsa.version>
         <snmp4j.version>3.6.7</snmp4j.version>
         <rocketmq-tools.version>4.9.4</rocketmq-tools.version>
-        <dnsjava.version>3.5.2</dnsjava.version>
+        <dnsjava.version>3.6.2</dnsjava.version>
         <consul-api.version>1.4.5</consul-api.version>
         <nacos-client.version>2.2.1</nacos-client.version>
         <vesoft-client.version>3.6.0</vesoft-client.version>
@@ -171,6 +173,7 @@
         <greptimedb.version>0.9.1</greptimedb.version>
         <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
         <arrow.version>18.1.0</arrow.version>
+        <snappy-java.version>1.1.10.7</snappy-java.version>
     </properties>
 
     <dependencyManagement>
@@ -179,6 +182,12 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-common</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- base -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-base</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- data warehouse -->
