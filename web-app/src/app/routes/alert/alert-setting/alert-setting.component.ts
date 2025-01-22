@@ -214,8 +214,9 @@ export class AlertSettingComponent implements OnInit {
       translationSearchList.push(trimSearch);
     }
 
-    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize).subscribe(
-      message => {
+    let alertDefineInit$ = this.alertDefineSvc
+      .getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize)
+      .subscribe(message => {
         this.tableLoading = false;
         this.checkedAll = false;
         this.checkedDefineIds.clear();
@@ -228,12 +229,7 @@ export class AlertSettingComponent implements OnInit {
           console.warn(message.msg);
         }
         alertDefineInit$.unsubscribe();
-      },
-      error => {
-        this.tableLoading = false;
-        alertDefineInit$.unsubscribe();
-      }
-    );
+      });
   }
 
   onNewAlertDefine() {
@@ -444,7 +440,7 @@ export class AlertSettingComponent implements OnInit {
    * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
+    const { pageSize, pageIndex } = params;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
     this.loadAlertDefineTable();
@@ -735,7 +731,7 @@ export class AlertSettingComponent implements OnInit {
       const funcMatch = expr.match(/^(!)?(?:equals|contains|matches)\(([^,]+),\s*"([^"]+)"\)$/);
       if (funcMatch) {
         const [_, not, field, value] = funcMatch;
-        const func = expr.match(/(?:equals|contains|matches)/)?.[0] || '';
+        const func = expr.match(/equals|contains|matches/)?.[0] || '';
         return {
           field,
           operator: not ? `!${func}` : func,
@@ -1180,23 +1176,21 @@ export class AlertSettingComponent implements OnInit {
   onDragStart(event: DragEvent, data: any): void {
     if (!event.dataTransfer) return;
 
-    // 根据数据类型生成不同格式
-    let dragText = '';
+    let dragText: string;
     if (this.isMetric(data)) {
-      dragText = `\${${data.value}}`; // 插入模板变量格式
+      dragText = `\${${data.value}}`;
     } else {
-      dragText = data.name; // 环境变量直接使用名称
+      dragText = data.name;
     }
 
     event.dataTransfer.setData('text/plain', dragText);
 
-    // 添加可视化反馈
     (event.target as HTMLElement).classList.add('dragging-active');
     this.saveTextareaSelection();
   }
 
   @HostListener('document:dragend', ['$event'])
-  onGlobalDragEnd(event: DragEvent) {
+  onGlobalDragEnd() {
     document.querySelectorAll('.dragging-active').forEach(el => {
       el.classList.remove('dragging-active');
     });
@@ -1215,7 +1209,6 @@ export class AlertSettingComponent implements OnInit {
   onTextareaDrop(event: DragEvent): void {
     event.preventDefault();
 
-    // 添加空值检查
     if (!event.dataTransfer) return;
 
     const textarea = event.target as HTMLTextAreaElement;
