@@ -23,7 +23,7 @@ import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
 import { NoticeRule } from '../pojo/NoticeRule';
-import { Page  } from '../pojo/Page';
+import { Page } from '../pojo/Page';
 
 const notice_rule_uri = '/notice/rule';
 const notice_rules_uri = '/notice/rules';

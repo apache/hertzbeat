@@ -28,12 +28,7 @@
     </button>
   </ng-template>
   <ng-template #right>
-    <nz-select
-      class="mobile-hide"
-      [nzPlaceHolder]="'monitor.status' | i18n"
-      [(ngModel)]="preset"
-      (ngModelChange)="onPresetStatusChanged()"
-    >
+    <nz-select class="mobile-hide" [nzPlaceHolder]="'monitor.status' | i18n" [(ngModel)]="preset" (ngModelChange)="onPresetStatusChanged()">
       <nz-option [nzLabel]="'alert.notice.template.preset.true' | i18n" [nzValue]="true"></nz-option>
       <nz-option [nzLabel]="'alert.notice.template.preset.false' | i18n" [nzValue]="false"></nz-option>
     </nz-select>

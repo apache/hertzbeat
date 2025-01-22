@@ -23,12 +23,12 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
 import { NoticeRule } from '../../../../pojo/NoticeRule';
 import { NoticeTemplate } from '../../../../pojo/NoticeTemplate';
 import { NoticeTemplateService } from '../../../../service/notice-template.service';
-import {NzTableQueryParams} from "ng-zorro-antd/table";
 
 @Component({
   selector: 'app-alert-notice-template',
