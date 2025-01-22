@@ -37,8 +37,8 @@
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.notice.rule.all' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'common.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -62,7 +62,7 @@
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateNoticeRule(data)"></nz-switch>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             (click)="onEditOneNoticeRule(data)"
