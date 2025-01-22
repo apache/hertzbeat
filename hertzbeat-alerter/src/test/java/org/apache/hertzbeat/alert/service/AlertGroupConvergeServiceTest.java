@@ -17,22 +17,27 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+
+import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
+import org.apache.hertzbeat.alert.reduce.AlarmGroupReduce;
+import org.apache.hertzbeat.alert.service.impl.AlertGroupConvergeServiceImpl;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import org.apache.hertzbeat.alert.dao.AlertGroupConvergeDao;
-import org.apache.hertzbeat.alert.service.impl.AlertGroupConvergeServiceImpl;
-import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -42,10 +47,9 @@ import org.springframework.data.jpa.domain.Specification;
 
 /**
  * test case for {@link AlertGroupConvergeServiceImpl}
- */
+*/
 
 @ExtendWith(MockitoExtension.class)
-@Disabled
 class AlertGroupConvergeServiceTest {
 
     @Mock
@@ -54,22 +58,28 @@ class AlertGroupConvergeServiceTest {
     @InjectMocks
     private AlertGroupConvergeServiceImpl alertGroupConvergeService;
 
+    @Mock
+    private AlarmGroupReduce alarmGroupReduce;
+
     @Test
     public void testAddAlertGroupConverge() {
-
         AlertGroupConverge alertGroupConverge = new AlertGroupConverge();
+        doNothing().when(alarmGroupReduce).refreshGroupDefines(anyList());
+        when(alertGroupConvergeDao.save(alertGroupConverge)).thenReturn(alertGroupConverge);
         alertGroupConvergeService.addAlertGroupConverge(alertGroupConverge);
-
         verify(alertGroupConvergeDao, times(1)).save(alertGroupConverge);
+        verify(alarmGroupReduce, times(1)).refreshGroupDefines(anyList());
     }
+
 
     @Test
     public void testModifyAlertGroupConverge() {
-
         AlertGroupConverge alertGroupConverge = new AlertGroupConverge();
+        doNothing().when(alarmGroupReduce).refreshGroupDefines(anyList());
+        when(alertGroupConvergeDao.save(alertGroupConverge)).thenReturn(alertGroupConverge);
         alertGroupConvergeService.modifyAlertGroupConverge(alertGroupConverge);
-
         verify(alertGroupConvergeDao, times(1)).save(alertGroupConverge);
+        verify(alarmGroupReduce, times(1)).refreshGroupDefines(anyList());
     }
 
     @Test
@@ -79,7 +89,6 @@ class AlertGroupConvergeServiceTest {
         AlertGroupConverge alertGroupConverge = new AlertGroupConverge();
         when(alertGroupConvergeDao.findById(convergeId)).thenReturn(Optional.of(alertGroupConverge));
         AlertGroupConverge result = alertGroupConvergeService.getAlertGroupConverge(convergeId);
-
         verify(alertGroupConvergeDao, times(1)).findById(convergeId);
         assertEquals(alertGroupConverge, result);
     }
@@ -87,10 +96,11 @@ class AlertGroupConvergeServiceTest {
     @Test
     public void testDeleteAlertGroupConverges() {
 
-        Set<Long> convergeIds = Set.of(1L, 2L, 3L);
-        alertGroupConvergeService.deleteAlertGroupConverges(convergeIds);
-
-        verify(alertGroupConvergeDao, times(1)).deleteAlertGroupConvergesByIdIn(convergeIds);
+        doNothing().when(alertGroupConvergeDao).deleteAlertGroupConvergesByIdIn(anySet());
+        doNothing().when(alarmGroupReduce).refreshGroupDefines(anyList());
+        alertGroupConvergeService.deleteAlertGroupConverges(new HashSet<>(Arrays.asList(1L, 2L)));
+        verify(alertGroupConvergeDao, times(1)).deleteAlertGroupConvergesByIdIn(anySet());
+        verify(alarmGroupReduce, times(1)).refreshGroupDefines(anyList());
     }
 
     @Test
