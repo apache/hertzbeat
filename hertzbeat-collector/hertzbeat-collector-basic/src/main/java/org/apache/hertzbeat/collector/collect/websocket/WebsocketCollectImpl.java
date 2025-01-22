@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
@@ -128,16 +129,16 @@ public class WebsocketCollectImpl extends AbstractCollect {
         byte[] key = generateRandomKey();
         String base64Key = base64Encode(key);
         String requestLine = "GET " + websocketProtocol.getPath() + " HTTP/1.1\r\n";
-        out.write(requestLine.getBytes());
+        out.write(requestLine.getBytes(StandardCharsets.UTF_8));
         String hostName = InetAddress.getLocalHost().getHostAddress();
-        out.write(("Host:" + hostName + "\r\n").getBytes());
-        out.write("Upgrade: websocket\r\n".getBytes());
-        out.write("Connection: Upgrade\r\n".getBytes());
-        out.write("Sec-WebSocket-Version: 13\r\n".getBytes());
-        out.write("Sec-WebSocket-Extensions: chat, superchat\r\n".getBytes());
-        out.write(("Sec-WebSocket-Key: " + base64Key + "\r\n").getBytes());
-        out.write("Content-Length: 0\r\n".getBytes());
-        out.write("\r\n".getBytes());
+        out.write(("Host:" + hostName + "\r\n").getBytes(StandardCharsets.UTF_8));
+        out.write("Upgrade: websocket\r\n".getBytes(StandardCharsets.UTF_8));
+        out.write("Connection: Upgrade\r\n".getBytes(StandardCharsets.UTF_8));
+        out.write("Sec-WebSocket-Version: 13\r\n".getBytes(StandardCharsets.UTF_8));
+        out.write("Sec-WebSocket-Extensions: chat, superchat\r\n".getBytes(StandardCharsets.UTF_8));
+        out.write(("Sec-WebSocket-Key: " + base64Key + "\r\n").getBytes(StandardCharsets.UTF_8));
+        out.write("Content-Length: 0\r\n".getBytes(StandardCharsets.UTF_8));
+        out.write("\r\n".getBytes(StandardCharsets.UTF_8));
         out.flush();
     }
 
