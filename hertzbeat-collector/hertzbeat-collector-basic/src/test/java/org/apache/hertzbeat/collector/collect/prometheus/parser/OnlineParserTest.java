@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.prometheus.parser;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class OnlineParserTest {
 
+    @Disabled // Disabled due to the fact that the URL is not reachable unless you have the Prometheus server running
     @Test
     void parseMetrics() throws Exception {
         URL url = new URL("http://localhost:9090/metrics");
