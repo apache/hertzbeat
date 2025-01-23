@@ -77,11 +77,11 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="14%">{{ 'alert.silence.type' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.times' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.silence.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="7%">{{ 'alert.silence.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="7%">{{ 'alert.silence.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'alert.silence.times' | i18n }}</th>
+      <th nzAlign="center" nzWidth="3%" nzRight>{{ 'alert.silence.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="5%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -106,10 +106,10 @@
           <span>{{ data.times == undefined ? 0 : data.times }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertSilence(data)" name="enable"></nz-switch>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             nz-button
