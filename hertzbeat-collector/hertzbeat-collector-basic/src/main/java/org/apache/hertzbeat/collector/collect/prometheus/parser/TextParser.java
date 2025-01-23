@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.prometheus.parser;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;

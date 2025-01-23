@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
