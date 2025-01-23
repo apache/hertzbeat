@@ -82,8 +82,8 @@
       <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-wait' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-interval' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.repeat-interval' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.group-converge.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'alert.group-converge.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -98,10 +98,10 @@
       <td nzAlign="center"> {{ data.groupWait }}{{ 'alert.group-converge.seconds' | i18n }} </td>
       <td nzAlign="center"> {{ data.groupInterval }}{{ 'alert.group-converge.seconds' | i18n }} </td>
       <td nzAlign="center"> {{ data.repeatInterval }}{{ 'alert.group-converge.seconds' | i18n }} </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateGroupConverge(data)" name="enable"></nz-switch>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             nz-button
