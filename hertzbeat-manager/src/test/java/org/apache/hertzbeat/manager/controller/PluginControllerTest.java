@@ -19,6 +19,8 @@ package org.apache.hertzbeat.manager.controller;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -62,7 +64,7 @@ class PluginControllerTest {
                 "jarFile",
                 "plugin-test.jar",
                 "application/java-archive",
-                "This is the file content".getBytes()
+                "This is the file content".getBytes(StandardCharsets.UTF_8)
         );
 
         this.mockMvc.perform(MockMvcRequestBuilders.multipart("/api/plugin")

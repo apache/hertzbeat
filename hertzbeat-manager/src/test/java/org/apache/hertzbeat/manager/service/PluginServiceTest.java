@@ -28,6 +28,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -87,7 +89,9 @@ class PluginServiceTest {
         PluginServiceImpl service = spy(pluginService);
         doReturn(metadata).when(service).validateJarFile(any());
 
-        MockMultipartFile mockFile = new MockMultipartFile("file", "test-plugin.jar", "application/java-archive", "plugin-content".getBytes());
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test-plugin.jar", "application/java-archive",
+                "plugin-content".getBytes(StandardCharsets.UTF_8));
         PluginUpload pluginUpload = new PluginUpload(mockFile, "Test Plugin", true);
 
         when(metadataDao.save(any(PluginMetadata.class))).thenReturn(new PluginMetadata());
