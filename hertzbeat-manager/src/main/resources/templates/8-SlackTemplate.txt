@@ -24,7 +24,9 @@
 </#if>
 > - Trigger Count: ${alert.triggerTimes}
 > - Start Time: ${(alert.startAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}
-> - Last Trigger: ${(alert.activeAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}
+<#if alert.activeAt??>
+> - Active Time: ${(alert.activeAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}
+</#if>
 <#if alert.endAt??>
 > - End Time: ${(alert.endAt?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}
 </#if>

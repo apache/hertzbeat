@@ -121,7 +121,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="emailEnable" nzRequired="true">{{ 'alert.notice.sender.enable' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="emailEnable" nzRequired="true">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="emailSender.enable" required name="emailEnable" id="emailEnable"></nz-switch>
         </nz-form-control>
@@ -193,7 +193,7 @@
       </ng-container>
       <ng-container *ngIf="smsType === 'alibaba'"> </ng-container>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="smsEnable" nzRequired="true">{{ 'alert.notice.sender.enable' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="smsEnable" nzRequired="true">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="smsNoticeSender.enable" required name="smsEnable" id="smsEnable"></nz-switch>
         </nz-form-control>

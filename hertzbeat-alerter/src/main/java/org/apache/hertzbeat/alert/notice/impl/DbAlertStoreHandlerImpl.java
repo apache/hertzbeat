@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +67,8 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
                 if (CommonConstants.ALERT_STATUS_FIRING.equals(singleAlert.getStatus())) {
                     if (!CommonConstants.ALERT_STATUS_RESOLVED.equals(existAlert.getStatus())) {
                         singleAlert.setStartAt(existAlert.getStartAt());
-                        singleAlert.setTriggerTimes(existAlert.getTriggerTimes() + singleAlert.getTriggerTimes());
+                        int triggerTimes = Optional.ofNullable(existAlert.getTriggerTimes()).orElse(1) + Optional.ofNullable(singleAlert.getTriggerTimes()).orElse(1);
+                        singleAlert.setTriggerTimes(triggerTimes);
                     } 
                 } else if (CommonConstants.ALERT_STATUS_RESOLVED.equals(singleAlert.getStatus())) {
                     // Transition to resolved state

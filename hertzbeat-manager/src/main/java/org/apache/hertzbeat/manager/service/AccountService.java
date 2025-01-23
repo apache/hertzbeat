@@ -41,4 +41,10 @@ public interface AccountService {
      * @throws Exception failed to refresh
      */
     RefreshTokenResponse refreshToken(String refreshToken) throws Exception;
+
+    /**
+     * Generate no expired token
+     * @return token
+     */
+    String generateToken() throws AuthenticationException;
 }

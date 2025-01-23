@@ -69,7 +69,7 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.setting.search' | i18n"
       [(value)]="search"
-      (keydown.enter)="loadAlertDefineTable()"
+      (keydown.enter)="onFilterChange()"
     />
   </ng-template>
 </app-toolbar>
@@ -498,23 +498,21 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
-            <a nz-dropdown [nzDropdownMenu]="menu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
-              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.template.tip' | i18n">
-                <i nz-icon nzType="snippets" nzTheme="outline"></i>
-              </button>
-            </a>
-            <nz-dropdown-menu #menu="nzDropdownMenu">
-              <ul nz-menu class="env-vars-menu">
-                <li nz-menu-item *ngFor="let env of templateEnvVars" (click)="onEnvVarClick(env)">
-                  <span class="env-var-name">{{ env.name }}</span>
-                  <span class="env-var-desc">{{ env.description | i18n }}</span>
-                </li>
-                <li nz-menu-item *ngFor="let env of currentMetrics" (click)="onEnvVarClick(env)">
-                  <span class="env-var-name">{{ '${' + env.value + '}' }}</span>
-                  <span class="env-var-desc">{{ env.label }}</span>
-                </li>
-              </ul>
-            </nz-dropdown-menu>
+            <div class="draggable-vars-container">
+              <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
+                <div class="key-value-block">
+                  <span class="var-key">{{ env.name }}</span>
+                  <span class="var-value">{{ env.description | i18n }}</span>
+                </div>
+              </div>
+
+              <div *ngFor="let metric of currentMetrics" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, metric)">
+                <div class="key-value-block">
+                  <span class="var-key">{{ '${' + metric.value + '}' }}</span>
+                  <span class="var-value">{{ metric.label }}</span>
+                </div>
+              </div>
+            </div>
 
             <nz-textarea-count [nzMaxCharacterCount]="200">
               <textarea
@@ -525,8 +523,10 @@
                 name="template"
                 id="template"
                 [placeholder]="'alert.setting.template.example' | i18n"
-              >
-              </textarea>
+                (dragover)="onTextareaDragOver($event)"
+                (drop)="onTextareaDrop($event)"
+                (dragleave)="onTextareaDragLeave($event)"
+              ></textarea>
             </nz-textarea-count>
           </div>
         </nz-form-control>
@@ -538,8 +538,8 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" [nzFor]="'annotations'" [nzTooltipTitle]="'annotation.bind.tip' | i18n"
-          >{{ 'annotation.bind' | i18n }}
+        <nz-form-label nzSpan="7" [nzFor]="'annotations'" [nzTooltipTitle]="'common.annotation.bind.tip' | i18n"
+          >{{ 'common.annotation.bind' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="12">
           <app-labels-input [(ngModel)]="define.annotations" name="annotations"></app-labels-input>
@@ -636,13 +636,13 @@
   </ng-container>
 </nz-modal>
 
-<!-- 添加类型选择弹窗 -->
+<!-- type model select -->
 <nz-modal
   [(nzVisible)]="isSelectTypeModalVisible"
   [nzTitle]="'alert.setting.new' | i18n"
   (nzOnCancel)="onSelectTypeModalCancel()"
   [nzFooter]="null"
-  nzWidth="400px"
+  nzWidth="460px"
 >
   <div *nzModalContent>
     <div class="alert-type-options">

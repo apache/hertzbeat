@@ -23,20 +23,15 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
-import org.apache.hertzbeat.alert.dto.CloudAlertReportAbstract;
-import org.apache.hertzbeat.alert.enums.CloudServiceAlarmInformationEnum;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -207,41 +202,5 @@ public class AlertServiceImpl implements AlertService {
             log.error(e.getMessage(), e);
         }
         return alertSummary;
-    }
-
-    @Override
-    public void addNewAlertReport(SingleAlert alert) {
-        // todo add alarm information to the alarm center
-        alarmCommonReduce.reduceAndSendAlarm(alert);
-    }
-
-    @Override
-    public void addNewAlertReportFromCloud(String cloudServiceName, String alertReport) {
-        CloudServiceAlarmInformationEnum cloudService = CloudServiceAlarmInformationEnum
-                .getEnumFromCloudServiceName(cloudServiceName);
-
-        SingleAlert alert = null;
-        if (cloudService != null) {
-            try {
-                CloudAlertReportAbstract cloudAlertReport = JsonUtil
-                        .fromJson(alertReport, cloudService.getCloudServiceAlarmInformationEntity());
-                assert cloudAlertReport != null;
-                Map<String, String> labels = cloudAlertReport.getLabels();
-                labels.put("source", cloudServiceName);
-                labels.put("alertname", cloudAlertReport.getAlertName());
-                
-                alert = SingleAlert.builder()
-                        .content(cloudAlertReport.getContent())
-                        .labels(labels)
-                        .annotations(cloudAlertReport.getAnnotations())
-                        .status("firing")
-                        .activeAt(cloudAlertReport.getAlertTime())
-                        .build();
-            } catch (Exception e) {
-                log.error("[alert report] parse cloud service alarm content failed! cloud service: {} conrent: {}",
-                        cloudService.name(), alertReport);
-            }
-        }
-        Optional.ofNullable(alert).ifPresent(this::addNewAlertReport);
     }
 }

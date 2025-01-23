@@ -24,6 +24,7 @@ import { Observable } from 'rxjs';
 import { Message } from '../pojo/Message';
 
 const account_auth_refresh_uri = '/account/auth/refresh';
+const account_token = '/account/token';
 
 @Injectable({
   providedIn: 'root'
@@ -36,5 +37,9 @@ export class AuthService {
       token: refreshToken
     };
     return this.http.post<Message<any>>(`${account_auth_refresh_uri}`, body);
+  }
+
+  public generateToken(): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${account_token}` + '/generate', {});
   }
 }

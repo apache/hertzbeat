@@ -17,29 +17,23 @@
 
 package org.apache.hertzbeat.alert.service;
 
-
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.reset;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
-import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
+import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.impl.AlertServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,9 +42,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test case for {@link AlertService}
- */
+*/
 @ExtendWith(MockitoExtension.class)
-@Disabled
 class AlertServiceTest {
     @Mock
     private GroupAlertDao groupAlertDao;
@@ -87,46 +80,23 @@ class AlertServiceTest {
     }
 
     @Test
-    void getAlertsSummary() {
-        List<SingleAlert> singleAlerts = new ArrayList<>();
-        singleAlerts.add(SingleAlert.builder().status("firing")
-                .labels(Map.of(CommonConstants.LABEL_ALERT_SEVERITY, "warning")).build());
-        when(singleAlertDao.querySingleAlertsByStatus(any())).thenReturn(singleAlerts);
-        when(singleAlertDao.count()).thenReturn(1L);
+    void testGetAlertsSummary() {
+        SingleAlert alert = new SingleAlert();
+        alert.setLabels(Collections.singletonMap(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL));
 
-        assertDoesNotThrow(() -> alertService.getAlertsSummary());
-        assertNotNull(alertService.getAlertsSummary());
-    }
+        when(singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING)).thenReturn(Collections.singletonList(alert));
+        when(singleAlertDao.count()).thenReturn(10L);
 
-    @Test
-    void addNewAlertReport() {
-        SingleAlert alertReport = SingleAlert.builder()
-                .fingerprint("fingerprint")
-                .labels(new HashMap<>())
-                .annotations(new HashMap<>())
-                .content("content")
-                .status("firing")
-                .triggerTimes(1)
-                .startAt(1734005477630L)
-                .activeAt(1734005477630L)
-                .build();
-        assertDoesNotThrow(() -> alertService.addNewAlertReport(alertReport));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
-    }
+        AlertSummary summary = alertService.getAlertsSummary();
 
-    @Test
-    void addNewAlertReportFromCloud() {
-        TenCloudAlertReport alertReport = TenCloudAlertReport.builder()
-                .firstOccurTime("2024-08-01 11:30:00")
-                .durationTime(100)
-                .build();
-        String reportJson = JsonUtil.toJson(alertReport);
-        assertDoesNotThrow(() -> alertService.addNewAlertReportFromCloud("tencloud", reportJson));
-        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+        assertNotNull(summary);
+        assertEquals(1, summary.getPriorityCriticalNum());
+        assertEquals(0, summary.getPriorityEmergencyNum());
+        assertEquals(0, summary.getPriorityWarningNum());
+        assertEquals(10L, summary.getTotal());
+        assertEquals(90.0f, summary.getRate());
 
-        alertService.addNewAlertReportFromCloud("alicloud", reportJson);
-        reset(alarmCommonReduce);
-        verify(alarmCommonReduce, times(0)).reduceAndSendAlarm(any(SingleAlert.class));
-
+        verify(singleAlertDao, times(1)).querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
+        verify(singleAlertDao, times(1)).count();
     }
 }

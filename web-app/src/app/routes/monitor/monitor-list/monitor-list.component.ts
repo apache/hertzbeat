@@ -130,6 +130,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   onFilterSearchMonitors() {
     this.tableLoading = true;
+    this.pageIndex = 1;
     let filter$ = this.monitorSvc
       .searchMonitors(this.app, this.labels, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize)
       .subscribe(
@@ -165,11 +166,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       return item.value == app;
     });
     if (find == undefined) {
-      return this.i18nSvc.fanyi('monitor_icon.center');
+      return this.i18nSvc.fanyi('monitor.icon.center');
     }
-    let icon = this.i18nSvc.fanyi(`monitor_icon.${find.category}`);
-    if (icon == `monitor_icon.${find.category}`) {
-      return this.i18nSvc.fanyi('monitor_icon.center');
+    let icon = this.i18nSvc.fanyi(`monitor.icon.${find.category}`);
+    if (icon == `monitor.icon.${find.category}`) {
+      return this.i18nSvc.fanyi('monitor.icon.center');
     }
     return icon;
   }
@@ -601,5 +602,31 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       hash = hash & hash;
     }
     return hash;
+  }
+
+  copyMonitor() {
+    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
+      return;
+    }
+    if (this.checkedMonitorIds.size > 1) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('monitor.copy.notify.one-select'), '');
+      return;
+    }
+    const monitorId = Array.from(this.checkedMonitorIds)[0];
+
+    this.monitorSvc.copyMonitor(monitorId).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.notifySvc.success(this.i18nSvc.fanyi('monitor.copy.success'), '');
+          this.loadMonitorTable();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), message.msg);
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), error.msg);
+      }
+    );
   }
 }

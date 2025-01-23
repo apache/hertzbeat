@@ -54,7 +54,7 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.silence.name' | i18n"
       [(value)]="search"
-      (valueChange)="loadAlertSilenceTable()"
+      (valueChange)="onFilterChange()"
     />
   </ng-template>
 </app-toolbar>
@@ -212,7 +212,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="silence.enable" name="enable" id="enable"></nz-switch>
         </nz-form-control>

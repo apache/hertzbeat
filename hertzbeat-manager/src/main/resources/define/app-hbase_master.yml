@@ -70,6 +70,16 @@ params:
     hide: true
     # default value
     defaultValue: 6000
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
 # collect metrics config list
 metrics:
   # metrics - Server
@@ -85,25 +95,21 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: numRegionServers
         type: 0
-        label: true
         i18n:
           zh-CN: 活跃RegionServer数量
           en-US: numRegionServers
       - field: numDeadRegionServers
         type: 0
-        label: true
         i18n:
           zh-CN: 异常RegionServer数量
           en-US: numDeadRegionServers
       - field: averageLoad
         type: 0
-        label: true
         i18n:
           zh-CN: 集群平均负载
           en-US: averageLoad
       - field: clusterRequests
         type: 0
-        label: true
         i18n:
           zh-CN: 集群请求数量
           en-US: clusterRequests
@@ -139,19 +145,16 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ritCount
         type: 0
-        label: true
         i18n:
           zh-CN: 当前的 RIT 数量
           en-US: ritCount
       - field: ritCountOverThreshold
         type: 0
-        label: true
         i18n:
           zh-CN: 超过阈值的 RIT 数量
           en-US: ritCountOverThreshold
       - field: ritOldestAge
         type: 0
-        label: true
         i18n:
           zh-CN: 最老的RIT的持续时间
           en-US: ritOldestAge
@@ -185,57 +188,48 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: liveRegionServers
         type: 1
-        label: true
         i18n:
           zh-CN: 当前活跃RegionServer列表
           en-US: liveRegionServers
       - field: deadRegionServers
         type: 1
-        label: true
         i18n:
           zh-CN: 当前离线RegionServer列表
           en-US: deadRegionServers
       - field: zookeeperQuorum
         type: 1
-        label: true
         i18n:
           zh-CN: Zookeeper列表
           en-US: zookeeperQuorum
       - field: masterHostName
         type: 1
-        label: true
         i18n:
           zh-CN: Master节点
           en-US: masterHostName
       - field: BalancerCluster_num_ops
         type: 0
-        label: true
         i18n:
           zh-CN: 集群负载均衡次数
           en-US: BalancerCluster_num_ops
       - field: numActiveHandler
         type: 0
-        label: true
         i18n:
           zh-CN: RPC句柄数
           en-US: numActiveHandler
       - field: receivedBytes
         type: 0
-        label: true
         unit: 'MB'
         i18n:
           zh-CN: 集群接收数据量(MB)
           en-US: receivedBytes
       - field: sentBytes
         type: 0
-        label: true
         unit: 'MB'
         i18n:
           zh-CN: 集群发送数据量(MB)
           en-US: sentBytes
       - field: clusterRequests
         type: 0
-        label: true
         i18n:
           zh-CN: 集群总请求数量
           en-US: clusterRequests

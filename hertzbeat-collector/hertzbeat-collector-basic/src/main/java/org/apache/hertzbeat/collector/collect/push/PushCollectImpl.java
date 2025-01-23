@@ -86,8 +86,7 @@ public class PushCollectImpl extends AbstractCollect {
         HttpContext httpContext = createHttpContext(pushProtocol);
         HttpUriRequest request = createHttpRequest(pushProtocol, monitorId, time);
 
-        try {
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);

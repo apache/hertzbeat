@@ -166,7 +166,7 @@ export class MonitorService {
       interval: interval
     });
     const options = { params: httpParams };
-    return this.http.get<Message<any>>(`/monitor/${monitorId}/metric/${metricFull}`, options);
+    return this.http.get<Message<any>>(`${monitor_uri}/${monitorId}/metric/${metricFull}`, options);
   }
 
   public getAppsMonitorSummary(): Observable<Message<any>> {
@@ -183,5 +183,9 @@ export class MonitorService {
 
   public deleteGrafanaDashboard(monitorId: number): Observable<Message<any>> {
     return this.http.delete<Message<any>>(`${grafana_dashboard_uri}?monitorId=${monitorId}`);
+  }
+
+  copyMonitor(id: number): Observable<any> {
+    return this.http.post<Message<any>>(`${monitor_uri}/copy/${id}`, null);
   }
 }

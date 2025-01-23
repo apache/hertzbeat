@@ -157,7 +157,7 @@
 
           <!-- Annotations -->
           <div class="detail-section" *ngIf="item.annotations">
-            <div class="section-title">{{ 'annotation' | i18n }}</div>
+            <div class="section-title">{{ 'common.annotation' | i18n }}</div>
             <div class="alert-annotations">
               <div *ngFor="let anno of item.annotations | keyvalue" class="annotation-item">
                 <span class="annotation-key">{{ anno.key }}:</span>
@@ -174,11 +174,11 @@
                 <span class="time-label">{{ 'alert.center.first-time' | i18n }}:</span>
                 <span class="time-value">{{ item.startAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
               </div>
-              <div *ngIf="item.activeAt" class="time-item">
+              <div *ngIf="item.status === 'firing' && item.activeAt" class="time-item">
                 <span class="time-label">{{ 'alert.center.last-time' | i18n }}:</span>
                 <span class="time-value">{{ item.activeAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
               </div>
-              <div *ngIf="item.endAt" class="time-item">
+              <div *ngIf="item.status === 'resolved' && item.endAt" class="time-item">
                 <span class="time-label">{{ 'alert.center.end-time' | i18n }}:</span>
                 <span class="time-value">{{ item.endAt | date : 'yyyy-MM-dd HH:mm:ss' }}</span>
               </div>

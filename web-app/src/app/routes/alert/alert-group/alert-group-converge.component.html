@@ -18,8 +18,8 @@
 -->
 
 <app-help-message-show
-  [help_message_content]="'alert.help.converge' | i18n"
-  [guild_link]="'alert.help.converge.link' | i18n"
+  [help_message_content]="'alert.help.group' | i18n"
+  [guild_link]="'alert.help.group.link' | i18n"
   [module_name]="'menu.alert.group'"
   [icon_name]="'filter'"
 ></app-help-message-show>
@@ -54,7 +54,7 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.group-converge.name' | i18n"
       [(value)]="search"
-      (valueChange)="loadGroupConvergeTable()"
+      (valueChange)="onFilterChange()"
     />
   </ng-template>
 </app-toolbar>
@@ -247,7 +247,7 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'alert.notice.rule.enable' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="groupConverge.enable" name="enable" id="enable"></nz-switch>
         </nz-form-control>

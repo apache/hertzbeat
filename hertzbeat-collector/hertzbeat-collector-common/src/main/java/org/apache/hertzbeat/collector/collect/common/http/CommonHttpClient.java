@@ -144,12 +144,25 @@ public class CommonHttpClient {
             ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1, threadFactory);
             scheduledExecutor.scheduleWithFixedDelay(() -> {
                 connectionManager.closeExpiredConnections();
-                connectionManager.closeIdleConnections(100, TimeUnit.SECONDS);
+                connectionManager.closeIdleConnections(40, TimeUnit.SECONDS);
             }, 40L, 40L, TimeUnit.SECONDS);
+
+            // shutdown hook
+            Runtime.getRuntime().addShutdownHook(new Thread(CommonHttpClient::close));
+            
         } catch (Exception ignored) {}
     }
 
     public static CloseableHttpClient getHttpClient() {
         return httpClient;
     }
+    
+    public static void close() {
+        try {
+            httpClient.close();
+        } catch (Exception e) {
+            log.error("close http client error", e);
+        }
+    }
+    
 }

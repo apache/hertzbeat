@@ -1,4 +1,5 @@
 @import '@delon/theme/index';
+@import '../../../../styles/theme.less';
 ::ng-deep {
 
   .row {
@@ -15,7 +16,7 @@
   }
 
   .tree:empty {
-    margin: 0px;
+    margin: 0;
   }
 
   .ruleset-invalid {
@@ -148,7 +149,7 @@
     justify-content: center;
 
     .alert-type-card {
-      width: 160px;
+      width: 200px;
       text-align: center;
       cursor: pointer;
 
@@ -237,5 +238,118 @@
   .export-type-card.loading {
     opacity: 0.7;
     cursor: not-allowed;
+  }
+
+  .draggable-vars-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #fafafa;
+    border: 1px dashed @border-color;
+    border-radius: 6px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+
+  .draggable-tag {
+    padding: 8px 12px;
+    min-width: 140px;
+    background: #f0f5ff;
+    border: 1px solid fade(@primary-color, 30%);
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+    .key-value-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .var-key {
+      font-weight: 500;
+      font-size: 13px;
+      color: @primary-color;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+
+      &::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-right: 8px;
+        background: @success-green;
+      }
+
+      &.metric-key::before {
+        background: @error-red;
+      }
+    }
+
+    .var-value {
+      font-size: 12px;
+      color: @secondary-color;
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    &:hover {
+      background: @highlight-blue;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+
+      .var-key {
+        color: darken(@primary-color, 10%);
+      }
+
+      .var-value {
+        color: darken(@secondary-color, 10%);
+      }
+    }
+
+    &.dragging-active {
+      opacity: 0.8;
+      transform: scale(0.98);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  .drag-over {
+    border-color: @primary-color !important;
+    box-shadow: 0 0 8px fade(@primary-color, 10%) !important;
+  }
+
+  .env-type-environment {
+    .var-key::before {
+      background: @success-green;
+    }
+  }
+
+  .env-type-metric {
+    .var-key::before {
+      background: @error-red;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .draggable-tag {
+      width: 100%;
+      min-width: auto;
+    }
   }
 }
