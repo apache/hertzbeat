@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
@@ -86,7 +87,7 @@ class KafkaMetricsDataDeserializerTest {
     @Test
     void testDeserializeWithInvalidBytes() {
 
-        byte[] invalidBytes = "invalid data".getBytes();
+        byte[] invalidBytes = "invalid data".getBytes(StandardCharsets.UTF_8);
 
         assertThrows(RuntimeException.class, () -> deserializer.deserialize("", invalidBytes));
     }
