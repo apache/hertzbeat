@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -43,6 +43,8 @@ const AVAILABILITY = 'availability';
   styleUrls: ['./alert-setting.component.less']
 })
 export class AlertSettingComponent implements OnInit {
+  private savedSelectionStart = 0;
+  private savedSelectionEnd = 0;
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
@@ -212,8 +214,9 @@ export class AlertSettingComponent implements OnInit {
       translationSearchList.push(trimSearch);
     }
 
-    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize).subscribe(
-      message => {
+    let alertDefineInit$ = this.alertDefineSvc
+      .getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize)
+      .subscribe(message => {
         this.tableLoading = false;
         this.checkedAll = false;
         this.checkedDefineIds.clear();
@@ -226,12 +229,7 @@ export class AlertSettingComponent implements OnInit {
           console.warn(message.msg);
         }
         alertDefineInit$.unsubscribe();
-      },
-      error => {
-        this.tableLoading = false;
-        alertDefineInit$.unsubscribe();
-      }
-    );
+      });
   }
 
   onNewAlertDefine() {
@@ -442,7 +440,7 @@ export class AlertSettingComponent implements OnInit {
    * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
+    const { pageSize, pageIndex } = params;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
     this.loadAlertDefineTable();
@@ -733,7 +731,7 @@ export class AlertSettingComponent implements OnInit {
       const funcMatch = expr.match(/^(!)?(?:equals|contains|matches)\(([^,]+),\s*"([^"]+)"\)$/);
       if (funcMatch) {
         const [_, not, field, value] = funcMatch;
-        const func = expr.match(/(?:equals|contains|matches)/)?.[0] || '';
+        const func = expr.match(/equals|contains|matches/)?.[0] || '';
         return {
           field,
           operator: not ? `!${func}` : func,
@@ -1173,5 +1171,70 @@ export class AlertSettingComponent implements OnInit {
   onFilterChange(): void {
     this.pageIndex = 1;
     this.loadAlertDefineTable();
+  }
+
+  onDragStart(event: DragEvent, data: any): void {
+    if (!event.dataTransfer) return;
+
+    let dragText: string;
+    if (this.isMetric(data)) {
+      dragText = `\${${data.value}}`;
+    } else {
+      dragText = data.name;
+    }
+
+    event.dataTransfer.setData('text/plain', dragText);
+
+    (event.target as HTMLElement).classList.add('dragging-active');
+    this.saveTextareaSelection();
+  }
+
+  @HostListener('document:dragend', ['$event'])
+  onGlobalDragEnd() {
+    document.querySelectorAll('.dragging-active').forEach(el => {
+      el.classList.remove('dragging-active');
+    });
+  }
+
+  private isMetric(data: any): boolean {
+    return 'value' in data && 'label' in data;
+  }
+
+  private saveTextareaSelection(): void {
+    const textarea = document.getElementById('template') as HTMLTextAreaElement;
+    this.savedSelectionStart = textarea.selectionStart;
+    this.savedSelectionEnd = textarea.selectionEnd;
+  }
+
+  onTextareaDrop(event: DragEvent): void {
+    event.preventDefault();
+
+    if (!event.dataTransfer) return;
+
+    const textarea = event.target as HTMLTextAreaElement;
+    const data = event.dataTransfer.getData('text/plain');
+    this.insertAtCursor(textarea, data);
+    this.define.template = textarea.value;
+  }
+
+  private insertAtCursor(textarea: HTMLTextAreaElement, text: string): void {
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+
+    const content = textarea.value;
+    textarea.value = content.substring(0, startPos) + text + content.substring(endPos, content.length);
+
+    const newPos = startPos + text.length;
+    textarea.selectionStart = newPos;
+    textarea.selectionEnd = newPos;
+  }
+
+  onTextareaDragOver(event: DragEvent): void {
+    event.preventDefault();
+    (event.target as HTMLElement).classList.add('drag-over');
+  }
+
+  onTextareaDragLeave(event: DragEvent): void {
+    (event.target as HTMLElement).classList.remove('drag-over');
   }
 }

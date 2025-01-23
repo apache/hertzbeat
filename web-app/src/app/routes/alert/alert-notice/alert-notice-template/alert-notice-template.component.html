@@ -61,7 +61,7 @@
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.type' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.preset' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -126,7 +126,7 @@
         </span>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div *ngIf="!data.preset" class="actions">
           <button
             (click)="onEditOneNoticeTemplate(data)"

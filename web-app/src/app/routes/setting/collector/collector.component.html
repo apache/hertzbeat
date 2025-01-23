@@ -100,7 +100,7 @@
       <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.version' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.start-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="13%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -143,7 +143,7 @@
       <td nzAlign="center">
         {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             *ngIf="data.collector.status == 1"
