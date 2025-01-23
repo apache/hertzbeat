@@ -61,7 +61,7 @@ const LANGS: { [key: string]: LangConfigData } = {
     abbr: '🇭🇰'
   },
   'ja-JP': {
-    text: 'にほんご',
+    text: '日本語',
     ng: ngJa,
     zorro: zorroJaJP,
     date: dfJa,
