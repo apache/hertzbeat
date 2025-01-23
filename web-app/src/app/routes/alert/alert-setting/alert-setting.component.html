@@ -97,8 +97,8 @@
       <th nzAlign="center" nzWidth="24%">{{ 'alert.setting.expr' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'alert.setting.template' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'label.bind' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'alert.setting.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -122,10 +122,10 @@
       <td nzAlign="center">
         <nz-tag *ngFor="let item of data.labels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             nz-button
