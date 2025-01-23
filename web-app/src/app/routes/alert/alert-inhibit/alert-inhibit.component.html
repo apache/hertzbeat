@@ -81,8 +81,8 @@
       <th nzAlign="center" nzWidth="20%">{{ 'alert.inhibit.source_labels' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'alert.inhibit.target_labels' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.inhibit.equal_labels' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'common.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="12%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'common.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -98,10 +98,10 @@
       <td nzAlign="center">
         <nz-tag *ngFor="let label of data.equalLabels">{{ label }}</nz-tag>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateInhibit(data)" name="enable"></nz-switch>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button nz-button nzType="primary" (click)="editInhibit(data.id)" nz-tooltip [nzTooltipTitle]="'alert.inhibit.edit' | i18n">
             <i nz-icon nzType="edit" nzTheme="outline"></i>
