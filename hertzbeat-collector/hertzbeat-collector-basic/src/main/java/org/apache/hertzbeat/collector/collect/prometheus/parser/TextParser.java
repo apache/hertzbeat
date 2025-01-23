@@ -300,6 +300,6 @@ public class TextParser {
      * @return true/false
      */
     private static boolean isValidLabelValue(String s) {
-        return s != null && s.equals(new String(s.getBytes(StandardCharsets.UTF_8)));
+        return s != null;
     }
 }
