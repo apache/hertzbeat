@@ -500,6 +500,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://medium.com/@pjfanning"><img src="https://avatars.githubusercontent.com/u/11783444?v=4?s=100" width="100px;" alt="PJ Fanning"/><br /><sub><b>PJ Fanning</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pjfanning" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MonsterChenzhuo"><img src="https://avatars.githubusercontent.com/u/60029759?v=4?s=100" width="100px;" alt="monster"/><br /><sub><b>monster</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=MonsterChenzhuo" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MasamiYui"><img src="https://avatars.githubusercontent.com/u/22274133?v=4?s=100" width="100px;" alt="Sherlock Yin"/><br /><sub><b>Sherlock Yin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=MasamiYui" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wanhao23"><img src="https://avatars.githubusercontent.com/u/29560961?v=4?s=100" width="100px;" alt="wanhao"/><br /><sub><b>wanhao</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=wanhao23" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
