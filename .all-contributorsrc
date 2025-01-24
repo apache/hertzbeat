@@ -2271,6 +2271,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "jonasHanhan",
+      "name": "jonasHanhan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130035609?v=4",
+      "profile": "https://github.com/jonasHanhan",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
