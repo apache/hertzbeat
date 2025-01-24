@@ -40,6 +40,7 @@ import org.springframework.util.ResourceUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -103,9 +104,10 @@ public class DockerMonitorE2eTest extends AbstractCollectE2eTest {
 
     private void sendJsonResponse(HttpExchange exchange, String response) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(200, response.getBytes().length);
+        final byte[] array = response.getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(200, array.length);
         try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes());
+            os.write(array);
         }
     }
 

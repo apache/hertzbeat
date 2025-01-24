@@ -36,7 +36,7 @@ const routes: Routes = [
   { path: 'silence', component: AlertSilenceComponent },
   { path: 'group', component: AlertGroupConvergeComponent },
   { path: 'inhibit', component: AlertInhibitComponent },
-  { path: 'integration/:source', component: AlertIntegrationComponent }
+  { path: 'integration/:source', component: AlertIntegrationComponent, data: { titleI18n: 'menu.alert.integration' } }
 ];
 
 @NgModule({
