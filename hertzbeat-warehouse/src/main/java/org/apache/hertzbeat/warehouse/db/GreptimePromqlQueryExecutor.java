@@ -29,8 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.util.Base64Util;
+import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
-import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -46,18 +46,18 @@ import org.springframework.web.util.UriComponentsBuilder;
  * query executor for victor metrics
  */
 @Component
-@ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @Slf4j
-public class VictoriaMetricsQueryExecutor implements QueryExecutor {
+public class GreptimePromqlQueryExecutor implements QueryExecutor {
 
-    private static final String QUERY_PATH = "/api/v1/query";
-    
-    private final VictoriaMetricsProperties victoriaMetricsProp;
+    private static final String QUERY_PATH = "/v1/prometheus/api/v1/query";
+
+    private final GreptimeProperties greptimeProperties;
 
     private final RestTemplate restTemplate;
 
-    public VictoriaMetricsQueryExecutor(VictoriaMetricsProperties victoriaMetricsProp, RestTemplate restTemplate) {
-        this.victoriaMetricsProp = victoriaMetricsProp;
+    public GreptimePromqlQueryExecutor(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
+        this.greptimeProperties = greptimeProperties;
         this.restTemplate = restTemplate;
     }
 
@@ -69,14 +69,14 @@ public class VictoriaMetricsQueryExecutor implements QueryExecutor {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(victoriaMetricsProp.username())
-                    && StringUtils.hasText(victoriaMetricsProp.password())) {
-                String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
+            if (StringUtils.hasText(greptimeProperties.username())
+                    && StringUtils.hasText(greptimeProperties.password())) {
+                String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
                 String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_PATH)
+            URI uri = UriComponentsBuilder.fromHttpUrl(greptimeProperties.httpEndpoint() + QUERY_PATH)
                     .queryParam("query", URLEncoder.encode(query, StandardCharsets.UTF_8))
                     .build(true).toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
@@ -103,7 +103,7 @@ public class VictoriaMetricsQueryExecutor implements QueryExecutor {
                     }
                 }
             } else {
-                log.error("query metrics data from victor-metrics failed. {}", responseEntity);
+                log.error("query metrics data from greptime failed. {}", responseEntity);
             }
         } catch (Exception e) {
             log.error(e.toString(), e);
