@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
@@ -68,7 +69,7 @@ class AlertDefineJsonImExportServiceTest {
     @BeforeEach
     public void setup() {
 
-        inputStream = new ByteArrayInputStream(JSON_DATA.getBytes());
+        inputStream = new ByteArrayInputStream(JSON_DATA.getBytes(StandardCharsets.UTF_8));
 
         AlertDefineDTO alertDefine = new AlertDefineDTO();
         alertDefine.setName("App1");

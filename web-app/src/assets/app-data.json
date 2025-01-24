@@ -148,7 +148,6 @@
           "icon": "anticon-calculator",
           "link": "/alert/setting"
         },
-
         {
           "text": "Integration",
           "i18n": "menu.alert.integration",
