@@ -22,6 +22,7 @@ package org.apache.hertzbeat.common.entity.message;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.channels.Channels;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -406,7 +407,7 @@ public final class CollectRep {
                                         fieldIndex < row.getColumnsList().size()) {
                                     String value = row.getColumns(fieldIndex);
                                     if (value != null) {
-                                        vector.set(rowIndex, value.getBytes());
+                                        vector.set(rowIndex, value.getBytes(StandardCharsets.UTF_8));
                                     }
                                 }
                             }
