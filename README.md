@@ -498,6 +498,7 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/helei1030"><img src="https://avatars.githubusercontent.com/u/11839080?v=4?s=100" width="100px;" alt="helei1030"/><br /><sub><b>helei1030</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=helei1030" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://medium.com/@pjfanning"><img src="https://avatars.githubusercontent.com/u/11783444?v=4?s=100" width="100px;" alt="PJ Fanning"/><br /><sub><b>PJ Fanning</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pjfanning" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
