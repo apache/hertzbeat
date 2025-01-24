@@ -18,20 +18,24 @@ import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 public class SshTunnel implements CommonRequestProtocol, Protocol {
 
     /**
+     * enable ssh tunnel
+     */
+    private String enable = "false";
+
+    /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
-
     private String host;
 
     /**
      * Peer host port
      */
-    private String port;
+    private String port = "22";
 
     /**
      * TIME OUT PERIOD
      */
-    private String timeout;
+    private String timeout = "6000";
 
     /**
      * UserName
@@ -49,12 +53,17 @@ public class SshTunnel implements CommonRequestProtocol, Protocol {
     private String privateKey;
 
     /**
-     * reuse connection session
+     * private key passphrase (optional)
      */
-    private String reuseConnection = "true";
+    private String privateKeyPassphrase;
 
     /**
-     * Local Port (optional)
+     * share connection session
+     */
+    private String shareConnection = "true";
+
+    /**
+     * Local Port (optional, default generate random port)
      */
     private String localPort;
 }
