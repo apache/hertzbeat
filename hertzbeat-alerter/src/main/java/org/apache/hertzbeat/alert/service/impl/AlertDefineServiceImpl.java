@@ -25,6 +25,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.calculate.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
@@ -67,6 +68,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Autowired
     private AlertDefineDao alertDefineDao;
+    
+    @Autowired
+    private PeriodicAlertRuleScheduler periodicAlertRuleScheduler;
 
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
 
@@ -99,18 +103,21 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void addAlertDefine(AlertDefine alertDefine) throws RuntimeException {
         alertDefineDao.save(alertDefine);
+        periodicAlertRuleScheduler.updateSchedule(alertDefine);
         CacheFactory.clearAlertDefineCache();
     }
 
     @Override
     public void modifyAlertDefine(AlertDefine alertDefine) throws RuntimeException {
         alertDefineDao.save(alertDefine);
+        periodicAlertRuleScheduler.updateSchedule(alertDefine);
         CacheFactory.clearAlertDefineCache();
     }
 
     @Override
     public void deleteAlertDefine(long alertId) throws RuntimeException {
         alertDefineDao.deleteById(alertId);
+        periodicAlertRuleScheduler.cancelSchedule(alertId);
         CacheFactory.clearAlertDefineCache();
     }
 
@@ -123,6 +130,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void deleteAlertDefines(Set<Long> alertIds) throws RuntimeException {
         alertDefineDao.deleteAlertDefinesByIdIn(alertIds);
+        for (Long alertId : alertIds) {
+            periodicAlertRuleScheduler.cancelSchedule(alertId);
+        }
         CacheFactory.clearAlertDefineCache();
     }
 
