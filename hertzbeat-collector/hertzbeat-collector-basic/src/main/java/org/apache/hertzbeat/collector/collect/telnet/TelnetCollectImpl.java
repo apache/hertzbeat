@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.collect.telnet;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -122,7 +123,7 @@ public class TelnetCollectImpl extends AbstractCollect {
             return new HashMap<>(16);
         }
         OutputStream outputStream = telnetClient.getOutputStream();
-        outputStream.write(cmd.getBytes());
+        outputStream.write(cmd.getBytes(StandardCharsets.UTF_8));
         outputStream.flush();
         String result = new String(telnetClient.getInputStream().readAllBytes());
         String[] lines = result.split("\n");
