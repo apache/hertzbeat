@@ -240,6 +240,7 @@ export class AlertSettingComponent implements OnInit {
     this.isSelectTypeModalVisible = false;
     this.define = new AlertDefine();
     this.define.type = type;
+    this.severity = '';
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     // Set default period for periodic alert
