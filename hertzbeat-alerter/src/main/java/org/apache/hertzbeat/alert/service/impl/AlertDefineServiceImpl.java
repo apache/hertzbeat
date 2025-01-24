@@ -102,7 +102,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void addAlertDefine(AlertDefine alertDefine) throws RuntimeException {
-        alertDefineDao.save(alertDefine);
+        alertDefine = alertDefineDao.save(alertDefine);
         periodicAlertRuleScheduler.updateSchedule(alertDefine);
         CacheFactory.clearAlertDefineCache();
     }

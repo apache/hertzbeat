@@ -60,6 +60,9 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner {
     }
 
     public void cancelSchedule(Long ruleId) {
+        if (ruleId == null) {
+            return;
+        }
         ScheduledFuture<?> future = scheduledFutures.get(ruleId);
         if (future != null) {
             future.cancel(true);
@@ -68,6 +71,10 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner {
     }
 
     public void updateSchedule(AlertDefine rule) {
+        if (rule == null || rule.getId() == null) {
+            log.error("Alert rule is null or rule id is null.");
+            return;
+        }
         cancelSchedule(rule.getId());
         if (rule.getType().equals(ALERT_THRESHOLD_TYPE_PERIODIC)) {
             ScheduledFuture<?> future = scheduledExecutor.scheduleAtFixedRate(() -> {

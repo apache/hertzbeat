@@ -498,7 +498,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
-            <div class="draggable-vars-container">
+            <div *ngIf="define.type === 'realtime'" class="draggable-vars-container">
               <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
                 <div class="key-value-block">
                   <span class="var-key">{{ env.name }}</span>
