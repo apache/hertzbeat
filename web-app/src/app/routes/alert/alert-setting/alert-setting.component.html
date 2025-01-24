@@ -97,8 +97,8 @@
       <th nzAlign="center" nzWidth="24%">{{ 'alert.setting.expr' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'alert.setting.template' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'label.bind' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'alert.setting.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -122,10 +122,10 @@
       <td nzAlign="center">
         <nz-tag *ngFor="let item of data.labels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             nz-button
@@ -498,23 +498,21 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
-            <a nz-dropdown [nzDropdownMenu]="menu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
-              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.template.tip' | i18n">
-                <i nz-icon nzType="snippets" nzTheme="outline"></i>
-              </button>
-            </a>
-            <nz-dropdown-menu #menu="nzDropdownMenu">
-              <ul nz-menu class="env-vars-menu">
-                <li nz-menu-item *ngFor="let env of templateEnvVars" (click)="onEnvVarClick(env)">
-                  <span class="env-var-name">{{ env.name }}</span>
-                  <span class="env-var-desc">{{ env.description | i18n }}</span>
-                </li>
-                <li nz-menu-item *ngFor="let env of currentMetrics" (click)="onEnvVarClick(env)">
-                  <span class="env-var-name">{{ '${' + env.value + '}' }}</span>
-                  <span class="env-var-desc">{{ env.label }}</span>
-                </li>
-              </ul>
-            </nz-dropdown-menu>
+            <div class="draggable-vars-container">
+              <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
+                <div class="key-value-block">
+                  <span class="var-key">{{ env.name }}</span>
+                  <span class="var-value">{{ env.description | i18n }}</span>
+                </div>
+              </div>
+
+              <div *ngFor="let metric of currentMetrics" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, metric)">
+                <div class="key-value-block">
+                  <span class="var-key">{{ '${' + metric.value + '}' }}</span>
+                  <span class="var-value">{{ metric.label }}</span>
+                </div>
+              </div>
+            </div>
 
             <nz-textarea-count [nzMaxCharacterCount]="200">
               <textarea
@@ -525,8 +523,10 @@
                 name="template"
                 id="template"
                 [placeholder]="'alert.setting.template.example' | i18n"
-              >
-              </textarea>
+                (dragover)="onTextareaDragOver($event)"
+                (drop)="onTextareaDrop($event)"
+                (dragleave)="onTextareaDragLeave($event)"
+              ></textarea>
             </nz-textarea-count>
           </div>
         </nz-form-control>
