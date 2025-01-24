@@ -36,7 +36,7 @@ public class DataSourceServiceImpl implements DataSourceService {
     private Map<String, QueryExecutor> executors;
     
     @Override
-    public List<Map<String, Object>> query(String datasource, String query) {
+    public List<Map<String, Object>> calculate(String datasource, String query) {
         QueryExecutor executor = executors.get(datasource);
         if (executor == null) {
             throw new IllegalArgumentException("Unsupported datasource: " + datasource);
