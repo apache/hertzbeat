@@ -56,7 +56,7 @@ public class SshCollectE2eTest extends AbstractCollectE2eTest {
     private static final String ROOT_USER = "root";
     private static final int SSH_PORT = 22;
     private static final int PASSWORD_LENGTH = 12;
-    private static final List<String> allowEmptyWhiteList = Arrays.asList("top_mem_process", "top_cpu_process");
+    private static final List<String> ALLOW_EMPTY_WHITE_LIST = Arrays.asList("top_mem_process", "top_cpu_process");
 
     private static GenericContainer<?> linuxContainer;
 
@@ -92,7 +92,7 @@ public class SshCollectE2eTest extends AbstractCollectE2eTest {
 
         Job ubuntuJob = appService.getAppDefine("ubuntu");
         ubuntuJob.getMetrics().forEach(metricsDef -> {
-            if (allowEmptyWhiteList.contains(metricsDef.getName())) {
+            if (ALLOW_EMPTY_WHITE_LIST.contains(metricsDef.getName())) {
                 validateMetricsCollection(metricsDef, metricsDef.getName(), true);
             } else {
                 validateMetricsCollection(metricsDef, metricsDef.getName());

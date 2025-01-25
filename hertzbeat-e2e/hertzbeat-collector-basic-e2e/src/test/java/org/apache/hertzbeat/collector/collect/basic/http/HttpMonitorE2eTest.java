@@ -56,7 +56,7 @@ public class HttpMonitorE2eTest extends AbstractCollectE2eTest {
     private static final int MOCK_SERVER_PORT = 52376;
     private static final String LOCALHOST = "127.0.0.1";
     private static final String RELATIVE_PATH = "/";
-    private static final List<String> allowEmptyWhiteList = List.of("header");
+    private static final List<String> ALLOW_EMPTY_WHITE_LIST = List.of("header");
     private static HttpServer mockServer;
 
     @AfterAll
@@ -98,7 +98,7 @@ public class HttpMonitorE2eTest extends AbstractCollectE2eTest {
         for (Metrics metricsDef : dockerJob.getMetrics()) {
             metricsDef = CollectUtil.replaceCryPlaceholderToMetrics(metricsDef, configmapFromPreCollectData.size() > 0 ? configmapFromPreCollectData.get(0) : new HashMap<>());
             CollectRep.MetricsData metricsData;
-            if (allowEmptyWhiteList.contains(metricsDef.getName())) {
+            if (ALLOW_EMPTY_WHITE_LIST.contains(metricsDef.getName())) {
                 metricsData = validateMetricsCollection(metricsDef, metricsDef.getName(), true);
             } else {
                 metricsData = validateMetricsCollection(metricsDef, metricsDef.getName());
