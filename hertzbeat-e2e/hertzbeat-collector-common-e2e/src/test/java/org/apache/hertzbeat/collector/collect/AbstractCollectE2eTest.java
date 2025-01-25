@@ -22,6 +22,7 @@ import org.apache.hertzbeat.collector.dispatch.CollectDataDispatch;
 import org.apache.hertzbeat.collector.dispatch.MetricsCollect;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
@@ -77,9 +78,24 @@ public abstract class AbstractCollectE2eTest {
 
     /**
      * Validate metrics collection, check if the metrics values are not empty <br/>
-     * We believe that all monitoring metrics should have data
+     * @param metricsDef metrics definition
+     * @param metricName metric name
+     * @return metrics data
      */
     protected CollectRep.MetricsData validateMetricsCollection(Metrics metricsDef, String metricName) {
+        // By default, we do not allow empty values
+        return validateMetricsCollection(metricsDef, metricName, false);
+    }
+
+    /**
+     * Validate metrics collection, check if the metrics values are not empty <br/>
+     * We believe that all monitoring metrics should have data
+     *
+     * @param metricsDef metrics definition
+     * @param metricName metric name
+     * @param allowEmpty In some special scenarios, it is not necessary to check if the value is `&nbsp;`
+     */
+    protected CollectRep.MetricsData validateMetricsCollection(Metrics metricsDef, String metricName, boolean allowEmpty) {
         CollectRep.MetricsData.Builder metricsData = collectMetrics(metricsDef);
 
         metricsCollect.calculateFields(metricsDef, metricsData);
@@ -91,6 +107,10 @@ public abstract class AbstractCollectE2eTest {
             for (int i = 0; i < valueRow.getColumnsCount(); i++) {
                 Assertions.assertFalse(valueRow.getColumns(i).isEmpty(),
                         String.format("%s metric column %d should not be empty", metricName, i));
+                if (!allowEmpty) {
+                    // Check if the value is not null
+                    Assertions.assertNotEquals(CommonConstants.NULL_VALUE, valueRow.getColumns(i), String.format("%s metric column %d should not be null", metricName, i));
+                }
             }
         }
 
@@ -98,21 +118,31 @@ public abstract class AbstractCollectE2eTest {
         return metricsData.build();
     }
 
+    /**
+     * Set alias fields for metrics
+     *
+     * @param metrics    metrics
+     * @param metricsDef metrics definition
+     */
     protected void setMetricsAliasFields(Metrics metrics, Metrics metricsDef) {
-        metrics.setAliasFields(metricsDef.getAliasFields() == null
-                ? metricsDef.getFields().stream()
-                .map(Metrics.Field::getField)
-                .collect(Collectors.toList()) :
-                metricsDef.getAliasFields());
+        List<String> aliasFields = metricsDef.getAliasFields() == null
+                ? metricsDef.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList())
+                : metricsDef.getAliasFields();
+        metrics.setAliasFields(aliasFields);
+        metricsDef.setAliasFields(aliasFields);
     }
 
     protected abstract CollectRep.MetricsData.Builder collectMetrics(Metrics metricsDef);
 
     protected CollectRep.MetricsData.Builder collectMetricsData(Metrics metrics, Metrics metricsDef) {
+        CollectRep.MetricsData.Builder metricsData = CollectRep.MetricsData.newBuilder();
+        return this.collectMetricsData(metrics, metricsDef, metricsData);
+    }
+
+    protected CollectRep.MetricsData.Builder collectMetricsData(Metrics metrics, Metrics metricsDef, CollectRep.MetricsData.Builder metricsData) {
         setMetricsAliasFields(metrics, metricsDef);
 
         // Collect metrics
-        CollectRep.MetricsData.Builder metricsData = CollectRep.MetricsData.newBuilder();
         collect.collect(metricsData, metrics);
         return metricsData;
     }

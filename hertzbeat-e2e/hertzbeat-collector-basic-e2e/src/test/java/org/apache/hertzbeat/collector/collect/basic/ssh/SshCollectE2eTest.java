@@ -38,6 +38,8 @@ import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -54,6 +56,7 @@ public class SshCollectE2eTest extends AbstractCollectE2eTest {
     private static final String ROOT_USER = "root";
     private static final int SSH_PORT = 22;
     private static final int PASSWORD_LENGTH = 12;
+    private static final List<String> allowEmptyWhiteList = Arrays.asList("top_mem_process", "top_cpu_process");
 
     private static GenericContainer<?> linuxContainer;
 
@@ -88,8 +91,13 @@ public class SshCollectE2eTest extends AbstractCollectE2eTest {
         Assertions.assertTrue(linuxContainer.isRunning(), "Ubuntu container should be running");
 
         Job ubuntuJob = appService.getAppDefine("ubuntu");
-        ubuntuJob.getMetrics().forEach(metricsDef -> 
-            validateMetricsCollection(metricsDef, metricsDef.getName()));
+        ubuntuJob.getMetrics().forEach(metricsDef -> {
+            if (allowEmptyWhiteList.contains(metricsDef.getName())) {
+                validateMetricsCollection(metricsDef, metricsDef.getName(), true);
+            } else {
+                validateMetricsCollection(metricsDef, metricsDef.getName());
+            }
+        });
     }
 
     @Override
