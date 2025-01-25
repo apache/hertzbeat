@@ -39,7 +39,6 @@ import java.util.List;
 /**
  * Test case for {@link DbAlertStoreHandlerImpl}
  */
-@Disabled
 @ExtendWith(MockitoExtension.class)
 class DbAlertStoreHandlerImplTest {
     
