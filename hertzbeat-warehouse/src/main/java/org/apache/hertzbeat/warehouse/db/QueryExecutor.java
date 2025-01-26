@@ -15,21 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.service;
+package org.apache.hertzbeat.warehouse.db;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * datasource service
+ * query executor interface
  */
-public interface DataSourceService {
+public interface QueryExecutor {
     
-    /**
-     * execute query expr calculate
-     * @param datasource datasource
-     * @param expr query expr
-     * @return result
-     */
-    List<Map<String, Object>> calculate(String datasource, String expr);
-} 
+    List<Map<String, Object>> execute(String query);
+    
+    boolean support(String datasource);
+}
