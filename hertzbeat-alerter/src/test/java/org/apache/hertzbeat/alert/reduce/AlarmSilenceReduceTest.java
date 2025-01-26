@@ -30,8 +30,10 @@ import java.util.Map;
 
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.alert.notice.AlertNoticeDispatch;
+import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -39,7 +41,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 /**
- * Test for AlarmSilenceReduce
+ * Test for {@link AlarmSilenceReduce}
  */
 @Disabled
 class AlarmSilenceReduceTest {
@@ -55,21 +57,23 @@ class AlarmSilenceReduceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(alertSilenceDao.findAll()).thenReturn(Collections.emptyList());
+        CacheFactory.clearAlertSilenceCache();
         alarmSilenceReduce = new AlarmSilenceReduce(alertSilenceDao, alertNoticeDispatch);
     }
 
     @Test
     void whenNoSilenceRules_shouldForwardAlert() {
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.emptyList());
+
         GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
-        
         alarmSilenceReduce.silenceAlarm(alert);
-        
+
         verify(alertNoticeDispatch).dispatchAlarm(alert);
     }
 
     @Test
     void whenMatchingSilenceRule_shouldNotForwardAlert() {
+
         // Create silence rule
         AlertSilence silenceRule = AlertSilence.builder()
                 .enable(true)
@@ -81,7 +85,7 @@ class AlarmSilenceReduceTest {
                 .times(0)
                 .build();
 
-        when(alertSilenceDao.findAll()).thenReturn(Collections.singletonList(silenceRule));
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
         when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(silenceRule);
         
         GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
@@ -107,9 +111,9 @@ class AlarmSilenceReduceTest {
                 .times(0)
                 .build();
 
-        when(alertSilenceDao.findAll()).thenReturn(Collections.singletonList(silenceRule));
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
         when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(silenceRule);
-        
+
         GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
         
         alarmSilenceReduce.silenceAlarm(alert);
@@ -130,29 +134,7 @@ class AlarmSilenceReduceTest {
                 .times(0)
                 .build();
 
-        when(alertSilenceDao.findAll()).thenReturn(Collections.singletonList(silenceRule));
-        
-        GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
-        
-        alarmSilenceReduce.silenceAlarm(alert);
-        
-        verify(alertNoticeDispatch).dispatchAlarm(alert);
-        verify(alertSilenceDao, never()).save(any());
-    }
-
-    @Test
-    void whenSilenceRuleDisabled_shouldForwardAlert() {
-        AlertSilence silenceRule = AlertSilence.builder()
-                .enable(false)
-                .matchAll(false)
-                .type((byte) 0)
-                .labels(createLabels("service", "web"))
-                .periodStart(LocalDateTime.now().minusHours(1).atZone(ZoneId.systemDefault()))
-                .periodEnd(LocalDateTime.now().plusHours(1).atZone(ZoneId.systemDefault()))
-                .times(0)
-                .build();
-
-        when(alertSilenceDao.findAll()).thenReturn(Collections.singletonList(silenceRule));
+        when(alertSilenceDao.findAlertSilencesByEnableTrue()).thenReturn(Collections.singletonList(silenceRule));
         
         GroupAlert alert = createGroupAlert("firing", createLabels("service", "web"));
         
