@@ -115,7 +115,7 @@ public class AccountController {
     @PostMapping("/register")
     @Transactional
     public ResponseEntity<Message<String>> accountRegister(@RequestBody @Validated SignUpDto account) {
-        //此处先让前端传递明文密码，后续改为加密密码
+        // TODO Let the front-end pass the plaintext password here first, and then change it to an encrypted password later
 
         if (accountService.registerAccount(account)) {
             Long authUser = roleService.getRoleIdByCode("role_user");
