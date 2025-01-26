@@ -70,6 +70,7 @@ public class TelnetCollectImpl extends AbstractCollect {
                 Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
                 if (resultMap.size() < aliasFields.size()) {
+                    System.out.println("telnet:" + resultMap);
                     log.error("telnet response data not enough: {}", resultMap);
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("The cmd execution results do not match the expected number of metrics.");
