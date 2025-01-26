@@ -70,38 +70,38 @@ public class SurenessFilterExample implements Filter {
             response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, authorization,x-requested-with, *");
 
             try {
-                //获取过滤器链中的filters属性
+                // Retrieve the filters attribute from the filter chain
                 Field filtersField = filterChain.getClass().getDeclaredField("filters");
-                //反射设置属性可达
+                // Reflection setting attribute reachable
                 filtersField.setAccessible(true);
-                //获取filters属性值
+                // Get the value of the filters attribute
                 FilterConfig[] filters = (FilterConfig[]) filtersField.get(filterChain);
-                //跳过过滤器个数记录
+                // Skip the record of the number of filters
                 int k = 0;
-                //遍历所有过滤器
+                // Traverse all filters
                 for (int i = 0; i < filters.length; i++) {
                     if (filters[i] != null) {
-                        //获取过滤器filterDef属性
+                        // Get the filterDef attribute of the filter
                         Field filterDefField = filters[i].getClass().getDeclaredField("filterDef");
                         filterDefField.setAccessible(true);
-                        //获取filter的class
+                        // Get the class of the filter
                         Field filterClassField = filterDefField.get(filters[i]).getClass().getDeclaredField("filterClass");
                         filterClassField.setAccessible(true);
                         String filterClass = (String) filterClassField.get(filterDefField.get(filters[i]));
                         String FILTER_REFERENCE1 = "com.usthe.sureness.configuration.SurenessJakartaServletFilter";
                         String FILTER_REFERENCE2 = "org.apache.tomcat.websocket.server.WsFilter";
-                        //跳过指定过滤器处理
+                        // Skip specified filter processing
                         if (FILTER_REFERENCE1.equals(filterClass)||FILTER_REFERENCE2.equals(filterClass)) {
                             filters[i] = null;
                             k++;
                             break;
                         }
-                        //属性可达关闭
+                        // Attribute can be disabled
                         filterClassField.setAccessible(false);
                         filterDefField.setAccessible(false);
                     }
                 }
-                //过滤器数组重新赋值，调整移除指定过滤器后过滤器数组
+                // Re assign the filter array and adjust it after removing the specified filter
                 int index = 0;
                 for (int i = 0; i < filters.length; i++) {
                     if (index == 0 && filters[i] == null) {
@@ -113,7 +113,7 @@ public class SurenessFilterExample implements Filter {
                         index = 0;
                     }
                 }
-                //n值重新赋值
+                // Reassignment of n value
                 filtersField.setAccessible(false);
                 Field n = filterChain.getClass().getDeclaredField("n");
                 n.setAccessible(true);
