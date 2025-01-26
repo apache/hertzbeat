@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -419,7 +418,7 @@ public class ExporterParser {
      * @return true/false
      */
     private boolean isValidLabelValue(String s) {
-        return s != null && s.equals(new String(s.getBytes(StandardCharsets.UTF_8)));
+        return s != null;
     }
 
     private boolean isSum(String s) {
