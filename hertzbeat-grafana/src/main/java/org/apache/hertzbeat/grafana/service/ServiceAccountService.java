@@ -194,9 +194,9 @@ public class ServiceAccountService {
 
     private HttpHeaders createHeaders() {
         String auth = username + SignConstants.DOUBLE_MARK + password;
-        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
         String authHeader = NetworkConstants.BASIC
-                + SignConstants.BLANK + new String(encodedAuth);
+                + SignConstants.BLANK + encodedAuth;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

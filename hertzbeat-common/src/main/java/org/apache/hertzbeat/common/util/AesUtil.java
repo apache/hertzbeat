@@ -90,7 +90,7 @@ public final class AesUtil {
             // encode content to byte array
             byte[] byteAes = cipher.doFinal(byteEncode);
             // base64 encode content
-            return new String(Base64.getEncoder().encode(byteAes), StandardCharsets.UTF_8);
+            return Base64.getEncoder().encodeToString(byteAes);
         } catch (Exception e) {
             log.error("aes encode content error: {}", e.getMessage(), e);
             return content;

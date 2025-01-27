@@ -39,7 +39,7 @@ public class DatabasePathTreeProvider implements PathTreeProvider {
 
     @Override
     public Set<String> providePathData() {
-        // 从数据库中读取出path信息，取出所有状态为1，即正常的path信息
+        // Read path information from the database and retrieve all path information with a status of 1, which is normal
         Set<String> pathSet = SurenessCommonUtil.attachContextPath(getContextPath(), resourceService.getAllEnableResourcePath());
         return pathSet;
 
@@ -47,7 +47,7 @@ public class DatabasePathTreeProvider implements PathTreeProvider {
 
     @Override
     public Set<String> provideExcludedResource() {
-        // 从数据库中读取出path信息，取出所有状态为9，即禁用的path信息
+        // Read path information from the database and retrieve all path information with a status of 9, which is disabled
         Set<String> exlResourceSet = SurenessCommonUtil.attachContextPath(getContextPath(), resourceService.getAllDisableResourcePath());
         return exlResourceSet;
     }

@@ -52,7 +52,7 @@ public class RocketmqProtocol implements CommonRequestProtocol, Protocol {
     private String secretKey;
 
     /**
-     * jsonpath解析脚本
+     * jsonpath parsing script
      */
     private String parseScript;
 

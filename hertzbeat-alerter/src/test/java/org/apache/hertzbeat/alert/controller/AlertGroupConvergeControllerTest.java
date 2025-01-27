@@ -27,12 +27,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
+
 import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,7 +44,6 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * test case for {@link AlertGroupConvergeController}
  */
-@Disabled
 @ExtendWith(MockitoExtension.class)
 public class AlertGroupConvergeControllerTest {
 
@@ -79,8 +78,8 @@ public class AlertGroupConvergeControllerTest {
 
         mockMvc.perform(post("/api/alert/group")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(alertGroupConverge))
-                ).andExpect(status().isOk())
+                        .content(JsonUtil.toJson(alertGroupConverge)))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"));
     }
@@ -93,8 +92,8 @@ public class AlertGroupConvergeControllerTest {
 
         mockMvc.perform(put("/api/alert/group")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(alertGroupConverge))
-                ).andExpect(status().isOk())
+                        .content(JsonUtil.toJson(alertGroupConverge)))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Modify success"));
     }
@@ -119,7 +118,6 @@ public class AlertGroupConvergeControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_NOT_EXIST_CODE))
-                .andExpect(jsonPath("$.msg").value("AlertGroupConverge not exist."));
+                .andExpect(jsonPath("$.msg").value("Alert Group Converge not exist."));
     }
-
 }
