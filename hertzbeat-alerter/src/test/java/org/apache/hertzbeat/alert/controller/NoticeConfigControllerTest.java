@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.controller;
 
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -44,6 +43,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -168,12 +171,38 @@ class NoticeConfigControllerTest {
 
     @Test
     void getReceivers() throws Exception {
+        NoticeReceiver receiver1 = new NoticeReceiver();
+        receiver1.setId(1L);
+        receiver1.setName("Receiver1");
 
-        //Mockito.when(noticeConfigService.getNoticeReceivers())
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receivers?name={name}", "tom"))
+        NoticeReceiver receiver2 = new NoticeReceiver();
+        receiver2.setId(2L);
+        receiver2.setName("Receiver2");
+
+        Page<NoticeReceiver> receiverPage = new PageImpl<>(
+                Arrays.asList(receiver1, receiver2),
+                PageRequest.of(0, 8, Sort.by("id").descending()),
+                2
+        );
+
+        when(noticeConfigService.getNoticeReceivers("Receiver", 0, 8)).thenReturn(receiverPage);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receivers")
+                        .param("name", "Receiver")
+                        .param("pageIndex", "0")
+                        .param("pageSize", "8")
+                        .param("sort", "id")
+                        .param("order", "desc")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andReturn();
+                .andExpect(jsonPath("$.data.content[0].id").value(1))
+                .andExpect(jsonPath("$.data.content[0].name").value("Receiver1"))
+                .andExpect(jsonPath("$.data.content[1].id").value(2))
+                .andExpect(jsonPath("$.data.content[1].name").value("Receiver2"))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.size").value(8))
+                .andExpect(jsonPath("$.data.number").value(0));
     }
 
     @Test
@@ -245,15 +274,38 @@ class NoticeConfigControllerTest {
 
     @Test
     void getRules() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/rules"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andReturn();
+        NoticeRule rule1 = new NoticeRule();
+        rule1.setId(1L);
+        rule1.setName("Rule1");
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/rules?name={name}", "tom"))
+        NoticeRule rule2 = new NoticeRule();
+        rule2.setId(2L);
+        rule2.setName("Rule2");
+
+        Page<NoticeRule> rulePage = new PageImpl<>(
+                Arrays.asList(rule1, rule2),
+                PageRequest.of(0, 8, Sort.by("id").descending()),
+                2
+        );
+
+        when(noticeConfigService.getNoticeRules("Rule", 0, 8)).thenReturn(rulePage);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/rules")
+                        .param("name", "Rule")
+                        .param("pageIndex", "0")
+                        .param("pageSize", "8")
+                        .param("sort", "id")
+                        .param("order", "desc")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andReturn();
+                .andExpect(jsonPath("$.data.content[0].id").value(1))
+                .andExpect(jsonPath("$.data.content[0].name").value("Rule1"))
+                .andExpect(jsonPath("$.data.content[1].id").value(2))
+                .andExpect(jsonPath("$.data.content[1].name").value("Rule2"))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.size").value(8))
+                .andExpect(jsonPath("$.data.number").value(0));
     }
 
     @Test
@@ -362,22 +414,40 @@ class NoticeConfigControllerTest {
     }
 
     @Test
-    void testGetTemplates() throws Exception {
-        // Mock the service response
+    void getTemplates() throws Exception {
         NoticeTemplate template1 = new NoticeTemplate();
+        template1.setId(1L);
         template1.setName("Template1");
-        NoticeTemplate template2 = new NoticeTemplate();
-        template2.setName("Template2");
-        List<NoticeTemplate> templates = Arrays.asList(template1, template2);
-        when(noticeConfigService.getNoticeTemplates(any())).thenReturn(templates);
 
-        // Perform the GET request and verify the response
-        this.mockMvc.perform(get("/api/notice/templates")
-                        .param("name", "Template"))
+        NoticeTemplate template2 = new NoticeTemplate();
+        template2.setId(2L);
+        template2.setName("Template2");
+
+        Page<NoticeTemplate> templatePage = new PageImpl<>(
+                Arrays.asList(template1, template2),
+                PageRequest.of(0, 8, Sort.by("id").descending()),
+                2
+        );
+
+        when(noticeConfigService.getNoticeTemplates("Template", true, 0, 8)).thenReturn(templatePage);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/templates")
+                        .param("name", "Template")
+                        .param("preset", "true")
+                        .param("pageIndex", "0")
+                        .param("pageSize", "8")
+                        .param("sort", "id")
+                        .param("order", "desc")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data[0].name").value("Template1"))
-                .andExpect(jsonPath("$.data[1].name").value("Template2"));
+                .andExpect(jsonPath("$.data.content[0].id").value(1))
+                .andExpect(jsonPath("$.data.content[0].name").value("Template1"))
+                .andExpect(jsonPath("$.data.content[1].id").value(2))
+                .andExpect(jsonPath("$.data.content[1].name").value("Template2"))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.size").value(8))
+                .andExpect(jsonPath("$.data.number").value(0));
     }
 
     @Test
@@ -414,5 +484,25 @@ class NoticeConfigControllerTest {
         verify(noticeConfigService, times(1)).sendTestMsg(noticeReceiver);
     }
 
+    @Test
+    void getAllTemplates() throws Exception {
+        List<NoticeTemplate> templates = Arrays.asList(new NoticeTemplate(), new NoticeTemplate());
+        when(noticeConfigService.getAllNoticeTemplates()).thenReturn(templates);
 
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/templates/all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
+
+    @Test
+    void getAllReceivers() throws Exception {
+        List<NoticeReceiver> receivers = Arrays.asList(new NoticeReceiver(), new NoticeReceiver());
+        when(noticeConfigService.getAllNoticeReceivers()).thenReturn(receivers);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/notice/receivers/all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
 }

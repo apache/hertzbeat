@@ -28,8 +28,30 @@
       {{ 'alert.notice.receiver.new' | i18n }}
     </button>
   </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      [placeholder]="'alert.notice.receiver.people.name' | i18n"
+      [(value)]="name"
+      (valueChange)="onSearch()"
+    />
+  </ng-template>
 </app-toolbar>
-<nz-table #fixedTable [nzData]="receivers" [nzLoading]="receiverTableLoading" [nzScroll]="{ x: '1240px' }" nzFrontPagination="false">
+<nz-table
+  #fixedTable
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzData]="receivers"
+  [nzLoading]="receiverTableLoading"
+  [nzScroll]="{ x: '1240px' }"
+>
   <thead>
     <tr>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.receiver.people' | i18n }}</th>
@@ -144,6 +166,9 @@
     </tr>
   </tbody>
 </nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
 <!-- new or update notice medium pop-up box -->
 <nz-modal
   (nzOnCancel)="onManageReceiverModalCancel()"
