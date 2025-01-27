@@ -20,6 +20,12 @@ package org.apache.hertzbeat.collector.collect.ftp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -59,30 +65,12 @@ public class FtpCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
-        FTPClient ftpClient = new FTPClient();
-        FtpProtocol ftpProtocol = metrics.getFtp();
-        // Set timeout
-        ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
-
-        // Collect data to load in CollectRep.ValueRow.Builder's object
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        Map<String, String> valueMap;
-        try {
-            valueMap = collectValue(ftpClient, ftpProtocol);
-            metrics.getAliasFields().forEach(it -> {
-                if (valueMap.containsKey(it)) {
-                    String fieldValue = valueMap.get(it);
-                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
-                } else {
-                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                }
-            });
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(e.getMessage());
-            return;
+        boolean ssl = Boolean.parseBoolean(metrics.getFtp().getSsl());
+        if(ssl){
+            handleSftpCollect(builder, metrics);
+        }else{
+            handleFtpCollect(builder, metrics);
         }
-        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**
@@ -113,8 +101,43 @@ public class FtpCollectImpl extends AbstractCollect {
         };
     }
 
+    private Map<String, String> collectValue(JSch jsch, FtpProtocol ftpProtocol) {
+        boolean isActive;
+        String responseTime;
+        ChannelSftp sftpChannel = null;
+        Session session = null;
+        try {
+            long startTime = System.currentTimeMillis();
+            session = login(jsch, ftpProtocol);
+            Channel channel = session.openChannel("sftp");
+            channel.connect();
+            sftpChannel = (ChannelSftp) channel;
+            sftpChannel.cd(ftpProtocol.getDirection());
+            isActive = true;
+            long endTime = System.currentTimeMillis();
+            responseTime = String.valueOf(endTime - startTime);
+        } catch (Exception e) {
+            log.info("[SFTPClient] error: {}", CommonUtil.getMessageFromThrowable(e), e);
+            throw new IllegalArgumentException(e.getMessage());
+        } finally {
+            if (sftpChannel != null && sftpChannel.isConnected()) {
+                sftpChannel.disconnect();
+            }
+            if (session != null && session.isConnected()) {
+                session.disconnect();
+            }
+        }
+        return new HashMap<>(8) {
+            {
+                put("isActive", Boolean.toString(isActive));
+                put("responseTime", responseTime);
+            }
+        };
+    }
+
+
     /**
-     * login
+     * ftp login
      */
     private void login(FTPClient ftpClient, FtpProtocol ftpProtocol) {
         try {
@@ -136,6 +159,30 @@ public class FtpCollectImpl extends AbstractCollect {
     }
 
     /**
+     * sftp login
+     */
+    private Session login(JSch jsch, FtpProtocol ftpProtocol) {
+        Session session;
+        try {
+            if (StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
+                session = jsch.getSession(ftpProtocol.getUsername(), ftpProtocol.getHost(), Integer.parseInt(ftpProtocol.getPort()));
+                session.setPassword(ftpProtocol.getPassword());
+            } else {
+                throw new IllegalArgumentException("The Username and password cannot empty.");
+            }
+            Properties config = new Properties();
+            config.put("StrictHostKeyChecking", "no");
+            session.setConfig(config);
+            session.connect(Integer.parseInt(ftpProtocol.getTimeout()));
+        } catch (Exception e) {
+            log.info("[SFTP Login] error: {}", CommonUtil.getMessageFromThrowable(e), e);
+            throw new IllegalArgumentException(e.getMessage());
+        }
+        return session;
+    }
+
+
+    /**
      * connect
      */
     private void connect(FTPClient ftpClient, FtpProtocol ftpProtocol) {
@@ -151,4 +198,57 @@ public class FtpCollectImpl extends AbstractCollect {
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_FTP;
     }
+
+
+    private void handleFtpCollect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
+        FTPClient ftpClient = new FTPClient();
+        FtpProtocol ftpProtocol = metrics.getFtp();
+        // Set timeout
+        ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
+
+        // Collect data to load in CollectRep.ValueRow.Builder's object
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        Map<String, String> valueMap;
+        try {
+            valueMap = collectValue(ftpClient, ftpProtocol);
+            metrics.getAliasFields().forEach(it -> {
+                if (valueMap.containsKey(it)) {
+                    String fieldValue = valueMap.get(it);
+                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                } else {
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                }
+            });
+        } catch (Exception e) {
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(e.getMessage());
+            return;
+        }
+        builder.addValueRow(valueRowBuilder.build());
+    }
+
+    private void handleSftpCollect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
+        JSch jsch = new JSch();
+        FtpProtocol ftpProtocol = metrics.getFtp();
+
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        Map<String, String> valueMap;
+        try {
+            valueMap = collectValue(jsch, ftpProtocol);
+            metrics.getAliasFields().forEach(it -> {
+                if (valueMap.containsKey(it)) {
+                    String fieldValue = valueMap.get(it);
+                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                } else {
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                }
+            });
+        } catch (Exception e) {
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(e.getMessage());
+            return;
+        }
+        builder.addValueRow(valueRowBuilder.build());
+    }
+
 }

@@ -155,5 +155,9 @@
             <artifactId>plc4j-driver-modbus</artifactId>
             <version>0.12.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+        </dependency>
     </dependencies>
 </project>

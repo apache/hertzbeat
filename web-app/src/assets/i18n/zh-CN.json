@@ -695,6 +695,8 @@
   "monitor.new.failed": "新增监控失败",
   "monitor.new.notify.change-to-http": "已关闭HTTPS，端口号自动更改为 80，请留意。",
   "monitor.new.notify.change-to-https": "已开启HTTPS，端口号自动更改为 443，请留意。",
+  "monitor.new.notify.change-to-ftp": "已关闭SFTP，端口号自动更改为 21，请留意。",
+  "monitor.new.notify.change-to-sftp": "已开启SFTP，端口号自动更改为 22，请留意。",
   "monitor.new.success": "新增监控成功",
   "monitor.not-found": "查询异常，此监控不存在",
   "monitor.path.tip": "导出器Url端点路径",

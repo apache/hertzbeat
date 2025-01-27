@@ -695,6 +695,8 @@
   "monitor.new.failed": "新增監控失敗",
   "monitor.new.notify.change-to-http": "已關閉HTTPS，連接埠號碼自動變更為 80，請留意。",
   "monitor.new.notify.change-to-https": "已開啟HTTPS，連接埠號碼自動變更為 443，請留意。",
+  "monitor.new.notify.change-to-ftp": "已關閉SFTP，連接埠號碼自動變更為 21，請留意。",
+  "monitor.new.notify.change-to-sftp": "已開啟SFTP，連接埠號碼自動變更為 22，請留意。",
   "monitor.new.success": "新增監控成功",
   "monitor.not-found": "查詢異常，此監控不存在",
   "monitor.path.tip": "匯出器Url端點路徑",

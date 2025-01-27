@@ -474,6 +474,12 @@
                 <artifactId>arrow-memory-netty</artifactId>
                 <version>${arrow.version}</version>
             </dependency>
+            <!-- sftp-->
+            <dependency>
+                <groupId>com.jcraft</groupId>
+                <artifactId>jsch</artifactId>
+                <version>0.1.55</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
