@@ -40,6 +40,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-plugin</artifactId>
         </dependency>
+        <!-- warehouse -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-warehouse</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
