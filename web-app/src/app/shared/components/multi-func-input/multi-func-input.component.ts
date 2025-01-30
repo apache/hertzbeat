@@ -52,6 +52,7 @@ export class MultiFuncInputComponent implements ControlValueAccessor {
   @Input() type: string = 'text';
   @Input() size: NzSizeLDSType = 'default';
   @Output() readonly valueChange = new EventEmitter<string>();
+  @Output() readonly cleared = new EventEmitter<void>();
 
   disabled: boolean = false;
   passwordVisible: boolean = false;
@@ -67,6 +68,7 @@ export class MultiFuncInputComponent implements ControlValueAccessor {
   onClear(event: any) {
     event.stopPropagation();
     this.onChange((this.value = null));
+    this.cleared.emit();
   }
 
   writeValue(value: any): void {
