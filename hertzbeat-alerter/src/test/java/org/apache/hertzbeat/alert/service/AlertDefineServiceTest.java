@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import org.apache.hertzbeat.alert.calculate.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -54,6 +55,9 @@ class AlertDefineServiceTest {
 
     @Mock
     private AlertDefineDao alertDefineDao;
+    
+    @Mock
+    private PeriodicAlertRuleScheduler periodicAlertRuleScheduler;
 
     @Mock
     private List<AlertDefineImExportService> alertDefineImExportServiceList;
@@ -64,6 +68,7 @@ class AlertDefineServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(this.alertDefineService, "alertDefineDao", alertDefineDao);
+        ReflectionTestUtils.setField(this.alertDefineService, "periodicAlertRuleScheduler", periodicAlertRuleScheduler);
 
         this.alertDefine = AlertDefine.builder()
                 .id(1L)

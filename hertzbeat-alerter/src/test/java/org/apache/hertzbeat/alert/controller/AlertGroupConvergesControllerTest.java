@@ -33,7 +33,6 @@ import org.apache.hertzbeat.alert.service.AlertGroupConvergeService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -52,7 +51,6 @@ import org.springframework.test.web.servlet.MockMvc;
  */
 
 @ExtendWith(MockitoExtension.class)
-@Disabled
 class AlertGroupConvergesControllerTest {
 
     private MockMvc mockMvc;
@@ -101,6 +99,7 @@ class AlertGroupConvergesControllerTest {
                         .param("order", "desc")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content[0].id").value(1))
                 .andExpect(jsonPath("$.data.content[0].name").value("Converge1"))
                 .andExpect(jsonPath("$.data.content[1].id").value(2))
@@ -119,4 +118,3 @@ class AlertGroupConvergesControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
     }
 }
-

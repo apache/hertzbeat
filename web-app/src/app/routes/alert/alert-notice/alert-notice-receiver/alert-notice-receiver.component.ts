@@ -23,6 +23,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../../pojo/NoticeReceiver';
@@ -41,6 +42,10 @@ export class AlertNoticeReceiverComponent implements OnInit {
   isManageReceiverModalOkLoading: boolean = false;
   isSendTestButtonLoading: boolean = false;
   receiver!: NoticeReceiver;
+  name!: string;
+  pageIndex: number = 1;
+  pageSize: number = 8;
+  total: number = 0;
   @ViewChild('receiverForm', { static: false }) receiverForm: NgForm | undefined;
 
   constructor(
@@ -60,11 +65,14 @@ export class AlertNoticeReceiverComponent implements OnInit {
 
   loadReceiversTable() {
     this.receiverTableLoading = true;
-    let receiverInit$ = this.noticeReceiverSvc.getReceivers().subscribe(
+    let receiverInit$ = this.noticeReceiverSvc.getReceivers(this.name, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.receiverTableLoading = false;
         if (message.code === 0) {
-          this.receivers = message.data;
+          let page = message.data;
+          this.receivers = page.content;
+          this.total = page.totalElements;
+          this.pageIndex = page.number + 1;
         } else {
           console.warn(message.msg);
         }
@@ -102,6 +110,7 @@ export class AlertNoticeReceiverComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+            this.updatePageIndex(1);
             this.loadReceiversTable();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
@@ -111,6 +120,11 @@ export class AlertNoticeReceiverComponent implements OnInit {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
         }
       );
+  }
+
+  updatePageIndex(delSize: number) {
+    const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
+    this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
   onSplitTokenStr(type: number) {
@@ -264,5 +278,17 @@ export class AlertNoticeReceiverComponent implements OnInit {
           }
         );
     }
+  }
+
+  onTablePageChange(params: NzTableQueryParams) {
+    const { pageSize, pageIndex } = params;
+    this.pageIndex = pageIndex;
+    this.pageSize = pageSize;
+    this.loadReceiversTable();
+  }
+
+  onSearch() {
+    this.pageIndex = 1;
+    this.loadReceiversTable();
   }
 }

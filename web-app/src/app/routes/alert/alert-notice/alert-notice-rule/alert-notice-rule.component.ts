@@ -23,6 +23,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { finalize } from 'rxjs/operators';
 
 import { NoticeReceiver } from '../../../../pojo/NoticeReceiver';
@@ -47,6 +48,10 @@ export class AlertNoticeRuleComponent implements OnInit {
   switchReceiver!: NoticeReceiver;
   receiversOption: any[] = [];
   isLimit: boolean = false;
+  name!: string;
+  pageIndex: number = 1;
+  pageSize: number = 8;
+  total: number = 0;
   @ViewChild('ruleForm', { static: false }) ruleForm: NgForm | undefined;
 
   dayCheckOptions = [
@@ -78,11 +83,14 @@ export class AlertNoticeRuleComponent implements OnInit {
 
   loadRulesTable() {
     this.ruleTableLoading = true;
-    let rulesInit$ = this.noticeRuleSvc.getNoticeRules().subscribe(
+    let rulesInit$ = this.noticeRuleSvc.getNoticeRules(this.name, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.ruleTableLoading = false;
         if (message.code === 0) {
-          this.rules = message.data;
+          let page = message.data;
+          this.rules = page.content;
+          this.total = page.totalElements;
+          this.pageIndex = page.number + 1;
         } else {
           console.warn(message.msg);
         }
@@ -122,6 +130,7 @@ export class AlertNoticeRuleComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+            this.updatePageIndex(1);
             this.loadRulesTable();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
@@ -131,6 +140,11 @@ export class AlertNoticeRuleComponent implements OnInit {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
         }
       );
+  }
+
+  updatePageIndex(delSize: number) {
+    const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
+    this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
   onNewNoticeRule() {
@@ -213,7 +227,7 @@ export class AlertNoticeRuleComponent implements OnInit {
   }
 
   loadReceiversOption() {
-    let receiverOption$ = this.noticeReceiverSvc.getReceivers().subscribe(
+    let receiverOption$ = this.noticeReceiverSvc.getAllReceivers().subscribe(
       message => {
         if (message.code === 0) {
           let data = message.data;
@@ -282,7 +296,7 @@ export class AlertNoticeRuleComponent implements OnInit {
   }
 
   loadTemplatesOption() {
-    let templateOption$ = this.noticeTemplateSvc.getNoticeTemplates().subscribe(
+    let templateOption$ = this.noticeTemplateSvc.getAllNoticeTemplates().subscribe(
       message => {
         if (message.code === 0) {
           let data = message.data;
@@ -425,5 +439,17 @@ export class AlertNoticeRuleComponent implements OnInit {
           }
         );
     }
+  }
+
+  onTablePageChange(params: NzTableQueryParams) {
+    const { pageSize, pageIndex } = params;
+    this.pageIndex = pageIndex;
+    this.pageSize = pageSize;
+    this.loadRulesTable();
+  }
+
+  onSearch() {
+    this.pageIndex = 1;
+    this.loadRulesTable();
   }
 }

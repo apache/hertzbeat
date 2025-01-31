@@ -18,18 +18,6 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import jakarta.persistence.criteria.Predicate;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.cache.CacheFactory;
@@ -51,9 +39,27 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Message notification configuration implementation
@@ -80,44 +86,87 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     private AlertNoticeDispatch dispatcherAlarm;
 
     @Override
-    public List<NoticeReceiver> getNoticeReceivers(String name) {
+    public Page<NoticeReceiver> getNoticeReceivers(String name, int pageIndex, int pageSize) {
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (StringUtils.isNotBlank(name)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                Predicate predicateName = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                );
                 predicate = criteriaBuilder.and(predicateName);
             }
             return predicate;
         };
-        return noticeReceiverDao.findAll(specification);
+        return noticeReceiverDao.findAll(specification, PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "id")));
     }
 
     @Override
-    public List<NoticeTemplate> getNoticeTemplates(String name) {
-        Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
-            if (StringUtils.isNotBlank(name)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                predicate = criteriaBuilder.and(predicateName);
+    public List<NoticeReceiver> getAllNoticeReceivers() {
+        return noticeReceiverDao.findAll();
+    }
+
+    @Override
+    public Page<NoticeTemplate> getNoticeTemplates(String name, boolean preset, int pageIndex, int pageSize) {
+        if (preset) {
+            // Query preset templates
+            List<NoticeTemplate> defaultTemplates = new LinkedList<>(PRESET_TEMPLATE.values());
+
+            // Filter by name (case-insensitive)
+            List<NoticeTemplate> filteredDefaultTemplates = defaultTemplates.stream()
+                    .filter(template -> StringUtils.isBlank(name)
+                            || template.getName().toLowerCase().contains(name.toLowerCase()))
+                    .collect(Collectors.toList());
+
+            // Pagination logic
+            int totalItems = filteredDefaultTemplates.size();
+            int fromIndex = Math.min(pageIndex * pageSize, totalItems);
+            int toIndex = Math.min(fromIndex + pageSize, totalItems);
+
+            if (fromIndex >= totalItems) {
+                return new PageImpl<>(Collections.emptyList(), PageRequest.of(pageIndex, pageSize), totalItems);
             }
-            return predicate;
-        };
+
+            List<NoticeTemplate> paginatedTemplates = filteredDefaultTemplates.subList(fromIndex, toIndex);
+            return new PageImpl<>(paginatedTemplates, PageRequest.of(pageIndex, pageSize), totalItems);
+        } else {
+            // Query custom templates
+            Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
+                Predicate predicate = criteriaBuilder.conjunction();
+                if (StringUtils.isNotBlank(name)) {
+                    Predicate predicateName = criteriaBuilder.like(
+                            criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                    );
+                    predicate = criteriaBuilder.and(predicateName);
+                }
+                return predicate;
+            };
+            PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+            return noticeTemplateDao.findAll(specification, pageRequest);
+        }
+    }
+
+
+
+    @Override
+    public List<NoticeTemplate> getAllNoticeTemplates() {
         List<NoticeTemplate> defaultTemplates = new LinkedList<>(PRESET_TEMPLATE.values());
-        defaultTemplates.addAll(noticeTemplateDao.findAll(specification));
+        defaultTemplates.addAll(noticeTemplateDao.findAll());
         return defaultTemplates;
     }
 
     @Override
-    public List<NoticeRule> getNoticeRules(String name) {
+    public Page<NoticeRule> getNoticeRules(String name, int pageIndex, int pageSize) {
         Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (StringUtils.isNotBlank(name)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                Predicate predicateName = criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                );
                 predicate = criteriaBuilder.and(predicateName);
             }
             return predicate;
         };
-        return noticeRuleDao.findAll(specification);
+        return noticeRuleDao.findAll(specification, PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "id")));
     }
 
     @Override

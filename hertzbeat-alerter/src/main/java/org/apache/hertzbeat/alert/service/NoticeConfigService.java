@@ -23,6 +23,7 @@ import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.springframework.data.domain.Page;
 
 /**
  * Message notification configuration interface
@@ -32,23 +33,32 @@ public interface NoticeConfigService {
     /**
      * Dynamic conditional query
      * @param name Recipient name,support fuzzy query
+     * @param pageIndex Page number
+     * @param pageSize Number of records per page
      * @return Search result
      */
-    List<NoticeReceiver> getNoticeReceivers(String name);
+    Page<NoticeReceiver> getNoticeReceivers(String name, int pageIndex, int pageSize);
 
     /**
      * Dynamic conditional query
      * @param name Template name,support fuzzy query
+     * @param preset Whether it is a system preset template
+     *               true: System preset template
+     *               false: Custom template
+     * @param pageIndex Page number
+     * @param pageSize Number of records per page
      * @return Search result
      */
-    List<NoticeTemplate> getNoticeTemplates(String name);
+    Page<NoticeTemplate> getNoticeTemplates(String name, boolean preset, int pageIndex, int pageSize);
 
     /**
      * Dynamic conditional query
-     * @param name Recipient name
+     * @param name Recipient name ,support fuzzy query
+     * @param pageIndex Page number
+     * @param pageSize Number of records per page
      * @return Search result
      */
-    List<NoticeRule> getNoticeRules(String name);
+    Page<NoticeRule> getNoticeRules(String name, int pageIndex, int pageSize);
 
     /**
      * Add a notification recipient
@@ -154,4 +164,15 @@ public interface NoticeConfigService {
      */
     boolean sendTestMsg(NoticeReceiver noticeReceiver);
 
+    /**
+     * Query all notification recipients
+     * @return Recipient List
+     */
+    List<NoticeReceiver> getAllNoticeReceivers();
+
+    /**
+     * Query all notification policies
+     * @return Notification Policy List
+     */
+    List<NoticeTemplate> getAllNoticeTemplates();
 }

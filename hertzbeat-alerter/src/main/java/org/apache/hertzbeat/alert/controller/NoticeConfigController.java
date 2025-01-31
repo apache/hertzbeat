@@ -31,6 +31,7 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -82,9 +83,18 @@ public class NoticeConfigController {
     @GetMapping(path = "/receivers")
     @Operation(summary = "Get a list of message notification recipients based on query filter items",
             description = "Get a list of message notification recipients based on query filter items")
-    public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
-            @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name) {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name)));
+    public ResponseEntity<Message<Page<NoticeReceiver>>> getReceivers(
+            @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name,
+            @Parameter(description = "en: List current page", example = "0") @RequestParam(defaultValue = "0") final int pageIndex,
+            @Parameter(description = "en: Number of list pages", example = "8") @RequestParam(defaultValue = "8") final int pageSize) {
+        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name, pageIndex, pageSize)));
+    }
+
+    @GetMapping(path = "/receivers/all")
+    @Operation(summary = "Get a list of all message notification recipients",
+            description = "Get a list of all message notification recipients")
+    public ResponseEntity<Message<List<NoticeReceiver>>> getAllReceivers() {
+        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeReceivers()));
     }
 
     @GetMapping(path = "/receiver/{id}")
@@ -129,9 +139,11 @@ public class NoticeConfigController {
     @GetMapping(path = "/rules")
     @Operation(summary = "Get a list of message notification policies based on query filter items",
             description = "Get a list of message notification policies based on query filter items")
-    public ResponseEntity<Message<List<NoticeRule>>> getRules(
-            @Parameter(description = "en: Recipient name", example = "rule1") @RequestParam(required = false) final String name) {
-        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeRules(name)));
+    public ResponseEntity<Message<Page<NoticeRule>>> getRules(
+            @Parameter(description = "en: Recipient name", example = "rule1") @RequestParam(required = false) final String name,
+            @Parameter(description = "en: List current page", example = "0") @RequestParam(defaultValue = "0") final int pageIndex,
+            @Parameter(description = "en: Number of list pages", example = "8") @RequestParam(defaultValue = "8") final int pageSize) {
+        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeRules(name, pageIndex, pageSize)));
     }
 
     @GetMapping(path = "/rule/{id}")
@@ -176,10 +188,20 @@ public class NoticeConfigController {
     @GetMapping(path = "/templates")
     @Operation(summary = "Get a list of message notification templates based on query filter items",
             description = "Get a list of message notification templates based on query filter items")
-    public ResponseEntity<Message<List<NoticeTemplate>>> getTemplates(
-            @Parameter(description = "Template name,support fuzzy query", example = "rule1") @RequestParam(required = false) final String name) {
-        List<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(name);
+    public ResponseEntity<Message<Page<NoticeTemplate>>> getTemplates(
+            @Parameter(description = "Template name,support fuzzy query", example = "rule1") @RequestParam(required = false) final String name,
+            @Parameter(description = "Whether it is a preset template", example = "true") @RequestParam(defaultValue = "true") final boolean preset,
+            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") final int pageIndex,
+            @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") final int pageSize) {
+        Page<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(name, preset, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(templatePage));
+    }
+
+    @GetMapping(path = "/templates/all")
+    @Operation(summary = "Get a list of all message notification templates",
+            description = "Get a list of all message notification templates")
+    public ResponseEntity<Message<List<NoticeTemplate>>> getAllTemplates() {
+        return ResponseEntity.ok(Message.success(noticeConfigService.getAllNoticeTemplates()));
     }
 
     @GetMapping(path = "/template/{id}")

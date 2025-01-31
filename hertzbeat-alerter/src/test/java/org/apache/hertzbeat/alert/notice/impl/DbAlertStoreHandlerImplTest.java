@@ -27,7 +27,6 @@ import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,7 +38,6 @@ import java.util.List;
 /**
  * Test case for {@link DbAlertStoreHandlerImpl}
  */
-@Disabled
 @ExtendWith(MockitoExtension.class)
 class DbAlertStoreHandlerImplTest {
     

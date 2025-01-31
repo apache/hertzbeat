@@ -70,6 +70,7 @@
       [placeholder]="'alert.setting.search' | i18n"
       [(value)]="search"
       (keydown.enter)="onFilterChange()"
+      (cleared)="onFilterChange()"
     />
   </ng-template>
 </app-toolbar>
@@ -417,13 +418,13 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="define.type == 'periodic'" [ngStyle]="{ marginBottom: '5px' }">
-        <nz-form-label [nzSpan]="7" nzFor="promql" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
+        <nz-form-label [nzSpan]="7" nzFor="datasource" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <ng-container *ngIf="cascadeValues[1] !== 'availability'">
-            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" id="promql">
-              <label nz-radio-button [nzValue]="'periodic'">
+            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" name="datasource" id="datasource">
+              <label nz-radio-button [nzValue]="'promql'">
                 {{ 'PromQL' | i18n }}
               </label>
             </nz-radio-group>
@@ -476,6 +477,7 @@
             [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
             name="severity"
             id="severity"
+            required
           >
             <nz-option [nzValue]="'emergency'" [nzLabel]="'alert.severity.0' | i18n"></nz-option>
             <nz-option [nzValue]="'critical'" [nzLabel]="'alert.severity.1' | i18n"></nz-option>
@@ -498,7 +500,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
-            <div class="draggable-vars-container">
+            <div *ngIf="define.type === 'realtime'" class="draggable-vars-container">
               <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
                 <div class="key-value-block">
                   <span class="var-key">{{ env.name }}</span>
