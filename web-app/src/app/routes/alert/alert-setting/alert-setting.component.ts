@@ -200,7 +200,7 @@ export class AlertSettingComponent implements OnInit {
     this.tableLoading = true;
     const translationSearchList: string[] = [];
     let trimSearch = '';
-    if (this.search !== undefined && this.search.trim() !== '') {
+    if (this.search && this.search.trim() !== '') {
       trimSearch = this.search.trim();
     }
     // Filter entries based on search input
