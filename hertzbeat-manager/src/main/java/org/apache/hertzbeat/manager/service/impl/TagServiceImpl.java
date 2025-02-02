@@ -92,9 +92,9 @@ public class TagServiceImpl implements TagService {
 
             List<Predicate> orList = new ArrayList<>();
             if (StringUtils.isNotBlank(search)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
+                Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + search.toLowerCase() + "%");
                 orList.add(predicateName);
-                Predicate predicateValue = criteriaBuilder.like(root.get("tagValue"), "%" + search + "%");
+                Predicate predicateValue = criteriaBuilder.like(criteriaBuilder.lower(root.get("tagValue")), "%" + search.toLowerCase() + "%");
                 orList.add(predicateValue);
             }
             Predicate[] orPredicates = new Predicate[orList.size()];

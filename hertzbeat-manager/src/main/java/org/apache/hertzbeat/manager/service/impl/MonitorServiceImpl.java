@@ -566,7 +566,7 @@ public class MonitorServiceImpl implements MonitorService {
             List<Predicate> orList = new ArrayList<>();
             if (StringUtils.isNotBlank(search)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + search + "%");
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
+                Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + search.toLowerCase() + "%");
                 Predicate predicateId = criteriaBuilder.like(root.get("id"), "%" + search + "%");
                 orList.add(predicateHost);
                 orList.add(predicateName);
