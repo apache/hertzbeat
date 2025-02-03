@@ -23,11 +23,13 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
+import org.apache.hertzbeat.alert.config.AlertSseManager;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.plugin.PostAlertPlugin;
 import org.apache.hertzbeat.plugin.Plugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
@@ -45,16 +47,18 @@ public class AlertNoticeDispatch {
     private final AlertStoreHandler alertStoreHandler;
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
     private final PluginRunner pluginRunner;
+    private final AlertSseManager emitterManager;
 
     public AlertNoticeDispatch(AlerterWorkerPool workerPool,
                                NoticeConfigService noticeConfigService,
                                AlertStoreHandler alertStoreHandler,
-                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner) {
+                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner, AlertSseManager emitterManager) {
         this.workerPool = workerPool;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
         this.pluginRunner = pluginRunner;
         alertNotifyHandlerMap = Maps.newHashMapWithExpectedSize(alertNotifyHandlerList.size());
+        this.emitterManager = emitterManager;
         alertNotifyHandlerList.forEach(r -> alertNotifyHandlerMap.put(r.type(), r));
     }
 
@@ -111,6 +115,8 @@ public class AlertNoticeDispatch {
             pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(groupAlert));
             // Execute the plugin if enable with params
             pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(groupAlert, pluginContext));
+            // Send alarm information to the client
+            emitterManager.broadcast(JsonUtil.toJson(groupAlert));
         }
     }
 
