@@ -116,6 +116,7 @@ public class AlertNoticeDispatch {
             // Execute the plugin if enable with params
             pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(groupAlert, pluginContext));
             // Send alert to the sse client
+            log.info("AlertNoticeDispatch dispatchAlarm, stored: {}", groupAlert);
             emitterManager.broadcast(JsonUtil.toJson(groupAlert));
         }
     }
