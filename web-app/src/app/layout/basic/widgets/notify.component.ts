@@ -123,7 +123,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   private previousCount = 0;
   // default to mute status
   mute: Mute = { mute: true };
-  private eventSource: EventSource | undefined;
+  private eventSource!: EventSource;
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,

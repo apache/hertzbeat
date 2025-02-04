@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -25,13 +25,14 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 
 import { GroupAlert } from '../../../pojo/GroupAlert';
 import { AlertService } from '../../../service/alert.service';
+import {SingleAlert} from "../../../pojo/SingleAlert";
 
 @Component({
   selector: 'app-alert-center',
   templateUrl: './alert-center.component.html',
   styleUrl: './alert-center.component.less'
 })
-export class AlertCenterComponent implements OnInit {
+export class AlertCenterComponent implements OnInit, OnDestroy {
   constructor(
     private notifySvc: NzNotificationService,
     private modal: NzModalService,
@@ -47,13 +48,58 @@ export class AlertCenterComponent implements OnInit {
   checkedAlertIds = new Set<number>();
   filterStatus!: string;
   filterContent: string | undefined;
+  private eventSource!: EventSource;
 
   ngOnInit(): void {
     this.loadAlertsTable();
+    this.initSSESubscription();
   }
 
-  sync() {
-    this.loadAlertsTable();
+  ngOnDestroy(): void {
+    if (this.eventSource) {
+      this.eventSource.close();
+    }
+  }
+
+  // Initialize SSE subscription for real-time alerts
+  private initSSESubscription(): void {
+    this.eventSource = new EventSource('/api/alert/sse/subscribe');
+    this.eventSource.addEventListener('ALERT_EVENT', (evt: MessageEvent) => {
+      try {
+        const newAlert: GroupAlert = JSON.parse(evt.data);
+        console.log('Received new alert:', newAlert);
+        this.updateAlertList(newAlert);
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    });
+
+    // Handle SSE errors
+    this.eventSource.onerror = error => {
+      console.error('SSE connection error:', error);
+      this.eventSource.close();
+    };
+  }
+
+  // Update alerts list with new data from SSE
+  private updateAlertList(newAlert: GroupAlert): void {
+    if (!newAlert.alerts) {
+      newAlert.alerts = [];
+    }
+
+    // Check if alert group already exists
+    const existingIndex = this.groupAlerts.findIndex(a => a.id === newAlert.id);
+
+    if (existingIndex === -1) {
+      // Add new alert group to the top of the list
+      this.groupAlerts = [newAlert, ...this.groupAlerts];
+      this.total += 1;
+    } else {
+      // Update existing alert group
+      this.groupAlerts[existingIndex] = newAlert;
+      // Trigger change detection with array spread
+      this.groupAlerts = [...this.groupAlerts];
+    }
   }
 
   loadAlertsTable() {

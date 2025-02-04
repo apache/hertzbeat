@@ -29,10 +29,6 @@
 <app-toolbar>
   <ng-template #center>
     <div class="center-content">
-      <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-        <i nz-icon nzType="sync" nzTheme="outline"></i>
-      </button>
-
       <div class="search-wrapper">
         <nz-input-group [nzPrefix]="prefixTemplate" class="search-input">
           <input
