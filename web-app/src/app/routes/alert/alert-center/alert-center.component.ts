@@ -25,8 +25,10 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 
 import { GroupAlert } from '../../../pojo/GroupAlert';
 import { AlertService } from '../../../service/alert.service';
-import {SingleAlert} from "../../../pojo/SingleAlert";
 
+interface ExtendedGroupAlert extends GroupAlert {
+  isNew?: boolean;
+}
 @Component({
   selector: 'app-alert-center',
   templateUrl: './alert-center.component.html',
@@ -43,7 +45,7 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  groupAlerts!: GroupAlert[];
+  groupAlerts: ExtendedGroupAlert[] = [];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
   filterStatus!: string;
@@ -67,7 +69,6 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
     this.eventSource.addEventListener('ALERT_EVENT', (evt: MessageEvent) => {
       try {
         const newAlert: GroupAlert = JSON.parse(evt.data);
-        console.log('Received new alert:', newAlert);
         this.updateAlertList(newAlert);
       } catch (error) {
         console.error('Error parsing SSE data:', error);
@@ -81,25 +82,72 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
     };
   }
 
-  // Update alerts list with new data from SSE
   private updateAlertList(newAlert: GroupAlert): void {
-    if (!newAlert.alerts) {
-      newAlert.alerts = [];
+    const extendedAlert: ExtendedGroupAlert = {
+      ...newAlert,
+      isNew: true
+    };
+
+    if (!extendedAlert.alerts) {
+      extendedAlert.alerts = [];
     }
 
-    // Check if alert group already exists
-    const existingIndex = this.groupAlerts.findIndex(a => a.id === newAlert.id);
+    const matchesFilter = this.checkAlertMatchesFilter(extendedAlert);
+    if (!matchesFilter) {
+      return;
+    }
+
+    const existingIndex = this.groupAlerts.findIndex(a => a.id === extendedAlert.id);
 
     if (existingIndex === -1) {
-      // Add new alert group to the top of the list
-      this.groupAlerts = [newAlert, ...this.groupAlerts];
+      this.groupAlerts = [extendedAlert, ...this.groupAlerts];
       this.total += 1;
+
+      setTimeout(() => {
+        const index = this.groupAlerts.findIndex(a => a.id === extendedAlert.id);
+        if (index !== -1) {
+          this.groupAlerts[index].isNew = false;
+          // 触发变更检测
+          this.groupAlerts = [...this.groupAlerts];
+        }
+      }, 1000);
     } else {
-      // Update existing alert group
-      this.groupAlerts[existingIndex] = newAlert;
-      // Trigger change detection with array spread
+      this.groupAlerts[existingIndex] = {
+        ...extendedAlert,
+        isNew: true
+      };
+
+      setTimeout(() => {
+        if (this.groupAlerts[existingIndex]) {
+          this.groupAlerts[existingIndex].isNew = false;
+          this.groupAlerts = [...this.groupAlerts];
+        }
+      }, 1000);
+
       this.groupAlerts = [...this.groupAlerts];
     }
+  }
+
+  private checkAlertMatchesFilter(alert: ExtendedGroupAlert): boolean {
+    if (this.filterStatus && alert.status !== this.filterStatus) {
+      return false;
+    }
+
+    if (this.filterContent) {
+      const searchContent = this.filterContent.toLowerCase();
+
+      const hasMatchingContent = alert.alerts?.some(singleAlert => singleAlert.content?.toLowerCase().includes(searchContent));
+
+      const hasMatchingLabels = Object.entries(alert.groupLabels || {}).some(
+        ([key, value]) => key.toLowerCase().includes(searchContent) || value.toLowerCase().includes(searchContent)
+      );
+
+      if (!hasMatchingContent && !hasMatchingLabels) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   loadAlertsTable() {

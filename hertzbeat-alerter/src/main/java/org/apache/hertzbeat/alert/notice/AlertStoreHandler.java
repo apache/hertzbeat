@@ -30,6 +30,7 @@ public interface AlertStoreHandler {
      * to the alert tag information tags while persisting.
      *
      * @param alert alarm information
+     * @return groupAlert
      */
-    void store(GroupAlert alert);
+    GroupAlert store(GroupAlert alert);
 }

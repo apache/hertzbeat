@@ -108,30 +108,27 @@ public class AlertNoticeDispatch {
     public void dispatchAlarm(GroupAlert groupAlert) {
         if (groupAlert != null) {
             // Determining alarm type storage
-            alertStoreHandler.store(groupAlert);
+            GroupAlert storedGroupAlert = alertStoreHandler.store(groupAlert);
             // Notice distribution
-            sendNotify(groupAlert);
+            sendNotify(storedGroupAlert);
             // Execute the plugin if enable (Compatible with old version plugins, will be removed in later versions)
-            pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(groupAlert));
+            pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(storedGroupAlert));
             // Execute the plugin if enable with params
-            pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(groupAlert, pluginContext));
+            pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(storedGroupAlert, pluginContext));
             // Send alert to the sse client
-            log.info("AlertNoticeDispatch dispatchAlarm, stored: {}", groupAlert);
-            emitterManager.broadcast(JsonUtil.toJson(groupAlert));
+            emitterManager.broadcast(JsonUtil.toJson(storedGroupAlert));
         }
     }
 
     private void sendNotify(GroupAlert alert) {
-        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> {
-            workerPool.executeNotify(() -> rule.getReceiverId()
-                    .forEach(receiverId -> {
-                        try {
-                            sendNoticeMsg(getOneReceiverById(receiverId),
-                                    getOneTemplateById(rule.getTemplateId()), alert);
-                        } catch (AlertNoticeException e) {
-                            log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                        }
-                    }));
-        }));
+        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> workerPool.executeNotify(() -> rule.getReceiverId()
+                .forEach(receiverId -> {
+                    try {
+                        sendNoticeMsg(getOneReceiverById(receiverId),
+                                getOneTemplateById(rule.getTemplateId()), alert);
+                    } catch (AlertNoticeException e) {
+                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                    }
+                }))));
     }
 }
