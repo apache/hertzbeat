@@ -174,6 +174,7 @@
         <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
         <arrow.version>18.1.0</arrow.version>
         <snappy-java.version>1.1.10.7</snappy-java.version>
+        <sshd-sftp.version>2.13.1</sshd-sftp.version>
     </properties>
 
     <dependencyManagement>
@@ -474,11 +475,10 @@
                 <artifactId>arrow-memory-netty</artifactId>
                 <version>${arrow.version}</version>
             </dependency>
-            <!-- sftp-->
             <dependency>
-                <groupId>com.jcraft</groupId>
-                <artifactId>jsch</artifactId>
-                <version>0.1.55</version>
+                <groupId>org.apache.sshd</groupId>
+                <artifactId>sshd-sftp</artifactId>
+                <version>${sshd-sftp.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

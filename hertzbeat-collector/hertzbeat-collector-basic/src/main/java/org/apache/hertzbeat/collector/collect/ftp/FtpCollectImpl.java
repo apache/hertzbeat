@@ -17,15 +17,11 @@
 
 package org.apache.hertzbeat.collector.collect.ftp;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -35,6 +31,10 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.sftp.client.SftpClient;
+import org.apache.sshd.sftp.client.SftpClientFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -101,38 +101,19 @@ public class FtpCollectImpl extends AbstractCollect {
         };
     }
 
-    private Map<String, String> collectValue(JSch jsch, FtpProtocol ftpProtocol) {
+    private Map<String, String> collectValue(ClientSession session, FtpProtocol ftpProtocol) {
         boolean isActive;
         String responseTime;
-        ChannelSftp sftpChannel = null;
-        Session session = null;
-        try {
+        try (SftpClient sftpClient = SftpClientFactory.instance().createSftpClient(session)) {
             long startTime = System.currentTimeMillis();
-            session = login(jsch, ftpProtocol);
-            Channel channel = session.openChannel("sftp");
-            channel.connect();
-            sftpChannel = (ChannelSftp) channel;
-            sftpChannel.cd(ftpProtocol.getDirection());
+            sftpClient.stat(ftpProtocol.getDirection());
             isActive = true;
             long endTime = System.currentTimeMillis();
             responseTime = String.valueOf(endTime - startTime);
         } catch (Exception e) {
-            log.info("[SFTPClient] error: {}", CommonUtil.getMessageFromThrowable(e), e);
-            throw new IllegalArgumentException(e.getMessage());
-        } finally {
-            if (sftpChannel != null && sftpChannel.isConnected()) {
-                sftpChannel.disconnect();
-            }
-            if (session != null && session.isConnected()) {
-                session.disconnect();
-            }
+            throw new IllegalArgumentException("[SFTPClient] error: " + e.getMessage(), e);
         }
-        return new HashMap<>(8) {
-            {
-                put("isActive", Boolean.toString(isActive));
-                put("responseTime", responseTime);
-            }
-        };
+        return Map.of("isActive", Boolean.toString(isActive), "responseTime", responseTime);
     }
 
 
@@ -159,30 +140,6 @@ public class FtpCollectImpl extends AbstractCollect {
     }
 
     /**
-     * sftp login
-     */
-    private Session login(JSch jsch, FtpProtocol ftpProtocol) {
-        Session session;
-        try {
-            if (StringUtils.hasText(ftpProtocol.getUsername()) && StringUtils.hasText(ftpProtocol.getPassword())) {
-                session = jsch.getSession(ftpProtocol.getUsername(), ftpProtocol.getHost(), Integer.parseInt(ftpProtocol.getPort()));
-                session.setPassword(ftpProtocol.getPassword());
-            } else {
-                throw new IllegalArgumentException("The Username and password cannot empty.");
-            }
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-            session.connect(Integer.parseInt(ftpProtocol.getTimeout()));
-        } catch (Exception e) {
-            log.info("[SFTP Login] error: {}", CommonUtil.getMessageFromThrowable(e), e);
-            throw new IllegalArgumentException(e.getMessage());
-        }
-        return session;
-    }
-
-
-    /**
      * connect
      */
     private void connect(FTPClient ftpClient, FtpProtocol ftpProtocol) {
@@ -191,6 +148,21 @@ public class FtpCollectImpl extends AbstractCollect {
         } catch (Exception e) {
             log.info("[ftp connection] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException("The host or port may be wrong.");
+        }
+    }
+
+    private ClientSession createSession(FtpProtocol ftpProtocol) {
+        SshClient client = SshClient.setUpDefaultClient();
+        client.start();
+        try {
+            ClientSession session = client.connect(ftpProtocol.getUsername(), ftpProtocol.getHost(), Integer.parseInt(ftpProtocol.getPort()))
+                    .verify(Integer.parseInt(ftpProtocol.getTimeout()))
+                    .getSession();
+            session.addPasswordIdentity(ftpProtocol.getPassword());
+            session.auth().verify(Integer.parseInt(ftpProtocol.getTimeout()));
+            return session;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("[SFTP Login] error: " + e.getMessage(), e);
         }
     }
 
@@ -228,27 +200,31 @@ public class FtpCollectImpl extends AbstractCollect {
     }
 
     private void handleSftpCollect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
-        JSch jsch = new JSch();
         FtpProtocol ftpProtocol = metrics.getFtp();
-
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        Map<String, String> valueMap;
+        ClientSession session = null;
         try {
-            valueMap = collectValue(jsch, ftpProtocol);
-            metrics.getAliasFields().forEach(it -> {
-                if (valueMap.containsKey(it)) {
-                    String fieldValue = valueMap.get(it);
-                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
-                } else {
-                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                }
-            });
+            session = createSession(ftpProtocol);
+            Map<String, String> valueMap = collectValue(session, ftpProtocol);
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            metrics.getAliasFields().forEach(it ->
+                    valueRowBuilder.addColumn(valueMap.getOrDefault(it, CommonConstants.NULL_VALUE))
+            );
+            builder.addValueRow(valueRowBuilder.build());
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(e.getMessage());
-            return;
+        } finally {
+            if (session != null && session.isOpen()) {
+                try {
+                    session.close();
+                } catch (IOException e) {
+                    log.warn("[SFTP] Failed to close session: {}", e.getMessage(), e);
+                }
+            }
         }
-        builder.addValueRow(valueRowBuilder.build());
     }
+
+
+
 
 }
