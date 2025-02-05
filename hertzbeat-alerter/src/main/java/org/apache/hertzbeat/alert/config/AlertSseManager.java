@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * SSE manager for alert
+ */
 @Component
 public class AlertSseManager {
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
