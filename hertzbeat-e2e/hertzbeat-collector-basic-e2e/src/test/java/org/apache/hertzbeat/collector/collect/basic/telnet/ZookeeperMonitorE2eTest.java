@@ -79,6 +79,7 @@ public class ZookeeperMonitorE2eTest extends AbstractCollectE2eTest {
                                     .withStartupTimeout(Duration.ofSeconds(60))
                     )
                     .withLogConsumer(outputFrame -> {
+                        System.out.println(outputFrame.getUtf8String());
                         log.info(outputFrame.getUtf8String());
                     });
 
