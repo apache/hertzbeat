@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -26,12 +26,15 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { GroupAlert } from '../../../pojo/GroupAlert';
 import { AlertService } from '../../../service/alert.service';
 
+interface ExtendedGroupAlert extends GroupAlert {
+  isNew?: boolean;
+}
 @Component({
   selector: 'app-alert-center',
   templateUrl: './alert-center.component.html',
   styleUrl: './alert-center.component.less'
 })
-export class AlertCenterComponent implements OnInit {
+export class AlertCenterComponent implements OnInit, OnDestroy {
   constructor(
     private notifySvc: NzNotificationService,
     private modal: NzModalService,
@@ -42,18 +45,109 @@ export class AlertCenterComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  groupAlerts!: GroupAlert[];
+  groupAlerts: ExtendedGroupAlert[] = [];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
   filterStatus!: string;
   filterContent: string | undefined;
+  private eventSource!: EventSource;
 
   ngOnInit(): void {
     this.loadAlertsTable();
+    this.initSSESubscription();
   }
 
-  sync() {
-    this.loadAlertsTable();
+  ngOnDestroy(): void {
+    if (this.eventSource) {
+      this.eventSource.close();
+    }
+  }
+
+  // Initialize SSE subscription for real-time alerts
+  private initSSESubscription(): void {
+    this.eventSource = new EventSource('/api/alert/sse/subscribe');
+    this.eventSource.addEventListener('ALERT_EVENT', (evt: MessageEvent) => {
+      try {
+        const newAlert: GroupAlert = JSON.parse(evt.data);
+        this.updateAlertList(newAlert);
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    });
+
+    // Handle SSE errors
+    this.eventSource.onerror = error => {
+      console.error('SSE connection error:', error);
+      this.eventSource.close();
+    };
+  }
+
+  private updateAlertList(newAlert: GroupAlert): void {
+    const extendedAlert: ExtendedGroupAlert = {
+      ...newAlert,
+      isNew: true
+    };
+
+    if (!extendedAlert.alerts) {
+      extendedAlert.alerts = [];
+    }
+
+    const matchesFilter = this.checkAlertMatchesFilter(extendedAlert);
+    if (!matchesFilter) {
+      return;
+    }
+
+    const existingIndex = this.groupAlerts.findIndex(a => a.id === extendedAlert.id);
+
+    if (existingIndex === -1) {
+      this.groupAlerts = [extendedAlert, ...this.groupAlerts];
+      this.total += 1;
+
+      setTimeout(() => {
+        const index = this.groupAlerts.findIndex(a => a.id === extendedAlert.id);
+        if (index !== -1) {
+          this.groupAlerts[index].isNew = false;
+          // 触发变更检测
+          this.groupAlerts = [...this.groupAlerts];
+        }
+      }, 1000);
+    } else {
+      this.groupAlerts[existingIndex] = {
+        ...extendedAlert,
+        isNew: true
+      };
+
+      setTimeout(() => {
+        if (this.groupAlerts[existingIndex]) {
+          this.groupAlerts[existingIndex].isNew = false;
+          this.groupAlerts = [...this.groupAlerts];
+        }
+      }, 1000);
+
+      this.groupAlerts = [...this.groupAlerts];
+    }
+  }
+
+  private checkAlertMatchesFilter(alert: ExtendedGroupAlert): boolean {
+    if (this.filterStatus && alert.status !== this.filterStatus) {
+      return false;
+    }
+
+    if (this.filterContent) {
+      const searchContent = this.filterContent.toLowerCase();
+
+      const hasMatchingContent = alert.alerts?.some(singleAlert => singleAlert.content?.toLowerCase().includes(searchContent));
+
+      const hasMatchingLabels = Object.entries(alert.groupLabels || {}).some(
+        ([key, value]) => key.toLowerCase().includes(searchContent) || value.toLowerCase().includes(searchContent)
+      );
+
+      if (!hasMatchingContent && !hasMatchingLabels) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   loadAlertsTable() {
