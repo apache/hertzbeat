@@ -207,7 +207,6 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
               let item = {
                 id: alert.id,
                 avatar: '/assets/img/notification.svg',
-                // title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.severity.${alert.severity}`)}`,
                 title: alert.content,
                 datetime: new Date(alert.activeAt).toLocaleString(),
                 color: 'blue',
