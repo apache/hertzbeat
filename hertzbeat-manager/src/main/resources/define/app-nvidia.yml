@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-category: server
+category: llm
 # The monitoring type eg: linux windows tomcat mysql aws...
 app: nvidia
 # The monitoring i18n name
