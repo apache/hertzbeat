@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,44 +47,53 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
     private final SingleAlertDao singleAlertDao;
 
     @Override
-    public void store(GroupAlert groupAlert) {
+    public GroupAlert store(GroupAlert groupAlert) {
         if (groupAlert == null || groupAlert.getAlerts() == null || groupAlert.getAlerts().isEmpty()) {
             log.error("The Group Alerts is empty, ignore store");
-            return;
+            return groupAlert;
         }
         // 1. Find existing alert group
         GroupAlert existGroupAlert = groupAlertDao.findByGroupKey(groupAlert.getGroupKey());
         
         // 2. Process individual alerts
         Set<String> alertFingerprints = new HashSet<>(8);
-        groupAlert.getAlerts().forEach(singleAlert -> {
+
+        List<SingleAlert> originalAlerts = groupAlert.getAlerts();
+        List<SingleAlert> newAlerts = new ArrayList<>();
+
+
+        for (SingleAlert singleAlert : originalAlerts) {
             SingleAlert existAlert = singleAlertDao.findByFingerprint(singleAlert.getFingerprint());
+
             if (existAlert != null) {
-                // Update existing alert
+                // Update the existing alert with the ID and creation time from the database
                 singleAlert.setId(existAlert.getId());
                 singleAlert.setGmtCreate(existAlert.getGmtCreate());
-                
+
                 // Status transition logic
                 if (CommonConstants.ALERT_STATUS_FIRING.equals(singleAlert.getStatus())) {
+                    // If the alert is firing and the existing alert is not resolved, update the start time and trigger times
                     if (!CommonConstants.ALERT_STATUS_RESOLVED.equals(existAlert.getStatus())) {
                         singleAlert.setStartAt(existAlert.getStartAt());
-                        int triggerTimes = Optional.ofNullable(existAlert.getTriggerTimes()).orElse(1) + Optional.ofNullable(singleAlert.getTriggerTimes()).orElse(1);
+                        int triggerTimes = Optional.ofNullable(existAlert.getTriggerTimes()).orElse(1)
+                                + Optional.ofNullable(singleAlert.getTriggerTimes()).orElse(1);
                         singleAlert.setTriggerTimes(triggerTimes);
-                    } 
+                    }
                 } else if (CommonConstants.ALERT_STATUS_RESOLVED.equals(singleAlert.getStatus())) {
-                    // Transition to resolved state
+                    // If the alert is resolved, set the end time (if not already set) and copy other fields from the existing alert
                     if (singleAlert.getEndAt() == null) {
-                        singleAlert.setEndAt(System.currentTimeMillis());   
+                        singleAlert.setEndAt(System.currentTimeMillis());
                     }
                     singleAlert.setStartAt(existAlert.getStartAt());
                     singleAlert.setActiveAt(existAlert.getActiveAt());
                     singleAlert.setTriggerTimes(existAlert.getTriggerTimes());
                 }
             }
-            alertFingerprints.add(singleAlert.getFingerprint());
-            singleAlertDao.save(singleAlert);
-        });
-        
+            SingleAlert savedSingleAlert = singleAlertDao.save(singleAlert);
+            newAlerts.add(savedSingleAlert);
+            alertFingerprints.add(savedSingleAlert.getFingerprint());
+        }
+        groupAlert.setAlerts(newAlerts);
         // 3. Process resolved alerts
         if (existGroupAlert != null) {
             List<String> existFingerprints = existGroupAlert.getAlertFingerprints();
@@ -120,6 +130,8 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
         
         // 4. Save alert group
         groupAlert.setAlertFingerprints(alertFingerprints.stream().toList());
-        groupAlertDao.save(groupAlert);
+        GroupAlert savedGroupAlert = groupAlertDao.save(groupAlert);
+        savedGroupAlert.setAlerts(groupAlert.getAlerts());
+        return savedGroupAlert;
     }
 }

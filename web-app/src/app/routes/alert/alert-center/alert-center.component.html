@@ -29,10 +29,6 @@
 <app-toolbar>
   <ng-template #center>
     <div class="center-content">
-      <button nz-button (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-        <i nz-icon nzType="sync" nzTheme="outline"></i>
-      </button>
-
       <div class="search-wrapper">
         <nz-input-group [nzPrefix]="prefixTemplate" class="search-input">
           <input
@@ -63,7 +59,13 @@
 </app-toolbar>
 
 <div class="alert-cards">
-  <nz-card *ngFor="let group of groupAlerts" class="alert-card" [class]="'status-' + group.status" [nzBordered]="false">
+  <nz-card
+    *ngFor="let group of groupAlerts"
+    class="alert-card"
+    [class.new-alert]="group.isNew"
+    [class]="'status-' + group.status"
+    [nzBordered]="false"
+  >
     <!-- Alert Group Header -->
     <div class="alert-header">
       <div class="alert-info">

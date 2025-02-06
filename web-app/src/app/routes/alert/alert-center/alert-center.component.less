@@ -1,4 +1,3 @@
-/* 调整工具栏布局 */
 :host ::ng-deep app-toolbar {
   .center-content {
     display: flex;
@@ -280,5 +279,25 @@
 
   &.status-pending {
     border-left-color: #faad14;
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.alert-card {
+  position: relative;
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+
+  &.new-alert {
+    animation: slideInFromRight 0.5s ease-out forwards;
   }
 }
