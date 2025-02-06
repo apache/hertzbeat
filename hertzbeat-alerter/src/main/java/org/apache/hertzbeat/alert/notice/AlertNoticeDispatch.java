@@ -23,11 +23,13 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
+import org.apache.hertzbeat.alert.config.AlertSseManager;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.plugin.PostAlertPlugin;
 import org.apache.hertzbeat.plugin.Plugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
@@ -45,16 +47,18 @@ public class AlertNoticeDispatch {
     private final AlertStoreHandler alertStoreHandler;
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
     private final PluginRunner pluginRunner;
+    private final AlertSseManager emitterManager;
 
     public AlertNoticeDispatch(AlerterWorkerPool workerPool,
                                NoticeConfigService noticeConfigService,
                                AlertStoreHandler alertStoreHandler,
-                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner) {
+                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner, AlertSseManager emitterManager) {
         this.workerPool = workerPool;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
         this.pluginRunner = pluginRunner;
         alertNotifyHandlerMap = Maps.newHashMapWithExpectedSize(alertNotifyHandlerList.size());
+        this.emitterManager = emitterManager;
         alertNotifyHandlerList.forEach(r -> alertNotifyHandlerMap.put(r.type(), r));
     }
 
@@ -104,27 +108,27 @@ public class AlertNoticeDispatch {
     public void dispatchAlarm(GroupAlert groupAlert) {
         if (groupAlert != null) {
             // Determining alarm type storage
-            alertStoreHandler.store(groupAlert);
+            GroupAlert storedGroupAlert = alertStoreHandler.store(groupAlert);
             // Notice distribution
-            sendNotify(groupAlert);
+            sendNotify(storedGroupAlert);
             // Execute the plugin if enable (Compatible with old version plugins, will be removed in later versions)
-            pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(groupAlert));
+            pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(storedGroupAlert));
             // Execute the plugin if enable with params
-            pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(groupAlert, pluginContext));
+            pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(storedGroupAlert, pluginContext));
+            // Send alert to the sse client
+            emitterManager.broadcast(JsonUtil.toJson(storedGroupAlert));
         }
     }
 
     private void sendNotify(GroupAlert alert) {
-        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> {
-            workerPool.executeNotify(() -> rule.getReceiverId()
-                    .forEach(receiverId -> {
-                        try {
-                            sendNoticeMsg(getOneReceiverById(receiverId),
-                                    getOneTemplateById(rule.getTemplateId()), alert);
-                        } catch (AlertNoticeException e) {
-                            log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                        }
-                    }));
-        }));
+        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> workerPool.executeNotify(() -> rule.getReceiverId()
+                .forEach(receiverId -> {
+                    try {
+                        sendNoticeMsg(getOneReceiverById(receiverId),
+                                getOneTemplateById(rule.getTemplateId()), alert);
+                    } catch (AlertNoticeException e) {
+                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                    }
+                }))));
     }
 }

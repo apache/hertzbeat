@@ -73,27 +73,34 @@ class DbAlertStoreHandlerImplTest {
     public void testStoreNewAlert() {
         String groupKey = "test-group";
         groupAlert.setGroupKey(groupKey);
-        
+
         when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(null);
-        
+
+        SingleAlert savedSingleAlert = new SingleAlert();
+        when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(savedSingleAlert);
+
+        GroupAlert savedGroupAlert = new GroupAlert();
+        when(groupAlertDao.save(any(GroupAlert.class))).thenReturn(savedGroupAlert);
+
         dbAlertStoreHandler.store(groupAlert);
-        
+
         verify(singleAlertDao).save(any(SingleAlert.class));
         verify(groupAlertDao).save(groupAlert);
     }
+
 
     @Test
     public void testStoreExistingAlert() {
         String groupKey = "test-group";
         String fingerprint = "test-fingerprint";
-        
+
         groupAlert.setGroupKey(groupKey);
         singleAlert.setFingerprint(fingerprint);
-        
+
         GroupAlert existingGroup = new GroupAlert();
         existingGroup.setId(1L);
         when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(existingGroup);
-        
+
         SingleAlert existingAlert = new SingleAlert();
         existingAlert.setId(1L);
         existingAlert.setStatus("firing");
@@ -101,11 +108,15 @@ class DbAlertStoreHandlerImplTest {
         existingAlert.setActiveAt(2000L);
         existingAlert.setTriggerTimes(1);
         when(singleAlertDao.findByFingerprint(fingerprint)).thenReturn(existingAlert);
-        
+
+        when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(existingAlert);
+        when(groupAlertDao.save(any(GroupAlert.class))).thenReturn(existingGroup);
+
         dbAlertStoreHandler.store(groupAlert);
-        
+
         verify(singleAlertDao).save(any(SingleAlert.class));
         verify(groupAlertDao).save(groupAlert);
         assertEquals(1L, groupAlert.getId());
     }
+
 }
