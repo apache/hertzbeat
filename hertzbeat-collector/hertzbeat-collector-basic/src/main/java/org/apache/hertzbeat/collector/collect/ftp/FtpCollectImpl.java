@@ -65,9 +65,9 @@ public class FtpCollectImpl extends AbstractCollect {
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         boolean ssl = Boolean.parseBoolean(metrics.getFtp().getSsl());
-        if(ssl){
+        if (ssl){
             handleSftpCollect(builder, metrics);
-        }else{
+        } else {
             handleFtpCollect(builder, metrics);
         }
     }
@@ -214,17 +214,17 @@ public class FtpCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(e.getMessage());
         } finally {
-            try{
-                if(sftpClient != null && sftpClient.isOpen()){
+            try {
+                if (sftpClient != null && sftpClient.isOpen()){
                     sftpClient.close();
                 }
-                if(session != null && session.isOpen()){
+                if (session != null && session.isOpen()){
                     session.close();
                 }
-                if(client != null && client.isOpen()){
+                if (client != null && client.isOpen()){
                     client.close();
                 }
-            }catch (Exception e){
+            } catch (Exception e){
                 log.error("[SFTPClient] error while closing: {}",  CommonUtil.getMessageFromThrowable(e), e);
             }
         }
