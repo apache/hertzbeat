@@ -12,8 +12,8 @@ import { catchError, map } from 'rxjs/operators';
 import { ICONS } from '../../../style-icons';
 import { ICONS_AUTO } from '../../../style-icons-auto';
 import { MemoryStorageService } from '../../service/memory-storage.service';
+import { ThemeService } from '../../service/theme.service';
 import { I18NService } from '../i18n/i18n.service';
-import {ThemeService} from "../../service/theme.service";
 
 @Injectable({
   providedIn: 'root'
