@@ -94,6 +94,7 @@ public class ZookeeperMonitorE2eTest extends AbstractCollectE2eTest {
             log.error("Failed to start Zookeeper container", e);
             throw e;
         }
+        Thread.sleep(30000);
     }
 
     @Override
