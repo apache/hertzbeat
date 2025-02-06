@@ -238,4 +238,8 @@ public class DataSourceServiceImpl implements DataSourceService {
                 return null;
         }
     }
+
+    public void setExecutors(List<QueryExecutor> mockExecutor) {
+        this.executors = mockExecutor;
+    }
 } 
