@@ -28,7 +28,9 @@ public interface AlertStoreHandler {
      * Persistent alarm records
      * It is necessary to associate and assign values
      * to the alert tag information tags while persisting.
+     *
      * @param alert alarm information
+     * @return groupAlert
      */
-    void store(GroupAlert alert);
+    GroupAlert store(GroupAlert alert);
 }
