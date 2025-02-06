@@ -1,6 +1,7 @@
 package org.apache.hertzbeat.alert.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.HashMap;
 import org.apache.hertzbeat.alert.service.impl.DataSourceServiceImpl;
@@ -216,9 +217,8 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 and node_cpu_seconds_total{mode=\"idle\"} < 120");
-        assertEquals(2, result.size());
+        assertEquals(1, result.size());
         assertEquals(100.0, result.get(0).get("__value__"));
-        assertNull(result.get(1).get("__value__"));
     }
 
     @Test
@@ -234,8 +234,278 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "(node_cpu_seconds_total{mode=\"user\"} > 50) and (node_cpu_seconds_total{mode=\"idle\"} < 120)");
-        assertEquals(2, result.size());
+        assertEquals(1, result.size());
         assertEquals(100.0, result.get(0).get("__value__"));
-        assertNull(result.get(1).get("__value__"));
+    }
+
+    @Test
+    void calculate13() {
+        List<Map<String, Object>> prometheusData = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute(Mockito.anyString())).thenReturn(prometheusData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 150 and node_cpu_seconds_total{mode=\"idle\"} < 220");
+        assertEquals(1, result.size());
+        assertEquals(200.0, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate14() {
+        List<Map<String, Object>> prometheusData = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute(Mockito.anyString())).thenReturn(prometheusData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "(node_cpu_seconds_total{mode=\"user\"} > 150) and (node_cpu_seconds_total{mode=\"idle\"} < 220)");
+        assertEquals(1, result.size());
+        assertEquals(200.0, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate15() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 and node_cpu_seconds_total{mode=\"idle\"} < 220");
+        assertEquals(1, result.size());
+        assertNull(result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate16() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 and node_cpu_seconds_total{mode=\"idle\"} < 20");
+        assertEquals(1, result.size());
+        assertNull(result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate17() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 150 or node_cpu_seconds_total{mode=\"idle\"} < 20");
+        assertEquals(1, result.size());
+        assertEquals(200.0, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate18() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 or node_cpu_seconds_total{mode=\"idle\"} < 120");
+        assertEquals(1, result.size());
+        assertEquals(100.0, result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate19() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 or node_cpu_seconds_total{mode=\"idle\"} < 20");
+        assertEquals(1, result.size());
+        assertNull(result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate20() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "key", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "book", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 or node_cpu_seconds_total{mode=\"idle\"} < 320");
+        assertEquals(1, result.size());
+        assertNotNull(result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate21() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "key", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "book", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 unless node_cpu_seconds_total{mode=\"idle\"} < 320");
+        assertEquals(1, result.size());
+        assertNull(result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate22() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "key", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "book", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 unless node_cpu_seconds_total{mode=\"idle\"} < 20");
+        assertEquals(1, result.size());
+        assertNotNull(result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate23() {
+        List<Map<String, Object>> prometheusData1 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        List<Map<String, Object>> prometheusData2 = List.of(
+                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "key", "node1")),
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "book", "node2"))
+        );
+
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 unless node_cpu_seconds_total{mode=\"idle\"} < 20");
+        assertEquals(1, result.size());
+        assertNull(result.get(0).get("__value__"));
+    }
+
+    @Test
+    void calculate24() {
+        List<Map<String, Object>> prometheusData = List.of();
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute(Mockito.anyString())).thenReturn(prometheusData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total > 150");
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void calculate25() {
+        List<Map<String, Object>> prometheusData = List.of();
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute(Mockito.anyString())).thenReturn(prometheusData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 unless node_cpu_seconds_total{mode=\"idle\"} < 20");
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void calculate26() {
+        List<Map<String, Object>> prometheusData = List.of(
+                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+        );
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        Mockito.when(mockExecutor.support("promql")).thenReturn(true);
+        Mockito.when(mockExecutor.execute(Mockito.anyString())).thenReturn(prometheusData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total > 150");
+        assertEquals(1, result.size());
+        assertEquals(200.0, result.get(0).get("__value__"));
     }
 }

@@ -18,11 +18,8 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Set;
 import java.util.Stack;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
@@ -46,7 +43,7 @@ public class DataSourceServiceImpl implements DataSourceService {
     @Autowired(required = false)
     private List<QueryExecutor> executors;
     
-    private static final Pattern EXPR_TOKEN = Pattern.compile("\\(|\\)|[a-zA-Z_][a-zA-Z0-9_{}\\[\\]\".]*|\\d+(\\.\\d+)?|>=|<=|==|!=|>|<|and|or|unless");
+    private static final Pattern EXPR_TOKEN = Pattern.compile("\\(|\\)|[a-zA-Z_][a-zA-Z0-9_=～{}\\[\\]\".]*|\\d+(\\.\\d+)?|>=|<=|==|!=|>|<|and|or|unless");
     private static final String THRESHOLD = "__threshold__";
     private static final String VALUE = "__value__";
     
@@ -63,7 +60,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             throw new IllegalArgumentException("Unsupported datasource: " + datasource);
         }
         // replace all white space
-        expr = expr.replaceAll("\\s+", "");
+        expr = expr.replaceAll("\\s+", " ");
         try {
             return evaluate(expr, executor);
         } catch (Exception e) {
@@ -89,14 +86,6 @@ public class DataSourceServiceImpl implements DataSourceService {
                 }
                 // remove the left parenthesis
                 operators.pop();
-            }  else if (token.matches("\\d+(\\.\\d+)?")) { 
-                double value = Double.parseDouble(token);
-                List<Map<String, Object>> numAsList = new ArrayList<>();
-                numAsList.add(Map.of(THRESHOLD, value));
-                values.push(numAsList);
-            } else if (token.matches("[a-zA-Z_][a-zA-Z0-9_{}\\[\\]\".]*")) {
-                List<Map<String, Object>> results = executor.execute(token);
-                values.push(results);
             } else if (token.matches(">=|<=|==|!=|>|<")) {
                 operators.push(token);
             } else if (token.equals("and") || token.equals("or") || token.equals("unless")) {
@@ -104,6 +93,14 @@ public class DataSourceServiceImpl implements DataSourceService {
                     applyOperator(values, operators.pop());
                 }
                 operators.push(token);
+            } else if (token.matches("\\d+(\\.\\d+)?")) { 
+                double value = Double.parseDouble(token);
+                List<Map<String, Object>> numAsList = new ArrayList<>();
+                numAsList.add(Map.of(THRESHOLD, value));
+                values.push(numAsList);
+            } else if (token.matches("[a-zA-Z_][a-zA-Z0-9_=～{}\\[\\]\".]*")) {
+                List<Map<String, Object>> results = executor.execute(token);
+                values.push(results);
             }
         }
         while (!operators.isEmpty()) {
@@ -114,15 +111,18 @@ public class DataSourceServiceImpl implements DataSourceService {
 
     private int precedence(String op) {
         return switch (op) {
-            case "or", "unless" -> 1;
-            case "and" -> 2;
-            case ">", "<", ">=", "<=", "==", "!=" -> 3;
+            case "or" -> 1;
+            case "unless" -> 2;
+            case "and" -> 3;
+            case ">", "<", ">=", "<=", "==", "!=" -> 4;
             default -> 0;
         };
     }
 
     private void applyOperator(Stack<List<Map<String, Object>>> values, String op) {
-        if (values.size() < 2) return;
+        if (values.size() < 2) {
+            return;
+        };
         List<Map<String, Object>> rightOperand = values.pop();
         List<Map<String, Object>> leftOperand = values.pop();
         if (rightOperand.size() == 1 && rightOperand.get(0).containsKey(THRESHOLD)) {
@@ -146,15 +146,117 @@ public class DataSourceServiceImpl implements DataSourceService {
             }
             return;
         }
-        
+        Map<String, Object> leftMap = null;
+        boolean leftMatch = false;
+        Map<String, Object> rightMap = null;
+        boolean rightMatch = false;
         switch (op) {
-            case "and" -> values.push(leftOperand.stream().filter(rightOperand::contains).collect(Collectors.toList()));
-            case "or" -> {
-                Set<Map<String, Object>> resultSet = new HashSet<>(leftOperand);
-                resultSet.addAll(rightOperand);
-                values.push(new ArrayList<>(resultSet));
+            case "and" -> {
+                for (Map<String, Object> item : leftOperand) {
+                    if (leftMap == null) {
+                        leftMap = item;
+                    }
+                    if (item.get(VALUE) != null) {
+                        leftMap = item;
+                        leftMatch = true;
+                        break;
+                    }
+                }
+                for (Map<String, Object> item : rightOperand) {
+                    if (rightMap == null) {
+                        rightMap = item;
+                    }
+                    if (item.get(VALUE) != null) {
+                        rightMap = item;
+                        rightMatch = true;
+                        break;
+                    }
+                }
+                if (leftMatch && rightMatch) {
+                    rightMap.putAll(leftMap);
+                    values.push(new LinkedList<>(List.of(rightMap)));
+                } else if (leftMap != null) {
+                    leftMap.put(VALUE, null);
+                    values.push(new LinkedList<>(List.of(leftMap)));
+                } else if (rightMap != null) {
+                    rightMap.put(VALUE, null);
+                    values.push(new LinkedList<>(List.of(rightMap)));
+                } 
             }
-            case "unless" -> values.push(leftOperand.stream().filter(item -> !rightOperand.contains(item)).collect(Collectors.toList()));
+            case "or" -> {
+                for (Map<String, Object> item : leftOperand) {
+                    if (leftMap == null) {
+                        leftMap = item;
+                    }
+                    if (item.get(VALUE) != null) {
+                        leftMap = item;
+                        leftMatch = true;
+                        break;
+                    }
+                }
+                for (Map<String, Object> item : rightOperand) {
+                    if (rightMap == null) {
+                        rightMap = item;
+                    }
+                    if (item.get(VALUE) != null) {
+                        rightMap = item;
+                        rightMatch = true;
+                        break;
+                    }
+                }
+                if (leftMatch && rightMatch) {
+                    rightMap.putAll(leftMap);
+                    values.push(new LinkedList<>(List.of(rightMap)));
+                } else if (leftMatch) {
+                    values.push(new LinkedList<>(List.of(leftMap)));
+                } else if (rightMatch) {
+                    values.push(new LinkedList<>(List.of(rightMap)));
+                } else {
+                    if (leftMap != null && rightMap != null) {
+                        rightMap.putAll(leftMap);
+                        values.push(new LinkedList<>(List.of(rightMap)));
+                    } else if (leftMap != null) {
+                        values.push(new LinkedList<>(List.of(leftMap)));
+                    } else if (rightMap != null){
+                        values.push(new LinkedList<>(List.of(rightMap)));
+                    }
+                }
+            }
+            case "unless" -> {
+                for (Map<String, Object> item : leftOperand) {
+                    if (leftMap == null) {
+                        leftMap = item;
+                    }
+                    if (item.get(VALUE) != null) {
+                        leftMap = item;
+                        leftMatch = true;
+                        break;
+                    }
+                }
+                for (Map<String, Object> item : rightOperand) {
+                    if (rightMap == null) {
+                        rightMap = item;
+                    }
+                    if (item.get(VALUE) != null) {
+                        rightMap = item;
+                        rightMatch = true;
+                        break;
+                    }
+                }
+                if (leftMatch && !rightMatch) {
+                    values.push(new LinkedList<>(List.of(leftMap)));
+                } else {
+                    if (leftMap != null) {
+                        leftMap.put(VALUE, null);
+                        values.push(new LinkedList<>(List.of(leftMap)));
+                    } else {
+                        if (rightMap != null) {
+                            rightMap.put(VALUE, null);
+                            values.push(new LinkedList<>(List.of(rightMap)));
+                        } 
+                    }
+                }
+            }
             default -> throw new IllegalArgumentException("Unsupported operator: " + op);
         }
     }
