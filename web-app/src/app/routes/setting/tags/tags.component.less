@@ -1,10 +1,11 @@
+@import '@delon/theme/index';
+
 .tag-cards-container {
   padding: 24px 0;
 
   .tag-card {
     transition: all 0.3s;
     border-radius: 8px;
-    background: #fff;
 
     &:hover {
       transform: translateY(-2px);
@@ -23,8 +24,7 @@
 
       .ant-card-actions {
         border-radius: 0 0 8px 8px;
-        background: #fafafa;
-        border-top: 1px solid #f0f0f0;
+        border-top: 1px solid rgba(240, 240, 240, 0.5);
         min-height: 32px;
 
         > li {
@@ -34,7 +34,7 @@
             padding: 4px 0;
 
             &:hover {
-              color: #1890ff;
+              color: @primary-color;
             }
 
             i {
@@ -60,6 +60,7 @@
       font-weight: 500;
       line-height: 1.4;
       text-align: center;
+      background: rgba(255, 255, 255, 0.8);
     }
   }
 

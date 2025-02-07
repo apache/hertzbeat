@@ -420,6 +420,8 @@
   "common.confirm.delete-batch": "请确认是否批量删除!",
   "common.confirm.enable": "请确认是否启用!",
   "common.confirm.enable-batch": "请确认是否批量启用!",
+  "common.copy": "复制到粘贴板",
+  "common.copy.button": "复制",
   "common.disable": "关闭",
   "common.edit": "操作",
   "common.edit-time": "更新时间",

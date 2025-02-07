@@ -41,9 +41,6 @@ import { CONSTANTS } from '../../shared/constants';
             <div nz-menu-item>
               <header-fullscreen></header-fullscreen>
             </div>
-            <div nz-menu-item>
-              <header-clear-storage></header-clear-storage>
-            </div>
             <div nz-menu-item routerLink="/setting/labels">
               <i nz-icon nzType="tag" class="mr-sm"></i>
               <span style="margin-left: 4px">{{ 'menu.advanced.labels' | i18n }}</span>
