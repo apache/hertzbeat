@@ -69,12 +69,36 @@
   padding: 16px;
 }
 
+:root {
+  --background-color: #fff;
+  --text-color: #333;
+}
+
+[data-theme='dark'] {
+  --background-color: #1e1e1e;
+  --text-color: #fff;
+}
+
 .alert-card {
-  background: #fff;
+  background: var(--background-color);
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #ff4d4f;
   transition: all 0.3s;
+
+  &.status-firing {
+    border-left: 4px solid #ff4d4f;
+    opacity: 0.9;
+  }
+
+  &.status-resolved {
+    border-left: 4px solid #52c41a;
+    opacity: 0.7;
+  }
+
+  &.status-pending {
+    border-left: 4px solid #faad14;
+    opacity: 0.8;
+  }
 
   &:hover {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
@@ -89,7 +113,7 @@
     justify-content: space-between;
     align-items: flex-start;
     padding-bottom: 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
     .alert-info {
       flex: 1;
@@ -109,7 +133,7 @@
         display: flex;
         gap: 16px;
         margin-top: 8px;
-        color: #8c8c8c;
+        color: rgba(0, 0, 0, 0.5);
         font-size: 12px;
 
         i {
@@ -150,7 +174,7 @@
 
         .ant-collapse-item {
           border-radius: 2px;
-          border: 1px solid #f0f0f0;
+          border: 1px solid rgba(0, 0, 0, 0.1);
           margin-bottom: 8px;
 
           &:last-child {
@@ -163,7 +187,7 @@
             cursor: pointer;
 
             &:hover {
-              background-color: #fafafa;
+              background-color: rgba(0, 0, 0, 0.05);
             }
 
             .ant-collapse-header-text {
@@ -172,19 +196,19 @@
 
             .ant-collapse-extra {
               margin: 0;
-              color: #8c8c8c;
+              color: rgba(0, 0, 0, 0.5);
               font-size: 12px;
             }
 
             .alert-content {
               font-size: 13px;
-              color: #333;
+              color: var(--text-color);
               line-height: 1.5;
             }
           }
 
           .ant-collapse-content {
-            border-top: 1px solid #f0f0f0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
 
             .ant-collapse-content-box {
               padding: 12px;
@@ -266,20 +290,6 @@
 .pagination {
   margin: 16px;
   text-align: right;
-}
-
-.alert-card {
-  &.status-firing {
-    border-left-color: #ff4d4f;
-  }
-
-  &.status-resolved {
-    border-left-color: #52c41a;
-  }
-
-  &.status-pending {
-    border-left-color: #faad14;
-  }
 }
 
 @keyframes slideInFromRight {
