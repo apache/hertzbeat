@@ -67,6 +67,8 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
+  transform-style: preserve-3d;
+  perspective: 1200px;
 }
 
 :root {
@@ -80,10 +82,16 @@
 }
 
 .alert-card {
+  position: relative;
   background: var(--background-color);
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
+  z-index: 1;
+
+  &.expanded {
+    z-index: 2;
+  }
 
   &.status-firing {
     border-left: 4px solid #ff4d4f;
@@ -102,6 +110,7 @@
 
   &:hover {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    z-index: 3;
   }
 
   ::ng-deep .ant-card-body {
@@ -166,16 +175,22 @@
 
   .alert-details {
     margin-top: 12px;
+    position: relative;
+    z-index: 4;
 
     ::ng-deep {
       .ant-collapse {
         background: transparent;
         border: none;
+        position: relative;
+        z-index: 5;
 
         .ant-collapse-item {
           border-radius: 2px;
           border: 1px solid rgba(0, 0, 0, 0.1);
           margin-bottom: 8px;
+          position: relative;
+          z-index: 6;
 
           &:last-child {
             margin-bottom: 0;
@@ -185,6 +200,8 @@
             padding: 8px 12px;
             align-items: center;
             cursor: pointer;
+            position: relative;
+            z-index: 7;
 
             &:hover {
               background-color: rgba(0, 0, 0, 0.05);
@@ -209,6 +226,8 @@
 
           .ant-collapse-content {
             border-top: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 6;
 
             .ant-collapse-content-box {
               padding: 12px;
@@ -314,7 +333,6 @@
 }
 
 .alert-card {
-  position: relative;
   transition:
     transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
     opacity 0.5s ease-out,
@@ -341,6 +359,7 @@
     );
     opacity: 0;
     animation: slideGlow 1s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
   }
 
   &.new-alert {
@@ -375,7 +394,3 @@
 .alert-card:nth-child(2) { animation-delay: 0.15s; }
 .alert-card:nth-child(3) { animation-delay: 0.2s; }
 .alert-card:nth-child(n+4) { animation-delay: 0.25s; }
-
-.alert-cards {
-  perspective: 1200px;
-}
