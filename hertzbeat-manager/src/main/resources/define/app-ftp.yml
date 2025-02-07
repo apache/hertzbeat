@@ -88,6 +88,15 @@ params:
     range: '[0,100000]'
     required: true
     defaultValue: 1000
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启用SFTP
+      en-US: SFTP
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
 # collect metrics config list
 metrics:
   # metrics - basic
@@ -122,3 +131,4 @@ metrics:
       password: ^_^password^_^
       direction: ^_^direction^_^
       timeout: ^_^timeout^_^
+      ssl: ^_^ssl^_^

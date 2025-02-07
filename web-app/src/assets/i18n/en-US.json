@@ -695,6 +695,8 @@
   "monitor.new.failed": "New Monitor Failed",
   "monitor.new.notify.change-to-http": "HTTPS has been disabled, and the port number has been automatically changed to 80. Please take note.",
   "monitor.new.notify.change-to-https": "HTTPS has been enabled, and the port number has been automatically changed to 443. Please take note.",
+  "monitor.new.notify.change-to-ftp": "SFTP has been disabled, and the port number has been automatically changed to 21. Please take note.",
+  "monitor.new.notify.change-to-sftp": "SFTP has been enabled, and the port number has been automatically changed to 22. Please take note.",
   "monitor.new.success": "New Monitor Success",
   "monitor.not-found": "This Monitor Not Found",
   "monitor.path.tip": "Exporter Url Endpoint Path",

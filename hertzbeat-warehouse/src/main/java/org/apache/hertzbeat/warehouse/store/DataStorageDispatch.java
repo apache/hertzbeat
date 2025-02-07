@@ -18,8 +18,11 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import java.util.Optional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
@@ -27,7 +30,6 @@ import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +46,8 @@ public class DataStorageDispatch {
     private final RealTimeDataWriter realTimeDataWriter;
     private final Optional<HistoryDataWriter> historyDataWriter;
     private final PluginRunner pluginRunner;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
@@ -87,24 +91,16 @@ public class DataStorageDispatch {
         if (metricsData.getPriority() == 0) {
             long id = metricsData.getId();
             CollectRep.Code code = metricsData.getCode();
-            // query current status
-            String queryStatusSql = "SELECT status FROM hzb_monitor WHERE id = ?";
             try {
-                int currentStatus = jdbcTemplate.queryForObject(queryStatusSql, Integer.class, id);
-                if (code == CollectRep.Code.SUCCESS && currentStatus == CommonConstants.MONITOR_DOWN_CODE) {
-                    // if collect success and current status is DOWN, update to UP
-                    String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ?";
-                    jdbcTemplate.update(sql, CommonConstants.MONITOR_UP_CODE, id);
-                } else if (code != CollectRep.Code.SUCCESS && currentStatus == CommonConstants.MONITOR_UP_CODE) {
-                    // if collect failed and current status is UP, update to DOWN
-                    String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ?";
-                    jdbcTemplate.update(sql, CommonConstants.MONITOR_DOWN_CODE, id);
+                String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ? AND status != ?";
+                int status = code == CollectRep.Code.SUCCESS ? CommonConstants.MONITOR_UP_CODE : CommonConstants.MONITOR_DOWN_CODE;
+                int matchedRows = jdbcTemplate.update(sql, status, id, status);
+                if (matchedRows > 0) {
+                    entityManager.getEntityManagerFactory().getCache().evict(Monitor.class, id);
                 }
-            } catch (EmptyResultDataAccessException ignored) {
-                // when query currentStatus result is null
+            } catch (Exception e) {
+                log.error("Update monitor status failed for monitor id: {}", id, e);
             }
         }
     }
-
-
 }
