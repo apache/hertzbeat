@@ -12,6 +12,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ICONS } from '../../../style-icons';
 import { ICONS_AUTO } from '../../../style-icons-auto';
 import { MemoryStorageService } from '../../service/memory-storage.service';
+import { ThemeService } from '../../service/theme.service';
 import { I18NService } from '../i18n/i18n.service';
 
 @Injectable({
@@ -28,7 +29,8 @@ export class StartupService {
     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
     private httpClient: HttpClient,
     private router: Router,
-    private storageService: MemoryStorageService
+    private storageService: MemoryStorageService,
+    private themeService: ThemeService
   ) {
     iconSrv.addIcon(...ICONS_AUTO, ...ICONS);
   }
@@ -86,6 +88,7 @@ export class StartupService {
         this.storageService.putData('hierarchy', menuData.data);
         this.menuService.resume();
         this.titleService.suffix = appData.app.name;
+        this.themeService.changeTheme(null);
       })
     );
   }
