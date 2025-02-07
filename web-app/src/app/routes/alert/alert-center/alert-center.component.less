@@ -1,4 +1,3 @@
-/* 调整工具栏布局 */
 :host ::ng-deep app-toolbar {
   .center-content {
     display: flex;
@@ -68,17 +67,50 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
+  transform-style: preserve-3d;
+  perspective: 1200px;
+}
+
+:root {
+  --background-color: #fff;
+  --text-color: #333;
+}
+
+[data-theme='dark'] {
+  --background-color: #1e1e1e;
+  --text-color: #fff;
 }
 
 .alert-card {
-  background: #fff;
+  position: relative;
+  background: var(--background-color);
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-left: 4px solid #ff4d4f;
   transition: all 0.3s;
+  z-index: 1;
+
+  &.expanded {
+    z-index: 2;
+  }
+
+  &.status-firing {
+    border-left: 4px solid #ff4d4f;
+    opacity: 0.9;
+  }
+
+  &.status-resolved {
+    border-left: 4px solid #52c41a;
+    opacity: 0.7;
+  }
+
+  &.status-pending {
+    border-left: 4px solid #faad14;
+    opacity: 0.8;
+  }
 
   &:hover {
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    z-index: 3;
   }
 
   ::ng-deep .ant-card-body {
@@ -90,7 +122,7 @@
     justify-content: space-between;
     align-items: flex-start;
     padding-bottom: 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
     .alert-info {
       flex: 1;
@@ -110,7 +142,7 @@
         display: flex;
         gap: 16px;
         margin-top: 8px;
-        color: #8c8c8c;
+        color: rgba(0, 0, 0, 0.5);
         font-size: 12px;
 
         i {
@@ -143,16 +175,22 @@
 
   .alert-details {
     margin-top: 12px;
+    position: relative;
+    z-index: 4;
 
     ::ng-deep {
       .ant-collapse {
         background: transparent;
         border: none;
+        position: relative;
+        z-index: 5;
 
         .ant-collapse-item {
           border-radius: 2px;
-          border: 1px solid #f0f0f0;
+          border: 1px solid rgba(0, 0, 0, 0.1);
           margin-bottom: 8px;
+          position: relative;
+          z-index: 6;
 
           &:last-child {
             margin-bottom: 0;
@@ -162,9 +200,11 @@
             padding: 8px 12px;
             align-items: center;
             cursor: pointer;
+            position: relative;
+            z-index: 7;
 
             &:hover {
-              background-color: #fafafa;
+              background-color: rgba(0, 0, 0, 0.05);
             }
 
             .ant-collapse-header-text {
@@ -173,19 +213,21 @@
 
             .ant-collapse-extra {
               margin: 0;
-              color: #8c8c8c;
+              color: rgba(0, 0, 0, 0.5);
               font-size: 12px;
             }
 
             .alert-content {
               font-size: 13px;
-              color: #333;
+              color: var(--text-color);
               line-height: 1.5;
             }
           }
 
           .ant-collapse-content {
-            border-top: 1px solid #f0f0f0;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 6;
 
             .ant-collapse-content-box {
               padding: 12px;
@@ -269,16 +311,86 @@
   text-align: right;
 }
 
-.alert-card {
-  &.status-firing {
-    border-left-color: #ff4d4f;
+@keyframes slideInFromRight {
+  0% {
+    transform: translate3d(120%, 0, 0) scale(0.95) rotate(3deg);
+    opacity: 0;
+    filter: blur(2px);
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.18);
   }
-
-  &.status-resolved {
-    border-left-color: #52c41a;
+  50% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(-5%, 0, 0) scale(1) rotate(-1deg);
   }
-
-  &.status-pending {
-    border-left-color: #faad14;
+  75% {
+    transform: translate3d(2%, 0, 0) scale(1) rotate(0.5deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
   }
 }
+
+.alert-card {
+  transition:
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.5s ease-out,
+    box-shadow 0.3s ease;
+  will-change: transform, opacity;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.005);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0;
+    animation: slideGlow 1s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  &.new-alert {
+    animation:
+      slideInFromRight 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+      cardLanding 0.6s 0.3s ease-out forwards;
+  }
+}
+
+@keyframes slideGlow {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes cardLanding {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  80% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+
+.alert-card:nth-child(1) { animation-delay: 0.1s; }
+.alert-card:nth-child(2) { animation-delay: 0.15s; }
+.alert-card:nth-child(3) { animation-delay: 0.2s; }
+.alert-card:nth-child(n+4) { animation-delay: 0.25s; }

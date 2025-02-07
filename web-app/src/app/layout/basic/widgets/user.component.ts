@@ -129,12 +129,7 @@ export class HeaderUserComponent {
   }
 
   logout(): void {
-    let tmp = this.localStorageSvc.getData(this.notShowAgainKey);
-    if (tmp === null) {
-      tmp = 'false';
-    }
-    this.localStorageSvc.clear();
-    this.localStorageSvc.putData(this.notShowAgainKey, tmp);
+    this.localStorageSvc.clearAuthorization();
     this.router.navigateByUrl('/passport/login');
   }
 
