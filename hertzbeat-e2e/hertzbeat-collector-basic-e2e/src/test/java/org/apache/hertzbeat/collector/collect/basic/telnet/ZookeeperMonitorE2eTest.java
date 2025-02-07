@@ -79,7 +79,6 @@ public class ZookeeperMonitorE2eTest extends AbstractCollectE2eTest {
                                     .withStartupTimeout(Duration.ofSeconds(60))
                     )
                     .withLogConsumer(outputFrame -> {
-                        System.out.println(outputFrame.getUtf8String());
                         log.info(outputFrame.getUtf8String());
                     });
 
@@ -87,9 +86,7 @@ public class ZookeeperMonitorE2eTest extends AbstractCollectE2eTest {
             log.info("Zookeeper container started at {}:{}",
                     zookeeperContainer.getHost(),
                     zookeeperContainer.getMappedPort(ZOOKEEPER_PORT));
-            System.out.println("Zookeeper container started at " + zookeeperContainer.getHost() + ":" + zookeeperContainer.getMappedPort(ZOOKEEPER_PORT));
         } catch (Exception e) {
-            System.out.println("Failed to start Zookeeper container" + e.getMessage());
             e.printStackTrace();
             log.error("Failed to start Zookeeper container", e);
             throw e;
