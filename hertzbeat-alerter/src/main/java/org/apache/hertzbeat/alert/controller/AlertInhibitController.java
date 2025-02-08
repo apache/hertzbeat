@@ -38,9 +38,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Alarm Silence management API
+ * Alarm Inhibit management API
  */
-@Tag(name = "Alert Silence API")
+@Tag(name = "Alert Inhibit API")
 @RestController
 @RequestMapping(path = "/api/alert/inhibit", produces = {APPLICATION_JSON_VALUE})
 public class AlertInhibitController {
@@ -49,7 +49,7 @@ public class AlertInhibitController {
     private AlertInhibitService alertInhibitService;
 
     @PostMapping
-    @Operation(summary = "New Alarm Silence", description = "Added an alarm Silence")
+    @Operation(summary = "New Alarm Inhibit", description = "Added an alarm Inhibit")
     public ResponseEntity<Message<Void>> addNewAlertInhibit(@Valid @RequestBody AlertInhibit alertInhibit) {
         alertInhibitService.validate(alertInhibit, false);
         alertInhibitService.addAlertInhibit(alertInhibit);
@@ -57,7 +57,7 @@ public class AlertInhibitController {
     }
 
     @PutMapping
-    @Operation(summary = "Modifying an Alarm Silence", description = "Modify an existing alarm Silence")
+    @Operation(summary = "Modifying an Alarm Inhibit", description = "Modify an existing alarm Inhibit")
     public ResponseEntity<Message<Void>> modifyAlertInhibit(@Valid @RequestBody AlertInhibit alertInhibit) {
         alertInhibitService.validate(alertInhibit, true);
         alertInhibitService.modifyAlertInhibit(alertInhibit);
@@ -65,10 +65,10 @@ public class AlertInhibitController {
     }
 
     @GetMapping(path = "/{id}")
-    @Operation(summary = "Querying Alarm Silence",
-            description = "You can obtain alarm Silence information based on the alarm Silence ID")
+    @Operation(summary = "Querying Alarm Inhibit",
+            description = "You can obtain alarm Inhibit information based on the alarm Inhibit ID")
     public ResponseEntity<Message<AlertInhibit>> getAlertInhibit(
-            @Parameter(description = "Alarm Silence ID", example = "6565463543") @PathVariable("id") long id) {
+            @Parameter(description = "Alarm Inhibit ID", example = "6565463543") @PathVariable("id") long id) {
         AlertInhibit alertInhibit = alertInhibitService.getAlertInhibit(id);
 
         return Objects.isNull(alertInhibit)
