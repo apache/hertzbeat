@@ -757,6 +757,7 @@
   "settings.system-config.locale.en_US": "English(en_US)",
   "settings.system-config.locale.zh_CN": "Simplified Chinese(zh_CN)",
   "settings.system-config.locale.zh_TW": "Traditional Chinese(zh_TW)",
+  "settings.system-config.locale.ja-JP": "Japanese(ja_JP)",
   "settings.system-config.ok": "Confirm Update",
   "settings.system-config.theme": "System Theme",
   "settings.system-config.theme.compact": "Compact Theme",

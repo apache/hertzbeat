@@ -757,6 +757,7 @@
   "settings.system-config.locale.en_US": "英語(en_US)",
   "settings.system-config.locale.zh_CN": "簡體中文(zh_CN)",
   "settings.system-config.locale.zh_TW": "繁體中文(zh_TW)",
+  "settings.system-config.locale.ja-JP": "日語(ja_JP)",
   "settings.system-config.ok": "確認更新",
   "settings.system-config.theme": "系統主題",
   "settings.system-config.theme.compact": "緊湊主題",
