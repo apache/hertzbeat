@@ -20,9 +20,13 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Type;
+
+import jakarta.annotation.Resource;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.support.event.SmsConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.SmsNoticeSender;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,6 +36,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SmsGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<SmsNoticeSender> {
+    @Resource
+    private ApplicationContext applicationContext;
 
     /**
      * SmsGeneralConfigServiceImpl's constructor creates an instance of this class
@@ -43,6 +49,14 @@ public class SmsGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImp
      */
     public SmsGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
+    }
+
+    /**
+     * This method is used to handle the sms configuration change event.
+     */
+    @Override
+    public void handler(SmsNoticeSender smsNoticeSender) {
+        applicationContext.publishEvent(new SmsConfigChangeEvent(applicationContext));
     }
     
     @Override

@@ -80,7 +80,7 @@ public class AlertNoticeDispatch {
             if (noticeTemplate == null) {
                 noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType(alertNotifyHandler.type());
             }
-            if (noticeTemplate == null) {
+            if (noticeTemplate == null && alertNotifyHandler.type() != 0) {
                 log.error("alert does not have mapping default notice template. type: {}.", alertNotifyHandler.type());
                 throw new NullPointerException(alertNotifyHandler.type() + " does not have mapping default notice template");
             }

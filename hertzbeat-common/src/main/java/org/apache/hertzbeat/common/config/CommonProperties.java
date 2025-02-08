@@ -43,11 +43,6 @@ public class CommonProperties {
     private DataQueueProperties queue;
 
     /**
-     * sms impl properties
-     */
-    private SmsProperties sms;
-
-    /**
      * data queue properties
      */
     @Getter
@@ -146,83 +141,4 @@ public class CommonProperties {
          */
         private String alertsDataTopic;
     }
-
-    /**
-     * sms properties
-     */
-    @Getter
-    @Setter
-    public static class SmsProperties {
-        //Tencent cloud SMS configuration
-        private TencentSmsProperties tencent;
-        //Ali cloud SMS configuration
-        private AliYunSmsProperties aliYun;
-    }
-
-    /**
-     * tencent sms properties
-     */
-    @Getter
-    @Setter
-    public static class TencentSmsProperties {
-
-        /**
-         * Tencent cloud account secret id
-         */
-        private String secretId;
-
-        /**
-         * Tencent cloud account secret key
-         */
-        private String secretKey;
-
-        /**
-         * SMS app id
-         */
-        private String appId;
-
-        /**
-         * SMS signature
-         */
-        private String signName;
-
-        /**
-         * SMS template ID
-         */
-        private String templateId;
-    }
-
-    /**
-     * aliYun sms properties
-     */
-    @Getter
-    @Setter
-    public static class AliYunSmsProperties {
-
-        /**
-         * Aliyun account access key id
-         */
-        private String secretId;
-
-        /**
-         * Ali Cloud account access key
-         */
-        private String secretKey;
-
-        /**
-         *  SMS app id
-         */
-        private String appId;
-
-        /**
-         * SMS signature
-         */
-        private String signName;
-
-        /**
-         * ID of the SMS template
-         */
-        private String templateId;
-    }
-
 }
