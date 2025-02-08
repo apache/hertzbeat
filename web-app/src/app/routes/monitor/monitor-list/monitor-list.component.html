@@ -120,7 +120,7 @@
     <app-multi-func-input
       groupStyle="width: 120px;"
       class="mobile-hide"
-      [placeholder]="'monitor.search.tag' | i18n"
+      [placeholder]="'monitor.search.label' | i18n"
       [(value)]="labels"
       (valueChange)="onTagChanged()"
     />
@@ -158,7 +158,7 @@
       <th nzAlign="center" nzWidth="10%">{{ 'monitor.app' | i18n }}</th>
       <th nzAlign="center" nzWidth="21%">{{ 'label' | i18n }}</th>
       <th nzAlign="center" nzWidth="14%" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -212,7 +212,7 @@
         </nz-tag>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button nz-button nzType="primary" [routerLink]="['/monitors/' + data.id]" nz-tooltip [nzTooltipTitle]="'monitor.detail' | i18n">
             <i nz-icon nzType="area-chart" nzTheme="outline"></i>

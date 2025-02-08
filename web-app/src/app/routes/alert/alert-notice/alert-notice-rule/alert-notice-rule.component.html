@@ -28,8 +28,30 @@
       {{ 'alert.notice.rule.new' | i18n }}
     </button>
   </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      [placeholder]="'alert.notice.rule.name' | i18n"
+      [(value)]="name"
+      (valueChange)="onSearch()"
+    />
+  </ng-template>
 </app-toolbar>
-<nz-table #ruleFixedTable [nzData]="rules" [nzLoading]="ruleTableLoading" [nzScroll]="{ x: '1240px' }" nzFrontPagination="false">
+<nz-table
+  #ruleFixedTable
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzData]="rules"
+  [nzLoading]="ruleTableLoading"
+  [nzScroll]="{ x: '1240px' }"
+>
   <thead>
     <tr>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.rule.name' | i18n }}</th>
@@ -37,8 +59,8 @@
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.notice.rule.all' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'common.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -62,7 +84,7 @@
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateNoticeRule(data)"></nz-switch>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             (click)="onEditOneNoticeRule(data)"
@@ -87,6 +109,8 @@
     </tr>
   </tbody>
 </nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
 <!-- new or update notice strategy pop-up box -->
 <nz-modal

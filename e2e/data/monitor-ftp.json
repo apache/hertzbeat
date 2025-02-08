@@ -30,6 +30,11 @@
         "paramValue": 1000
       },
       {
+        "field": "ssl",
+        "type": 1,
+        "paramValue": false
+      },
+      {
         "field": "username",
         "type": 1
       },

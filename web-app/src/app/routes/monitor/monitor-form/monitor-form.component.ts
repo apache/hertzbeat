@@ -150,17 +150,32 @@ export class MonitorFormComponent implements OnChanges {
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {
-    // For SSL port linkage, port 80 by default is not enabled, but port 443 by default is enabled
-    if (field === 'ssl') {
-      const portParam = this.params.find(param => param.field === 'port');
-      if (portParam) {
-        if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
-          portParam.paramValue = 443;
-          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-https'));
+    if (this.monitor.app === 'api') {
+      if (field === 'ssl') {
+        const portParam = this.params.find(param => param.field === 'port');
+        if (portParam) {
+          if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
+            portParam.paramValue = 443;
+            this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-https'));
+          }
+          if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
+            portParam.paramValue = 80;
+            this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-http'));
+          }
         }
-        if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
-          portParam.paramValue = 80;
-          this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-http'));
+      }
+    } else if (this.monitor.app === 'ftp') {
+      if (field === 'ssl') {
+        const portParam = this.params.find(param => param.field === 'port');
+        if (portParam) {
+          if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 21)) {
+            portParam.paramValue = 22;
+            this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-sftp'));
+          }
+          if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 22)) {
+            portParam.paramValue = 21;
+            this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('monitor.new.notify.change-to-ftp'));
+          }
         }
       }
     }
