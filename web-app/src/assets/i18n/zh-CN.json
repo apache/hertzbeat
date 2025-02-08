@@ -722,7 +722,6 @@
   "monitor.sshPort.tip": "SSH隧道开启时必填",
   "monitor.sshUsername.tip": "SSH隧道开启时必填",
   "monitor.sshPrivateKey.tip": "启动RSA私钥",
-
   "placeholder.key": "键",
   "placeholder.value": "值",
   "plugin.delete": "刪除插件",
