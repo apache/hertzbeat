@@ -101,12 +101,9 @@ public class JdbcCommonCollect extends AbstractCollect {
             statement = getConnection(jdbcProtocol.getUsername(),
                     jdbcProtocol.getPassword(), databaseUrl, timeout);
             switch (jdbcProtocol.getQueryType()) {
-                case QUERY_TYPE_ONE_ROW ->
-                        queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                case QUERY_TYPE_MULTI_ROW ->
-                        queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                case QUERY_TYPE_COLUMNS ->
-                        queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_COLUMNS -> queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
                 case RUN_SCRIPT -> {
                     Connection connection = statement.getConnection();
                     FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
@@ -138,8 +135,7 @@ public class JdbcCommonCollect extends AbstractCollect {
             String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("Peer ssh connection failed: " + errorMsg);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             String errorMessage = CommonUtil.getMessageFromThrowable(e);
             log.error("Jdbc error: {}.", errorMessage, e);
             builder.setCode(CollectRep.Code.FAIL);
@@ -347,8 +343,7 @@ public class JdbcCommonCollect extends AbstractCollect {
             case "oracle" -> "jdbc:oracle:thin:@" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
             case "dm" -> "jdbc:dm://" + host + ":" + port;
-            default ->
-                    throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
+            default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
     }
 }
