@@ -1,8 +1,25 @@
-package org.apache.hertzbeat.collector.collect.common.ssh;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package org.apache.hertzbeat.collector.collect.common.ssh;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Scheduler;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -43,19 +60,15 @@ public class SshTunnelHelper {
                     .expireAfterAccess(Duration.ofMillis(DEFAULT_CACHE_TIMEOUT))
                     .scheduler(Scheduler.systemScheduler())
                     .removalListener((key, value, cause) -> {
+                        if (cause == RemovalCause.REPLACED) {
+                            return;
+                        }
                         if (key != null && value != null) {
                             // 1. try close tunnel
                             SshClientSessionWrapper clientSessionWrapper = (SshClientSessionWrapper) key;
                             LocalPortForwardingWrapper wrapper = (LocalPortForwardingWrapper) value;
-                            List<LocalPortForwardingWrapper> select = wrapper.select(clientSessionWrapper.getClientSession(), null);
-                            for (LocalPortForwardingWrapper forwardWrapper : select) {
-                                try {
-                                    forwardWrapper.close();
-                                    log.info("[SSH Tunnel] discarded ssh local port forwarding, {}", forwardWrapper);
-                                } catch (IOException e) {
-                                    log.error("[SSH Tunnel] discarded ssh session local port forwarding  error", e);
-                                }
-                            }
+                            wrapper.remove(clientSessionWrapper.getClientSession());
+
                             // 2. try close session
                             if (!clientSessionWrapper.isShareConnection()) {
                                 try {
@@ -69,6 +82,27 @@ public class SshTunnelHelper {
                     })
                     .build();
 
+
+    /**
+     * check ssh tunnel param
+     *
+     * @param sshTunnel ssh tunnel param
+     */
+    public static void checkTunnelParam(SshTunnel sshTunnel) {
+        if (sshTunnel == null || !Boolean.parseBoolean(sshTunnel.getEnable())) {
+            return;
+        }
+        if (!StringUtils.hasText(sshTunnel.getHost())) {
+            throw new IllegalArgumentException("ssh tunnel must has ssh host param");
+        }
+        if (!StringUtils.hasText(sshTunnel.getPort())) {
+            throw new IllegalArgumentException("ssh tunnel must has ssh port param");
+        }
+        if (!StringUtils.hasText(sshTunnel.getUsername())) {
+            throw new IllegalArgumentException("ssh tunnel must has ssh username param");
+        }
+
+    }
 
     /**
      * create ssh tunnel
@@ -86,19 +120,17 @@ public class SshTunnelHelper {
                 Integer.parseInt(sshTunnel.getTimeout()), shareConnection);
         SshClientSessionWrapper sessionWrapper = new SshClientSessionWrapper(session, shareConnection);
 
-        // 2. get local port
-        int localPort = sshTunnel.getLocalPort() != null ? Integer.parseInt(sshTunnel.getLocalPort()) : 0;
-
-        // 3. get tunnel
+        // 2. get tunnel
         LocalPortForwardingWrapper forwardingWrapper = selectWrapper(
-                TRACKER_CACHE.getIfPresent(sessionWrapper), sessionWrapper, remoteHost, remotePort, localPort);
+                TRACKER_CACHE.getIfPresent(sessionWrapper), sessionWrapper, remoteHost, remotePort);
+        int localPort;
         if (forwardingWrapper == null) {
-            if (localPort <= 0) {
-                localPort = getRandomPort();
-            }
+            localPort = getRandomPort();
             LocalPortForwardingWrapper newForwardingWrapper = sessionWrapper
                     .createLocalPortForwardingTracker(localPort, remoteHost, Integer.parseInt(remotePort));
-            TRACKER_CACHE.put(sessionWrapper, newForwardingWrapper);
+            if (TRACKER_CACHE.getIfPresent(sessionWrapper) == null) {
+                TRACKER_CACHE.put(sessionWrapper, newForwardingWrapper);
+            }
             log.info("[SSH Tunnel] created ssh forwarding tracker ssh:{}, remote:{}, localPort:{}",
                     sshTunnel.getHost() + ":" + sshTunnel.getPort(), remoteHost + ":" + remotePort, localPort);
         } else {
@@ -108,22 +140,6 @@ public class SshTunnelHelper {
         return localPort;
     }
 
-    public static void checkTunnelParam(SshTunnel sshTunnel) {
-        if (sshTunnel == null || !Boolean.parseBoolean(sshTunnel.getEnable())) {
-            return;
-        }
-        if (!StringUtils.hasText(sshTunnel.getHost())) {
-            throw new IllegalArgumentException("ssh tunnel must has ssh host param");
-        }
-        if (!StringUtils.hasText(sshTunnel.getPort())){
-            throw new IllegalArgumentException("ssh tunnel must has ssh port param");
-        }
-        if (!StringUtils.hasText(sshTunnel.getUsername())){
-            throw new IllegalArgumentException("ssh tunnel must has ssh username param");
-        }
-
-    }
-
     /**
      * get tunnel
      *
@@ -131,11 +147,10 @@ public class SshTunnelHelper {
      * @param sessionWrapper SshClientSessionWrapper
      * @param remoteHost     remote host
      * @param remotePort     remote port
-     * @param localPort      local port
      * @return LocalPortForwardingWrapper
      */
     private static LocalPortForwardingWrapper selectWrapper(LocalPortForwardingWrapper wrapper, SshClientSessionWrapper sessionWrapper,
-                                                            String remoteHost, String remotePort, Integer localPort) {
+                                                            String remoteHost, String remotePort) {
         if (wrapper == null) {
             return null;
         }
@@ -144,14 +159,8 @@ public class SshTunnelHelper {
                 return false;
             }
             ExplicitPortForwardingTracker tracker = localPortForwardWrapper.getTracker();
-            SshdSocketAddress localAddress = tracker.getLocalAddress();
             SshdSocketAddress remoteAddress = tracker.getRemoteAddress();
-            if (localPort <= 0) {
-                return Objects.equals(remoteAddress.getHostName(), remoteHost)
-                        && Objects.equals(remoteAddress.getPort(), Integer.parseInt(remotePort));
-            }
-            return Objects.equals(localAddress.getPort(), localPort)
-                    && Objects.equals(remoteAddress.getHostName(), remoteHost)
+            return Objects.equals(remoteAddress.getHostName(), remoteHost)
                     && Objects.equals(remoteAddress.getPort(), Integer.parseInt(remotePort));
         });
 
@@ -170,7 +179,7 @@ public class SshTunnelHelper {
 
 
     private static int getRandomPort() throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(0);) {
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
             return serverSocket.getLocalPort();
         }
     }
@@ -187,6 +196,13 @@ public class SshTunnelHelper {
             this.shareConnection = shareConnection;
         }
 
+        /**
+         *  Starts a local port forwarding
+         * @param localPort  local port
+         * @param remoteHost remove host
+         * @param remotePort remote port
+         * @return LocalPortForwardingWrapper
+         */
         public LocalPortForwardingWrapper createLocalPortForwardingTracker(Integer localPort, String remoteHost, Integer remotePort) throws IOException {
             SshdSocketAddress remoteAddress = new SshdSocketAddress(remoteHost, remotePort);
             SshdSocketAddress localAddress = new SshdSocketAddress("localhost", localPort);
@@ -194,13 +210,16 @@ public class SshTunnelHelper {
             return new LocalPortForwardingWrapper(tracker);
         }
 
+        /**
+         * close client session
+         */
         public void close() throws IOException {
             clientSession.close();
         }
 
         @Override
         public String toString() {
-            return "{ ssh:%s, shareConnection:%b}".formatted(clientSession, shareConnection);
+            return "{ ssh:%s, shareConnection:%b }".formatted(clientSession, shareConnection);
         }
     }
 
@@ -220,6 +239,7 @@ public class SshTunnelHelper {
         }
 
         /**
+         * select ClientSession LocalPortForwardingWrapper List
          * @param session   ssh client session
          * @param predicate condition
          * @return LocalPortForwardWrapper
@@ -239,15 +259,37 @@ public class SshTunnelHelper {
                     try {
                         wrapper.getTracker().close();
                         iterator.remove();
-                        log.info("[SSH Tunnel] Remove ssh local port forwarding {}", wrapper);
+                        log.info("[SSH Tunnel] Lazy Remove ssh local port forwarding {}", wrapper);
                     } catch (IOException e) {
-                        log.warn("[SSH Tunnel] Close ssh local port forwarding  Error", e);
+                        log.warn("[SSH Tunnel] Lazy Remove ssh local port forwarding  Error", e);
                     }
                 } else if (predicate == null || predicate.test(wrapper)) {
                     list.add(wrapper);
                 }
             }
             return list;
+        }
+
+        /**
+         *  remove session local port forwarding
+         * @param session ssh client session
+         */
+        public void remove(ClientSession session) {
+            List<LocalPortForwardingWrapper> trackerList = map.get(session);
+            if (CollectionUtils.isEmpty(trackerList)) {
+                return;
+            }
+            Iterator<LocalPortForwardingWrapper> iterator = trackerList.iterator();
+            while (iterator.hasNext()){
+                try {
+                    LocalPortForwardingWrapper next = iterator.next();
+                    next.close();
+                    iterator.remove();
+                    log.info("[SSH Tunnel] Remove ssh local port forwarding, {}", next);
+                } catch (IOException e) {
+                    log.error("[SSH Tunnel] Remove ssh session local port forwarding  error", e);
+                }
+            }
         }
 
         public void close() throws IOException {

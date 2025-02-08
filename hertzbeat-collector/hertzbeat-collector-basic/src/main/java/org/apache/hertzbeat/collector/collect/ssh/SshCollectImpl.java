@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.collector.collect.ssh;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -30,35 +29,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
-import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshBlacklist;
-import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshClient;
+import org.apache.hertzbeat.collector.collect.common.ssh.SshHelper;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.collector.util.PrivateKeyUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ClientChannel;
 import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
-import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
-import org.apache.sshd.common.util.security.SecurityUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -291,57 +282,9 @@ public class SshCollectImpl extends AbstractCollect {
 
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection)
             throws IOException, GeneralSecurityException {
-        CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
-                .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
-                .build();
-        ClientSession clientSession = null;
-        if (reuseConnection) {
-            Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
-            if (cacheOption.isPresent()) {
-                SshConnect sshConnect = (SshConnect) cacheOption.get();
-                clientSession = sshConnect.getConnection();
-                try {
-                    if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
-                        clientSession = null;
-                        connectionCommonCache.removeCache(identifier);
-                    }
-                } catch (Exception e) {
-                    log.warn(e.getMessage());
-                    clientSession = null;
-                    connectionCommonCache.removeCache(identifier);
-                }
-            }
-            if (clientSession != null) {
-                return clientSession;
-            }
-        }
-        SshClient sshClient = CommonSshClient.getSshClient();
-        clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
-                .verify(timeout, TimeUnit.MILLISECONDS).getSession();
-        if (StringUtils.hasText(sshProtocol.getPassword())) {
-            clientSession.addPasswordIdentity(sshProtocol.getPassword());
-        } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
-            var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
-            FilePasswordProvider passwordProvider = (session, resource, index) -> {
-                if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
-                    return sshProtocol.getPrivateKeyPassphrase();
-                }
-                return null;
-            };
-            SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), passwordProvider)
-                    .forEach(clientSession::addPublicKeyIdentity);
-        }  // else auth with localhost private public key certificates
-
-        // auth
-        if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            clientSession.close();
-            throw new IllegalArgumentException("ssh auth failed.");
-        }
-        if (reuseConnection) {
-            SshConnect sshConnect = new SshConnect(clientSession);
-            connectionCommonCache.addCache(identifier, sshConnect);
-        }
-        return clientSession;
+        return SshHelper.getConnectSession(
+            sshProtocol.getHost(), sshProtocol.getPort(), sshProtocol.getUsername(), sshProtocol.getPassword(),
+            sshProtocol.getPrivateKey(), sshProtocol.getPrivateKeyPassphrase(), timeout, reuseConnection
+        );
     }
 }

@@ -128,6 +128,7 @@ params:
       en-US: SSH Host
     type: text
     required: false
+    placeholder: 'When Enable SSH Tunnel'
     hide: true
   - field: sshPort
     name:
@@ -137,15 +138,7 @@ params:
     range: '[0,65535]'
     required: false
     defaultValue: 22
-    hide: true
-
-  - field: sshLocalPort
-    name:
-      zh-CN: SSH本地端口转发
-      en-US: SSH Local Port Forward
-    type: number
-    range: '[0,65535]'
-    required: false
+    placeholder: 'When Enable SSH tunnel'
     hide: true
   - field: sshTimeout
     name:
@@ -162,6 +155,7 @@ params:
       en-US: SSH Username
     type: text
     required: false
+    placeholder: 'When Enable SSH tunnel'
     hide: true
   - field: sshPassword
     name:
@@ -287,7 +281,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -377,7 +370,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -422,7 +414,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -499,7 +490,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -605,7 +595,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -695,7 +684,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -745,7 +733,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -795,7 +782,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -840,7 +826,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -895,7 +880,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -945,7 +929,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -985,7 +968,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -1026,7 +1008,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^
@@ -1089,7 +1070,6 @@ metrics:
         enable: ^_^enableSshTunnel^_^
         host: ^_^sshHost^_^
         port: ^_^sshPort^_^
-        localPort: ^_^sshLocalPort^_^
         timeout: ^_^sshTimeout^_^
         username: ^_^sshUsername^_^
         password: ^_^sshPassword^_^

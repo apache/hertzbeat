@@ -28,6 +28,8 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +44,7 @@ import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.RedisConnect;
+import org.apache.hertzbeat.collector.collect.common.ssh.SshTunnelHelper;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -51,6 +54,8 @@ import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.MapCapUtil;
+import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -79,6 +84,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         RedisProtocol redisProtocol = metrics.getRedis();
         Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
         Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
+        SshTunnelHelper.checkTunnelParam(metrics.getRedis().getSshTunnel());
     }
 
     @Override
@@ -96,6 +102,14 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             log.info("[redis connection] error: {}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
+        } catch (SshException sshException) {
+            Throwable throwable = sshException.getCause();
+            if (throwable instanceof SshChannelOpenException) {
+                log.warn("[redis collect] Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
+            }
+            String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg("Peer ssh connection failed: " + errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("[redis collect] error: {}", e.getMessage(), e);
@@ -109,7 +123,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param metrics metrics config
      * @return data
      */
-    private Map<String, String> getSingleRedisInfo(Metrics metrics) {
+    private Map<String, String> getSingleRedisInfo(Metrics metrics) throws GeneralSecurityException, IOException {
         StatefulRedisConnection<String, String> connection = getSingleConnection(metrics.getRedis());
         String info = connection.sync().info(metrics.getName());
         Map<String, String> valueMap = parseInfo(info, metrics);
@@ -125,7 +139,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param metrics metrics config
      * @return data
      */
-    private List<Map<String, String>> getClusterRedisInfo(Metrics metrics) {
+    private List<Map<String, String>> getClusterRedisInfo(Metrics metrics) throws GeneralSecurityException, IOException {
         Map<String, StatefulRedisClusterConnection<String, String>> connectionMap = getConnectionList(metrics.getRedis());
         List<Map<String, String>> list = new ArrayList<>(connectionMap.size());
         connectionMap.forEach((identity, connection) ->{
@@ -179,12 +193,16 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param redisProtocol protocol
      * @return connection
      */
-    private StatefulRedisConnection<String, String> getSingleConnection(RedisProtocol redisProtocol) {
-        CacheIdentifier identifier = doIdentifier(redisProtocol);
+    private StatefulRedisConnection<String, String> getSingleConnection(RedisProtocol redisProtocol) throws GeneralSecurityException, IOException {
+        String[] resolvedArr = resolveHostAndPort(redisProtocol);
+        String host = resolvedArr[0];
+        String port = resolvedArr[1];
+
+        CacheIdentifier identifier = doIdentifier(redisProtocol, host, port);
         StatefulRedisConnection<String, String> connection = (StatefulRedisConnection<String, String>) getStatefulConnection(identifier);
         if (Objects.isNull(connection)) {
             // reuse connection failed, new one
-            RedisClient redisClient = buildSingleClient(redisProtocol);
+            RedisClient redisClient = buildSingleClient(redisProtocol, host, port);
             connection = redisClient.connect();
             connectionCache.addCache(identifier, new RedisConnect(connection));
         }
@@ -196,7 +214,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param redisProtocol protocol
      * @return connection map
      */
-    private Map<String, StatefulRedisClusterConnection<String, String>> getConnectionList(RedisProtocol redisProtocol) {
+    private Map<String, StatefulRedisClusterConnection<String, String>> getConnectionList(RedisProtocol redisProtocol) throws GeneralSecurityException, IOException {
         // first connection
         StatefulRedisClusterConnection<String, String> connection = getClusterConnection(redisProtocol);
         Partitions partitions = connection.getPartitions();
@@ -217,12 +235,16 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param redisProtocol redis protocol
      * @return cluster connection
      */
-    private StatefulRedisClusterConnection<String, String> getClusterConnection(RedisProtocol redisProtocol) {
-        CacheIdentifier identifier = doIdentifier(redisProtocol);
+    private StatefulRedisClusterConnection<String, String> getClusterConnection(RedisProtocol redisProtocol) throws GeneralSecurityException, IOException {
+        String[] resolvedArr = resolveHostAndPort(redisProtocol);
+        String host = resolvedArr[0];
+        String port = resolvedArr[1];
+
+        CacheIdentifier identifier = doIdentifier(redisProtocol, host, port);
         StatefulRedisClusterConnection<String, String> connection = (StatefulRedisClusterConnection<String, String>) getStatefulConnection(identifier);
         if (connection == null) {
             // reuse connection failed, new one
-            RedisClusterClient redisClusterClient = buildClusterClient(redisProtocol);
+            RedisClusterClient redisClusterClient = buildClusterClient(redisProtocol, host, port);
             connection = redisClusterClient.connect();
             connectionCache.addCache(identifier, new RedisConnect(connection));
         }
@@ -260,8 +282,8 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param redisProtocol redis protocol config
      * @return redis cluster client
      */
-    private RedisClusterClient buildClusterClient(RedisProtocol redisProtocol) {
-        return RedisClusterClient.create(defaultClientResources, redisUri(redisProtocol));
+    private RedisClusterClient buildClusterClient(RedisProtocol redisProtocol, String host, String port) {
+        return RedisClusterClient.create(defaultClientResources, redisUri(redisProtocol, host, port));
     }
 
     /**
@@ -270,12 +292,12 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param redisProtocol redis protocol config
      * @return redis single client
      */
-    private RedisClient buildSingleClient(RedisProtocol redisProtocol) {
-        return RedisClient.create(defaultClientResources, redisUri(redisProtocol));
+    private RedisClient buildSingleClient(RedisProtocol redisProtocol, String host, String port) {
+        return RedisClient.create(defaultClientResources, redisUri(redisProtocol, host, port));
     }
 
-    private RedisURI redisUri(RedisProtocol redisProtocol) {
-        RedisURI.Builder redisUriBuilder = RedisURI.builder().withHost(redisProtocol.getHost()).withPort(Integer.parseInt(redisProtocol.getPort()));
+    private RedisURI redisUri(RedisProtocol redisProtocol, String host, String port) {
+        RedisURI.Builder redisUriBuilder = RedisURI.builder().withHost(host).withPort(Integer.parseInt(port));
         if (StringUtils.hasText(redisProtocol.getUsername())) {
             redisUriBuilder.withClientName(redisProtocol.getUsername());
         }
@@ -295,10 +317,10 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         return ip + SignConstants.DOUBLE_MARK + port;
     }
 
-    private CacheIdentifier doIdentifier(RedisProtocol redisProtocol) {
+    private CacheIdentifier doIdentifier(RedisProtocol redisProtocol, String host, String port) {
         return CacheIdentifier.builder()
-                .ip(redisProtocol.getHost())
-                .port(redisProtocol.getPort())
+                .ip(host)
+                .port(port)
                 .username(redisProtocol.getUsername())
                 .password(redisProtocol.getPassword())
                 .customArg(redisProtocol.getPattern())
@@ -326,6 +348,22 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             }
         }
         return result;
+    }
+
+    private String[] resolveHostAndPort(RedisProtocol redisProtocol) throws GeneralSecurityException, IOException {
+        boolean enableSshTunnel = Optional.ofNullable(redisProtocol.getSshTunnel())
+                .map(ssh -> Boolean.parseBoolean(ssh.getEnable()))
+                .orElse(false);
+        String host;
+        String port;
+        if (enableSshTunnel){
+            host = "localhost";
+            port = String.valueOf(SshTunnelHelper.localPortForward(redisProtocol.getSshTunnel(), redisProtocol.getHost(), redisProtocol.getPort()));
+        } else {
+            host = redisProtocol.getHost();
+            port = redisProtocol.getPort();
+        }
+        return new String[]{host, port};
     }
 
     @Override

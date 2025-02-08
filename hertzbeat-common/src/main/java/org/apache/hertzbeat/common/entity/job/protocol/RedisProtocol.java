@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.job.SshTunnel;
 
 /**
  * Redis Protocol
@@ -60,5 +61,10 @@ public class RedisProtocol implements CommonRequestProtocol, Protocol {
      * TIME OUT PERIOD
      */
     private String timeout;
+
+    /**
+     * SSH TUNNEL
+     */
+    private SshTunnel sshTunnel;
 
 }

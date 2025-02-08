@@ -17,6 +17,16 @@
 
 package org.apache.hertzbeat.collector.collect.database;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
@@ -39,12 +49,6 @@ import org.postgresql.util.PSQLException;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.util.StringUtils;
-
-import java.sql.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * common query for database query
@@ -129,7 +133,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         } catch (SshException sshException) {
             Throwable throwable = sshException.getCause();
             if (throwable instanceof SshChannelOpenException) {
-                log.warn("Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
+                log.warn("[Jdbc collect] Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
             }
             String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
