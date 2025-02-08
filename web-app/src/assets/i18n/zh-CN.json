@@ -707,6 +707,11 @@
   "monitor.total": "总量",
   "monitor.uri.tip": "网站 uri 路径（无 ip 端口） EG:/console",
   "monitor.url.tip": "服务:jmx:rmi:///jndi/rmi://host:port/jmxrmi",
+  "monitor.sshHost.tip": "SSH隧道开启时必填",
+  "monitor.sshPort.tip": "SSH隧道开启时必填",
+  "monitor.sshUsername.tip": "SSH隧道开启时必填",
+  "monitor.sshPrivateKey.tip": "启动RSA私钥",
+
   "placeholder.key": "键",
   "placeholder.value": "值",
   "plugin.delete": "刪除插件",

@@ -711,6 +711,11 @@
   "monitor.total": "Total",
   "monitor.uri.tip": "Website uri path(no ip port) EG:/console",
   "monitor.url.tip": "service:jmx:rmi:///jndi/rmi://host:port/jmxrmi",
+  "monitor.sshHost.tip": "Required When Enabling SSH Tunnel",
+  "monitor.sshPort.tip": "Required When Enabling SSH Tunnel",
+  "monitor.sshUsername.tip": "Required When Enabling SSH Tunnel",
+  "monitor.sshPrivateKey.tip": "BEGIN RSA PRIVATE KEY",
+
   "placeholder.key": "Key",
   "placeholder.value": "Value",
   "plugin.delete": "Delete Plugin",
