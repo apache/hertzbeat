@@ -80,6 +80,7 @@ excludedResource:
   - /api/status/page/public/**===*
   # web ui resource
   - /===get
+  - /assets/**===get
   - /dashboard/**===get
   - /monitors/**===get
   - /alert/**===get
