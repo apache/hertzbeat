@@ -1,3 +1,5 @@
+@import "~src/styles/theme";
+
 :host ::ng-deep app-toolbar {
   .center-content {
     display: flex;
@@ -71,19 +73,9 @@
   perspective: 1200px;
 }
 
-:root {
-  --background-color: #fff;
-  --text-color: #333;
-}
-
-[data-theme='dark'] {
-  --background-color: #1e1e1e;
-  --text-color: #fff;
-}
-
 .alert-card {
   position: relative;
-  background: var(--background-color);
+  background: @common-background-color;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
@@ -219,7 +211,6 @@
 
             .alert-content {
               font-size: 13px;
-              color: var(--text-color);
               line-height: 1.5;
             }
           }
@@ -394,3 +385,11 @@
 .alert-card:nth-child(2) { animation-delay: 0.15s; }
 .alert-card:nth-child(3) { animation-delay: 0.2s; }
 .alert-card:nth-child(n+4) { animation-delay: 0.25s; }
+
+[data-theme='dark'] {
+  :host {
+    .alert-card {
+      background-color: @common-background-color-dark;
+    }
+  }
+}
