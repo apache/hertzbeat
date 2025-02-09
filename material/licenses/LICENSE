@@ -235,8 +235,6 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/com.squareup.okio/okio-jvm/3.6.0 Apache-2.0
     https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-moshi/2.9.0 Apache-2.0
     https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit/2.9.0 Apache-2.0
-    https://mvnrepository.com/artifact/com.tencentcloudapi/tencentcloud-sdk-java-common/3.1.648 Apache-2.0
-    https://mvnrepository.com/artifact/com.tencentcloudapi/tencentcloud-sdk-java-sms/3.1.648 Apache-2.0
     https://mvnrepository.com/artifact/com.usthe.sureness/spring-boot3-starter-sureness/1.1.0 Apache-2.0
     https://mvnrepository.com/artifact/com.usthe.sureness/sureness-core/1.1.0 Apache-2.0
     https://mvnrepository.com/artifact/com.zaxxer/HikariCP/5.0.1 Apache-2.0
