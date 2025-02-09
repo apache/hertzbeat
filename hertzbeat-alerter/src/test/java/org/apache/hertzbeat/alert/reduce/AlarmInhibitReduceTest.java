@@ -83,8 +83,8 @@ class AlarmInhibitReduceTest {
         MockitoAnnotations.openMocks(this);
         when(alertInhibitDao.findAlertInhibitsByEnableIsTrue())
             .thenReturn(Collections.emptyList());
-        
-        // 正确设置 AlerterProperties mock
+
+        // Correctly set up AlerterProperties mock
         AlerterProperties.InhibitProperties inhibitProperties = new AlerterProperties.InhibitProperties();
         inhibitProperties.setTtl(60000);
         when(alerterProperties.getInhibit()).thenReturn(inhibitProperties);

@@ -142,7 +142,7 @@ public final class AesUtil {
     /**
      * Determine whether it is encrypted
      * @param text text
-     * @return true-是 false-否
+     * @return true false
      */
     public static boolean isCiphertext(String text, String decryptKey) {
         // First use whether it is base64 to determine whether it has been encrypted
