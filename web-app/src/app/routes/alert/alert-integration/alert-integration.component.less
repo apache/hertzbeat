@@ -1,30 +1,21 @@
-:root {
-  --background-color: #fff;
-  --text-color: #333;
-}
-
-[data-theme='dark'] {
-  --background-color: #1e1e1e;
-  --text-color: #fff;
-}
+@import "~src/styles/theme";
 
 .alert-integration-container {
   display: flex;
   height: 100%;
-  background: var(--background-color);
+  background: @common-background-color;
   border-radius: 4px;
 
   .data-sources {
     width: 240px;
     border-right: 1px solid #f0f0f0;
     padding: 16px;
-    background: var(--background-color);
+    background: @common-background-color;
 
     h2 {
       margin-bottom: 16px;
       font-size: 16px;
       font-weight: 500;
-      color: var(--text-color);
     }
 
     .source-list {
@@ -49,10 +40,6 @@
           height: 24px;
           margin-right: 8px;
         }
-
-        span {
-          color: var(--text-color);
-        }
       }
     }
   }
@@ -61,26 +48,36 @@
     flex: 1;
     padding: 24px;
     overflow-y: auto;
-    background: var(--background-color);
+    background: @common-background-color;
 
     h2 {
       margin-bottom: 24px;
       font-size: 20px;
       font-weight: 500;
-      color: var(--text-color);
     }
   }
 }
 
 [data-theme='dark'] {
-  .source-list {
-    .source-item {
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
+  :host {
+    .alert-integration-container {
+      background: @common-background-color-dark;
+      .data-sources {
+        background: @common-background-color-dark;
       }
+      .doc-content {
+        background: @common-background-color-dark;
+      }
+      .source-list {
+        .source-item {
+          &:hover {
+            background: rgba(255, 255, 255, 0.4);
+          }
 
-      &.active {
-        background: rgba(255, 255, 255, 0.2);
+          &.active {
+            background: rgba(255, 255, 255, 0.6);
+          }
+        }
       }
     }
   }
