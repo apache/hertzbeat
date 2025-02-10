@@ -452,7 +452,7 @@ public class MonitorServiceImpl implements MonitorService {
                         .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
-            // when the monitor status is stopped, don't change the monitor status
+            // when the monitor status is paused, don't change the monitor status
             if (preMonitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
                 monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             }
