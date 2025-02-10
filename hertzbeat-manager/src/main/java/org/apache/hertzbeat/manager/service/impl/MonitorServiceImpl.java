@@ -452,6 +452,10 @@ public class MonitorServiceImpl implements MonitorService {
                         .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
+            // when the monitor status is stopped, don't change the monitor status
+            if (preMonitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
+                monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
+            }
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             // update or open grafana dashboard
