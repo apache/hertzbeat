@@ -34,6 +34,7 @@ import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
+import { ThemeService } from '../../service/theme.service';
 import { formatTagName } from '../../shared/utils/common-util';
 
 @Component({
@@ -51,9 +52,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private collectorSvc: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private router: Router,
+    private themeSvc: ThemeService,
     private cdr: ChangeDetectorRef
   ) {}
 
+  theme: string = 'default';
   // Tag Word Cloud
   wordCloudData: CloudData[] = [];
   wordCloudDataLoading: boolean = false;
@@ -178,6 +181,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   alertContentLoading: boolean = false;
 
   ngOnInit(): void {
+    this.theme = this.themeSvc.getTheme() || 'default';
     this.appsCountTheme = {
       title: {
         text: `{a|${this.i18nSvc.fanyi('dashboard.monitors.title')}}`,

@@ -306,7 +306,7 @@
         [delay]="300"
         [zoomOnHover]="{ scale: 1.4, transitionTime: 0.6, delay: 0.4 }"
         [overflow]="false"
-        [background]="'white no-repeat fixed center'"
+        [background]="theme == 'dark' ? '#141414' : 'white'"
       >
       </angular-tag-cloud>
     </nz-spin>

@@ -69,5 +69,6 @@ export class ThemeService {
 
     // add new theme
     this.doc.body.appendChild(style);
+    this.doc.body.setAttribute('data-theme', theme);
   }
 }
