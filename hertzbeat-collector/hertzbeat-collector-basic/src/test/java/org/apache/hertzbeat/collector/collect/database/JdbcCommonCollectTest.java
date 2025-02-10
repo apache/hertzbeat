@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.collect.database;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -99,28 +100,27 @@ class JdbcCommonCollectTest {
             "dm"
         };
         for (String platform : platforms) {
-            assertDoesNotThrow(() -> {
-                JdbcProtocol jdbc = new JdbcProtocol();
-                jdbc.setPlatform(platform);
-    
-                Metrics metrics = new Metrics();
-                metrics.setJdbc(jdbc);
-    
-                CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-                jdbcCommonCollect.collect(builder, metrics);
-            });
-        }
-        // invalid platform
-        assertThrows(IllegalArgumentException.class, () -> {
             JdbcProtocol jdbc = new JdbcProtocol();
-            jdbc.setPlatform("invalid");
+            jdbc.setPlatform(platform);
 
             Metrics metrics = new Metrics();
             metrics.setJdbc(jdbc);
 
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             jdbcCommonCollect.collect(builder, metrics);
-        });
+            assertNotEquals(builder.getMsg(), "Query Error: Not support database platform: " + platform);
+        }
+        // invalid platform
+        JdbcProtocol jdbc = new JdbcProtocol();
+        jdbc.setPlatform("invalid");
+
+        Metrics metrics = new Metrics();
+        metrics.setJdbc(jdbc);
+
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        jdbcCommonCollect.collect(builder, metrics);
+        assertEquals(builder.getCode(), CollectRep.Code.FAIL);
+        assertEquals(builder.getMsg(), "Query Error: Not support database platform: invalid");
     }
 
     @Test

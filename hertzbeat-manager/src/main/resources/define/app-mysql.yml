@@ -115,6 +115,78 @@ params:
     required: false
     # hide param-true or false
     hide: true
+  - field: enableSshTunnel
+    name:
+      zh-CN: 是否启用SSH隧道
+      en-US: Enable SSH Tunnel
+    type: boolean
+    required: true
+    hide: true
+  - field: sshHost
+    name:
+      zh-CN: SSH Host
+      en-US: SSH Host
+    type: text
+    required: false
+    placeholder: 'When Enable SSH Tunnel'
+    hide: true
+  - field: sshPort
+    name:
+      zh-CN: SSH端口
+      en-US: SSH Port
+    type: number
+    range: '[0,65535]'
+    required: false
+    defaultValue: 22
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshTimeout
+    name:
+      zh-CN: SSH超时时间(ms)
+      en-US: SSH Timeout(ms)
+    type: number
+    required: false
+    range: '[400,200000]'
+    defaultValue: 6000
+    hide: true
+  - field: sshUsername
+    name:
+      zh-CN: SSH用户名
+      en-US: SSH Username
+    type: text
+    required: false
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshPassword
+    name:
+      zh-CN: SSH密码
+      en-US: SSH Password
+    type: password
+    required: false
+    hide: true
+  - field: sshShareConnection
+    name:
+      zh-CN: 是否共享SSH连接
+      en-US: Share SSH Connection
+    type: boolean
+    required: true
+    defaultValue: true
+    hide: true
+  - field: sshPrivateKey
+    name:
+      zh-CN: SSH私钥
+      en-US: SSH PrivateKey
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    required: false
+    hide: true
+  - field: sshPrivateKeyPassphrase
+    name:
+      zh-CN: SSH密钥短语
+      en-US: SSH PrivateKey PassPhrase
+    type: password
+    required: false
+    hide: true
 
 # collect metrics config list
 metrics:
@@ -205,6 +277,16 @@ metrics:
       sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port' or Variable_name = 'thread_cache_size' or Variable_name = 'table_open_cache' or Variable_name = 'innodb_buffer_pool_size';
       # JDBC url
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: cache
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
@@ -284,6 +366,16 @@ metrics:
       # sql
       sql: show global status like 'QCache%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: performance
     priority: 2
@@ -318,6 +410,16 @@ metrics:
       queryType: columns
       sql: show global status where Variable_name = 'questions' or Variable_name = 'uptime';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: innodb
     priority: 3
@@ -384,6 +486,16 @@ metrics:
       queryType: columns
       sql: show global status where Variable_name like 'innodb%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: status
     priority: 4
@@ -479,6 +591,16 @@ metrics:
       queryType: columns
       sql: show global status where Variable_name like 'thread%' or Variable_name = 'com_select' or Variable_name = 'com_insert' or Variable_name = 'com_update' or Variable_name = 'com_delete' or Variable_name = 'com_commit' or Variable_name = 'com_rollback' or Variable_name = 'questions' or Variable_name = 'uptime';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: handler
     priority: 5
@@ -558,6 +680,16 @@ metrics:
       queryType: columns
       sql: show global status like 'Handler%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: connection
     priority: 6
@@ -597,6 +729,16 @@ metrics:
       queryType: columns
       sql: show global status;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: thread
     priority: 7
@@ -636,6 +778,16 @@ metrics:
       queryType: columns
       sql: show global status like 'thread%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: tmp
     priority: 8
@@ -670,6 +822,16 @@ metrics:
       queryType: columns
       sql: show global status where Variable_name like '%tmp%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: select_type
     priority: 9
@@ -714,6 +876,16 @@ metrics:
       queryType: columns
       sql: show global status where Variable_name like 'select%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: sort
     priority: 10
@@ -753,6 +925,16 @@ metrics:
       queryType: columns
       sql: show global status where Variable_name like 'sort%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: table_lock
     priority: 11
@@ -782,6 +964,16 @@ metrics:
       queryType: columns
       sql: show global status where Variable_name like 'table_lock%';
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: process_state
     priority: 12
@@ -812,6 +1004,16 @@ metrics:
       queryType: multiRow
       sql: select state, count(*) as num from information_schema.PROCESSLIST where state != '' group by state;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: slow_sql
     priority: 13
@@ -864,3 +1066,13 @@ metrics:
       queryType: multiRow
       sql: select sql_text, start_time, db, query_time from mysql.slow_log;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^

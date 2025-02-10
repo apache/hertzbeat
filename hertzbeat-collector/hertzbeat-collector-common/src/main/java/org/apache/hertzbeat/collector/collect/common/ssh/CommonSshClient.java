@@ -25,6 +25,7 @@ import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.kex.BuiltinDHFactories;
 import org.apache.sshd.core.CoreModuleProperties;
+import org.apache.sshd.server.forward.AcceptAllForwardingFilter;
 
 /**
  * common ssh pool client
@@ -52,6 +53,7 @@ public class CommonSshClient {
                 BuiltinDHFactories.VALUES,
                 ClientBuilder.DH2KEX
         ));
+        SSH_CLIENT.setForwardingFilter(new AcceptAllForwardingFilter());
         // todo when connect AlibabaCloud ubuntu server, custom signature factories will cause error, why?
         // SSH_CLIENT.setSignatureFactories(new ArrayList<>(BuiltinSignatures.VALUES));
         SSH_CLIENT.start();
