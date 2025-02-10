@@ -105,6 +105,78 @@ params:
     defaultValue: 3
     # hide-is hide this field and put it in advanced layout
     hide: true
+  - field: enableSshTunnel
+    name:
+      zh-CN: 是否启用SSH隧道
+      en-US: Enable SSH Tunnel
+    type: boolean
+    required: true
+    hide: true
+  - field: sshHost
+    name:
+      zh-CN: SSH Host
+      en-US: SSH Host
+    type: text
+    required: false
+    placeholder: 'When Enable SSH Tunnel'
+    hide: true
+  - field: sshPort
+    name:
+      zh-CN: SSH端口
+      en-US: SSH Port
+    type: number
+    range: '[0,65535]'
+    required: false
+    defaultValue: 22
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshTimeout
+    name:
+      zh-CN: SSH超时时间(ms)
+      en-US: SSH Timeout(ms)
+    type: number
+    required: false
+    range: '[400,200000]'
+    defaultValue: 6000
+    hide: true
+  - field: sshUsername
+    name:
+      zh-CN: SSH用户名
+      en-US: SSH Username
+    type: text
+    required: false
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshPassword
+    name:
+      zh-CN: SSH密码
+      en-US: SSH Password
+    type: password
+    required: false
+    hide: true
+  - field: sshShareConnection
+    name:
+      zh-CN: 是否共享SSH连接
+      en-US: Share SSH Connection
+    type: boolean
+    required: true
+    defaultValue: true
+    hide: true
+  - field: sshPrivateKey
+    name:
+      zh-CN: SSH私钥
+      en-US: SSH PrivateKey
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    required: false
+    hide: true
+  - field: sshPrivateKeyPassphrase
+    name:
+      zh-CN: SSH密钥短语
+      en-US: SSH PrivateKey PassPhrase
+    type: password
+    required: false
+    hide: true
 metrics:
   - name: server
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
@@ -247,6 +319,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
 
   - name: clients
@@ -318,6 +400,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: memory
     i18n:
@@ -562,6 +654,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: persistence
     i18n:
@@ -707,6 +809,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: stats
     i18n:
@@ -927,6 +1039,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: replication
     i18n:
@@ -1012,6 +1134,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: cpu
     i18n:
@@ -1072,6 +1204,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: errorstats
     i18n:
@@ -1112,6 +1254,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: cluster
     i18n:
@@ -1227,6 +1379,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: commandstats
     i18n:
@@ -1307,6 +1469,16 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
 
   - name: keyspace
@@ -1370,3 +1542,13 @@ metrics:
       # timeout unit：ms
       timeout: ^_^timeout^_^
       pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^

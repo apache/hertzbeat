@@ -15,65 +15,66 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.common.entity.job;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.job.SshTunnel;
+import org.apache.hertzbeat.common.entity.job.protocol.CommonRequestProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 
 /**
- * Database configuration information implemented by the common jdbc specification
+ * ssh tunnel
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class JdbcProtocol implements CommonRequestProtocol, Protocol {
+public class SshTunnel implements CommonRequestProtocol, Protocol {
+
+    /**
+     * enable ssh tunnel
+     */
+    private String enable = "false";
+
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
+
     /**
-     * Port number
+     * Peer host port
      */
-    private String port;
-    /**
-     * Database user name (optional)
-     */
-    private String username;
-    /**
-     * Database Password (optional)
-     */
-    private String password;
-    /**
-     * Database
-     */
-    private String database;
+    private String port = "22";
+
     /**
      * TIME OUT PERIOD
      */
-    private String timeout;
-    /**
-     * TYPE OF DATABASE mysql oracle ...
-     */
-    private String platform;
-    /**
-     * SQL query mode： oneRow, multiRow, columns, runScript
-     */
-    private String queryType;
-    /**
-     * sql
-     */
-    private String sql;
-    /**
-     * DATABASE LINK URL eg: jdbc:mysql://localhost:3306/usthe
-     */
-    private String url;
+    private String timeout = "6000";
 
     /**
-     * ssh tunnel
+     * UserName
      */
-    private SshTunnel sshTunnel;
+    private String username;
+
+    /**
+     * Password (optional)
+     */
+    private String password;
+
+    /**
+     * Private key (optional)
+     */
+    private String privateKey;
+
+    /**
+     * private key passphrase (optional)
+     */
+    private String privateKeyPassphrase;
+
+    /**
+     * share connection session
+     */
+    private String shareConnection = "true";
 }
