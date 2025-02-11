@@ -99,7 +99,7 @@ class EmailAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        // 设置邮件服务器配置
+        // Set up email server configuration
         MailServerConfig mailServerConfig = new MailServerConfig();
         mailServerConfig.setEmailHost("smtp.example.com");
         mailServerConfig.setEmailPort(587);

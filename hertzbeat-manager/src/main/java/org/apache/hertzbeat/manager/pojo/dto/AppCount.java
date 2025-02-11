@@ -46,7 +46,6 @@ public class AppCount {
     private String app;
 
     /**
-     * 任务状态
      * task status
      */
     private transient byte status;
