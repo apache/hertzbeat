@@ -436,11 +436,12 @@ public class MonitorServiceImpl implements MonitorService {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
             }
             monitor.setJobId(newJobId);
-        }
 
-        try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {
+            // execute only in non paused status
+            try {
+                detectMonitor(monitor, params, collector);
+            } catch (Exception ignored) {
+            }
         }
 
         // After the update is successfully released, refresh the database
@@ -451,10 +452,6 @@ public class MonitorServiceImpl implements MonitorService {
                         .collector(collector).monitorId(monitorId)
                         .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
-            }
-            // when the monitor status is paused, don't change the monitor status
-            if (preMonitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
-                monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             }
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
