@@ -41,7 +41,7 @@ public class Configmap implements Serializable {
     private String key;
 
     /**
-     * parameter value  参数value
+     * parameter value
      */
     private Object value;
 

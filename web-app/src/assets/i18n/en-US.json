@@ -400,6 +400,8 @@
   "common.button.cancel": "Cancel",
   "common.button.collapse": "Collapse",
   "common.button.confirm": "Confirm",
+  "common.button.copy": "Copy",
+  "common.button.copy.tip": "Click to copy",
   "common.button.delete": "Delete",
   "common.button.detect": "Detect",
   "common.button.edit": "Edit",

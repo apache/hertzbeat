@@ -400,6 +400,8 @@
   "common.button.cancel": "取消",
   "common.button.collapse": "收起",
   "common.button.confirm": "確認",
+  "common.button.copy": "複製",
+  "common.button.copy.tip": "點擊複製",
   "common.button.delete": "刪除",
   "common.button.detect": "測試",
   "common.button.edit": "編輯",

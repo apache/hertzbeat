@@ -68,19 +68,19 @@ class KafkaCommonDataQueueTest {
         when(commonProperties.getQueue()).thenReturn(dataQueueProperties);
         when(dataQueueProperties.getKafka()).thenReturn(kafkaProperties);
         
-        // 设置所有必需的 topic
+        // Set all required topics
         when(kafkaProperties.getMetricsDataTopic()).thenReturn("metricsDataTopic");
         when(kafkaProperties.getAlertsDataTopic()).thenReturn("alertsDataTopic");
         when(kafkaProperties.getMetricsDataToStorageTopic()).thenReturn("metricsDataToStorageTopic");
         when(kafkaProperties.getServiceDiscoveryDataTopic()).thenReturn("serviceDiscoveryDataTopic");
         when(kafkaProperties.getServers()).thenReturn("localhost:9092");
 
-        // 模拟 consumer 的 subscribe 方法
+        // Simulate the subscribe method for consumers
         doNothing().when(metricsDataToAlertConsumer).subscribe(anyCollection());
 
         kafkaCommonDataQueue = new KafkaCommonDataQueue(commonProperties);
         
-        // 使用反射设置私有字段
+        // Use reflection to set private fields
         setPrivateField(kafkaCommonDataQueue, "metricsDataProducer", metricsDataProducer);
         setPrivateField(kafkaCommonDataQueue, "metricsDataToAlertConsumer", metricsDataToAlertConsumer);
     }
@@ -98,16 +98,16 @@ class KafkaCommonDataQueueTest {
 
     @Test
     void testPollMetricsDataToAlerter() throws InterruptedException {
-        // 创建一个测试数据
+        // Create a test data
         CollectRep.MetricsData expectedData = CollectRep.MetricsData.newBuilder()
                 .setMetrics("test metrics")
                 .build();
         
-        // 创建一个包含测试数据的 ConsumerRecord
+        // Create a ConsumerRecord containing test data
         ConsumerRecord<Long, CollectRep.MetricsData> record = 
                 new ConsumerRecord<>("metricsDataTopic", 0, 0L, 1L, expectedData);
         
-        // 创建一个包含单个记录的 ConsumerRecords
+        // Create a ConsumerRecords containing a single record.
         Map<TopicPartition, List<ConsumerRecord<Long, CollectRep.MetricsData>>> recordsMap = 
                 Collections.singletonMap(
                         new TopicPartition("metricsDataTopic", 0), 
