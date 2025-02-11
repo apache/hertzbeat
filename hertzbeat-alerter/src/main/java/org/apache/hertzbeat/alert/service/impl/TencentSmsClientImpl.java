@@ -17,10 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.TencentSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
@@ -35,6 +31,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -61,10 +59,8 @@ public class TencentSmsClientImpl implements SmsClient {
     private String templateId;
     private String secretId;
     private String secretKey;
-    private final Gson gson;
 
     public TencentSmsClientImpl(TencentSmsProperties config) {
-        this.gson = new Gson();
         if (config != null) {
             this.appId = config.getAppId();
             this.signName = config.getSignName();
@@ -114,7 +110,7 @@ public class TencentSmsClientImpl implements SmsClient {
             params.put("TemplateParamSet", templateValues);
             params.put("PhoneNumberSet", phones);
             
-            String payload = gson.toJson(params);
+            String payload = JsonUtil.toJson(params);
             
             // calculate request signature
             String authorization = TencentCloudApiSignV3.calculateAuthorization(
@@ -145,18 +141,19 @@ public class TencentSmsClientImpl implements SmsClient {
                     throw new SendMessageException("HTTP request failed with status code: " + statusCode);
                 }
                 
-                JsonObject jsonResponse = JsonParser.parseString(responseBody).getAsJsonObject().getAsJsonObject("Response");
-                JsonObject error = jsonResponse.getAsJsonObject("Error");
+                JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
+                JsonNode responseNode = jsonResponse.get("Response");
+                JsonNode error = responseNode.get("Error");
                 if (error != null) {
-                    String code = error.get("Code").getAsString();
-                    String message = error.get("Message").getAsString();
+                    String code = error.get("Code").asText();
+                    String message = error.get("Message").asText();
                     throw new SendMessageException(code + ":" + message);
                 }
-                JsonArray sendStatusSet = jsonResponse.getAsJsonArray("SendStatusSet");
-                if (sendStatusSet != null && sendStatusSet.size() > 0) {
-                    JsonObject firstStatus = sendStatusSet.get(0).getAsJsonObject();
-                    String code = firstStatus.get("Code").getAsString();
-                    String message = firstStatus.get("Message").getAsString();
+                JsonNode sendStatusSet = responseNode.get("SendStatusSet");
+                if (sendStatusSet != null && sendStatusSet.isArray() && sendStatusSet.size() > 0) {
+                    JsonNode firstStatus = sendStatusSet.get(0);
+                    String code = firstStatus.get("Code").asText();
+                    String message = firstStatus.get("Message").asText();
                     if (!RESPONSE_OK.equals(code)) {
                         throw new SendMessageException(code + ":" + message);
                     }
