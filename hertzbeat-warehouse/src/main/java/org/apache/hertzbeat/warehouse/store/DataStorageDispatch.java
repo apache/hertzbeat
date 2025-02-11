@@ -92,9 +92,10 @@ public class DataStorageDispatch {
             long id = metricsData.getId();
             CollectRep.Code code = metricsData.getCode();
             try {
-                String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ? AND status != ?";
+                String sql = "UPDATE hzb_monitor SET status = ? WHERE id = ? AND status = ?";
                 int status = code == CollectRep.Code.SUCCESS ? CommonConstants.MONITOR_UP_CODE : CommonConstants.MONITOR_DOWN_CODE;
-                int matchedRows = jdbcTemplate.update(sql, status, id, status);
+                int preStatus = code == CollectRep.Code.SUCCESS ? CommonConstants.MONITOR_DOWN_CODE : CommonConstants.MONITOR_UP_CODE;
+                int matchedRows = jdbcTemplate.update(sql, status, id, preStatus);
                 if (matchedRows > 0) {
                     entityManager.getEntityManagerFactory().getCache().evict(Monitor.class, id);
                 }

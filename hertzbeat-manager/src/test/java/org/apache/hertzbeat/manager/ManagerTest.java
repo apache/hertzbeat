@@ -43,7 +43,7 @@ import org.apache.hertzbeat.common.config.CommonConfig;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
-import org.apache.hertzbeat.alert.service.TencentSmsClient;
+import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
 import org.apache.hertzbeat.warehouse.store.history.iotdb.IotDbDataStorage;
@@ -93,7 +93,7 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(CommonConfig.class));
         assertNotNull(ctx.getBean(InMemoryCommonDataQueue.class));
         // condition on common.sms.tencent.app-id
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TencentSmsClient.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TencentSmsClientImpl.class));
         assertNotNull(ctx.getBean(SpringContextHolder.class));
 
         // test warehouse module
