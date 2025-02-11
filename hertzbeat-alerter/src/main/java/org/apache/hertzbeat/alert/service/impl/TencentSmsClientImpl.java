@@ -132,25 +132,14 @@ public class TencentSmsClientImpl implements SmsClient {
             httpPost.setHeader("Authorization", authorization);
             httpPost.setEntity(new StringEntity(payload, StandardCharsets.UTF_8));
 
-            // log request information
-            log.info("Request URL: {}", httpPost.getURI());
-            log.info("Request Headers:");
-            for (org.apache.http.Header header : httpPost.getAllHeaders()) {
-                log.info("{}: {}", header.getName(), header.getValue());
-            }
-            log.info("Request Body: {}", payload);
-            
+            log.debug("Sending SMS request to {}, payload: {}", httpPost.getURI(), payload);
+
             // send http request and handle response
             try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
 
-                log.info("Response Status: {}", statusCode);
-                log.info("Response Headers:");
-                for (org.apache.http.Header header : response.getAllHeaders()) {
-                    log.info("{}: {}", header.getName(), header.getValue());
-                }
-                log.info("Response Body: {}", responseBody);
+                log.debug("SMS response status: {}, body: {}", statusCode, responseBody);
                 
                 if (statusCode != 200) {
                     throw new SendMessageException("HTTP request failed with status code: " + statusCode);
@@ -172,9 +161,10 @@ public class TencentSmsClientImpl implements SmsClient {
                         throw new SendMessageException(code + ":" + message);
                     }
                 }
+                log.info("Successfully sent SMS to phones: {}", String.join(",", phones));
             }
         } catch (Exception e) {
-            log.warn(e.getMessage());
+            log.warn("Failed to send SMS: {}", e.getMessage());
             throw new SendMessageException(e.getMessage());
         }
     }
