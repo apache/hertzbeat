@@ -21,12 +21,12 @@ import java.util.ResourceBundle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
-import org.apache.hertzbeat.alert.service.TencentSmsClient;
+import org.apache.hertzbeat.alert.service.SmsClient;
+import org.apache.hertzbeat.alert.service.SmsClientFactory;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,35 +35,22 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty("common.sms.tencent.app-id")
-@Deprecated
 final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     
-    private final TencentSmsClient tencentSmsClient;
-    
+    private final SmsClientFactory smsFactory;
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
     
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
-        // SMS notification todo use the rest api not sdk
         try {
-            String instance = null;
-            String priority = null;
-            String content = null;
-            if (alert.getCommonLabels() != null) {
-                instance = alert.getCommonLabels().get("instance");
-                priority = alert.getCommonLabels().get("priority");
-                content = alert.getCommonAnnotations().get("summary");
-                content = content == null ? alert.getCommonAnnotations().get("description") : content;
-                if (content == null) {
-                    content = alert.getCommonAnnotations().values().stream().findFirst().orElse(null);
-                }
+            SmsClient smsClient = smsFactory.getSmsClient();
+            if (smsClient == null) {
+                throw new AlertNoticeException("No SMS Service available, please check the configuration");
             }
-            String[] params = new String[3];
-            params[0] = instance == null ? alert.getGroupKey() : instance;
-            params[1] = priority == null ? "unknown" : priority;
-            params[2] = content;
-            tencentSmsClient.sendMessage(params, new String[]{receiver.getPhone()});
+            if (!smsClient.checkConfig()) {
+                throw new AlertNoticeException(smsClient.getType() + " SMS Service configuration is invalid, please check the configuration");
+            }
+            smsClient.sendMessage(receiver, noticeTemplate, alert);
         } catch (Exception e) {
             throw new AlertNoticeException("[Sms Notify Error] " + e.getMessage());
         }

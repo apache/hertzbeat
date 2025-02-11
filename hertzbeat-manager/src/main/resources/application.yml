@@ -203,6 +203,17 @@ alerter:
   # alert inhibit ttl unit ms, default 14400000(4 hours)
   inhibit:
     ttl: 14400000
+  sms:
+    enable: true
+    type: tencent
+    tencent:
+      secret-id:
+      secret-key:
+      app-id:
+      sign-name:
+      template-id:
+    alibaba:
+      app-id:
 
 scheduler:
   server:
