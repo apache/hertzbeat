@@ -266,7 +266,7 @@ export class DefineComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.loadMenus();
+            this.updateLocalAppState(app, hide);
             this.startUpSvc.loadConfigResourceViaHttp().subscribe(() => {});
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
           } else {
@@ -277,6 +277,18 @@ export class DefineComponent implements OnInit {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );
+  }
+
+  private updateLocalAppState(app: string, hide: boolean): void {
+    this.appMenusArr.forEach(([category, menuData]) => {
+      if (menuData.child) {
+        menuData.child.forEach((item: any) => {
+          if (item.value === app) {
+            item.hide = hide;
+          }
+        });
+      }
+    });
   }
 
   renderCategoryName(category: string): string {

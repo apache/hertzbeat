@@ -19,7 +19,7 @@
 
 import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { I18NService } from '@core';
+import { I18NService, StartupService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
@@ -32,6 +32,7 @@ import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
 import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
+import { GeneralConfigService } from '../../../service/general-config.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { generateReadableRandomString } from '../../../shared/utils/common-util';
 
@@ -59,6 +60,8 @@ export class MonitorNewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private notifySvc: NzNotificationService,
+    private configService: GeneralConfigService,
+    private startUpSvc: StartupService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private titleSvc: TitleService,
     private collectorSvc: CollectorService
@@ -168,13 +171,19 @@ export class MonitorNewComponent implements OnInit {
     };
     this.spinningTip = 'Loading...';
     this.isSpinning = true;
+
     this.monitorSvc.newMonitor(addMonitor).subscribe(
       message => {
-        this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('monitor.new.success'), '');
-          this.router.navigateByUrl(`/monitors?app=${info.monitor.app}`);
+          this.configService.updateAppTemplateConfig({ hide: false }, info.monitor.app).subscribe(() => {
+            this.startUpSvc.loadConfigResourceViaHttp().subscribe(() => {
+              this.isSpinning = false;
+              this.notifySvc.success(this.i18nSvc.fanyi('monitor.new.success'), '');
+              this.router.navigateByUrl(`/monitors?app=${info.monitor.app}`);
+            });
+          });
         } else {
+          this.isSpinning = false;
           this.notifySvc.error(this.i18nSvc.fanyi('monitor.new.failed'), message.msg);
         }
       },
