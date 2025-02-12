@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.prometheus.parser;
+package org.apache.hertzbeat.common.entity.dto;
 
 import java.util.List;
 import lombok.Data;

@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.prometheus.parser;
+package org.apache.hertzbeat.common.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.dto.MetricFamily;
 
 import java.io.IOException;
 import java.io.InputStream;

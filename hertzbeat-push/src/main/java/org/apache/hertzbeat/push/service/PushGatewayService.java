@@ -30,6 +30,8 @@ import org.springframework.stereotype.Service;
 @Service
 public interface PushGatewayService {
 
+
+
     boolean pushMetricsData(InputStream inputStream) throws IOException;
 
 }
