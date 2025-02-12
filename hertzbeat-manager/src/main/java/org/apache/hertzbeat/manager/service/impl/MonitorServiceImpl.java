@@ -436,11 +436,12 @@ public class MonitorServiceImpl implements MonitorService {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
             }
             monitor.setJobId(newJobId);
-        }
 
-        try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {
+            // execute only in non paused status
+            try {
+                detectMonitor(monitor, params, collector);
+            } catch (Exception ignored) {
+            }
         }
 
         // After the update is successfully released, refresh the database
