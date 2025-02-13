@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
+        <version>3.4.2</version>
     </parent>
 
     <groupId>org.apache.hertzbeat</groupId>
@@ -168,7 +168,7 @@
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
-        <greptimedb.version>0.9.1</greptimedb.version>
+        <greptimedb.version>0.11.0</greptimedb.version>
         <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
         <arrow.version>18.1.0</arrow.version>
         <snappy-java.version>1.1.10.7</snappy-java.version>
