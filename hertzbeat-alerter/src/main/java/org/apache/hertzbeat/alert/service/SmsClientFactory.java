@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.SmsConfig;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
+import org.apache.hertzbeat.alert.service.impl.UniSmsClientImpl;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import static org.apache.hertzbeat.common.constants.SmsConstants.ALIBABA;
 import static org.apache.hertzbeat.common.constants.SmsConstants.TENCENT;
+import static org.apache.hertzbeat.common.constants.SmsConstants.UNISMS;
 
 /**
  * SMS client factory
@@ -123,6 +125,9 @@ public class SmsClientFactory {
         switch (smsConfig.getType()) {
             case TENCENT:
                 currentSmsClient = new TencentSmsClientImpl(smsConfig.getTencent());
+                break;
+            case UNISMS:
+                currentSmsClient = new UniSmsClientImpl(smsConfig.getUnisms());
                 break;
             case ALIBABA:
                 // TODO: implement Alibaba SMS client
