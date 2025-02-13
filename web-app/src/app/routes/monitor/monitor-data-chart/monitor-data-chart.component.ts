@@ -75,18 +75,6 @@ export class MonitorDataChartComponent implements OnInit {
         show: true,
         orient: 'vertical',
         feature: {
-          dataZoom: {
-            yAxisIndex: 'none',
-            title: {
-              zoom: this.i18nSvc.fanyi('monitor.detail.chart.zoom'),
-              back: this.i18nSvc.fanyi('monitor.detail.chart.back')
-            },
-            emphasis: {
-              iconStyle: {
-                textPosition: 'left'
-              }
-            }
-          },
           saveAsImage: {
             title: this.i18nSvc.fanyi('monitor.detail.chart.save'),
             emphasis: {
@@ -223,7 +211,10 @@ export class MonitorDataChartComponent implements OnInit {
         {
           type: 'inside',
           start: 0,
-          end: 100
+          end: 100,
+          zoomOnMouseWheel: false,
+          moveOnMouseMove: false,
+          moveOnMouseWheel: false
         }
       ]
     };
