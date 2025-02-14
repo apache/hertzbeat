@@ -110,9 +110,18 @@
           >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
-          <button nz-button nzDanger (click)="onDeleteOnePlugin(data.id)" nz-tooltip [nzTooltipTitle]="'plugin.delete' | i18n">
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
           </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button nz-button nzDanger (click)="onDeleteOnePlugin(data.id)" nz-tooltip [nzTooltipTitle]="'plugin.delete' | i18n">
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
         </div>
       </td>
     </tr>

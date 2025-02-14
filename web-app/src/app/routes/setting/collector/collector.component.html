@@ -167,16 +167,25 @@
           >
             <i nz-icon nzType="down-circle" nzTheme="outline"></i>
           </button>
-          <button
-            [disabled]="data.collector.name == 'main-default-collector'"
-            nz-button
-            nzDanger
-            (click)="onDeleteOneCollector(data.collector.name)"
-            nz-tooltip
-            [nzTooltipTitle]="'collector.delete' | i18n"
-          >
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
           </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button
+                  [disabled]="data.collector.name == 'main-default-collector'"
+                  nz-button
+                  nzDanger
+                  (click)="onDeleteOneCollector(data.collector.name)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'collector.delete' | i18n"
+                >
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
         </div>
       </td>
     </tr>
