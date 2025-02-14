@@ -289,12 +289,7 @@
       <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && !isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
-          <ngx-query-builder
-            [classNames]="qbClassNames"
-            [config]="qbConfig"
-            [formControl]="qbFormCtrl"
-            [ngStyle]="{ borderRadius: '4px' }"
-          >
+          <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl" [ngStyle]="{ borderRadius: '4px' }">
             <ng-container *querySwitchGroup="let rule; let onChange = onChange">
               <nz-radio-group
                 style="white-space: nowrap"
