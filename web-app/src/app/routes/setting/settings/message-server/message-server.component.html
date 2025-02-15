@@ -47,25 +47,30 @@
         <ng-template #smsDesc>
           {{ 'alert.notice.sender.sms.type' | i18n }}: {{ 'alert.notice.sender.sms.type.' + smsNoticeSender.type | i18n }}
           <br />
-          <ng-container *ngIf="smsNoticeSender.type === 'tencent'">
-            {{ 'alert.notice.sender.sms.tencent.secretId' | i18n }}: {{ smsNoticeSender.tencent.secretId }}
-            <br />
+          <ng-container [ngSwitch]="smsNoticeSender.type">
+            <!-- Tencent SMS -->
+            <ng-container *ngSwitchCase="SmsType.TENCENT">
+              {{ 'alert.notice.sender.sms.tencent.appId' | i18n }}: {{ smsNoticeSender.tencent.appId }}
+              <br />
+              {{ 'alert.notice.sender.sms.tencent.signName' | i18n }}: {{ smsNoticeSender.tencent.signName }}
+              <br />
+              {{ 'alert.notice.sender.sms.tencent.templateId' | i18n }}: {{ smsNoticeSender.tencent.templateId }}
+            </ng-container>
+
+            <!-- Alibaba SMS -->
+            <ng-container *ngSwitchCase="SmsType.ALIBABA"></ng-container>
+
+            <!-- UniSMS -->
+            <ng-container *ngSwitchCase="SmsType.UNISMS">
+              {{ 'alert.notice.sender.sms.unisms.signature' | i18n }}: {{ smsNoticeSender.unisms.signature }}
+              <br />
+              {{ 'alert.notice.sender.sms.unisms.templateId' | i18n }}: {{ smsNoticeSender.unisms.templateId }}
+              <br />
+              {{ 'alert.notice.sender.sms.unisms.authMode' | i18n }}: {{ smsNoticeSender.unisms.authMode }}
+            </ng-container>
           </ng-container>
-          <ng-container *ngIf="smsNoticeSender.type === 'tencent'">
-            {{ 'alert.notice.sender.sms.tencent.secretKey' | i18n }}: {{ smsNoticeSender.tencent.secretKey }}
-            <br />
-          </ng-container>
-          <ng-container *ngIf="smsNoticeSender.type === 'tencent'">
-            {{ 'alert.notice.sender.sms.tencent.signName' | i18n }}: {{ smsNoticeSender.tencent.signName }}
-            <br />
-          </ng-container>
-          <ng-container *ngIf="smsNoticeSender.type === 'tencent'">
-            {{ 'alert.notice.sender.sms.tencent.appId' | i18n }}: {{ smsNoticeSender.tencent.appId }}
-            <br />
-          </ng-container>
-          <ng-container *ngIf="smsNoticeSender.type === 'tencent'">
-            {{ 'alert.notice.sender.sms.tencent.templateId' | i18n }}: {{ smsNoticeSender.tencent.templateId }}
-          </ng-container>
+          <br />
+          {{ 'common.enable' | i18n }}: {{ smsNoticeSender.enable ? ('common.yes' | i18n) : ('common.no' | i18n) }}
         </ng-template>
       </nz-list-item-meta>
     </nz-list-item>
@@ -145,27 +150,28 @@
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true">{{ 'alert.notice.sender.sms.type' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-select [(ngModel)]="smsType" name="type" id="type" (ngModelChange)="onSmsTypeChange(smsType)">
-            <nz-option nzValue="tencent" nzLabel="{{ 'alert.notice.sender.sms.type.tencent' | i18n }}"></nz-option>
-            <nz-option nzValue="alibaba" nzLabel="{{ 'alert.notice.sender.sms.type.alibaba' | i18n }}"></nz-option>
+          <nz-select [(ngModel)]="smsType" name="type" id="type" (ngModelChange)="onSmsTypeChange($event)">
+            <nz-option [nzValue]="SmsType.TENCENT" nzLabel="{{ 'alert.notice.sender.sms.type.tencent' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.ALIBABA" nzLabel="{{ 'alert.notice.sender.sms.type.alibaba' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.UNISMS" nzLabel="{{ 'alert.notice.sender.sms.type.unisms' | i18n }}"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
-      <ng-container *ngIf="smsType === 'tencent'">
+      <ng-container *ngIf="smsType === SmsType.TENCENT">
         <nz-form-item>
-          <nz-form-label [nzSpan]="7" nzFor="secretId" nzRequired="true">{{
-            'alert.notice.sender.sms.tencent.secretId' | i18n
-          }}</nz-form-label>
+          <nz-form-label [nzSpan]="7" nzFor="secretId" nzRequired="true">
+            {{ 'alert.notice.sender.sms.tencent.secretId' | i18n }}
+          </nz-form-label>
           <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-            <input [(ngModel)]="smsNoticeSender.tencent.secretId" nz-input required name="secretId" type="text" id="secretId" />
+            <input [(ngModel)]="smsNoticeSender.tencent.secretId" nz-input required name="secretId" type="password" id="secretId" />
           </nz-form-control>
         </nz-form-item>
         <nz-form-item>
-          <nz-form-label [nzSpan]="7" nzFor="secretKey" nzRequired="true">{{
-            'alert.notice.sender.sms.tencent.secretKey' | i18n
-          }}</nz-form-label>
+          <nz-form-label [nzSpan]="7" nzFor="secretKey" nzRequired="true">
+            {{ 'alert.notice.sender.sms.tencent.secretKey' | i18n }}
+          </nz-form-label>
           <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-            <input [(ngModel)]="smsNoticeSender.tencent.secretKey" nz-input required name="secretKey" type="text" id="secretKey" />
+            <input [(ngModel)]="smsNoticeSender.tencent.secretKey" nz-input required name="secretKey" type="password" id="secretKey" />
           </nz-form-control>
         </nz-form-item>
         <nz-form-item>
@@ -191,7 +197,68 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
-      <ng-container *ngIf="smsType === 'alibaba'"> </ng-container>
+      <ng-container *ngIf="smsType === SmsType.ALIBABA"> </ng-container>
+      <ng-container *ngIf="smsType === SmsType.UNISMS">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
+            {{ 'alert.notice.sender.sms.unisms.accessKeyId' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.unisms.accessKeyId"
+              nz-input
+              required
+              name="accessKeyId"
+              type="password"
+              id="unismsAccessKeyId"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label nzSpan="7" nzFor="authMode" nzRequired="true">
+            {{ 'alert.notice.sender.sms.unisms.authMode' | i18n }}
+          </nz-form-label>
+          <nz-form-control nzSpan="12">
+            <nz-select [(ngModel)]="smsNoticeSender.unisms.authMode" name="authMode" id="unismsAuthMode" required>
+              <nz-option [nzValue]="uniSmsAuthModes.HMAC" nzLabel="HMAC"></nz-option>
+              <nz-option [nzValue]="uniSmsAuthModes.SIMPLE" nzLabel="Simple"></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <!-- accessKeySecret 根据 authMode 动态显示 -->
+        <nz-form-item *ngIf="isAccessKeySecretRequired()">
+          <nz-form-label [nzSpan]="7" nzFor="accessKeySecret" nzRequired="true">
+            {{ 'alert.notice.sender.sms.unisms.accessKeySecret' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.unisms.accessKeySecret"
+              nz-input
+              required
+              name="accessKeySecret"
+              type="password"
+              id="unismsAccessKeySecret"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="signature" nzRequired="true">
+            {{ 'alert.notice.sender.sms.unisms.signature' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.unisms.signature" nz-input required name="signature" type="text" id="unismsSignature" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="templateId" nzRequired="true">
+            {{ 'alert.notice.sender.sms.unisms.templateId' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.unisms.templateId" nz-input required name="templateId" type="text" id="unismsTemplateId" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="smsEnable" nzRequired="true">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">

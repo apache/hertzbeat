@@ -17,20 +17,10 @@
  * under the License.
  */
 
-import { AlibabaSmsConfig } from './AlibabaSmsConfig';
-import { TencentSmsConfig } from './TencentSmsConfig';
-import { UniSmsConfig } from './UniSmsConfig';
-import { SmsType } from './enums/sms-type.enum';
-
-export class SmsNoticeSender {
-  id!: number;
-  type: SmsType = SmsType.TENCENT;
-  tencent: TencentSmsConfig = new TencentSmsConfig();
-  alibaba: AlibabaSmsConfig = new AlibabaSmsConfig();
-  unisms: UniSmsConfig = new UniSmsConfig();
-  enable: boolean = false;
-  creator!: string;
-  modifier!: string;
-  gmtCreate!: number;
-  gmtUpdate!: number;
+export class UniSmsConfig {
+  accessKeyId!: string;
+  accessKeySecret!: string;
+  signature!: string;
+  authMode!: string;
+  templateId!: string;
 }

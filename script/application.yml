@@ -202,6 +202,25 @@ alerter:
   # alert inhibit ttl unit ms, default 14400000(4 hours)
   inhibit:
     ttl: 14400000
+  sms:
+    enable: false
+    type: tencent
+    tencent:
+      secret-id:
+      secret-key:
+      app-id:
+      sign-name:
+      template-id:
+    alibaba:
+      app-id:
+    unisms:
+      # auth-mode: simple or hmac
+      auth-mode: simple
+      access-key-id: YOUR_ACCESS_KEY_ID
+      # hmac mode need to fill in access-key-secret
+      access-key-secret: YOUR_ACCESS_KEY_SECRET
+      signature: YOUR_SMS_SIGNATURE
+      template-id: YOUR_TEMPLATE_ID
     
 scheduler:
   server:
