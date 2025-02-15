@@ -1,0 +1,134 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: service
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: ftp
+# The monitoring i18n name
+name:
+  zh-CN: FTP服务器
+  en-US: FTP Server
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 FTP 服务器的通用指标进行测量监控。<br>您可以点击 “<i>新建 FTP服务器</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitoring FTP server through general performance metric. You could click the "<i>New FTP server</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 FTP 伺服器的通用名額進行量測監控。<br>您可以點擊“<i>新建FTP伺服器</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ftp
+  en-US: https://hertzbeat.apache.org/docs/help/ftp
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 21
+    # param field input placeholder
+    placeholder: 'Please input port'
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 用户密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    required: false
+    hide: true
+  - field: direction
+    name:
+      zh-CN: 目录
+      en-US: Direction
+    type: text
+    limit: 100
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 超时时间
+      en-US: Timeout
+    type: number
+    range: '[0,100000]'
+    required: true
+    defaultValue: 1000
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启用SFTP
+      en-US: SFTP
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+# collect metrics config list
+metrics:
+  # metrics - basic
+  - name: basic
+    i18n:
+      zh-CN: 概要
+      en-US: Basic
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: isActive
+        type: 1
+        i18n:
+          zh-CN: 活动状态
+          en-US: Is Active
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ftp
+    # the config content when protocol is ftp
+    ftp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      direction: ^_^direction^_^
+      timeout: ^_^timeout^_^
+      ssl: ^_^ssl^_^

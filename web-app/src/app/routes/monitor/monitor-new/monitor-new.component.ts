@@ -49,7 +49,6 @@ export class MonitorNewComponent implements OnInit {
   monitor!: Monitor;
   collectors!: Collector[];
   collector: string = '';
-  detected: boolean = false;
   grafanaDashboard!: GrafanaDashboard;
   // whether it is loading
   isSpinning: boolean = false;
@@ -65,7 +64,6 @@ export class MonitorNewComponent implements OnInit {
     private collectorSvc: CollectorService
   ) {
     this.monitor = new Monitor();
-    this.monitor.tags = [];
     this.grafanaDashboard = new GrafanaDashboard();
   }
 
@@ -78,7 +76,6 @@ export class MonitorNewComponent implements OnInit {
             this.router.navigateByUrl('/monitors/new?app=website');
           }
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
-          this.detected = false;
           this.isSpinning = true;
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
@@ -115,6 +112,7 @@ export class MonitorNewComponent implements OnInit {
                 }
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
+              define.placeholder = define.placeholder && this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
               if (define.hide) {
                 advancedParams.push(param);
                 advancedParamDefines.push(define);
@@ -163,63 +161,55 @@ export class MonitorNewComponent implements OnInit {
 
   onSubmit(info: any) {
     let addMonitor = {
-      detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
       params: info.params.concat(info.advancedParams),
       grafanaDashboard: info.grafanaDashboard
     };
-    if (this.detected) {
-      this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
-    } else {
-      this.spinningTip = 'Loading...';
-    }
+    this.spinningTip = 'Loading...';
     this.isSpinning = true;
     this.monitorSvc.newMonitor(addMonitor).subscribe(
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('monitors.new.success'), '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitor.new.success'), '');
           this.router.navigateByUrl(`/monitors?app=${info.monitor.app}`);
         } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.new.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.new.failed'), error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitor.new.failed'), error.msg);
       }
     );
   }
 
   onDetect(info: any) {
     let detectMonitor = {
-      detected: true,
       monitor: info.monitor,
       collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
-    this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
+    this.spinningTip = this.i18nSvc.fanyi('monitor.spinning-tip.detecting');
     this.isSpinning = true;
     this.monitorSvc.detectMonitor(detectMonitor).subscribe(
       message => {
         this.isSpinning = false;
         if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('monitors.detect.success'), '');
+          this.notifySvc.success(this.i18nSvc.fanyi('monitor.detect.success'), '');
         } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), message.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.detect.failed'), message.msg);
         }
       },
       error => {
         this.isSpinning = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('monitors.detect.failed'), error.msg);
+        this.notifySvc.error(this.i18nSvc.fanyi('monitor.detect.failed'), error.msg);
       }
     );
   }
 
   onCancel() {
-    let app = this.monitor.app;
-    app = app ? app : '';
-    this.router.navigateByUrl(`/monitors?app=${app}`);
+    this.router.navigateByUrl(`/monitors`);
   }
 }

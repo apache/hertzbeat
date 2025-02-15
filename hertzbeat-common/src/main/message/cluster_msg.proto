@@ -1,0 +1,62 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+package org.apache.hertzbeat.common.entity.message;
+
+message Message
+{
+    // collector identity
+    string identity = 1;
+    // message direction
+    Direction direction = 2;
+    // message type
+    MessageType type = 3;
+    // message content
+    bytes msg = 4;
+}
+
+enum MessageType
+{
+    // heartbeat message
+    HEARTBEAT = 0;
+    // collector go online to master message
+    GO_ONLINE = 1;
+    // collector go offline to master message
+    GO_OFFLINE = 2;
+    // collector go close to master
+    GO_CLOSE = 3;
+    // issue cyclic collect task 
+    ISSUE_CYCLIC_TASK = 4;
+    // delete cyclic collect task
+    DELETE_CYCLIC_TASK = 5;
+    // issue one-time collect task
+    ISSUE_ONE_TIME_TASK = 6;
+    // response one-time collect data
+    RESPONSE_ONE_TIME_TASK_DATA = 7;
+    // response cyclic collect data
+    RESPONSE_CYCLIC_TASK_DATA = 8;
+    // response cyclic service discovery data
+    RESPONSE_CYCLIC_TASK_SD_DATA = 9;
+}
+
+enum Direction {
+    // request message
+    REQUEST = 0;
+    // request response
+    RESPONSE = 1;
+}

@@ -87,7 +87,7 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
     locations:
-      - classpath:db/migration/{vendor}
+      - classpath:db/migration/postgresql
   
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
@@ -159,7 +159,10 @@ alerter:
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
-
+  # alert inhibit ttl unit ms, default 14400000(4 hours)
+  inhibit:
+    ttl: 14400000
+    
 scheduler:
   server:
     enabled: true

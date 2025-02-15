@@ -17,15 +17,17 @@
  * under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
 import { NoticeReceiver } from '../pojo/NoticeReceiver';
+import { Page } from '../pojo/Page';
 
 const notice_receiver_uri = '/notice/receiver';
 const notice_receivers_uri = '/notice/receivers';
+const notice_receivers_all_uri = '/notice/receivers/all';
 const notice_receiver_send_test_msg_uri = '/notice/receiver/send-test-msg';
 
 @Injectable({
@@ -46,8 +48,25 @@ export class NoticeReceiverService {
     return this.http.delete<Message<any>>(`${notice_receiver_uri}/${receiverId}`);
   }
 
-  public getReceivers(): Observable<Message<NoticeReceiver[]>> {
-    return this.http.get<Message<NoticeReceiver[]>>(notice_receivers_uri);
+  public getReceivers(name: string, pageIndex: number, pageSize: number): Observable<Message<Page<NoticeReceiver>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    let httpParams = new HttpParams();
+    httpParams = httpParams.append('pageIndex', pageIndex);
+    httpParams = httpParams.append('pageSize', pageSize);
+    if (name != undefined && name != null && name != '') {
+      httpParams = httpParams.append('name', name);
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<NoticeReceiver>>>(notice_receivers_uri, options);
+  }
+
+  public getAllReceivers(): Observable<Message<NoticeReceiver[]>> {
+    return this.http.get<Message<NoticeReceiver[]>>(notice_receivers_all_uri);
+  }
+
+  public getReceiver(receiverId: number): Observable<Message<NoticeReceiver>> {
+    return this.http.get<Message<NoticeReceiver>>(`${notice_receiver_uri}/${receiverId}`);
   }
 
   public sendAlertMsgToReceiver(body: NoticeReceiver): Observable<Message<any>> {

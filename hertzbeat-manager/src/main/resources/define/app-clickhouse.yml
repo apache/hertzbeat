@@ -1,0 +1,240 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: clickhouse
+# The monitoring i18n name
+name:
+  zh-CN: ClickHouse
+  en-US: ClickHouse
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 ClickHouse 数据库监控通用指标进行测量监控。<br>您可以点击 “<i>新建 ClickHouse 数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors the status codes which returned by the API. You could click the "<i>New ClickHouse Database</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 ClickHouse 資料庫監控通用名額進行量測監控。<br>您可以點擊 “<i>新建ClickHouse資料庫</i>” 並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/clickhouse
+  en-US: https://hertzbeat.apache.org/docs/help/clickhouse
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: HTTP端口
+      en-US: HTTP Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 8123
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # required-true or false
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    hide: true
+    # default value
+    defaultValue: 6000
+  # field-param field key
+  - field: database
+    # name-param field display i18n name
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input type)
+    type: password
+    # required-true or false
+    required: false
+# collect metrics config list
+metrics:
+  # metrics - ping_available
+  - name: summary
+    i18n:
+      zh-CN: ping的可用性
+      en-US: ping_available
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # url request interface path
+      url: /ping
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # Whether to enable ssl/tls, that is, http or https, the default is false
+      ssl: false
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: website
+
+  - name: system
+    priority: 1
+    i18n:
+      zh-CN: system.metrics表的数据
+      en-US: Data in the system.metrics table
+    fields:
+      - field: metric
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: metric
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 指标值
+          en-US: value
+      - field: description
+        type: 1
+        i18n:
+          zh-CN: 说明
+          en-US: description
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: clickhouse
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT  * FROM system.metrics where metric in ('VersionInteger','Query','Merge','Move','PartMutation','QueryThread','QueryPreempted','revision','TCPConnection','HTTPConnection','ZooKeeperWatch','EphemeralNode','contextLockWait','delayedInserts','dictCacheRequests','distributedSend','GlobalThread','GlobalThreadActive','LocalThread','LocalThreadActive','ReadonlyReplica','memoryTracking','OpenFileForRead','OpenFileForWrite','ReplicatedFetch','ReplicatedSend','ReplicatedChecks','RWLockWaitingReaders','RWLockWaitingWriters','RWLockActiveReaders','RWLockActiveWriters','storageBufferRows','StorageBufferBytes')
+  - name: events
+    priority: 2
+    i18n:
+      zh-CN: system.events表的数据
+      en-US: Data for the system.events table
+    fields:
+      - field: event
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 事件信息
+          en-US: event
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: value
+      - field: description
+        type: 1
+        i18n:
+          zh-CN: 说明
+          en-US: description
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: clickhouse
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT * FROM system.events where event in ('Query','SelectQuery','InsertQuery','InsertedRows','InsertedBytes','FailedQuery','FailedSelectQuery','FileOpen','MergeTreeDataWriterRows','MergeTreeDataWriterCompressedBytes');
+
+  - name: asynchronous
+    priority: 3
+    i18n:
+      zh-CN: system.asynchronous_metrics表的数据
+      en-US: Data from the system.asynchronous_metrics table
+    fields:
+      - field: metric
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: metric
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 指标值
+          en-US: value
+      - field: description
+        type: 1
+        i18n:
+          zh-CN: 说明
+          en-US: description
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: clickhouse
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: SELECT * FROM system.asynchronous_metrics where metric in ('AsynchronousMetricsCalculationTimeSpent','jemalloc.arenas.all.muzzy_purged','jemalloc.arenas.all.dirty_purged','BlockReadBytes_ram1','jemalloc.background_thread.run_intervals','BlockQueueTime_nbd13','jemalloc.background_thread.num_threads','jemalloc.resident','InterserverThreads','BlockWriteMerges_nbd7','MarkCacheBytes','MarkCacheFiles','MaxPartCountForPartition');

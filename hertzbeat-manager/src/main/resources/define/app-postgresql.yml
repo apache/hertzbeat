@@ -1,0 +1,985 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: postgresql
+# The monitoring i18n name
+name:
+  zh-CN: PostgreSQL数据库
+  en-US: PostgreSQL DB
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 PostgreSQL 数据库的通用性能指标 (basic、state、activity etc) 进行采集监控，支持版本为 PostgreSQL10+。<br>您可以点击“<i>新建 PostgreSQL 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of PostgreSQL database  (basic、state、activity etc). Supported version is PostgreSQL10+. <br>You can click "<i>New PostgreSQL Database</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 PostgreSQL 數據庫的通用性能指標 (basic、state、activity etc)進行采集監控，支持版本爲 PostgreSQL10+。<br>您可以點擊“<i>新建 PostgreSQL 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/postgresql
+  en-US: https://hertzbeat.apache.org/docs/help/postgresql
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 5432
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    type: number
+    range: '[400,200000]'
+    required: false
+    hide: true
+    defaultValue: 6000
+  - field: database
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    type: text
+    defaultValue: postgres
+    required: false
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: url
+    name:
+      zh-CN: URL
+      en-US: URL
+    type: text
+    required: false
+    hide: true
+  - field: enableSshTunnel
+    name:
+      zh-CN: 是否启用SSH隧道
+      en-US: Enable SSH Tunnel
+    type: boolean
+    required: true
+    hide: true
+  - field: sshHost
+    name:
+      zh-CN: SSH Host
+      en-US: SSH Host
+    type: text
+    required: false
+    placeholder: 'When Enable SSH Tunnel'
+    hide: true
+  - field: sshPort
+    name:
+      zh-CN: SSH端口
+      en-US: SSH Port
+    type: number
+    range: '[0,65535]'
+    required: false
+    defaultValue: 22
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshTimeout
+    name:
+      zh-CN: SSH超时时间(ms)
+      en-US: SSH Timeout(ms)
+    type: number
+    required: false
+    range: '[400,200000]'
+    defaultValue: 6000
+    hide: true
+  - field: sshUsername
+    name:
+      zh-CN: SSH用户名
+      en-US: SSH Username
+    type: text
+    required: false
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshPassword
+    name:
+      zh-CN: SSH密码
+      en-US: SSH Password
+    type: password
+    required: false
+    hide: true
+  - field: sshShareConnection
+    name:
+      zh-CN: 是否共享SSH连接
+      en-US: Share SSH Connection
+    type: boolean
+    required: true
+    defaultValue: true
+    hide: true
+  - field: sshPrivateKey
+    name:
+      zh-CN: SSH私钥
+      en-US: SSH PrivateKey
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    required: false
+    hide: true
+  - field: sshPrivateKeyPassphrase
+    name:
+      zh-CN: SSH密钥短语
+      en-US: SSH PrivateKey PassPhrase
+    type: password
+    required: false
+    hide: true
+
+# collect metrics config list
+metrics:
+  # metrics - basic
+  - name: basic
+    i18n:
+      zh-CN: 基本信息
+      en-US: Basic Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: server_version
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 服务器版本
+          en-US: Server Version
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
+      - field: server_encoding
+        type: 1
+        i18n:
+          zh-CN: 服务器编码
+          en-US: Server Encoding
+      - field: data_directory
+        type: 1
+        i18n:
+          zh-CN: 数据目录
+          en-US: Data Directory
+      - field: max_connections
+        type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connections
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jdbc
+    # the config content when protocol is jdbc
+    jdbc:
+      # host: ipv4 ipv6 host
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      # database platform name
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      # SQL Query Method：oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';
+      # JDBC url
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: state
+    i18n:
+      zh-CN: 状态信息
+      en-US: State Info
+    priority: 1
+    fields:
+      - field: db_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: conflicts
+        type: 0
+        unit: times
+        i18n:
+          zh-CN: 冲突次数
+          en-US: Conflicts
+      - field: deadlocks
+        type: 0
+        unit: times
+        i18n:
+          zh-CN: 死锁次数
+          en-US: Deadlocks
+      - field: blks_read
+        type: 0
+        unit: blocks per second
+        i18n:
+          zh-CN: 读取块
+          en-US: Blocks Read
+      - field: blks_hit
+        type: 0
+        unit: blocks per second
+        i18n:
+          zh-CN: 命中块
+          en-US: Blocks Hit
+      - field: blk_read_time
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 读取时间
+          en-US: Read Time
+      - field: blk_write_time
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 写入时间
+          en-US: Write Time
+      - field: stats_reset
+        type: 1
+        i18n:
+          zh-CN: 统计重置
+          en-US: Stats Reset
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: activity
+    i18n:
+      zh-CN: 活动信息
+      en-US: Activity Info
+    priority: 2
+    fields:
+      - field: running
+        type: 0
+        unit: sbc
+        i18n:
+          zh-CN: 运行中
+          en-US: Running
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: oneRow
+      sql: SELECT count(*) as running FROM pg_stat_activity WHERE NOT pid=pg_backend_pid();
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: resource_config
+    i18n:
+      zh-CN: 资源配置
+      en-US: Resource Config
+    priority: 3
+    fields:
+      - field: work_mem
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 工作内存
+          en-US: Work Memory
+      - field: shared_buffers
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 共享缓冲区
+          en-US: Shared Buffers
+      - field: autovacuum
+        type: 1
+        i18n:
+          zh-CN: 自动清理
+          en-US: Auto Vacuum
+      - field: max_connections
+        type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connections
+      - field: effective_cache_size
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 有效缓存大小
+          en-US: Effective Cache Size
+      - field: wal_buffers
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: WAL缓冲区
+          en-US: WAL Buffers
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: columns
+      sql: show all;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: connection
+    i18n:
+      zh-CN: 连接信息
+      en-US: Connection Info
+    priority: 4
+    fields:
+      - field: active
+        type: 0
+        i18n:
+          zh-CN: 活动连接
+          en-US: Active Connection
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: oneRow
+      sql: select count(1) as active from pg_stat_activity;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: connection_state
+    i18n:
+      zh-CN: 连接状态
+      en-US: Connection State
+    priority: 5
+    fields:
+      - field: state
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 状态
+          en-US: State
+      - field: num
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: Num
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select COALESCE(state, 'other') as state, count(*) as num from pg_stat_activity group by state;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: connection_db
+    i18n:
+      zh-CN: 连接数据库
+      en-US: Connection Db
+    priority: 6
+    fields:
+      - field: db_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: active
+        type: 0
+        i18n:
+          zh-CN: 活动连接
+          en-US: Active Connection
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select count(*) as active, COALESCE(datname, 'other') as db_name from pg_stat_activity group by datname;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: tuple
+    i18n:
+      zh-CN: 元组信息
+      en-US: Tuple Info
+    priority: 7
+    fields:
+      - field: fetched
+        type: 0
+        i18n:
+          zh-CN: 获取次数
+          en-US: Fetched
+      - field: returned
+        type: 0
+        i18n:
+          zh-CN: 返回次数
+          en-US: Returned
+      - field: inserted
+        type: 0
+        i18n:
+          zh-CN: 插入次数
+          en-US: Inserted
+      - field: updated
+        type: 0
+        i18n:
+          zh-CN: 更新次数
+          en-US: Updated
+      - field: deleted
+        type: 0
+        i18n:
+          zh-CN: 删除次数
+          en-US: Deleted
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select sum(tup_fetched) as fetched, sum(tup_updated) as updated, sum(tup_deleted) as deleted, sum(tup_inserted) as inserted, sum(tup_returned) as returned from pg_stat_database;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: temp_file
+    i18n:
+      zh-CN: 临时文件
+      en-US: Temp File
+    priority: 8
+    fields:
+      - field: db_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: num
+        type: 0
+        i18n:
+          zh-CN: 次数
+          en-US: Num
+      - field: size
+        type: 0
+        unit: B
+        i18n:
+          zh-CN: 大小
+          en-US: Size
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select COALESCE(datname, 'other') as db_name, sum(temp_files) as num, sum(temp_bytes) as size from pg_stat_database group by datname;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: lock
+    i18n:
+      zh-CN: 锁信息
+      en-US: Lock Info
+    priority: 9
+    fields:
+      - field: db_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: conflicts
+        type: 0
+        unit: times
+        i18n:
+          zh-CN: 冲突次数
+          en-US: Conflicts
+      - field: deadlocks
+        type: 0
+        unit: times
+        i18n:
+          zh-CN: 死锁次数
+          en-US: Deadlocks
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: slow_sql
+    i18n:
+      zh-CN: 慢查询
+      en-US: Slow Sql
+    priority: 10
+    fields:
+      - field: sql_text
+        type: 1
+        label: true
+        i18n:
+          zh-CN: SQL语句
+          en-US: SQL Text
+      - field: calls
+        type: 0
+        i18n:
+          zh-CN: 调用次数
+          en-US: Calls
+      - field: rows
+        type: 0
+        i18n:
+          zh-CN: 行数
+          en-US: Rows
+      - field: avg_time
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 平均时间
+          en-US: Avg Time
+      - field: total_time
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 总时间
+          en-US: Total Time
+    aliasFields:
+      - query
+      - calls
+      - rows
+      - total_exec_time
+      - mean_exec_time
+    calculates:
+      - sql_text=query
+      - avg_time=mean_exec_time
+      - total_time=total_exec_time
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select * from pg_stat_statements;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: transaction
+    i18n:
+      zh-CN: 事务信息
+      en-US: Transaction Info
+    priority: 11
+    fields:
+      - field: db_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: commits
+        type: 0
+        unit: times
+        i18n:
+          zh-CN: 提交次数
+          en-US: Commits
+      - field: rollbacks
+        type: 0
+        unit: times
+        i18n:
+          zh-CN: 回滚次数
+          en-US: Rollbacks
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select COALESCE(datname, 'other') as db_name, sum(xact_commit) as commits, sum(xact_rollback) as rollbacks from pg_stat_database group by datname;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: conflicts
+    i18n:
+      zh-CN: 冲突信息
+      en-US: Conflicts Info
+    priority: 12
+    fields:
+      - field: db_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: tablespace
+        type: 0
+        i18n:
+          zh-CN: 表空间
+          en-US: Tablespace
+      - field: lock
+        type: 0
+        i18n:
+          zh-CN: 锁
+          en-US: Lock
+      - field: snapshot
+        type: 0
+        i18n:
+          zh-CN: 快照
+          en-US: Snapshot
+      - field: bufferpin
+        type: 0
+        i18n:
+          zh-CN: 缓冲区
+          en-US: Bufferpin
+      - field: deadlock
+        type: 0
+        i18n:
+          zh-CN: 死锁
+          en-US: Deadlock
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select datname as db_name, confl_tablespace as tablespace, confl_lock as lock, confl_snapshot as snapshot, confl_bufferpin as bufferpin, confl_deadlock as deadlock from pg_stat_database_conflicts;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: cache_hit_ratio
+    i18n:
+      zh-CN: 缓存命中率
+      en-US: Cache Hit Ratio
+    priority: 13
+    fields:
+      - field: db_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: ratio
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 命中率
+          en-US: Hit Ratio
+    aliasFields:
+      - blks_hit
+      - blks_read
+      - db_name
+    calculates:
+      - ratio=(blks_hit + 1) / (blks_read + blks_hit + 1) * 100
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: multiRow
+      sql: select datname as db_name, blks_hit, blks_read from pg_stat_database;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: checkpoint
+    i18n:
+      zh-CN: Checkpoint信息
+      en-US: Checkpoint Info
+    priority: 14
+    fields:
+      - field: checkpoint_sync_time
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: Checkpoint同步时间
+          en-US: Checkpoint Sync Time
+      - field: checkpoint_write_time
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: Checkpoint写入时间
+          en-US: Checkpoint Write Time
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: oneRow
+      sql: select checkpoint_sync_time, checkpoint_write_time from pg_stat_bgwriter;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: buffer
+    i18n:
+      zh-CN: Buffer信息
+      en-US: Buffer Info
+    priority: 15
+    fields:
+      - field: allocated
+        type: 0
+        i18n:
+          zh-CN: 已分配
+          en-US: Allocated
+      - field: fsync_calls_by_backend
+        type: 0
+        i18n:
+          zh-CN: 后端进程直接执行的文件同步调用次数
+          en-US: Fsync Calls By Backend
+      - field: written_directly_by_backend
+        type: 0
+        i18n:
+          zh-CN: 后台写入到数据文件
+          en-US: Written Directly By Backend
+      - field: written_by_background_writer
+        type: 0
+        i18n:
+          zh-CN: 后台写入
+          en-US: Written By Background Writer
+      - field: written_during_checkpoints
+        type: 0
+        i18n:
+          zh-CN: 检查点期间写入
+          en-US: Written During Checkpoints
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      platform: postgresql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      queryType: oneRow
+      sql: select buffers_alloc as allocated, buffers_backend_fsync as fsync_calls_by_backend, buffers_backend as written_directly_by_backend, buffers_clean as written_by_background_writer, buffers_checkpoint as written_during_checkpoints from pg_stat_bgwriter;
+      url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^

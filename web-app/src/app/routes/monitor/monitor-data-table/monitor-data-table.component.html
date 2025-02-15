@@ -38,7 +38,7 @@
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitors.detail.name' | i18n }}</p></div
+          ><p style="text-align: right">{{ 'monitor.detail.name' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
           ><p style="text-align: left">{{ monitor.name }}</p></div
@@ -52,7 +52,7 @@
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitors.detail.port' | i18n }}</p></div
+          ><p style="text-align: right">{{ 'monitor.detail.port' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
           ><p style="text-align: left">{{ port }}</p></div
@@ -60,7 +60,7 @@
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitors.detail.description' | i18n }}</p></div
+          ><p style="text-align: right">{{ 'monitor.detail.description' | i18n }}</p></div
         >
         <div nz-col nzSpan="16"
           ><p style="text-align: left">{{ monitor.description }}</p></div
@@ -68,7 +68,7 @@
       </div>
       <div nz-row nzGutter="16">
         <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitors.detail.status' | i18n }}</p></div
+          ><p style="text-align: right">{{ 'monitor.detail.status' | i18n }}</p></div
         >
         <div nz-col nzSpan="16">
           <nz-tag *ngIf="monitor.status == 0" nzColor="default">
@@ -113,7 +113,7 @@
     <nz-table
       *ngIf="!monitor && isTable"
       nzSize="small"
-      nzNoResult="No Metrics Data"
+      [nzNoResult]="'monitor.detail.chart.no-data' | i18n"
       [nzFrontPagination]="false"
       [nzShowPagination]="false"
       [nzData]="valueRows"
@@ -133,7 +133,7 @@
             <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
             <ng-template #contentTemplate>
               {{ value.origin }}
-              <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+              <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
               <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
             </ng-template>
           </td>
@@ -143,7 +143,7 @@
     <nz-table
       *ngIf="!monitor && !isTable"
       nzSize="small"
-      nzNoResult="No Metrics Data"
+      [nzNoResult]="'monitor.detail.chart.no-data' | i18n"
       [nzFrontPagination]="false"
       [nzShowPagination]="false"
       [nzData]="valueRows"
@@ -162,7 +162,7 @@
           </td>
           <td
             >{{ rowValues[i].origin }}
-            <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+            <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
             <nz-tag *ngIf="field.unit" nzColor="success">{{ field.unit }}</nz-tag>
           </td>
         </tr>
@@ -173,7 +173,7 @@
 
 <ng-template #card_title>
   <p style="font-size: small; text-align: left">
-    {{ !monitor ? ('monitor.app.' + app + '.metrics.' + metrics | i18nElse : metrics) : ('monitors.detail.basic' | i18n) }}
+    {{ !monitor ? ('monitor.app.' + app + '.metrics.' + metrics | i18nElse : metrics) : ('monitor.detail.basic' | i18n) }}
   </p>
 </ng-template>
 
@@ -183,10 +183,10 @@
 
 <ng-template #metrics_card_extra>
   <div style="display: flex; gap: 10px">
-    <div nz-popover [nzPopoverContent]="('monitors.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
+    <div nz-popover [nzPopoverContent]="('monitor.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
       <a><i nz-icon nzType="field-time" nzTheme="outline"></i></a>
       <i style="font-size: 13px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">
-        {{ 'monitors.collect.time' | i18n }}: {{ time | _date : 'HH:mm:ss' }}
+        {{ 'monitor.collect.time' | i18n }}: {{ time | _date : 'HH:mm:ss' }}
       </i>
     </div>
     <div>
@@ -202,7 +202,7 @@
       <div>
         <i nz-icon nzType="field-time" nzTheme="outline"></i>
         <i style="font-size: 13px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">
-          {{ ('monitors.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss') }}
+          {{ ('monitor.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss') }}
         </i>
       </div>
       <div style="cursor: pointer" (click)="showModal = false"><i nz-icon nzType="close"></i></div>

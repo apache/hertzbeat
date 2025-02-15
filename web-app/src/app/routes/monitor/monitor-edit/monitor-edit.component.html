@@ -19,7 +19,7 @@
 
 <app-help-message-show
   [help_message_content]="monitor.app && ('monitor.app.' + monitor.app + '.help' | i18n)"
-  [module_name]="monitor.app && ('monitors.edit' | i18n) + ' ' + ('monitor.app.' + monitor.app | i18n) + ' ' + ('monitor' | i18n)"
+  [module_name]="monitor.app && ('monitor.edit' | i18n) + ' ' + ('monitor.app.' + monitor.app | i18n) + ' ' + ('monitor' | i18n)"
   [guild_link]="monitor.app && ('monitor.app.' + monitor.app + '.helpLink' | i18n)"
   [icon_name]="'edit'"
 ></app-help-message-show>

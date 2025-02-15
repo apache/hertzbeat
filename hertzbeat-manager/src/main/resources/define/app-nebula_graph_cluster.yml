@@ -1,0 +1,445 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
+category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: nebula_graph_cluster
+# The app api i18n name
+name:
+  zh-CN: NebulaGraph集群
+  en-US: NebulaGraph Cluster
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat通过查询使用NGQL或OpenCypher查询 NebulaGraph 集群的基础信息，节点信息等指标。
+  en-US: Hertzbeat uses NGQL or OpenCypher to query the basic information, node information and other metrics of the NebulaGraph cluster.
+  zh-TW: Hertzbeat透過查詢使用NGQL或OpenCypher查詢 NebulaGraph 叢集的基礎訊息，節點資訊等指標。
+# The description and help of this monitoring type
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulagraph_cluster
+  en-US: https://hertzbeat.apache.org/docs/help/nebulaGraph_cluster
+# Input params define for app api(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: graphPort
+    # name-param field display i18n name
+    name:
+      zh-CN: graph端口
+      en-US: graphPort
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 9669
+
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is number, range is required
+    # required-true or false
+    required: true
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input type)
+    type: password
+    # when type is number, range is required
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 连接超时时间(ms)
+      en-US: Connect Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: true
+    # default value 6000
+    defaultValue: 6000
+
+
+# collect metrics config list
+metrics:
+  # metrics - base info
+  - name: base_info
+    i18n:
+      zh-CN: 基础信息
+      en-US: Base info
+    priority: 0
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+      - field: charset
+        type: 1
+        i18n:
+          zh-CN: 字符集
+          en-US: Charset
+      - field: Collation
+        type: 1
+        i18n:
+          zh-CN: 排序规则
+          en-US: collation
+      - field: metaLeader
+        type: 1
+        i18n:
+          zh-CN: Meta Leader
+          en-US: Meta Leader
+
+    aliasFields:
+      - responseTime
+      - Charset
+      - Collation
+      - Meta Leader
+    calculates:
+      - charset=Charset
+      - collation=Collation
+      - metaLeader=Meta Leader
+    protocol: ngql
+    ngql:
+      host: ^_^host^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      port: ^_^graphPort^_^
+      parseType: oneRow
+      commands:
+        - SHOW COLLATION;
+        - SHOW META LEADER;
+      timeout: ^_^timeout^_^
+  # metrics - sessions
+  - name: session
+    i18n:
+      zh-CN: Session
+      en-US: Session
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    fields:
+      - field: session
+        type: 0
+        i18n:
+          zh-CN: Session数量
+          en-US: Session
+      - field: running_query_count
+        type: 1
+        i18n:
+          zh-CN: 正在执行的查询数量
+          en-US: Running query
+
+    # 指标别名列表，用于在查询结果中识别指标
+    aliasFields:
+      - session
+      - running_query_count
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, nginx
+    protocol: ngql
+    ngql:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # http port
+      port: ^_^graphPort^_^
+      parseType: filterCount
+      commands:
+        - session#show sessions##
+        - running_query_count#show queries#Status#RUNNING
+      # timeout
+      timeout: ^_^timeout^_^
+  # metrics - jobs
+  - name: jobs
+    i18n:
+      zh-CN: 后台任务
+      en-US: Jobs
+    priority: 2
+    fields:
+      - field: queue_jobs
+        type: 0
+        i18n:
+          zh-CN: 等待中的任务
+          en-US: Queue jobs
+      - field: running_jobs
+        type: 0
+        i18n:
+          zh-CN: 执行中的任务
+          en-US: Running jobs
+
+    aliasFields:
+      - queue_jobs
+      - running_jobs
+    protocol: ngql
+    ngql:
+      host: ^_^host^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      port: ^_^graphPort^_^
+      parseType: oneRow
+      commands:
+        - show jobs;
+      timeout: ^_^timeout^_^
+  # metrics - node_info
+  - name: node_info
+    i18n:
+      zh-CN: 节点信息
+      en-US: Cluster node info
+    priority: 3
+    fields:
+      - field: total_storage_node
+        type: 0
+        i18n:
+          zh-CN: Storage节点
+          en-US: Total storage node
+      - field: offline_storage_node
+        type: 0
+        i18n:
+          zh-CN: 离线Storage节点
+          en-US: Offline storage node
+
+      - field: total_meta_node
+        type: 0
+        i18n:
+          zh-CN: Meta节点
+          en-US: Total meta node
+      - field: offline_meta_node
+        type: 0
+        i18n:
+          zh-CN: 离线Meta节点
+          en-US: Offline meta node
+
+      - field: total_graph_node
+        type: 0
+        i18n:
+          zh-CN: Graph节点
+          en-US: Total graph node
+      - field: offline_graph_node
+        type: 0
+        i18n:
+          zh-CN: 离线Graph节点
+          en-US: Offline graph node
+
+    aliasFields:
+      - total_storage_node
+      - offline_storage_node
+      - total_meta_node
+      - offline_meta_node
+      - total_graph_node
+      - offline_graph_node
+    calculates:
+      - responseTime=responseTime
+    protocol: ngql
+    ngql:
+      host: ^_^host^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      port: ^_^graphPort^_^
+      parseType: filterCount
+      commands:
+        - total_storage_node#show hosts#Status#ONLINE
+        - offline_storage_node#show hosts#Status#OFFLINE
+        - total_meta_node#show hosts meta#Status#ONLINE
+        - offline_meta_node#show hosts meta#Status#OFFLINE
+        - total_graph_node#show hosts graph#Status#ONLINE
+        - offline_graph_node#show hosts graph#Status#OFFLINE
+      timeout: ^_^timeout^_^
+  # metrics - storage
+  - name: storage
+    i18n:
+      zh-CN: Storage节点
+      en-US: Storage Nodes
+    priority: 4
+    fields:
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: Host
+          en-US: Host
+      - field: port
+        type: 0
+        i18n:
+          zh-CN: Port
+          en-US: Port
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: STATUS
+      - field: leaderCount
+        type: 0
+        i18n:
+          zh-CN: Leader数量
+          en-US: Leader Count
+      - field: leaderDistribution
+        type: 1
+        i18n:
+          zh-CN: Leader分布
+          en-US: Leader Distribution
+      - field: partitionDistribution
+        type: 1
+        i18n:
+          zh-CN: Partition分布
+          en-US: Partition Distribution
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+
+    aliasFields:
+      - Host
+      - Port
+      - Status
+      - Leader count
+      - Leader distribution
+      - Partition distribution
+      - Version
+    calculates:
+      - host=Host
+      - port=Port
+      - status=Status
+      - leaderCount=Leader count
+      - leaderDistribution=Leader distribution
+      - partitionDistribution=Partition distribution
+      - version=Version
+    protocol: ngql
+    ngql:
+      host: ^_^host^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      port: ^_^graphPort^_^
+      parseType: multiRow
+      commands:
+        - show hosts;
+      timeout: ^_^timeout^_^
+    # metrics - meta
+  - name: meta
+    i18n:
+      zh-CN: Meta节点
+      en-US: Meta Nodes
+    priority: 5
+    fields:
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: Host
+          en-US: Host
+      - field: port
+        type: 0
+        i18n:
+          zh-CN: Port
+          en-US: Port
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: STATUS
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+
+    aliasFields:
+      - Host
+      - Port
+      - Status
+      - Version
+    calculates:
+      - host=Host
+      - port=Port
+      - status=Status
+      - version=Version
+    protocol: ngql
+    ngql:
+      host: ^_^host^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      port: ^_^graphPort^_^
+      parseType: multiRow
+      commands:
+        - show hosts meta;
+      timeout: ^_^timeout^_^
+    # metrics - graph
+  - name: graph
+    i18n:
+      zh-CN: Graph节点
+      en-US: Graph Nodes
+    priority: 6
+    fields:
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: Host
+          en-US: Host
+      - field: port
+        type: 0
+        i18n:
+          zh-CN: Port
+          en-US: Port
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: STATUS
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+
+    aliasFields:
+      - Host
+      - Port
+      - Status
+      - Version
+    calculates:
+      - host=Host
+      - port=Port
+      - status=Status
+      - version=Version
+    protocol: ngql
+    ngql:
+      host: ^_^host^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      port: ^_^graphPort^_^
+      parseType: multiRow
+      commands:
+        - show hosts graph;
+      timeout: ^_^timeout^_^

@@ -1,8 +1,0 @@
-${targetLabel} : ${target}
-<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
-<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
-<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>
-${priorityLabel} : ${priority}
-${triggerTimeLabel} : ${triggerTime}
-<#if (restoreTimeLabel??)>${restoreTimeLabel} : ${restoreTime} </#if>
-${contentLabel} : ${content}

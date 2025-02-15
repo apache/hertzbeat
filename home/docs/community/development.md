@@ -8,17 +8,15 @@ sidebar_label: Development
 
 > To get HertzBeat code running on your development tools, and able to debug with breakpoints.
 > This is a front-end and back-end separation project.
-> To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
+> To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
 
 ### Backend start
 
 1. Requires `maven3+`, `java17` and `lombok` environments
-
 2. (Optional) Modify the configuration file: `manager/src/main/resources/application.yml`
-
 3. Execute under the project root directory: `mvn clean install -DskipTests`
-
-4. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+4. Add VM Options: `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`
+5. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
 
 ### Frontend start
 

@@ -1,0 +1,855 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: mid
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: kafka
+# The monitoring i18n name
+name:
+  zh-CN: Kafka消息系统
+  en-US: Kafka Message
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">JMX 协议</a> 对 Kafka 的通用性能指标 (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc) 进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要在 Kafka 开启 JMX 服务，应用启动时添加 JMX 参数，暴露端口，对外IP。下方配置的端口即为JMX暴露的端口，而非Kafka的server端口。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kafka'>点击查看开启步骤</a>。</span>
+  en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'>JMX Protocol</a> to monitoring kafka general performance metrics (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc). <br><span class='help_module_span'>Note⚠️:You need to enable JMX service in Kafka, export JMX port and config params.The port configured below is the JMX exposed port, not the Kafka server port. <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/kafka'>Click here to view the specific steps.</a></span>
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">JMX 協議</a> 對 Kafka 的通用性能指標 (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc) 進行采集監控。<br><span class='help_module_span'>注意⚠️：您需要在 Kafka 開啓 JMX 服務，應用啓動時添加 JMX 參數，暴露端口，對外IP。下方配置的端口即為 JMX 暴露的端口，而非 Kafka 的伺服器端口。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kafka'>點擊查看開啓步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kafka
+  en-US: https://hertzbeat.apache.org/docs/help/kafka
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9999
+  - field: url
+    name:
+      zh-CN: JMX URL
+      en-US: JMX URL
+    type: text
+    required: false
+    hide: true
+    placeholder: 'service:jmx:rmi:///jndi/rmi://host:port/jmxrmi'
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+# collect metrics config list
+metrics:
+  # metrics - server_info
+  - name: server_info
+    i18n:
+      zh-CN: 服务器信息
+      en-US: Server Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: Version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+      - field: StartTimeMs
+        type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Start Time
+      - field: CommitId
+        type: 1
+        i18n:
+          zh-CN: CommitId
+          en-US: CommitId
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jmx
+    # the config content when protocol is jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=app-info,id=*
+      # jmx url
+      url: ^_^url^_^
+
+  - name: jvm_basic
+    i18n:
+      zh-CN: 虚拟机基础信息
+      en-US: JVM Basic
+    priority: 1
+    fields:
+      - field: VmName
+        type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Vm Name
+      - field: VmVendor
+        type: 1
+        i18n:
+          zh-CN: 厂商
+          en-US: Vm Vendor
+      - field: VmVersion
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Vm Version
+      - field: Uptime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 运行时长
+          en-US: Up time
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: java.lang:type=Runtime
+      url: ^_^url^_^
+
+  - name: jvm_memory_pool
+    i18n:
+      zh-CN: 内存池
+      en-US: Memory Pool
+    priority: 2
+    fields:
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: Name
+      - field: committed
+        type: 0
+        i18n:
+          zh-CN: 已分配内存
+          en-US: Committed
+      - field: init
+        type: 0
+        i18n:
+          zh-CN: 初始化内存
+          en-US: Init
+      - field: max
+        type: 0
+        i18n:
+          zh-CN: 最大内存
+          en-US: Max
+      - field: used
+        type: 0
+        i18n:
+          zh-CN: 已使用内存
+          en-US: Used
+    aliasFields:
+      - Name
+      - Usage->committed
+      - Usage->init
+      - Usage->max
+      - Usage->used
+    calculates:
+      - name=Name
+      - committed=Usage->committed
+      - init=Usage->init
+      - max=Usage->max
+      - used=Usage->used
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: java.lang:type=MemoryPool,name=*
+      url: ^_^url^_^
+
+  - name: kafka_controller_metrics
+    i18n:
+      zh-CN: Kafka控制器指标
+      en-US: Kafka Controller Metrics
+    priority: 3
+    fields:
+      - field: ActiveBrokerCount
+        type: 0
+        i18n:
+          zh-CN: 活跃代理数量
+          en-US: Active Broker Count
+      - field: ActiveControllerCount
+        type: 0
+        i18n:
+          zh-CN: 活跃控制器数量
+          en-US: Active Controller Count
+      - field: ControllerState
+        type: 0
+        i18n:
+          zh-CN: 控制器状态
+          en-US: Controller State
+      - field: FencedBrokerCount
+        type: 0
+        i18n:
+          zh-CN: 被隔离代理数量
+          en-US: Fenced Broker Count
+      - field: GlobalPartitionCount
+        type: 0
+        i18n:
+          zh-CN: 全局分区数量
+          en-US: Global Partition Count
+      - field: GlobalTopicCount
+        type: 0
+        i18n:
+          zh-CN: 全局主题数量
+          en-US: Global Topic Count
+      - field: OfflinePartitionsCount
+        type: 0
+        i18n:
+          zh-CN: 离线分区数量
+          en-US: Offline Partitions Count
+      - field: PreferredReplicaImbalanceCount
+        type: 0
+        i18n:
+          zh-CN: 首选副本不平衡数量
+          en-US: Preferred Replica Imbalance Count
+      - field: ReplicasIneligibleToDeleteCount
+        type: 0
+        i18n:
+          zh-CN: 不能删除的副本数量
+          en-US: Replicas Ineligible To Delete Count
+      - field: ReplicasToDeleteCount
+        type: 0
+        i18n:
+          zh-CN: 待删除副本数量
+          en-US: Replicas To Delete Count
+      - field: TopicsIneligibleToDeleteCount
+        type: 0
+        i18n:
+          zh-CN: 不能删除的主题数量
+          en-US: Topics Ineligible To Delete Count
+      - field: TopicsToDeleteCount
+        type: 0
+        i18n:
+          zh-CN: 待删除主题数量
+          en-US: Topics To Delete Count
+      - field: ZkMigrationState
+        type: 0
+        i18n:
+          zh-CN: ZooKeeper迁移状态
+          en-US: Zk Migration State
+    aliasFields:
+      - Value->ActiveBrokerCount
+      - Value->ActiveControllerCount
+      - Value->ControllerState
+      - Value->FencedBrokerCount
+      - Value->GlobalPartitionCount
+      - Value->GlobalTopicCount
+      - Value->OfflinePartitionsCount
+      - Value->PreferredReplicaImbalanceCount
+      - Value->ReplicasIneligibleToDeleteCount
+      - Value->ReplicasToDeleteCount
+      - Value->TopicsIneligibleToDeleteCount
+      - Value->TopicsToDeleteCount
+      - Value->ZkMigrationState
+    calculates:
+      - ActiveBrokerCount=Value->ActiveBrokerCount
+      - ActiveControllerCount=Value->ActiveControllerCount
+      - ControllerState=Value->ControllerState
+      - FencedBrokerCount=Value->FencedBrokerCount
+      - GlobalPartitionCount=Value->GlobalPartitionCount
+      - GlobalTopicCount=Value->GlobalTopicCount
+      - OfflinePartitionsCount=Value->OfflinePartitionsCount
+      - PreferredReplicaImbalanceCount=Value->PreferredReplicaImbalanceCount
+      - ReplicasIneligibleToDeleteCount=Value->ReplicasIneligibleToDeleteCount
+      - ReplicasToDeleteCount=Value->ReplicasToDeleteCount
+      - TopicsIneligibleToDeleteCount=Value->TopicsIneligibleToDeleteCount
+      - TopicsToDeleteCount=Value->TopicsToDeleteCount
+      - ZkMigrationState=Value->ZkMigrationState
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      objectName: kafka.controller:type=KafkaController,name=*
+      url: ^_^url^_^
+
+
+
+  - name: broker_handler_avg_percent
+    i18n:
+      zh-CN: Broker处理器平均百分比
+      en-US: Broker Handler Avg Percent
+    priority: 6
+    fields:
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent
+      url: ^_^url^_^
+
+  - name: kafka_replica_manager_metrics
+    i18n:
+      zh-CN: Kafka副本管理器指标
+      en-US: Kafka Replica Manager Metrics
+    priority: 6
+    fields:
+      - field: AtMinIsrPartitionCount
+        type: 0
+        i18n:
+          zh-CN: 达到最小ISR的分区数
+          en-US: At Min ISR Partition Count
+      - field: FailedIsrUpdatesPerSec
+        type: 0
+        i18n:
+          zh-CN: 每秒失败ISR更新数
+          en-US: Failed ISR Updates Per Sec
+      - field: IsrExpandsPerSec
+        type: 0
+        i18n:
+          zh-CN: 每秒ISR扩展数
+          en-US: ISR Expands Per Sec
+      - field: IsrShrinksPerSec
+        type: 0
+        i18n:
+          zh-CN: 每秒ISR收缩数
+          en-US: ISR Shrinks Per Sec
+      - field: LeaderCount
+        type: 0
+        i18n:
+          zh-CN: 领导者数量
+          en-US: Leader Count
+      - field: OfflineReplicaCount
+        type: 0
+        i18n:
+          zh-CN: 离线副本数量
+          en-US: Offline Replica Count
+      - field: PartitionCount
+        type: 0
+        i18n:
+          zh-CN: 分区总数
+          en-US: Partition Count
+      - field: PartitionsWithLateTransactionsCount
+        type: 0
+        i18n:
+          zh-CN: 含有延迟交易的分区数
+          en-US: Partitions With Late Transactions Count
+      - field: ProducerIdCount
+        type: 0
+        i18n:
+          zh-CN: 生产者ID数量
+          en-US: Producer ID Count
+      - field: ReassigningPartitions
+        type: 0
+        i18n:
+          zh-CN: 正在重新分配的分区数
+          en-US: Reassigning Partitions
+      - field: UnderMinIsrPartitionCount
+        type: 0
+        i18n:
+          zh-CN: 低于最小ISR的分区数
+          en-US: Under Min ISR Partition Count
+      - field: UnderReplicatedPartitions
+        type: 0
+        i18n:
+          zh-CN: 副本数低于预期的分区数量
+          en-US: Under Replicated Partitions
+    aliasFields:
+      - Value->LeaderCount
+      - Value->AtMinIsrPartitionCount
+      - Value->FailedIsrUpdatesPerSec
+      - Value->IsrExpandsPerSec
+      - Value->IsrShrinksPerSec
+      - Value->OfflineReplicaCount
+      - Value->PartitionCount
+      - Value->PartitionsWithLateTransactionsCount
+      - Value->ProducerIdCount
+      - Value->ReassigningPartitions
+      - Value->UnderMinIsrPartitionCount
+      - Value->UnderReplicatedPartitions
+    calculates:
+      - LeaderCount=Value->LeaderCount
+      - AtMinIsrPartitionCount=Value->AtMinIsrPartitionCount
+      - FailedIsrUpdatesPerSec=Value->FailedIsrUpdatesPerSec
+      - IsrExpandsPerSec=Value->IsrExpandsPerSec
+      - IsrShrinksPerSec=Value->IsrShrinksPerSec
+      - OfflineReplicaCount=Value->OfflineReplicaCount
+      - PartitionCount=Value->PartitionCount
+      - PartitionsWithLateTransactionsCount=Value->PartitionsWithLateTransactionsCount
+      - ProducerIdCount=Value->ProducerIdCount
+      - ReassigningPartitions=Value->ReassigningPartitions
+      - UnderMinIsrPartitionCount=Value->UnderMinIsrPartitionCount
+      - UnderReplicatedPartitions=Value->UnderReplicatedPartitions
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=ReplicaManager,name=*
+      url: ^_^url^_^
+
+
+  - name: topic_total_bytes_in_persec
+    i18n:
+      zh-CN: 每秒主题流入字节
+      en-US: Total Bytes In Per Second
+    priority: 7
+    fields:
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec
+      url: ^_^url^_^
+
+  - name: each_topic_bytes_in_persec
+    i18n:
+      zh-CN: 各主题每秒流入字节
+      en-US: Bytes In Per Topic Per Second
+    priority: 7
+    fields:
+      - field: topic
+        type: 1
+        i18n:
+          zh-CN: 主题名称
+          en-US: Topic Name
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=BytesInPerSec,topic=*
+      url: ^_^url^_^
+
+  - name: topic_bytes_out_persec
+    i18n:
+      zh-CN: 主题每秒流出字节
+      en-US: Total Bytes Out Per Second
+    priority: 8
+    fields:
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec
+      url: ^_^url^_^
+
+  - name: each_topic_bytes_out_persec
+    i18n:
+      zh-CN: 各主题每秒流出字节
+      en-US: Bytes Out Per Topic Per Second
+    priority: 9
+    fields:
+      - field: topic
+        type: 1
+        i18n:
+          zh-CN: 主题名称
+          en-US: Topic Name
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=BytesOutPerSec,topic=*
+      url: ^_^url^_^
+
+  - name: produce_message_conversions_persec
+    i18n:
+      zh-CN: 每秒生产消息转换
+      en-US: Produce Message Conversions PerSec
+    priority: 9
+    fields:
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=ProduceMessageConversionsPerSec
+      url: ^_^url^_^
+
+  - name: produce_total_requests_persec
+    i18n:
+      zh-CN: 每秒生产总请求数
+      en-US: Produce Total Requests PerSec
+    priority: 10
+    fields:
+      - field: EventType
+        type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
+      - field: RateUnit
+        type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
+      - field: MeanRate
+        type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
+      - field: OneMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
+      - field: FiveMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
+      - field: FifteenMinuteRate
+        type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
+      - field: Count
+        type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      objectName: kafka.server:type=BrokerTopicMetrics,name=TotalProduceRequestsPerSec
+      url: ^_^url^_^
+
+  - name: kafka_group_metrics
+    i18n:
+      zh-CN: Kafka消费者组指标
+      en-US: Kafka Group Metrics
+    priority: 11
+    fields:
+      - field: NumGroups
+        type: 0
+        i18n:
+          zh-CN: 群组数量
+          en-US: Num Groups
+      - field: NumGroupsCompletingRebalance
+        type: 0
+        i18n:
+          zh-CN: 正在完成重新平衡的群组数量
+          en-US: Num Groups Completing Rebalance
+      - field: NumGroupsDead
+        type: 0
+        i18n:
+          zh-CN: 死亡群组数量
+          en-US: Num Groups Dead
+      - field: NumGroupsEmpty
+        type: 0
+        i18n:
+          zh-CN: 空群组数量
+          en-US: Num Groups Empty
+      - field: NumGroupsPreparingRebalance
+        type: 0
+        i18n:
+          zh-CN: 正在准备重新平衡的群组数量
+          en-US: Num Groups Preparing Rebalance
+      - field: NumGroupsStable
+        type: 0
+        i18n:
+          zh-CN: 稳定群组数量
+          en-US: Num Groups Stable
+      - field: NumOffsets
+        type: 0
+        i18n:
+          zh-CN: 偏移量数量
+          en-US: Num Offsets
+    aliasFields:
+      - Value->NumGroups
+      - Value->NumGroupsCompletingRebalance
+      - Value->NumGroupsDead
+      - Value->NumGroupsEmpty
+      - Value->NumGroupsPreparingRebalance
+      - Value->NumGroupsStable
+      - Value->NumOffsets
+    calculates:
+      - NumGroups=Value->NumGroups
+      - NumGroupsCompletingRebalance=Value->NumGroupsCompletingRebalance
+      - NumGroupsDead=Value->NumGroupsDead
+      - NumGroupsEmpty=Value->NumGroupsEmpty
+      - NumGroupsPreparingRebalance=Value->NumGroupsPreparingRebalance
+      - NumGroupsStable=Value->NumGroupsStable
+      - NumOffsets=Value->NumOffsets
+    protocol: jmx
+    jmx:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      # jmx mbean object name
+      # kafka.server:type=GroupMetadataManager || kafka.coordinator.group:type=GroupMetadataManager
+      objectName: kafka.*:type=GroupMetadataManager,name=*
+      url: ^_^url^_^
+
+

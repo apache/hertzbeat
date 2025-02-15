@@ -20,7 +20,7 @@ import { MonitorService } from '../../../service/monitor.service';
 @Component({
   selector: 'header-search',
   template: `
-    <nz-input-group [nzPrefix]="iconTpl" [nzSuffix]="loadingTpl">
+    <nz-input-group [nzPrefix]="iconTpl" [nzSuffix]="loadingTpl" class="search-input-group">
       <ng-template #iconTpl>
         <i nz-icon [nzType]="focus ? 'arrow-down' : 'search'"></i>
       </ng-template>
@@ -36,19 +36,33 @@ import { MonitorService } from '../../../service/monitor.service';
         (focus)="qFocus()"
         (blur)="qBlur()"
         [attr.placeholder]="'menu.search.placeholder' | i18n"
+        class="search-input"
       />
     </nz-input-group>
-    <nz-autocomplete nzBackfill="false" nzDefaultActiveFirstOption #auto>
-      <nz-auto-option *ngFor="let option of options" [nzValue]="option.id" [nzLabel]="option.name" (click)="onOptionSelect(option)">
+    <nz-autocomplete nzBackfill="false" nzDefaultActiveFirstOption #auto class="search-autocomplete">
+      <nz-auto-option
+        *ngFor="let option of options"
+        [nzValue]="option.id"
+        [nzLabel]="option.name"
+        (click)="onOptionSelect(option)"
+        class="search-option"
+      >
         <a>
-          {{ 'monitor.name' | i18n }} : {{ option.name }}
-          <span style="left:50% ; position: absolute;">{{ 'monitor.host' | i18n }} : {{ option.host }}</span>
-          <span style="right: 10px; position: absolute;"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
+          <div class="monitor-info">
+            <div>
+              <span class="monitor-name">{{ option.name }}</span>
+              <span class="monitor-host">{{ option.host }}</span>
+            </div>
+            <div class="monitor-labels">
+              <span *ngFor="let label of option.labels | keyvalue" class="monitor-label">{{ label.key + ' : ' + label.value }}</span>
+            </div>
+          </div>
         </a>
       </nz-auto-option>
     </nz-autocomplete>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrls: ['./search.component.less']
 })
 export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
   q = '';

@@ -1,0 +1,889 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: hugegraph linux windows tomcat mysql aws...
+app: hugegraph
+# The monitoring i18n name
+name:
+  zh-CN: HugeGraph
+  en-US: HugeGraph
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 HugeGraph 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache HugeGraph</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors the HugeGraph metrics. <br>You can click "<i>New Apache HugeGraph</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
+  zh-TW: Hertzbeat 對 HugeGraph 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache HugeGraph</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hugegraph
+  en-US: https://hertzbeat.apache.org/docs/help/hugegraph
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 8080
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # When the type is boolean, the frontend will display a switch for it.
+    type: boolean
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: base_path
+    # name-param field display i18n name
+    name:
+      zh-CN: Base Path
+      en-US: Base Path
+    # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
+    type: text
+    # default value
+    defaultValue: /metrics
+    # required-true or false
+    required: true
+    # hide-true or false
+    hide: true
+# collect metrics config list
+metrics:
+  # metrics - environment
+  - name: gauges
+    priority: 0
+    # The specific monitoring metrics in the metric group.
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: edge-hugegraph-capacity
+        type: 0
+        i18n:
+          zh-CN: edge-hugegraph-capacity
+          en-US: edge-hugegraph-capacity
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: edge-hugegraph-expire
+        type: 0
+        i18n:
+          zh-CN: edge-hugegraph-expire
+          en-US: edge-hugegraph-expire
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: edge-hugegraph-hits
+        type: 0
+        i18n:
+          zh-CN: edge-hugegraph-hits
+          en-US: edge-hugegraph-hits
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: edge-hugegraph-miss
+        type: 0
+        i18n:
+          zh-CN: edge-hugegraph-miss
+          en-US: edge-hugegraph-miss
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: edge-hugegraph-size
+        type: 0
+        i18n:
+          zh-CN: edge-hugegraph-size
+          en-US: edge-hugegraph-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: instances
+        type: 0
+        i18n:
+          zh-CN: instances
+          en-US: instances
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-id-hugegraph-capacity
+        type: 0
+        i18n:
+          zh-CN: schema-id-hugegraph-capacity
+          en-US: schema-id-hugegraph-capacity
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-id-hugegraph-expire
+        type: 0
+        i18n:
+          zh-CN: schema-id-hugegraph-expire
+          en-US: schema-id-hugegraph-expire
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-id-hugegraph-hits
+        type: 0
+        i18n:
+          zh-CN: schema-id-hugegraph-hits
+          en-US: schema-id-hugegraph-hits
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-id-hugegraph-miss
+        type: 0
+        i18n:
+          zh-CN: schema-id-hugegraph-miss
+          en-US: schema-id-hugegraph-miss
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-id-hugegraph-size
+        type: 0
+        i18n:
+          zh-CN: schema-id-hugegraph-size
+          en-US: schema-id-hugegraph-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-name-hugegraph-capacity
+        type: 0
+        i18n:
+          zh-CN: schema-name-hugegraph-capacity
+          en-US: schema-name-hugegraph-capacity
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-name-hugegraph-expire
+        type: 0
+        i18n:
+          zh-CN: schema-name-hugegraph-expire
+          en-US: schema-name-hugegraph-expire
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-name-hugegraph-hits
+        type: 0
+        i18n:
+          zh-CN: schema-name-hugegraph-hits
+          en-US: schema-name-hugegraph-hits
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-name-hugegraph-miss
+        type: 0
+        i18n:
+          zh-CN: schema-name-hugegraph-miss
+          en-US: schema-name-hugegraph-miss
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: schema-name-hugegraph-size
+        type: 0
+        i18n:
+          zh-CN: schema-name-hugegraph-size
+          en-US: schema-name-hugegraph-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: token-hugegraph-capacity
+        type: 0
+        i18n:
+          zh-CN: token-hugegraph-capacity
+          en-US: token-hugegraph-capacity
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: token-hugegraph-expire
+        type: 0
+        i18n:
+          zh-CN: token-hugegraph-expire
+          en-US: token-hugegraph-expire
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: token-hugegraph-hits
+        type: 0
+        i18n:
+          zh-CN: token-hugegraph-hits
+          en-US: token-hugegraph-hits
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: token-hugegraph-miss
+        type: 0
+        i18n:
+          zh-CN: token-hugegraph-miss
+          en-US: token-hugegraph-miss
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: token-hugegraph-size
+        type: 0
+        i18n:
+          zh-CN: token-hugegraph-size
+          en-US: token-hugegraph-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users-hugegraph-capacity
+        type: 0
+        i18n:
+          zh-CN: users-hugegraph-capacity
+          en-US: users-hugegraph-capacity
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users-hugegraph-expire
+        type: 0
+        i18n:
+          zh-CN: users-hugegraph-expire
+          en-US: users-hugegraph-expire
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users-hugegraph-hits
+        type: 0
+        i18n:
+          zh-CN: users-hugegraph-hits
+          en-US: users-hugegraph-hits
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users-hugegraph-miss
+        type: 0
+        i18n:
+          zh-CN: users-hugegraph-miss
+          en-US: users-hugegraph-miss
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users-hugegraph-size
+        type: 0
+        i18n:
+          zh-CN: users-hugegraph-size
+          en-US: users-hugegraph-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users_pwd-hugegraph-capacity
+        type: 0
+        i18n:
+          zh-CN: users_pwd-hugegraph-capacity
+          en-US: users_pwd-hugegraph-capacity
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users_pwd-hugegraph-expire
+        type: 0
+        i18n:
+          zh-CN: users_pwd-hugegraph-expire
+          en-US: users_pwd-hugegraph-expire
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users_pwd-hugegraph-hits
+        type: 0
+        i18n:
+          zh-CN: users_pwd-hugegraph-hits
+          en-US: users_pwd-hugegraph-hits
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users_pwd-hugegraph-miss
+        type: 0
+        i18n:
+          zh-CN: users_pwd-hugegraph-miss
+          en-US: users_pwd-hugegraph-miss
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: users_pwd-hugegraph-size
+        type: 0
+        i18n:
+          zh-CN: users_pwd-hugegraph-size
+          en-US: users_pwd-hugegraph-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: vertex-hugegraph-capacity
+        type: 0
+        i18n:
+          zh-CN: vertex-hugegraph-capacity
+          en-US: vertex-hugegraph-capacity
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: vertex-hugegraph-expire
+        type: 0
+        i18n:
+          zh-CN: vertex-hugegraph-expire
+          en-US: vertex-hugegraph-expire
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: vertex-hugegraph-hits
+        type: 0
+        i18n:
+          zh-CN: vertex-hugegraph-hits
+          en-US: vertex-hugegraph-hits
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: vertex-hugegraph-miss
+        type: 0
+        i18n:
+          zh-CN: vertex-hugegraph-miss
+          en-US: vertex-hugegraph-miss
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: vertex-hugegraph-size
+        type: 0
+        i18n:
+          zh-CN: vertex-hugegraph-size
+          en-US: vertex-hugegraph-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: batch-write-threads
+        type: 0
+        i18n:
+          zh-CN: batch-write-threads
+          en-US: batch-write-threads
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: max-write-threads
+        type: 0
+        i18n:
+          zh-CN: max-write-threads
+          en-US: max-write-threads
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: pending-tasks
+        type: 0
+        i18n:
+          zh-CN: pending-tasks
+          en-US: pending-tasks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: workers
+        type: 0
+        i18n:
+          zh-CN: workers
+          en-US: workers
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: average-load-penalty
+        type: 0
+        i18n:
+          zh-CN: average-load-penalty
+          en-US: average-load-penalty
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: estimated-size
+        type: 0
+        i18n:
+          zh-CN: estimated-size
+          en-US: estimated-size
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: eviction-count
+        type: 0
+        i18n:
+          zh-CN: eviction-count
+          en-US: eviction-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: eviction-weight
+        type: 0
+        i18n:
+          zh-CN: eviction-weight
+          en-US: eviction-weight
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: hit-count
+        type: 0
+        i18n:
+          zh-CN: hit-count
+          en-US: hit-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: hit-rate
+        type: 0
+        i18n:
+          zh-CN: hit-rate
+          en-US: hit-rate
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: load-count
+        type: 0
+        i18n:
+          zh-CN: load-count
+          en-US: load-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: load-failure-count
+        type: 0
+        i18n:
+          zh-CN: load-failure-count
+          en-US: load-failure-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: load-failure-rate
+        type: 0
+        i18n:
+          zh-CN: load-failure-rate
+          en-US: load-failure-rate
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: load-success-count
+        type: 0
+        i18n:
+          zh-CN: load-success-count
+          en-US: load-success-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: long-run-compilation-count
+        type: 0
+        i18n:
+          zh-CN: long-run-compilation-count
+          en-US: long-run-compilation-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: miss-count
+        type: 0
+        i18n:
+          zh-CN: miss-count
+          en-US: miss-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: miss-rate
+        type: 0
+        i18n:
+          zh-CN: miss-rate
+          en-US: miss-rate
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: request-count
+        type: 0
+        i18n:
+          zh-CN: request-count
+          en-US: request-count
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: total-load-time
+        type: 0
+        i18n:
+          zh-CN: total-load-time
+          en-US: total-load-time
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: sessions
+        type: 0
+        i18n:
+          zh-CN: sessions
+          en-US: sessions
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.capacity'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.expire'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.hits'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.miss'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.size'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.instances'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.capacity'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.expire'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.hits'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.miss'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.size'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.capacity'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.expire'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.hits'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.miss'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.size'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.capacity'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.expire'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.hits'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.miss'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.size'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.capacity'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.expire'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.hits'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.miss'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.size'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.capacity'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.expire'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.hits'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.miss'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.size'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.capacity'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.expire'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.hits'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.miss'].['value']
+      - $.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.size'].['value']
+      - $.['org.apache.hugegraph.server.RestServer.batch-write-threads'].['value']
+      - $.['org.apache.hugegraph.server.RestServer.max-write-threads'].['value']
+      - $.['org.apache.hugegraph.task.TaskManager.pending-tasks'].['value']
+      - $.['org.apache.hugegraph.task.TaskManager.workers'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.average-load-penalty'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.estimated-size'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.eviction-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.eviction-weight'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.hit-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.hit-rate'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-failure-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-failure-rate'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-success-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.long-run-compilation-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.miss-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.miss-rate'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.request-count'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.total-load-time'].['value']
+      - $.['org.apache.tinkerpop.gremlin.server.GremlinServer.sessions'].['value']
+    calculates:
+      - edge-hugegraph-capacity=$.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.capacity'].['value']
+      - edge-hugegraph-expire=$.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.expire'].['value']
+      - edge-hugegraph-hits=$.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.hits'].['value']
+      - edge-hugegraph-miss=$.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.miss'].['value']
+      - edge-hugegraph-size=$.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.size'].['value']
+      - instances=$.['org.apache.hugegraph.backend.cache.Cache.instances'].['value']
+      - schema-id-hugegraph-capacity=$.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.capacity'].['value']
+      - schema-id-hugegraph-expire=$.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.expire'].['value']
+      - schema-id-hugegraph-hits=$.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.hits'].['value']
+      - schema-id-hugegraph-miss=$.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.miss'].['value']
+      - schema-id-hugegraph-size=$.['org.apache.hugegraph.backend.cache.Cache.schema-id-hugegraph.size'].['value']
+      - schema-name-hugegraph-capacity=$.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.capacity'].['value']
+      - schema-name-hugegraph-expire=$.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.expire'].['value']
+      - schema-name-hugegraph-hits=$.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.hits'].['value']
+      - schema-name-hugegraph-miss=$.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.miss'].['value']
+      - schema-name-hugegraph-size=$.['org.apache.hugegraph.backend.cache.Cache.schema-name-hugegraph.size'].['value']
+      - token-hugegraph-capacity=$.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.capacity'].['value']
+      - token-hugegraph-expire=$.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.expire'].['value']
+      - token-hugegraph-hits=$.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.hits'].['value']
+      - token-hugegraph-miss=$.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.miss'].['value']
+      - token-hugegraph-size=$.['org.apache.hugegraph.backend.cache.Cache.token-hugegraph.size'].['value']
+      - users-hugegraph-capacity=$.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.capacity'].['value']
+      - users-hugegraph-expire=$.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.expire'].['value']
+      - users-hugegraph-hits=$.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.hits'].['value']
+      - users-hugegraph-miss=$.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.miss'].['value']
+      - users-hugegraph-size=$.['org.apache.hugegraph.backend.cache.Cache.users-hugegraph.size'].['value']
+      - users_pwd-hugegraph-capacity=$.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.capacity'].['value']
+      - users_pwd-hugegraph-expire=$.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.expire'].['value']
+      - users_pwd-hugegraph-hits=$.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.hits'].['value']
+      - users_pwd-hugegraph-miss=$.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.miss'].['value']
+      - users_pwd-hugegraph-size=$.['org.apache.hugegraph.backend.cache.Cache.users_pwd-hugegraph.size'].['value']
+      - vertex-hugegraph-capacity=$.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.capacity'].['value']
+      - vertex-hugegraph-expire=$.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.expire'].['value']
+      - vertex-hugegraph-hits=$.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.hits'].['value']
+      - vertex-hugegraph-miss=$.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.miss'].['value']
+      - vertex-hugegraph-size=$.['org.apache.hugegraph.backend.cache.Cache.vertex-hugegraph.size'].['value']
+      - batch-write-threads=$.['org.apache.hugegraph.server.RestServer.batch-write-threads'].['value']
+      - max-write-threads=$.['org.apache.hugegraph.server.RestServer.max-write-threads'].['value']
+      - pending-tasks=$.['org.apache.hugegraph.task.TaskManager.pending-tasks'].['value']
+      - workers=$.['org.apache.hugegraph.task.TaskManager.workers'].['value']
+      - average-load-penalty=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.average-load-penalty'].['value']
+      - estimated-size=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.estimated-size'].['value']
+      - eviction-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.eviction-count'].['value']
+      - eviction-weight=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.eviction-weight'].['value']
+      - hit-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.hit-count'].['value']
+      - hit-rate=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.hit-rate'].['value']
+      - load-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-count'].['value']
+      - load-failure-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-failure-count'].['value']
+      - load-failure-rate=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-failure-rate'].['value']
+      - load-success-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.load-success-count'].['value']
+      - long-run-compilation-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.long-run-compilation-count'].['value']
+      - miss-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.miss-count'].['value']
+      - miss-rate=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.miss-rate'].['value']
+      - request-count=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.request-count'].['value']
+      - total-load-time=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.gremlin-groovy.sessionless.class-cache.total-load-time'].['value']
+      - sessions=$.['org.apache.tinkerpop.gremlin.server.GremlinServer.sessions'].['value']
+    # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: ^_^base_path^_^/gauges?type=json
+      # http request method GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      parseType: jsonPath
+      # http response data parse script
+      parseScript: '$'
+
+  - name: counters
+    priority: 1
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GET-SUCCESS_COUNTER
+        type: 0
+        i18n:
+          zh-CN: GET-SUCCESS_COUNTER
+          en-US: GET-SUCCESS_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GET-TOTAL_COUNTER
+        type: 0
+        i18n:
+          zh-CN: GET-TOTAL_COUNTER
+          en-US: GET-TOTAL_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: favicon-ico-GET-FAILED_COUNTER
+        type: 0
+        i18n:
+          zh-CN: favicon-ico-GET-FAILED_COUNTER
+          en-US: favicon-ico-GET-FAILED_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: favicon-ico-GET-TOTAL_COUNTER
+        type: 0
+        i18n:
+          zh-CN: favicon-ico-GET-TOTAL_COUNTER
+          en-US: favicon-ico-GET-TOTAL_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: graphs-HEAD-FAILED_COUNTER
+        type: 0
+        i18n:
+          zh-CN: graphs-HEAD-FAILED_COUNTER
+          en-US: graphs-HEAD-FAILED_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: graphs-HEAD-SUCCESS_COUNTER
+        type: 0
+        i18n:
+          zh-CN: graphs-HEAD-SUCCESS_COUNTER
+          en-US: graphs-HEAD-SUCCESS_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: graphs-HEAD-TOTAL_COUNTER
+        type: 0
+        i18n:
+          zh-CN: graphs-HEAD-TOTAL_COUNTER
+          en-US: graphs-HEAD-TOTAL_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: graphs-hugegraph-graph-vertices-GET-SUCCESS_COUNTER
+        type: 0
+        i18n:
+          zh-CN: graphs-hugegraph-graph-vertices-GET-SUCCESS_COUNTER
+          en-US: graphs-hugegraph-graph-vertices-GET-SUCCESS_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: graphs-hugegraph-graph-vertices-GET-TOTAL_COUNTER
+        type: 0
+        i18n:
+          zh-CN: graphs-hugegraph-graph-vertices-GET-TOTAL_COUNTER
+          en-US: graphs-hugegraph-graph-vertices-GET-TOTAL_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: metircs-GET-FAILED_COUNTER
+        type: 0
+        i18n:
+          zh-CN: metircs-GET-FAILED_COUNTER
+          en-US: metircs-GET-FAILED_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: metircs-GET-TOTAL_COUNTER
+        type: 0
+        i18n:
+          zh-CN: metircs-GET-TOTAL_COUNTER
+          en-US: metircs-GET-TOTAL_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: metrics-GET-SUCCESS_COUNTER
+        type: 0
+        i18n:
+          zh-CN: metrics-GET-SUCCESS_COUNTER
+          en-US: metrics-GET-SUCCESS_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: metrics-GET-TOTAL_COUNTER
+        type: 0
+        i18n:
+          zh-CN: metrics-GET-TOTAL_COUNTER
+          en-US: metrics-GET-TOTAL_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: metrics-gauges-GET-SUCCESS_COUNTER
+        type: 0
+        i18n:
+          zh-CN: metrics-gauges-GET-SUCCESS_COUNTER
+          en-US: metrics-gauges-GET-SUCCESS_COUNTER
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: metrics-gauges-GET-TOTAL_COUNTER
+        type: 0
+        i18n:
+          zh-CN: metrics-gauges-GET-TOTAL_COUNTER
+          en-US: metrics-gauges-GET-TOTAL_COUNTER
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.['//GET/SUCCESS_COUNTER'].['count']
+      - $.['//GET/TOTAL_COUNTER'].['count']
+      - $.['/favicon.ico/GET/FAILED_COUNTER'].['count']
+      - $.['/favicon.ico/GET/TOTAL_COUNTER'].['count']
+      - $.['/graphs/HEAD/FAILED_COUNTER'].['count']
+      - $.['/graphs/HEAD/SUCCESS_COUNTER'].['count']
+      - $.['/graphs/HEAD/TOTAL_COUNTER'].['count']
+      - $.['/graphs/hugegraph/graph/vertices/GET/SUCCESS_COUNTER'].['count']
+      - $.['/graphs/hugegraph/graph/vertices/GET/TOTAL_COUNTER'].['count']
+      - $.['/metircs/GET/FAILED_COUNTER'].['count']
+      - $.['/metircs/GET/TOTAL_COUNTER'].['count']
+      - $.['/metrics/GET/SUCCESS_COUNTER'].['count']
+      - $.['/metrics/GET/TOTAL_COUNTER'].['count']
+      - $.['/metrics/gauges/GET/SUCCESS_COUNTER'].['count']
+      - $.['/metrics/gauges/GET/TOTAL_COUNTER'].['count']
+    calculates:
+      - GET-SUCCESS_COUNTER=$.['//GET/SUCCESS_COUNTER'].['count']
+      - GET-TOTAL_COUNTER=$.['//GET/TOTAL_COUNTER'].['count']
+      - favicon-ico-GET-FAILED_COUNTER=$.['/favicon.ico/GET/FAILED_COUNTER'].['count']
+      - favicon-ico-GET-TOTAL_COUNTER=$.['/favicon.ico/GET/TOTAL_COUNTER'].['count']
+      - graphs-HEAD-FAILED_COUNTER=$.['/graphs/HEAD/FAILED_COUNTER'].['count']
+      - graphs-HEAD-SUCCESS_COUNTER=$.['/graphs/HEAD/SUCCESS_COUNTER'].['count']
+      - graphs-HEAD-TOTAL_COUNTER=$.['/graphs/HEAD/TOTAL_COUNTER'].['count']
+      - graphs-hugegraph-graph-vertices-GET-SUCCESS_COUNTER=$.['/graphs/hugegraph/graph/vertices/GET/SUCCESS_COUNTER'].['count']
+      - graphs-hugegraph-graph-vertices-GET-TOTAL_COUNTER=$.['/graphs/hugegraph/graph/vertices/GET/TOTAL_COUNTER'].['count']
+      - metircs-GET-FAILED_COUNTER=$.['/metircs/GET/FAILED_COUNTER'].['count']
+      - metircs-GET-TOTAL_COUNTER=$.['/metircs/GET/TOTAL_COUNTER'].['count']
+      - metrics-GET-SUCCESS_COUNTER=$.['/metrics/GET/SUCCESS_COUNTER'].['count']
+      - metrics-GET-TOTAL_COUNTER=$.['/metrics/GET/TOTAL_COUNTER'].['count']
+      - metrics-gauges-GET-SUCCESS_COUNTER=$.['/metrics/gauges/GET/SUCCESS_COUNTER'].['count']
+      - metrics-gauges-GET-TOTAL_COUNTER=$.['/metrics/gauges/GET/TOTAL_COUNTER'].['count']
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/counters?type=json
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: system
+    priority: 2
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: mem
+        type: 0
+        i18n:
+          zh-CN: mem
+          en-US: mem
+      - field: mem_total
+        type: 0
+        i18n:
+          zh-CN: mem_total
+          en-US: mem_total
+      - field: mem_used
+        type: 0
+        i18n:
+          zh-CN: mem_used
+          en-US: mem_used
+      - field: mem_free
+        type: 0
+        i18n:
+          zh-CN: mem_free
+          en-US: mem_free
+      - field: mem_unit
+        type: 1
+        i18n:
+          zh-CN: mem_unit
+          en-US: mem_unit
+      - field: processors
+        type: 0
+        i18n:
+          zh-CN: processors
+          en-US: processors
+      - field: uptime
+        type: 0
+        i18n:
+          zh-CN: uptime
+          en-US: uptime
+      - field: systemload_average
+        type: 0
+        i18n:
+          zh-CN: systemload_average
+          en-US: systemload_average
+      - field: heap_committed
+        type: 0
+        i18n:
+          zh-CN: heap_committed
+          en-US: heap_committed
+      - field: heap_init
+        type: 0
+        i18n:
+          zh-CN: heap_init
+          en-US: heap_init
+      - field: heap_used
+        type: 0
+        i18n:
+          zh-CN: heap_used
+          en-US: heap_used
+      - field: heap_max
+        type: 0
+        i18n:
+          zh-CN: heap_max
+          en-US: heap_max
+      - field: nonheap_committed
+        type: 0
+        i18n:
+          zh-CN: nonheap_committed
+          en-US: nonheap_committed
+      - field: nonheap_init
+        type: 0
+        i18n:
+          zh-CN: nonheap_init
+          en-US: nonheap_init
+      - field: nonheap_used
+        type: 0
+        i18n:
+          zh-CN: nonheap_used
+          en-US: nonheap_used
+      - field: nonheap_max
+        type: 0
+        i18n:
+          zh-CN: nonheap_max
+          en-US: nonheap_max
+      - field: thread_peak
+        type: 0
+        i18n:
+          zh-CN: thread_peak
+          en-US: thread_peak
+      - field: thread_daemon
+        type: 0
+        i18n:
+          zh-CN: thread_daemon
+          en-US: thread_daemon
+      - field: thread_total_started
+        type: 0
+        i18n:
+          zh-CN: thread_total_started
+          en-US: thread_total_started
+      - field: thread_count
+        type: 0
+        i18n:
+          zh-CN: thread_count
+          en-US: thread_count
+      - field: garbage_collector_g1_young_generation_count
+        type: 0
+        i18n:
+          zh-CN: garbage_collector_g1_young_generation_count
+          en-US: garbage_collector_g1_young_generation_count
+      - field: garbage_collector_g1_young_generation_time
+        type: 0
+        i18n:
+          zh-CN: garbage_collector_g1_young_generation_time
+          en-US: garbage_collector_g1_young_generation_time
+      - field: garbage_collector_g1_old_generation_count
+        type: 0
+        i18n:
+          zh-CN: garbage_collector_g1_old_generation_count
+          en-US: garbage_collector_g1_old_generation_count
+      - field: garbage_collector_g1_old_generation_time
+        type: 0
+        i18n:
+          zh-CN: garbage_collector_g1_old_generation_time
+          en-US: garbage_collector_g1_old_generation_time
+      - field: garbage_collector_time_unit
+        type: 1
+        i18n:
+          zh-CN: garbage_collector_time_unit
+          en-US: garbage_collector_time_unit
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.basic.mem
+      - $.basic.mem_total
+      - $.basic.mem_used
+      - $.basic.mem_free
+      - $.basic.mem_unit
+      - $.basic.processors
+      - $.basic.uptime
+      - $.basic.systemload_average
+      - $.heap.committed
+      - $.heap.init
+      - $.heap.used
+      - $.heap.max
+      - $.nonheap.committed
+      - $.nonheap.init
+      - $.nonheap.used
+      - $.nonheap.max
+      - $.thread.peak
+      - $.thread.daemon
+      - $.thread.total_started
+      - $.thread.count
+      - $.garbage_collector.g1_young_generation_count
+      - $.garbage_collector.g1_young_generation_time
+      - $.garbage_collector.g1_old_generation_count
+      - $.garbage_collector.g1_old_generation_time
+      - $.garbage_collector.time_unit
+    calculates:
+      - mem=$.basic.mem
+      - mem_total=$.basic.mem_total
+      - mem_used=$.basic.mem_used
+      - mem_free=$.basic.mem_free
+      - mem_unit=$.basic.mem_unit
+      - processors=$.basic.processors
+      - uptime=$.basic.uptime
+      - systemload_average=$.basic.systemload_average
+      - heap_committed=$.heap.committed
+      - heap_init=$.heap.init
+      - heap_used=$.heap.used
+      - heap_max=$.heap.max
+      - nonheap_committed=$.nonheap.committed
+      - nonheap_init=$.nonheap.init
+      - nonheap_used=$.nonheap.used
+      - nonheap_max=$.nonheap.max
+      - thread_peak=$.thread.peak
+      - thread_daemon=$.thread.daemon
+      - thread_total_started=$.thread.total_started
+      - thread_count=$.thread.count
+      - garbage_collector_g1_young_generation_count=$.garbage_collector.g1_young_generation_count
+      - garbage_collector_g1_young_generation_time=$.garbage_collector.g1_young_generation_time
+      - garbage_collector_g1_old_generation_count=$.garbage_collector.g1_old_generation_count
+      - garbage_collector_g1_old_generation_time=$.garbage_collector.g1_old_generation_time
+      - garbage_collector_time_unit=$.garbage_collector.time_unit
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/system?type=json
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'

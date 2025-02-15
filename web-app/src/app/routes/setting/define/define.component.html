@@ -27,7 +27,7 @@
 <nz-divider></nz-divider>
 
 <nz-layout style="height: 100vh; overflow: hidden">
-  <nz-sider nzTheme="light" style="height: 100%; overflow: hidden" [nzTrigger]="null">
+  <nz-sider [nzTheme]="theme == 'dark' ? 'dark' : 'light'" style="height: 100%; overflow: hidden" [nzTrigger]="null">
     <app-monitor-select-menu
       [loading]="menuLoading"
       [data]="appMenusArr"
@@ -80,7 +80,7 @@
           <i nz-icon nzType="save" nzTheme="outline"></i>
           {{ 'define.save-apply' | i18n }}
         </button>
-        <button *ngIf="currentApp != null" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
+        <button *ngIf="currentApp != null" nz-button nzDanger (click)="onDeleteDefineYml()">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
           {{ 'define.delete' | i18n : { app: currentApp } }}
         </button>
@@ -107,7 +107,7 @@
         [nzOriginalText]="originalCode"
         [(ngModel)]="code"
         [nzEditorMode]="'diff'"
-        [nzEditorOption]="{ language: 'yaml', theme: 'vs-dark', folding: true, automaticLayout: true }"
+        [nzEditorOption]="{ language: 'yaml', theme: 'vs', folding: true, automaticLayout: true }"
       ></nz-code-editor>
     </div>
   </nz-content>

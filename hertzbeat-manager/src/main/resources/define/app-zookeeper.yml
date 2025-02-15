@@ -1,0 +1,360 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+category: mid
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: zookeeper
+# The monitoring i18n name
+name:
+  zh-CN: Zookeeper服务
+  en-US: Zookeeper Server
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 支持对 Zookeeper 的通用性能指标(conf、stats)进行采集监控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 来收集指标数据，您需要将 zookeeper 的四字命令加入白名单，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper'>点击查看具体步骤</a>。
+  en-US: HertzBeat monitors Zookeeper general performance metrics such as status and configuration. <br><span class='help_module_span'>Note⚠️:Due to the need for four-letter-word provided by zookeeper to collect metric data, you should add the four-letter-word to the whitelist.<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/zookeeper'>Click here to view the specific steps.</a>"
+  zh-TW: HertzBeat 支持對 Zookeeper 的通用性能指標(conf、stats)進行采集監控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 來收集指標數據，您需要將 zookeeper 的四字命令加入白名單，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper'>點擊查看具體步驟</a>。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper
+  en-US: https://hertzbeat.apache.org/docs/help/zookeeper
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 2181
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # required-true or false
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    hide: true
+    # default value
+    defaultValue: 6000
+# collect metrics config list
+metrics:
+  # metrics - cluster
+  - name: conf
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: clientPort
+        type: 0
+        i18n:
+          zh-CN: 客户端端口
+          en-US: Client Port
+      - field: dataDir
+        type: 1
+        i18n:
+          zh-CN: 数据目录
+          en-US: Data Directory
+      - field: dataDirSize
+        type: 0
+        unit: kb
+        i18n:
+          zh-CN: 数据目录大小
+          en-US: Data Directory Size
+      - field: dataLogDir
+        type: 1
+        i18n:
+          zh-CN: 日志目录
+          en-US: Data Log Directory
+      - field: dataLogSize
+        type: 0
+        unit: kb
+        i18n:
+          zh-CN: 日志目录大小
+          en-US: Data Log Size
+      - field: tickTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 心跳间隔时间
+          en-US: Tick Time
+      - field: maxClientCnxns
+        type: 1
+        i18n:
+          zh-CN: 最大客户端连接数
+          en-US: Max Client Connections
+      - field: minSessionTimeout
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 最小会话超时
+          en-US: Min Session Timeout
+      - field: maxSessionTimeout
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 最大会话超时
+          en-US: Max Session Timeout
+      - field: serverId
+        type: 0
+        i18n:
+          zh-CN: 服务器ID
+          en-US: Server ID
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: telnet
+    telnet:
+      # telnet host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # telnet port: 22
+      port: ^_^port^_^
+      # telnet connect timeout
+      timeout: ^_^timeout^_^
+      # telnet collect cmd
+      cmd: conf
+  - name: stats
+    priority: 1
+    fields:
+      - field: zk_version
+        type: 1
+        i18n:
+          zh-CN: ZooKeeper版本
+          en-US: ZooKeeper Version
+      - field: zk_server_state
+        type: 1
+        i18n:
+          zh-CN: 服务器状态
+          en-US: Server State
+      - field: zk_num_alive_connections
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: 存活连接数
+          en-US: Number of Alive Connections
+      - field: zk_avg_latency
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 平均延迟
+          en-US: Average Latency
+      - field: zk_outstanding_requests
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: 未完成请求数
+          en-US: Outstanding Requests
+      - field: zk_znode_count
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: ZNode数量
+          en-US: ZNode Count
+      - field: zk_packets_sent
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: 发送数据包数
+          en-US: Packets Sent
+      - field: zk_packets_received
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: 接收数据包数
+          en-US: Packets Received
+      - field: zk_watch_count
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: Watch数量
+          en-US: Watch Count
+      - field: zk_max_file_descriptor_count
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: 最大文件描述符数量
+          en-US: Max File Descriptor Count
+      - field: zk_approximate_data_size
+        type: 0
+        unit: kb
+        i18n:
+          zh-CN: 大致数据大小
+          en-US: Approximate Data Size
+      - field: zk_open_file_descriptor_count
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: 打开的文件描述符数量
+          en-US: Open File Descriptor Count
+      - field: zk_max_latency
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 最大延迟
+          en-US: Max Latency
+      - field: zk_ephemerals_count
+        type: 0
+        unit: 个
+        i18n:
+          zh-CN: 临时节点数量
+          en-US: Ephemerals Count
+      - field: zk_min_latency
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 最小延迟
+          en-US: Min Latency
+    protocol: telnet
+    telnet:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      cmd: mntr
+  - name: envi
+    priority: 2
+    fields:
+      - field: zk_version
+        type: 1
+        i18n:
+          zh-CN: ZooKeeper版本
+          en-US: ZooKeeper Version
+      - field: hostname
+        type: 1
+        i18n:
+          zh-CN: 主机名
+          en-US: Host Name
+      - field: java_version
+        type: 1
+        i18n:
+          zh-CN: Java版本
+          en-US: Java Version
+      - field: java_vendor
+        type: 1
+        i18n:
+          zh-CN: Java供应商
+          en-US: Java Vendor
+      - field: java_home
+        type: 1
+        i18n:
+          zh-CN: Java主目录
+          en-US: Java Home
+      - field: java_class_path
+        type: 1
+        i18n:
+          zh-CN: Java类路径
+          en-US: Java Class Path
+      - field: java_library_path
+        type: 1
+        i18n:
+          zh-CN: Java库路径
+          en-US: Java Library Path
+      - field: java_io_tmpdir
+        type: 1
+        i18n:
+          zh-CN: Java临时目录
+          en-US: Java IO Temp Directory
+      - field: java_compiler
+        type: 1
+        i18n:
+          zh-CN: Java编译器
+          en-US: Java Compiler
+      - field: os_name
+        type: 1
+        i18n:
+          zh-CN: 操作系统名称
+          en-US: OS Name
+      - field: os_arch
+        type: 1
+        i18n:
+          zh-CN: 操作系统架构
+          en-US: OS Architecture
+      - field: os_version
+        type: 1
+        i18n:
+          zh-CN: 操作系统版本
+          en-US: OS Version
+      - field: user_name
+        type: 1
+        i18n:
+          zh-CN: 用户名
+          en-US: User Name
+      - field: user_home
+        type: 1
+        i18n:
+          zh-CN: 用户主目录
+          en-US: User Home
+      - field: user_dir
+        type: 1
+        i18n:
+          zh-CN: 用户当前目录
+          en-US: User Directory
+    aliasFields:
+      - zookeeper.version
+      - host.name
+      - java.version
+      - java.vendor
+      - user.dir
+      - java.home
+      - java.class.path
+      - java.library.path
+      - java.io.tmpdir
+      - java.compiler
+      - os.name
+      - os.arch
+      - os.version
+      - user.name
+      - user.home
+    calculates:
+      - zk_version=zookeeper.version
+      - hostname=host.name
+      - java_version=java.version
+      - java_vendor=java.vendor
+      - user_dir=user.dir
+      - java_home=java.home
+      - java_class_path=java.class.path
+      - java_library_path=java.library.path
+      - java_io_tmpdir=java.io.tmpdir
+      - java_compiler=java.compiler
+      - os_name=os.name
+      - os_arch=os.arch
+      - os_version=os.version
+      - user_name=user.name
+      - user_home=user.home
+    protocol: telnet
+    telnet:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      cmd: envi

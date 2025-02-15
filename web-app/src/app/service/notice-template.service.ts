@@ -17,15 +17,17 @@
  * under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
 import { NoticeTemplate } from '../pojo/NoticeTemplate';
+import { Page } from '../pojo/Page';
 
 const notice_template_uri = '/notice/template';
 const notice_templates_uri = '/notice/templates';
+const notice_templates_all_uri = '/notice/templates/all';
 const default_notice_templates_uri = '/notice/default_templates';
 @Injectable({
   providedIn: 'root'
@@ -45,10 +47,29 @@ export class NoticeTemplateService {
     return this.http.delete<Message<any>>(`${notice_template_uri}/${templateId}`);
   }
 
-  public getNoticeTemplates(): Observable<Message<NoticeTemplate[]>> {
-    return this.http.get<Message<NoticeTemplate[]>>(notice_templates_uri);
+  public getNoticeTemplates(name: string, preset: boolean, pageIndex: number, pageSize: number): Observable<Message<Page<NoticeTemplate>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    let httpParams = new HttpParams();
+    httpParams = httpParams.append('pageIndex', pageIndex);
+    httpParams = httpParams.append('pageSize', pageSize);
+    httpParams = httpParams.append('preset', preset);
+    if (name != undefined && name != null && name != '') {
+      httpParams = httpParams.append('name', name);
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<NoticeTemplate>>>(notice_templates_uri, options);
   }
+
+  public getAllNoticeTemplates(): Observable<Message<NoticeTemplate[]>> {
+    return this.http.get<Message<NoticeTemplate[]>>(notice_templates_all_uri);
+  }
+
   public getDefaultNoticeTemplates(): Observable<Message<NoticeTemplate[]>> {
     return this.http.get<Message<NoticeTemplate[]>>(default_notice_templates_uri);
+  }
+
+  public getNoticeTemplateById(templateId: number): Observable<Message<NoticeTemplate>> {
+    return this.http.get<Message<NoticeTemplate>>(`${notice_template_uri}/${templateId}`);
   }
 }

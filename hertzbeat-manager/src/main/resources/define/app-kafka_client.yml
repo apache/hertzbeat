@@ -1,0 +1,195 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: mid
+app: kafka_client
+name:
+  zh-CN: Kafka消息系统（客户端）
+  en-US: Kafka Message（Client）
+
+help:
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client">Kafka Admin Client</a> 对 Kafka 的通用指标进行采集监控。</span>
+  en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/help/kafka_client'>Kafka Admin Client</a> to monitoring kafka general metrics. </span>
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client">Kafka Admin Client</a> 對 Kafka 的通用指標進行采集監控。</span>
+
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client
+  en-US: https://hertzbeat.apache.org/docs/help/kafka_client
+
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9092
+  - field: monitorInternalTopic
+    name:
+      zh-CN: 是否监控内部主题
+      en-US: Monitor Internal Topic
+    type: boolean
+    required: true
+    defaultValue: false
+
+metrics:
+  - name: topic_list
+    i18n:
+      zh-CN: 主题列表
+      en-US: Topic List
+    priority: 0
+    fields:
+      - field: TopicName
+        type: 1
+        i18n:
+          zh-CN: 主题名称
+          en-US: Topic Name
+    protocol: kclient
+    kclient:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
+      command: topic-list
+  - name: topic_detail
+    i18n:
+      zh-CN: 主题详细信息
+      en-US: Topic Detail Info
+    priority: 1
+    fields:
+      - field: TopicName
+        type: 1
+        i18n:
+          zh-CN: 主题名称
+          en-US: Topic Name
+      - field: PartitionNum
+        type: 1
+        i18n:
+          zh-CN: 分区数量
+          en-US: Partition Num
+      - field: PartitionLeader
+        type: 1
+        i18n:
+          zh-CN: 分区领导者
+          en-US: Partition Leader
+      - field: BrokerHost
+        type: 1
+        i18n:
+          zh-CN: Broker主机
+          en-US: Broker Host
+      - field: BrokerPort
+        type: 1
+        i18n:
+          zh-CN: Broker端口
+          en-US: Broker Port
+      - field: ReplicationFactorSize
+        type: 1
+        i18n:
+          zh-CN: 复制因子大小
+          en-US: Replication Factor Size
+      - field: ReplicationFactor
+        type: 1
+        i18n:
+          zh-CN: 复制因子
+          en-US: Replication Factor
+    protocol: kclient
+    kclient:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
+      command: topic-describe
+  - name: topic_offset
+    i18n:
+      zh-CN: 主题偏移量
+      en-US: Topic Offset
+    priority: 2
+    # Kafka offset does not need to be obtained frequently, as getting it too quickly will affect performance
+    interval: 300
+    fields:
+      - field: TopicName
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 主题名称
+          en-US: Topic Name
+      - field: PartitionNum
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 分区号
+          en-US: Partition Num
+      - field: earliest
+        type: 0
+        i18n:
+          zh-CN: 最早偏移量
+          en-US: Earliest Offset
+      - field: latest
+        type: 0
+        i18n:
+          zh-CN: 最新偏移量
+          en-US: Latest Offset
+    protocol: kclient
+    kclient:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
+      command: topic-offset
+  - name: consumer_detail
+    i18n:
+      zh-CN: 消费者组情况
+      en-US: Consumer Detail Info
+    priority: 3
+    # Kafka offset does not need to be obtained frequently, as getting it too quickly will affect performance
+    interval: 300
+    fields:
+      - field: GroupId
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 消费者组ID
+          en-US: Consumer Group ID
+      - field: Group Member Num
+        type: 1
+        i18n:
+          zh-CN: 消费者实例数量
+          en-US: Group Member Num
+      - field: Topic
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 订阅主题名称
+          en-US: Subscribed Topic Name
+      - field: Offset of Each Partition
+        type: 1
+        i18n:
+          zh-CN: 各分区偏移量
+          en-US: Offset of Each Partition
+      - field: Lag
+        type: 0
+        i18n:
+          zh-CN: 落后偏移量
+          en-US: Total Lag
+    protocol: kclient
+    kclient:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      monitorInternalTopic: ^_^monitorInternalTopic^_^
+      command: consumer-detail

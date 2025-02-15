@@ -91,21 +91,22 @@
 
 <app-key-value-input
   *ngIf="item.type === 'key-value'"
-  [(value)]="value"
-  (valueChange)="onChange($event)"
+  [(ngModel)]="value"
+  (ngModelChange)="onChange($event)"
+  [keyAlias]="'monitor.headerName.tip' | i18n"
+  [valueAlias]="'monitor.headerValue.tip' | i18n"
+  [name]="item.field"
   [id]="item.field"
-  keyAlias="Header Name"
-  valueAlias="Header Value"
 />
 
 <app-metrics-field-input
   *ngIf="item.type === 'metrics-field'"
   [(value)]="value"
   (valueChange)="onChange($event)"
-  [id]="item.field"
   [FieldAlias]="'Field'"
   [UnitAlias]="'Unit'"
   [TypeAlias]="'Type'"
+  [id]="item.field"
 />
 
 <ng-container *ngIf="item.type === 'collectors-selection'">
@@ -155,8 +156,6 @@
   </nz-input-number>
   <nz-tag style="margin-left: 6px">{{ 'common.time.unit.second' | i18n }}</nz-tag>
 </ng-container>
-
-<app-tags-select *ngIf="item.type === 'tags-selection'" [mode]="extra.tag_mode" [(value)]="value" (valueChange)="onChange($event)" />
 
 <nz-textarea-count *ngIf="item.type === 'textarea-limit'" [nzMaxCharacterCount]="extra.textarea_limit || 100">
   <textarea

@@ -27,6 +27,7 @@ import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -35,7 +36,11 @@ import { NzTransferModule } from 'ng-zorro-antd/transfer';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
-import { AlertConvergeComponent } from './alert-converge/alert-converge.component';
+import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
+import { AlertInhibitComponent } from './alert-inhibit/alert-inhibit.component';
+import { AlertNoticeReceiverComponent } from './alert-notice/alert-notice-receiver/alert-notice-receiver.component';
+import { AlertNoticeRuleComponent } from './alert-notice/alert-notice-rule/alert-notice-rule.component';
+import { AlertNoticeTemplateComponent } from './alert-notice/alert-notice-template/alert-notice-template.component';
 import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
@@ -46,7 +51,11 @@ const COMPONENTS: Array<Type<void>> = [
   AlertSettingComponent,
   AlertNoticeComponent,
   AlertSilenceComponent,
-  AlertConvergeComponent
+  AlertInhibitComponent,
+  AlertGroupConvergeComponent,
+  AlertNoticeReceiverComponent,
+  AlertNoticeRuleComponent,
+  AlertNoticeTemplateComponent
 ];
 
 @NgModule({
@@ -66,7 +75,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzDatePickerModule,
     NzBadgeModule,
     NzUploadModule,
-    QueryBuilderModule
+    QueryBuilderModule,
+    NzPaginationModule
   ],
   declarations: COMPONENTS
 })

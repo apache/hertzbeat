@@ -1,0 +1,192 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: flink
+# The monitoring i18n name
+name:
+  zh-CN: Apache Flink
+  en-US: Apache Flink
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Flink流引擎的通用指标进行测量监控。<br>您可以点击 “<i>新建 Flink流引擎</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitoring Flink Stream through general performance metric. You could click the "<i>New Flink Stream</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 Flink流引擎的通用名額進行量測監控。<br>您可以點擊“<i>新建Flink流引擎</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/flink
+  en-US: https://hertzbeat.apache.org/docs/help/flink
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 8081
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # type-param field type(boolean mapping the html switch tag)
+    type: boolean
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    # type-param field type(most mapping the html input type)
+    type: radio
+    required: false
+    hide: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+# collect metrics config list
+metrics:
+  # metrics - basic
+  - name: basic
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: flink-version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: /v1/config
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: ^_^ssl^_^
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: default
+
+  - name: overview
+    priority: 1
+    fields:
+      - field: slots_total        # slots count
+        type: 0
+        i18n:
+          zh-CN: 插槽总数
+          en-US: Slots Total
+      - field: slots_used        # slots used count
+        type: 0
+        i18n:
+          zh-CN: 已用插槽数
+          en-US: Slots Used
+      - field: task_total        # task count
+        type: 0
+        i18n:
+          zh-CN: 任务总数
+          en-US: Task Total
+      - field: jobs_running        # Number of running tasks
+        type: 0
+        i18n:
+          zh-CN: 正在运行的任务数
+          en-US: Jobs Running
+      - field: jobs_failed        # Number of failed tasks
+        type: 0
+        i18n:
+          zh-CN: 已经失败的任务数
+          en-US: Jobs Failed
+    aliasFields:
+      - slots-total
+      - slots-available
+      - jobs-running
+      - jobs-finished
+      - jobs-cancelled
+      - jobs-failed
+    calculates:
+      - slots_total=get('slots-total')
+      - slots_used=get('slots-total')-get('slots-available')
+      - task_total=get('jobs-running')+get('jobs-finished')+get('jobs-cancelled')+get('jobs-failed')
+      - jobs_running=get('jobs-running')
+      - jobs_failed=get('jobs-failed')
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /v1/overview
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: default

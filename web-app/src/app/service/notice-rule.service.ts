@@ -17,12 +17,13 @@
  * under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
 import { NoticeRule } from '../pojo/NoticeRule';
+import { Page } from '../pojo/Page';
 
 const notice_rule_uri = '/notice/rule';
 const notice_rules_uri = '/notice/rules';
@@ -45,7 +46,20 @@ export class NoticeRuleService {
     return this.http.delete<Message<any>>(`${notice_rule_uri}/${ruleId}`);
   }
 
-  public getNoticeRules(): Observable<Message<NoticeRule[]>> {
-    return this.http.get<Message<NoticeRule[]>>(notice_rules_uri);
+  public getNoticeRules(name: string, pageIndex: number, pageSize: number): Observable<Message<Page<NoticeRule>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    let httpParams = new HttpParams();
+    httpParams = httpParams.append('pageIndex', pageIndex);
+    httpParams = httpParams.append('pageSize', pageSize);
+    if (name != undefined && name != null && name != '') {
+      httpParams = httpParams.append('name', name);
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<NoticeRule>>>(notice_rules_uri, options);
+  }
+
+  public getNoticeRuleById(ruleId: number): Observable<Message<NoticeRule>> {
+    return this.http.get<Message<NoticeRule>>(`${notice_rule_uri}/${ruleId}`);
   }
 }

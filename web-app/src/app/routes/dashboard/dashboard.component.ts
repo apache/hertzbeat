@@ -27,13 +27,14 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { fromEvent } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
 import { CollectorSummary } from '../../pojo/CollectorSummary';
+import { SingleAlert } from '../../pojo/SingleAlert';
 import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
+import { ThemeService } from '../../service/theme.service';
 import { formatTagName } from '../../shared/utils/common-util';
 
 @Component({
@@ -51,9 +52,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private collectorSvc: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private router: Router,
+    private themeSvc: ThemeService,
     private cdr: ChangeDetectorRef
   ) {}
 
+  theme: string = 'default';
   // Tag Word Cloud
   wordCloudData: CloudData[] = [];
   wordCloudDataLoading: boolean = false;
@@ -113,8 +116,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       );
   }
 
-  onTagCloudClick(data: CloudData): void {
-    this.router.navigate(['/monitors'], { queryParams: { tag: data.text } });
+  onLabelCloudClick(data: CloudData): void {
+    this.router.navigate(['/monitors'], { queryParams: { labels: data.text } });
   }
 
   // start -- quantitative information summary
@@ -174,10 +177,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   collectorsTabSelectedIndex = 0;
 
   // alert list
-  alerts!: Alert[];
+  alerts!: SingleAlert[];
   alertContentLoading: boolean = false;
 
   ngOnInit(): void {
+    this.theme = this.themeSvc.getTheme() || 'default';
     this.appsCountTheme = {
       title: {
         text: `{a|${this.i18nSvc.fanyi('dashboard.monitors.title')}}`,
@@ -298,7 +302,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       xAxis: {
         type: 'category',
-        data: [this.i18nSvc.fanyi('alert.priority.2'), this.i18nSvc.fanyi('alert.priority.1'), this.i18nSvc.fanyi('alert.priority.0')]
+        data: [this.i18nSvc.fanyi('alert.severity.2'), this.i18nSvc.fanyi('alert.severity.1'), this.i18nSvc.fanyi('alert.severity.0')]
       },
       yAxis: {
         type: 'value'
@@ -570,7 +574,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   refreshAlertContentList(): void {
     this.alertContentLoading = true;
     let alertsInit$ = this.alertSvc
-      .loadAlerts(undefined, undefined, undefined, 0, 10)
+      .loadAlerts('firing', undefined, 0, 10)
       .pipe(finalize(() => (this.alertContentLoading = false)))
       .subscribe(
         message => {

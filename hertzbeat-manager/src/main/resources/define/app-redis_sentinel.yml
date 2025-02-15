@@ -1,0 +1,758 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+category: cache
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: redis_sentinel
+# The monitoring i18n name
+name:
+  zh-CN: Redis Sentinel
+  en-US: Redis Sentinel
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Redis Sentinel 的通用指标进行采集监控。<br>您可以点击 “<i>新建 Redis Cluster</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors Redis Database Sentinel's general performance metrics. You could click the "<i>New Redis Cluster</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 Redis Sentinel 的通用指標進行采集監控。<br>您可以點擊 “<i>新建 Redis Cluster</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/influxdb_promql
+  en-US: https://hertzbeat.apache.org/docs/help/influxdb_promql
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 26379
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 3000
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: pattern
+    # name-param field display i18n name
+    name:
+      zh-CN: 模式
+      en-US: Pattern
+    # type-param field type(most mapping the html input type)
+    type: number
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 2
+    # hide-is hide this field and put it in advanced layout
+    hide: true
+  - field: enableSshTunnel
+    name:
+      zh-CN: 是否启用SSH隧道
+      en-US: Enable SSH Tunnel
+    type: boolean
+    required: true
+    hide: true
+  - field: sshHost
+    name:
+      zh-CN: SSH Host
+      en-US: SSH Host
+    type: text
+    required: false
+    placeholder: 'When Enable SSH Tunnel'
+    hide: true
+  - field: sshPort
+    name:
+      zh-CN: SSH端口
+      en-US: SSH Port
+    type: number
+    range: '[0,65535]'
+    required: false
+    defaultValue: 22
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshTimeout
+    name:
+      zh-CN: SSH超时时间(ms)
+      en-US: SSH Timeout(ms)
+    type: number
+    required: false
+    range: '[400,200000]'
+    defaultValue: 6000
+    hide: true
+  - field: sshUsername
+    name:
+      zh-CN: SSH用户名
+      en-US: SSH Username
+    type: text
+    required: false
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshPassword
+    name:
+      zh-CN: SSH密码
+      en-US: SSH Password
+    type: password
+    required: false
+    hide: true
+  - field: sshShareConnection
+    name:
+      zh-CN: 是否共享SSH连接
+      en-US: Share SSH Connection
+    type: boolean
+    required: true
+    defaultValue: true
+    hide: true
+  - field: sshPrivateKey
+    name:
+      zh-CN: SSH私钥
+      en-US: SSH PrivateKey
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    required: false
+    hide: true
+  - field: sshPrivateKeyPassphrase
+    name:
+      zh-CN: SSH密钥短语
+      en-US: SSH PrivateKey PassPhrase
+    type: password
+    required: false
+    hide: true
+metrics:
+  - name: server
+    i18n:
+      zh-CN: 服务器
+      en-US: Server
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: identity
+        type: 1
+        i18n:
+          zh-CN: 标识
+          en-US: Identity
+      - field: redis_version
+        type: 1
+        i18n:
+          zh-CN: Redis 版本
+          en-US: Redis Version
+      - field: redis_git_sha1
+        type: 0
+        i18n:
+          zh-CN: Redis Git SHA1
+          en-US: Redis Git SHA1
+      - field: redis_git_dirty
+        type: 0
+        i18n:
+          zh-CN: Redis Git Dirty
+          en-US: Redis Git Dirty
+      - field: redis_build_id
+        type: 1
+        i18n:
+          zh-CN: Redis Build ID
+          en-US: Redis Build ID
+      - field: redis_mode
+        type: 1
+        i18n:
+          zh-CN: Redis 模式
+          en-US: Redis Mode
+      - field: os
+        type: 1
+        i18n:
+          zh-CN: 操作系统
+          en-US: Operating System
+      - field: arch_bits
+        type: 0
+        i18n:
+          zh-CN: 架构位数
+          en-US: Architecture Bits
+      - field: multiplexing_api
+        type: 1
+        i18n:
+          zh-CN: 多路复用 API
+          en-US: Multiplexing API
+      - field: atomicvar_api
+        type: 1
+        i18n:
+          zh-CN: 原子变量 API
+          en-US: Atomicvar API
+      - field: gcc_version
+        type: 1
+        i18n:
+          zh-CN: GCC 版本
+          en-US: GCC Version
+      - field: process_id
+        type: 0
+        i18n:
+          zh-CN: 进程 ID
+          en-US: Process ID
+      - field: process_supervised
+        type: 1
+        i18n:
+          zh-CN: 进程监控
+          en-US: Process Supervised
+      - field: run_id
+        type: 1
+        i18n:
+          zh-CN: 运行 ID
+          en-US: Run ID
+      - field: tcp_port
+        type: 0
+        i18n:
+          zh-CN: TCP 端口
+          en-US: TCP Port
+      - field: server_time_usec
+        type: 0
+        i18n:
+          zh-CN: 基于纪元的系统时间
+          en-US: Server Time Usec
+      - field: uptime_in_seconds
+        type: 0
+        i18n:
+          zh-CN: 运行时间(秒)
+          en-US: Uptime In Seconds
+      - field: uptime_in_days
+        type: 0
+        i18n:
+          zh-CN: 运行时间(天)
+          en-US: Uptime In Days
+      - field: hz
+        type: 0
+        i18n:
+          zh-CN: 定时器频率
+          en-US: Hz
+      - field: configured_hz
+        type: 0
+        i18n:
+          zh-CN: 配置定时器频率
+          en-US: Configured Hz
+      - field: lru_clock
+        type: 0
+        i18n:
+          zh-CN: LRU 时钟
+          en-US: LRU Clock
+      - field: executable
+        type: 1
+        i18n:
+          zh-CN: 可执行文件
+          en-US: Executable
+      - field: config_file
+        type: 1
+        i18n:
+          zh-CN: 配置文件
+          en-US: Config File
+      - field: io_threads_active
+        type: 0
+        i18n:
+          zh-CN: 活动 IO 线程
+          en-US: IO Threads Active
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: clients
+    i18n:
+      zh-CN: 客户端
+      en-US: Clients
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: connected_clients
+        type: 0
+        i18n:
+          zh-CN: 已连接客户端
+          en-US: Connected Clients
+      - field: cluster_connections
+        type: 0
+        i18n:
+          zh-CN: 集群连接
+          en-US: Cluster Connections
+      - field: maxclients
+        type: 0
+        i18n:
+          zh-CN: 最大客户端数
+          en-US: Maxclients
+      - field: client_recent_max_input_buffer
+        type: 0
+        i18n:
+          zh-CN: 客户端最近最大输入缓冲区
+          en-US: Client Recent Max Input Buffer
+      - field: client_recent_max_output_buffer
+        type: 0
+        i18n:
+          zh-CN: 客户端最近最大输出缓冲区
+          en-US: Client Recent Max Output Buffer
+      - field: blocked_clients
+        type: 0
+        i18n:
+          zh-CN: 阻塞客户端
+          en-US: Blocked Clients
+      - field: tracking_clients
+        type: 0
+        i18n:
+          zh-CN: 跟踪客户端
+          en-US: Tracking Clients
+      - field: clients_in_timeout_table
+        type: 0
+        i18n:
+          zh-CN: 超时表中的客户端
+          en-US: Clients In Timeout Table
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: stats
+    i18n:
+      zh-CN: 统计
+      en-US: Stats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 2
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: total_connections_received
+        type: 0
+        i18n:
+          zh-CN: 收到总连接数
+          en-US: Total Connections Received
+      - field: total_commands_processed
+        type: 0
+        i18n:
+          zh-CN: 处理总命令数
+          en-US: Total Commands Processed
+      - field: instantaneous_ops_per_sec
+        type: 0
+        i18n:
+          zh-CN: 瞬时每秒操作数
+          en-US: Instantaneous Ops Per Sec
+      - field: total_net_input_bytes
+        type: 0
+        i18n:
+          zh-CN: 总网络输入字节
+          en-US: Total Net Input Bytes
+      - field: total_net_output_bytes
+        type: 0
+        i18n:
+          zh-CN: 总网络输出字节
+          en-US: Total Net Output Bytes
+      - field: instantaneous_input_kbps
+        type: 0
+        i18n:
+          zh-CN: 瞬时的输入 kbps
+          en-US: Instantaneous Input Kbps
+      - field: instantaneous_output_kbps
+        type: 0
+        i18n:
+          zh-CN: 瞬时输出 kbps
+          en-US: Instantaneous Output Kbps
+      - field: rejected_connections
+        type: 0
+        i18n:
+          zh-CN: 拒绝连接数
+          en-US: Rejected Connections
+      - field: sync_full
+        type: 0
+        i18n:
+          zh-CN: 全量同步
+          en-US: Sync Full
+      - field: sync_partial_ok
+        type: 0
+        i18n:
+          zh-CN: 部分同步成功
+          en-US: Sync Partial Ok
+      - field: sync_partial_err
+        type: 0
+        i18n:
+          zh-CN: 部分同步失败
+          en-US: Sync Partial Err
+      - field: expired_keys
+        type: 0
+        i18n:
+          zh-CN: 过期键
+          en-US: Expired Keys
+      - field: expired_stale_perc
+        type: 0
+        i18n:
+          zh-CN: 过期key占比
+          en-US: Expired Stale Perc
+      - field: expired_time_cap_reached_count
+        type: 0
+        i18n:
+          zh-CN: 达到过期时间上限计数
+          en-US: Expired Time Cap Reached Count
+      - field: expire_cycle_cpu_milliseconds
+        type: 0
+        i18n:
+          zh-CN: 过期周期 CPU 毫秒
+          en-US: Expire Cycle CPU Milliseconds
+      - field: evicted_keys
+        type: 0
+        i18n:
+          zh-CN: 逐出键
+          en-US: Evicted Keys
+      - field: keyspace_hits
+        type: 0
+        i18n:
+          zh-CN: 命中键
+          en-US: Keyspace Hits
+      - field: keyspace_misses
+        type: 0
+        i18n:
+          zh-CN: 未命中键
+          en-US: Keyspace Misses
+      - field: pubsub_channels
+        type: 0
+        i18n:
+          zh-CN: 发布订阅频道
+          en-US: Pubsub Channels
+      - field: pubsub_patterns
+        type: 0
+        i18n:
+          zh-CN: 发布订阅模式
+          en-US: Pubsub Patterns
+      - field: latest_fork_usec
+        type: 0
+        i18n:
+          zh-CN: 最新 fork 毫秒
+          en-US: Latest Fork Usec
+      - field: total_forks
+        type: 0
+        i18n:
+          zh-CN: 总 fork 数
+          en-US: Total Forks
+      - field: migrate_cached_sockets
+        type: 0
+        i18n:
+          zh-CN: 迁移缓存套接字
+          en-US: Migrate Cached Sockets
+      - field: slave_expires_tracked_keys
+        type: 0
+        i18n:
+          zh-CN: 从节点过期跟踪键
+          en-US: Slave Expires Tracked Keys
+      - field: active_defrag_hits
+        type: 0
+        i18n:
+          zh-CN: 活跃碎片整理命中
+          en-US: Active Defrag Hits
+      - field: active_defrag_misses
+        type: 0
+        i18n:
+          zh-CN: 活跃碎片整理未命中
+          en-US: Active Defrag Misses
+      - field: active_defrag_key_hits
+        type: 0
+        i18n:
+          zh-CN: 活跃碎片整理键命中
+          en-US: Active Defrag Key Hits
+      - field: active_defrag_key_misses
+        type: 0
+        i18n:
+          zh-CN: 活跃碎片整理键未命中
+          en-US: Active Defrag Key Misses
+      - field: tracking_total_keys
+        type: 0
+        i18n:
+          zh-CN: 跟踪键总数
+          en-US: Tracking Total Keys
+      - field: tracking_total_items
+        type: 0
+        i18n:
+          zh-CN: 跟踪项总数
+          en-US: Tracking Total Items
+      - field: tracking_total_prefixes
+        type: 0
+        i18n:
+          zh-CN: 跟踪前缀总数
+          en-US: Tracking Total Prefixes
+      - field: unexpected_error_replies
+        type: 0
+        i18n:
+          zh-CN: 意外错误回复
+          en-US: Unexpected Error Replies
+      - field: total_error_replies
+        type: 0
+        i18n:
+          zh-CN: 总错误回复
+          en-US: Total Error Replies
+      - field: dump_payload_sanitizations
+        type: 0
+        i18n:
+          zh-CN: 转储有效负载深度完整性验证的总数
+          en-US: Dump Payload Sanitizations
+      - field: total_reads_processed
+        type: 0
+        i18n:
+          zh-CN: 总读取处理
+          en-US: Total Reads Processed
+      - field: total_writes_processed
+        type: 0
+        i18n:
+          zh-CN: 总写入处理
+          en-US: Total Writes Processed
+      - field: io_threaded_reads_processed
+        type: 0
+        i18n:
+          zh-CN: IO 线程读取处理
+          en-US: Io Threaded Reads Processed
+      - field: io_threaded_writes_processed
+        type: 0
+        i18n:
+          zh-CN: IO 线程写入处理
+          en-US: Io Threaded Writes Processed
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: cpu
+    i18n:
+      zh-CN: CPU
+      en-US: CPU
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 3
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: used_cpu_sys
+        type: 0
+        i18n:
+          zh-CN: 系统已使用 CPU
+          en-US: Sys CPU Used
+      - field: used_cpu_user
+        type: 0
+        i18n:
+          zh-CN: 用户已使用 CPU
+          en-US: User CPU Used
+      - field: used_cpu_sys_children
+        type: 0
+        i18n:
+          zh-CN: Sys 子进程已使用 CPU
+          en-US: Sys Children CPU Used
+      - field: used_cpu_user_children
+        type: 0
+        i18n:
+          zh-CN: 用户子进程已使用 CPU
+          en-US: User Children CPU Used
+      - field: used_cpu_sys_main_thread
+        type: 0
+        i18n:
+          zh-CN: 系统主线程已使用 CPU
+          en-US: Sys Main Thread CPU Used
+      - field: used_cpu_user_main_thread
+        type: 0
+        i18n:
+          zh-CN: 用户主线程已使用 CPU
+          en-US: User Main Thread CPU Used
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
+
+  - name: sentinel
+    i18n:
+      zh-CN: 哨兵
+      en-US: Sentinel
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 4
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: sentinel_masters
+        type: 1
+        i18n:
+          zh-CN: 主节点
+          en-US: Masters
+      - field: sentinel_tilt
+        type: 1
+        i18n:
+          zh-CN: 倾斜
+          en-US: Tilt
+      - field: sentinel_running_scripts
+        type: 1
+        i18n:
+          zh-CN: 运行脚本
+          en-US: Running Scripts
+      - field: sentinel_scripts_queue_length
+        type: 1
+        i18n:
+          zh-CN: 脚本队列长度
+          en-US: Scripts Queue Length
+      - field: sentinel_simulate_failure_flags
+        type: 1
+        i18n:
+          zh-CN: 模拟失败标志
+          en-US: Simulate Failure Flags
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      pattern: ^_^pattern^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
