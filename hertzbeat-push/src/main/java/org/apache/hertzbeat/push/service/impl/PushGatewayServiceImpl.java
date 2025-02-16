@@ -64,7 +64,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
     }
 
     @Scheduled(fixedDelay = 5000)
-    private boolean saveMetrics() {
+    private void saveMetrics() {
         Long curTime = System.currentTimeMillis();
         ImmutablePair<Long, Map<String, MetricFamily>> head = metricFamilyQueue.peek();
 //        List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
@@ -108,6 +108,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
             }
             head = metricFamilyQueue.peek();
         }
+        return;
     }
 
     @Override
