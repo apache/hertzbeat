@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Metrics Push Gateway API")
 @RestController
-@RequestMapping(value = "/api/push/pushgateway")
+@RequestMapping(value = "/api/push/pushgateway1")
 public class PushGatewayController {
 
     @Autowired
