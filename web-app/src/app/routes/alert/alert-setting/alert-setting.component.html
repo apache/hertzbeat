@@ -93,12 +93,13 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="10%">{{ 'alert.setting.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'alert.setting.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.type' | i18n }}</th>
-      <th nzAlign="center" nzWidth="24%">{{ 'alert.setting.expr' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'alert.setting.template' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'label.bind' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'alert.setting.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.setting.expr' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.setting.template' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'label.bind' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'common.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'common.edit-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="8%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
@@ -116,16 +117,19 @@
           <span>{{ 'alert.setting.type.periodic' | i18n }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzEllipsis nz-tooltip [nzTooltipTitle]="data.expr">
         <span>{{ data.expr }}</span>
       </td>
-      <td nzAlign="center">{{ data.template }}</td>
+      <td nzAlign="center" nzEllipsis nz-tooltip [nzTooltipTitle]="data.template">
+        <span>{{ data.template }}</span>
+      </td>
       <td nzAlign="center">
         <nz-tag *ngFor="let item of data.labels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
       </td>
       <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
       </td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center" nzRight>
         <div class="actions">
           <button
@@ -285,12 +289,7 @@
       <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && !isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
-          <ngx-query-builder
-            [classNames]="qbClassNames"
-            [config]="qbConfig"
-            [formControl]="qbFormCtrl"
-            [ngStyle]="{ background: 'ghostwhite', borderRadius: '4px' }"
-          >
+          <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl" [ngStyle]="{ borderRadius: '4px' }">
             <ng-container *querySwitchGroup="let rule; let onChange = onChange">
               <nz-radio-group
                 style="white-space: nowrap"

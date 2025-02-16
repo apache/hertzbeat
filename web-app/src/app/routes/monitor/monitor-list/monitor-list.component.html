@@ -223,13 +223,7 @@
           <nz-dropdown-menu #more_menu="nzDropdownMenu">
             <ul nz-menu>
               <li nz-menu-item>
-                <button
-                  nz-button
-                  nzType="primary"
-                  (click)="onEditOneMonitor(data.id)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'monitor.edit-monitor' | i18n"
-                >
+                <button nz-button (click)="onEditOneMonitor(data.id)" nz-tooltip [nzTooltipTitle]="'monitor.edit-monitor' | i18n">
                   <i nz-icon nzType="edit" nzTheme="outline"></i>
                 </button>
               </li>
