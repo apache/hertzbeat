@@ -44,7 +44,7 @@ public class PushGatewayController {
     @Autowired
     private PushGatewayService pushGatewayService;
 
-    @PostMapping("/monitorname")
+    @PostMapping("/{monitorname}")
     @Operation(summary = "Push metric data to hertzbeat pushgateway", description = "Push metric data to hertzbeat pushgateway")
     public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request, @PathVariable("monitorname")String monitorName) throws IOException {
         InputStream inputStream = request.getInputStream();

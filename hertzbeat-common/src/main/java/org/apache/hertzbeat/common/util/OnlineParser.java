@@ -276,10 +276,11 @@ public class OnlineParser {
         if (i == ' ') {
             i = skipSpaces(inputStream).getInt();
         }
+
+        List<MetricFamily.Label> labelList = new LinkedList<>();
+        metric.setLabels(labelList);
         if (i == '{') {
-            List<MetricFamily.Label> labelList = new LinkedList<>();
             parseLabels(inputStream, stringBuilder, labelList);
-            metric.setLabels(labelList);
             i = skipSpaces(inputStream).getInt();
         }
 

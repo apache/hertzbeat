@@ -66,7 +66,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
     @Scheduled(fixedDelay = 5000)
     private void saveMetrics() {
         Long curTime = System.currentTimeMillis();
-        ImmutablePair<Long, Map<String, MetricFamily>> head = metricFamilyQueue.peek();
+        ImmutablePair<Long, Map<String, MetricFamily>> head = metricFamilyQueue.poll();
 //        List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
         while (head != null && head.left < curTime) {
             Map<String, MetricFamily> metricFamilyMap = head.right;
@@ -106,7 +106,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
                     commonDataQueue.sendMetricsData(builder.build());
                 }
             }
-            head = metricFamilyQueue.peek();
+            head = metricFamilyQueue.poll();
         }
         return;
     }
