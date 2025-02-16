@@ -28,6 +28,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.push.service.PushGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,11 +44,11 @@ public class PushGatewayController {
     @Autowired
     private PushGatewayService pushGatewayService;
 
-    @PostMapping()
+    @PostMapping("/monitorname")
     @Operation(summary = "Push metric data to hertzbeat pushgateway", description = "Push metric data to hertzbeat pushgateway")
-    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) throws IOException {
+    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request, @PathVariable("monitorname")String monitorName) throws IOException {
         InputStream inputStream = request.getInputStream();
-        boolean result = pushGatewayService.pushMetricsData(inputStream);
+        boolean result = pushGatewayService.pushMetricsData(inputStream, monitorName);
         if (result) {
             return ResponseEntity.ok(Message.success("Push success"));
         }

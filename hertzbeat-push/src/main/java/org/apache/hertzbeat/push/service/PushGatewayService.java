@@ -32,6 +32,6 @@ public interface PushGatewayService {
 
 
 
-    boolean pushMetricsData(InputStream inputStream) throws IOException;
+    boolean pushMetricsData(InputStream inputStream, String monitorName) throws IOException;
 
 }
