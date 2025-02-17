@@ -55,8 +55,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'plugin.search' | i18n"
       [(value)]="search"
-      (valueChange)="loadPluginsTable()"
+      (keydown.enter)="loadPluginsTable()"
+      (cleared)="loadPluginsTable()"
     />
+    <button nz-button nzType="primary" (click)="loadPluginsTable()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 

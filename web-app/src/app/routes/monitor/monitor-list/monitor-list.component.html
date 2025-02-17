@@ -122,15 +122,20 @@
       class="mobile-hide"
       [placeholder]="'monitor.search.label' | i18n"
       [(value)]="labels"
-      (valueChange)="onTagChanged()"
+      (keydown.enter)="onFilterSearchMonitors()"
+      (cleared)="onFilterSearchMonitors()"
     />
     <app-multi-func-input
       groupStyle="width: 180px;"
       class="mobile-hide"
       [placeholder]="'monitor.search.placeholder' | i18n"
       [(value)]="filterContent"
-      (valueChange)="onFilterSearchMonitors()"
+      (keydown.enter)="onFilterSearchMonitors()"
+      (cleared)="onFilterSearchMonitors()"
     />
+    <button class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 

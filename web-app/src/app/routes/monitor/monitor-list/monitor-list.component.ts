@@ -120,14 +120,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     });
   }
 
-  onTagChanged(): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { ...this.route.snapshot.queryParams, tag: this.labels },
-      queryParamsHandling: 'merge'
-    });
-  }
-
   onFilterSearchMonitors() {
     this.tableLoading = true;
     this.pageIndex = 1;

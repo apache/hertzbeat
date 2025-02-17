@@ -54,8 +54,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.silence.name' | i18n"
       [(value)]="search"
-      (valueChange)="onFilterChange()"
+      (keydown.enter)="onFilterChange()"
+      (cleared)="onFilterChange()"
     />
+    <button nz-button nzType="primary" (click)="onFilterChange()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
