@@ -68,8 +68,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'collector.name' | i18n"
       [(value)]="search"
-      (valueChange)="loadCollectorsTable()"
+      (keydown.enter)="loadCollectorsTable()"
+      (cleared)="loadCollectorsTable()"
     />
+    <button nz-button nzType="primary" (click)="loadCollectorsTable()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
