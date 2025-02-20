@@ -26,10 +26,15 @@ import lombok.Data;
 @Data
 public class SmsAlibabaConfig {
     
-    @NotBlank(message = "SecretId cannot be empty")
-    private String secretId;
+    @NotBlank(message = "AccessKeyId cannot be empty")
+    private String accessKeyId;
     
-    @NotBlank(message = "SecretKey cannot be empty")
-    private String secretKey;
+    @NotBlank(message = "AccessKeySecret cannot be empty")
+    private String accessKeySecret;
 
+    @NotBlank(message = "SignName cannot be empty")
+    private String signName;
+
+    @NotBlank(message = "TemplateCode cannot be null")
+    private String templateCode;
 }

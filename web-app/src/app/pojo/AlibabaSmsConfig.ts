@@ -18,9 +18,8 @@
  */
 
 export class AlibabaSmsConfig {
-  secretId!: string;
-  secretKey!: string;
+  accessKeyId!: string;
+  accessKeySecret!: string;
   signName!: string;
-  appId!: string;
-  templateId!: string;
+  templateCode!: string;
 }

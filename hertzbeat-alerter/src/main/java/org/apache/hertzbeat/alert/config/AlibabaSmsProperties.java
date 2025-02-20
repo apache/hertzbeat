@@ -17,9 +17,30 @@
 
 package org.apache.hertzbeat.alert.config;
 
+import lombok.Data;
+
 /**
- * Alibaba Cloud SMS properties
+ * Alibaba Cloud SMS configuration properties
  */
+@Data
 public class AlibabaSmsProperties {
-    // todo add properties
+    /**
+     * Alibaba Cloud access key id
+     */
+    private String accessKeyId;
+    
+    /**
+     * Alibaba Cloud access key secret
+     */
+    private String accessKeySecret;
+    
+    /**
+     * SMS signature
+     */
+    private String signName;
+    
+    /**
+     * SMS template Code
+     */
+    private String templateCode;
 }
