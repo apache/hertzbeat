@@ -433,6 +433,7 @@
   "common.file.select": "选择文件",
   "common.ignore": "忽略",
   "common.mute": "静音",
+  "common.unmute": "取消静音",
   "common.name": "指标名",
   "common.new-time": "创建时间",
   "common.no": "否",

@@ -433,6 +433,7 @@
   "common.file.select": "Select File",
   "common.ignore": "Ignore",
   "common.mute": "Mute",
+  "common.unmute": "Unmute",
   "common.name": "Metric Name",
   "common.new-time": "Create Time",
   "common.no": "No",
