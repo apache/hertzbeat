@@ -33,8 +33,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.notice.rule.name' | i18n"
       [(value)]="name"
-      (valueChange)="onSearch()"
+      (keydown.enter)="onSearch()"
+      (cleared)="onSearch()"
     />
+    <button nz-button nzType="primary" (click)="onSearch()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 <nz-table

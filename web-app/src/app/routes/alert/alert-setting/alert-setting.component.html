@@ -72,6 +72,9 @@
       (keydown.enter)="onFilterChange()"
       (cleared)="onFilterChange()"
     />
+    <button nz-button nzType="primary" (click)="onFilterChange()">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
