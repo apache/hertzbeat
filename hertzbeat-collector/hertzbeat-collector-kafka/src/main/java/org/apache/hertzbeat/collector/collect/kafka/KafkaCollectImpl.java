@@ -266,7 +266,7 @@ public class KafkaCollectImpl extends AbstractCollect {
             }
         } catch (InterruptedException | ExecutionException e) {
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Kafka collect error: " + e.getCause());
+            builder.setMsg("Kafka collect error: " + e.getMessage());
             log.error("Kafka collect error", e);
         }
     }
