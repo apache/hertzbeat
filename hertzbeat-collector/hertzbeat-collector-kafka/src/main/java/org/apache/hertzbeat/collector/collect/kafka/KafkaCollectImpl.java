@@ -223,7 +223,9 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        Assert.isTrue(metrics != null, "Metrics cannot be null");
         KafkaProtocol kafkaProtocol = metrics.getKclient();
+
         // Ensure that metrics and kafkaProtocol are not null
         Assert.isTrue(metrics != null && kafkaProtocol != null, "Kafka collect must have kafkaProtocol params");
         // Ensure that host and port are not empty
