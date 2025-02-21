@@ -8,6 +8,7 @@ keywords: [Open Source Monitoring System, Open Source Network Monitoring, Deepse
 ### Preparation
 
 #### Obtain Session Key
+
 Log in to the Deepseek backend and visit the `https://platform.deepseek.com/api_keys` page to obtain the session key.
 
 ### Configuration Parameters
