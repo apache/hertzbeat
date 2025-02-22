@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-@WebServlet(urlPatterns = "/api/push/pushgateway", loadOnStartup = 1)
+@WebServlet(urlPatterns = "/api/push/pushgateway1", loadOnStartup = 1)
 public class MyServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

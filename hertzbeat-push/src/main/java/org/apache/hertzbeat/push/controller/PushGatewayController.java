@@ -21,9 +21,11 @@ package org.apache.hertzbeat.push.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.push.config.PushErrorRequestWrapper;
+import org.apache.hertzbeat.push.config.PushSuccessRequestWrapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,16 +36,20 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Metrics Push Gateway API")
 @RestController
-@RequestMapping(value = "/api/push/pushgateway1")
+@RequestMapping(value = "/api/push/pushgateway/*")
 public class PushGatewayController {
 
     @PostMapping()
     @Operation(summary = "Push metric data to hertzbeat push gateway", description = "Push metric data to hertzbeat push gateway")
-    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) {
+    public ResponseEntity<Message<Void>> pushMetrics(ServletRequest request) {
         if (request instanceof PushErrorRequestWrapper) {
-            return ResponseEntity.ok(Message.success("Push failed"));     
-        } else {
-            return ResponseEntity.ok(Message.success("Push success"));   
+            return ResponseEntity.ok(Message.success("Push failed."));
+        }
+        else if (request instanceof PushSuccessRequestWrapper successRequestWrapper) {
+            return ResponseEntity.ok(Message.success(String.format("Push success, monitor name: %s", successRequestWrapper.getMonitorName())));
+        }
+        else {
+            return ResponseEntity.ok(Message.success("Request not matched."));
         }
     }
 

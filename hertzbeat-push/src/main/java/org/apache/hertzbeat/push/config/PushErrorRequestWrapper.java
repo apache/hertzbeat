@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
  *
  */
 public class PushErrorRequestWrapper extends HttpServletRequestWrapper {
-    
+
     public PushErrorRequestWrapper(HttpServletRequest request) {
         super(request);
     }
