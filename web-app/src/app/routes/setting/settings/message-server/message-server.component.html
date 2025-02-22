@@ -58,7 +58,11 @@
             </ng-container>
 
             <!-- Alibaba SMS -->
-            <ng-container *ngSwitchCase="SmsType.ALIBABA"></ng-container>
+            <ng-container *ngSwitchCase="SmsType.ALIBABA">
+              {{ 'alert.notice.sender.sms.alibaba.signName' | i18n }}: {{ smsNoticeSender.alibaba.signName }}
+              <br />
+              {{ 'alert.notice.sender.sms.alibaba.templateCode' | i18n }}: {{ smsNoticeSender.alibaba.templateCode }}
+            </ng-container>
 
             <!-- UniSMS -->
             <ng-container *ngSwitchCase="SmsType.UNISMS">
@@ -197,7 +201,61 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
-      <ng-container *ngIf="smsType === SmsType.ALIBABA"> </ng-container>
+      <ng-container *ngIf="smsType === SmsType.ALIBABA">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
+            {{ 'alert.notice.sender.sms.alibaba.accessKeyId' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.alibaba.accessKeyId"
+              nz-input
+              required
+              name="accessKeyId"
+              type="password"
+              id="alibabaAccessKeyId"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accessKeySecret" nzRequired="true">
+            {{ 'alert.notice.sender.sms.alibaba.accessKeySecret' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.alibaba.accessKeySecret"
+              nz-input
+              required
+              name="accessKeySecret"
+              type="password"
+              id="alibabaAccessKeySecret"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="signName" nzRequired="true">
+            {{ 'alert.notice.sender.sms.alibaba.signName' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.alibaba.signName" nz-input required name="signName" type="text" id="alibabaSignName" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="templateCode" nzRequired="true">
+            {{ 'alert.notice.sender.sms.alibaba.templateCode' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.alibaba.templateCode"
+              nz-input
+              required
+              name="templateCode"
+              type="text"
+              id="alibabaTemplateCode"
+            />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
       <ng-container *ngIf="smsType === SmsType.UNISMS">
         <nz-form-item>
           <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
