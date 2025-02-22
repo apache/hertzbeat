@@ -18,16 +18,14 @@
 package org.apache.hertzbeat.common.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.hertzbeat.common.entity.dto.MetricFamily;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -36,6 +34,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 public class OnlineParser {
+
+    private static Map<Integer, Integer> escapeMap = new HashMap<>();;
+
+    static {
+        escapeMap.put((int)'n', (int)'\n');
+        escapeMap.put((int)'b', (int)'\b');
+        escapeMap.put((int)'t', (int)'\t');
+        escapeMap.put((int)'r', (int)'\r');
+        escapeMap.put((int)'f', (int)'\f');
+        escapeMap.put((int)'\'', (int)'\'');
+        escapeMap.put((int)'\"', (int)'\"');
+        escapeMap.put((int)'\\', (int)'\\');
+    }
 
     private static class FormatException extends Exception {
 
@@ -124,51 +135,67 @@ public class OnlineParser {
 
     }
 
-    private static CharChecker parseOneChar(InputStream inputStream) throws IOException {
+    private static int getChar(InputStream inputStream) throws IOException, FormatException {
         int i = inputStream.read();
+        if (i == '\\') {
+            i = inputStream.read();
+            if (escapeMap.containsKey(i)) {
+                return escapeMap.get(i);
+            }
+            else {
+                throw new FormatException("Escape character failed.");
+            }
+        }
+        else {
+            return i;
+        }
+    }
+
+    private static CharChecker parseOneChar(InputStream inputStream) throws IOException, FormatException {
+        int i = getChar(inputStream);
         return new CharChecker(i);
     }
 
-    private static CharChecker parseOneDouble(InputStream inputStream, StringBuilder stringBuilder) throws IOException {
-        int i = inputStream.read();
+    private static CharChecker parseOneDouble(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
+        int i = getChar(inputStream);
         while ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || i == '-' || i == '+' || i == 'e' || i == '.') {
             stringBuilder.append((char) i);
-            i = inputStream.read();
+            i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
 
-    private static CharChecker skipOneLong(InputStream inputStream) throws IOException {
-        int i = inputStream.read();
+    private static CharChecker skipOneLong(InputStream inputStream) throws IOException, FormatException {
+        int i = getChar(inputStream);
         while (i >= '0' && i <= '9') {
-            i = inputStream.read();
+            i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
 
-    private static CharChecker parseMetricName(InputStream inputStream, StringBuilder stringBuilder) throws IOException {
-        int i = inputStream.read();
+    private static CharChecker parseMetricName(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
+        int i = getChar(inputStream);
         while ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || (i >= '0' && i <= '9') || i == '_' || i == ':') {
             stringBuilder.append((char) i);
-            i = inputStream.read();
+            i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
 
-    private static CharChecker parseLabelName(InputStream inputStream, StringBuilder stringBuilder) throws IOException {
-        int i = inputStream.read();
+    private static CharChecker parseLabelName(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
+        int i = getChar(inputStream);
         while ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || (i >= '0' && i <= '9') || i == '_') {
             stringBuilder.append((char) i);
-            i = inputStream.read();
+            i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
 
     private static CharChecker parseLabelValue(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
-        int i = inputStream.read();
+        int i = getChar(inputStream);
         while (i != '"' && i != -1) {
             if (i == '\\') {
-                i = inputStream.read();
+                i = getChar(inputStream);
                 switch (i) {
                     case 'n':
                         stringBuilder.append('\n');
@@ -186,23 +213,23 @@ public class OnlineParser {
             else {
                 stringBuilder.append((char) i);
             }
-            i = inputStream.read();
+            i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
 
-    private static CharChecker skipSpaces(InputStream inputStream) throws IOException {
-        int i = inputStream.read();
+    private static CharChecker skipSpaces(InputStream inputStream) throws IOException, FormatException {
+        int i = getChar(inputStream);
         while (i == ' ') {
-            i = inputStream.read();
+            i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
 
-    private static CharChecker skipToLineEnd(InputStream inputStream) throws IOException {
-        int i = inputStream.read();
+    private static CharChecker skipToLineEnd(InputStream inputStream) throws IOException, FormatException {
+        int i = getChar(inputStream);
         while (i != '\n' && i != -1) {
-            i = inputStream.read();
+            i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
@@ -309,8 +336,8 @@ public class OnlineParser {
 
     public static Map<String, MetricFamily> parseMetrics(InputStream inputStream) throws IOException {
         Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
-        int i = inputStream.read();
         try {
+            int i = getChar(inputStream);
             while (i != -1) {
                 if (i == '#' || i == '\n') {
                     skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
@@ -319,7 +346,7 @@ public class OnlineParser {
                     stringBuilder.append((char) i);
                     parseMetric(inputStream, metricFamilyMap, stringBuilder);
                 }
-                i = inputStream.read();
+                i = getChar(inputStream);
             }
         } catch (FormatException e) {
             log.error("prometheus parser failed because of wrong input format. {}", e.getMessage());
