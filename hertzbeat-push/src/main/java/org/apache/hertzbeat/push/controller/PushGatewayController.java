@@ -22,13 +22,9 @@ package org.apache.hertzbeat.push.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.InputStream;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.push.service.PushGatewayService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.hertzbeat.push.config.PushErrorRequestWrapper;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,19 +37,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/push/pushgateway1")
 public class PushGatewayController {
 
-    @Autowired
-    private PushGatewayService pushGatewayService;
-
-    @PostMapping("/{monitorname}")
-    @Operation(summary = "Push metric data to hertzbeat pushgateway", description = "Push metric data to hertzbeat pushgateway")
-    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request, @PathVariable("monitorname")String monitorName) throws IOException {
-        InputStream inputStream = request.getInputStream();
-        boolean result = pushGatewayService.pushMetricsData(inputStream, monitorName);
-        if (result) {
-            return ResponseEntity.ok(Message.success("Push success"));
-        }
-        else {
-            return ResponseEntity.ok(Message.success("Push failed"));
+    @PostMapping()
+    @Operation(summary = "Push metric data to hertzbeat push gateway", description = "Push metric data to hertzbeat push gateway")
+    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) {
+        if (request instanceof PushErrorRequestWrapper) {
+            return ResponseEntity.ok(Message.success("Push failed"));     
+        } else {
+            return ResponseEntity.ok(Message.success("Push success"));   
         }
     }
 
