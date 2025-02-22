@@ -18,7 +18,7 @@ public class PushFilterConfig {
     @Autowired
     private PushGatewayService pushGatewayService;
 
-    private static final String URI_PREFIX = "/api/push/pushgateway";
+    private static final String URI_PREFIX = "/api/push/pushgateway/*";
     public static final String URI_REGEX = "^/api/push/pushgateway/(\\w+)$";
 
     public static Pattern uri_pattern;
