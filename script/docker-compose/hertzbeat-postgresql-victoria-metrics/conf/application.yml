@@ -172,7 +172,10 @@ alerter:
       sign-name:
       template-id:
     alibaba:
-      app-id:
+      access-key-id:
+      access-key-secret:
+      sign-name:
+      template-code:
     unisms:
       # auth-mode: simple or hmac
       auth-mode: simple
