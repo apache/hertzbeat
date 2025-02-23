@@ -1,6 +1,6 @@
 ---
 id: deepseek
-title: Monitoring: Deepseek Account Status
+title: Monitoring Deepseek Account Status
 sidebar_label: Deepseek Account Status
 keywords: [Open Source Monitoring System, Open Source Network Monitoring, Deepseek Account Monitoring]
 ---
