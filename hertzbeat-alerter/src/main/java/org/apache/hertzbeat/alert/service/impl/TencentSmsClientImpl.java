@@ -20,7 +20,7 @@ package org.apache.hertzbeat.alert.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.TencentSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
-import org.apache.hertzbeat.alert.util.TencentCloudApiSignV3;
+import org.apache.hertzbeat.alert.util.CryptoUtils;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -34,9 +34,14 @@ import org.apache.http.util.EntityUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import javax.xml.bind.DatatypeConverter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static org.apache.hertzbeat.common.constants.SmsConstants.TENCENT;
 
@@ -53,6 +58,7 @@ public class TencentSmsClientImpl implements SmsClient {
     private static final String API_VERSION = "2021-01-11";
     private static final String ACTION = "SendSms";
     private static final String HOST = "sms.tencentcloudapi.com";
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
     
     private String appId;
     private String signName;
@@ -113,7 +119,7 @@ public class TencentSmsClientImpl implements SmsClient {
             String payload = JsonUtil.toJson(params);
             
             // calculate request signature
-            String authorization = TencentCloudApiSignV3.calculateAuthorization(
+            String authorization = calculateAuthorization(
                     secretId, secretKey, "sms", HOST, REGION,
                     ACTION, API_VERSION, payload);
             
@@ -177,5 +183,41 @@ public class TencentSmsClientImpl implements SmsClient {
             return false;
         }
         return true;
+    }
+
+    public static String calculateAuthorization(String secretId, String secretKey,
+                                                String service, String host, String region,
+                                                String action, String version, String payload) throws Exception {
+        String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String date = sdf.format(new Date(Long.valueOf(timestamp + "000")));
+
+        // Step 1: Construct the canonical request string
+        String httpRequestMethod = "POST";
+        String canonicalUri = "/";
+        String canonicalQueryString = "";
+        String canonicalHeaders = "content-type:application/json; charset=utf-8\n" + "host:" + host + "\n";
+        String signedHeaders = "content-type;host";
+        String hashedRequestPayload = CryptoUtils.sha256Hex(payload);
+        String canonicalRequest = httpRequestMethod + "\n" + canonicalUri + "\n" + canonicalQueryString + "\n"
+                + canonicalHeaders + "\n" + signedHeaders + "\n" + hashedRequestPayload;
+
+        // Step 2: Construct the string to sign
+        String algorithm = "TC3-HMAC-SHA256";
+        String credentialScope = date + "/" + service + "/" + "tc3_request";
+        String hashedCanonicalRequest = CryptoUtils.sha256Hex(canonicalRequest);
+        String stringToSign = algorithm + "\n" + timestamp + "\n" + credentialScope + "\n" + hashedCanonicalRequest;
+
+        // Step 3: Calculate the signature
+        byte[] secretDate = CryptoUtils.hmac256(("TC3" + secretKey).getBytes(UTF8), date);
+        byte[] secretService = CryptoUtils.hmac256(secretDate, service);
+        byte[] secretSigning = CryptoUtils.hmac256(secretService, "tc3_request");
+        String signature = DatatypeConverter.printHexBinary(
+                CryptoUtils.hmac256(secretSigning, stringToSign)).toLowerCase();
+
+        // Step 4: Construct the Authorization header
+        return algorithm + " " + "Credential=" + secretId + "/" + credentialScope + ", "
+                + "SignedHeaders=" + signedHeaders + ", " + "Signature=" + signature;
     }
 }
