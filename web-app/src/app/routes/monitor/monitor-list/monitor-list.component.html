@@ -169,7 +169,7 @@
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzEllipsis>
         <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.id]">
           {{ data.name }}
           <span nz-icon nzType="area-chart"></span>
@@ -189,7 +189,7 @@
           <span>{{ 'monitor.status.down' | i18n }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzEllipsis>
         <button
           nz-button
           nzSize="default"
