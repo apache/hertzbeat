@@ -19,28 +19,24 @@
 
 package org.apache.hertzbeat.push.service.impl;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.MetricFamily;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.OnlineParser;
+import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.push.dao.PushMonitorDao;
 import org.apache.hertzbeat.push.service.PushGatewayService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 /**
@@ -50,32 +46,57 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class PushGatewayServiceImpl implements PushGatewayService {
-
-//    List<CollectRep.MetricsData>
-    @Autowired
-    private PushMonitorDao monitorDao;
+    
     private final CommonDataQueue commonDataQueue;
-    Map<String, Lock> createdMonitorNameMap;
-    Queue<ImmutablePair<Long, Map<String, MetricFamily>>> metricFamilyQueue;
-    public PushGatewayServiceImpl(CommonDataQueue commonDataQueue) {
+    
+    private final PushMonitorDao pushMonitorDao;
+    
+    private final Map<String, Long> jobInstanceMap;
+    
+    public PushGatewayServiceImpl(CommonDataQueue commonDataQueue, PushMonitorDao pushMonitorDao) {
         this.commonDataQueue = commonDataQueue;
-        metricFamilyQueue = new ConcurrentLinkedQueue<>();
-        createdMonitorNameMap = new ConcurrentHashMap<>();
+        this.pushMonitorDao = pushMonitorDao;
+        jobInstanceMap = new ConcurrentHashMap<>();
+        pushMonitorDao.findMonitorsByType((byte) 1).forEach(monitor -> 
+                jobInstanceMap.put(monitor.getApp() + "_" + monitor.getName(), monitor.getId()));
     }
 
-    @Scheduled(fixedDelay = 5000)
-    private void saveMetrics() {
-        Long curTime = System.currentTimeMillis();
-        ImmutablePair<Long, Map<String, MetricFamily>> head = metricFamilyQueue.poll();
-//        List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
-        while (head != null && head.left < curTime) {
-            Map<String, MetricFamily> metricFamilyMap = head.right;
+    @Override
+    public boolean pushPrometheusMetrics(InputStream inputStream, String job, String instance) {
+        try {
+            long curTime = Instant.now().toEpochMilli();
+            Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+            if (metricFamilyMap == null) {
+                log.error("parse prometheus metrics is null, job: {}, instance: {}", job, instance);
+                return false;
+            }
+            long id = 0L;
+            if (job != null && instance != null) {
+                // auto create monitor when job and instance not null
+                // job is app, instance is the name
+                id = jobInstanceMap.computeIfAbsent(job + "_" + instance, key -> {
+                    log.info("auto create monitor by prometheus push, job: {}, instance: {}", job, instance);
+                    long monitorId = SnowFlakeIdGenerator.generateId();
+                    Monitor monitor = Monitor.builder()
+                            .id(monitorId)
+                            .app(job)
+                            .name(instance)
+                            .host(instance)
+                            .type((byte) 1)
+                            .status(CommonConstants.MONITOR_UP_CODE)
+                            .build();
+                    this.pushMonitorDao.save(monitor);
+                    return monitorId;
+                });
+            }
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            builder.setId(id);
+            builder.setApp(job);
             for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
                 builder.clearMetrics();
                 builder.clearFields();
                 builder.clearValues();
-                builder.setTime(head.left);
+                builder.setTime(curTime);
                 String metricsName = entry.getKey();
                 builder.setMetrics(metricsName);
                 MetricFamily metricFamily = entry.getValue();
@@ -106,29 +127,10 @@ public class PushGatewayServiceImpl implements PushGatewayService {
                     commonDataQueue.sendMetricsData(builder.build());
                 }
             }
-            head = metricFamilyQueue.poll();
+            return true;
+        } catch (Exception e) {
+            log.error("push prometheus metrics error", e);
+            return false;
         }
-        return;
-    }
-
-    @Override
-    public boolean pushMetricsData(InputStream inputStream, String monitorName) throws IOException {
-        if (!createdMonitorNameMap.containsKey(monitorName)) {
-            createdMonitorNameMap.putIfAbsent(monitorName, new ReentrantLock());
-            createdMonitorNameMap.get(monitorName).lock();
-            if (!createdMonitorNameMap.containsKey(monitorName)) {
-                Optional<Monitor> monitorOptional = monitorDao.findMonitorByNameEquals(monitorName);
-                if (!monitorOptional.isPresent()) {
-                    Monitor.MonitorBuilder monitorBuilder = Monitor.builder();
-                    monitorBuilder.name(monitorName);
-                    // todo: other params for monitor to work
-                    monitorDao.save(monitorBuilder.build());
-                }
-            }
-            createdMonitorNameMap.get(monitorName).unlock();
-        }
-        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
-        metricFamilyQueue.add(new ImmutablePair<>(System.currentTimeMillis(), metricFamilyMap));
-        return true;
     }
 }

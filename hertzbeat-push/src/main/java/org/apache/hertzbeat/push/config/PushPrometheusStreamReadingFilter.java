@@ -10,17 +10,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.regex.Matcher;
 
+import java.util.regex.Pattern;
 import org.apache.hertzbeat.push.service.PushGatewayService;
 
 
 /**
  * todo 
  */
-public class PushGatewayStreamReadingFilter implements Filter {
+public class PushPrometheusStreamReadingFilter implements Filter {
     
     private final PushGatewayService pushGatewayService;
     
-    public PushGatewayStreamReadingFilter(PushGatewayService pushGatewayService) {
+    private final Pattern pathPattern = Pattern.compile("^/api/push/prometheus/job/([a-zA-Z0-9_]*)(?:/instance/([a-zA-Z0-9_]*))?$");
+    
+    public PushPrometheusStreamReadingFilter(PushGatewayService pushGatewayService) {
         this.pushGatewayService = pushGatewayService;
     }
     
@@ -32,17 +35,18 @@ public class PushGatewayStreamReadingFilter implements Filter {
             throws IOException, ServletException {
         if (request instanceof HttpServletRequest httpRequest) {
             String uri = httpRequest.getRequestURI();
-            Matcher matcher = PushFilterConfig.uri_pattern.matcher(uri);
-            String monitorName = null;
+            Matcher matcher = pathPattern.matcher(uri);
+            String job = null;
+            String instance = null;
             if (matcher.matches()) {
-                // 获取第一个捕获组
-                monitorName = matcher.group(1);
-                boolean flag = pushGatewayService.pushMetricsData(request.getInputStream(), monitorName);
+                job = matcher.group(1);
+                instance = matcher.group(2);
+                boolean flag = pushGatewayService.pushPrometheusMetrics(request.getInputStream(), job, instance);
                 if (flag) {
-                    PushSuccessRequestWrapper successRequestWrapper = new PushSuccessRequestWrapper(httpRequest, monitorName);
+                    PushSuccessRequestWrapper successRequestWrapper = new PushSuccessRequestWrapper(httpRequest, job, instance);
                     chain.doFilter(successRequestWrapper, response);
                 } else {
-                    PushErrorRequestWrapper errorRequestWrapper = new PushErrorRequestWrapper(httpRequest);
+                    PushErrorRequestWrapper errorRequestWrapper = new PushErrorRequestWrapper(httpRequest, job, instance);
                     chain.doFilter(errorRequestWrapper, response);
                 }
             } else {

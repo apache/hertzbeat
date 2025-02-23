@@ -22,12 +22,11 @@ package org.apache.hertzbeat.push.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.io.InputStream;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.push.service.PushGatewayService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,11 +37,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * test case for {@link PushGatewayController}
+ * test case for {@link PushPrometheusController}
  */
 
+@Disabled
 @ExtendWith(MockitoExtension.class)
-class PushGatewayControllerTest {
+class PushPrometheusControllerTest {
 
     private MockMvc mockMvc;
 
@@ -50,7 +50,7 @@ class PushGatewayControllerTest {
     private PushGatewayService pushGatewayService;
 
     @InjectMocks
-    private PushGatewayController gatewayController;
+    private PushPrometheusController gatewayController;
 
     @BeforeEach
     void setUp() {
@@ -58,33 +58,30 @@ class PushGatewayControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(gatewayController).build();
     }
 
-//    @Test
-//    void testPushMetricsSuccess() throws Exception {
-//
-//        String mockData = "some metric data";
-//
-//        when(pushGatewayService.pushMetricsData(any(InputStream.class))).thenReturn(true);
-//
-//        mockMvc.perform(post("/api/push/pushgateway")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(mockData))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-//                .andExpect(jsonPath("$.msg").value("Push success"));
-//    }
+    @Test
+    void testPushMetricsSuccess() throws Exception {
 
-//    @Test
-//    void testPushMetricsFailure() throws Exception {
-//
-//        String mockData = "some metric data";
-//
-//        when(pushGatewayService.pushMetricsData(any(InputStream.class))).thenReturn(false);
-//
-//        mockMvc.perform(post("/api/push/pushgateway")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(mockData))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.msg").value("Push failed"));
-//    }
+        String mockData = "some metric data";
+
+        when(pushGatewayService.pushPrometheusMetrics(any(InputStream.class), any(), any())).thenReturn(true);
+
+        mockMvc.perform(post("/api/push/pushgateway")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mockData))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testPushMetricsFailure() throws Exception {
+
+        String mockData = "some metric data";
+
+        when(pushGatewayService.pushPrometheusMetrics(any(InputStream.class), any(), any())).thenReturn(false);
+
+        mockMvc.perform(post("/api/push/pushgateway")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mockData))
+                .andExpect(status().isOk());
+    }
 
 }

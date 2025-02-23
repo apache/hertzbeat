@@ -201,8 +201,8 @@
       <td nzAlign="center">
         <a routerLink="/monitors" [queryParams]="{ app: data.app }">
           <nz-tag nzColor="processing" class="hoverClass">
-            <i nz-icon nzType="cloud"></i>
-            <span>{{ 'monitor.app.' + data.app | i18n }}</span>
+            <span *ngIf="data.type != 1">{{ 'monitor.app.' + data.app | i18n }}</span>
+            <span *ngIf="data.type == 1">{{ data.app }}</span>
           </nz-tag>
         </a>
       </td>
@@ -222,7 +222,7 @@
           </button>
           <nz-dropdown-menu #more_menu="nzDropdownMenu">
             <ul nz-menu>
-              <li nz-menu-item>
+              <li *ngIf="data.type != 1" nz-menu-item>
                 <button
                   nz-button
                   nzType="primary"
@@ -233,7 +233,7 @@
                   <i nz-icon nzType="edit" nzTheme="outline"></i>
                 </button>
               </li>
-              <li nz-menu-item>
+              <li *ngIf="data.type != 1" nz-menu-item>
                 <button
                   *ngIf="data.status == 0"
                   nz-button
@@ -244,7 +244,7 @@
                   <i nz-icon nzType="play-circle" nzTheme="outline"></i>
                 </button>
               </li>
-              <li nz-menu-item>
+              <li *ngIf="data.type != 1" nz-menu-item>
                 <button
                   *ngIf="data.status != 0"
                   nz-button

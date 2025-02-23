@@ -21,7 +21,6 @@ package org.apache.hertzbeat.push.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.push.config.PushErrorRequestWrapper;
@@ -36,20 +35,23 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Metrics Push Gateway API")
 @RestController
-@RequestMapping(value = "/api/push/pushgateway/*")
-public class PushGatewayController {
+@RequestMapping(value = "/api/push/prometheus/**")
+public class PushPrometheusController {
 
     @PostMapping()
-    @Operation(summary = "Push metric data to hertzbeat push gateway", description = "Push metric data to hertzbeat push gateway")
-    public ResponseEntity<Message<Void>> pushMetrics(ServletRequest request) {
-        if (request instanceof PushErrorRequestWrapper) {
-            return ResponseEntity.ok(Message.success("Push failed."));
+    @Operation(summary = "Prometheus push gateway", description = "Push prometheus metric data to hertzbeat")
+    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) {
+        if (request instanceof PushErrorRequestWrapper error) {
+            return ResponseEntity.badRequest().body(Message.success(String.format("Push failed, job: %s, instance: %s", 
+                            error.getJob(), error.getInstance())));
         }
-        else if (request instanceof PushSuccessRequestWrapper successRequestWrapper) {
-            return ResponseEntity.ok(Message.success(String.format("Push success, monitor name: %s", successRequestWrapper.getMonitorName())));
+        else if (request instanceof PushSuccessRequestWrapper success) {
+            return ResponseEntity.ok(Message.success(String.format("Push success, job: %s, instance: %s",
+                    success.getJob(), success.getInstance())));
         }
         else {
-            return ResponseEntity.ok(Message.success("Request not matched."));
+            return ResponseEntity.badRequest()
+                    .body(Message.success(String.format("Request  %s not matched.", request.getRequestURI())));
         }
     }
 

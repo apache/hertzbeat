@@ -17,14 +17,19 @@
 
 package org.apache.hertzbeat.push.dao;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.Optional;
 
 /**
  * push monitor dao
  */
 public interface PushMonitorDao extends JpaRepository<Monitor, Long> {
-    Optional<Monitor> findMonitorByNameEquals(String name);
+
+    /**
+     * Find all monitoring entities by type
+     * @param type Monitoring type
+     * @return Monitoring entity list
+     */
+    List<Monitor> findMonitorsByType(byte type);
 }

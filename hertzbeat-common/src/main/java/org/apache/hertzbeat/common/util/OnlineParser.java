@@ -17,15 +17,18 @@
 
 package org.apache.hertzbeat.common.util;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.hertzbeat.common.entity.dto.MetricFamily;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -35,22 +38,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class OnlineParser {
 
-    private static Map<Integer, Integer> escapeMap = new HashMap<>();;
-
+    private static final Map<Integer, Integer> escapeMap = new HashMap<>();
+    
     static {
-        escapeMap.put((int)'n', (int)'\n');
-        escapeMap.put((int)'b', (int)'\b');
-        escapeMap.put((int)'t', (int)'\t');
-        escapeMap.put((int)'r', (int)'\r');
-        escapeMap.put((int)'f', (int)'\f');
-        escapeMap.put((int)'\'', (int)'\'');
-        escapeMap.put((int)'\"', (int)'\"');
-        escapeMap.put((int)'\\', (int)'\\');
+        escapeMap.put((int) 'n', (int) '\n');
+        escapeMap.put((int) 'b', (int) '\b');
+        escapeMap.put((int) 't', (int) '\t');
+        escapeMap.put((int) 'r', (int) '\r');
+        escapeMap.put((int) 'f', (int) '\f');
+        escapeMap.put((int) '\'', (int) '\'');
+        escapeMap.put((int) '\"', (int) '\"');
+        escapeMap.put((int) '\\', (int) '\\');
     }
 
     private static class FormatException extends Exception {
 
-        public FormatException() {}
+        public FormatException() {
+        }
 
         public FormatException(String message) {
             super(message);
@@ -141,12 +145,10 @@ public class OnlineParser {
             i = inputStream.read();
             if (escapeMap.containsKey(i)) {
                 return escapeMap.get(i);
-            }
-            else {
+            } else {
                 throw new FormatException("Escape character failed.");
             }
-        }
-        else {
+        } else {
             return i;
         }
     }
@@ -209,8 +211,7 @@ public class OnlineParser {
                     default:
                         throw new FormatException();
                 }
-            }
-            else {
+            } else {
                 stringBuilder.append((char) i);
             }
             i = getChar(inputStream);
@@ -295,8 +296,7 @@ public class OnlineParser {
             metricFamily.setMetricList(new ArrayList<>());
             metricFamily.setName(metricName);
             metricFamilyMap.put(metricName, metricFamily);
-        }
-        else {
+        } else {
             metricFamily = metricFamilyMap.get(metricName);
         }
 
