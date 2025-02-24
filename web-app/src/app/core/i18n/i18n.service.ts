@@ -20,7 +20,14 @@ import {
 import { AlainConfigService } from '@delon/util/config';
 import { enUS as dfEn, zhCN as dfZhCn, zhTW as dfZhTw, ja as dfJa, ptBR as dfPtBR } from 'date-fns/locale';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
-import { en_US as zorroEnUS, NzI18nService, zh_CN as zorroZhCN, zh_TW as zorroZhTW, ja_JP as zorroJaJP, pt_BR as zorroPtBR } from 'ng-zorro-antd/i18n';
+import {
+  en_US as zorroEnUS,
+  NzI18nService,
+  zh_CN as zorroZhCN,
+  zh_TW as zorroZhTW,
+  ja_JP as zorroJaJP,
+  pt_BR as zorroPtBR
+} from 'ng-zorro-antd/i18n';
 import { Observable, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 
