@@ -43,7 +43,7 @@ import { GeneralConfigService } from '../../../service/general-config.service';
           ngClass="alain-default__nav-item-icon"
           (click)="toggleMute($event)"
           nz-tooltip
-          [nzTooltipTitle]="'common.mute' | i18n"
+          [nzTooltipTitle]="(mute.mute ? 'common.unmute' : 'common.mute') | i18n"
         ></i>
       </nz-badge>
     </div>
@@ -163,6 +163,9 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    if (this.eventSource) {
+      this.eventSource.close();
+    }
   }
 
   onPopoverVisibleChange(visible: boolean): void {
@@ -226,24 +229,6 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
           console.error(error);
         }
       );
-  }
-
-  updateAlertsStatus(alertIds: Set<number>, status: string) {
-    const markAlertsStatus$ = this.alertSvc.applyGroupAlertsStatus(alertIds, status).subscribe(
-      message => {
-        markAlertsStatus$.unsubscribe();
-        if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.mark-success'), '');
-          this.loadData();
-        } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.mark-fail'), message.msg);
-        }
-      },
-      error => {
-        markAlertsStatus$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.mark-fail'), error.msg);
-      }
-    );
   }
 
   gotoAlertCenter(): void {
@@ -314,7 +299,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     });
     this.eventSource.onerror = error => {
       console.error('SSE connection error:', error);
-      setTimeout(() => this.initSSEConnection(), 3000);
+      this.eventSource.close();
     };
   }
 }
