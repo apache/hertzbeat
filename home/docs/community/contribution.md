@@ -68,11 +68,9 @@ Even small corrections to typos are very welcome :)
 
 4. Install Dependencies: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. Install angular-cli globally: `yarn global add @angular/cli@15` or `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`
+5. After the local backend is started, start the local frontend in the web-app directory: `yarn start`
 
-6. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-
-7. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
+6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
 ### Find tasks
 

@@ -64,6 +64,13 @@ params:
     required: false
     hide: true
     defaultValue: 6000
+  - field: reuseConnection
+    name:
+      zh-CN: 复用连接
+      en-US: Reuse Connection
+    type: boolean
+    required: false
+    defaultValue: true
   - field: database
     name:
       zh-CN: 服务名
@@ -158,6 +165,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       # SQL Query Method：oneRow, multiRow, columns
       queryType: oneRow
       # sql
@@ -213,8 +221,8 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
-      
       sql: select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files
       url: ^_^url^_^
 
@@ -238,6 +246,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
       sql: select count(*) as count from v$session
       url: ^_^url^_^
@@ -262,6 +271,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
       sql: select count(*) as count from v$session where username is not null and status = 'ACTIVE'
       url: ^_^url^_^
@@ -286,6 +296,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
       sql: select count(*) as count from v$session where username is null
       url: ^_^url^_^
@@ -316,6 +327,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
       sql: SELECT username, count( username ) as count FROM v$session WHERE username IS NOT NULL GROUP BY username
       url: ^_^url^_^
@@ -361,6 +373,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: columns
       sql: select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'
       url: ^_^url^_^
@@ -414,6 +427,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
       # DBA_TABLESPACE_USAGE_METRICS可以查出表空间used_max值，它的大小计算单位是block，1kb=8block，把block*8/1024转化为MB单位
       sql: "SELECT tablespace_name,ROUND ( (TABLESPACE_SIZE * 8 / 1024), 0) AS total,ROUND ( (USED_SPACE * 8 / 1024), 0) AS used,ROUND ( ( (TABLESPACE_SIZE * 8 / 1024) - (USED_SPACE * 8 / 1024)), 0) AS free,ROUND ( (USED_PERCENT), 0) AS used_percentage,100 - ROUND ( (USED_PERCENT), 0) AS free_percentage FROM sys.dba_tablespace_usage_metrics ORDER BY used_percent DESC"
@@ -439,6 +453,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
       sql: select count(*) as process_count from v$process
       url: ^_^url^_^
@@ -476,6 +491,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: columns
       sql: select metric_name, value from gv$sysmetric where metric_name = 'User Commits Per Sec' or  metric_name = 'User Rollbacks Per Sec'
       url: ^_^url^_^
@@ -561,6 +577,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: columns
       sql: select wait_class, sum(time_waited) total_wait_time from v$active_session_history where session_state = 'WAITING' GROUP BY wait_class ORDER BY total_wait_time DESC
       url: ^_^url^_^
@@ -591,6 +608,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
       sql: select stat_name as type, value as num from v$osstat where stat_name like '%CPU%' or stat_name like '%TIME'
       url: ^_^url^_^
@@ -621,6 +639,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
       sql: select stat_name as type, value as num from v$osstat where stat_name like '%BYTES'
       url: ^_^url^_^
@@ -656,6 +675,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: columns
       sql: select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc
       url: ^_^url^_^
@@ -733,6 +753,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
       sql: SELECT * FROM (SELECT sql_id, child_number, executions, ROUND(CASE WHEN executions = 0 THEN NULL ELSE elapsed_time / (executions*1000000) END,4) AS per_secs, cpu_time / 1000000 AS cpu_secs, buffer_gets, disk_reads, fetches, parse_calls, optimizer_cost, sql_text FROM  v$sql  ) where rownum <= 10 ORDER BY  per_secs DESC
       url: ^_^url^_^
