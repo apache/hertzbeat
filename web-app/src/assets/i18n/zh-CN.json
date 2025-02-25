@@ -773,6 +773,7 @@
   "settings.system-config.locale.zh_CN": "简体中文(zh_CN)",
   "settings.system-config.locale.zh_TW": "繁体中文(zh_TW)",
   "settings.system-config.locale.ja-JP": "日语(ja_JP)",
+  "settings.system-config.locale.pt_BR": "Português(pt_BR)",
   "settings.system-config.ok": "确认更新",
   "settings.system-config.theme": "系统主题",
   "settings.system-config.theme.compact": "紧凑主题",
