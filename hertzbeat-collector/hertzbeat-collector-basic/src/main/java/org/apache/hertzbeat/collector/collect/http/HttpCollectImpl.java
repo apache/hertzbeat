@@ -525,8 +525,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 if (StringUtils.hasText(header.getValue())) {
-                    requestBuilder.addHeader(CollectUtil.replaceUriSpecialChar(header.getKey()),
-                            CollectUtil.replaceUriSpecialChar(header.getValue()));
+                    requestBuilder.addHeader(header.getKey(), header.getValue());
                 }
             }
         }
@@ -561,7 +560,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // uri
-        String uri = CollectUtil.replaceUriSpecialChar(httpProtocol.getUrl());
+        String uri = httpProtocol.getUrl();
         if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
 
             requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
