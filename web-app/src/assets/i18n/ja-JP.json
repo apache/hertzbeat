@@ -437,6 +437,7 @@
   "common.file.select": "ファイルを選択",
   "common.ignore": "無視",
   "common.mute": "ミュート",
+  "common.unmute": "ミュート解除",
   "common.name": "メトリック名",
   "common.new-time": "作成時間",
   "common.no": "いいえ",
