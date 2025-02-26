@@ -246,8 +246,7 @@
     gap: 10px;
     margin-bottom: 16px;
     padding: 12px;
-    background: #fafafa;
-    border: 1px dashed @border-color;
+    border: 1px dashed fade(@primary-color, 30%);
     border-radius: 6px;
 
     @media (max-width: 768px) {
@@ -258,7 +257,6 @@
   .draggable-tag {
     padding: 8px 12px;
     min-width: 140px;
-    background: #f0f5ff;
     border: 1px solid fade(@primary-color, 30%);
     border-radius: 4px;
     cursor: move;

@@ -54,8 +54,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.silence.name' | i18n"
       [(value)]="search"
-      (valueChange)="onFilterChange()"
+      (keydown.enter)="onFilterChange()"
+      (cleared)="onFilterChange()"
     />
+    <button nz-button nzType="primary" (click)="onFilterChange()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
@@ -77,11 +81,12 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="7%">{{ 'alert.silence.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="7%">{{ 'alert.silence.type' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'alert.silence.times' | i18n }}</th>
-      <th nzAlign="center" nzWidth="3%" nzRight>{{ 'alert.silence.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="5%" nzRight>{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'alert.silence.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'alert.silence.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'alert.silence.times' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%" nzRight>{{ 'common.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -109,6 +114,7 @@
       <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertSilence(data)" name="enable"></nz-switch>
       </td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center" nzRight>
         <div class="actions">
           <button

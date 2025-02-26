@@ -17,8 +17,10 @@
  * under the License.
  */
 
-import { DOCUMENT } from '@angular/common';
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
@@ -34,26 +36,17 @@ const key = 'oss';
 })
 export class ObjectStoreComponent implements OnInit {
   constructor(
-    private cdr: ChangeDetectorRef,
-    private notifySvc: NzNotificationService,
     private configService: GeneralConfigService,
-    @Inject(DOCUMENT) private doc: any
+    private notifySvc: NzNotificationService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   loading = true;
   config!: ObjectStore<any>;
-  isObjectStoreModalVisible: boolean = false;
+  @ViewChild('objectStoreForm', { static: false }) ruleForm: NgForm | undefined;
 
   ngOnInit(): void {
     this.loadObjectStore();
-  }
-
-  onConfigObjectStore() {
-    this.isObjectStoreModalVisible = true;
-  }
-
-  onCancelObjectStore() {
-    this.isObjectStoreModalVisible = false;
   }
 
   loadObjectStore() {
@@ -81,6 +74,15 @@ export class ObjectStoreComponent implements OnInit {
   }
 
   onSaveObjectStore() {
+    if (this.ruleForm?.invalid) {
+      Object.values(this.ruleForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.loading = true;
     const configOk$ = this.configService
       .saveGeneralConfig(this.config, key)
@@ -93,12 +95,13 @@ export class ObjectStoreComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
           } else {
-            // this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
           }
         },
         error => {
-          // this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );
   }
@@ -115,6 +118,5 @@ export class ObjectStoreComponent implements OnInit {
     }
   };
 
-  protected readonly ObjectStore = ObjectStore;
   protected readonly ObjectStoreType = ObjectStoreType;
 }
