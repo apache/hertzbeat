@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CollectRepTest {
 
     @ParameterizedTest
-    @CsvSource({
-       "name, name, true",
-       "name1, name3, false",
+    @CsvSource(value = {
+            "name, name, true",
+            "name1, name3, false",
     })
     void testFieldEquals(String name1, String name2, boolean result) {
         CollectRep.Field field1 = new CollectRep.Field();
