@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
-import java.util.Arrays;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -35,6 +34,7 @@ import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
+import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -69,37 +69,20 @@ public class RealTimeAlertCalculator {
     private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\"(\\d+)\"\\)");
     private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
-    /**
-     * The alarm in the process is triggered
-     * key - labels fingerprint
-     */
-    private final Map<String, SingleAlert> pendingAlertMap;
-    /**
-     * The not recover alert
-     * key - labels fingerprint
-     */
-    private final Map<String, SingleAlert> firingAlertMap;
     private final AlerterWorkerPool workerPool;
     private final CommonDataQueue dataQueue;
     private final AlertDefineService alertDefineService;
     private final AlarmCommonReduce alarmCommonReduce;
+    private final AlarmCacheManager alarmCacheManager;
 
     public RealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                                    AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                   AlarmCommonReduce alarmCommonReduce) {
+                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alarmCommonReduce = alarmCommonReduce;
         this.alertDefineService = alertDefineService;
-        this.pendingAlertMap = new ConcurrentHashMap<>(8);
-        this.firingAlertMap = new ConcurrentHashMap<>(8);
-        // Initialize firing stateAlertMap
-        List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
-        for (SingleAlert singleAlert : singleAlerts) {
-            String fingerprint = calculateFingerprint(singleAlert.getLabels());
-            singleAlert.setId(null);
-            firingAlertMap.put(fingerprint, singleAlert);
-        }
+        this.alarmCacheManager = alarmCacheManager;
         startCalculate();
     }
 
@@ -299,8 +282,8 @@ public class RealTimeAlertCalculator {
     }
 
     private void handleRecoveredAlert(Map<String, String> fingerprints) {
-        String fingerprint = calculateFingerprint(fingerprints);
-        SingleAlert firingAlert = firingAlertMap.remove(fingerprint);
+        String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(fingerprint);
         if (firingAlert != null) {
             // todo consider multi times to tig for resolved alert
             firingAlert.setTriggerTimes(1);
@@ -308,13 +291,13 @@ public class RealTimeAlertCalculator {
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
-        pendingAlertMap.remove(fingerprint);
+        alarmCacheManager.removePending(fingerprint);
     }
 
     private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints, 
                                          Map<String, Object> fieldValueMap, AlertDefine define) {
-        String fingerprint = calculateFingerprint(fingerPrints);
-        SingleAlert existingAlert = pendingAlertMap.get(fingerprint);
+        String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
+        SingleAlert existingAlert = alarmCacheManager.getPending(fingerprint);
         Map<String, String> labels = new HashMap<>(8);
         fieldValueMap.putAll(define.getLabels());
         labels.putAll(fingerPrints);
@@ -335,11 +318,11 @@ public class RealTimeAlertCalculator {
             // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
                 newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                firingAlertMap.put(fingerprint, newAlert);
+                alarmCacheManager.putFiring(fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
             } else {
                 // Otherwise put into pending queue first
-                pendingAlertMap.put(fingerprint, newAlert);
+                alarmCacheManager.putPending(fingerprint, newAlert);
             }
         } else {
             // Update existing alert
@@ -349,9 +332,9 @@ public class RealTimeAlertCalculator {
             // Check if required trigger times reached
             if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
                 // Reached trigger times threshold, change to firing status
-                pendingAlertMap.remove(fingerprint);
+                alarmCacheManager.removePending(fingerprint);
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                firingAlertMap.put(fingerprint, existingAlert);
+                alarmCacheManager.putFiring(fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }
@@ -384,12 +367,5 @@ public class RealTimeAlertCalculator {
             throw e;
         }
         return match != null && match;
-    }
-    
-    private String calculateFingerprint(Map<String, String> fingerPrints) {
-        List<String> keyList = fingerPrints.keySet().stream().filter(Objects::nonNull).sorted().toList();
-        List<String> valueList = fingerPrints.values().stream().filter(Objects::nonNull).sorted().toList();
-        return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
-                + Arrays.hashCode(valueList.toArray(new String[0]));
     }
 }
