@@ -55,6 +55,114 @@ alerter:
 4. Obtain Tencent Cloud Access Management credentials (secret-id, secret-key)  
    ![image](https://github.com/apache/hertzbeat/assets/40455946/36f056f0-94e7-43db-8f07-82893c98024e)
 
+### 1.2 Alibaba Cloud SMS Configuration
+
+To activate and use Alibaba Cloud SMS service, you can refer to the official Alibaba Cloud documentation: [SMS Getting Started Guide](https://help.aliyun.com/zh/sms/getting-started/get-started-with-sms)
+
+You can configure the Alibaba Cloud SMS service either through the graphical interface or in the `application.yml` file.
+To use `application.yml`, add/fill the following Alibaba Cloud SMS configuration (replace parameters with your own SMS server configuration):
+
+```yaml
+alerter:
+   sms:
+      enable: true    # Whether to enable
+      type: alibaba   # SMS provider type, supports "alibaba"
+      alibaba:        # Alibaba Cloud SMS configuration
+         access-key-id:      # Your AccessKey ID
+         access-key-secret:  # Your AccessKey Secret
+         sign-name:          # SMS signature
+         template-code:      # SMS template code
+```
+
+1. Create an Alibaba Cloud account and activate SMS service
+   - Visit [Alibaba Cloud SMS Console](https://dysms.console.aliyun.com/)
+   - Activate SMS service
+
+2. Create a signature (sign-name)
+   - Log in to [SMS Console](https://dysms.console.aliyun.com/)
+   - Select Domestic/International SMS service
+   - Go to "Signature Management" page and click "Add Signature"
+   - Fill in signature information and submit for review
+   - Wait for signature approval
+
+3. Create a message template (template-code)
+   - Go to "Template Management" page
+   - Click "Add Template"
+   - Create a template with the following format:
+
+   ```text
+   Monitor: ${instance}, Alert Level: ${priority}. Content: ${content}
+   ```
+
+   - Submit the template for review
+
+4. Obtain Access Key credentials (access-key-id, access-key-secret)
+   :::tip
+   Alibaba Cloud officially recommends using RAM user AccessKey with minimal permissions.
+   :::
+   - [Go to RAM Access Control](https://ram.console.aliyun.com/users) to manage RAM users
+   - Create user and select "Access Key for API Access"
+   - Securely save the AccessKey ID and AccessKey Secret
+   - Grant SMS service permission "AliyunDysmsFullAccess" to the user
+
+Now you can configure this information in your hertzbeat application.
+
+### 1.3 UniSMS Configuration
+
+UniSMS is an aggregated SMS service platform. You can refer to [UniSMS Documentation](https://unisms.apistd.com/docs/tutorials) for configuration.
+
+Add/Fill in the following UniSMS configuration to `application.yml` (replace parameters with your own SMS server configuration):
+
+```yaml
+alerter:
+  sms:
+    enable: true    # Whether to enable
+    type: unisms   # SMS provider type, set to unisms
+    unisms:        # UniSMS configuration
+       # auth-mode: simple or hmac
+       auth-mode: simple
+       access-key-id: YOUR_ACCESS_KEY_ID
+       # hmac mode need to fill in access-key-secret
+       access-key-secret: YOUR_ACCESS_KEY_SECRET
+       signature: YOUR_SMS_SIGNATURE
+       template-id: YOUR_TEMPLATE_ID
+```
+
+1. Register UniSMS account
+   - Visit [UniSMS website](https://unisms.apistd.com/)
+
+2. Create signature
+   - Log in to [UniSMS Console](https://unisms.apistd.com/console/)
+   - Go to "SMS Filing - Signature Management" page
+   - Click "Add Signature"
+   - Fill in signature information and submit for review
+   - Wait for signature approval
+
+3. Create message template
+   - Go to "SMS Filing - Template Management" page
+   - Click "Add Template"
+   - Create a template with the following format:
+
+   ```text
+   Monitor: {instance}, Alert Level: {priority}. Content: {content}
+   ```
+
+   - Submit the template for review
+
+4. Obtain `access-key-id` and `access-key-secret`
+   - Log in to [UniSMS Console](https://unisms.apistd.com/console/)
+   - Go to "Credential Management" page
+   - Get AccessKey ID and AccessKey Secret
+   - Securely save the AccessKey ID and AccessKey Secret
+
+   :::note
+   UniSMS provides two authentication methods for developers to choose from, which can be set in Console - Credential Management, with Simple Mode as default.
+     - Simple Mode [Default]: This mode only verifies AccessKey ID without request parameter signature, making it easier for developers to integrate quickly.
+     - HMAC Mode: This mode requires signing request parameters with AccessKey Secret to enhance the security and authenticity of requests.
+   :::
+
+Now you can configure this information in your hertzbeat application.
+
 ## 2. Configuring Custom Alert Parameters
 
 ```yaml
