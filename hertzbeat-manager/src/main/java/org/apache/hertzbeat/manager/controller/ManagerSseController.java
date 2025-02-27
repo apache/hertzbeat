@@ -29,6 +29,9 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 
 
+/**
+ * SSE controller for manager
+ */
 @RestController
 @RequestMapping(path = "/api/manager/sse", produces = {TEXT_EVENT_STREAM_VALUE})
 public class ManagerSseController {

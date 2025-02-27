@@ -156,7 +156,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
         }
       );
     this.loadData();
-    this.initSSEConnection();
+    this.initAlertSSEConnection();
+    this.initManagerSSEConnection();
   }
 
   ngOnDestroy() {
@@ -286,7 +287,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       });
   }
 
-  private initSSEConnection(): void {
+  private initAlertSSEConnection(): void {
     const sseUrl = '/api/alert/sse/subscribe';
 
     this.eventSource = new EventSource(sseUrl);
@@ -313,8 +314,40 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
     this.eventSource.onerror = error => {
-      console.error('SSE connection error:', error);
-      setTimeout(() => this.initSSEConnection(), 3000);
+      console.error('Alert SSE connection error:', error);
+      setTimeout(() => this.initAlertSSEConnection(), 3000);
     };
   }
+
+  private initManagerSSEConnection(): void {
+    const sseUrl = '/api/manager/sse/subscribe';
+
+    this.eventSource = new EventSource(sseUrl);
+
+    this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
+      let list: any[] = [];
+      let alert: SingleAlert = JSON.parse(evt.data);
+      let item = {
+        id: alert.id,
+        avatar: '/assets/img/notification.svg',
+        title: alert.content,
+        datetime: new Date(alert.activeAt).toLocaleString(),
+        color: 'blue',
+        status: alert.status,
+        type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
+      };
+      list.push(item);
+
+      this.data = this.updateNoticeData(list);
+      if (!this.mute.mute) {
+        this.alertSound.playAlertSound(this.i18nSvc.currentLang);
+      }
+      this.cdr.detectChanges();
+    });
+    this.eventSource.onerror = error => {
+      console.error('Manager SSE connection error:', error);
+      setTimeout(() => this.initManagerSSEConnection(), 3000);
+    };
+  }
+
 }

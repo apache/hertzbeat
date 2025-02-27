@@ -22,17 +22,23 @@ import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.annotation.Resource;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.common.support.ResourceBundleUtf8Control;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
@@ -54,17 +60,36 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     @Resource
     private TagService tagService;
 
+    @Resource
+    private ManagerSseManager managerSseManager;
+
     @Override
     public void importConfig(InputStream is) {
         var formList = parseImport(is)
                 .stream()
                 .map(this::convert)
                 .toList();
+
         if (!CollectionUtils.isEmpty(formList)) {
-            formList.forEach(monitorDto -> {
-                monitorService.validate(monitorDto, false);
-                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
-            });
+            int totalElements = formList.size();
+            int progressInterval = Math.max(1, totalElements / 10); // 每10%的进度间隔
+
+            try {
+                ResourceBundle bundle = new ResourceBundleUtf8Control().newBundle("msg", Locale.ROOT, "java.properties", getClass().getClassLoader(), false);
+                for (int i = 0; i < totalElements; i++) {
+                    MonitorDto monitorDto = formList.get(i);
+                    monitorService.validate(monitorDto, false);
+                    monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
+                    // Broadcast progress once for per 10% of elements processed
+                    if ((i + 1) % progressInterval == 0 || i == totalElements - 1) {
+                        int progress = (int) ((i + 1) * 100.0 / totalElements);
+                        managerSseManager.broadcast(ManagerEventTypeEnum.importTask.getValue(), String.format(bundle.getString("import_progress"), progress));
+                    }
+                }
+            } catch (Exception e) {
+                managerSseManager.broadcast(ManagerEventTypeEnum.importTask.getValue(), "导入失败");
+            }
+            managerSseManager.broadcast(ManagerEventTypeEnum.importTask.getValue(), "导入完成");
         }
     }
 
