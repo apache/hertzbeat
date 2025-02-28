@@ -17,23 +17,14 @@
 
 package org.apache.hertzbeat.common.constants;
 
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
-
 /**
- * Manager Event Type Enum
+ * Import/Export task constants
  */
-@Getter
-@AllArgsConstructor
-@ToString
-public enum ManagerEventTypeEnum {
+
+public interface ImExportTaskConstant {
 
     /**
-     * IMPORT_TASK_EVENT
+     * Import task Process bar threshold
      */
-    IMPORT_TASK_EVENT("IMPORT_TASK_EVENT");
-
-    private final String value;
+    Integer ImportProcessThreshold = 100;
 }

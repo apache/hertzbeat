@@ -30,14 +30,12 @@ import java.time.LocalDate;
 import java.util.*;
 
 import lombok.Data;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.ImExportTaskConstant;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.support.ResourceBundleUtf8Control;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
@@ -64,32 +62,31 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     private ManagerSseManager managerSseManager;
 
     @Override
-    public void importConfig(InputStream is) {
+    public void importConfig(String taskName, InputStream is) throws Exception {
+        int progress = 0;
         var formList = parseImport(is)
                 .stream()
                 .map(this::convert)
                 .toList();
-
         if (!CollectionUtils.isEmpty(formList)) {
             int totalElements = formList.size();
-            int progressInterval = Math.max(1, totalElements / 10); // 每10%的进度间隔
-
+            int progressInterval = Math.max(1, totalElements / 10);
+            ResourceBundle bundle = new ResourceBundleUtf8Control().newBundle("msg", Locale.ROOT, "java.properties", getClass().getClassLoader(), false);
             try {
-                ResourceBundle bundle = new ResourceBundleUtf8Control().newBundle("msg", Locale.ROOT, "java.properties", getClass().getClassLoader(), false);
                 for (int i = 0; i < totalElements; i++) {
                     MonitorDto monitorDto = formList.get(i);
                     monitorService.validate(monitorDto, false);
                     monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
-                    // Broadcast progress once for per 10% of elements processed
-                    if ((i + 1) % progressInterval == 0 || i == totalElements - 1) {
-                        int progress = (int) ((i + 1) * 100.0 / totalElements);
-                        managerSseManager.broadcast(ManagerEventTypeEnum.importTask.getValue(), String.format(bundle.getString("import_progress"), progress));
+                    if (totalElements >= ImExportTaskConstant.ImportProcessThreshold && ((i + 1) % progressInterval == 0 || i == totalElements - 1)) {
+                        progress = (int) ((i + 1) * 100.0 / totalElements);
+                        managerSseManager.broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), String.format(bundle.getString("import_task_progress"), taskName, progress));
                     }
                 }
             } catch (Exception e) {
-                managerSseManager.broadcast(ManagerEventTypeEnum.importTask.getValue(), "导入失败");
+                managerSseManager.broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), String.format(bundle.getString("import_task_fail"), taskName, e.getMessage()));
+                throw e;
             }
-            managerSseManager.broadcast(ManagerEventTypeEnum.importTask.getValue(), "导入完成");
+            managerSseManager.broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), String.format(bundle.getString("import_task_completed"), taskName));
         }
     }
 
