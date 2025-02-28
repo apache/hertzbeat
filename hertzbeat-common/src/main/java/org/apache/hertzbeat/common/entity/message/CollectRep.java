@@ -567,6 +567,13 @@ public final class CollectRep {
             return new Builder();
         }
 
+        public boolean equals(Object o) {
+            if(!(o instanceof Field))
+                return false;
+            Field other = (Field)o;
+            return other.name.equals(this.name);
+        }
+
         public static class Builder {
             private final Field instance;
 
