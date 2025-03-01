@@ -86,6 +86,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriUtils;
 import org.xml.sax.InputSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -509,13 +510,41 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         // params
         Map<String, String> params = httpProtocol.getParams();
+        boolean enableUrlEncoding = Boolean.parseBoolean(httpProtocol.getEnableUrlEncoding());
+        StringBuilder queryParams = new StringBuilder();
+        
         if (params != null && !params.isEmpty()) {
+            boolean isFirstParam = true;
             for (Map.Entry<String, String> param : params.entrySet()) {
-                if (StringUtils.hasText(param.getValue())) {
-                    requestBuilder.addParameter(param.getKey(), TimeExpressionUtil.calculate(param.getValue()));
+                String key = param.getKey();
+                String value = param.getValue();
+
+                if (!StringUtils.hasText(key)) {
+                    continue;
+                }
+
+                if (isFirstParam) {
+                    queryParams.append("?");
+                    isFirstParam = false;
+                } else {
+                    queryParams.append("&");
+                }
+
+                if (enableUrlEncoding) {
+                    key = UriUtils.encodeQueryParam(key, "UTF-8");
+                }
+                queryParams.append(key);
+
+                if (StringUtils.hasText(value)) {
+                    String calculatedValue = TimeExpressionUtil.calculate(value);
+                    if (enableUrlEncoding) {
+                        calculatedValue = UriUtils.encodeQueryParam(calculatedValue, "UTF-8");
+                    }
+                    queryParams.append("=").append(calculatedValue);
                 }
             }
         }
+        
         // The default request header can be overridden if customized
         // keep-alive
         requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
@@ -559,11 +588,21 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
 
-        // uri
-        String uri = httpProtocol.getUrl();
-        if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
+        // uri encode
+        String uri;
+        if (enableUrlEncoding) {
+            uri = UriUtils.encodePath(httpProtocol.getUrl(), "UTF-8");
+        } else {
+            uri = httpProtocol.getUrl();
+        }
 
-            requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
+        if (queryParams.length() > 0) {
+            uri += queryParams.toString();
+        }
+        
+        String finalUri;
+        if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
+            finalUri = httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri;
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(httpProtocol.getHost());
             String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
@@ -571,10 +610,17 @@ public class HttpCollectImpl extends AbstractCollect {
                     : String.format("%s:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri);
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
-                requestBuilder.setUri(NetworkConstants.HTTPS_HEADER + baseUri);
+                finalUri = NetworkConstants.HTTPS_HEADER + baseUri;
             } else {
-                requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
+                finalUri = NetworkConstants.HTTP_HEADER + baseUri;
             }
+        }
+        
+        try {
+            requestBuilder.setUri(finalUri);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid URI with illegal characters: {}. User has disabled URL encoding, not applying any encoding.", finalUri);
+            throw e;
         }
 
         // custom timeout
