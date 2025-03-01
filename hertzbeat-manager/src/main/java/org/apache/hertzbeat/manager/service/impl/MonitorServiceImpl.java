@@ -26,34 +26,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.ExportFileConstants;
-import org.apache.hertzbeat.common.constants.NetworkConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.common.constants.*;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.CommonRequestProtocol;
-import org.apache.hertzbeat.common.entity.manager.Collector;
-import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.MonitorBind;
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
-import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
-import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.entity.manager.*;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
-import org.apache.hertzbeat.common.util.AesUtil;
-import org.apache.hertzbeat.common.util.FileUtil;
-import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.SdMonitorOperator;
-import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.apache.hertzbeat.common.util.*;
 import org.apache.hertzbeat.grafana.service.DashboardService;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -86,16 +71,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -138,6 +114,8 @@ public class MonitorServiceImpl implements MonitorService {
     private WarehouseService warehouseService;
     @Autowired
     private DashboardService dashboardService;
+    @Autowired
+    private ManagerSseManager managerSseManager;
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
@@ -183,16 +161,21 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-
         var fileName = FileUtil.getFileName(file);
         var type = FileUtil.getFileType(file);
-        if (!imExportServiceMap.containsKey(type)) {
-            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
+        try {
+            if (!imExportServiceMap.containsKey(type)) {
+                String errMsg = ExportFileConstants.FILE + " " + fileName + " is not supported.";
+                managerSseManager.broadcastImportTaskFail(fileName, errMsg);
+                throw new RuntimeException(errMsg);
+            }
+            var imExportService = imExportServiceMap.get(type);
+            imExportService.importConfig(fileName, file.getInputStream());
+        } catch (Exception e){
+            managerSseManager.broadcastImportTaskFail(fileName, e.getMessage());
+            throw e;
         }
-        var imExportService = imExportServiceMap.get(type);
-        imExportService.importConfig(file.getInputStream());
     }
-
 
     @Override
     @Transactional(readOnly = true)

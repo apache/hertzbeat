@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 
 import { Mute } from '../../../pojo/Mute';
 import { SingleAlert } from '../../../pojo/SingleAlert';
+import { ManagerMessage } from '../../../pojo/ManagerMessage';
 import { AlertSoundService } from '../../../service/alert-sound.service';
 import { AlertService } from '../../../service/alert.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
@@ -321,28 +322,18 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
 
   private initManagerSSEConnection(): void {
     const sseUrl = '/api/manager/sse/subscribe';
-
     this.eventSource = new EventSource(sseUrl);
-
     this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
-      let list: any[] = [];
-      let alert: SingleAlert = JSON.parse(evt.data);
-      let item = {
-        id: alert.id,
-        avatar: '/assets/img/notification.svg',
-        title: alert.content,
-        datetime: new Date(alert.activeAt).toLocaleString(),
-        color: 'blue',
-        status: alert.status,
-        type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
-      };
-      list.push(item);
-
-      this.data = this.updateNoticeData(list);
-      if (!this.mute.mute) {
-        this.alertSound.playAlertSound(this.i18nSvc.currentLang);
+      let msg = JSON.parse(evt.data);
+      if(msg.notifyLevel === 'SUCCESS'){
+        this.notifySvc.success(msg.content, '');
+      }else if(msg.notifyLevel === 'ERROR'){
+        this.notifySvc.error(msg.content, '');
+      }else if(msg.notifyLevel === 'INFO'){
+        this.notifySvc.info(msg.content, '');
+      }else{
+        this.notifySvc.blank(msg.content, '');
       }
-      this.cdr.detectChanges();
     });
     this.eventSource.onerror = error => {
       console.error('Manager SSE connection error:', error);

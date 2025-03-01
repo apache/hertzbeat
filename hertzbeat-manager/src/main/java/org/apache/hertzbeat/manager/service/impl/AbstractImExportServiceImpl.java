@@ -22,20 +22,16 @@ import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.annotation.Resource;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.time.LocalDate;
-import java.util.*;
-
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.ImExportTaskConstant;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
+import org.apache.hertzbeat.common.constants.NotifyLevelEnum;
+import org.apache.hertzbeat.common.entity.manager.ManagerMessage;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.support.ResourceBundleUtf8Control;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
@@ -44,6 +40,11 @@ import org.apache.hertzbeat.manager.service.TagService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.time.LocalDate;
+import java.util.*;
 
 /**
  * class AbstractImExportServiceImpl
@@ -62,41 +63,26 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     private ManagerSseManager managerSseManager;
 
     @Override
-    public void importConfig(String taskName, InputStream is) throws Exception {
-        int progress = 0;
-        var formList = parseImport(is)
-                .stream()
-                .map(this::convert)
-                .toList();
+    public void importConfig(String taskName, InputStream is) {
+        var formList = parseImport(is).stream().map(this::convert).toList();
         if (!CollectionUtils.isEmpty(formList)) {
             int totalElements = formList.size();
             int progressInterval = Math.max(1, totalElements / 10);
-            ResourceBundle bundle = new ResourceBundleUtf8Control().newBundle("msg", Locale.ROOT, "java.properties", getClass().getClassLoader(), false);
-            try {
-                for (int i = 0; i < totalElements; i++) {
-                    MonitorDto monitorDto = formList.get(i);
-                    monitorService.validate(monitorDto, false);
-                    monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
-                    if (totalElements >= ImExportTaskConstant.ImportProcessThreshold && ((i + 1) % progressInterval == 0 || i == totalElements - 1)) {
-                        progress = (int) ((i + 1) * 100.0 / totalElements);
-                        managerSseManager.broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), String.format(bundle.getString("import_task_progress"), taskName, progress));
-                    }
+            for (int i = 0; i < totalElements; i++) {
+                MonitorDto monitorDto = formList.get(i);
+                monitorService.validate(monitorDto, false);
+                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
+                if (totalElements >= ImExportTaskConstant.ImportProcessThreshold && (i + 1) % progressInterval == 0) {
+                    managerSseManager.broadcastImportTaskProcess(taskName, (int) ((i + 1) * 100.0 / totalElements));
                 }
-            } catch (Exception e) {
-                managerSseManager.broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), String.format(bundle.getString("import_task_fail"), taskName, e.getMessage()));
-                throw e;
             }
-            managerSseManager.broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), String.format(bundle.getString("import_task_completed"), taskName));
+            managerSseManager.broadcastImportTaskSuccess(taskName);
         }
     }
 
     @Override
     public void exportConfig(OutputStream os, List<Long> configList) {
-        var monitorList = configList.stream()
-                .map(it -> monitorService.getMonitorDto(it))
-                .filter(Objects::nonNull)
-                .map(this::convert)
-                .toList();
+        var monitorList = configList.stream().map(it -> monitorService.getMonitorDto(it)).filter(Objects::nonNull).map(this::convert).toList();
         writeOs(monitorList, os);
     }
 
@@ -121,15 +107,13 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var monitor = new MonitorDTO();
         BeanUtils.copyProperties(dto.getMonitor(), monitor);
         exportMonitor.setMonitor(monitor);
-        exportMonitor.setParams(dto.getParams().stream()
-                .map(it -> {
-                    var param = new ParamDTO();
-                    param.setField(it.getField());
-                    param.setType(it.getType());
-                    param.setValue(it.getParamValue());
-                    return param;
-                })
-                .toList());
+        exportMonitor.setParams(dto.getParams().stream().map(it -> {
+            var param = new ParamDTO();
+            param.setField(it.getField());
+            param.setType(it.getType());
+            param.setValue(it.getParamValue());
+            return param;
+        }).toList());
         exportMonitor.getMonitor().setCollector(dto.getCollector());
         return exportMonitor;
     }
@@ -142,7 +126,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var monitorDto = new MonitorDto();
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
-        if (exportMonitor.monitor != null) { 
+        if (exportMonitor.monitor != null) {
             // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
         }
@@ -151,15 +135,13 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
             monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
         }
         if (exportMonitor.params != null) {
-            monitorDto.setParams(exportMonitor.params.stream()
-                    .map(it -> {
-                        var param = new Param();
-                        param.setField(it.field);
-                        param.setType(it.type);
-                        param.setParamValue(it.value);
-                        return param;
-                    })
-                    .toList());
+            monitorDto.setParams(exportMonitor.params.stream().map(it -> {
+                var param = new Param();
+                param.setField(it.field);
+                param.setType(it.type);
+                param.setParamValue(it.value);
+                return param;
+            }).toList());
         } else {
             monitorDto.setParams(Collections.emptyList());
         }
@@ -225,5 +207,4 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         @Excel(name = "Value")
         private String value;
     }
-
 }
