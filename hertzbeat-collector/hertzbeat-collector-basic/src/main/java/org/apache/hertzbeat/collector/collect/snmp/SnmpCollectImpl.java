@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -308,7 +307,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                     CharBuffer res = decoder.decode(ByteBuffer.wrap(bytes));
                     return res.toString();
                 } catch (Exception e) {
-                    if(isDateAndTimeOctetString(binding)){
+                    if (isDateAndTimeOctetString(binding)) {
                         return parseDateAndTime(clearHexStr);
                     }
                     return new String(bytes);
@@ -322,7 +321,7 @@ public class SnmpCollectImpl extends AbstractCollect {
     }
 
     private static boolean isDateAndTimeOctetString(VariableBinding binding) {
-        if(!(binding.getVariable() instanceof OctetString)){
+        if (!(binding.getVariable() instanceof OctetString)) {
             return false;
         }
         byte[] bytes = HexFormat.of().parseHex(binding.toValueString().replaceAll(HEX_SPLIT, ""));
@@ -377,7 +376,7 @@ public class SnmpCollectImpl extends AbstractCollect {
             char sign = (char) bytes[8];
             int tzHour = bytes[9] & 0xFF;
             int tzMinute = bytes[10] & 0xFF;
-            dateTime += String.format(" "+TIME_ZONE_PATTERN, sign, tzHour, tzMinute);
+            dateTime += String.format(" " + TIME_ZONE_PATTERN, sign, tzHour, tzMinute);
         }
         return dateTime;
     }
