@@ -18,13 +18,6 @@
 package org.apache.hertzbeat.warehouse.db;
 
 
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
@@ -32,15 +25,19 @@ import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * query executor for victor metrics
@@ -48,71 +45,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @Slf4j
-public class GreptimePromqlQueryExecutor implements QueryExecutor {
+public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
 
     private static final String QUERY_PATH = "/v1/prometheus/api/v1/query";
 
     private final GreptimeProperties greptimeProperties;
 
-    private final RestTemplate restTemplate;
-
     public GreptimePromqlQueryExecutor(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
+        super(restTemplate, new HttpPromqlProperties(greptimeProperties.httpEndpoint() + QUERY_PATH,
+                greptimeProperties.username(), greptimeProperties.password()));
         this.greptimeProperties = greptimeProperties;
-        this.restTemplate = restTemplate;
-    }
-
-    @Override
-    public List<Map<String, Object>> execute(String query) {
-        // http run the promql query
-        List<Map<String, Object>> results = new LinkedList<>();
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(greptimeProperties.username())
-                    && StringUtils.hasText(greptimeProperties.password())) {
-                String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
-                String encodedAuth = Base64Util.encode(authStr);
-                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
-            }
-            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(greptimeProperties.httpEndpoint() + QUERY_PATH)
-                    .queryParam("query", URLEncoder.encode(query, StandardCharsets.UTF_8))
-                    .build(true).toUri();
-            ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
-            if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                        && responseEntity.getBody().getData().getResult() != null) {
-                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
-                    for (PromQlQueryContent.ContentData.Content content : contents) {
-                        Map<String, String> labels = content.getMetric();
-                        Map<String, Object> queryResult = new HashMap<>(8);
-                        queryResult.putAll(labels);
-                        if (content.getValue() != null && content.getValue().length == 2) {
-                            queryResult.put("__timestamp__", content.getValue()[0]);
-                            queryResult.put("__value__", content.getValue()[1]);
-                        } else if (content.getValues() != null && !content.getValues().isEmpty()) {
-                            List<Object> values = new LinkedList<>();
-                            for (Object[] valueArr : content.getValues()) {
-                                values.add(valueArr[1]);
-                            }
-                            queryResult.put("__value__", values);
-                        }
-                        results.add(queryResult);
-                    }
-                }
-            } else {
-                log.error("query metrics data from greptime failed. {}", responseEntity);
-            }
-        } catch (Exception e) {
-            log.error(e.toString(), e);
-        }
-        return results;
-    }
-
-    @Override
-    public boolean support(String datasource) {
-        return "promql".equals(datasource);
     }
 }

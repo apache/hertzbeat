@@ -15,20 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.db;
+package org.apache.hertzbeat.warehouse.service;
+
+import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
 
 import java.util.List;
-import java.util.Map;
 
 /**
- * query executor interface
+ * metrics data query service
  */
-public interface QueryExecutor {
-    List<Map<String, Object>> execute(String query);
-
-    List<Map<String, Object>> query(String query, long time);
-
-    List<Map<String, Object>> query_range(String query, long start, long end, String step);
+public interface MetricsDataQueryService {
     
-    boolean support(String datasource);
+    /**
+     * Query metrics data
+     * @param queries query expr
+     * @param time time
+     * @return data
+     */
+    List<MetricQueryData> query(List<String> queries, String queryType, long time);
+
+    /**
+     * Query metrics data range
+     * @param queries query expr
+     * @param start start
+     * @param end end
+     * @param step step
+     * @return data
+     */
+    List<MetricQueryData> queryRange(List<String> queries, String queryType, long start, long end, String step);
 }

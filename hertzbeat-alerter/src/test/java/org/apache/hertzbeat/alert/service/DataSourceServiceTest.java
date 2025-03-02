@@ -46,7 +46,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import org.mockito.Mockito;
-import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 
 /**
  * test case for {@link DataSourceService}
