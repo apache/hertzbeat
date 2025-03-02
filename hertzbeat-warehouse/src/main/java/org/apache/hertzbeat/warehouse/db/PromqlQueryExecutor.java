@@ -3,6 +3,7 @@ package org.apache.hertzbeat.warehouse.db;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
 import org.springframework.http.*;
@@ -94,6 +95,17 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             log.error(e.toString(), e);
         }
         return results;
+    }
+
+    public MetricQueryData convertToMetricQueryData(Object object) {
+        MetricQueryData metricQueryData = new MetricQueryData();
+        try {
+            List<Map<String, Object>> metrics = (List<Map<String, Object>>) object;
+            // todo
+        } catch (Exception e) {
+            log.error("converting to metric query data failed.");
+        }
+        return metricQueryData;
     }
 
     public List<Map<String, Object>> execute(String queryString) {

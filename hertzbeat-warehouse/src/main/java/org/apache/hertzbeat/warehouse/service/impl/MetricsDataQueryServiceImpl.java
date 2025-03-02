@@ -28,9 +28,9 @@ public class MetricsDataQueryServiceImpl implements MetricsDataQueryService {
         }
         List<MetricQueryData> metricQueryDataList = new ArrayList<>();
         for (String query : queries) {
-            executor.query(query, time);
+            metricQueryDataList.add(executor.convertToMetricQueryData(executor.query(query, time)));
         }
-        return null;
+        return metricQueryDataList;
     }
 
     @Override
@@ -42,9 +42,10 @@ public class MetricsDataQueryServiceImpl implements MetricsDataQueryService {
         if (executor == null) {
             throw new IllegalArgumentException("Unsupported datasource: " + queryType);
         }
+        List<MetricQueryData> metricQueryDataList = new ArrayList<>();
         for (String query : queries) {
-            executor.query_range(query, start, end, step);
+            metricQueryDataList.add(executor.convertToMetricQueryData(executor.query_range(query, start, end, step)));
         }
-        return null;
+        return metricQueryDataList;
     }
 }
