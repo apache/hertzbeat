@@ -144,7 +144,9 @@ export class MonitorEditComponent implements OnInit {
                 }
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
-              define.placeholder = define.placeholder && this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
+              if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
+                define.placeholder = this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
+              }
               if (define.hide) {
                 advancedParams.push(param);
                 advancedParamDefines.push(define);
