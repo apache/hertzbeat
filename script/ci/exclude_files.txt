@@ -21,3 +21,5 @@
 ./home/versioned_docs/version-v1.5.x/community/contact.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/introduce.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/community/contact.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/community/contact.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/introduce.md
