@@ -460,7 +460,7 @@
   "common.notify.export-success": "导出成功!",
   "common.notify.import-fail": "导入失败!",
   "common.notify.import-success": "导入成功!",
-  "common.notify.import-submit": "导入任务{{taskName}}已提交!",
+  "common.notify.import-submit": "导入任务[{{taskName}}]已提交!",
   "common.notify.mark-fail": "标记失败!",
   "common.notify.mark-success": "标记成功!",
   "common.notify.new-fail": "新增失败!",

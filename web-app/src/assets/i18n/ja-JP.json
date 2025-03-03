@@ -460,7 +460,7 @@
   "common.notify.export-success": "エクスポートに成功しました！",
   "common.notify.import-fail": "インポートに失敗しました！",
   "common.notify.import-success": "インポートに成功しました！",
-  "common.notify.import-submit": "タスク「{{taskName}}」のインポートが提出されました！",
+  "common.notify.import-submit": "タスク[{{taskName}}]のインポートが提出されました！",
   "common.notify.mark-fail": "マークに失敗しました！",
   "common.notify.mark-success": "マークに成功しました！",
   "common.notify.new-fail": "追加に失敗しました！",
