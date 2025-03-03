@@ -18,40 +18,34 @@
 package org.apache.hertzbeat.alert.config;
 
 import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
- * SMS configuration
+ * UniSMS properties
  */
 @Data
-@Component
-@ConfigurationProperties(prefix = "alerter.sms")
-public class SmsConfig {
-
+public class UniSmsProperties {
     /**
-     * whether to enable SMS, default is false
+     * UniSMS access key id
      */
-    private boolean enable = false;
-
+    private String accessKeyId;
+    
     /**
-     * sms service provider
+     * UniSMS access key secret, required for HMAC mode
      */
-    private String type;
-
+    private String accessKeySecret;
+    
     /**
-     * Tencent cloud SMS configuration
+     * SMS signature
      */
-    private TencentSmsProperties tencent;
-
+    private String signature;
+    
     /**
-     * Aliyun SMS configuration
+     * SMS template ID
      */
-    private AlibabaSmsProperties alibaba;
-
+    private String templateId;
+    
     /**
-     * UniSMS configuration
+     * Authentication mode: simple or hmac, default is simple
      */
-    private UniSmsProperties unisms;
-
-}
+    private String authMode = "simple";
+} 

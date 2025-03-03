@@ -17,9 +17,13 @@
  * under the License.
  */
 
-export class AlibabaSmsConfig {
-  accessKeyId!: string;
-  accessKeySecret!: string;
-  signName!: string;
-  templateCode!: string;
+export enum SmsType {
+  TENCENT = 'tencent',
+  ALIBABA = 'alibaba',
+  UNISMS = 'unisms'
+}
+
+export enum UniSmsAuthMode {
+  HMAC = 'hmac',
+  SIMPLE = 'simple'
 }

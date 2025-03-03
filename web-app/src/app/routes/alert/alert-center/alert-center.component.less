@@ -38,22 +38,6 @@
       border-radius: 6px;
       padding: 4px 11px 4px 40px;
     }
-
-    .ant-input-prefix {
-      color: rgba(0, 0, 0, 0.45);
-      font-size: 16px;
-      margin-right: 8px;
-      margin-left: 12px;
-    }
-
-    .ant-input-affix-wrapper {
-      border-radius: 6px;
-
-      &:hover, &:focus {
-        border-color: #40a9ff;
-        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-      }
-    }
   }
 }
 
@@ -390,6 +374,59 @@
   :host {
     .alert-card {
       background-color: @common-background-color-dark;
+      .alert-header {
+        .alert-info {
+          .alert-meta-info {
+            color: rgb(214, 214, 214);
+          }
+        }
+      }
+      .alert-details {
+        ::ng-deep {
+          .ant-collapse {
+            .ant-collapse-item {
+              .ant-collapse-header {
+                &:hover {
+                  background-color: rgba(0, 0, 0, 0.05);
+                }
+                .ant-collapse-extra {
+                  color: rgb(236, 236, 236);
+                }
+              }
+            }
+          }
+        }
+        .detail-section {
+          .section-title {
+            color: #cdcdcd;
+          }
+          .alert-count {
+            color: #ececec;
+          }
+        }
+
+        .alert-annotations {
+          .annotation-item {
+            .annotation-key {
+              color: #dfdede;
+            }
+            .annotation-value {
+              color: #e3e3e3;
+            }
+          }
+        }
+
+        .time-info {
+          .time-item {
+            .time-label {
+              color: #dfdede;
+            }
+            .time-value {
+              color: #e3e3e3;
+            }
+          }
+        }
+      }
     }
   }
 }

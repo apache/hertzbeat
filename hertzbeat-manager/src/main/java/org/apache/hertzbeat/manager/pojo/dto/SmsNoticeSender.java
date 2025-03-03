@@ -37,5 +37,7 @@ public class SmsNoticeSender {
     
     private SmsAlibabaConfig alibaba;
 
+    private SmsUniSmsConfig unisms;
+
     private boolean enable = true;
 }

@@ -54,8 +54,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.group-converge.name' | i18n"
       [(value)]="search"
-      (valueChange)="onFilterChange()"
+      (keydown.enter)="onFilterChange()"
+      (cleared)="onFilterChange()"
     />
+    <button nz-button nzType="primary" (click)="onFilterChange()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
@@ -77,12 +81,13 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="15%">{{ 'alert.group-converge.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'alert.group-converge.group-labels' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'alert.group-converge.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'alert.group-converge.group-labels' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-wait' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.group-interval' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'alert.group-converge.repeat-interval' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'alert.group-converge.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%" nzRight>{{ 'common.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'common.edit-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
@@ -101,6 +106,7 @@
       <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateGroupConverge(data)" name="enable"></nz-switch>
       </td>
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center" nzRight>
         <div class="actions">
           <button

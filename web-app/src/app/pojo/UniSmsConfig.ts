@@ -17,9 +17,10 @@
  * under the License.
  */
 
-export class AlibabaSmsConfig {
+export class UniSmsConfig {
   accessKeyId!: string;
   accessKeySecret!: string;
-  signName!: string;
-  templateCode!: string;
+  signature!: string;
+  authMode!: string;
+  templateId!: string;
 }

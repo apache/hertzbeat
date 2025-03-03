@@ -42,8 +42,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'label.search' | i18n"
       [(value)]="search"
-      (valueChange)="loadTagsTable()"
+      (keydown.enter)="loadTagsTable()"
+      (cleared)="loadTagsTable()"
     />
+    <button nz-button nzType="primary" (click)="loadTagsTable()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
