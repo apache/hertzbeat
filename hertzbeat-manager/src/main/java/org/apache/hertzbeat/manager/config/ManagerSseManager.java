@@ -34,7 +34,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manager SSE Manager
+ * Manager SSE
  */
 @Component
 public class ManagerSseManager {

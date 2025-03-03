@@ -24,7 +24,7 @@ package org.apache.hertzbeat.common.constants;
 public interface ImExportTaskConstant {
 
     /**
-     * Import task Process bar threshold
+     * If the number of tasks exceeds 100, progress information will broadcast
      */
-    Integer ImportProcessThreshold = 100;
+    Integer IMPORT_TASK_PROCESS_THRESHOLD = 100;
 }
