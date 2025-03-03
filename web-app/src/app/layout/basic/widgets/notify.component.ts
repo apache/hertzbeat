@@ -326,13 +326,13 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
       let msg = JSON.parse(evt.data);
       if(msg.notifyLevel === 'SUCCESS'){
-        this.notifySvc.success(msg.content, '');
+        this.notifySvc.success(this.i18nSvc.fanyi('common.notice'), msg.content);
       }else if(msg.notifyLevel === 'ERROR'){
-        this.notifySvc.error(msg.content, '');
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notice'), msg.content);
       }else if(msg.notifyLevel === 'INFO'){
-        this.notifySvc.info(msg.content, '');
+        this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), msg.content);
       }else{
-        this.notifySvc.blank(msg.content, '');
+        this.notifySvc.blank(this.i18nSvc.fanyi('common.notice'), msg.content);
       }
     });
     this.eventSource.onerror = error => {

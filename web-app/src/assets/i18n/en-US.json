@@ -451,6 +451,7 @@
   "common.notify.export-success": "Export Success!",
   "common.notify.import-fail": "Import Failed!",
   "common.notify.import-success": "Import Success!",
+  "common.notify.import-submit": "Import Task {{taskName}} submitted!",
   "common.notify.mark-fail": "Mark Failed!",
   "common.notify.mark-success": "Mark Success!",
   "common.notify.new-fail": "Add Failed!",

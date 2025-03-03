@@ -166,7 +166,6 @@ public class MonitorServiceImpl implements MonitorService {
         try {
             if (!imExportServiceMap.containsKey(type)) {
                 String errMsg = ExportFileConstants.FILE + " " + fileName + " is not supported.";
-                managerSseManager.broadcastImportTaskFail(fileName, errMsg);
                 throw new RuntimeException(errMsg);
             }
             var imExportService = imExportServiceMap.get(type);
