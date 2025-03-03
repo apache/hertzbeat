@@ -84,6 +84,8 @@ public class SnmpCollectImpl extends AbstractCollect {
                     + "{1,choice,0#|1#1 hour, |1<{1,number,integer} hours, }"
                     + "{2,choice,0#|1#1 minute, |1<{2,number,integer} minutes, }"
                     + "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
+    private static final String DATE_AND_TIME_PATTERN = "%04d-%02d-%02d,%02d:%02d:%02d.%d";
+    private static final String TIME_ZONE_PATTERN = "%c%02d:%02d";
 
     private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
 
@@ -305,6 +307,9 @@ public class SnmpCollectImpl extends AbstractCollect {
                     CharBuffer res = decoder.decode(ByteBuffer.wrap(bytes));
                     return res.toString();
                 } catch (Exception e) {
+                    if (isDateAndTimeOctetString(binding)) {
+                        return parseDateAndTime(clearHexStr);
+                    }
                     return new String(bytes);
                 }
             } catch (Exception e) {
@@ -314,6 +319,68 @@ public class SnmpCollectImpl extends AbstractCollect {
             return hexString;
         }
     }
+
+    private static boolean isDateAndTimeOctetString(VariableBinding binding) {
+        if (!(binding.getVariable() instanceof OctetString)) {
+            return false;
+        }
+        byte[] bytes = HexFormat.of().parseHex(binding.toValueString().replaceAll(HEX_SPLIT, ""));
+        if (bytes.length != 8 && bytes.length != 11) return false;
+
+        int year = ((bytes[0] & 0xFF) << 8) | (bytes[1] & 0xFF);
+        if (year < 1970 || year > 3000) return false;
+
+        int month = bytes[2] & 0xFF;
+        if (month < 1 || month > 12) return false;
+
+        int day = bytes[3] & 0xFF;
+        if (day < 1 || day > 31) return false;
+
+        int hour = bytes[4] & 0xFF;
+        if (hour > 23) return false;
+
+        int minute = bytes[5] & 0xFF;
+        if (minute > 59) return false;
+
+        int second = bytes[6] & 0xFF;
+        if (second > 59) return false;
+
+        int deciSecond = bytes[7] & 0xFF;
+        if (deciSecond > 99) return false;
+
+        if (bytes.length == 11) {
+            int tzSign = bytes[8] & 0xFF;
+            if (tzSign != 0x2B && tzSign != 0x2D) return false;
+
+            int tzHour = bytes[9] & 0xFF;
+            if (tzHour > 23) return false;
+
+            int tzMinute = bytes[10] & 0xFF;
+            if (tzMinute > 59) return false;
+        }
+        return true;
+    }
+
+    private static String parseDateAndTime(String hexString) {
+        byte[] bytes = HexFormat.of().parseHex(hexString);
+        int year = ((bytes[0] & 0xFF) << 8) | (bytes[1] & 0xFF);
+        int month = bytes[2] & 0xFF;
+        int day = bytes[3] & 0xFF;
+        int hour = bytes[4] & 0xFF;
+        int minute = bytes[5] & 0xFF;
+        int second = bytes[6] & 0xFF;
+        int deciSeconds = bytes[7] & 0xFF;
+        String dateTime = String.format(DATE_AND_TIME_PATTERN,
+                year, month, day, hour, minute, second, deciSeconds);
+        if (bytes.length == 11) {
+            char sign = (char) bytes[8];
+            int tzHour = bytes[9] & 0xFF;
+            int tzMinute = bytes[10] & 0xFF;
+            dateTime += String.format(" " + TIME_ZONE_PATTERN, sign, tzHour, tzMinute);
+        }
+        return dateTime;
+    }
+
 
     private void snmpClose(Snmp snmp, int version) throws IOException {
         snmp.close();
