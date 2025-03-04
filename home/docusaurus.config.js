@@ -213,7 +213,7 @@ module.exports = {
           className: 'header-github-link'
         }, 
         {
-          href: 'https://twitter.com/hertzbeat1024',
+          href: 'https://x.com/hertzbeat1024',
           position: 'right',
           className: 'header-twitter-link'
         }, 
