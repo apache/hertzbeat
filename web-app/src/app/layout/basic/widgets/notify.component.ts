@@ -6,9 +6,9 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
+import { ManagerMessage } from '../../../pojo/ManagerMessage';
 import { Mute } from '../../../pojo/Mute';
 import { SingleAlert } from '../../../pojo/SingleAlert';
-import { ManagerMessage } from '../../../pojo/ManagerMessage';
 import { AlertSoundService } from '../../../service/alert-sound.service';
 import { AlertService } from '../../../service/alert.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
@@ -310,13 +310,13 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     this.eventSource = new EventSource(sseUrl);
     this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
       let msg = JSON.parse(evt.data);
-      if(msg.notifyLevel === 'SUCCESS'){
+      if (msg.notifyLevel === 'SUCCESS') {
         this.notifySvc.success(this.i18nSvc.fanyi('common.notice'), msg.content);
-      }else if(msg.notifyLevel === 'ERROR'){
+      } else if (msg.notifyLevel === 'ERROR') {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notice'), msg.content);
-      }else if(msg.notifyLevel === 'INFO'){
+      } else if (msg.notifyLevel === 'INFO') {
         this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), msg.content);
-      }else{
+      } else {
         this.notifySvc.blank(this.i18nSvc.fanyi('common.notice'), msg.content);
       }
     });
@@ -325,5 +325,4 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       this.eventSource.close();
     };
   }
-
 }

@@ -266,8 +266,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   onImportMonitors(info: NzUploadChangeParam): void {
     console.log(info.type);
-    if(info.type === 'start'){
-      this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('common.notify.import-submit', { 'taskName': info.file.name }));
+    if (info.type === 'start') {
+      this.notifySvc.info(
+        this.i18nSvc.fanyi('common.notice'),
+        this.i18nSvc.fanyi('common.notify.import-submit', { taskName: info.file.name })
+      );
     }
     if (info.type === 'success' && info.file.response) {
       this.tableLoading = true;
