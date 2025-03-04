@@ -15,42 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.common.constants;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 
 /**
- * Configuration Import Export
- * Created by gcdd1993 on 2023/3/31
+ * Manager Event Type Enum
  */
-public interface ImExportService {
+@Getter
+@AllArgsConstructor
+@ToString
+public enum ManagerEventTypeEnum {
 
     /**
-     * Import Configuration
-     * @param taskName task name
-     * @param is input stream
+     * IMPORT_TASK_EVENT
      */
-    void importConfig(String taskName, InputStream is);
+    IMPORT_TASK_EVENT("IMPORT_TASK_EVENT");
 
-    /**
-     * Export Configuration
-     * @param os         output stream
-     * @param configList configuration list
-     */
-    void exportConfig(OutputStream os, List<Long> configList);
-
-    /**
-     * Export file type
-     * @return file type
-     */
-    String type();
-
-    /**
-     * Get Export File Name
-     * @return file name
-     */
-    String getFileName();
-
+    private final String value;
 }

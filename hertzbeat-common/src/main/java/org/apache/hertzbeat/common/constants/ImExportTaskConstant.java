@@ -15,42 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
-
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
+package org.apache.hertzbeat.common.constants;
 
 /**
- * Configuration Import Export
- * Created by gcdd1993 on 2023/3/31
+ * Import/Export task constants
  */
-public interface ImExportService {
+
+public interface ImExportTaskConstant {
 
     /**
-     * Import Configuration
-     * @param taskName task name
-     * @param is input stream
+     * If the number of tasks exceeds 100, progress information will broadcast
      */
-    void importConfig(String taskName, InputStream is);
-
-    /**
-     * Export Configuration
-     * @param os         output stream
-     * @param configList configuration list
-     */
-    void exportConfig(OutputStream os, List<Long> configList);
-
-    /**
-     * Export file type
-     * @return file type
-     */
-    String type();
-
-    /**
-     * Get Export File Name
-     * @return file name
-     */
-    String getFileName();
-
+    Integer IMPORT_TASK_PROCESS_THRESHOLD = 100;
 }

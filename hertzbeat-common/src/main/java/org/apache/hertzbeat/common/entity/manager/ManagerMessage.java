@@ -15,42 +15,31 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.common.entity.manager;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Configuration Import Export
- * Created by gcdd1993 on 2023/3/31
+ * Manager Message Entity
  */
-public interface ImExportService {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ManagerMessage {
+    /**
+     * Notify Level {@see NotifyLevelEnum}
+     */
+    private String notifyLevel;
 
     /**
-     * Import Configuration
-     * @param taskName task name
-     * @param is input stream
+     * Manager Event Type {@see ManagerEventTypeEnum}
      */
-    void importConfig(String taskName, InputStream is);
+    private String managerEventType;
 
     /**
-     * Export Configuration
-     * @param os         output stream
-     * @param configList configuration list
+     * Message Content
      */
-    void exportConfig(OutputStream os, List<Long> configList);
-
-    /**
-     * Export file type
-     * @return file type
-     */
-    String type();
-
-    /**
-     * Get Export File Name
-     * @return file name
-     */
-    String getFileName();
-
+    private String content;
 }

@@ -6,6 +6,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
+import { ManagerMessage } from '../../../pojo/ManagerMessage';
 import { Mute } from '../../../pojo/Mute';
 import { SingleAlert } from '../../../pojo/SingleAlert';
 import { AlertSoundService } from '../../../service/alert-sound.service';
@@ -156,7 +157,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
         }
       );
     this.loadData();
-    this.initSSEConnection();
+    this.initAlertSSEConnection();
+    this.initManagerSSEConnection();
   }
 
   ngOnDestroy() {
@@ -271,7 +273,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       });
   }
 
-  private initSSEConnection(): void {
+  private initAlertSSEConnection(): void {
     const sseUrl = '/api/alert/sse/subscribe';
 
     this.eventSource = new EventSource(sseUrl);
@@ -299,6 +301,27 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     });
     this.eventSource.onerror = error => {
       console.error('SSE connection error:', error);
+      this.eventSource.close();
+    };
+  }
+
+  private initManagerSSEConnection(): void {
+    const sseUrl = '/api/manager/sse/subscribe';
+    this.eventSource = new EventSource(sseUrl);
+    this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
+      let msg = JSON.parse(evt.data);
+      if (msg.notifyLevel === 'SUCCESS') {
+        this.notifySvc.success(this.i18nSvc.fanyi('common.notice'), msg.content);
+      } else if (msg.notifyLevel === 'ERROR') {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notice'), msg.content);
+      } else if (msg.notifyLevel === 'INFO') {
+        this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), msg.content);
+      } else {
+        this.notifySvc.blank(this.i18nSvc.fanyi('common.notice'), msg.content);
+      }
+    });
+    this.eventSource.onerror = error => {
+      console.error('Manager SSE connection error:', error);
       this.eventSource.close();
     };
   }
