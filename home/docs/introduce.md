@@ -7,14 +7,14 @@ slug: /
 
 > A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-[![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
-[![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
-[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
-[![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
-[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
+[![Discord](/img/badge/discord.svg)](https://discord.gg/Fb6M73htGr)
+[![Reddit](/img/badge/reddit.svg)](https://www.reddit.com/r/hertzbeat/)
+[![Twitter](/img/badge/twitter.svg)](https://twitter.com/hertzbeat1024)
+[![OpenSSF Best Practices](/img/badge/openssf_best_practices.svg)](https://www.bestpractices.dev/projects/8139)
+[![Docker Pulls](/img/badge/docker_pulls.svg)](https://hub.docker.com/r/apache/hertzbeat)
+[![Artifact Hub](/img/badge/artifact_hub.svg)](https://artifacthub.io/packages/search?repo=hertzbeat)
+[![QQ](/img/badge/qq.svg)](https://qm.qq.com/q/FltGGGIX2m)
+[![YouTube Channel Subscribers](/img/badge/youtube.svg)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
