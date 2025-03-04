@@ -260,6 +260,7 @@
           "label": "notice",
           "items": [
             "help/alert_email",
+            "help/alert_sms",
             "help/alert_webhook",
             "help/alert_discord",
             "help/alert_slack",
