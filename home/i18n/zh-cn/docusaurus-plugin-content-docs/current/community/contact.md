@@ -20,6 +20,6 @@ sidebar_label: 交流联系
 
 [Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
-[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+[Follow Us Twitter](https://x.com/hertzbeat1024)
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
