@@ -88,6 +88,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         SshTunnel sshTunnel = jdbcProtocol.getSshTunnel();
 
         int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
+        boolean reuseConnection = Boolean.parseBoolean(jdbcProtocol.getReuseConnection());
         Statement statement = null;
         String databaseUrl;
         try {
@@ -99,7 +100,7 @@ public class JdbcCommonCollect extends AbstractCollect {
             }
 
             statement = getConnection(jdbcProtocol.getUsername(),
-                    jdbcProtocol.getPassword(), databaseUrl, timeout);
+                    jdbcProtocol.getPassword(), databaseUrl, timeout, reuseConnection);
             switch (jdbcProtocol.getQueryType()) {
                 case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
                 case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
@@ -142,10 +143,19 @@ public class JdbcCommonCollect extends AbstractCollect {
             builder.setMsg("Query Error: " + errorMessage);
         } finally {
             if (statement != null) {
+                Connection connection = null;
                 try {
+                    connection = statement.getConnection();
                     statement.close();
                 } catch (Exception e) {
                     log.error("Jdbc close statement error: {}", e.getMessage());
+                }
+                try {
+                    if (!reuseConnection && connection != null) {
+                        connection.close();
+                    }
+                } catch (Exception e) {
+                    log.error("Jdbc close connection error: {}", e.getMessage());
                 }
             }
         }
@@ -157,38 +167,40 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
 
-    private Statement getConnection(String username, String password, String url, Integer timeout) throws Exception {
+    private Statement getConnection(String username, String password, String url, Integer timeout, boolean reuseConnection) throws Exception {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
-        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         Statement statement = null;
-        if (cacheOption.isPresent()) {
-            JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
-            try {
-                statement = jdbcConnect.getConnection().createStatement();
-                // set query timeout
-                int timeoutSecond = timeout / 1000;
-                timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
-                statement.setQueryTimeout(timeoutSecond);
-                // set query max row number
-                statement.setMaxRows(1000);
-            } catch (Exception e) {
-                log.info("The jdbc connect from cache, create statement error: {}", e.getMessage());
+        if (reuseConnection) {
+            Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
+            if (cacheOption.isPresent()) {
+                JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
                 try {
-                    if (statement != null) {
-                        statement.close();
+                    statement = jdbcConnect.getConnection().createStatement();
+                    // set query timeout
+                    int timeoutSecond = timeout / 1000;
+                    timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
+                    statement.setQueryTimeout(timeoutSecond);
+                    // set query max row number
+                    statement.setMaxRows(1000);
+                } catch (Exception e) {
+                    log.info("The jdbc connect from cache, create statement error: {}", e.getMessage());
+                    try {
+                        if (statement != null) {
+                            statement.close();
+                        }
+                        jdbcConnect.close();
+                    } catch (Exception e2) {
+                        log.error(e2.getMessage());
                     }
-                    jdbcConnect.close();
-                } catch (Exception e2) {
-                    log.error(e2.getMessage());
+                    statement = null;
+                    connectionCommonCache.removeCache(identifier);
                 }
-                statement = null;
-                connectionCommonCache.removeCache(identifier);
             }
-        }
-        if (statement != null) {
-            return statement;
+            if (statement != null) {
+                return statement;
+            }
         }
         // renew connection when failed
         Connection connection = DriverManager.getConnection(url, username, password);
@@ -198,8 +210,10 @@ public class JdbcCommonCollect extends AbstractCollect {
         timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
         statement.setQueryTimeout(timeoutSecond);
         statement.setMaxRows(1000);
-        JdbcConnect jdbcConnect = new JdbcConnect(connection);
-        connectionCommonCache.addCache(identifier, jdbcConnect);
+        if (reuseConnection) {
+            JdbcConnect jdbcConnect = new JdbcConnect(connection);
+            connectionCommonCache.addCache(identifier, jdbcConnect);
+        }
         return statement;
     }
 
