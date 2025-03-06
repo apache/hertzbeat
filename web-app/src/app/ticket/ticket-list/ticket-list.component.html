@@ -1,0 +1,88 @@
+<nz-card nzTitle="Ticket Management">
+  <div class="ticket-actions mb-3">
+    <div class="search-box">
+      <nz-input-group [nzSuffix]="suffixIcon">
+        <input type="text" nz-input placeholder="Search title, content or assignee" [(ngModel)]="searchValue" (keyup.enter)="onSearch()" />
+      </nz-input-group>
+      <ng-template #suffixIcon>
+        <i nz-icon nzType="search" (click)="onSearch()"></i>
+      </ng-template>
+    </div>
+    <div class="filters">
+      <nz-select
+        [nzPlaceHolder]="'Status'"
+        [(ngModel)]="statusFilter"
+        (ngModelChange)="onStatusFilterChange()"
+        [nzAllowClear]="true"
+      >
+        <nz-option *ngFor="let option of statusOptions" [nzValue]="option.value.toString()" [nzLabel]="option.label"></nz-option>
+      </nz-select>
+    </div>
+    <div class="actions">
+      <button nz-button nzType="primary" routerLink="/ticket/add">
+        <i nz-icon nzType="plus"></i>New Ticket
+      </button>
+      <button nz-button nzType="primary" nzDanger [disabled]="selectedTickets.length === 0" (click)="deleteSelected()">
+        <i nz-icon nzType="delete"></i>Delete
+      </button>
+    </div>
+  </div>
+
+  <nz-table
+    #ticketTable
+    [nzData]="tickets"
+    [nzFrontPagination]="false"
+    [nzTotal]="total"
+    [nzPageIndex]="pageIndex"
+    [nzPageSize]="pageSize"
+    [nzLoading]="loading"
+    (nzPageIndexChange)="onPageIndexChange($event)"
+    (nzPageSizeChange)="onPageSizeChange($event)"
+    (nzCurrentPageDataChange)="onSelectChange($event)"
+    nzShowSizeChanger
+  >
+    <thead>
+      <tr>
+        <th [nzLeft]="true" [nzWidth]="'40px'" [nzChecked]="selectedTickets.length === tickets.length && tickets.length > 0"
+            [nzIndeterminate]="selectedTickets.length > 0 && selectedTickets.length < tickets.length"
+            [nzDisabled]="tickets.length === 0"
+            (nzCheckedChange)="ticketTable.checkAll($event)"></th>
+        <th nzWidth="60px">ID</th>
+        <th nzWidth="300px" nzColumnKey="title">Title</th>
+        <th nzWidth="120px" nzColumnKey="assigneeName">Assignee</th>
+        <th nzWidth="120px" nzColumnKey="status">Status</th>
+        <th nzWidth="120px" nzColumnKey="priority">Priority</th>
+        <th nzColumnKey="gmtCreate" [nzSortFn]="true">Created</th>
+        <th nzWidth="200px">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let ticket of ticketTable.data">
+        <td [nzLeft]="true" [nzChecked]="ticketTable.isChecked(ticket.id)" (nzCheckedChange)="ticketTable.checkItem($event, ticket)"></td>
+        <td>{{ ticket.id }}</td>
+        <td><a [routerLink]="['/ticket', ticket.id]">{{ ticket.title }}</a></td>
+        <td>{{ ticket.assigneeName }}</td>
+        <td>
+          <nz-tag [nzColor]="getStatusColor(ticket.status)">{{ getStatusLabel(ticket.status) }}</nz-tag>
+        </td>
+        <td>
+          <nz-tag [nzColor]="getPriorityColor(ticket.priority)">{{ getPriorityLabel(ticket.priority) }}</nz-tag>
+        </td>
+        <td>{{ ticket.gmtCreate | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+        <td>
+          <button nz-button nzType="primary" nzSize="small" [routerLink]="['/ticket', ticket.id]">View</button>
+          <nz-dropdown *ngIf="ticket.status !== 3" [nzPlacement]="'bottomRight'">
+            <button nz-button nzSize="small" nz-dropdown>Change Status <i nz-icon nzType="down"></i></button>
+            <ul nz-menu>
+              <li *ngFor="let option of statusOptions" nz-menu-item (click)="updateTicketStatus(ticket.id, option.value)" 
+                  [nzDisabled]="ticket.status === option.value">
+                {{ option.label }}
+              </li>
+            </ul>
+          </nz-dropdown>
+          <button nz-button nzType="primary" nzDanger nzSize="small" (click)="deleteTickets([ticket.id])">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+</nz-card> 

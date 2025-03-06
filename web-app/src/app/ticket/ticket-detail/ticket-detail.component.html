@@ -1,0 +1,105 @@
+<nz-card>
+  <div class="card-header">
+    <div class="title">
+      <h2 *ngIf="ticket">工单 #{{ ticket.id }}</h2>
+      <button nz-button nzType="default" (click)="goBack()">
+        <i nz-icon nzType="arrow-left"></i> 返回
+      </button>
+    </div>
+    <div class="actions" *ngIf="ticket && !isEditing">
+      <button nz-button nzType="primary" (click)="startEditing()" [disabled]="ticket.status === 3">
+        <i nz-icon nzType="edit"></i> 编辑
+      </button>
+    </div>
+  </div>
+
+  <nz-spin [nzSpinning]="loading">
+    <div *ngIf="ticket">
+      <form [formGroup]="form" (ngSubmit)="saveChanges()">
+        <div class="ticket-header">
+          <div class="ticket-info">
+            <div class="info-item">
+              <span class="label">状态:</span>
+              <span *ngIf="!isEditing">
+                <nz-tag [nzColor]="getStatusColor(ticket.status)">{{ getStatusLabel(ticket.status) }}</nz-tag>
+              </span>
+              <nz-form-item *ngIf="isEditing">
+                <nz-form-control>
+                  <nz-select formControlName="status">
+                    <nz-option *ngFor="let option of statusOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+            <div class="info-item">
+              <span class="label">优先级:</span>
+              <span *ngIf="!isEditing">
+                <nz-tag [nzColor]="getPriorityColor(ticket.priority)">{{ getPriorityLabel(ticket.priority) }}</nz-tag>
+              </span>
+              <nz-form-item *ngIf="isEditing">
+                <nz-form-control>
+                  <nz-select formControlName="priority">
+                    <nz-option *ngFor="let option of priorityOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+                  </nz-select>
+                </nz-form-control>
+              </nz-form-item>
+            </div>
+            <div class="info-item">
+              <span class="label">负责人:</span>
+              <span>{{ ticket.assigneeName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">创建时间:</span>
+              <span>{{ ticket.gmtCreate | date:'yyyy-MM-dd HH:mm:ss' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">更新时间:</span>
+              <span>{{ ticket.gmtUpdate | date:'yyyy-MM-dd HH:mm:ss' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">告警ID:</span>
+              <span>{{ ticket.alertId }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">监控ID:</span>
+              <span>{{ ticket.monitorId }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ticket-content">
+          <h3>标题</h3>
+          <div *ngIf="!isEditing" class="content-view">{{ ticket.title }}</div>
+          <nz-form-item *ngIf="isEditing">
+            <nz-form-control [nzErrorTip]="'请输入标题'">
+              <input nz-input formControlName="title" />
+            </nz-form-control>
+          </nz-form-item>
+
+          <h3>内容</h3>
+          <div *ngIf="!isEditing" class="content-view content-multiline">{{ ticket.content }}</div>
+          <nz-form-item *ngIf="isEditing">
+            <nz-form-control [nzErrorTip]="'请输入内容'">
+              <textarea nz-input formControlName="content" [nzAutosize]="{ minRows: 6, maxRows: 12 }"></textarea>
+            </nz-form-control>
+          </nz-form-item>
+
+          <h3>解决方案</h3>
+          <div *ngIf="!isEditing" class="content-view content-multiline">
+            {{ ticket.solution || '暂无解决方案' }}
+          </div>
+          <nz-form-item *ngIf="isEditing">
+            <nz-form-control>
+              <textarea nz-input formControlName="solution" [nzAutosize]="{ minRows: 4, maxRows: 8 }" placeholder="输入解决方案..."></textarea>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+
+        <div class="form-actions" *ngIf="isEditing">
+          <button nz-button nzType="primary" type="submit" [disabled]="form.invalid" [nzLoading]="loading">保存</button>
+          <button nz-button nzType="default" type="button" (click)="cancelEditing()">取消</button>
+        </div>
+      </form>
+    </div>
+  </nz-spin>
+</nz-card> 

@@ -1,0 +1,39 @@
+.ticket-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  
+  .search-box {
+    width: 350px;
+  }
+  
+  .filters {
+    flex: 1;
+    margin: 0 16px;
+    
+    nz-select {
+      width: 150px;
+    }
+  }
+  
+  .actions {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+nz-table {
+  a {
+    margin-right: 8px;
+  }
+  
+  .ant-btn {
+    margin-right: 8px;
+  }
+}
+
+nz-tag {
+  min-width: 70px;
+  text-align: center;
+} 

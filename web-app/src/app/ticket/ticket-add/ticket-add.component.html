@@ -1,0 +1,60 @@
+<nz-card>
+  <div class="card-header">
+    <div class="title">
+      <h2>创建新工单</h2>
+      <button nz-button nzType="default" (click)="goBack()">
+        <i nz-icon nzType="arrow-left"></i> 返回
+      </button>
+    </div>
+  </div>
+
+  <form nz-form [formGroup]="form" (ngSubmit)="submitForm()">
+    <nz-form-item>
+      <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>标题</nz-form-label>
+      <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="请输入工单标题">
+        <input nz-input formControlName="title" placeholder="输入工单标题" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>负责人</nz-form-label>
+      <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="请选择负责人">
+        <nz-select formControlName="assigneeId" nzPlaceHolder="选择负责人">
+          <nz-option *ngFor="let user of users" [nzValue]="user.id" [nzLabel]="user.username"></nz-option>
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>状态</nz-form-label>
+      <nz-form-control [nzSm]="14" [nzXs]="24">
+        <nz-select formControlName="status">
+          <nz-option *ngFor="let option of statusOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>优先级</nz-form-label>
+      <nz-form-control [nzSm]="14" [nzXs]="24">
+        <nz-select formControlName="priority">
+          <nz-option *ngFor="let option of priorityOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSm]="6" [nzXs]="24" nzRequired>工单内容</nz-form-label>
+      <nz-form-control [nzSm]="14" [nzXs]="24" nzErrorTip="请输入工单内容">
+        <textarea nz-input formControlName="content" [nzAutosize]="{ minRows: 8, maxRows: 16 }" placeholder="详细描述工单内容"></textarea>
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-control [nzOffset]="6" [nzSm]="14" [nzXs]="24">
+        <button nz-button nzType="primary" [nzLoading]="loading" [disabled]="form.invalid">提交</button>
+        <button nz-button (click)="goBack()" style="margin-left: 8px;">取消</button>
+      </nz-form-control>
+    </nz-form-item>
+  </form>
+</nz-card> 

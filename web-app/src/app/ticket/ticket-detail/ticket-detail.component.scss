@@ -1,0 +1,66 @@
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    
+    h2 {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.ticket-header {
+  margin-bottom: 24px;
+  
+  .ticket-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    
+    .info-item {
+      display: flex;
+      align-items: center;
+      
+      .label {
+        font-weight: 500;
+        width: 100px;
+      }
+    }
+  }
+}
+
+.ticket-content {
+  h3 {
+    margin-top: 24px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  .content-view {
+    padding: 12px 16px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    min-height: 40px;
+    
+    &.content-multiline {
+      white-space: pre-line;
+      min-height: 100px;
+    }
+  }
+}
+
+.form-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 16px;
+}
+
+nz-form-item {
+  margin-bottom: 8px;
+} 
