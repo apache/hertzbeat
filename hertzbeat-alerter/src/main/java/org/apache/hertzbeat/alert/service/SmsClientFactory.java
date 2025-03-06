@@ -48,9 +48,7 @@ public class SmsClientFactory {
 
     private volatile SmsClient currentSmsClient;
 
-    public SmsClientFactory(GeneralConfigDao generalConfigDao,
-                            ObjectMapper objectMapper,
-                            SmsConfig yamlSmsConfig) {
+    public SmsClientFactory(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper, SmsConfig yamlSmsConfig) {
         this.generalConfigDao = generalConfigDao;
         this.objectMapper = objectMapper;
         this.yamlSmsConfig = yamlSmsConfig;

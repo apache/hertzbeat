@@ -49,7 +49,7 @@ public class SmsLocalSmsClientImpl implements SmsClient {
 
     private final SmslocalSmsProperties config;
 
-    public  SmsLocalSmsClientImpl(SmslocalSmsProperties smslocalSmsProperties) {
+    public SmsLocalSmsClientImpl(SmslocalSmsProperties smslocalSmsProperties) {
         this.config = smslocalSmsProperties;
     }
 
@@ -57,7 +57,7 @@ public class SmsLocalSmsClientImpl implements SmsClient {
     public void sendMessage(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         if (Objects.isNull(receiver) || Objects.isNull(alert)) {
             log.warn("receiver and alert can not be null! receiver: {}, alert:{}", receiver, alert);
-            return ;
+            return;
         }
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
@@ -88,7 +88,7 @@ public class SmsLocalSmsClientImpl implements SmsClient {
                 String errorcode = jsonResponse.get("errorcode").asText();
                 if (!SUCCESS_CODE.equals(errorcode)) {
                     String msgid = jsonResponse.get("msgid").asText();
-                    throw new SendMessageException(errorcode  + ":" + msgid);
+                    throw new SendMessageException(errorcode + ":" + msgid);
                 }
 
                 log.info("Successfully sent SMS to phone: {}", receiver.getPhone());
@@ -107,8 +107,7 @@ public class SmsLocalSmsClientImpl implements SmsClient {
 
     @Override
     public boolean checkConfig() {
-        if (Objects.isNull(config) || Objects.isNull(config.getApiKey())
-                || config.getApiKey().isBlank()) {
+        if (Objects.isNull(config) || Objects.isNull(config.getApiKey()) || config.getApiKey().isBlank()) {
             log.warn("smslocal properties can not be null: {}", config);
             return false;
         }
