@@ -29,4 +29,7 @@ public interface SmsConstants {
     
     // UniSMS
     String UNISMS = "unisms";
+
+    // Smslocal SMS
+    String SMSLOCAL = "smslocal";
 }
