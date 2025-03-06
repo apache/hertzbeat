@@ -9,9 +9,8 @@
 
 1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
 2. Install yarn if not existed `npm install -g yarn`
-3. Execute `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`  
-4. Install angular-cli : `yarn global add @angular/cli@15` or `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`    
-5. Start After Backend Server Available : `yarn start`
+3. Execute `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. Start After Backend Server Available : `yarn start`
 
 
 ### Build HertzBeat Install Package    

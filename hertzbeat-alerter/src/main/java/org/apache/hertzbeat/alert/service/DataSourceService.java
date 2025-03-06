@@ -26,10 +26,10 @@ import java.util.Map;
 public interface DataSourceService {
     
     /**
-     * execute query
+     * execute query expr calculate
      * @param datasource datasource
-     * @param query query
+     * @param expr query expr
      * @return result
      */
-    List<Map<String, Object>> query(String datasource, String query);
+    List<Map<String, Object>> calculate(String datasource, String expr);
 } 

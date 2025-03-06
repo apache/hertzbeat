@@ -7,6 +7,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { Mute } from '../../../pojo/Mute';
+import { SingleAlert } from '../../../pojo/SingleAlert';
 import { AlertSoundService } from '../../../service/alert-sound.service';
 import { AlertService } from '../../../service/alert.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
@@ -42,7 +43,7 @@ import { GeneralConfigService } from '../../../service/general-config.service';
           ngClass="alain-default__nav-item-icon"
           (click)="toggleMute($event)"
           nz-tooltip
-          [nzTooltipTitle]="'common.mute' | i18n"
+          [nzTooltipTitle]="(mute.mute ? 'common.unmute' : 'common.mute') | i18n"
         ></i>
       </nz-badge>
     </div>
@@ -122,6 +123,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
   private previousCount = 0;
   // default to mute status
   mute: Mute = { mute: true };
+  private eventSource!: EventSource;
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
@@ -154,14 +156,15 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
         }
       );
     this.loadData();
-    this.refreshInterval = setInterval(() => {
-      this.loadData();
-    }, 10000); // every 10 seconds refresh the tabs
+    this.initSSEConnection();
   }
 
   ngOnDestroy() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
+    }
+    if (this.eventSource) {
+      this.eventSource.close();
     }
   }
 
@@ -207,7 +210,6 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
               let item = {
                 id: alert.id,
                 avatar: '/assets/img/notification.svg',
-                // title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.severity.${alert.severity}`)}`,
                 title: alert.content,
                 datetime: new Date(alert.activeAt).toLocaleString(),
                 color: 'blue',
@@ -217,11 +219,6 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
               list.push(item);
             });
             this.data = this.updateNoticeData(list);
-
-            if (page.totalElements > this.previousCount && !this.mute.mute) {
-              this.alertSound.playAlertSound(this.i18nSvc.currentLang);
-            }
-            this.previousCount = page.totalElements;
             this.count = page.totalElements;
           } else {
             console.warn(message.msg);
@@ -232,24 +229,6 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
           console.error(error);
         }
       );
-  }
-
-  updateAlertsStatus(alertIds: Set<number>, status: string) {
-    const markAlertsStatus$ = this.alertSvc.applyGroupAlertsStatus(alertIds, status).subscribe(
-      message => {
-        markAlertsStatus$.unsubscribe();
-        if (message.code === 0) {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.mark-success'), '');
-          this.loadData();
-        } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.mark-fail'), message.msg);
-        }
-      },
-      error => {
-        markAlertsStatus$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.mark-fail'), error.msg);
-      }
-    );
   }
 
   gotoAlertCenter(): void {
@@ -290,5 +269,37 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  private initSSEConnection(): void {
+    const sseUrl = '/api/alert/sse/subscribe';
+
+    this.eventSource = new EventSource(sseUrl);
+
+    this.eventSource.addEventListener('ALERT_EVENT', (evt: MessageEvent) => {
+      let list: any[] = [];
+      let alert: SingleAlert = JSON.parse(evt.data);
+      let item = {
+        id: alert.id,
+        avatar: '/assets/img/notification.svg',
+        // title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.severity.${alert.severity}`)}`,
+        title: alert.content,
+        datetime: new Date(alert.activeAt).toLocaleString(),
+        color: 'blue',
+        status: alert.status,
+        type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
+      };
+      list.push(item);
+
+      this.data = this.updateNoticeData(list);
+      if (!this.mute.mute) {
+        this.alertSound.playAlertSound(this.i18nSvc.currentLang);
+      }
+      this.cdr.detectChanges();
+    });
+    this.eventSource.onerror = error => {
+      console.error('SSE connection error:', error);
+      this.eventSource.close();
+    };
   }
 }

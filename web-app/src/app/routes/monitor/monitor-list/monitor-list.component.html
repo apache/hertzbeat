@@ -120,17 +120,22 @@
     <app-multi-func-input
       groupStyle="width: 120px;"
       class="mobile-hide"
-      [placeholder]="'monitor.search.tag' | i18n"
+      [placeholder]="'monitor.search.label' | i18n"
       [(value)]="labels"
-      (valueChange)="onTagChanged()"
+      (keydown.enter)="onFilterSearchMonitors()"
+      (cleared)="onFilterSearchMonitors()"
     />
     <app-multi-func-input
       groupStyle="width: 180px;"
       class="mobile-hide"
       [placeholder]="'monitor.search.placeholder' | i18n"
       [(value)]="filterContent"
-      (valueChange)="onFilterSearchMonitors()"
+      (keydown.enter)="onFilterSearchMonitors()"
+      (cleared)="onFilterSearchMonitors()"
     />
+    <button class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
@@ -164,7 +169,7 @@
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzEllipsis>
         <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.id]">
           {{ data.name }}
           <span nz-icon nzType="area-chart"></span>
@@ -184,7 +189,7 @@
           <span>{{ 'monitor.status.down' | i18n }}</span>
         </nz-tag>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzEllipsis>
         <button
           nz-button
           nzSize="default"
@@ -223,13 +228,7 @@
           <nz-dropdown-menu #more_menu="nzDropdownMenu">
             <ul nz-menu>
               <li nz-menu-item>
-                <button
-                  nz-button
-                  nzType="primary"
-                  (click)="onEditOneMonitor(data.id)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'monitor.edit-monitor' | i18n"
-                >
+                <button nz-button (click)="onEditOneMonitor(data.id)" nz-tooltip [nzTooltipTitle]="'monitor.edit-monitor' | i18n">
                   <i nz-icon nzType="edit" nzTheme="outline"></i>
                 </button>
               </li>

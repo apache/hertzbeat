@@ -28,14 +28,40 @@
       {{ 'alert.notice.receiver.new' | i18n }}
     </button>
   </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      [placeholder]="'alert.notice.receiver.people.name' | i18n"
+      [(value)]="name"
+      (keydown.enter)="onSearch()"
+      (cleared)="onSearch()"
+    />
+    <button nz-button nzType="primary" (click)="onSearch()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
+  </ng-template>
 </app-toolbar>
-<nz-table #fixedTable [nzData]="receivers" [nzLoading]="receiverTableLoading" [nzScroll]="{ x: '1240px' }" nzFrontPagination="false">
+<nz-table
+  #fixedTable
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzData]="receivers"
+  [nzLoading]="receiverTableLoading"
+  [nzScroll]="{ x: '1240px' }"
+>
   <thead>
     <tr>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.receiver.people' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'alert.notice.receiver.type' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'alert.notice.receiver.setting' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.receiver.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="25%">{{ 'alert.notice.receiver.setting' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'common.edit-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
@@ -130,20 +156,32 @@
           >
             <i nz-icon nzTheme="outline" nzType="edit"></i>
           </button>
-          <button
-            (click)="onDeleteOneNoticeReceiver(data.id)"
-            [nzTooltipTitle]="'alert.notice.receiver.delete' | i18n"
-            nz-button
-            nz-tooltip
-            nzDanger
-          >
-            <i nz-icon nzTheme="outline" nzType="delete"></i>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
           </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button
+                  (click)="onDeleteOneNoticeReceiver(data.id)"
+                  [nzTooltipTitle]="'alert.notice.receiver.delete' | i18n"
+                  nz-button
+                  nz-tooltip
+                  nzDanger
+                >
+                  <i nz-icon nzTheme="outline" nzType="delete"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
         </div>
       </td>
     </tr>
   </tbody>
 </nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
 <!-- new or update notice medium pop-up box -->
 <nz-modal
   (nzOnCancel)="onManageReceiverModalCancel()"

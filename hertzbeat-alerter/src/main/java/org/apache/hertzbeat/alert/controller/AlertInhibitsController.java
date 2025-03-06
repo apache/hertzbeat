@@ -36,9 +36,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Silence the batch API for alarms
+ * Inhibit the batch API for alarms
  */
-@Tag(name = "Alert Silence Batch API")
+@Tag(name = "Alert Inhibit Batch API")
 @RestController
 @RequestMapping(path = "/api/alert/inhibits", produces = {APPLICATION_JSON_VALUE})
 public class AlertInhibitsController {
@@ -50,7 +50,7 @@ public class AlertInhibitsController {
     @Operation(summary = "Query the alarm inhibit list",
             description = "You can obtain the list of alarm inhibit by querying filter items")
     public ResponseEntity<Message<Page<AlertInhibit>>> getAlertInhibits(
-            @Parameter(description = "Alarm Silence ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
+            @Parameter(description = "Alarm Inhibit ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
             @Parameter(description = "Search Name", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Sort field, default id", example = "id") @RequestParam(defaultValue = "id") String sort,
             @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
@@ -64,7 +64,7 @@ public class AlertInhibitsController {
     @Operation(summary = "Delete alarm inhibit in batches",
             description = "Delete alarm inhibit in batches based on the alarm inhibit ID list")
     public ResponseEntity<Message<Void>> deleteAlertDefines(
-            @Parameter(description = "Alarm Silence IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @Parameter(description = "Alarm Inhibit IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             alertInhibitService.deleteAlertInhibits(new HashSet<>(ids));

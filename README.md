@@ -12,7 +12,7 @@
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
-[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
+[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
@@ -496,6 +496,19 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Suvrat1629"><img src="https://avatars.githubusercontent.com/u/140749446?v=4?s=100" width="100px;" alt="Suvrat1629"/><br /><sub><b>Suvrat1629</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Suvrat1629" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://ghyghoo8.github.io/"><img src="https://avatars.githubusercontent.com/u/363129?v=4?s=100" width="100px;" alt="ghy"/><br /><sub><b>ghy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ghyghoo8" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/helei1030"><img src="https://avatars.githubusercontent.com/u/11839080?v=4?s=100" width="100px;" alt="helei1030"/><br /><sub><b>helei1030</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=helei1030" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://medium.com/@pjfanning"><img src="https://avatars.githubusercontent.com/u/11783444?v=4?s=100" width="100px;" alt="PJ Fanning"/><br /><sub><b>PJ Fanning</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pjfanning" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MonsterChenzhuo"><img src="https://avatars.githubusercontent.com/u/60029759?v=4?s=100" width="100px;" alt="monster"/><br /><sub><b>monster</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=MonsterChenzhuo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MasamiYui"><img src="https://avatars.githubusercontent.com/u/22274133?v=4?s=100" width="100px;" alt="Sherlock Yin"/><br /><sub><b>Sherlock Yin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=MasamiYui" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wanhao23"><img src="https://avatars.githubusercontent.com/u/29560961?v=4?s=100" width="100px;" alt="wanhao"/><br /><sub><b>wanhao</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=wanhao23" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=wanhao23" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jonasHanhan"><img src="https://avatars.githubusercontent.com/u/130035609?v=4?s=100" width="100px;" alt="jonasHanhan"/><br /><sub><b>jonasHanhan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jonasHanhan" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/NikhilMurugesan"><img src="https://avatars.githubusercontent.com/u/49281792?v=4?s=100" width="100px;" alt="NikhilMurugesan"/><br /><sub><b>NikhilMurugesan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=NikhilMurugesan" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/myangle1120"><img src="https://avatars.githubusercontent.com/u/19237013?v=4?s=100" width="100px;" alt="myangle1120"/><br /><sub><b>myangle1120</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=myangle1120" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yasminvo"><img src="https://avatars.githubusercontent.com/u/107528848?v=4?s=100" width="100px;" alt="yasminvo"/><br /><sub><b>yasminvo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yasminvo" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
@@ -522,7 +535,7 @@ WeChat Public : Search ID `usthecom`.
 
 [Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
-[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+[Follow Us Twitter](https://x.com/hertzbeat1024)
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 

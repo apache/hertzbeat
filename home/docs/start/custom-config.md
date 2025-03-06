@@ -4,56 +4,39 @@ title: Advanced Params Config
 sidebar_label: Advanced Params Config
 ---
 
-This describes how to configure the SMS server, the number of built-in availability alarm triggers, etc.
+Here it describes how to configure custom parameters for alerts, etc.
 
 **Configuration file `application.yml` of `hertzbeat`**
 
-### Configure the configuration file of HertzBeat
+Configuring the HertzBeat configuration file:
 
-Modify the configuration file located at `hertzbeat/config/application.yml`
-Note ⚠️The docker container method needs to mount the application.yml file to the local host
-The installation package can be decompressed and modified in `hertzbeat/config/application.yml`
+- Modify the configuration file located at `hertzbeat/config/application.yml`
+- **Docker Deployment:** ⚠️ When using a Docker container, the `application.yml` file must be mounted to the host machine
+- **Installation Package Deployment:** Extract the package and modify the configuration file located at `hertzbeat/config/application.yml`
 
-1. Configure the SMS sending server
+## 1. Configuring Custom Alert Parameters
 
-    > Only when your own SMS server is successfully configured, the alarm SMS triggered in the monitoring tool will be sent normally.
+```yaml
+alerter:
+  # Custom console URL
+  console-url: https://console.tancloud.io
+```
 
-    Add the following Tencent platform SMS server configuration in `application.yml` (parameters need to be replaced with your SMS server configuration)
+## 2. Using an External Redis Instead of In-Memory Storage for Real-Time Metric Data
 
-    ```yaml
-    common:
-       sms:
-         tencent:
-           secret-id: AKIDbQ4VhdMr89wDedFrIcgU2PaaMvOuBCzY
-           secret-key: PaXGl0ziY9UcWFjUyiFlCPMr77rLkJYlyA
-           app-id: 1435441637
-           sign-name: XX Technology
-           template-id: 1343434
-    ```
+> By default, real-time metric data is stored in memory. You can configure Redis as a replacement using the settings below.
 
-2. Configure alarm custom parameters
+⚠️ Note: Set `memory.enabled: false, redis.enabled: true`
 
-    ```yaml
-    alerter:
-       # Custom console address
-       console-url: https://console.tancloud.io
-    ```
-
-3. Use external redis instead of memory to store real-time metric data
-
-    > By default, the real-time data of our metrics is stored in memory, which can be configured as follows to use redis instead of memory storage.
-
-    Note ⚠️ `memory.enabled: false, redis.enabled: true`
-
-    ```yaml
-    warehouse:
-       store:
-         memory:
-           enabled: false
-           init-size: 1024
-         redis:
-           enabled: true
-           host: 127.0.0.1
-           port: 6379
-           password: 123456
-    ```
+```yaml
+warehouse:
+  store:
+    memory:
+      enabled: false
+      init-size: 1024
+    redis:
+      enabled: true
+      host: 127.0.0.1
+      port: 6379
+      password: 123456
+```

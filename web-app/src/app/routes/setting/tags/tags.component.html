@@ -42,8 +42,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'label.search' | i18n"
       [(value)]="search"
-      (valueChange)="loadTagsTable()"
+      (keydown.enter)="loadTagsTable()"
+      (cleared)="loadTagsTable()"
     />
+    <button nz-button nzType="primary" (click)="loadTagsTable()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
@@ -127,7 +131,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="description">{{ 'tag.description' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="description">{{ 'label.description' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input [(ngModel)]="tag.description" nz-input name="description" type="text" id="description" />
         </nz-form-control>

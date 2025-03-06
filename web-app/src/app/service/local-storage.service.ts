@@ -57,7 +57,8 @@ export class LocalStorageService {
     return localStorage.getItem(AuthorizationConst) != null;
   }
 
-  public clear() {
-    localStorage.clear();
+  public clearAuthorization() {
+    localStorage.removeItem(AuthorizationConst);
+    localStorage.removeItem(RefreshTokenConst);
   }
 }

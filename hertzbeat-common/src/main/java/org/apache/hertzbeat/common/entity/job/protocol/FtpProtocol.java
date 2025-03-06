@@ -59,4 +59,10 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
      * Timeout
      */
     private String timeout;
+
+    /**
+     * Whether ftp uses link encryption ssl/tls, i.e. ftp or sftp
+     *
+     */
+    private String ssl = "false";
 }

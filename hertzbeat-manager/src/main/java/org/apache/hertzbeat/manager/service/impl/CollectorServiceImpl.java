@@ -71,7 +71,7 @@ public class CollectorServiceImpl implements CollectorService {
         Specification<Collector> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (StringUtils.isNotBlank(name)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
             return predicate;

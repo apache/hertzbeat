@@ -21,8 +21,8 @@ package org.apache.hertzbeat.alert.reduce;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -267,7 +267,7 @@ public class AlarmGroupReduce {
                 .groupLabels(alert.getLabels())
                 .commonLabels(alert.getLabels())
                 .commonAnnotations(alert.getAnnotations())
-                .alerts(Collections.singletonList(alert))
+                .alerts(new LinkedList<>(List.of(alert)))
                 .status(alert.getStatus())
                 .build();
 

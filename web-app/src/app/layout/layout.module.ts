@@ -19,7 +19,6 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 import { LayoutBasicComponent } from './basic/basic.component';
-import { HeaderClearStorageComponent } from './basic/widgets/clear-storage.component';
 import { HeaderFullScreenComponent } from './basic/widgets/fullscreen.component';
 import { HeaderI18nComponent } from './basic/widgets/i18n.component';
 import { HeaderSearchComponent } from './basic/widgets/search.component';
@@ -33,7 +32,6 @@ const HEADER_COMPONENTS = [
   HeaderSearchComponent,
   HeaderFullScreenComponent,
   HeaderI18nComponent,
-  HeaderClearStorageComponent,
   HeaderUserComponent,
   HeaderNotifyComponent
 ];

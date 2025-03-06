@@ -91,6 +91,78 @@ params:
     type: text
     required: false
     hide: true
+  - field: enableSshTunnel
+    name:
+      zh-CN: 是否启用SSH隧道
+      en-US: Enable SSH Tunnel
+    type: boolean
+    required: true
+    hide: true
+  - field: sshHost
+    name:
+      zh-CN: SSH Host
+      en-US: SSH Host
+    type: text
+    required: false
+    placeholder: 'When Enable SSH Tunnel'
+    hide: true
+  - field: sshPort
+    name:
+      zh-CN: SSH端口
+      en-US: SSH Port
+    type: number
+    range: '[0,65535]'
+    required: false
+    defaultValue: 22
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshTimeout
+    name:
+      zh-CN: SSH超时时间(ms)
+      en-US: SSH Timeout(ms)
+    type: number
+    required: false
+    range: '[400,200000]'
+    defaultValue: 6000
+    hide: true
+  - field: sshUsername
+    name:
+      zh-CN: SSH用户名
+      en-US: SSH Username
+    type: text
+    required: false
+    placeholder: 'When Enable SSH tunnel'
+    hide: true
+  - field: sshPassword
+    name:
+      zh-CN: SSH密码
+      en-US: SSH Password
+    type: password
+    required: false
+    hide: true
+  - field: sshShareConnection
+    name:
+      zh-CN: 是否共享SSH连接
+      en-US: Share SSH Connection
+    type: boolean
+    required: true
+    defaultValue: true
+    hide: true
+  - field: sshPrivateKey
+    name:
+      zh-CN: SSH私钥
+      en-US: SSH PrivateKey
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    required: false
+    hide: true
+  - field: sshPrivateKeyPassphrase
+    name:
+      zh-CN: SSH密钥短语
+      en-US: SSH PrivateKey PassPhrase
+    type: password
+    required: false
+    hide: true
 
 # collect metrics config list
 metrics:
@@ -150,6 +222,16 @@ metrics:
       sql: select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';
       # JDBC url
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: state
     i18n:
@@ -216,6 +298,16 @@ metrics:
       queryType: multiRow
       sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: activity
     i18n:
@@ -241,6 +333,16 @@ metrics:
       queryType: oneRow
       sql: SELECT count(*) as running FROM pg_stat_activity WHERE NOT pid=pg_backend_pid();
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: resource_config
     i18n:
@@ -294,6 +396,16 @@ metrics:
       queryType: columns
       sql: show all;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: connection
     i18n:
@@ -318,6 +430,16 @@ metrics:
       queryType: oneRow
       sql: select count(1) as active from pg_stat_activity;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: connection_state
     i18n:
@@ -348,6 +470,16 @@ metrics:
       queryType: multiRow
       sql: select COALESCE(state, 'other') as state, count(*) as num from pg_stat_activity group by state;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: connection_db
     i18n:
@@ -378,6 +510,16 @@ metrics:
       queryType: multiRow
       sql: select count(*) as active, COALESCE(datname, 'other') as db_name from pg_stat_activity group by datname;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: tuple
     i18n:
@@ -422,6 +564,16 @@ metrics:
       queryType: multiRow
       sql: select sum(tup_fetched) as fetched, sum(tup_updated) as updated, sum(tup_deleted) as deleted, sum(tup_inserted) as inserted, sum(tup_returned) as returned from pg_stat_database;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: temp_file
     i18n:
@@ -458,6 +610,16 @@ metrics:
       queryType: multiRow
       sql: select COALESCE(datname, 'other') as db_name, sum(temp_files) as num, sum(temp_bytes) as size from pg_stat_database group by datname;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: lock
     i18n:
@@ -495,6 +657,16 @@ metrics:
       queryType: multiRow
       sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: slow_sql
     i18n:
@@ -552,6 +724,16 @@ metrics:
       queryType: multiRow
       sql: select * from pg_stat_statements;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: transaction
     i18n:
@@ -589,6 +771,16 @@ metrics:
       queryType: multiRow
       sql: select COALESCE(datname, 'other') as db_name, sum(xact_commit) as commits, sum(xact_rollback) as rollbacks from pg_stat_database group by datname;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: conflicts
     i18n:
@@ -639,6 +831,16 @@ metrics:
       queryType: multiRow
       sql: select datname as db_name, confl_tablespace as tablespace, confl_lock as lock, confl_snapshot as snapshot, confl_bufferpin as bufferpin, confl_deadlock as deadlock from pg_stat_database_conflicts;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: cache_hit_ratio
     i18n:
@@ -676,6 +878,16 @@ metrics:
       queryType: multiRow
       sql: select datname as db_name, blks_hit, blks_read from pg_stat_database;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: checkpoint
     i18n:
@@ -707,6 +919,16 @@ metrics:
       queryType: oneRow
       sql: select checkpoint_sync_time, checkpoint_write_time from pg_stat_bgwriter;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
 
   - name: buffer
     i18n:
@@ -751,3 +973,13 @@ metrics:
       queryType: oneRow
       sql: select buffers_alloc as allocated, buffers_backend_fsync as fsync_calls_by_backend, buffers_backend as written_directly_by_backend, buffers_clean as written_by_background_writer, buffers_checkpoint as written_during_checkpoints from pg_stat_bgwriter;
       url: ^_^url^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^

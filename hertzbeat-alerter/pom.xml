@@ -40,6 +40,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-plugin</artifactId>
         </dependency>
+        <!-- warehouse -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-warehouse</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -92,25 +97,6 @@
             <artifactId>easypoi-annotation</artifactId>
             <version>${easy-poi.version}</version>
             <scope>compile</scope>
-        </dependency>
-        <!-- sms -->
-        <dependency>
-            <groupId>com.tencentcloudapi</groupId>
-            <artifactId>tencentcloud-sdk-java-sms</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.squareup.okhttp</groupId>
-                    <artifactId>logging-interceptor</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.squareup.okhttp</groupId>
-                    <artifactId>okhttp</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.squareup.okio</groupId>
-                    <artifactId>okio</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.huaweicloud.sdk</groupId>
