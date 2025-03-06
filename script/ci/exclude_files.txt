@@ -17,3 +17,11 @@
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/help/sqlserver.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/start/tdengine-init.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/start/tdengine-init.md
+./home/versioned_docs/version-v1.5.x/introduce.md
+./home/versioned_docs/version-v1.5.x/community/contact.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/introduce.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/community/contact.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/community/contact.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/introduce.md
+./home/docs/introduce.md
+./home/docs/community/contact.md

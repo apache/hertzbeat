@@ -12,7 +12,7 @@
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
-[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
+[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
@@ -506,6 +506,7 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/myangle1120"><img src="https://avatars.githubusercontent.com/u/19237013?v=4?s=100" width="100px;" alt="myangle1120"/><br /><sub><b>myangle1120</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=myangle1120" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yasminvo"><img src="https://avatars.githubusercontent.com/u/107528848?v=4?s=100" width="100px;" alt="yasminvo"/><br /><sub><b>yasminvo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yasminvo" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -533,7 +534,7 @@ Thanks these wonderful people, welcome to join us:
 
 [Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
-[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+[Follow Us Twitter](https://x.com/hertzbeat1024)
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
