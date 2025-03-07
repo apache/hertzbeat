@@ -60,7 +60,7 @@ public class ManagerSseManager {
                 emitter.complete();
                 removeEmitter(clientId);
             } catch (Exception exception) {
-                log.error("Failed to broadcast alert data to client: {}", exception.getMessage());
+                log.error("Failed to broadcast manager message data to client: {}", exception.getMessage());
                 emitter.complete();
                 removeEmitter(clientId);
             }
