@@ -19,27 +19,26 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
-import org.apache.hertzbeat.common.constants.NotifyLevelEnum;
-import org.apache.hertzbeat.common.entity.manager.ManagerMessage;
+import org.apache.hertzbeat.common.entity.dto.ImportTaskMessage;
+import org.apache.hertzbeat.common.entity.dto.ManagerMessage;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manager SSE
  */
+@Slf4j
 @Component
 public class ManagerSseManager {
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
-    private final ResourceBundle bundle = ResourceBundleUtil.getBundle("msg");
 
     public SseEmitter createEmitter(Long clientId) {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
@@ -57,28 +56,29 @@ public class ManagerSseManager {
                         .id(String.valueOf(System.currentTimeMillis()))
                         .name(eventName)
                         .data(data));
-            } catch (IOException e) {
+            } catch (IOException | IllegalStateException e) {
+                emitter.complete();
+                removeEmitter(clientId);
+            } catch (Exception exception) {
+                log.error("Failed to broadcast alert data to client: {}", exception.getMessage());
                 emitter.complete();
                 removeEmitter(clientId);
             }
         });
     }
 
-    public void broadcastImportTaskProcess(String taskName, Integer process){
-        ManagerMessage managerMessage = new ManagerMessage(NotifyLevelEnum.INFO.getValue(), ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(),
-                String.format(bundle.getString("manager_import_task_progress"), taskName, process));
+    public void broadcastImportTaskInProgress(String taskName, Integer progress){
+        ManagerMessage managerMessage = ImportTaskMessage.createInProgressMessage(taskName, progress);
         broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
     }
 
     public void broadcastImportTaskSuccess(String taskName){
-        ManagerMessage managerMessage = new ManagerMessage(NotifyLevelEnum.SUCCESS.getValue(), ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(),
-                String.format(bundle.getString("manager_import_task_success"), taskName));
+        ManagerMessage managerMessage = ImportTaskMessage.createCompletedMessage(taskName);
         broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
     }
 
     public void broadcastImportTaskFail(String taskName, String errMsg){
-        ManagerMessage managerMessage = new ManagerMessage(NotifyLevelEnum.ERROR.getValue(), ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(),
-                String.format(bundle.getString("manager_import_task_fail"), taskName, errMsg));
+        ManagerMessage managerMessage = ImportTaskMessage.createFailedMessage(taskName, errMsg);
         broadcast(ManagerEventTypeEnum.IMPORT_TASK_EVENT.getValue(), JsonUtil.toJson(managerMessage));
     }
 

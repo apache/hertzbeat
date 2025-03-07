@@ -269,7 +269,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     if (info.type === 'start') {
       this.notifySvc.info(
         this.i18nSvc.fanyi('common.notice'),
-        this.i18nSvc.fanyi('common.notify.import-submit', { taskName: info.file.name })
+        this.i18nSvc.fanyi('common.notify.import-submitted', { taskName: info.file.name })
       );
     }
     if (info.type === 'success' && info.file.response) {

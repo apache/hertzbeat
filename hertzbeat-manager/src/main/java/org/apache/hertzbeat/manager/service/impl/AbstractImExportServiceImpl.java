@@ -71,7 +71,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 monitorService.validate(monitorDto, false);
                 monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
                 if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && ((i + 1) % progressInterval == 0) && (i + 1 < totalElements)) {
-                    managerSseManager.broadcastImportTaskProcess(taskName, (int) ((i + 1) * 100.0 / totalElements));
+                    managerSseManager.broadcastImportTaskInProgress(taskName, (int) ((i + 1) * 100.0 / totalElements));
                 }
             }
             managerSseManager.broadcastImportTaskSuccess(taskName);

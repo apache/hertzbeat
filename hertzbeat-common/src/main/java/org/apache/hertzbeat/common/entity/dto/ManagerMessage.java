@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.manager;
+package org.apache.hertzbeat.common.entity.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,9 +37,4 @@ public class ManagerMessage {
      * Manager Event Type {@see ManagerEventTypeEnum}
      */
     private String managerEventType;
-
-    /**
-     * Message Content
-     */
-    private String content;
 }
