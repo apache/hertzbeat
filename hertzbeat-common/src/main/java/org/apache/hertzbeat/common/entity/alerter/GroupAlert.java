@@ -63,6 +63,7 @@ public class GroupAlert {
     private Long id;
     
     @Schema(title = "Group Key", example = "HighCPUUsage{alertname=\"HighCPUUsage\", instance=\"server1\"}")
+    @Column(length = 2048)
     private String groupKey;
     
     @Schema(title = "Status", example = "resolved")

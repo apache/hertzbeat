@@ -59,8 +59,9 @@ public class SingleAlert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Threshold Id", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
-    
-    @Schema(title = "Fingerprint", example = "dxsdfdsf")
+
+    @Schema(title = "Fingerprint", example = "alertname:demo")
+    @Column(length = 2048)
     private String fingerprint;
     
     @Schema(title = "Labels", example = "{\"alertname\": \"HighCPUUsage\", \"priority\": \"critical\", \"instance\": \"343483943\"}")
@@ -74,6 +75,7 @@ public class SingleAlert {
     private Map<String, String> annotations;
 
     @Schema(title = "Content", example = "CPU usage is above 80% for the last 5 minutes on instance server1.example.com.")
+    @Column(length = 4096)
     private String content;
 
     @Schema(title = "Status", example = "firing|resolved")
