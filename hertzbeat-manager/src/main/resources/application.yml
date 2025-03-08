@@ -225,6 +225,8 @@ alerter:
       access-key-secret: YOUR_ACCESS_KEY_SECRET
       signature: YOUR_SMS_SIGNATURE
       template-id: YOUR_TEMPLATE_ID
+    smslocal:
+      api-key: YOUR_API_KEY_HERE
 
 scheduler:
   server:
@@ -247,4 +249,4 @@ ai:
   # api key
   api-key:
   #At present, only IFLYTEK large model needs to be filled in
-  api-secret:
+  api-secret: 

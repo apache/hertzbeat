@@ -54,4 +54,8 @@ public class SmsConfig {
      */
     private UniSmsProperties unisms;
 
+    /**
+     * Smslocal SMS configuration
+     */
+    private SmslocalSmsProperties smslocal;
 }
