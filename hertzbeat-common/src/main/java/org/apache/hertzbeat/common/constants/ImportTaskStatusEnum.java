@@ -15,42 +15,35 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.common.constants;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
 
 /**
- * Configuration Import Export
- * Created by gcdd1993 on 2023/3/31
+ * Import/Export task status
  */
-public interface ImExportService {
+@Getter
+@AllArgsConstructor
+@ToString
+public enum ImportTaskStatusEnum {
 
     /**
-     * Import Configuration
-     * @param taskName task name
-     * @param is input stream
+     * In progress
      */
-    void importConfig(String taskName, InputStream is);
+    IN_PROGRESS("IN_PROGRESS"),
 
     /**
-     * Export Configuration
-     * @param os         output stream
-     * @param configList configuration list
+     * Completed
      */
-    void exportConfig(OutputStream os, List<Long> configList);
+    COMPLETED("COMPLETED"),
 
     /**
-     * Export file type
-     * @return file type
+     * Failed
      */
-    String type();
+    FAILED("FAILED");
 
-    /**
-     * Get Export File Name
-     * @return file name
-     */
-    String getFileName();
-
+    private final String value;
 }
