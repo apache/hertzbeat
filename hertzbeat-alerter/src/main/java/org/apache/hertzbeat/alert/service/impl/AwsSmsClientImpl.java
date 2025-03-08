@@ -39,6 +39,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -52,8 +53,8 @@ import static org.apache.hertzbeat.common.constants.SmsConstants.AWS;
 
 /**
  * AWS Cloud SMS Client Implementation<br>
- * API doc: </a><br>
- * Singnature doc: <a </a>
+ * API doc:<a href="https://docs.aws.amazon.com/pinpoint/latest/apireference_smsvoicev2/API_SendTextMessage.html">https://docs.aws.amazon.com/pinpoint/latest/apireference_smsvoicev2/API_SendTextMessage.html</a><br>
+ * Signature doc:<a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html"</a>https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html</a>
  */
 @Slf4j
 public class AwsSmsClientImpl implements SmsClient {
@@ -105,53 +106,71 @@ public class AwsSmsClientImpl implements SmsClient {
         payload.put("MessageBody", message);
         payload.put("DestinationPhoneNumber", phoneNumber);
         payload.put("MessageType", "TRANSACTIONAL");
+
         Instant now = Instant.now();
-        String endpoint = "https://" + SERVICE + "." + region + ".amazonaws.com/?";
         String amzDate = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC).format(now);
+        String endpoint = "https://" + SERVICE + "." + region + ".amazonaws.com/?";
+
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             String payloadInString = new ObjectMapper().writeValueAsString(payload);
             URI requestUri = new URI(endpoint);
-            String authorizationHeader = new AwsAuthenticationBuilder()
-                    .credential(this.accessKey, this.secretKey)
-                    .region(this.region)
-                    .header("content-type", "application/x-amz-json-1.0")
-                    .header("host", SERVICE + "." + this.region + ".amazonaws.com")
-                    .header("x-amz-date", amzDate)
-                    .header("x-amz-target", "PinpointSMSVoiceV2.SendTextMessage")
-                    .build(requestUri, "POST", SERVICE, payloadInString);
 
-
-            HttpPost httpPost = new HttpPost(requestUri);
-            httpPost.setHeader("Authorization", authorizationHeader);
-            httpPost.setHeader("content-type", "application/x-amz-json-1.0");
-            httpPost.setHeader("x-amz-date", amzDate);
-            httpPost.setHeader("x-amz-target", "PinpointSMSVoiceV2.SendTextMessage");
-            httpPost.setEntity(
-                    new StringEntity(payloadInString, ContentType.APPLICATION_JSON));
+            HttpPost httpPost = createHttpPost(requestUri, amzDate, payloadInString);
             log.info("Sending AWS SMS request to {}", requestUri + "," + "headers: " + Arrays.toString(httpPost.getAllHeaders()));
-
-            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                String responseBody = EntityUtils.toString(response.getEntity());
-                log.info("SMS response status: {}, body: {}", statusCode, responseBody);
-                if (statusCode != 200) {
-                    throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
-                }
-
-                JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
-                if (jsonResponse == null) {
-                    throw new SendMessageException(statusCode + ":" + responseBody);
-                }
-                JsonNode responseNode = jsonResponse.get("MessageId");
-                if (responseNode == null) {
-                    throw new SendMessageException(statusCode + ":" + responseBody);
-                }
-                String messageId = responseNode.asText();
-                log.info("Successfully sent SMS to phone: {}, messageId: {}", phoneNumber, messageId);
-            }
+            executeRequest(httpClient, httpPost, phoneNumber);
         } catch (Exception e) {
             log.warn("Failed to send SMS: {}", e.getMessage());
             throw new SendMessageException(e.getMessage());
+        }
+    }
+
+
+    private HttpPost createHttpPost(URI requestUri, String amzDate, String payloadInString) throws Exception {
+        // Define headers once to avoid repetition
+        Map<String, String> headers = new HashMap<>();
+        headers.put("content-type", "application/x-amz-json-1.0");
+        headers.put("host", SERVICE + "." + this.region + ".amazonaws.com");
+        headers.put("x-amz-date", amzDate);
+        headers.put("x-amz-target", "PinpointSMSVoiceV2.SendTextMessage");
+        
+        // Build authorization header using the same headers
+        AwsAuthenticationBuilder authBuilder = new AwsAuthenticationBuilder()
+                .credential(this.accessKey, this.secretKey)
+                .region(this.region);
+        headers.forEach(authBuilder::header);
+        String authorizationHeader = authBuilder.build(requestUri, "POST", SERVICE, payloadInString);
+
+        // Create HTTP post and set all headers
+        HttpPost httpPost = new HttpPost(requestUri);
+        httpPost.setHeader("Authorization", authorizationHeader);
+        headers.forEach(httpPost::setHeader);
+        
+        httpPost.setEntity(new StringEntity(payloadInString, ContentType.APPLICATION_JSON));
+        return httpPost;
+    }
+
+    private void executeRequest(CloseableHttpClient httpClient, HttpPost httpPost, String phoneNumber) throws Exception {
+        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            String responseBody = EntityUtils.toString(response.getEntity());
+            log.info("SMS response status: {}, body: {}", statusCode, responseBody);
+
+            if (statusCode != 200) {
+                throw new SendMessageException("HTTP request failed with status code: " + statusCode + ", response: " + responseBody);
+            }
+
+            JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
+            if (jsonResponse == null) {
+                throw new SendMessageException(statusCode + ":" + responseBody);
+            }
+
+            JsonNode responseNode = jsonResponse.get("MessageId");
+            if (responseNode == null) {
+                throw new SendMessageException(statusCode + ":" + responseBody);
+            }
+
+            String messageId = responseNode.asText();
+            log.info("Successfully sent SMS to phone: {}, messageId: {}", phoneNumber, messageId);
         }
     }
 
@@ -174,7 +193,7 @@ public class AwsSmsClientImpl implements SmsClient {
         private URI requestUri;
         private String method;
         private String payload;
-        private final Map<String, String> headers = new LinkedHashMap<String, String>();
+        private final Map<String, String> headers = new LinkedHashMap<>();
 
         public AwsAuthenticationBuilder region(String region) {
             this.region = region;
@@ -197,71 +216,92 @@ public class AwsSmsClientImpl implements SmsClient {
             this.method = method;
             this.service = service;
             this.payload = payload;
-            return "%s Credential=%s/%s, SignedHeaders=%s, Signature=%s".formatted(getAlgorithm(), this.accessKey, getCredentialScope(), getSignedHeaders(), getSignature());
+            return "%s Credential=%s/%s, SignedHeaders=%s, Signature=%s".formatted(
+                    getAlgorithm(), 
+                    this.accessKey, 
+                    getCredentialScope(), 
+                    getSignedHeaders(), 
+                    getSignature()
+            );
         }
 
         private String getCredentialScope() {
-            return this.getDateStamp() + "/" + this.region + "/" + this.service + "/aws4_request";
+            return getDateStamp() + "/" + region + "/" + service + "/aws4_request";
         }
 
         private String getSignedHeaders() {
-            return String.join(";", this.headers.keySet());
+            return String.join(";", headers.keySet());
         }
 
         private String getDateTime() {
-            return this.headers.get("x-amz-date");
+            return headers.get("x-amz-date");
         }
 
         private String getDateStamp() {
-            return this.getDateTime().substring(0, 8);
+            return getDateTime().substring(0, 8);
         }
 
         private String getSignature() throws Exception {
-            String canonicalRequest = this.getCanonicalRequest();
-            String stringToSign = "AWS4-HMAC-SHA256\n" + this.getDateTime() + "\n" + this.getCredentialScope() + "\n" + sha256Hash(canonicalRequest);
-            byte[] signingKey = getSignatureKey(this.secretKey, this.getDateStamp(), this.region, this.service);
+            String canonicalRequest = getCanonicalRequest();
+            String stringToSign = String.join("\n", 
+                    getAlgorithm(),
+                    getDateTime(),
+                    getCredentialScope(),
+                    sha256Hash(canonicalRequest));
+            
+            byte[] signingKey = getSignatureKey(secretKey, getDateStamp(), region, service);
             return bytesToHex(hmacSHA256(signingKey, stringToSign));
         }
 
-        public String getCanonicalRequest() throws Exception {
-            return "%s\n%s\n%s\n%s\n%s\n%s".formatted(this.method, this.requestUri.getPath(), this.requestUri.getQuery(), this.getCanonicalHeaders(), this.getSignedHeaders(), sha256Hash(this.payload));
+        private String getCanonicalRequest() throws Exception {
+            return String.join("\n", 
+                    method,
+                    requestUri.getPath(),
+                    requestUri.getQuery() != null ? requestUri.getQuery() : "",
+                    getCanonicalHeaders(),
+                    getSignedHeaders(),
+                    sha256Hash(payload)
+            );
         }
 
         private String getCanonicalHeaders() {
-            return new StringBuilder().append(this.headers.entrySet().stream()
+            return headers.entrySet().stream()
                     .map(entry -> entry.getKey() + ":" + entry.getValue())
-                    .collect(Collectors.joining("\n"))).append("\n").toString();
+                    .collect(Collectors.joining("\n")) + "\n";
         }
 
         private String getAlgorithm() {
             return "AWS4-HMAC-SHA256";
         }
 
-        private static String sha256Hash(String text) throws Exception {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+        private String sha256Hash(String text) throws Exception {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         }
 
-        private static byte[] hmacSHA256(byte[] key, String data) throws Exception {
+        private byte[] hmacSHA256(byte[] key, String data) throws Exception {
             Mac mac = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKeySpec = new SecretKeySpec(key, "HmacSHA256");
             mac.init(secretKeySpec);
             return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         }
 
-        private static byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) throws Exception {
-            byte[] kDate = hmacSHA256(("AWS4" + key).getBytes(StandardCharsets.UTF_8), dateStamp);
+        private byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) throws Exception {
+            byte[] kSecret = ("AWS4" + key).getBytes(StandardCharsets.UTF_8);
+            byte[] kDate = hmacSHA256(kSecret, dateStamp);
             byte[] kRegion = hmacSHA256(kDate, regionName);
             byte[] kService = hmacSHA256(kRegion, serviceName);
             return hmacSHA256(kService, "aws4_request");
         }
 
-        private static String bytesToHex(byte[] bytes) {
-            StringBuilder hexString = new StringBuilder();
+        private String bytesToHex(byte[] bytes) {
+            StringBuilder hexString = new StringBuilder(2 * bytes.length);
             for (byte b : bytes) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
                 hexString.append(hex);
             }
             return hexString.toString();
