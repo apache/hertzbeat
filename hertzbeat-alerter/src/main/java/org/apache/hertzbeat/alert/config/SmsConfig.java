@@ -54,4 +54,8 @@ public class SmsConfig {
      */
     private UniSmsProperties unisms;
 
+    /**
+     * Aws configuration
+     */
+    private AwsSmsProperties aws;
 }
