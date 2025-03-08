@@ -45,7 +45,8 @@ public class ImportTaskMessage extends ManagerMessage {
     private Integer progress;
 
     /**
-     * Task Status, {@see IExportTaskStatusEnum}
+     * Task Status,
+     * @see ImportTaskStatusEnum
      */
     @NotNull
     private String status;

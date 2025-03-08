@@ -29,12 +29,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ManagerMessage {
     /**
-     * Notify Level {@see NotifyLevelEnum}
+     * Notify Level
+     * @see org.apache.hertzbeat.common.constants.NotifyLevelEnum
      */
     private String notifyLevel;
 
     /**
-     * Manager Event Type {@see ManagerEventTypeEnum}
+     * Manager Event Type
+     * @see org.apache.hertzbeat.common.constants.ManagerEventTypeEnum
      */
     private String managerEventType;
 }
