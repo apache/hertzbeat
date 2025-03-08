@@ -71,7 +71,10 @@ public class JdbcProtocol implements CommonRequestProtocol, Protocol {
      * DATABASE LINK URL eg: jdbc:mysql://localhost:3306/usthe
      */
     private String url;
-
+    /**
+     * reuse connection session
+     */
+    private String reuseConnection = "true";
     /**
      * ssh tunnel
      */
