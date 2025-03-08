@@ -249,4 +249,4 @@ ai:
   # api key
   api-key:
   #At present, only IFLYTEK large model needs to be filled in
-  api-secret: 04163b67-6cdc-4310-8394-681db4cca694
+  api-secret: 
