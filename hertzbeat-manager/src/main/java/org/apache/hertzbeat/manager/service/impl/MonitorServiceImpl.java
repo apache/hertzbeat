@@ -54,6 +54,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -138,6 +139,8 @@ public class MonitorServiceImpl implements MonitorService {
     private WarehouseService warehouseService;
     @Autowired
     private DashboardService dashboardService;
+    @Autowired
+    private ManagerSseManager managerSseManager;
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
@@ -183,16 +186,20 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-
         var fileName = FileUtil.getFileName(file);
         var type = FileUtil.getFileType(file);
-        if (!imExportServiceMap.containsKey(type)) {
-            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
+        try {
+            if (!imExportServiceMap.containsKey(type)) {
+                String errMsg = ExportFileConstants.FILE + " " + fileName + " is not supported.";
+                throw new RuntimeException(errMsg);
+            }
+            var imExportService = imExportServiceMap.get(type);
+            imExportService.importConfig(fileName, file.getInputStream());
+        } catch (Exception e){
+            managerSseManager.broadcastImportTaskFail(fileName, e.getMessage());
+            throw e;
         }
-        var imExportService = imExportServiceMap.get(type);
-        imExportService.importConfig(file.getInputStream());
     }
-
 
     @Override
     @Transactional(readOnly = true)

@@ -17,19 +17,24 @@
 
 package org.apache.hertzbeat.common.constants;
 
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
+
 /**
- * SMS provider constants
+ * Notify Level Enum
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
+@Getter
+@AllArgsConstructor
+@ToString
+public enum NotifyLevelEnum {
 
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
+    SUCCESS("SUCCESS"),
+    ERROR("ERROR"),
+    INFO("INFO"),
+    WARNING("WARNING"),
+    BLANK("BLANK");
 
-    // UniSMS
-    String UNISMS = "unisms";
-
-    // Smslocal SMS
-    String SMSLOCAL = "smslocal";
+    private final String value;
 }
