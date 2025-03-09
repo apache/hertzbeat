@@ -72,11 +72,6 @@
               <br />
               {{ 'alert.notice.sender.sms.unisms.authMode' | i18n }}: {{ smsNoticeSender.unisms.authMode }}
             </ng-container>
-
-            <!-- Smslocal SMS -->
-            <ng-container *ngSwitchCase="SmsType.SMSLOCAL">
-              {{ 'alert.notice.sender.sms.smslocal.signature' | i18n }}: {{ smsNoticeSender.smslocal.apiKey }}
-            </ng-container>
           </ng-container>
           <br />
           {{ 'common.enable' | i18n }}: {{ smsNoticeSender.enable ? ('common.yes' | i18n) : ('common.no' | i18n) }}
