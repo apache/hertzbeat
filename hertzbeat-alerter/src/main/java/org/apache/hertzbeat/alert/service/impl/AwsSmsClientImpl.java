@@ -250,7 +250,7 @@ public class AwsSmsClientImpl implements SmsClient {
                     sha256Hash(canonicalRequest));
             
             byte[] signingKey = getSignatureKey(secretKey, getDateStamp(), region, service);
-            return bytesToHex(hmacSHA256(signingKey, stringToSign));
+            return bytesToHex(hmacSha256(signingKey, stringToSign));
         }
 
         private String getCanonicalRequest() throws Exception {
@@ -280,7 +280,7 @@ public class AwsSmsClientImpl implements SmsClient {
             return bytesToHex(hash);
         }
 
-        private byte[] hmacSHA256(byte[] key, String data) throws Exception {
+        private byte[] hmacSha256(byte[] key, String data) throws Exception {
             Mac mac = Mac.getInstance("HmacSHA256");
             SecretKeySpec secretKeySpec = new SecretKeySpec(key, "HmacSHA256");
             mac.init(secretKeySpec);
@@ -288,11 +288,11 @@ public class AwsSmsClientImpl implements SmsClient {
         }
 
         private byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) throws Exception {
-            byte[] kSecret = ("AWS4" + key).getBytes(StandardCharsets.UTF_8);
-            byte[] kDate = hmacSHA256(kSecret, dateStamp);
-            byte[] kRegion = hmacSHA256(kDate, regionName);
-            byte[] kService = hmacSHA256(kRegion, serviceName);
-            return hmacSHA256(kService, "aws4_request");
+            byte[] secret = ("AWS4" + key).getBytes(StandardCharsets.UTF_8);
+            byte[] date = hmacSha256(secret, dateStamp);
+            byte[] region = hmacSha256(date, regionName);
+            byte[] service = hmacSha256(region, serviceName);
+            return hmacSha256(service, "aws4_request");
         }
 
         private String bytesToHex(byte[] bytes) {

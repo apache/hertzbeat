@@ -181,13 +181,13 @@ alerter:
    - Go to the AWS IAM (Identity and Access Management) Console.
    - Create an IAM user with programmatic access and attach the necessary permissions.
    - Retrieve your Access Key ID and Secret Access Key (You will need these for configuration).
-   
+
 3. Select a Specific AWS Region for SMS Messaging
    - Choose a region that supports AWS End User Messaging (SMS Service).
    - You can check the supported regions [here](https://docs.aws.amazon.com/sms-voice/latest/userguide/phone-numbers-sms-by-country.html).
 
 4. Move from the AWS SMS Sandbox to Production
-   - By default, AWS SMS operates in sandbox mode, which restricts SMS delivery to verified phone numbers. 
+   - By default, AWS SMS operates in sandbox mode, which restricts SMS delivery to verified phone numbers.
      To send messages to any number, you must move your account to production mode. follow this [guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/sandbox.html#sandbox-sms-move-to-production)
 
 5. Verify Destination Phone Numbers (for Sandbox Mode)
@@ -195,7 +195,7 @@ alerter:
    - Note: You do not need to create an Origination Identity or Origination Simulator—just use the AWS CLI to add verified phone numbers.
 
    > The message template is fixed as follows: "Instance: {}, Priority: {}, Content: {}"
-   
+
    Now you can configure this information in your hertzbeat application.
 
 ## Operation steps
