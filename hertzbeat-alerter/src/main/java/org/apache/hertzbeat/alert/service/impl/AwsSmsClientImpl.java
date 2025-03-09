@@ -126,8 +126,8 @@ public class AwsSmsClientImpl implements SmsClient {
 
 
     private HttpPost createHttpPost(URI requestUri, String amzDate, String payloadInString) throws Exception {
-        // Define headers once to avoid repetition
-        Map<String, String> headers = new HashMap<>();
+        // Define headers once to avoid repetition (Order of headers must be maintained)
+        Map<String, String> headers = new LinkedHashMap<>();
         headers.put("content-type", "application/x-amz-json-1.0");
         headers.put("host", SERVICE + "." + this.region + ".amazonaws.com");
         headers.put("x-amz-date", amzDate);
