@@ -31,8 +31,8 @@ import { UniSmsConfig } from 'src/app/pojo/UniSmsConfig';
 import { SmsType, UniSmsAuthMode } from 'src/app/pojo/enums/sms-type.enum';
 
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
+import { SmslocalSmsConfig } from '../../../../pojo/SmslocalSmsConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
-import {SmslocalSmsConfig} from "../../../../pojo/SmslocalSmsConfig";
 
 @Component({
   selector: 'app-message-server',

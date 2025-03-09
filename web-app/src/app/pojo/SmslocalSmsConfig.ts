@@ -18,5 +18,5 @@
  */
 
 export class SmslocalSmsConfig {
-  apiKey!: string
+  apiKey!: string;
 }
