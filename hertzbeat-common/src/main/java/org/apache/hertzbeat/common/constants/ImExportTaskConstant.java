@@ -18,18 +18,13 @@
 package org.apache.hertzbeat.common.constants;
 
 /**
- * SMS provider constants
+ * Import/Export task constants
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
 
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
+public interface ImExportTaskConstant {
 
-    // UniSMS
-    String UNISMS = "unisms";
-
-    // Smslocal SMS
-    String SMSLOCAL = "smslocal";
+    /**
+     * If the number of tasks exceeds 100, progress information will broadcast
+     */
+    Integer IMPORT_TASK_PROCESS_THRESHOLD = 100;
 }

@@ -15,21 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.common.entity.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * SMS provider constants
+ * Manager Message Entity
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ManagerMessage {
+    /**
+     * Notify Level
+     * @see org.apache.hertzbeat.common.constants.NotifyLevelEnum
+     */
+    private String notifyLevel;
 
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
-
-    // UniSMS
-    String UNISMS = "unisms";
-
-    // Smslocal SMS
-    String SMSLOCAL = "smslocal";
+    /**
+     * Manager Event Type
+     * @see org.apache.hertzbeat.common.constants.ManagerEventTypeEnum
+     */
+    private String managerEventType;
 }

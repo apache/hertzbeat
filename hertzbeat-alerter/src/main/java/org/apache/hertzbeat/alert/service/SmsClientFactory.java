@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.SmsConfig;
+import org.apache.hertzbeat.alert.service.impl.SmsLocalSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.UniSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.AlibabaSmsClientImpl;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Component;
 import static org.apache.hertzbeat.common.constants.SmsConstants.ALIBABA;
 import static org.apache.hertzbeat.common.constants.SmsConstants.TENCENT;
 import static org.apache.hertzbeat.common.constants.SmsConstants.UNISMS;
+import static org.apache.hertzbeat.common.constants.SmsConstants.SMSLOCAL;
 
 /**
  * SMS client factory
@@ -49,9 +51,7 @@ public class SmsClientFactory {
 
     private volatile SmsClient currentSmsClient;
 
-    public SmsClientFactory(GeneralConfigDao generalConfigDao,
-                            ObjectMapper objectMapper,
-                            SmsConfig yamlSmsConfig) {
+    public SmsClientFactory(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper, SmsConfig yamlSmsConfig) {
         this.generalConfigDao = generalConfigDao;
         this.objectMapper = objectMapper;
         this.yamlSmsConfig = yamlSmsConfig;
@@ -132,6 +132,9 @@ public class SmsClientFactory {
                 break;
             case ALIBABA:
                 currentSmsClient = new AlibabaSmsClientImpl(smsConfig.getAlibaba());
+                break;
+            case SMSLOCAL:
+                currentSmsClient = new SmsLocalSmsClientImpl(smsConfig.getSmslocal());
                 break;
             default:
                 log.warn("[SmsClientFactory] Unsupported SMS provider type: {}", smsConfig.getType());
