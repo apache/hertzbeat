@@ -89,7 +89,12 @@ public class SmsLocalSmsClientImpl implements SmsClient {
                 }
 
                 JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
-                String errorcode = jsonResponse.get("errorcode").asText();
+                JsonNode jsonNode = jsonResponse.get("errorcode");
+                if (Objects.isNull(jsonNode)) {
+                    log.warn("jsonResponse parse errorcode failed: {}", jsonResponse);
+                    return;
+                }
+                String errorcode = jsonNode.asText();
                 if (!SUCCESS_CODE.equals(errorcode)) {
                     String msgid = jsonResponse.get("msgid").asText();
                     throw new SendMessageException(errorcode + ":" + msgid);
