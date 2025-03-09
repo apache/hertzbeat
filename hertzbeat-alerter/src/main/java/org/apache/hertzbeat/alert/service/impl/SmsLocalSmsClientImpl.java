@@ -100,7 +100,7 @@ public class SmsLocalSmsClientImpl implements SmsClient {
                 }
                 String errorCode = jsonNode.get("errorCode").asText();
                 if (!SUCCESS_CODE.equals(errorCode)) {
-                    String msgid = jsonResponse.get("id").asText();
+                    String msgid = jsonNode.get("id").asText();
                     throw new SendMessageException(errorCode + ":" + msgid);
                 }
 
