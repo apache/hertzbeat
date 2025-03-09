@@ -310,11 +310,20 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
       let msg = JSON.parse(evt.data);
       if (msg.notifyLevel === 'SUCCESS') {
-        this.notifySvc.success(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('common.notify.import-success-detail', {taskName: msg.taskName }));
+        this.notifySvc.success(
+          this.i18nSvc.fanyi('common.notice'),
+          this.i18nSvc.fanyi('common.notify.import-success-detail', { taskName: msg.taskName })
+        );
       } else if (msg.notifyLevel === 'ERROR') {
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('common.notify.import-fail-detail', {taskName: msg.taskName, errMsg: msg.errMsg}));
+        this.notifySvc.error(
+          this.i18nSvc.fanyi('common.notice'),
+          this.i18nSvc.fanyi('common.notify.import-fail-detail', { taskName: msg.taskName, errMsg: msg.errMsg })
+        );
       } else if (msg.notifyLevel === 'INFO') {
-        this.notifySvc.info(this.i18nSvc.fanyi('common.notice'), this.i18nSvc.fanyi('common.notify.import-progress', {taskName: msg.taskName, progress: msg.progress}));
+        this.notifySvc.info(
+          this.i18nSvc.fanyi('common.notice'),
+          this.i18nSvc.fanyi('common.notify.import-progress', { taskName: msg.taskName, progress: msg.progress })
+        );
       } else {
         console.error('Parse message error, msg:', evt.data);
       }
