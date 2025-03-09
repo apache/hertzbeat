@@ -15,21 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.alert.config;
+
+import lombok.Data;
 
 /**
- * SMS provider constants
+ * AWS Cloud SMS configuration properties
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
-    
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
-    
-    // UniSMS
-    String UNISMS = "unisms";
+@Data
+public class AwsSmsProperties {
+    /**
+     * AWS Cloud access key id
+     */
+    private String accessKeyId;
 
-    // Aws cloud SMS
-    String AWS = "aws";
+    /**
+     * AWS Cloud access key secret
+     */
+    private String accessKeySecret;
+
+    /**
+     * AWS Cloud region
+     */
+    private String region;
+
 }

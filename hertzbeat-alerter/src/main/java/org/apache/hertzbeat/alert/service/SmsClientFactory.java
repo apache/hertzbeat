@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.SmsConfig;
+import org.apache.hertzbeat.alert.service.impl.AwsSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.UniSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.AlibabaSmsClientImpl;
@@ -31,6 +32,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import static org.apache.hertzbeat.common.constants.SmsConstants.ALIBABA;
+import static org.apache.hertzbeat.common.constants.SmsConstants.AWS;
 import static org.apache.hertzbeat.common.constants.SmsConstants.TENCENT;
 import static org.apache.hertzbeat.common.constants.SmsConstants.UNISMS;
 
@@ -132,6 +134,9 @@ public class SmsClientFactory {
                 break;
             case ALIBABA:
                 currentSmsClient = new AlibabaSmsClientImpl(smsConfig.getAlibaba());
+                break;
+            case AWS:
+                currentSmsClient = new AwsSmsClientImpl(smsConfig.getAws());
                 break;
             default:
                 log.warn("[SmsClientFactory] Unsupported SMS provider type: {}", smsConfig.getType());
