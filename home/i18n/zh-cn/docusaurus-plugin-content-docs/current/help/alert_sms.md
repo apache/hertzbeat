@@ -155,6 +155,33 @@ alerter:
 
 现在您可以把这些信息配置到您的hertzbeat应用中。
 
+### smslocal短信配置
+
+smslocal是一款面向企业的一体化短信服务平台，具备诸如多种发送方式、强大的安全性以及全天候支持等特性。你可以参考 smslocal 的[开发者文档](https://www.smslocal.com/developer/)来进行配置。
+
+在 `application.yml` 中添加/填写以下 smslocal 配置内容（请用你自己的短信服务器配置参数替换相关参数）：
+
+```yaml
+alerter:
+  sms:
+    enable: true    # 是否启用
+    type: smslocal   # 短信服务提供商类型，设置为smslocal
+    smslocal:        # smslocal配置
+       api-key: 在此处填入你的API密钥
+```
+
+1. 注册 smslocal 账号
+   - 访问 [smslocal官网](https://www.smslocal.com/)
+
+2. 获取 `api-key`
+   - 登录 [smslocal API accessKey访问页面](https://secure.smslocal.com/cpaas/pages/profile/settings/api-reference)
+   - 进入 “API 访问” 页面
+   - 点击眼睛图标按钮
+   - 复制显示的访问密钥
+   - 然后你就可以配置 `application.yml` 文件了
+
+现在你可以在你的 Hertzbeat 应用程序中配置这些信息。
+
 ## 操作步骤
 
 1. **【告警通知】->【新增接收人】 ->【选择短信通知方式】**
