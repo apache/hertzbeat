@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.SmslocalSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
@@ -65,7 +67,10 @@ public class SmsLocalSmsClientImpl implements SmsClient {
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             String content = alert.getCommonAnnotations().get("summary");
-            SmsMessage smsMessage = new SmsMessage(FROM, receiver.getPhone(), Objects.isNull(content) ? alert.getCommonAnnotations().get("description") : content);
+            if (Objects.isNull(content) || Objects.isNull(alert.getCommonAnnotations().get("description"))) {
+                content = alert.getAlerts().get(0).getContent();
+            }
+            SmsMessage smsMessage = new SmsMessage(FROM, receiver.getPhone(), content);
 
             String payload = JsonUtil.toJson(smsMessage);
 
@@ -88,15 +93,15 @@ public class SmsLocalSmsClientImpl implements SmsClient {
                 }
 
                 JsonNode jsonResponse = JsonUtil.fromJson(responseBody);
-                JsonNode jsonNode = jsonResponse.get("errorcode");
+                JsonNode jsonNode = jsonResponse.get(0);
                 if (Objects.isNull(jsonNode)) {
-                    log.warn("jsonResponse parse errorcode failed: {}", jsonResponse);
+                    log.warn("jsonResponse parse errorCode failed: {}", jsonResponse);
                     return;
                 }
-                String errorcode = jsonNode.asText();
-                if (!SUCCESS_CODE.equals(errorcode)) {
-                    String msgid = jsonResponse.get("msgid").asText();
-                    throw new SendMessageException(errorcode + ":" + msgid);
+                String errorCode = jsonNode.get("errorCode").asText();
+                if (!SUCCESS_CODE.equals(errorCode)) {
+                    String msgid = jsonResponse.get("id").asText();
+                    throw new SendMessageException(errorCode + ":" + msgid);
                 }
 
                 log.info("Successfully sent SMS to phone: {}", receiver.getPhone());
@@ -122,7 +127,8 @@ public class SmsLocalSmsClientImpl implements SmsClient {
         return true;
     }
 
-
+    @Getter
+    @Setter
     private static class SmsMessage {
         String from;
         String to;
