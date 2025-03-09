@@ -15,26 +15,26 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.support.event;
+package org.apache.hertzbeat.alert.util;
 
-import org.springframework.context.ApplicationEvent;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * the event for monitor delete
+ * alert util
  */
-public class MonitorDeletedEvent extends ApplicationEvent {
-    
+public class AlertUtil {
+
     /**
-     * monitoring id
+     * calculate fingerprint
+     * @param fingerPrints finger prints
      */
-    private final Long monitorId;
-    
-    public MonitorDeletedEvent(Object source, Long monitorId) {
-        super(source);
-        this.monitorId = monitorId;
-    }
-    
-    public Long getMonitorId() {
-        return monitorId;
+    public static String calculateFingerprint(Map<String, String> fingerPrints) {
+        List<String> keyList = fingerPrints.keySet().stream().filter(Objects::nonNull).sorted().toList();
+        List<String> valueList = fingerPrints.values().stream().filter(Objects::nonNull).sorted().toList();
+        return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
+                + Arrays.hashCode(valueList.toArray(new String[0]));
     }
 }
