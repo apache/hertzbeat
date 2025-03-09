@@ -139,7 +139,7 @@
   </div>
 </nz-modal>
 
-<!-- sms server modal -->
+<!-- sms server model -->
 <nz-modal
   [(nzVisible)]="isSmsServerModalVisible"
   [nzTitle]="'settings.server.sms.setting' | i18n"
@@ -158,9 +158,12 @@
             <nz-option [nzValue]="SmsType.TENCENT" nzLabel="{{ 'alert.notice.sender.sms.type.tencent' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.ALIBABA" nzLabel="{{ 'alert.notice.sender.sms.type.alibaba' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.UNISMS" nzLabel="{{ 'alert.notice.sender.sms.type.unisms' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.SMSLOCAL" nzLabel="{{ 'alert.notice.sender.sms.type.smslocal' | i18n }}"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
+
+      <!-- Tencent SMS -->
       <ng-container *ngIf="smsType === SmsType.TENCENT">
         <nz-form-item>
           <nz-form-label [nzSpan]="7" nzFor="secretId" nzRequired="true">
@@ -201,6 +204,8 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
+
+      <!-- Alibaba SMS -->
       <ng-container *ngIf="smsType === SmsType.ALIBABA">
         <nz-form-item>
           <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
@@ -256,6 +261,8 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
+
+      <!-- UniSMS -->
       <ng-container *ngIf="smsType === SmsType.UNISMS">
         <nz-form-item>
           <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
@@ -314,6 +321,18 @@
           </nz-form-label>
           <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
             <input [(ngModel)]="smsNoticeSender.unisms.templateId" nz-input required name="templateId" type="text" id="unismsTemplateId" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
+
+      <!-- Smslocal SMS -->
+      <ng-container *ngIf="smsType === SmsType.SMSLOCAL">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="apiKey" nzRequired="true">
+            {{ 'alert.notice.sender.sms.smslocal.apiKey' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.smslocal.apiKey" nz-input required name="apiKey" type="password" id="apiKey" />
           </nz-form-control>
         </nz-form-item>
       </ng-container>
