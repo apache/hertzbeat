@@ -21,6 +21,7 @@ import { AlibabaSmsConfig } from './AlibabaSmsConfig';
 import { TencentSmsConfig } from './TencentSmsConfig';
 import { UniSmsConfig } from './UniSmsConfig';
 import { SmsType } from './enums/sms-type.enum';
+import {SmslocalSmsConfig} from "./SmslocalSmsConfig";
 
 export class SmsNoticeSender {
   id!: number;
@@ -28,6 +29,7 @@ export class SmsNoticeSender {
   tencent: TencentSmsConfig = new TencentSmsConfig();
   alibaba: AlibabaSmsConfig = new AlibabaSmsConfig();
   unisms: UniSmsConfig = new UniSmsConfig();
+  smslocal: SmslocalSmsConfig = new SmslocalSmsConfig();
   enable: boolean = false;
   creator!: string;
   modifier!: string;

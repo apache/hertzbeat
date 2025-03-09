@@ -17,14 +17,6 @@
  * under the License.
  */
 
-export enum SmsType {
-  TENCENT = 'tencent',
-  ALIBABA = 'alibaba',
-  UNISMS = 'unisms',
-  SMSLOCAL = 'smslocal'
-}
-
-export enum UniSmsAuthMode {
-  HMAC = 'hmac',
-  SIMPLE = 'simple'
+export class SmslocalSmsConfig {
+  apiKey!: string
 }

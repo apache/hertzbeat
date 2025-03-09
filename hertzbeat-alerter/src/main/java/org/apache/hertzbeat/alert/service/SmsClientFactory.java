@@ -31,7 +31,10 @@ import org.apache.hertzbeat.common.support.event.SmsConfigChangeEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import static org.apache.hertzbeat.common.constants.SmsConstants.*;
+import static org.apache.hertzbeat.common.constants.SmsConstants.ALIBABA;
+import static org.apache.hertzbeat.common.constants.SmsConstants.TENCENT;
+import static org.apache.hertzbeat.common.constants.SmsConstants.UNISMS;
+import static org.apache.hertzbeat.common.constants.SmsConstants.SMSLOCAL;
 
 /**
  * SMS client factory

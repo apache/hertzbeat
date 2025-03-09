@@ -20,6 +20,10 @@ package org.apache.hertzbeat.alert.config;
 
 import lombok.Data;
 
+/**
+ * Smslocal SMS Properties
+ * @author zhoushusheng
+ */
 @Data
 public class SmslocalSmsProperties {
     /**

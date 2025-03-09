@@ -37,6 +37,10 @@ import org.apache.http.util.EntityUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+/**
+ * Smslocal SMS Client Implement
+ * @author zhoushusheng
+ */
 @Slf4j
 public class SmsLocalSmsClientImpl implements SmsClient {
     private static final String HOST = "secure.smslocal.com";
@@ -119,8 +123,8 @@ public class SmsLocalSmsClientImpl implements SmsClient {
         String from;
         String to;
         String content;
-        final int datacoding = 0;
-        final String direction = "mt";
+//        final int datacoding = 0;
+//        final String direction = "mt";
 
         public SmsMessage(String from, String to, String content) {
             this.from = from;

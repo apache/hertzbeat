@@ -32,6 +32,7 @@ import { SmsType, UniSmsAuthMode } from 'src/app/pojo/enums/sms-type.enum';
 
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
 import { GeneralConfigService } from '../../../../service/general-config.service';
+import {SmslocalSmsConfig} from "../../../../pojo/SmslocalSmsConfig";
 
 @Component({
   selector: 'app-message-server',
@@ -142,6 +143,7 @@ export class MessageServerComponent implements OnInit {
             this.smsNoticeSender.tencent = { ...new TencentSmsConfig(), ...message.data.tencent };
             this.smsNoticeSender.alibaba = { ...new AlibabaSmsConfig(), ...message.data.alibaba };
             this.smsNoticeSender.unisms = { ...new UniSmsConfig(), ...message.data.unisms };
+            this.smsNoticeSender.smslocal = { ...new SmslocalSmsConfig(), ...message.data.smslocal };
             this.smsType = message.data.type || 'tencent';
           } else {
             this.smsNoticeSender = new SmsNoticeSender();
@@ -165,7 +167,8 @@ export class MessageServerComponent implements OnInit {
       ...this.smsNoticeSender,
       tencent: { ...this.smsNoticeSender.tencent },
       alibaba: { ...this.smsNoticeSender.alibaba },
-      unisms: { ...this.smsNoticeSender.unisms }
+      unisms: { ...this.smsNoticeSender.unisms },
+      smslocal: { ...this.smsNoticeSender.smslocal }
     };
     this.isSmsServerModalVisible = true;
   }
@@ -176,7 +179,8 @@ export class MessageServerComponent implements OnInit {
       ...this.tempSmsNoticeSender,
       tencent: { ...this.tempSmsNoticeSender.tencent },
       alibaba: { ...this.tempSmsNoticeSender.alibaba },
-      unisms: { ...this.tempSmsNoticeSender.unisms }
+      unisms: { ...this.tempSmsNoticeSender.unisms },
+      smslocal: { ...this.tempSmsNoticeSender.smslocal }
     };
     this.isSmsServerModalVisible = false;
   }
