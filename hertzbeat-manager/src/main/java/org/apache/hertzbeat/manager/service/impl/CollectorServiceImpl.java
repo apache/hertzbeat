@@ -61,7 +61,7 @@ public class CollectorServiceImpl implements CollectorService {
     
     @Autowired(required = false)
     private ManageServer manageServer;
-    
+
     @Override
     @Transactional(readOnly = true)
     public Page<CollectorSummary> getCollectors(String name, int pageIndex, Integer pageSize) {
