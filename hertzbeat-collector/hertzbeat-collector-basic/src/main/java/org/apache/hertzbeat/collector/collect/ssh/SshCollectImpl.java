@@ -157,7 +157,7 @@ public class SshCollectImpl extends AbstractCollect {
                     log.error(e.getMessage(), e);
                 }
             }
-            if (clientSession != null && !reuseConnection) {
+            if (clientSession != null && !reuseConnection && !useProxy) {
                 try {
                     clientSession.close();
                 } catch (Exception e) {
