@@ -18,30 +18,21 @@
 package org.apache.hertzbeat.manager.pojo.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * Sms Sender configuration dto
+ * AWS Sms Sender configuration dto
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class SmsNoticeSender {
-    
-    @NotBlank(message = "Type cannot be empty")
-    private String type;
-    
-    private SmsTencentConfig tencent;
-    
-    private SmsAlibabaConfig alibaba;
+public class SmsAwsConfig {
 
-    private SmsUniSmsConfig unisms;
+    @NotBlank(message = "AccessKeyId cannot be empty")
+    private String accessKeyId;
 
-    private SmslocalConfig smslocal;
+    @NotBlank(message = "AccessKeySecret cannot be empty")
+    private String accessKeySecret;
 
-    private SmsAwsConfig aws;
+    @NotBlank(message = "region cannot be empty")
+    private String region;
 
-    private boolean enable = true;
 }
