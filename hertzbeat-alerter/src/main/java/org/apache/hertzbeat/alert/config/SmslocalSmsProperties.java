@@ -15,21 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.alert.config;
+
+
+import lombok.Data;
 
 /**
- * SMS provider constants
+ * Smslocal SMS Properties
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
+@Data
+public class SmslocalSmsProperties {
+    /**
+     * SmsLocal account api key
+     */
+    private String apiKey;
 
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
-
-    // UniSMS
-    String UNISMS = "unisms";
-
-    // Smslocal SMS
-    String SMSLOCAL = "smslocal";
 }

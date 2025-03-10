@@ -39,5 +39,7 @@ public class SmsNoticeSender {
 
     private SmsUniSmsConfig unisms;
 
+    private SmslocalConfig smslocal;
+
     private boolean enable = true;
 }
