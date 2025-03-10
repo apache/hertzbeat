@@ -407,7 +407,17 @@ public final class CollectRep {
                                         fieldIndex < row.getColumnsList().size()) {
                                     String value = row.getColumns(fieldIndex);
                                     if (value != null) {
-                                        vector.set(rowIndex, value.getBytes(StandardCharsets.UTF_8));
+                                        // Check byte array size, Arrow default buffer size is 32768 bytes
+                                        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+                                        if (bytes.length > 32700) {
+                                            log.warn("Value too large for Arrow buffer ({}), truncating to 32700 bytes. MonitorId: {}, App: {}, Metrics: {}",
+                                                    bytes.length, id, app, metrics);
+                                            byte[] truncatedBytes = new byte[32700];
+                                            System.arraycopy(bytes, 0, truncatedBytes, 0, 32700);
+                                            vector.set(rowIndex, truncatedBytes);
+                                        } else {
+                                            vector.set(rowIndex, bytes);
+                                        }
                                     }
                                 }
                             }
