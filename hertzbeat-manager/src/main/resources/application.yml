@@ -225,6 +225,8 @@ alerter:
       access-key-secret: YOUR_ACCESS_KEY_SECRET
       signature: YOUR_SMS_SIGNATURE
       template-id: YOUR_TEMPLATE_ID
+    smslocal:
+      api-key: YOUR_API_KEY_HERE
     aws:
       access-key-id: YOUR_ACCESS_KEY_ID
       access-key-secret: YOUR_ACCESS_KEY_SECRET

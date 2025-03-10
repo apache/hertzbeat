@@ -58,4 +58,8 @@ public class SmsConfig {
      * Aws configuration
      */
     private AwsSmsProperties aws;
+    /**
+     * Smslocal SMS configuration
+     */
+    private SmslocalSmsProperties smslocal;
 }

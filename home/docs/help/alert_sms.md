@@ -156,6 +156,33 @@ alerter:
 
 Now you can configure this information in your hertzbeat application.
 
+### Smslocal SMS Configuration
+
+SMSLocal is an all-in-one SMS service for businesses, with features like multi-way sending, strong security, and 24/7 support. You can refer to smslocal's [Developer Documentation](https://www.smslocal.com/developer/) for configuration.
+
+Add/Fill in the following Smslocal configuration to `application.yml` (replace parameters with your own SMS server configuration):
+
+```yaml
+alerter:
+  sms:
+    enable: true    # Whether to enable
+    type: smslocal   # SMS provider type, set to smslocal
+    smslocal:        # Smslocal configuration
+       api-key: YOUR_API_KEY_HERE
+```
+
+1. Register smslocal account
+   - Visit [Smslocal Website](https://www.smslocal.com/)
+
+2. Obtain `api-key`
+   - Log in to [Smslocal Api Access](https://secure.smslocal.com/cpaas/pages/profile/settings/api-reference)
+   - Go to "API Access" page
+   - Click the eye button
+   - Copy the displayed access key
+   - Then you can configure the `application.yml` file
+
+Now you can configure this information in your hertzbeat application.
+
 ### AWS Cloud SMS Configuration
 
 To activate and use the AWS Cloud SMS service, refer to the official AWS documentation: [SMS Getting Started Guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/what-is-sms-mms.html)

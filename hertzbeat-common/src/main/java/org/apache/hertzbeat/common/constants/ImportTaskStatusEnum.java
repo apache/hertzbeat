@@ -17,22 +17,33 @@
 
 package org.apache.hertzbeat.common.constants;
 
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
+
 /**
- * SMS provider constants
+ * Import/Export task status
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
+@Getter
+@AllArgsConstructor
+@ToString
+public enum ImportTaskStatusEnum {
 
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
+    /**
+     * In progress
+     */
+    IN_PROGRESS("IN_PROGRESS"),
 
-    // UniSMS
-    String UNISMS = "unisms";
+    /**
+     * Completed
+     */
+    COMPLETED("COMPLETED"),
 
-    // Smslocal SMS
-    String SMSLOCAL = "smslocal";
+    /**
+     * Failed
+     */
+    FAILED("FAILED");
 
-    // Aws cloud SMS
-    String AWS = "aws";
+    private final String value;
 }
