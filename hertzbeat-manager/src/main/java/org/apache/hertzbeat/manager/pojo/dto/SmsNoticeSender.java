@@ -41,5 +41,7 @@ public class SmsNoticeSender {
 
     private SmslocalConfig smslocal;
 
+    private SmsAwsConfig aws;
+
     private boolean enable = true;
 }

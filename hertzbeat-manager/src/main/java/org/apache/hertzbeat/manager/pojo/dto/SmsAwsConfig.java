@@ -15,24 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.manager.pojo.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
 /**
- * SMS provider constants
+ * AWS Sms Sender configuration dto
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
+@Data
+public class SmsAwsConfig {
 
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
+    @NotBlank(message = "AccessKeyId cannot be empty")
+    private String accessKeyId;
 
-    // UniSMS
-    String UNISMS = "unisms";
+    @NotBlank(message = "AccessKeySecret cannot be empty")
+    private String accessKeySecret;
 
-    // Smslocal SMS
-    String SMSLOCAL = "smslocal";
+    @NotBlank(message = "region cannot be empty")
+    private String region;
 
-    // Aws cloud SMS
-    String AWS = "aws";
 }

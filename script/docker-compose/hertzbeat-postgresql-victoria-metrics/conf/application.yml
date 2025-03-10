@@ -186,7 +186,10 @@ alerter:
       template-id: YOUR_TEMPLATE_ID
     smslocal:
       api-key: YOUR_API_KEY_HERE
-    
+    aws:
+      access-key-id: YOUR_ACCESS_KEY_ID
+      access-key-secret: YOUR_ACCESS_KEY_SECRET
+      region: AWS_REGION_FOR_END_USER_MESSAGING
 scheduler:
   server:
     enabled: true
