@@ -70,7 +70,7 @@
       "type": 1
     },
     {
-      "field": "successCodes",
+      "field": "successCode",
       "type": 4,
       "paramValue": "200, 201"
     },
