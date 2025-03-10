@@ -514,7 +514,6 @@ public class HttpCollectImpl extends AbstractCollect {
         StringBuilder queryParams = new StringBuilder();
         
         if (params != null && !params.isEmpty()) {
-            boolean isFirstParam = true;
             for (Map.Entry<String, String> param : params.entrySet()) {
                 String key = param.getKey();
                 String value = param.getValue();
@@ -523,10 +522,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     continue;
                 }
 
-                if (isFirstParam) {
-                    queryParams.append("?");
-                    isFirstParam = false;
-                } else {
+                if (queryParams.length() > 0) {
                     queryParams.append("&");
                 }
 
@@ -591,13 +587,21 @@ public class HttpCollectImpl extends AbstractCollect {
         // uri encode
         String uri;
         if (enableUrlEncoding) {
-            uri = UriUtils.encodePath(httpProtocol.getUrl(), "UTF-8");
+            // if the url contains parameters directly
+            if(httpProtocol.getUrl().contains("?")) {
+                String path = httpProtocol.getUrl().substring(0, httpProtocol.getUrl().indexOf("?"));
+                String query = httpProtocol.getUrl().substring(httpProtocol.getUrl().indexOf("?") + 1);
+                uri = UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8");
+            } else {
+                uri = UriUtils.encodePath(httpProtocol.getUrl(), "UTF-8");
+            }
         } else {
             uri = httpProtocol.getUrl();
         }
 
+        // append query params
         if (queryParams.length() > 0) {
-            uri += queryParams.toString();
+            uri += (uri.contains("?") ? "&" : "?") + queryParams.toString();
         }
         
         String finalUri;
