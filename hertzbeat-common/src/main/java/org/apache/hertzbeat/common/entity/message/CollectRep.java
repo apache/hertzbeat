@@ -407,7 +407,7 @@ public final class CollectRep {
                                         fieldIndex < row.getColumnsList().size()) {
                                     String value = row.getColumns(fieldIndex);
                                     if (value != null) {
-                                        // Check byte array size, Arrow default buffer size is 32768 bytes
+                                        // Check byte array size, Arrow buffer size is 32768 bytes
                                         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
                                         if (bytes.length > 32700) {
                                             log.warn("Value too large for Arrow buffer ({}), truncating to 32700 bytes. MonitorId: {}, App: {}, Metrics: {}",
