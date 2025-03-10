@@ -75,7 +75,7 @@
       "paramValue": "200, 201"
     },
     {
-      "filed": "enableUrlEncoding",
+      "field": "enableUrlEncoding",
       "type": 1,
       "paramValue": true
     }
