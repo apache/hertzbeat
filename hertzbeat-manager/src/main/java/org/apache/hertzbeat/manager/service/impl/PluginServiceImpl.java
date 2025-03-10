@@ -285,11 +285,8 @@ public class PluginServiceImpl implements PluginService {
         String jarPath = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getAbsolutePath();
         Path extLibPath = Paths.get(new File(jarPath).getParent(), "plugin-lib");
         File extLibDir = extLibPath.toFile();
-
         String fileName = pluginUpload.getJarFile().getOriginalFilename();
-        if (fileName == null) {
-            throw new CommonException("Failed to upload plugin");
-        }
+        validateFileName(fileName);
         fileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
         File destFile = new File(extLibDir, fileName);
         FileUtils.createParentDirectories(destFile);
@@ -319,6 +316,20 @@ public class PluginServiceImpl implements PluginService {
         loadJarToClassLoader();
         // sync enabled status
         syncPluginStatus();
+    }
+
+    /**
+     * validate file name if file name is invalid, throw exception
+     *
+     * @param fileName file name
+     */
+    private void validateFileName(String fileName) {
+        if (fileName == null) {
+            throw new CommonException("Failed to upload plugin");
+        }
+        if (fileName.matches(".*(\\.\\.|[\n\t\r/\\\\]).*")) {
+            throw new CommonException("Invalid plugin file name: " + fileName);
+        }
     }
 
     @Override
@@ -369,7 +380,7 @@ public class PluginServiceImpl implements PluginService {
     }
 
     private void syncSinglePluginStatus(PluginMetadata plugin) {
-        if (plugin == null || CollectionUtils.isEmpty(plugin.getItems())){
+        if (plugin == null || CollectionUtils.isEmpty(plugin.getItems())) {
             return;
         }
         for (PluginItem item : plugin.getItems()) {
