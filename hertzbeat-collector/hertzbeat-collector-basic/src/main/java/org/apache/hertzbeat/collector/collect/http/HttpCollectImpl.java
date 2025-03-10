@@ -588,7 +588,7 @@ public class HttpCollectImpl extends AbstractCollect {
         String uri;
         if (enableUrlEncoding) {
             // if the url contains parameters directly
-            if(httpProtocol.getUrl().contains("?")) {
+            if (httpProtocol.getUrl().contains("?")) {
                 String path = httpProtocol.getUrl().substring(0, httpProtocol.getUrl().indexOf("?"));
                 String query = httpProtocol.getUrl().substring(httpProtocol.getUrl().indexOf("?") + 1);
                 uri = UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8");
