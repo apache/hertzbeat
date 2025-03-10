@@ -338,7 +338,6 @@
         </nz-form-item>
       </ng-container>
 
-
       <!-- AWS SMS -->
       <ng-container *ngIf="smsType === SmsType.AWS">
         <nz-form-item>
@@ -346,14 +345,7 @@
             {{ 'alert.notice.sender.sms.aws.accessKeyId' | i18n }}
           </nz-form-label>
           <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-            <input
-              [(ngModel)]="smsNoticeSender.aws.accessKeyId"
-              nz-input
-              required
-              name="accessKeyId"
-              type="password"
-              id="awsAccessKeyId"
-            />
+            <input [(ngModel)]="smsNoticeSender.aws.accessKeyId" nz-input required name="accessKeyId" type="password" id="awsAccessKeyId" />
           </nz-form-control>
         </nz-form-item>
         <nz-form-item>
