@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -39,6 +40,7 @@ import org.apache.hertzbeat.common.constants.PluginType;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
 import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
 import org.apache.hertzbeat.manager.dao.PluginParamDao;
@@ -100,6 +102,23 @@ class PluginServiceTest {
         service.savePlugin(pluginUpload);
         verify(metadataDao, times(1)).save(any(PluginMetadata.class));
         verify(itemDao, times(1)).saveAll(anyList());
+
+    }
+
+    @Test
+    void testUploadPluginWithInvalidName() {
+        MockMultipartFile mockFile = new MockMultipartFile(
+            "file", "../test-plugin.jar", "application/java-archive",
+            "plugin-content".getBytes(StandardCharsets.UTF_8));
+        PluginUpload pluginUpload = new PluginUpload(mockFile, "Test Plugin", true);
+        assertThrows(CommonException.class, () -> pluginService.savePlugin(pluginUpload));
+
+        MockMultipartFile mockWindowsFile = new MockMultipartFile(
+            "file", "..\\..\\test-plugin.jar", "application/java-archive",
+            "plugin-content".getBytes(StandardCharsets.UTF_8));
+        PluginUpload pluginUploadWindows = new PluginUpload(mockWindowsFile, "Test Plugin", true);
+        assertThrows(CommonException.class, () -> pluginService.savePlugin(pluginUploadWindows));
+
 
     }
 
