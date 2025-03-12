@@ -206,6 +206,7 @@
   "alert.notice.type.telegram-bot": "Telegram ボット",
   "alert.notice.type.telegram-bot-token": "Telegram ボットトークン",
   "alert.notice.type.telegram-bot-user-id": "Telegram ユーザーID",
+  "alert.notice.type.telegram-message-thread-id": "Telegram メッセージスレッドID",
   "alert.notice.type.url": "URL",
   "alert.notice.type.userId": "ユーザーID",
   "alert.notice.type.wechat": "Open WeChat",
