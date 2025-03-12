@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.AwsSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
+import org.apache.hertzbeat.alert.util.CryptoUtils;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -35,11 +36,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -132,7 +130,7 @@ public class AwsSmsClientImpl implements SmsClient {
         headers.put("host", SERVICE + "." + this.region + ".amazonaws.com");
         headers.put("x-amz-date", amzDate);
         headers.put("x-amz-target", "PinpointSMSVoiceV2.SendTextMessage");
-        
+
         // Build authorization header using the same headers
         AwsAuthenticationBuilder authBuilder = new AwsAuthenticationBuilder()
                 .credential(this.accessKey, this.secretKey)
@@ -144,7 +142,7 @@ public class AwsSmsClientImpl implements SmsClient {
         HttpPost httpPost = new HttpPost(requestUri);
         httpPost.setHeader("Authorization", authorizationHeader);
         headers.forEach(httpPost::setHeader);
-        
+
         httpPost.setEntity(new StringEntity(payloadInString, ContentType.APPLICATION_JSON));
         return httpPost;
     }
@@ -217,10 +215,10 @@ public class AwsSmsClientImpl implements SmsClient {
             this.service = service;
             this.payload = payload;
             return "%s Credential=%s/%s, SignedHeaders=%s, Signature=%s".formatted(
-                    getAlgorithm(), 
-                    this.accessKey, 
-                    getCredentialScope(), 
-                    getSignedHeaders(), 
+                    getAlgorithm(),
+                    this.accessKey,
+                    getCredentialScope(),
+                    getSignedHeaders(),
                     getSignature()
             );
         }
@@ -241,26 +239,26 @@ public class AwsSmsClientImpl implements SmsClient {
             return getDateTime().substring(0, 8);
         }
 
-        private String getSignature() throws Exception {
+        private String getSignature() {
             String canonicalRequest = getCanonicalRequest();
-            String stringToSign = String.join("\n", 
+            String stringToSign = String.join("\n",
                     getAlgorithm(),
                     getDateTime(),
                     getCredentialScope(),
-                    sha256Hash(canonicalRequest));
-            
+                    CryptoUtils.sha256Hex(canonicalRequest));
+
             byte[] signingKey = getSignatureKey(secretKey, getDateStamp(), region, service);
-            return bytesToHex(hmacSha256(signingKey, stringToSign));
+            return CryptoUtils.hmacSha256Hex(signingKey, stringToSign);
         }
 
-        private String getCanonicalRequest() throws Exception {
-            return String.join("\n", 
+        private String getCanonicalRequest() {
+            return String.join("\n",
                     method,
                     requestUri.getPath(),
                     requestUri.getQuery() != null ? requestUri.getQuery() : "",
                     getCanonicalHeaders(),
                     getSignedHeaders(),
-                    sha256Hash(payload)
+                    CryptoUtils.sha256Hex(payload)
             );
         }
 
@@ -274,38 +272,15 @@ public class AwsSmsClientImpl implements SmsClient {
             return "AWS4-HMAC-SHA256";
         }
 
-        private String sha256Hash(String text) throws Exception {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(text.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hash);
-        }
-
-        private byte[] hmacSha256(byte[] key, String data) throws Exception {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(key, "HmacSHA256");
-            mac.init(secretKeySpec);
-            return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-        }
-
-        private byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) throws Exception {
+        private byte[] getSignatureKey(String key, String dateStamp, String regionName, String serviceName) {
             byte[] secret = ("AWS4" + key).getBytes(StandardCharsets.UTF_8);
-            byte[] date = hmacSha256(secret, dateStamp);
-            byte[] region = hmacSha256(date, regionName);
-            byte[] service = hmacSha256(region, serviceName);
-            return hmacSha256(service, "aws4_request");
+            byte[] date = CryptoUtils.hmac256(secret, dateStamp);
+            byte[] region = CryptoUtils.hmac256(date, regionName);
+            byte[] service = CryptoUtils.hmac256(region, serviceName);
+            return CryptoUtils.hmac256(service, "aws4_request");
         }
 
-        private String bytesToHex(byte[] bytes) {
-            StringBuilder hexString = new StringBuilder(2 * bytes.length);
-            for (byte b : bytes) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        }
+
     }
 }
 
