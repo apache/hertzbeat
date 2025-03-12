@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * SkyWalking Alert Content Entity
- * @see <a href="https://skywalking.apache.org/docs/main/next/en/setup/backend/backend-alarm/#webhook">backend-alarm</a>
+ * @see <a href="https://skywalking.apache.org/docs/main/latest/en/setup/backend/backend-alarm/">backend-alarm</a>
  */
 @Data
 @Builder
