@@ -12,7 +12,7 @@
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
-[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
+[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
@@ -507,6 +507,9 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/myangle1120"><img src="https://avatars.githubusercontent.com/u/19237013?v=4?s=100" width="100px;" alt="myangle1120"/><br /><sub><b>myangle1120</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=myangle1120" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yasminvo"><img src="https://avatars.githubusercontent.com/u/107528848?v=4?s=100" width="100px;" alt="yasminvo"/><br /><sub><b>yasminvo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yasminvo" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/notbugggg"><img src="https://avatars.githubusercontent.com/u/147966331?v=4?s=100" width="100px;" alt="不关银渐层的事哦"/><br /><sub><b>不关银渐层的事哦</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=notbugggg" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yyahang"><img src="https://avatars.githubusercontent.com/u/90464876?v=4?s=100" width="100px;" alt="yyahang"/><br /><sub><b>yyahang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yyahang" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -534,7 +537,7 @@ WeChat Public : Search ID `usthecom`.
 
 [Reddit Community](https://www.reddit.com/r/hertzbeat/)
 
-[Follow Us Twitter](https://twitter.com/hertzbeat1024)
+[Follow Us Twitter](https://x.com/hertzbeat1024)
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 

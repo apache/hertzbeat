@@ -18,6 +18,7 @@
  */
 
 import { AlibabaSmsConfig } from './AlibabaSmsConfig';
+import { SmslocalSmsConfig } from './SmslocalSmsConfig';
 import { TencentSmsConfig } from './TencentSmsConfig';
 import { UniSmsConfig } from './UniSmsConfig';
 import { SmsType } from './enums/sms-type.enum';
@@ -28,6 +29,7 @@ export class SmsNoticeSender {
   tencent: TencentSmsConfig = new TencentSmsConfig();
   alibaba: AlibabaSmsConfig = new AlibabaSmsConfig();
   unisms: UniSmsConfig = new UniSmsConfig();
+  smslocal: SmslocalSmsConfig = new SmslocalSmsConfig();
   enable: boolean = false;
   creator!: string;
   modifier!: string;

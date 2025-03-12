@@ -23,10 +23,13 @@ package org.apache.hertzbeat.common.constants;
 public interface SmsConstants {
     // Tencent cloud SMS
     String TENCENT = "tencent";
-    
+
     // Alibaba Cloud SMS
     String ALIBABA = "alibaba";
-    
+
     // UniSMS
     String UNISMS = "unisms";
+
+    // Smslocal SMS
+    String SMSLOCAL = "smslocal";
 }
