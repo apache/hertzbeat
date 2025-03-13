@@ -89,7 +89,18 @@ public class CryptoUtils {
      * @return lowercase hexadecimal string
      */
     public static String hmacSha256Hex(String key, String data) {
-        byte[] hmacResult = hmac256(key.getBytes(UTF8), data);
+        return hmacSha256Hex(hmac256(key.getBytes(UTF8), data), data);
+    }
+
+    /**
+     * Calculate HMAC-SHA256 signature and convert to lowercase hexadecimal string
+     * Note: This is necessary as, converting a String to byte[] and back may yield different results due to encoding differences or data loss.
+     * @param key secret key in byte array
+     * @param data data to be signed
+     * @return lowercase hexadecimal string
+     */
+    public static String hmacSha256Hex(byte[] key, String data) {
+        byte[] hmacResult = hmac256(key, data);
         return DatatypeConverter.printHexBinary(hmacResult).toLowerCase();
     }
 } 

@@ -159,6 +159,7 @@
             <nz-option [nzValue]="SmsType.ALIBABA" nzLabel="{{ 'alert.notice.sender.sms.type.alibaba' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.UNISMS" nzLabel="{{ 'alert.notice.sender.sms.type.unisms' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.SMSLOCAL" nzLabel="{{ 'alert.notice.sender.sms.type.smslocal' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.AWS" nzLabel="{{ 'alert.notice.sender.sms.type.aws' | i18n }}"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -336,6 +337,42 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
+
+      <!-- AWS SMS -->
+      <ng-container *ngIf="smsType === SmsType.AWS">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
+            {{ 'alert.notice.sender.sms.aws.accessKeyId' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.aws.accessKeyId" nz-input required name="accessKeyId" type="password" id="awsAccessKeyId" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accessKeySecret" nzRequired="true">
+            {{ 'alert.notice.sender.sms.aws.accessKeySecret' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.aws.accessKeySecret"
+              nz-input
+              required
+              name="accessKeySecret"
+              type="password"
+              id="awsAccessKeySecret"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="region" nzRequired="true">
+            {{ 'alert.notice.sender.sms.aws.region' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.aws.region" nz-input required name="region" type="text" id="awsRegion" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
+
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="smsEnable" nzRequired="true">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
