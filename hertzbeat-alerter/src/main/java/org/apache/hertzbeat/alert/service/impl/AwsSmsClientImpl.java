@@ -107,7 +107,7 @@ public class AwsSmsClientImpl implements SmsClient {
 
         Instant now = Instant.now();
         String amzDate = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC).format(now);
-        String endpoint = "https://" + SERVICE + "." + region + ".amazonaws.com/?";
+        String endpoint = "https://" + SERVICE + "." + region + ".amazonaws.com";
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             String payloadInString = new ObjectMapper().writeValueAsString(payload);
@@ -254,7 +254,7 @@ public class AwsSmsClientImpl implements SmsClient {
         private String getCanonicalRequest() {
             return String.join("\n",
                     method,
-                    requestUri.getPath(),
+                    requestUri.getPath().isEmpty() ? "/" : requestUri.getPath(),
                     requestUri.getQuery() != null ? requestUri.getQuery() : "",
                     getCanonicalHeaders(),
                     getSignedHeaders(),
