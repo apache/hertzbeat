@@ -35,18 +35,18 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'common.button.new' | i18n }}
     </button>
-    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+    <button *ngIf="currentBulletin" nz-button nz-dropdown [nzDropdownMenu]="more_menu">
       <span nz-icon nzType="ellipsis"></span>
     </button>
     <nz-dropdown-menu #more_menu="nzDropdownMenu">
       <ul nz-menu>
-        <li *ngIf="currentBulletin" nz-menu-item>
+        <li nz-menu-item>
           <button nz-button nzDanger (click)="onDeleteBulletinDefines()">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
             {{ 'common.button.delete' | i18n }}
           </button>
         </li>
-        <li *ngIf="currentBulletin" nz-menu-item>
+        <li nz-menu-item>
           <button nz-button nzDanger (click)="onBatchDeleteBulletinDefines()">
             <i nz-icon nzType="delete" nzTheme="outline"></i>
             {{ 'bulletin.batch.delete' | i18n }}
