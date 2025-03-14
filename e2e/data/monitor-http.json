@@ -73,6 +73,11 @@
       "field": "successCode",
       "type": 4,
       "paramValue": "200, 201"
+    },
+    {
+      "field": "enableUrlEncoding",
+      "type": 1,
+      "paramValue": true
     }
   ]
 }
