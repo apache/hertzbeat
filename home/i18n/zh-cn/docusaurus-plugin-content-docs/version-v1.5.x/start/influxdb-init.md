@@ -15,7 +15,7 @@ InfluxDB是一个由InfluxData开发的开源时序型数据库，专注于海�
 
 ### 1. 直接使用华为云服务 GaussDB For Influx
 
-> 开通使用[华为云云数据库 GaussDB For Influx](https://www.huaweicloud.com/product/gaussdbforinflux.html)
+> 开通使用[华为云云数据库 GaussDB For Influx](https://www.huaweicloud.com/intl/zh-cn/product/gaussdb.html)
 >
 > 获取云数据库对外暴露连接地址，账户密码即可
 
