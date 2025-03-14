@@ -135,6 +135,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
+                .host("localhost")
                 .build();
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
@@ -157,6 +158,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
+                .host("localhost")
                 .build();
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
@@ -179,6 +181,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
+                .host("localhost")
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
@@ -194,6 +197,7 @@ class MonitorServiceTest {
         Monitor monitor = Monitor.builder()
                 .intervals(1)
                 .name("memory")
+                .host("localhost")
                 .app("demoApp")
                 .build();
         Job job = new Job();
@@ -733,6 +737,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
+                .host("localhost")
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
