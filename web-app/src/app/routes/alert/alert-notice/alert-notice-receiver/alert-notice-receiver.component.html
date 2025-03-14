@@ -344,6 +344,12 @@
           <input [(ngModel)]="receiver.tgUserId" [required]="receiver.type === 7" name="tgUserId" nz-input type="text" />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 7">
+        <nz-form-label [nzSpan]="7" nzFor="tgMessageThreadId">{{ 'alert.notice.type.telegram-message-thread-id' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.tgMessageThreadId" name="tgMessageThreadId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 8">
         <nz-form-label [nzRequired]="receiver.type === 8" [nzSpan]="7" nzFor="slackWebHookUrl"
           >{{ 'alert.notice.type.slack-webHook-url' | i18n }}

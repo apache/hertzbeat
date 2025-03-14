@@ -122,6 +122,11 @@ public class NoticeReceiver {
             example = "779294123", accessMode = READ_WRITE)
     private String tgUserId;
 
+    @Schema(title = "Telegram message thread id: The notification method is valid for Telegram Bot",
+            description = "TTelegram message thread id: The notification method is valid for Telegram Bot",
+            example = "779294123", accessMode = READ_WRITE)
+    private String tgMessageThreadId;
+
     @Schema(title = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
             description = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
             example = "779294123", accessMode = READ_WRITE)

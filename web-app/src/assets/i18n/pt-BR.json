@@ -305,6 +305,7 @@
     "alert.notice.type.telegram-bot": "Bot do Telegram",
     "alert.notice.type.telegram-bot-token": "Token do Bot do Telegram",
     "alert.notice.type.telegram-bot-user-id": "ID do Usuário do Telegram",
+    "alert.notice.type.telegram-message-thread-id": "ID da Thread do Telegram",
     "alert.notice.type.slack": "WebHook do Slack",
     "alert.notice.type.slack-webHook-url": "URL do WebHook do Slack",
     "alert.notice.type.discord": "Bot do Discord",
