@@ -14,7 +14,7 @@ Note⚠️ Need InfluxDB 1.x Version.
 
 ### 1. Use HuaweiCloud GaussDB For Influx
 
-> Use [HuaweiCloud GaussDB For Influx](https://www.huaweicloud.com/product/gaussdbforinflux.html)
+> Use [HuaweiCloud GaussDB For Influx](https://www.huaweicloud.com/intl/en-us/product/gaussdb.html)
 >
 > Get the `GaussDB For Influx` service url, username and password config.
 
