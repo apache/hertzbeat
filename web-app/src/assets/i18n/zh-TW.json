@@ -97,6 +97,7 @@
   "alert.integration.source.prometheus": "Prometheus",
   "alert.integration.source.tencent": "腾讯云监控",
   "alert.integration.source.webhook": "默认Webhook",
+  "alert.integration.source.skywalking": "SkyWalking",
   "alert.integration.token.desc": "生成的 Token 可用于访问 HertzBeat API",
   "alert.integration.token.new": "点击生成 Token",
   "alert.integration.token.notice": "此内容只会展示一次，请妥善保管您的 Token，不要泄露给他人",
