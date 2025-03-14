@@ -1,0 +1,43 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<div class="container">
+  <div *ngFor="let obj of value; let i = index" class="row">
+    <ng-container *ngFor="let cfg of configs">
+      <app-multi-func-input
+        [style]="cfg.style"
+        [name]="(name || '') + '-' + i + '-' + cfg.key"
+        [id]="(id || '') + '-' + i + '-' + cfg.key"
+        [required]="cfg.required ?? false"
+        [placeholder]="cfg.placeholder ?? ''"
+        [(value)]="value[i][cfg.key]"
+        (valueChange)="onChange(i, cfg.key, $event)"
+      />
+      <span *ngIf="cfg.separatorAfter" class="separator">{{ cfg.separatorAfter }}</span>
+    </ng-container>
+    <div class="btns">
+      <button nz-button nzSize="small" *ngIf="value.length > 1" (click)="del(i, $event)">
+        <i nz-icon nzType="minus" nzTheme="outline"></i>
+      </button>
+      <button nz-button nzSize="small" (click)="add($event)">
+        <i nz-icon nzType="plus" nzTheme="outline"></i>
+      </button>
+    </div>
+  </div>
+</div>

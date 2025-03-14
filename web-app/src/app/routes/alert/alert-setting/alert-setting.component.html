@@ -538,7 +538,14 @@
       <nz-form-item>
         <nz-form-label nzSpan="7" [nzFor]="'labels'" [nzTooltipTitle]="'label.bind.tip' | i18n">{{ 'label.bind' | i18n }} </nz-form-label>
         <nz-form-control nzSpan="12">
-          <app-labels-input [(ngModel)]="define.labels" name="labels"></app-labels-input>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels'
+            }"
+            [name]="'labels'"
+            [(ngModel)]="define.labels"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -546,7 +553,14 @@
           >{{ 'common.annotation.bind' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="12">
-          <app-labels-input [(ngModel)]="define.annotations" name="annotations"></app-labels-input>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels'
+            }"
+            [name]="'annotations'"
+            [(ngModel)]="define.annotations"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>

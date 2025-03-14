@@ -179,7 +179,15 @@
       <nz-form-item *ngIf="!silence.matchAll">
         <nz-form-label nzSpan="7" nzFor="labels" nzRequired="true">{{ 'alert.silence.labels' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
-          <app-labels-input [(ngModel)]="silence.labels" name="labels" required></app-labels-input>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels',
+              required: true
+            }"
+            [name]="'labels'"
+            [(ngModel)]="silence.labels"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
