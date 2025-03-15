@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.config;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -27,16 +28,19 @@ public class AwsSmsProperties {
     /**
      * AWS Cloud access key id
      */
+    @NotBlank(message = "AccessKeyId cannot be empty")
     private String accessKeyId;
 
     /**
      * AWS Cloud access key secret
      */
+    @NotBlank(message = "AccessKeySecret cannot be empty")
     private String accessKeySecret;
 
     /**
      * AWS Cloud region
      */
+    @NotBlank(message = "region cannot be empty")
     private String region;
 
 }

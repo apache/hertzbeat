@@ -17,16 +17,22 @@
 
 package org.apache.hertzbeat.alert.config;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * UniSMS properties
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UniSmsProperties {
     /**
      * UniSMS access key id
      */
+    @NotBlank(message = "accessKeyId cannot be empty")
     private String accessKeyId;
     
     /**
@@ -37,15 +43,18 @@ public class UniSmsProperties {
     /**
      * SMS signature
      */
+    @NotBlank(message = "signature cannot be null")
     private String signature;
     
     /**
      * SMS template ID
      */
+    @NotBlank(message = "templateId cannot be null")
     private String templateId;
     
     /**
      * Authentication mode: simple or hmac, default is simple
      */
+    @NotBlank(message = "authMode cannot be null")
     private String authMode = "simple";
 } 
