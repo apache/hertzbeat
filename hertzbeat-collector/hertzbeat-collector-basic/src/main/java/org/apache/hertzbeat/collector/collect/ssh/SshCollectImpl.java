@@ -79,11 +79,12 @@ public class SshCollectImpl extends AbstractCollect {
         long startTime = System.currentTimeMillis();
         SshProtocol sshProtocol = metrics.getSsh();
         boolean reuseConnection = Boolean.parseBoolean(sshProtocol.getReuseConnection());
+        boolean useProxy = Boolean.parseBoolean(sshProtocol.getUseProxy());
         int timeout = CollectUtil.getTimeout(sshProtocol.getTimeout(), DEFAULT_TIMEOUT);
         ClientChannel channel = null;
         ClientSession clientSession = null;
         try {
-            clientSession = getConnectSession(sshProtocol, timeout, reuseConnection);
+            clientSession = getConnectSession(sshProtocol, timeout, reuseConnection, useProxy);
             if (CommonSshBlacklist.isCommandBlacklisted(sshProtocol.getScript())) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("The command is blacklisted: " + sshProtocol.getScript());
@@ -156,7 +157,7 @@ public class SshCollectImpl extends AbstractCollect {
                     log.error(e.getMessage(), e);
                 }
             }
-            if (clientSession != null && !reuseConnection) {
+            if (clientSession != null && !reuseConnection && !useProxy) {
                 try {
                     clientSession.close();
                 } catch (Exception e) {
@@ -280,11 +281,8 @@ public class SshCollectImpl extends AbstractCollect {
         connectionCommonCache.removeCache(identifier);
     }
 
-    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection)
+    private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection, boolean useProxy)
             throws IOException, GeneralSecurityException {
-        return SshHelper.getConnectSession(
-            sshProtocol.getHost(), sshProtocol.getPort(), sshProtocol.getUsername(), sshProtocol.getPassword(),
-            sshProtocol.getPrivateKey(), sshProtocol.getPrivateKeyPassphrase(), timeout, reuseConnection
-        );
+        return SshHelper.getConnectSession(sshProtocol, timeout, reuseConnection, useProxy);
     }
 }
