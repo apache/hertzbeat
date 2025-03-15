@@ -305,7 +305,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         Map<String, String> labels = new HashMap<>(8);
         labels.put(CommonConstants.LABEL_INSTANCE, "1000000");
         labels.put(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert");
-        labels.put(CommonConstants.LABEL_HOST, "127.0.0.1");
+        labels.put(CommonConstants.LABEL_INSTANCE_HOST, "127.0.0.1");
         Map<String, String> annotations = new HashMap<>(8);
         annotations.put("suggest", "Please check the CPU usage of the server");
         SingleAlert singleAlert1 = SingleAlert.builder()

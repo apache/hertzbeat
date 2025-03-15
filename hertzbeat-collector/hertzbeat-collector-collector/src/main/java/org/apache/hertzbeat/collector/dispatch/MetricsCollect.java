@@ -76,6 +76,18 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      */
     protected Metrics metrics;
     /**
+     * metadata
+     */
+    protected Map<String, String> metadata;
+    /**
+     * labels
+     */
+    protected Map<String, String> labels;
+    /**
+     * annotations
+     */
+    protected Map<String, String> annotations;
+    /**
      * time wheel timeout
      */
     protected Timeout timeout;
@@ -119,6 +131,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.id = job.getMonitorId();
         this.tenantId = job.getTenantId();
         this.app = job.getApp();
+        this.metadata = job.getMetadata();
+        this.labels = job.getLabels();
+        this.annotations = job.getAnnotations();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
         this.isSd = job.isSd();
@@ -136,9 +151,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.startTime = System.currentTimeMillis();
         setNewThreadName(id, app, startTime, metrics);
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
-        response.setApp(app);
-        response.setId(id);
-        response.setTenantId(tenantId);
+        response.setApp(app).setId(id).setTenantId(tenantId)
+                .setLabels(labels).setAnnotations(annotations).addMetadataAll(metadata);
         // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
             List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
