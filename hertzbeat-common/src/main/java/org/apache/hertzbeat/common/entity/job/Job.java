@@ -62,6 +62,19 @@ public class Job {
      */
     private long monitorId;
     /**
+     * metadata info bind with this job
+     * eg: instancename, instancehost
+     */
+    private Map<String, String> metadata;
+    /**
+     * bind labels 
+     */
+    private Map<String, String> labels;
+    /**
+     * bind annotations
+     */
+    private Map<String, String> annotations;
+    /**
      * Is hide this app in main menus layout, only for app type, default true.
      */
     private boolean hide = true;

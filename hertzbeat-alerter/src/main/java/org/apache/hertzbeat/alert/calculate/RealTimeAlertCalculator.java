@@ -55,6 +55,8 @@ public class RealTimeAlertCalculator {
     private static final int CALCULATE_THREADS = 3;
     
     private static final String KEY_INSTANCE = "__instance__";
+    private static final String KEY_INSTANCE_NAME = "__instancename__";
+    private static final String KEY_INSTANCE_HOST = "__instancehost__";
     private static final String KEY_APP = "__app__";
     private static final String KEY_METRICS = "__metrics__";
     private static final String KEY_PRIORITY = "__priority__";
@@ -125,10 +127,14 @@ public class RealTimeAlertCalculator {
     private void calculate(CollectRep.MetricsData metricsData) {
         long currentTimeMilli = System.currentTimeMillis();
         String instance = String.valueOf(metricsData.getId());
+        String instanceName = metricsData.getInstanceName();
+        String instanceHost = metricsData.getInstanceHost();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
         int priority = metricsData.getPriority();
         int code = metricsData.getCode().getNumber();
+        Map<String, String> labels = metricsData.getLabels();
+        Map<String, String> annotations = metricsData.getAnnotations();
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
         // Filter thresholds by app, metrics and instance
         thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance, priority);
@@ -137,12 +143,17 @@ public class RealTimeAlertCalculator {
         }
         Map<String, Object> commonContext = new HashMap<>(8);
         commonContext.put(KEY_INSTANCE, instance);
+        commonContext.put(KEY_INSTANCE_NAME, instanceName);
+        commonContext.put(KEY_INSTANCE_HOST, instanceHost);
         commonContext.put(KEY_APP, app);
         commonContext.put(KEY_PRIORITY, priority);
         commonContext.put(KEY_CODE, code);
         commonContext.put(KEY_METRICS, metrics);
         if (priority == 0) {
             commonContext.put(KEY_AVAILABLE, metricsData.getCode() == CollectRep.Code.SUCCESS ? UP : DOWN);
+        }
+        if (labels != null) {
+            commonContext.putAll(labels);
         }
         List<CollectRep.Field> fields = metricsData.getFields();
         Map<String, Object> fieldValueMap = new HashMap<>(8);
@@ -160,21 +171,26 @@ public class RealTimeAlertCalculator {
             if (StringUtils.isBlank(expr)) {
                 continue;
             }
+            Map<String, String> commonFingerPrints = new HashMap<>(8);
+            commonFingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
+            // here use the alert name as finger, not care the alert name may be changed
+            commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
+            commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_NAME, instanceName);
+            commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_HOST, instanceHost);
+            commonFingerPrints.putAll(define.getLabels());
+            if (labels != null) {
+                commonFingerPrints.putAll(labels);
+            }
             {
                 // trigger the expr before the metrics data, due the available up down or others
                 try {
                     boolean match = execAlertExpression(fieldValueMap, expr, true);
                     try {
-                        Map<String, String> fingerPrints = new HashMap<>(8);
-                        fingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
-                        // here use the alert name as finger, not care the alert name may be changed
-                        fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
-                        fingerPrints.putAll(define.getLabels());
                         if (match) {
                             // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                            afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define);
+                            afterThresholdRuleMatch(currentTimeMilli, commonFingerPrints, fieldValueMap, define, annotations);
                         } else {
-                            handleRecoveredAlert(fingerPrints);
+                            handleRecoveredAlert(commonFingerPrints);
                         }
                         // if this threshold pre compile success, ignore blew
                         continue;
@@ -192,9 +208,7 @@ public class RealTimeAlertCalculator {
                 fieldValueMap.put(KEY_ROW, valueRowCount);
                 fieldValueMap.putAll(commonContext);
                 fingerPrints.clear();
-                fingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
-                fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
-                fingerPrints.putAll(define.getLabels());
+                fingerPrints.putAll(commonFingerPrints);
                 for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
                     String valueStr = valueRow.getColumns(index);
                     if (CommonConstants.NULL_VALUE.equals(valueStr)) {
@@ -228,7 +242,7 @@ public class RealTimeAlertCalculator {
                     boolean match = execAlertExpression(fieldValueMap, expr, false);
                     try {
                         if (match) {
-                            afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define);
+                            afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define, annotations);
                         } else {
                             handleRecoveredAlert(fingerPrints);
                         }
@@ -311,20 +325,31 @@ public class RealTimeAlertCalculator {
         pendingAlertMap.remove(fingerprint);
     }
 
-    private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints, 
-                                         Map<String, Object> fieldValueMap, AlertDefine define) {
+    private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
+                                         Map<String, Object> fieldValueMap, AlertDefine define, Map<String, String> annotations) {
         String fingerprint = calculateFingerprint(fingerPrints);
         SingleAlert existingAlert = pendingAlertMap.get(fingerprint);
-        Map<String, String> labels = new HashMap<>(8);
         fieldValueMap.putAll(define.getLabels());
-        labels.putAll(fingerPrints);
         int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
         if (existingAlert == null) {
             // First time triggering alert, create new alert and set to pending status
+            Map<String, String> alertLabels = new HashMap<>(8);
+            alertLabels.putAll(fingerPrints);
+            Map<String, String> alertAnnotations = new HashMap<>(8);
+            if (annotations != null) {
+                alertAnnotations.putAll(annotations);
+            }
+            if (define.getAnnotations() != null) {
+                alertAnnotations.putAll(define.getAnnotations());
+            }
+            // render var content in annotations
+            for (Map.Entry<String, String> entry : alertAnnotations.entrySet()) {
+                entry.setValue(AlertTemplateUtil.render(entry.getValue(), fieldValueMap));
+            }
             SingleAlert newAlert = SingleAlert.builder()
-                    .labels(labels)
-                    // todo render var content in annotations
-                    .annotations(define.getAnnotations())
+                    .labels(alertLabels)
+                    .annotations(alertAnnotations)
+                    // render var content in content
                     .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                     .status(CommonConstants.ALERT_STATUS_PENDING)
                     .triggerTimes(1) 
