@@ -118,11 +118,11 @@ public class TencentCloudExternAlert {
     /**
      * Transaction alarm
      */
-    private static final String EVENT = "event";
+    public static final String EVENT = "event";
 
     /**
      * Indicator alarm
      */
-    private static final String METRIC = "metric";
+    public static final String METRIC = "metric";
 
 }
