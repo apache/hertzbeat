@@ -120,7 +120,11 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
-
+                Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                appDefine.setMetadata(metadata);
+                appDefine.setLabels(monitor.getLabels());
+                appDefine.setAnnotations(monitor.getAnnotations());
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());
