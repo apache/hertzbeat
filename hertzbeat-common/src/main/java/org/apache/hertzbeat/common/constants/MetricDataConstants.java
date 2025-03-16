@@ -27,12 +27,16 @@ public interface MetricDataConstants {
     String UNIT = "unit";
 
     // key in Schema metadata
-    String MONITOR_ID = "id";
+    String ID = "id";
     String TENANT_ID = "tenantId";
     String APP = "app";
     String METRICS = "metrics";
+    String LABELS = "labels";
+    String ANNOTATIONS = "annotations";
     String PRIORITY = "priority";
     String TIME = "time";
     String CODE = "code";
     String MSG = "msg";
+    String INSTANCE_NAME = "instancename";
+    String INSTANCE_HOST = "instancehost";
 }
