@@ -62,6 +62,19 @@ public class Job {
      */
     private long monitorId;
     /**
+     * metadata info bind with this job
+     * eg: instancename, instancehost
+     */
+    private Map<String, String> metadata;
+    /**
+     * bind labels 
+     */
+    private Map<String, String> labels;
+    /**
+     * bind annotations
+     */
+    private Map<String, String> annotations;
+    /**
      * Is hide this app in main menus layout, only for app type, default true.
      */
     private boolean hide = true;
@@ -159,23 +172,36 @@ public class Job {
      * collector use - construct to initialize metrics execution view
      */
     public synchronized void constructPriorMetrics() {
-        Map<Byte, List<Metrics>> map = metrics.stream()
-            .filter(metrics -> (System.currentTimeMillis() >= metrics.getCollectTime() + metrics.getInterval() * 1000))
-            .peek(metric -> {
-                metric.setCollectTime(System.currentTimeMillis());
-                // Determine whether to configure aliasFields If not, configure the default
-                if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
-                    metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
-                }
-                // Set the default metrics execution priority, if not filled, the default last priority
-                if (metric.getPriority() == null) {
-                    metric.setPriority(Byte.MAX_VALUE);
-                }
-            })
-            .collect(Collectors.groupingBy(Metrics::getPriority));
+        long now = System.currentTimeMillis();
+        Map<Byte, List<Metrics>> currentCollectMetrics = metrics.stream()
+                .filter(metrics -> (now >= metrics.getCollectTime() + metrics.getInterval() * 1000))
+                .peek(metric -> {
+                    metric.setCollectTime(now);
+                    // Determine whether to configure aliasFields If not, configure the default
+                    if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
+                        metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
+                    }
+                    // Set the default metrics execution priority, if not filled, the default last priority
+                    if (metric.getPriority() == null) {
+                        metric.setPriority(Byte.MAX_VALUE);
+                    }
+                })
+                .collect(Collectors.groupingBy(Metrics::getPriority));
+        // the current collect metrics can not empty, if empty, add a default availability metrics
+        // due the metric collect is trigger by the previous metric collect
+        if (currentCollectMetrics.isEmpty()) {
+            Optional<Metrics> defaultMetricOption = metrics.stream().filter(metric -> metric.getPriority() == 0).findFirst();
+            if (defaultMetricOption.isPresent()) {
+                Metrics defaultMetric = defaultMetricOption.get();
+                defaultMetric.setCollectTime(now);
+                currentCollectMetrics.put((byte) 0, Collections.singletonList(defaultMetric));
+            } else {
+                log.error("metrics must has one priority 0 metrics at least.");
+            }
+        }
         // Construct a linked list of task execution order of the metrics
         priorMetrics = new LinkedList<>();
-        map.values().forEach(metric -> {
+        currentCollectMetrics.values().forEach(metric -> {
             Set<Metrics> metricsSet = Collections.synchronizedSet(new HashSet<>(metric));
             priorMetrics.add(metricsSet);
         });
@@ -260,7 +286,7 @@ public class Job {
     public void initIntervals() {
         List<Long> metricsIntervals = new LinkedList<>();
         for (Metrics metrics: getMetrics()) {
-            metrics.setCollectTime(System.currentTimeMillis());
+            metrics.setCollectTime(0L);
             if (metrics.getInterval() <= 0) {
                 metrics.setInterval(defaultInterval);
             }
@@ -287,10 +313,10 @@ public class Job {
      * The least common multiple
      */
     public static long lcm(List<Long> array) {
-        if (array != null) {
+        if (array != null && !array.isEmpty()) {
             long result = array.get(0);
             for (int i = 1; i < array.size(); i++) {
-                result = (result * array.get(i)) / gcd(result, array.get(i));
+                result = result / gcd(result, array.get(i)) * array.get(i);
             }
             return result;
         }
