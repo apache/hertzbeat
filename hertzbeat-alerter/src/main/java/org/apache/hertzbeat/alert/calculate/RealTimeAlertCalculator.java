@@ -308,7 +308,7 @@ public class RealTimeAlertCalculator {
         alarmCacheManager.removePending(fingerprint);
     }
 
-    private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints, 
+    private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
                                          Map<String, Object> fieldValueMap, AlertDefine define, Map<String, String> annotations) {
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
         SingleAlert existingAlert = alarmCacheManager.getPending(fingerprint);
