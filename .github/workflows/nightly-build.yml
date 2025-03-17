@@ -42,7 +42,7 @@ jobs:
       run: |
         mvn clean install
         mvn clean package -Prelease -DskipTests
-        cd collector
+        cd hertzbeat-collector
         mvn clean package -Pcluster -DskipTests
 
     - uses: docker/setup-qemu-action@v3
