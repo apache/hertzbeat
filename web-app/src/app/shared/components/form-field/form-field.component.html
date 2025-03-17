@@ -89,23 +89,70 @@
   </label>
 </nz-radio-group>
 
-<app-key-value-input
-  *ngIf="item.type === 'key-value'"
+<app-configurable-field
+  *ngIf="item.type === 'labels'"
   [(ngModel)]="value"
   (ngModelChange)="onChange($event)"
-  [keyAlias]="'monitor.headerName.tip' | i18n"
-  [valueAlias]="'monitor.headerValue.tip' | i18n"
+  [configs]="[
+    {
+      key: 'key',
+      required: true,
+      separatorAfter: ':',
+      placeholder: 'placeholder.key' | i18n
+    },
+    {
+      key: 'value',
+      required: true,
+      placeholder: 'placeholder.value' | i18n
+    }
+  ]"
   [name]="item.field"
   [id]="item.field"
 />
 
-<app-metrics-field-input
+<app-configurable-field
+  *ngIf="item.type === 'key-value'"
+  [(ngModel)]="value"
+  (ngModelChange)="onChange($event)"
+  [configs]="[
+    {
+      key: 'key',
+      required: true,
+      placeholder: 'monitor.headerName.tip' | i18n
+    },
+    {
+      key: 'value',
+      required: true,
+      placeholder: 'monitor.headerValue.tip' | i18n
+    }
+  ]"
+  [name]="item.field"
+  [id]="item.field"
+/>
+
+<app-configurable-field
   *ngIf="item.type === 'metrics-field'"
-  [(value)]="value"
-  (valueChange)="onChange($event)"
-  [FieldAlias]="'Field'"
-  [UnitAlias]="'Unit'"
-  [TypeAlias]="'Type'"
+  [(ngModel)]="value"
+  (ngModelChange)="onChange($event)"
+  [configs]="[
+    {
+      key: 'field',
+      required: true,
+      placeholder: 'Field'
+    },
+    {
+      key: 'unit',
+      required: true,
+      placeholder: 'Unit',
+      style: 'flex: 0; flex-basis: min-content; min-width: 50px'
+    },
+    {
+      key: 'type',
+      required: true,
+      placeholder: 'Type'
+    }
+  ]"
+  [name]="item.field"
   [id]="item.field"
 />
 

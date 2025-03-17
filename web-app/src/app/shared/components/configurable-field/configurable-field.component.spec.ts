@@ -19,20 +19,20 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { KeyValueInputComponent } from './key-value-input.component';
+import { ConfigurableFieldComponent } from './configurable-field.component';
 
-describe('KeyValueInputComponent', () => {
-  let component: KeyValueInputComponent;
-  let fixture: ComponentFixture<KeyValueInputComponent>;
+describe('ConfigurableFieldComponent', () => {
+  let component: ConfigurableFieldComponent;
+  let fixture: ComponentFixture<ConfigurableFieldComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [KeyValueInputComponent]
+      declarations: [ConfigurableFieldComponent]
     }).compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(KeyValueInputComponent);
+    fixture = TestBed.createComponent(ConfigurableFieldComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

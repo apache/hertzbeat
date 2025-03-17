@@ -17,8 +17,10 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
+
+import { ConfigurableFieldComponent } from '../configurable-field/configurable-field.component';
 
 @Component({
   selector: 'app-form-field',
@@ -41,15 +43,39 @@ export class FormFieldComponent implements ControlValueAccessor, Validator {
   constructor() {}
   @Input() item!: any;
   @Input() extra: any = {};
+  @ViewChild(ConfigurableFieldComponent) configurableField: ConfigurableFieldComponent | undefined;
 
   value: any;
-  validateStatus!: string;
 
   _onChange: Function = () => {};
   _onTouched: Function = () => {};
 
   writeValue(value: any): void {
-    this.value = value;
+    if (this.item.type === 'key-value' && value && typeof value === 'string') {
+      // It is compatible with the key-value type data structure of existing data. For the conversion from the old to the new:
+      // Old structure: "{"1":"2","3":"4"}"
+      // New structure: [{key: "1", value: "2"}, {key: "3", value: "4"}]
+      let tmpValue = JSON.parse(value);
+      let newValue = [];
+      for (let k in tmpValue) {
+        newValue[newValue.length] = {
+          key: k,
+          value: tmpValue[k]
+        };
+      }
+      this.value = newValue;
+    } else if (this.item.type === 'labels' && value && !(value instanceof Array)) {
+      // It is compatible with the lables type data structure of existing data. For the conversion from the old to the new:
+      // Old structure: {1:"2", 3:"4"}
+      // New structure: [{key: "1", value: "2"}, {key: "3", value: "4"}]
+      let newValue = Object.entries(value).map(([key, value]) => ({
+        key: String(key),
+        value: String(value)
+      }));
+      this.value = newValue;
+    } else {
+      this.value = value;
+    }
   }
 
   registerOnChange(fn: Function): void {
@@ -63,19 +89,44 @@ export class FormFieldComponent implements ControlValueAccessor, Validator {
   validate(control: AbstractControl): ValidationErrors | null {
     // if (!(control.dirty) && !(control.touched)) return null;
     let { value } = control;
-    if (this.item.required && (value === null || value === undefined || value === '')) {
-      this.validateStatus = 'error';
+    if (
+      this.item.required &&
+      (value === null ||
+        value === undefined ||
+        (typeof value === 'string' && value.trim() === '') ||
+        this.configurableField?.validateStatus === 'error')
+    ) {
       return {
         required: {
           valid: false
         }
       };
     }
-    this.validateStatus = '';
     return null;
   }
 
   onChange(value: any) {
-    this._onChange(value);
+    if (this.item.type === 'key-value' && value) {
+      // It is compatible with the key-value type data structure of existing data. For the conversion from the new to the old:
+      // Old structure: "{"1":"2","3":"4"}"
+      // New structure: [{key: "1", value: "2"}, {key: "3", value: "4"}]
+      const newValue: any = {};
+      value.forEach((item: any) => {
+        newValue[item.key] = item.value;
+      });
+      this._onChange(JSON.stringify(newValue));
+    } else if (this.item.type === 'labels' && value) {
+      // It is compatible with the lables type data structure of existing data. For the conversion from the new to the old:
+      // Old structure: {1:"2", 3:"4"}
+      // New structure: [{key: "1", value: "2"}, {key: "3", value: "4"}]
+      const newValue: any = {};
+      value.forEach((item: any) => {
+        newValue[item.key] = item.value;
+      });
+      this._onChange(newValue);
+    } else {
+      this._onChange(value);
+    }
+    this._onTouched();
   }
 }
