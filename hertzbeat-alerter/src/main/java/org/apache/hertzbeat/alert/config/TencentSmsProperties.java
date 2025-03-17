@@ -17,35 +17,45 @@
 
 package org.apache.hertzbeat.alert.config;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Tencent Cloud SMS properties
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TencentSmsProperties {
     /**
      * Tencent cloud account secret id
      */
+    @NotBlank(message = "SecretId cannot be empty")
     private String secretId;
 
     /**
      * Tencent cloud account secret key
      */
+    @NotBlank(message = "SecretKey cannot be empty")
     private String secretKey;
 
     /**
      * SMS app id
      */
+    @NotBlank(message = "AppId cannot be null")
     private String appId;
 
     /**
      * SMS signature
      */
+    @NotBlank(message = "SignName cannot be empty")
     private String signName;
 
     /**
      * SMS template ID
      */
+    @NotBlank(message = "templateId cannot be null")
     private String templateId;
 }
