@@ -17,7 +17,8 @@
 
 name: 'HertzBeat Doc Pdf Builder'
 on:
-  page_build
+  push:
+    branches: [ page_build* ]
 
 jobs:
   build:

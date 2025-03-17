@@ -19,7 +19,7 @@ name: DOC CI
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master, dev, action* ]
     paths:
       - 'home/**'
   pull_request:
