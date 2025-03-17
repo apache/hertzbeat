@@ -18,6 +18,7 @@
  */
 
 import { AlibabaSmsConfig } from './AlibabaSmsConfig';
+import { AwsSmsConfig } from './AwsSmsConfig';
 import { SmslocalSmsConfig } from './SmslocalSmsConfig';
 import { TencentSmsConfig } from './TencentSmsConfig';
 import { UniSmsConfig } from './UniSmsConfig';
@@ -30,6 +31,7 @@ export class SmsNoticeSender {
   alibaba: AlibabaSmsConfig = new AlibabaSmsConfig();
   unisms: UniSmsConfig = new UniSmsConfig();
   smslocal: SmslocalSmsConfig = new SmslocalSmsConfig();
+  aws: AwsSmsConfig = new AwsSmsConfig();
   enable: boolean = false;
   creator!: string;
   modifier!: string;

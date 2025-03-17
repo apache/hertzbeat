@@ -32,4 +32,7 @@ public interface SmsConstants {
 
     // Smslocal SMS
     String SMSLOCAL = "smslocal";
+
+    // Aws cloud SMS
+    String AWS = "aws";
 }

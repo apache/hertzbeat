@@ -15,26 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.alert.config;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * Alibaba Sms Sender configuration dto
+ * AWS Cloud SMS configuration properties
  */
 @Data
-public class SmsAlibabaConfig {
-    
+public class AwsSmsProperties {
+    /**
+     * AWS Cloud access key id
+     */
     @NotBlank(message = "AccessKeyId cannot be empty")
     private String accessKeyId;
-    
+
+    /**
+     * AWS Cloud access key secret
+     */
     @NotBlank(message = "AccessKeySecret cannot be empty")
     private String accessKeySecret;
 
-    @NotBlank(message = "SignName cannot be empty")
-    private String signName;
+    /**
+     * AWS Cloud region
+     */
+    @NotBlank(message = "region cannot be empty")
+    private String region;
 
-    @NotBlank(message = "TemplateCode cannot be null")
-    private String templateCode;
 }

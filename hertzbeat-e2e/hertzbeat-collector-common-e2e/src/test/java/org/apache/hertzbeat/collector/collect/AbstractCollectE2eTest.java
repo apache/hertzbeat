@@ -72,7 +72,7 @@ public abstract class AbstractCollectE2eTest {
         metricsCollect = new MetricsCollect(mock(Metrics.class), timeout, mock(CollectDataDispatch.class), null, List.of());
 
         // Initialize services and components
-        appService.run();
+        appService.afterPropertiesSet();
         metrics = new Metrics();
     }
 
