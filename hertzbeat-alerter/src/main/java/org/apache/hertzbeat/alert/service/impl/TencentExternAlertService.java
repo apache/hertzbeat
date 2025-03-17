@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -61,12 +60,19 @@ public class TencentExternAlertService implements ExternAlertService {
         return "tencent";
     }
 
-
+    /**
+     * Converter: TencentCloud alert to SingleAlert
+     */
     public static class TencentCloudAlertConverter {
 
-        // 注入消息模板配置
+        /**
+         * Metric alert content template
+         */
         private final String metricTemplate = "Tencent Cloud Metric Alert: {metricShowName} {calcType} {calcValue}{calcUnit}, Current: {currentValue}{unit}";
 
+        /**
+         * Event alert content template
+         */
         private final String eventTemplate = "Tencent Cloud Event Alert: {productShowName} - {eventShowName}";
 
 
@@ -116,23 +122,22 @@ public class TencentExternAlertService implements ExternAlertService {
         }
 
         private void buildAnnotations(Map<String, String> annotations, TencentCloudExternAlert alert) {
-
             TencentCloudExternAlert.AlarmPolicyInfo alarmPolicyInfo = alert.getAlarmPolicyInfo();
             TencentCloudExternAlert.AlarmObjInfo alarmObjInfo = alert.getAlarmObjInfo();
             TencentCloudExternAlert.Dimensions dimensions = alert.getAlarmObjInfo().getDimensions();
 
-            putIfNotNull(annotations,"policy_id",alarmPolicyInfo.getPolicyId());
-            putIfNotNull(annotations,"policy_type",alarmPolicyInfo.getPolicyType());
-            putIfNotNull(annotations,"policy_name",alarmPolicyInfo.getPolicyName());
-            putIfNotNull(annotations,"policy_type_cname",alarmPolicyInfo.getPolicyTypeCname());
+            putIfNotNull(annotations, "policy_id", alarmPolicyInfo.getPolicyId());
+            putIfNotNull(annotations, "policy_type", alarmPolicyInfo.getPolicyType());
+            putIfNotNull(annotations, "policy_name", alarmPolicyInfo.getPolicyName());
+            putIfNotNull(annotations, "policy_type_cname", alarmPolicyInfo.getPolicyTypeCname());
 
-            putIfNotNull(annotations,"namespace",alarmObjInfo.getNamespace());
-            putIfNotNull(annotations,"region",alarmObjInfo.getRegion());
-            putIfNotNull(annotations,"app_id",alarmObjInfo.getAppId());
-            putIfNotNull(annotations,"uin",alarmObjInfo.getUin());
+            putIfNotNull(annotations, "namespace", alarmObjInfo.getNamespace());
+            putIfNotNull(annotations, "region", alarmObjInfo.getRegion());
+            putIfNotNull(annotations, "app_id", alarmObjInfo.getAppId());
+            putIfNotNull(annotations, "uin", alarmObjInfo.getUin());
 
-            putIfNotNull(annotations,"instance_id", dimensions.getUnInstanceId());
-            putIfNotNull(annotations,"obj_id", dimensions.getObjId());
+            putIfNotNull(annotations, "instance_id", dimensions.getUnInstanceId());
+            putIfNotNull(annotations, "obj_id", dimensions.getObjId());
 
         }
 
@@ -194,7 +199,7 @@ public class TencentExternAlertService implements ExternAlertService {
         private String replacePlaceholders(String template, Map<String, String> params) {
             String result = template;
             for (Map.Entry<String, String> entry : params.entrySet()) {
-                result = result.replace("{" + entry.getKey() + "}", Objects.toString(entry.getValue(),"NULL"));
+                result = result.replace("{" + entry.getKey() + "}", Objects.toString(entry.getValue(), "NULL"));
             }
             return result;
         }
@@ -212,9 +217,10 @@ public class TencentExternAlertService implements ExternAlertService {
                 throw new IllegalArgumentException("Failed to parse time: " + timeStr, e);
             }
         }
-        private void putIfNotNull(Map<String,String> map, String key, String value){
-            if(StringUtils.isNotEmpty(value)){
-                map.put(key,value);
+
+        private void putIfNotNull(Map<String, String> map, String key, String value){
+            if (StringUtils.isNotEmpty(value)){
+                map.put(key, value);
             }
         }
     }
