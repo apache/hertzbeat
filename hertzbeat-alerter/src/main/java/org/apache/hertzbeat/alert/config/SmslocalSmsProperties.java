@@ -18,12 +18,16 @@
 package org.apache.hertzbeat.alert.config;
 
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Smslocal SMS Properties
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SmslocalSmsProperties {
     /**
      * SmsLocal account api key

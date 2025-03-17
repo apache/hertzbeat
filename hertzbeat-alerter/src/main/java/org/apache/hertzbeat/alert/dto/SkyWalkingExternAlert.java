@@ -15,33 +15,52 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.alert.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+
 /**
- * Sms Sender configuration dto
+ * SkyWalking Alert Content Entity
+ * @see <a href="https://skywalking.apache.org/docs/main/latest/en/setup/backend/backend-alarm/">backend-alarm</a>
  */
 @Data
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
-public class SmsNoticeSender {
-    
-    @NotBlank(message = "Type cannot be empty")
-    private String type;
-    
-    private SmsTencentConfig tencent;
-    
-    private SmsAlibabaConfig alibaba;
+@NoArgsConstructor
+public class SkyWalkingExternAlert {
 
-    private SmsUniSmsConfig unisms;
+    private Long scopeId;
 
-    private SmslocalConfig smslocal;
+    private String scope;
 
-    private SmsAwsConfig aws;
+    private String name;
 
-    private boolean enable = true;
+    private String id0;
+
+    private String id1;
+
+    private String ruleName;
+
+    private String alarmMessage;
+
+    private Long startTime;
+
+    private List<Tag> tags;
+
+    /**
+     * SkyWalking Tag Entity
+     */
+    @Data
+    public static class Tag {
+
+        private String key;
+
+        private String value;
+    }
 }
