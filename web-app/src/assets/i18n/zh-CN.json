@@ -211,6 +211,7 @@
   "alert.notice.type.telegram-bot": "Telegram机器人",
   "alert.notice.type.telegram-bot-token": "Telegram Bot Token",
   "alert.notice.type.telegram-bot-user-id": "Telegram User Id",
+  "alert.notice.type.telegram-message-thread-id": "Message Thread Id",
   "alert.notice.type.url": "URL地址",
   "alert.notice.type.userId": "用户ID",
   "alert.notice.type.wechat": "微信公众号",
