@@ -183,21 +183,18 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         Job job = timerTask.getJob();
         job.constructPriorMetrics();
         Set<Metrics> metricsSet = job.getNextCollectMetrics(null, true);
-        // Avoid NullPointerException
-        if (null != metricsSet){
-            metricsSet.forEach(metrics -> {
-                MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
-                        collectorIdentity, unitConvertList);
-                jobRequestQueue.addJob(metricsCollect);
-                if (metrics.getPrometheus() != null) {
-                    metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
-                            new MetricsTime(System.currentTimeMillis(), metrics, timeout));
-                } else {
-                    metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                            new MetricsTime(System.currentTimeMillis(), metrics, timeout));
-                }
-            });
-        }
+        metricsSet.forEach(metrics -> {
+            MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
+                    collectorIdentity, unitConvertList);
+            jobRequestQueue.addJob(metricsCollect);
+            if (metrics.getPrometheus() != null) {
+                metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
+                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+            } else {
+                metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
+                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
+            }
+        });
     }
 
     @Override
@@ -237,8 +234,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     long spendTime = System.currentTimeMillis() - job.getDispatchTime();
                     long interval = job.getInterval() - spendTime / 1000;
                     interval = interval <= 0 ? 0 : interval;
-                    // Reset Construction Execution Metrics Task View 
-                    job.constructPriorMetrics();
                     timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
                 }
             } else if (!metricsSet.isEmpty()) {
@@ -335,8 +330,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 long spendTime = System.currentTimeMillis() - job.getDispatchTime();
                 long interval = job.getInterval() - spendTime / 1000;
                 interval = interval <= 0 ? 0 : interval;
-                // Reset Construction Execution Metrics Task View 
-                job.constructPriorMetrics();
                 timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
             }
             // it is an asynchronous periodic cyclic task, directly response the collected data
