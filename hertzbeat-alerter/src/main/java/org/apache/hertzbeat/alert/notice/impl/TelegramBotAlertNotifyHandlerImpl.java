@@ -48,6 +48,7 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
                     .chatId(receiver.getTgUserId())
                     .text(renderContent(noticeTemplate, alert))
+                    .messageThreadId(receiver.getTgMessageThreadId())
                     .disableWebPagePreview(true)
                     .build();
             HttpHeaders headers = new HttpHeaders();
@@ -84,6 +85,8 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         private String text;
         @JsonProperty("disable_web_page_preview")
         private Boolean disableWebPagePreview;
+        @JsonProperty("message_thread_id")
+        private String messageThreadId;
     }
 
     @NoArgsConstructor

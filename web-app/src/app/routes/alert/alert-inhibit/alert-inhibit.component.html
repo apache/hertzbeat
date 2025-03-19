@@ -163,7 +163,15 @@
           {{ 'alert.inhibit.source_labels' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12">
-          <app-labels-input [(ngModel)]="alertInhibit.sourceLabels" name="sourceLabels" required></app-labels-input>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels',
+              required: true
+            }"
+            [name]="'sourceLabels'"
+            [(ngModel)]="alertInhibit.sourceLabels"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -171,7 +179,15 @@
           {{ 'alert.inhibit.target_labels' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12">
-          <app-labels-input [(ngModel)]="alertInhibit.targetLabels" name="targetLabels" required></app-labels-input>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels',
+              required: true
+            }"
+            [name]="'targetLabels'"
+            [(ngModel)]="alertInhibit.targetLabels"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
