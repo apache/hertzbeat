@@ -18,7 +18,7 @@ receivers:
 
 - `http://{hertzbeat_host}:1157/api/alerts/report/alertmanager` は、HertzBeat の webhook URLです。
 - `send_resolved: true` は、アラート解決情報を送信することを意味します。
-- `credentials` 内の `{token}` はHertzBeatが提供するtokenです。
+- `credentials` の `{token}` はHertzBeatが提供するtokenです。
 
 2. Alertmanager のサービスを再起動する。
 
