@@ -15,27 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.manager.pojo.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
 /**
- * SMS provider constants
+ * Twilio Sms Sender configuration dto
  */
-public interface SmsConstants {
-    // Tencent cloud SMS
-    String TENCENT = "tencent";
+@Data
+public class SmsTwilioConfig {
 
-    // Alibaba Cloud SMS
-    String ALIBABA = "alibaba";
+    @NotBlank(message = "AccountSid cannot be empty")
+    private String accountSid;
 
-    // UniSMS
-    String UNISMS = "unisms";
+    @NotBlank(message = "AuthToken cannot be empty")
+    private String authToken;
 
-    // Smslocal SMS
-    String SMSLOCAL = "smslocal";
-
-    // Aws cloud SMS
-    String AWS = "aws";
-
-    // Twilio SMS
-    String TWILIO = "twilio";
+    @NotBlank(message = "TwilioPhoneNumber cannot be empty")
+    private String twilioPhoneNumber;
 }

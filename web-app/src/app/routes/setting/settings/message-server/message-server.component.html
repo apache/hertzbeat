@@ -72,6 +72,11 @@
               <br />
               {{ 'alert.notice.sender.sms.unisms.authMode' | i18n }}: {{ smsNoticeSender.unisms.authMode }}
             </ng-container>
+            <ng-container *ngSwitchCase="SmsType.TWILIO">
+              {{ 'alert.notice.sender.sms.twilio.accountSid' | i18n }}: {{ smsNoticeSender.twilio.accountSid }}
+              <br />
+              {{ 'alert.notice.sender.sms.twilio.twilioPhoneNumber' | i18n }}: {{ smsNoticeSender.twilio.twilioPhoneNumber }}
+            </ng-container>
           </ng-container>
           <br />
           {{ 'common.enable' | i18n }}: {{ smsNoticeSender.enable ? ('common.yes' | i18n) : ('common.no' | i18n) }}
@@ -160,6 +165,7 @@
             <nz-option [nzValue]="SmsType.UNISMS" nzLabel="{{ 'alert.notice.sender.sms.type.unisms' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.SMSLOCAL" nzLabel="{{ 'alert.notice.sender.sms.type.smslocal' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.AWS" nzLabel="{{ 'alert.notice.sender.sms.type.aws' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.TWILIO" nzLabel="{{ 'alert.notice.sender.sms.type.twilio' | i18n }}"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -369,6 +375,48 @@
           </nz-form-label>
           <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
             <input [(ngModel)]="smsNoticeSender.aws.region" nz-input required name="region" type="text" id="awsRegion" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
+
+      <!-- Twilio SMS -->
+      <ng-container *ngIf="smsType === SmsType.TWILIO">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accountSid" nzRequired="true">
+            {{ 'alert.notice.sender.sms.twilio.accountSid' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.twilio.accountSid"
+              nz-input
+              required
+              name="accountSid"
+              type="password"
+              id="twilioAccountSid"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="authToken" nzRequired="true">
+            {{ 'alert.notice.sender.sms.twilio.authToken' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.twilio.authToken" nz-input required name="authToken" type="password" id="twilioAuthToken" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="twilioPhoneNumber" nzRequired="true">
+            {{ 'alert.notice.sender.sms.twilio.twilioPhoneNumber' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.twilio.twilioPhoneNumber"
+              nz-input
+              required
+              name="twilioPhoneNumber"
+              type="text"
+              id="twilioPhoneNumber"
+            />
           </nz-form-control>
         </nz-form-item>
       </ng-container>
