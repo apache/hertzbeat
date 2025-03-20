@@ -75,7 +75,8 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * Monitoring Type Management Implementation
- * temporarily stores the monitoring configuration and parameter configuration in memory and then stores it in the
+ * Temporarily stores the monitoring configuration and parameter configuration in memory,
+ * and then persists it to a storage system.
  */
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
