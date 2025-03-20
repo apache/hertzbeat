@@ -17,14 +17,14 @@ hooks:
 ### 設定の検証
 
 1. SkyWalking の設定が正しいことを確認し、設定を再読み込みしてください。
-2. SkyWalkingアラートルールの状態を確認する
-3. テストアラートをトリガーし、HertzBeatアラートセンターで表示を確認する
+2. SkyWalkingアラートルールの状態を確認する。
+3. テストアラートをトリガーし、HertzBeatアラートセンターで表示を確認する。
 
 
 ### FAQ
 
-- SkyWalkingサーバーからHertzBeatのURLへアクセス可能であること
-- SkyWalkingログ内にアラート送信失敗のエラーメッセージがないか確認する
-- アラートルールの式が正しいことを検証する
+- SkyWalkingサーバーからHertzBeatのURLへアクセス可能であること。
+- SkyWalkingログ内にアラート送信失敗のエラーメッセージがないか確認する。
+- アラートルールの式が正しいことを検証する。
 
 詳細情報は [SkyWalkingアラート設定ドキュメント](https://skywalking.apache.org/docs/main/latest/en/setup/backend/backend-alarm/)
