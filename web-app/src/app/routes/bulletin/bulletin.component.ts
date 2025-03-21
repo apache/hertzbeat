@@ -25,7 +25,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange } from 'ng-zorro-antd/transfer';
 import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
-import { finalize } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Fields } from '../../pojo/Fields';
@@ -33,9 +34,6 @@ import { Monitor } from '../../pojo/Monitor';
 import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
-
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-bulletin',
@@ -85,12 +83,14 @@ export class BulletinComponent implements OnInit, OnDestroy {
     this.refreshInterval = setInterval(() => {
       this.countDown();
     }, 1000); // every 30 seconds refresh the tabs
-    this.filterSubject.pipe(
-      debounceTime(300), // triggered after the user stops typing for 300ms
-      distinctUntilChanged()
-    ).subscribe(value => {
-      this.filterMonitors();
-    });
+    this.filterSubject
+      .pipe(
+        debounceTime(300), // triggered after the user stops typing for 300ms
+        distinctUntilChanged()
+      )
+      .subscribe(value => {
+        this.filterMonitors();
+      });
   }
 
   ngOnDestroy() {
@@ -591,8 +591,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
 
   filterMonitors(): void {
     const validLabels = this.cleanFilterLabels(this.filterLabels);
-    const activeFilters = Object.entries(validLabels)
-      .filter(([k, v]) => k !== '' && k !== 'null');// Second filtering ensures key validity
+    const activeFilters = Object.entries(validLabels).filter(([k, v]) => k !== '' && k !== 'null'); // Second filtering ensures key validity
 
     if (activeFilters.length === 0) {
       this.filteredMonitors = [...this.monitors];
@@ -605,9 +604,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
       return activeFilters.every(([filterKey, filterValue]) => {
         const keyExists = Object.prototype.hasOwnProperty.call(monitor.labels, filterKey);
         const actualValue = (monitor.labels[filterKey] ?? '').toLowerCase();
-        return filterValue === ''
-          ? keyExists
-          : actualValue.includes(filterValue.toLowerCase());
+        return filterValue === '' ? keyExists : actualValue.includes(filterValue.toLowerCase());
       });
     });
   }
