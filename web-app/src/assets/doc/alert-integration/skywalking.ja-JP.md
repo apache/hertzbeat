@@ -11,8 +11,8 @@ hooks:
       urls:
         - http://{hertzbeat_host}:1157/api/alerts/report/skywalking
 ```
-- `http://{hertzbeat_host}:1157/api/alerts/report/skywalking` は、 HertzBeat が提供する Webhook インターフェースです
-- SkyWalking OAP Server を再起動してください
+- `http://{hertzbeat_host}:1157/api/alerts/report/skywalking` は、 HertzBeat が提供する Webhook インターフェースです。
+- SkyWalking OAP Server を再起動してください。
 
 ### 設定の検証
 
