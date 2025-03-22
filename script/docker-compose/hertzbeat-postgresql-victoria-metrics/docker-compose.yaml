@@ -64,7 +64,7 @@ services:
       - hertzbeat
 
   hertzbeat:
-    image: apache/hertzbeat
+    image: apache/hertzbeat:1.7.0
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always

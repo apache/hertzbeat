@@ -72,14 +72,22 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-    redis:
-      enabled: false
-      host: 127.0.0.1
-      port: 6379
-      password: 123456
+  # store real-time metrics data, enable only one below
+  real-time:
     memory:
       enabled: true
       init-size: 16
+    redis:
+      enabled: false
+      # redis mode: single, sentinel, cluster. Default is single
+      mode: single
+      # separate each address with comma when using cluster mode, eg: 127.0.0.1:6379,127.0.0.1:6380
+      address: 127.0.0.1:6379
+      # enter master name when using sentinel mode
+      masterName: mymaster
+      password: 123456
+      # redis db index, default: DB0
+      db: 0
 
 scheduler:
   server:
