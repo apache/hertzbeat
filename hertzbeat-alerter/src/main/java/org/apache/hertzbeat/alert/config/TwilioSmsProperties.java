@@ -21,57 +21,29 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 /**
- * SMS configuration
+ * Twilio SMS configuration properties
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Component
-@ConfigurationProperties(prefix = "alerter.sms")
-public class SmsConfig {
+public class TwilioSmsProperties {
+    /**
+     * Twilio Account SID
+     */
+    @NotBlank(message = "Account SID cannot be empty")
+    private String accountSid;
 
     /**
-     * whether to enable SMS, default is false
+     * Twilio Auth Token
      */
-    private boolean enable = false;
+    @NotBlank(message = "Auth Token cannot be empty")
+    private String authToken;
 
     /**
-     * sms service provider
+     * Twilio Issued Phone Number
      */
-    @NotBlank(message = "Type cannot be empty")
-    private String type;
-
-    /**
-     * Tencent cloud SMS configuration
-     */
-    private TencentSmsProperties tencent;
-
-    /**
-     * Aliyun SMS configuration
-     */
-    private AlibabaSmsProperties alibaba;
-
-    /**
-     * UniSMS configuration
-     */
-    private UniSmsProperties unisms;
-
-    /**
-     * Aws configuration
-     */
-    private AwsSmsProperties aws;
-
-    /**
-     * Twilio SMS configuration
-     */
-    private TwilioSmsProperties twilio;
-
-    /**
-     * Smslocal SMS configuration
-     */
-    private SmslocalSmsProperties smslocal;
+    @NotBlank(message = "Twilio Phone Number cannot be empty")
+    private String twilioPhoneNumber;
 }
