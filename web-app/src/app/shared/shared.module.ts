@@ -11,11 +11,9 @@ import { NzRadioComponent, NzRadioGroupComponent } from 'ng-zorro-antd/radio';
 import { NzSwitchComponent } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 
+import { ConfigurableFieldComponent } from './components/configurable-field/configurable-field.component';
 import { FormFieldComponent } from './components/form-field/form-field.component';
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
-import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
-import { LabelsInputComponent } from './components/labels-input/labels-input.component';
-import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
 import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -27,14 +25,12 @@ import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
 
 const ThirdModules: Array<Type<void>> = [];
 const COMPONENTS: Array<Type<void>> = [
-  KeyValueInputComponent,
   MultiFuncInputComponent,
   HelpMessageShowComponent,
-  MetricsFieldInputComponent,
   ToolbarComponent,
+  ConfigurableFieldComponent,
   FormFieldComponent,
-  MonitorSelectMenuComponent,
-  LabelsInputComponent
+  MonitorSelectMenuComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 

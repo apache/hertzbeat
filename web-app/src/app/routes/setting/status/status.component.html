@@ -391,7 +391,15 @@
           'status.component.tag' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <app-labels-input [(ngModel)]="currentStatusComponent.labels" name="sourceLabels" required></app-labels-input>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels',
+              required: true
+            }"
+            [name]="'sourceLabels'"
+            [(ngModel)]="currentStatusComponent.labels"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="currentStatusComponent.method == 1">

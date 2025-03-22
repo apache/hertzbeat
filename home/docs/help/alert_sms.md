@@ -225,6 +225,52 @@ alerter:
 
    Now you can configure this information in your hertzbeat application.
 
+### Twilio SMS Configuration
+
+To activate and use the Twilio SMS service, refer to the official Twilio documentation: [SMS Getting Started Guide](https://www.twilio.com/docs/sms/quickstart)
+
+You can configure the Twilio SMS service either through the graphical interface or in the `application.yml` file.
+To use `application.yml`, add/fill in the following Twilio SMS configuration (replace parameters with your own SMS server configuration):
+
+```yaml
+alerter:
+      sms:
+            enable: true # Whether to enable
+            type: twilio # SMS provider type, supports "twilio"
+            twilio: # Twilio SMS configuration
+                  account-sid: # Your Twilio Account SID
+                  auth-token: # Your Twilio Auth Token
+                  twilio-phone-number: # Your Twilio Phone Number
+```
+
+1. Create a Twilio account
+
+      - If you don't have a Twilio account, sign up at [Twilio Console](https://www.twilio.com/console)
+      - You'll get a free trial account that allows you to test the SMS service
+
+2. Obtain Twilio credentials
+
+      - After signing in, locate your Account SID and Auth Token on the dashboard
+      - These credentials will be used to authenticate API requests
+
+3. Get a Twilio Phone Number
+
+      - In the Twilio Console, navigate to "Phone Numbers" > "Manage" > "Active Numbers"
+      - Click "Buy a Number" or use the trial number provided by Twilio
+      - Make sure the number has SMS capabilities enabled
+      - This number will be used as the sender for your SMS alerts
+      - A phone number is required for the Twilio SMS service to work
+
+4. Testing Your Configuration on Twilio
+
+      - Twilio provides a sandbox environment for testing
+      - If you are in the trial period, you will only be able to send SMS to verified phone numbers
+      - To verify a phone number, add it to your verified phone numbers list in the Twilio Console
+
+      > The message follows the format: "Instance: {}, Priority: {}, Content: {}"
+
+      This information can be configured in the Hertzbeat application.
+
 ## Operation steps
 
 1. **【Alarm notification】->【Add new recipient】 ->【Select SMS notification method】**

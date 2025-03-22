@@ -17,30 +17,39 @@
 
 package org.apache.hertzbeat.alert.config;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Alibaba Cloud SMS configuration properties
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class AlibabaSmsProperties {
     /**
      * Alibaba Cloud access key id
      */
+    @NotBlank(message = "AccessKeyId cannot be empty")
     private String accessKeyId;
     
     /**
      * Alibaba Cloud access key secret
      */
+    @NotBlank(message = "AccessKeySecret cannot be empty")
     private String accessKeySecret;
     
     /**
      * SMS signature
      */
+    @NotBlank(message = "SignName cannot be empty")
     private String signName;
     
     /**
      * SMS template Code
      */
+    @NotBlank(message = "TemplateCode cannot be null")
     private String templateCode;
 }

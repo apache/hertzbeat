@@ -33,6 +33,7 @@ import { SmsType, UniSmsAuthMode } from 'src/app/pojo/enums/sms-type.enum';
 import { AwsSmsConfig } from '../../../../pojo/AwsSmsConfig';
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
 import { SmslocalSmsConfig } from '../../../../pojo/SmslocalSmsConfig';
+import { TwilioSmsConfig } from '../../../../pojo/TwilioSmsConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
 @Component({
@@ -146,6 +147,7 @@ export class MessageServerComponent implements OnInit {
             this.smsNoticeSender.unisms = { ...new UniSmsConfig(), ...message.data.unisms };
             this.smsNoticeSender.smslocal = { ...new SmslocalSmsConfig(), ...message.data.smslocal };
             this.smsNoticeSender.aws = { ...new AwsSmsConfig(), ...message.data.aws };
+            this.smsNoticeSender.twilio = { ...new TwilioSmsConfig(), ...message.data.twilio };
             this.smsType = message.data.type || 'tencent';
           } else {
             this.smsNoticeSender = new SmsNoticeSender();
@@ -171,7 +173,8 @@ export class MessageServerComponent implements OnInit {
       alibaba: { ...this.smsNoticeSender.alibaba },
       unisms: { ...this.smsNoticeSender.unisms },
       smslocal: { ...this.smsNoticeSender.smslocal },
-      aws: { ...this.smsNoticeSender.aws }
+      aws: { ...this.smsNoticeSender.aws },
+      twilio: { ...this.smsNoticeSender.twilio }
     };
     this.isSmsServerModalVisible = true;
   }
@@ -184,7 +187,8 @@ export class MessageServerComponent implements OnInit {
       alibaba: { ...this.tempSmsNoticeSender.alibaba },
       unisms: { ...this.tempSmsNoticeSender.unisms },
       smslocal: { ...this.tempSmsNoticeSender.smslocal },
-      aws: { ...this.tempSmsNoticeSender.aws }
+      aws: { ...this.tempSmsNoticeSender.aws },
+      twilio: { ...this.tempSmsNoticeSender.twilio }
     };
     this.isSmsServerModalVisible = false;
   }

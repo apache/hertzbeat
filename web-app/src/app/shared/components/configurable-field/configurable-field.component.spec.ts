@@ -19,20 +19,20 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MetricsFieldInputComponent } from './metrics-field-input.component';
+import { ConfigurableFieldComponent } from './configurable-field.component';
 
-describe('MetricsFieldInputComponent', () => {
-  let component: MetricsFieldInputComponent;
-  let fixture: ComponentFixture<MetricsFieldInputComponent>;
+describe('ConfigurableFieldComponent', () => {
+  let component: ConfigurableFieldComponent;
+  let fixture: ComponentFixture<ConfigurableFieldComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MetricsFieldInputComponent]
+      declarations: [ConfigurableFieldComponent]
     }).compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(MetricsFieldInputComponent);
+    fixture = TestBed.createComponent(ConfigurableFieldComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
