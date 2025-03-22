@@ -182,6 +182,21 @@
       </nz-form-item>
 
       <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'filterLabels'">{{ 'monitor.search.label' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels'
+            }"
+            [name]="'labels'"
+            [(ngModel)]="filterLabels"
+            (ngModelChange)="onFilterInputChange($event)"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
@@ -193,7 +208,7 @@
             nzMode="multiple"
             required
           >
-            <ng-container *ngFor="let monitor of monitors">
+            <ng-container *ngFor="let monitor of filteredMonitors">
               <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name"></nz-option>
             </ng-container>
           </nz-select>

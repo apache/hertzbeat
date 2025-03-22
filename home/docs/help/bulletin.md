@@ -9,7 +9,7 @@ keywords: [bulletin, custom]
 
 ### Add Bulletin Item
 
-1. Click `Add New Bulletin Item`, enter the `Bulletin Name`, scroll down to select the `Monitoring Type`, select the associated `Monitoring Task Name`, and then select the `Monitoring Metrics` you want to show in the shuttle box.
+1. Click `Add New Bulletin Item`, enter the `Bulletin Name`, scroll down to select the `Monitoring Type`, select the associated `Monitoring Task Name`, You can filter `Monitor Task Name` by `Label`, and then select the `Monitoring Metrics` you want to show in the shuttle box.
 
 2. Click `OK` button to finish creating the customized bulletin.
 

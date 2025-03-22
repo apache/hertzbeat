@@ -25,7 +25,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange } from 'ng-zorro-antd/transfer';
 import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
-import { finalize } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Fields } from '../../pojo/Fields';
@@ -73,22 +74,35 @@ export class BulletinComponent implements OnInit, OnDestroy {
   refreshInterval: any;
   deadline = 30;
   countDownTime: number = 0;
+  filterLabels: Record<string, string> = {};
+  filteredMonitors: Monitor[] = [];
+  private filterSubject = new Subject<string>(); //filter logic debouncing
 
   ngOnInit() {
     this.loadTabs();
     this.refreshInterval = setInterval(() => {
       this.countDown();
     }, 1000); // every 30 seconds refresh the tabs
+    this.filterSubject
+      .pipe(
+        debounceTime(300), // triggered after the user stops typing for 300ms
+        distinctUntilChanged()
+      )
+      .subscribe(value => {
+        this.filterMonitors();
+      });
   }
 
   ngOnDestroy() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    this.filterSubject.complete();
   }
 
   sync() {
     this.loadCurrentBulletinData();
+    this.clearFilters();
   }
 
   configRefreshDeadline(deadlineTime: number) {
@@ -158,6 +172,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
     this.isManageModalVisible = false;
     // clear fields
     this.fields = {};
+    this.clearFilters();
   }
 
   resetManageModalData() {
@@ -254,6 +269,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
         message => {
           if (message.code === 0) {
             this.monitors = message.data;
+            this.filterMonitors();
             if (this.monitors != null) {
               this.isMonitorListLoading = true;
             }
@@ -567,5 +583,48 @@ export class BulletinComponent implements OnInit, OnDestroy {
       result = result.concat(find);
     }
     return result;
+  }
+
+  onFilterInputChange(value: string): void {
+    this.filterSubject.next(value); // push the input value to the debounce Subject
+  }
+
+  filterMonitors(): void {
+    const validLabels = this.cleanFilterLabels(this.filterLabels);
+    const activeFilters = Object.entries(validLabels).filter(([k, v]) => k !== '' && k !== 'null'); // Second filtering ensures key validity
+
+    if (activeFilters.length === 0) {
+      this.filteredMonitors = [...this.monitors];
+      return;
+    }
+
+    this.filteredMonitors = this.monitors.filter(monitor => {
+      if (!monitor.labels || typeof monitor.labels !== 'object') return false;
+
+      return activeFilters.every(([filterKey, filterValue]) => {
+        const keyExists = Object.prototype.hasOwnProperty.call(monitor.labels, filterKey);
+        const actualValue = (monitor.labels[filterKey] ?? '').toLowerCase();
+        return filterValue === '' ? keyExists : actualValue.includes(filterValue.toLowerCase());
+      });
+    });
+  }
+
+  private cleanFilterLabels(labels: any): Record<string, string> {
+    const cleaned: Record<string, string> = {};
+    Object.entries(labels ?? {}).forEach(([k, v]) => {
+      if (typeof k === 'string') {
+        const trimmedKey = k.trim();
+        if (trimmedKey !== '' && trimmedKey !== 'null') {
+          cleaned[trimmedKey] = (v ?? '').toString().trim();
+        }
+      }
+    });
+    return cleaned;
+  }
+
+  clearFilters(): void {
+    this.filterLabels = {};
+    this.filterMonitors();
+    this.cdr.detectChanges();
   }
 }
