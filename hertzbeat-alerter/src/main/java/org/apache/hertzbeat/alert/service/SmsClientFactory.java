@@ -23,6 +23,7 @@ import org.apache.hertzbeat.alert.config.SmsConfig;
 import org.apache.hertzbeat.alert.service.impl.SmsLocalSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.AwsSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;
+import org.apache.hertzbeat.alert.service.impl.TwilioSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.UniSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.AlibabaSmsClientImpl;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Component;
 import static org.apache.hertzbeat.common.constants.SmsConstants.ALIBABA;
 import static org.apache.hertzbeat.common.constants.SmsConstants.AWS;
 import static org.apache.hertzbeat.common.constants.SmsConstants.TENCENT;
+import static org.apache.hertzbeat.common.constants.SmsConstants.TWILIO;
 import static org.apache.hertzbeat.common.constants.SmsConstants.UNISMS;
 import static org.apache.hertzbeat.common.constants.SmsConstants.SMSLOCAL;
 
@@ -141,9 +143,12 @@ public class SmsClientFactory {
             case AWS:
                 currentSmsClient = new AwsSmsClientImpl(smsConfig.getAws());
                 break;
+            case TWILIO:
+                currentSmsClient = new TwilioSmsClientImpl(smsConfig.getTwilio());
+                break;
             default:
                 log.warn("[SmsClientFactory] Unsupported SMS provider type: {}", smsConfig.getType());
                 break;
         }
     }
-} 
+}

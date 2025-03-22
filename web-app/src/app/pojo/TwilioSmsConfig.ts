@@ -17,16 +17,8 @@
  * under the License.
  */
 
-export enum SmsType {
-  TENCENT = 'tencent',
-  ALIBABA = 'alibaba',
-  UNISMS = 'unisms',
-  SMSLOCAL = 'smslocal',
-  AWS = 'aws',
-  TWILIO = 'twilio'
-}
-
-export enum UniSmsAuthMode {
-  HMAC = 'hmac',
-  SIMPLE = 'simple'
+export class TwilioSmsConfig {
+  accountSid!: string;
+  authToken!: string;
+  twilioPhoneNumber!: string;
 }

@@ -35,4 +35,7 @@ public interface SmsConstants {
 
     // Aws cloud SMS
     String AWS = "aws";
+
+    // Twilio SMS
+    String TWILIO = "twilio";
 }
