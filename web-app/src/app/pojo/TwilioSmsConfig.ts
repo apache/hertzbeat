@@ -17,6 +17,8 @@
  * under the License.
  */
 
-export const CONSTANTS = {
-  VERSION: 'v1.7.0'
-};
+export class TwilioSmsConfig {
+  accountSid!: string;
+  authToken!: string;
+  twilioPhoneNumber!: string;
+}

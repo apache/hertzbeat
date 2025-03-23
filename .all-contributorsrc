@@ -2325,6 +2325,42 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "JuJinPark",
+      "name": "jujin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44892459?v=4",
+      "profile": "https://github.com/JuJinPark",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "LL-LIN",
+      "name": "LL-LIN",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43002118?v=4",
+      "profile": "https://github.com/LL-LIN",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "bigcyy",
+      "name": "Yang Chen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/73413979?v=4",
+      "profile": "https://bigcyy.github.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sarthakeash",
+      "name": "Sarthak Arora",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74091160?v=4",
+      "profile": "https://github.com/sarthakeash",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

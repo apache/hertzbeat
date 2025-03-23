@@ -18,7 +18,7 @@ hooks:
 
 1. 确保 SkyWalking 配置正确并重新加载配置
 2. 检查 SkyWalking 告警规则状态
-3. 触发测试告警并在 SkyWalking 告警中心查看
+3. 触发测试告警并在 HertzBeat 告警中心查看
 
 ### 常见问题
 

@@ -22,7 +22,8 @@ export enum SmsType {
   ALIBABA = 'alibaba',
   UNISMS = 'unisms',
   SMSLOCAL = 'smslocal',
-  AWS = 'aws'
+  AWS = 'aws',
+  TWILIO = 'twilio'
 }
 
 export enum UniSmsAuthMode {
