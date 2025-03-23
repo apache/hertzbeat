@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
@@ -58,9 +59,9 @@ class AlertDefineJsonImExportServiceTest {
     private AlertDefineJsonImExportServiceImpl service;
 
     @SuppressWarnings("checkstyle:OperatorWrap")
-    private static final String JSON_DATA = "[{\"alertDefine\":{\"app\":\"App1\",\"metric\":\"Metric1\"," +
-            "\"field\":\"Field1\",\"preset\":true,\"expr\":\"Expr1\",\"priority\":1,\"times\":1,\"tags\":[]," +
-            "\"enable\":true,\"recoverNotice\":true,\"template\":\"Template1\"}}]";
+    private static final String JSON_DATA = "[{\"alertDefine\":{\"name\":\"App1\",\"type\":\"realtime\"," +
+            "\"expr\":\"Expr1\",\"period\":3000,\"times\":3," +
+            "\"enable\":true,\"template\":\"Template1\"}}]";
 
     private InputStream inputStream;
     private List<ExportAlertDefineDTO> alertDefineList;
@@ -68,19 +69,15 @@ class AlertDefineJsonImExportServiceTest {
     @BeforeEach
     public void setup() {
 
-        inputStream = new ByteArrayInputStream(JSON_DATA.getBytes());
+        inputStream = new ByteArrayInputStream(JSON_DATA.getBytes(StandardCharsets.UTF_8));
 
         AlertDefineDTO alertDefine = new AlertDefineDTO();
-        alertDefine.setApp("App1");
-        alertDefine.setMetric("Metric1");
-        alertDefine.setField("Field1");
-        alertDefine.setPreset(true);
+        alertDefine.setName("App1");
+        alertDefine.setType("realtime");
         alertDefine.setExpr("Expr1");
-        alertDefine.setPriority((byte) 1);
-        alertDefine.setTimes(1);
-        alertDefine.setTags(List.of());
+        alertDefine.setPeriod(3000);
+        alertDefine.setTimes(3);
         alertDefine.setEnable(true);
-        alertDefine.setRecoverNotice(true);
         alertDefine.setTemplate("Template1");
 
         ExportAlertDefineDTO exportAlertDefine = new ExportAlertDefineDTO();

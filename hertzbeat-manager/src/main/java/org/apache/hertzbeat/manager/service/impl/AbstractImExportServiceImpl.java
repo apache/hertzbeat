@@ -22,20 +22,12 @@ import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.annotation.Resource;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.ImExportTaskConstant;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
@@ -43,6 +35,14 @@ import org.apache.hertzbeat.manager.service.TagService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * class AbstractImExportServiceImpl
@@ -57,27 +57,30 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     @Resource
     private TagService tagService;
 
+    @Resource
+    private ManagerSseManager managerSseManager;
+
     @Override
-    public void importConfig(InputStream is) {
-        var formList = parseImport(is)
-                .stream()
-                .map(this::convert)
-                .toList();
+    public void importConfig(String taskName, InputStream is) {
+        var formList = parseImport(is).stream().map(this::convert).toList();
         if (!CollectionUtils.isEmpty(formList)) {
-            formList.forEach(monitorDto -> {
+            int totalElements = formList.size();
+            int progressInterval = Math.max(1, totalElements / 10);
+            for (int i = 0; i < totalElements; i++) {
+                MonitorDto monitorDto = formList.get(i);
                 monitorService.validate(monitorDto, false);
                 monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
-            });
+                if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && ((i + 1) % progressInterval == 0) && (i + 1 < totalElements)) {
+                    managerSseManager.broadcastImportTaskInProgress(taskName, (int) ((i + 1) * 100.0 / totalElements));
+                }
+            }
+            managerSseManager.broadcastImportTaskSuccess(taskName);
         }
     }
 
     @Override
     public void exportConfig(OutputStream os, List<Long> configList) {
-        var monitorList = configList.stream()
-                .map(it -> monitorService.getMonitorDto(it))
-                .filter(Objects::nonNull)
-                .map(this::convert)
-                .toList();
+        var monitorList = configList.stream().map(it -> monitorService.getMonitorDto(it)).filter(Objects::nonNull).map(this::convert).toList();
         writeOs(monitorList, os);
     }
 
@@ -101,21 +104,14 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var exportMonitor = new ExportMonitorDTO();
         var monitor = new MonitorDTO();
         BeanUtils.copyProperties(dto.getMonitor(), monitor);
-        if (!CollectionUtils.isEmpty(dto.getMonitor().getTags())) {
-            monitor.setTags(dto.getMonitor().getTags().stream()
-                    .map(Tag::getId).toList());
-        }
         exportMonitor.setMonitor(monitor);
-        exportMonitor.setParams(dto.getParams().stream()
-                .map(it -> {
-                    var param = new ParamDTO();
-                    param.setField(it.getField());
-                    param.setType(it.getType());
-                    param.setValue(it.getParamValue());
-                    return param;
-                })
-                .toList());
-        exportMonitor.setMetrics(dto.getMetrics());
+        exportMonitor.setParams(dto.getParams().stream().map(it -> {
+            var param = new ParamDTO();
+            param.setField(it.getField());
+            param.setType(it.getType());
+            param.setValue(it.getParamValue());
+            return param;
+        }).toList());
         exportMonitor.getMonitor().setCollector(dto.getCollector());
         return exportMonitor;
     }
@@ -128,32 +124,22 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var monitorDto = new MonitorDto();
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
-        if (exportMonitor.monitor != null) { // Add one more null check
+        if (exportMonitor.monitor != null) {
+            // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
-            if (exportMonitor.monitor.tags != null && !exportMonitor.monitor.tags.isEmpty()) {
-                monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
-                        .stream()
-                        .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
-                        .collect(Collectors.toList()));
-            } else {
-                monitor.setTags(Collections.emptyList());
-            }
         }
         monitorDto.setMonitor(monitor);
         if (exportMonitor.getMonitor() != null) {
             monitorDto.setCollector(exportMonitor.getMonitor().getCollector());
         }
-        monitorDto.setMetrics(exportMonitor.metrics);
         if (exportMonitor.params != null) {
-            monitorDto.setParams(exportMonitor.params.stream()
-                    .map(it -> {
-                        var param = new Param();
-                        param.setField(it.field);
-                        param.setType(it.type);
-                        param.setParamValue(it.value);
-                        return param;
-                    })
-                    .toList());
+            monitorDto.setParams(exportMonitor.params.stream().map(it -> {
+                var param = new Param();
+                param.setField(it.field);
+                param.setType(it.type);
+                param.setParamValue(it.value);
+                return param;
+            }).toList());
         } else {
             monitorDto.setParams(Collections.emptyList());
         }
@@ -164,6 +150,9 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         return "hertzbeat_monitor_" + LocalDate.now();
     }
 
+    /**
+     * Export Monitor DTO
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -173,10 +162,11 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private MonitorDTO monitor;
         @ExcelCollection(name = "Params")
         private List<ParamDTO> params;
-        @ExcelCollection(name = "Metrics")
-        private List<String> metrics;
     }
 
+    /**
+     * Monitor DTO
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -194,12 +184,15 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private Byte status;
         @Excel(name = "Description")
         private String description;
-        @Excel(name = "Tags")
-        private List<Long> tags;
+        @Excel(name = "Labels")
+        private Map<String, String> labels;
         @Excel(name = "Collector")
         private String collector;
     }
 
+    /**
+     * Param DTO
+     */
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -212,5 +205,4 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         @Excel(name = "Value")
         private String value;
     }
-
 }

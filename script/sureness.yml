@@ -72,13 +72,16 @@ resourceRole:
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alerts/report/**===*
+  - /api/alert/sse/**===*
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get
   - /api/push/**===*
   - /api/status/page/public/**===*
+  - /api/manager/sse/**===*
   # web ui resource
   - /===get
+  - /assets/**===get
   - /dashboard/**===get
   - /monitors/**===get
   - /alert/**===get

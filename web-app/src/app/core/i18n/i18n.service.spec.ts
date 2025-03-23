@@ -81,4 +81,11 @@ describe('Service: I18n', () => {
       expect(lang).toBe('en-US');
     });
   });
+  it('should be trigger notify when changed language', () => {
+    genModule();
+    srv.use('pt-BR', {});
+    srv.change.subscribe(lang => {
+      expect(lang).toBe('pt-BR');
+    });
+  });
 });

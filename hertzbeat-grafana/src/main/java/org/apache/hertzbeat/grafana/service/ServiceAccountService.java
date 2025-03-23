@@ -25,6 +25,8 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.GET_SERVICE_A
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.GRAFANA_CONFIG;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -192,9 +194,9 @@ public class ServiceAccountService {
 
     private HttpHeaders createHeaders() {
         String auth = username + SignConstants.DOUBLE_MARK + password;
-        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
         String authHeader = NetworkConstants.BASIC
-                + SignConstants.BLANK + new String(encodedAuth);
+                + SignConstants.BLANK + encodedAuth;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

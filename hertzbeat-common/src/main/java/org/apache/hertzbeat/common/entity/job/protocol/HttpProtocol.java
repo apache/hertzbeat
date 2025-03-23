@@ -96,6 +96,12 @@ public class HttpProtocol implements CommonRequestProtocol, Protocol {
     private List<String> successCodes;
 
     /**
+     * Whether to enable URL encoding for the path. Default is true.
+     * When true, the URL path will be encoded. When false, the URL path will not be encoded.
+     */
+    private String enableUrlEncoding = "true";
+
+    /**
      * authentication information
      */
     @Data

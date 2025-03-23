@@ -294,7 +294,7 @@
       <angular-tag-cloud
         class="br-4"
         *ngIf="!wordCloudDataLoading"
-        (clicked)="onTagCloudClick($event)"
+        (clicked)="onLabelCloudClick($event)"
         [font]="'italic bold 6px monospace'"
         [data]="wordCloudData"
         [width]="1"
@@ -306,7 +306,7 @@
         [delay]="300"
         [zoomOnHover]="{ scale: 1.4, transitionTime: 0.6, delay: 0.4 }"
         [overflow]="false"
-        [background]="'white no-repeat fixed center'"
+        [background]="theme == 'dark' ? '#141414' : 'white'"
       >
       </angular-tag-cloud>
     </nz-spin>
@@ -396,24 +396,23 @@
     <nz-spin [nzSpinning]="alertContentLoading">
       <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow: hidden">
         <nz-timeline nzMode="left">
-          <nz-timeline-item
-            *ngFor="let alert of alerts; let i = index"
-            [nzLabel]="(alert.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
-          >
+          <nz-timeline-item *ngFor="let alert of alerts; let i = index" [nzLabel]="(alert.activeAt | date : 'YYYY-MM-dd HH:mm:ss')?.trim()">
             <p style="font-weight: 400">
-              <nz-tag *ngIf="alert.priority == 0" nzColor="red">
+              <nz-tag *ngIf="alert.labels.severity == 'emergency'" nzColor="red">
                 <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.priority.0' | i18n }}</span>
+                <span>{{ 'alert.severity.0' | i18n }}</span>
               </nz-tag>
-              <nz-tag *ngIf="alert.priority == 1" nzColor="orange">
+              <nz-tag *ngIf="alert.labels.severity == 'critical'" nzColor="orange">
                 <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.priority.1' | i18n }}</span>
+                <span>{{ 'alert.severity.1' | i18n }}</span>
               </nz-tag>
-              <nz-tag *ngIf="alert.priority == 2" nzColor="yellow">
+              <nz-tag *ngIf="alert.labels.severity == 'warning'" nzColor="yellow">
                 <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.priority.2' | i18n }}</span>
+                <span>{{ 'alert.severity.2' | i18n }}</span>
               </nz-tag>
-              <span>[{{ alert.tags.monitorName }}] </span>
+              <nz-tag *ngIf="alert.labels.alertname">
+                <span>{{ alert.labels.alertname }}</span>
+              </nz-tag>
               {{ alert.content }}
             </p>
           </nz-timeline-item>

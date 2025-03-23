@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * test case for {@link FileUtil}.
  */
@@ -41,9 +43,12 @@ class FileUtilTest {
     @BeforeEach
     void setUp() {
 
-        jsonFile = new MockMultipartFile("file", "test.json", MediaType.APPLICATION_JSON_VALUE, "test content".getBytes());
-        excelFile = new MockMultipartFile("file", "test.xlsx", EXCEL_TYPE, "test content".getBytes());
-        yamlFile = new MockMultipartFile("file", "test.yaml", YAML_TYPE, "test content".getBytes());
+        jsonFile = new MockMultipartFile("file", "test.json", MediaType.APPLICATION_JSON_VALUE,
+                "test content".getBytes(StandardCharsets.UTF_8));
+        excelFile = new MockMultipartFile("file", "test.xlsx", EXCEL_TYPE,
+                "test content".getBytes(StandardCharsets.UTF_8));
+        yamlFile = new MockMultipartFile("file", "test.yaml", YAML_TYPE,
+                "test content".getBytes(StandardCharsets.UTF_8));
         emptyFile = new MockMultipartFile("file", "", null, (byte[]) null);
     }
 

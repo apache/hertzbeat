@@ -21,16 +21,39 @@
   <ng-template #left>
     <button (click)="syncTemplate()" nz-button nzType="primary">
       <i nz-icon nzTheme="outline" nzType="sync"></i>
-      {{ 'common.refresh' | i18n }}
     </button>
     <button (click)="onNewNoticeTemplate()" nz-button nzType="primary">
       <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
       {{ 'alert.notice.template.new' | i18n }}
     </button>
   </ng-template>
+  <ng-template #right>
+    <nz-select class="mobile-hide" [nzPlaceHolder]="'monitor.status' | i18n" [(ngModel)]="preset" (ngModelChange)="onPresetStatusChanged()">
+      <nz-option [nzLabel]="'alert.notice.template.preset.true' | i18n" [nzValue]="true"></nz-option>
+      <nz-option [nzLabel]="'alert.notice.template.preset.false' | i18n" [nzValue]="false"></nz-option>
+    </nz-select>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      [placeholder]="'alert.notice.template.name' | i18n"
+      [(value)]="name"
+      (keydown.enter)="onSearch()"
+      (cleared)="onSearch()"
+    />
+    <button nz-button nzType="primary" (click)="onSearch()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
+  </ng-template>
 </app-toolbar>
 <nz-table
   #templateFixedTable
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
   [nzData]="templates"
   [nzLoading]="templateTableLoading"
   [nzScroll]="{ x: '1240px' }"
@@ -38,11 +61,11 @@
 >
   <thead>
     <tr>
-      <th nzAlign="center" nzWidth="25%">{{ 'alert.notice.template.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%">{{ 'alert.notice.template.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.type' | i18n }}</th>
       <th nzAlign="center" nzWidth="15%">{{ 'alert.notice.template.preset' | i18n }}</th>
       <th nzAlign="center" nzWidth="20%">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -107,7 +130,7 @@
         </span>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center">
+      <td nzAlign="center" nzRight>
         <div *ngIf="!data.preset" class="actions">
           <button
             (click)="onEditOneNoticeTemplate(data)"
@@ -124,7 +147,6 @@
             nz-button
             nz-tooltip
             nzDanger
-            nzType="primary"
           >
             <i nz-icon nzTheme="outline" nzType="delete"></i>
           </button>
@@ -144,6 +166,9 @@
     </tr>
   </tbody>
 </nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
 <!-- new or update notice template pop-up box -->
 <nz-modal
   (nzOnCancel)="onManageTemplateModalCancel()"
@@ -223,7 +248,7 @@
       [(ngModel)]="template.content"
       id="template_content_example"
       name="template_content"
-      style="white-space: nowrap; overflow: scroll; width: 100%; height: 200px"
+      class="textarea"
       type="textarea"
     ></textarea>
   </div>

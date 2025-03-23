@@ -149,10 +149,22 @@
           "link": "/alert/setting"
         },
         {
-          "text": "Converge",
-          "i18n": "menu.alert.converge",
+          "text": "Integration",
+          "i18n": "menu.alert.integration",
+          "icon": "anticon-api",
+          "link": "/alert/integration/webhook"
+        },
+        {
+          "text": "Group",
+          "i18n": "menu.alert.group",
           "icon": "anticon-filter",
-          "link": "/alert/converge"
+          "link": "/alert/group"
+        },
+        {
+          "text": "Inhibition",
+          "i18n": "menu.alert.inhibit",
+          "icon": "anticon-delete-column",
+          "link": "/alert/inhibit"
         },
         {
           "text": "Silence",
@@ -193,10 +205,10 @@
           "link": "/setting/collector"
         },
         {
-          "text": "tags",
-          "i18n": "menu.advanced.tags",
+          "text": "labels",
+          "i18n": "menu.advanced.labels",
           "icon": "anticon-tags",
-          "link": "/setting/tags"
+          "link": "/setting/labels"
         },
         {
           "text": "plugins",

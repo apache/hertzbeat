@@ -33,11 +33,7 @@
     </button>
     <button nz-button nzType="primary" (click)="onNewAlertDefine()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'alert.setting.new' | i18n }}
-    </button>
-    <button nz-button nzType="primary" nzDanger (click)="onDeleteAlertDefines()">
-      <i nz-icon nzType="delete" nzTheme="outline"></i>
-      {{ 'alert.setting.delete' | i18n }}
+      {{ 'common.button.new' | i18n }}
     </button>
 
     <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
@@ -46,16 +42,22 @@
     <nz-dropdown-menu #more_menu="nzDropdownMenu">
       <ul nz-menu>
         <li nz-menu-item>
-          <button nz-button nzType="primary" (click)="onExportDefines()">
+          <button nzDanger nz-button (click)="onDeleteAlertDefines()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'common.button.delete' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button (click)="onExportDefines()">
             <i nz-icon nzType="export" nzTheme="outline"></i>
-            {{ 'alert.setting.export' | i18n }}
+            {{ 'common.button.export' | i18n }}
           </button>
         </li>
         <li nz-menu-item>
           <nz-upload nzAction="/alert/defines/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportDefines($event)">
-            <button nz-button nzType="primary">
+            <button nz-button>
               <i nz-icon nzType="import" nzTheme="outline"></i>
-              {{ 'alert.setting.import' | i18n }}
+              {{ 'common.button.import' | i18n }}
             </button>
           </nz-upload>
         </li>
@@ -67,8 +69,12 @@
       groupStyle="width: 250px;"
       [placeholder]="'alert.setting.search' | i18n"
       [(value)]="search"
-      (valueChange)="loadAlertDefineTable()"
+      (keydown.enter)="onFilterChange()"
+      (cleared)="onFilterChange()"
     />
+    <button nz-button nzType="primary" (click)="onFilterChange()">
+      {{ 'common.search' | i18n }}
+    </button>
   </ng-template>
 </app-toolbar>
 
@@ -90,85 +96,73 @@
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="16%">{{ 'alert.setting.target' | i18n }}</th>
-      <th nzAlign="center" nzWidth="14%">{{ 'alert.setting.expr' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.priority' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.times' | i18n }}</th>
-      <th nzAlign="center" nzWidth="20%">{{ 'alert.setting.template' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.default' | i18n }}</th>
-      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.enable' | i18n }}</th>
-      <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'alert.setting.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%">{{ 'alert.setting.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.setting.expr' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'alert.setting.template' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'label.bind' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'common.enable' | i18n }}</th>
+      <th nzAlign="center" nzWidth="14%">{{ 'common.edit-time' | i18n }}</th>
+      <th nzAlign="center" nzWidth="8%" nzRight>{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let data of fixedTable.data">
       <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
-        <span *ngIf="data.field">
-          {{ 'monitor.app.' + data.app | i18n }} / {{ 'monitor.app.' + data.app + '.metrics.' + data.metric | i18nElse : data.metric }} /
-          {{ 'monitor.app.' + data.app + '.metrics.' + data.metric + '.metric.' + data.field | i18nElse : data.field }}
-        </span>
-        <span *ngIf="!data.field && data.metric === 'availability'">
-          {{ 'monitor.app.' + data.app | i18n }} / {{ 'monitor.availability' | i18n }}
-        </span>
+        <span>{{ data.name }}</span>
       </td>
       <td nzAlign="center">
+        <nz-tag *ngIf="data.type == 'realtime' || data.type == undefined">
+          <span>{{ 'alert.setting.type.realtime' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 'periodic'">
+          <span>{{ 'alert.setting.type.periodic' | i18n }}</span>
+        </nz-tag>
+      </td>
+      <td nzAlign="center" nzEllipsis nz-tooltip [nzTooltipTitle]="data.expr">
         <span>{{ data.expr }}</span>
       </td>
-      <td nzAlign="center">
-        <nz-tag *ngIf="data.priority == 0" nzColor="red">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.0' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.priority == 1" nzColor="orange">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.1' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.priority == 2" nzColor="yellow">
-          <i nz-icon nzType="bell" nzTheme="outline"></i>
-          <span>{{ 'alert.priority.2' | i18n }}</span>
-        </nz-tag>
-      </td>
-      <td nzAlign="center">{{ data.times }}</td>
-      <td nzAlign="center">{{ data.template }}</td>
-      <td nzAlign="center">
-        <nz-switch [(ngModel)]="data.preset" (ngModelChange)="updateAlertDefine(data)" name="preset"></nz-switch>
+      <td nzAlign="center" nzEllipsis nz-tooltip [nzTooltipTitle]="data.template">
+        <span>{{ data.template }}</span>
       </td>
       <td nzAlign="center">
+        <nz-tag *ngFor="let item of data.labels | keyvalue">{{ item.key }}:{{ item.value }}</nz-tag>
+      </td>
+      <td nzAlign="center" nzRight>
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
       </td>
-      <td nzAlign="center">
+      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
+      <td nzAlign="center" nzRight>
         <div class="actions">
           <button
             nz-button
-            nzType="primary"
-            (click)="onOpenConnectModal(data.id, data.app)"
-            nz-tooltip
-            [disabled]="data.preset"
-            [nzTooltipTitle]="'alert.setting.connect' | i18n"
-          >
-            <i nz-icon nzType="link" nzTheme="outline"></i>
-          </button>
-          <button
-            nz-button
-            nzType="primary"
             (click)="onEditOneAlertDefine(data.id)"
             nz-tooltip
+            nzType="primary"
             [nzLoading]="isLoadingEdit === data.id"
-            [nzTooltipTitle]="'alert.setting.edit' | i18n"
+            [nzTooltipTitle]="data.type == 'realtime' ? ('alert.setting.edit.realtime' | i18n) : ('alert.setting.edit.periodic' | i18n)"
           >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
-          <button
-            nz-button
-            nzDanger
-            nzType="primary"
-            (click)="onDeleteOneAlertDefine(data.id)"
-            nz-tooltip
-            [nzTooltipTitle]="'alert.setting.delete' | i18n"
-          >
-            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
           </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button
+                  nz-button
+                  nzDanger
+                  (click)="onDeleteOneAlertDefine(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'alert.setting.delete' | i18n"
+                >
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
         </div>
       </td>
     </tr>
@@ -180,7 +174,15 @@
 <!-- new or update alert definition pop-up box -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="isManageModalAdd ? ('alert.setting.new' | i18n) : ('alert.setting.edit' | i18n)"
+  [nzTitle]="
+    isManageModalAdd
+      ? define.type == 'periodic'
+        ? ('alert.setting.new.periodic' | i18n)
+        : ('alert.setting.new.realtime' | i18n)
+      : define.type == 'periodic'
+      ? ('alert.setting.edit.periodic' | i18n)
+      : ('alert.setting.edit.realtime' | i18n)
+  "
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
@@ -190,7 +192,17 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #defineForm="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true">{{ 'alert.setting.target' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="name" [nzTooltipTitle]="'alert.setting.name.tip' | i18n">
+          {{ 'alert.setting.name' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="define.name" nz-input required type="text" name="name" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'realtime'">
+        <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true" [nzTooltipTitle]="'alert.setting.target.tip' | i18n">
+          {{ 'alert.setting.target' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-cascader
             required
@@ -204,81 +216,83 @@
           ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2" [ngStyle]="{ marginBottom: '5px' }">
+      <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzFor="isExpr" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-radio-group
-            [(ngModel)]="isExpr"
-            (ngModelChange)="switchAlertRuleShow()"
-            nzButtonStyle="solid"
-            [required]="'true'"
-            name="isExpr"
-            id="isExpr"
-          >
-            <label nz-radio-button [nzValue]="false">
-              {{ 'alert.setting.rule.switch-expr.0' | i18n }}
-            </label>
-            <label nz-radio-button [nzValue]="true">
-              {{ 'alert.setting.rule.switch-expr.1' | i18n }}
-            </label>
-          </nz-radio-group>
+          <div *ngIf="cascadeValues[1] === 'availability'">
+            <span style="color: red">
+              <nz-tag nzColor="error">{{ 'monitor.status.down' | i18n }}</nz-tag>
+              <nz-tag nzColor="error">{{ 'monitor.status.unreachable' | i18n }}</nz-tag>
+              {{ 'alert.setting.trigger' | i18n }}
+            </span>
+          </div>
+          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
+            <nz-radio-group
+              [(ngModel)]="isExpr"
+              (ngModelChange)="switchAlertRuleShow()"
+              nzButtonStyle="solid"
+              [required]="'true'"
+              name="isExpr"
+              id="isExpr"
+            >
+              <label nz-radio-button [nzValue]="false">
+                {{ 'alert.setting.rule.switch-expr.0' | i18n }}
+              </label>
+              <label nz-radio-button [nzValue]="true">
+                {{ 'alert.setting.rule.switch-expr.1' | i18n }}
+              </label>
+            </nz-radio-group>
+          </ng-container>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2 && isExpr">
+      <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-textarea-count [nzMaxCharacterCount]="100">
-            <textarea
-              [(ngModel)]="define.expr"
-              required
-              rows="3"
-              nz-input
-              name="expr"
-              id="expr"
-              [placeholder]="('alert.setting.expr.example' | i18n) + ': responseTime&gt;40'"
-            >
-            </textarea>
-          </nz-textarea-count>
-          <nz-collapse style="margin-top: 20px">
-            <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.expr.tip' | i18n">
-              <nz-list nzSize="small" nzSplit="false">
-                <nz-list-item *ngFor="let item of currentMetrics; let i = index">
-                  <code>
-                    {{ item.value }} :
-                    {{
-                      item.value == item.label
-                        ? i == 0
-                          ? ('alert.setting.target.tip' | i18n)
-                          : ('alert.setting.target.other' | i18n)
-                        : item.label
-                    }}
-                  </code>
-                  <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
+          <div class="template-input-wrapper">
+            <a nz-dropdown [nzDropdownMenu]="exprMenu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
+              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.expr.tip' | i18n">
+                <i nz-icon nzType="snippets" nzTheme="outline"></i>
+              </button>
+            </a>
+            <nz-dropdown-menu #exprMenu="nzDropdownMenu">
+              <ul nz-menu class="env-vars-menu">
+                <li nz-menu-item *ngFor="let item of currentMetrics" (click)="onExprVarClick(item)">
+                  <span class="env-var-name">{{ item.value }}</span>
+                  <span class="env-var-desc">{{ item.label }}</span>
+                  <nz-tag class="env-var-type" [nzColor]="item.type === 0 ? 'success' : 'processing'">
                     {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
                   </nz-tag>
-                </nz-list-item>
-                <nz-list-item>
-                  <code>
-                    {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
-                    <, <=, >, >=, !=, ( ), +, -, &&, ||
-                  </code>
-                </nz-list-item>
-              </nz-list>
-            </nz-collapse-panel>
-          </nz-collapse>
+                </li>
+                <nz-divider></nz-divider>
+                <li nz-menu-item *ngFor="let op of commonOperators" (click)="onExprVarClick(op)">
+                  <span class="env-var-name">{{ op.value }}</span>
+                  <span class="env-var-desc">{{ op.description | i18n }}</span>
+                </li>
+              </ul>
+            </nz-dropdown-menu>
+
+            <nz-textarea-count [nzMaxCharacterCount]="100">
+              <textarea
+                [(ngModel)]="userExpr"
+                (ngModelChange)="updateFinalExpr()"
+                required
+                rows="3"
+                nz-input
+                name="expr"
+                id="expr"
+                [placeholder]="'alert.setting.expr.example' | i18n"
+              >
+              </textarea>
+            </nz-textarea-count>
+          </div>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2 && !isExpr">
+      <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && !isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
-          <ngx-query-builder
-            [classNames]="qbClassNames"
-            [config]="qbConfig"
-            [formControl]="qbFormCtrl"
-            [ngStyle]="{ background: 'ghostwhite', borderRadius: '4px' }"
-          >
+          <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl" [ngStyle]="{ borderRadius: '4px' }">
             <ng-container *querySwitchGroup="let rule; let onChange = onChange">
               <nz-radio-group
                 style="white-space: nowrap"
@@ -384,32 +398,92 @@
           </ngx-query-builder>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length == 2">
-        <nz-form-label [nzSpan]="7" nzFor="available">
-          {{ 'monitor.availability' | i18n }}
+      <nz-form-item *ngIf="define.type === 'realtime'">
+        <nz-form-label [nzSpan]="7" nzFor="monitors" [nzTooltipTitle]="'alert.setting.bind.monitors.tip' | i18n">
+          {{ 'alert.setting.bind.monitors' | i18n }}
         </nz-form-label>
-        <nz-form-control [nzSpan]="10">
-          <span style="color: red">
-            <nz-tag nzColor="error">{{ 'monitor.status.down' | i18n }}</nz-tag>
-            <nz-tag nzColor="error">{{ 'monitor.status.unreachable' | i18n }}</nz-tag>
-            {{ 'alert.setting.trigger' | i18n }}
-          </span>
+        <nz-form-control [nzSpan]="12">
+          <button nz-button (click)="showConnectModal()">
+            <i nz-icon nzType="link" nzTheme="outline"></i>
+            {{ 'alert.setting.bind.manage' | i18n }}
+          </button>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'realtime'">
+        <nz-form-label [nzSpan]="7" nzFor="previewExpr">
+          {{ 'alert.setting.preview.expr' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-card [nzBordered]="false" class="preview-expr-card">
+            <pre>{{ define.expr }}</pre>
+          </nz-card>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'periodic'" [ngStyle]="{ marginBottom: '5px' }">
+        <nz-form-label [nzSpan]="7" nzFor="datasource" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
+          {{ 'alert.setting.rule' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
+            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" name="datasource" id="datasource">
+              <label nz-radio-button [nzValue]="'promql'">
+                {{ 'PromQL' | i18n }}
+              </label>
+            </nz-radio-group>
+          </ng-container>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'periodic'">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea
+              [(ngModel)]="define.expr"
+              required
+              rows="3"
+              nz-input
+              name="periodic_expr"
+              id="periodic_expr"
+              [placeholder]="'alert.setting.promql.tip' | i18n"
+            >
+            </textarea>
+          </nz-textarea-count>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'periodic'">
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="period" [nzTooltipTitle]="'alert.setting.period.tip' | i18n">
+          {{ 'alert.setting.period' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-input-number
+            [(ngModel)]="define.period"
+            required
+            [nzMin]="60"
+            [nzStep]="60"
+            name="period"
+            id="period"
+            [nzPlaceHolder]="'alert.setting.period.placeholder' | i18n"
+          >
+          </nz-input-number>
+          <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzRequired="true" nzFor="priority" [nzTooltipTitle]="'alert.setting.priority.tip' | i18n">
-          {{ 'alert.priority' | i18n }}
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="severity" [nzTooltipTitle]="'alert.setting.priority.tip' | i18n">
+          {{ 'alert.severity' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
-            [(ngModel)]="define.priority"
+            [(ngModel)]="severity"
+            (ngModelChange)="onSeverityChange()"
             [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
-            name="priority"
-            id="priority"
+            name="severity"
+            id="severity"
+            required
           >
-            <nz-option [nzValue]="0" [nzLabel]="'alert.priority.0' | i18n"></nz-option>
-            <nz-option [nzValue]="1" [nzLabel]="'alert.priority.1' | i18n"></nz-option>
-            <nz-option [nzValue]="2" [nzLabel]="'alert.priority.2' | i18n"></nz-option>
+            <nz-option [nzValue]="'emergency'" [nzLabel]="'alert.severity.0' | i18n"></nz-option>
+            <nz-option [nzValue]="'critical'" [nzLabel]="'alert.severity.1' | i18n"></nz-option>
+            <nz-option [nzValue]="'warning'" [nzLabel]="'alert.severity.2' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -423,82 +497,70 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" [nzTooltipTitle]="'alert.setting.template.label' | i18n">
+        <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" [nzTooltipTitle]="'alert.setting.template.tip' | i18n">
           {{ 'alert.setting.template' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-textarea-count [nzMaxCharacterCount]="200">
-            <textarea
-              [(ngModel)]="define.template"
-              rows="3"
-              nz-input
-              required
-              name="template"
-              id="template"
-              [placeholder]="'alert.setting.template.example' | i18n"
-            >
-            </textarea>
-          </nz-textarea-count>
-          <nz-collapse style="margin-top: 20px">
-            <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.template.tip' | i18n">
-              <nz-list nzSize="small" nzSplit="false">
-                <nz-list-item>
-                  <code>&#36;&#123;app&#125; : {{ 'alert.setting.template.monitor-type' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item>
-                  <code>&#36;&#123;metrics&#125; : {{ 'alert.setting.template.metrics-name' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item *ngIf="cascadeValues.length == 3">
-                  <code>&#36;&#123;metric&#125; : {{ 'alert.setting.template.metric-name' | i18n }}</code>
-                </nz-list-item>
-                <nz-list-item *ngFor="let item of filterMetrics(currentMetrics, cascadeValues)">
-                  <code
-                    >&#36;{{ '{' + item.value + '}' }} :
-                    {{
-                      item.value == item.label
-                        ? ('alert.setting.template.other-value' | i18n)
-                        : ('alert.setting.template.metric-value' | i18n) + '-' + item.label
-                    }}</code
-                  >
-                </nz-list-item>
-              </nz-list>
-            </nz-collapse-panel>
-          </nz-collapse>
+          <div class="template-input-wrapper">
+            <div *ngIf="define.type === 'realtime'" class="draggable-vars-container">
+              <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
+                <div class="key-value-block">
+                  <span class="var-key">{{ env.name }}</span>
+                  <span class="var-value">{{ env.description | i18n }}</span>
+                </div>
+              </div>
+
+              <div *ngFor="let metric of currentMetrics" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, metric)">
+                <div class="key-value-block">
+                  <span class="var-key">{{ '${' + metric.value + '}' }}</span>
+                  <span class="var-value">{{ metric.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <nz-textarea-count [nzMaxCharacterCount]="200">
+              <textarea
+                [(ngModel)]="define.template"
+                required
+                rows="3"
+                nz-input
+                name="template"
+                id="template"
+                [placeholder]="'alert.setting.template.example' | i18n"
+                (dragover)="onTextareaDragOver($event)"
+                (drop)="onTextareaDrop($event)"
+                (dragleave)="onTextareaDragLeave($event)"
+              ></textarea>
+            </nz-textarea-count>
+          </div>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" [nzFor]="'tags'" [nzTooltipTitle]="'tag.bind.tip' | i18n">{{ 'tag.bind' | i18n }} </nz-form-label>
-        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+        <nz-form-label nzSpan="7" [nzFor]="'labels'" [nzTooltipTitle]="'label.bind.tip' | i18n">{{ 'label.bind' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="12">
           <app-form-field
             [item]="{
-              field: 'tags',
-              type: 'tags-selection'
+              field: 'labels',
+              type: 'labels'
             }"
-            [extra]="{ tag_mode: 'closeable' }"
-            [name]="'tags'"
-            [(ngModel)]="define.tags"
+            [name]="'labels'"
+            [(ngModel)]="define.labels"
           />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="preset" [nzTooltipTitle]="'alert.setting.default.tip' | i18n">
-          {{ 'alert.setting.default' | i18n }}
+        <nz-form-label nzSpan="7" [nzFor]="'annotations'" [nzTooltipTitle]="'common.annotation.bind.tip' | i18n"
+          >{{ 'common.annotation.bind' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="recoverNotice" [nzTooltipTitle]="'alert.setting.recover-notice.tip' | i18n">
-          {{ 'alert.setting.recover-notice' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-switch
-            [(ngModel)]="define.recoverNotice"
-            [ngModelOptions]="{ standalone: true }"
-            name="recoverNotice"
-            id="recoverNotice"
-          ></nz-switch>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels'
+            }"
+            [name]="'annotations'"
+            [(ngModel)]="define.annotations"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -552,7 +614,7 @@
         <tbody>
           <tr *ngFor="let data of t.data" (click)="onItemSelect(data)">
             <td [nzChecked]="!!data.checked" (nzCheckedChange)="onItemSelect(data)"></td>
-            <td>{{ data.name }}</td>
+            <td>{{ data.title }}</td>
           </tr>
         </tbody>
       </nz-table>
@@ -565,27 +627,53 @@
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'alert.export.switch-type' | i18n"
   (nzOnCancel)="onExportTypeModalCancel()"
-  nzOkDisabled="true"
-  [nzFooter]="switchExportTypeModalFooter"
+  nzWidth="600px"
+  [nzFooter]="null"
 >
   <ng-container *nzModalContent>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('YAML')" [nzLoading]="exportYamlButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'alert.export.use-type' | i18n : { type: 'YAML' } }}
-      </button>
-    </p>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('JSON')" [nzLoading]="exportJsonButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'alert.export.use-type' | i18n : { type: 'JSON' } }}
-      </button>
-    </p>
-    <p style="text-align: center">
-      <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('EXCEL')" [nzLoading]="exportExcelButtonLoading">
-        <span nz-icon nzType="download"></span>
-        {{ 'alert.export.use-type' | i18n : { type: 'EXCEL' } }}
-      </button>
-    </p>
+    <div class="export-type-container">
+      <div class="export-type-card" (click)="exportDefines('JSON')" [class.loading]="exportJsonButtonLoading">
+        <div class="export-type-icon">
+          <i nz-icon nzType="code" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>JSON</h3>
+          <p>{{ 'alert.export.use-type' | i18n : { type: 'JSON' } }}</p>
+        </div>
+      </div>
+      <div class="export-type-card" (click)="exportDefines('EXCEL')" [class.loading]="exportExcelButtonLoading">
+        <div class="export-type-icon">
+          <i nz-icon nzType="file-excel" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>EXCEL</h3>
+          <p>{{ 'alert.export.use-type' | i18n : { type: 'EXCEL' } }}</p>
+        </div>
+      </div>
+    </div>
   </ng-container>
+</nz-modal>
+
+<!-- type model select -->
+<nz-modal
+  [(nzVisible)]="isSelectTypeModalVisible"
+  [nzTitle]="'alert.setting.new' | i18n"
+  (nzOnCancel)="onSelectTypeModalCancel()"
+  [nzFooter]="null"
+  nzWidth="460px"
+>
+  <div *nzModalContent>
+    <div class="alert-type-options">
+      <nz-card (click)="onSelectAlertType('realtime')" class="alert-type-card" [nzHoverable]="true">
+        <i nz-icon nzType="thunderbolt" nzTheme="outline"></i>
+        <h3>{{ 'alert.setting.type.realtime' | i18n }}</h3>
+        <p>{{ 'alert.setting.type.realtime.desc' | i18n }}</p>
+      </nz-card>
+      <nz-card (click)="onSelectAlertType('periodic')" class="alert-type-card" [nzHoverable]="true">
+        <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
+        <h3>{{ 'alert.setting.type.periodic' | i18n }}</h3>
+        <p>{{ 'alert.setting.type.periodic.desc' | i18n }}</p>
+      </nz-card>
+    </div>
+  </div>
 </nz-modal>

@@ -21,7 +21,6 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, MenuService } from '@delon/theme';
-import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -33,7 +32,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { formatTagName, findDeepestSelected } from '../../../shared/utils/common-util';
+import { findDeepestSelected } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-list',
@@ -47,7 +46,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private monitorSvc: MonitorService,
-    private messageSvc: NzMessageService,
     private storageSvc: MemoryStorageService,
     private appDefineSvc: AppDefineService,
     private menuService: MenuService,
@@ -56,7 +54,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   isDefaultListMenu!: boolean;
   app!: string | undefined;
-  tag!: string | undefined;
+  labels!: string | undefined;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -65,7 +63,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   checkedMonitorIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
   exportJsonButtonLoading = false;
-  exportYamlButtonLoading = false;
   exportExcelButtonLoading = false;
   filterContent!: string;
   filterStatus: number = 9;
@@ -75,6 +72,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   appSearchOrigin: any[] = [];
   appSearchLoading = false;
   intervalId: any;
+  // save the current sorting status
+  currentSortField: string | null = null;
+  currentSortOrder: string | null = null;
 
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
@@ -86,11 +86,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     });
     this.route.queryParamMap.subscribe(paramMap => {
       let appStr = paramMap.get('app');
-      let tagStr = paramMap.get('tag');
-      if (tagStr != null) {
-        this.tag = tagStr;
+      let labelsStr = paramMap.get('labels');
+      if (labelsStr != null) {
+        this.labels = labelsStr;
       } else {
-        this.tag = undefined;
+        this.labels = undefined;
       }
       if (appStr != null) {
         this.app = appStr;
@@ -123,18 +123,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     });
   }
 
-  onTagChanged(): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { ...this.route.snapshot.queryParams, tag: this.tag },
-      queryParamsHandling: 'merge'
-    });
-  }
-
   onFilterSearchMonitors() {
     this.tableLoading = true;
+    this.pageIndex = 1;
     let filter$ = this.monitorSvc
-      .searchMonitors(this.app, this.tag, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize)
+      .searchMonitors(this.app, this.labels, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize)
       .subscribe(
         message => {
           filter$.unsubscribe();
@@ -159,7 +152,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   sync() {
-    this.loadMonitorTable();
+    this.loadMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
   getAppIconName(app: string | undefined): string {
@@ -168,11 +161,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       return item.value == app;
     });
     if (find == undefined) {
-      return this.i18nSvc.fanyi('monitor_icon.center');
+      return this.i18nSvc.fanyi('monitor.icon.center');
     }
-    let icon = this.i18nSvc.fanyi(`monitor_icon.${find.category}`);
-    if (icon == `monitor_icon.${find.category}`) {
-      return this.i18nSvc.fanyi('monitor_icon.center');
+    let icon = this.i18nSvc.fanyi(`monitor.icon.${find.category}`);
+    if (icon == `monitor.icon.${find.category}`) {
+      return this.i18nSvc.fanyi('monitor.icon.center');
     }
     return icon;
   }
@@ -180,7 +173,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
     let monitorInit$ = this.monitorSvc
-      .searchMonitors(this.app, this.tag, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
+      .searchMonitors(this.app, this.labels, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
       .subscribe(
         message => {
           this.tableLoading = false;
@@ -205,7 +198,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   changeMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
     let monitorInit$ = this.monitorSvc
-      .searchMonitors(this.app, this.tag, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
+      .searchMonitors(this.app, this.labels, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
       .subscribe(
         message => {
           this.tableLoading = false;
@@ -275,15 +268,20 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   onImportMonitors(info: NzUploadChangeParam): void {
-    if (info.file.response) {
+    console.log(info.type);
+    if (info.type === 'start') {
+      this.notifySvc.info(
+        this.i18nSvc.fanyi('common.notice'),
+        this.i18nSvc.fanyi('common.notify.import-submitted', { taskName: info.file.name })
+      );
+    }
+    if (info.type === 'success' && info.file.response) {
       this.tableLoading = true;
       const message = info.file.response;
       if (message.code === 0) {
-        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
         this.loadMonitorTable();
       } else {
         this.tableLoading = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
       }
     }
   }
@@ -335,15 +333,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       case 'EXCEL':
         this.exportExcelButtonLoading = true;
         break;
-      case 'YAML':
-        this.exportYamlButtonLoading = true;
-        break;
     }
     const exportMonitors$ = this.monitorSvc
       .exportMonitors(this.checkedMonitorIds, type)
       .pipe(
         finalize(() => {
-          this.exportYamlButtonLoading = false;
           this.exportExcelButtonLoading = false;
           this.exportJsonButtonLoading = false;
           exportMonitors$.unsubscribe();
@@ -495,7 +489,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   // end: List multiple choice paging
 
   notifyCopySuccess() {
-    this.messageSvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), { nzDuration: 800 });
+    this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
   }
 
   /**
@@ -508,9 +502,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
     const currentSort = sort.find(item => item.value !== null);
-    const sortField = (currentSort && currentSort.key) || null;
-    const sortOrder = (currentSort && currentSort.value) || null;
-    this.changeMonitorTable(sortField, sortOrder);
+    this.currentSortField = (currentSort && currentSort.key) || null;
+    this.currentSortOrder = (currentSort && currentSort.value) || null;
+    this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
   // begin: app type search filter
@@ -594,5 +588,45 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     );
   }
 
-  protected readonly sliceTagName = formatTagName;
+  getLabelColor(key: string): string {
+    const colors = ['blue', 'green', 'orange', 'purple', 'cyan'];
+    const index = Math.abs(this.hashString(key)) % colors.length;
+    return colors[index];
+  }
+
+  private hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return hash;
+  }
+
+  copyMonitor() {
+    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
+      return;
+    }
+    if (this.checkedMonitorIds.size > 1) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('monitor.copy.notify.one-select'), '');
+      return;
+    }
+    const monitorId = Array.from(this.checkedMonitorIds)[0];
+
+    this.monitorSvc.copyMonitor(monitorId).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.notifySvc.success(this.i18nSvc.fanyi('monitor.copy.success'), '');
+          this.loadMonitorTable();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), message.msg);
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), error.msg);
+      }
+    );
+  }
 }

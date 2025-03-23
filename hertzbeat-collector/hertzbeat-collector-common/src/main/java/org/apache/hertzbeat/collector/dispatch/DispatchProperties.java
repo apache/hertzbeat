@@ -154,13 +154,11 @@ public class DispatchProperties {
 
     /**
      * Schedule Data Export Configuration Properties
-     * 调度数据出口配置属性
      */
     public static class ExportProperties {
 
         /**
          * kafka configuration information
-         * kafka配置信息
          */
         private KafkaProperties kafka;
 
@@ -178,18 +176,15 @@ public class DispatchProperties {
         public static class KafkaProperties {
             /**
              * Whether the kafka data export is started
-             * kafka数据出口是否启动
              */
             private boolean enabled = true;
 
             /**
              * kafka's connection server url
-             * kafka的连接服务器url
              */
             private String servers = "http://127.0.0.1:2379";
             /**
              * Topic name to send data to
-             * 发送数据的topic名称
              */
             private String topic;
 

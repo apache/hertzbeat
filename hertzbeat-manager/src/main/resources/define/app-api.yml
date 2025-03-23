@@ -246,6 +246,20 @@ params:
     defaultValue: '200, 201'
     # hide param-true or false
     hide: true
+  # field-param field key
+  - field: enableUrlEncoding
+    # name-param field display i18n name
+    name:
+      zh-CN: 启用URL编码（UTF-8）
+      en-US: Enable URL Encoding(UTF-8)
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: true
+    # hide param-true or false
+    hide: true
 # collect metrics config list
 metrics:
   # metrics - summary
@@ -286,6 +300,8 @@ metrics:
       method: ^_^httpMethod^_^
       # if enabled https
       ssl: ^_^ssl^_^
+      # enable url encoding
+      enableUrlEncoding: ^_^enableUrlEncoding^_^
       # http request payload
       payload: ^_^payload^_^
       # http request header content
@@ -344,6 +360,8 @@ metrics:
       method: GET
       # if enabled https
       ssl: ^_^ssl^_^
+      # enable url encoding
+      enableUrlEncoding: ^_^enableUrlEncoding^_^
       authorization:
         # http auth type: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^

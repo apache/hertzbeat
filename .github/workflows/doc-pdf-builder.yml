@@ -17,7 +17,8 @@
 
 name: 'HertzBeat Doc Pdf Builder'
 on:
-  page_build
+  push:
+    branches: [ page_build* ]
 
 jobs:
   build:
@@ -39,7 +40,7 @@ jobs:
         run: npx docusaurus-prince-pdf -u https://hertzbeat.apache.org/docs --output docs-en.pdf
   
       - name: Upload results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docs-cn-pdf
           path: docs-cn.pdf
@@ -47,7 +48,7 @@ jobs:
           retention-days: 1
           
       - name: Upload results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docs-en-pdf
           path: docs-en.pdf

@@ -47,8 +47,7 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * test case for {@link AlertDefineYamlImExportServiceImpl}
- */
-
+*/
 @ExtendWith(MockitoExtension.class)
 class AlertDefineYamlImExportServiceTest {
 
@@ -58,16 +57,12 @@ class AlertDefineYamlImExportServiceTest {
     private static final String YAML_DATA =
             """
                     - alertDefine:
-                        app: App1
-                        metric: Metric1
-                        field: Field1
-                        preset: true
+                        name: App1
+                        type: realtime
                         expr: Expr1
-                        priority: 1
-                        times: 1
-                        tags: []
+                        period: 3000
+                        times: 3
                         enable: true
-                        recoverNotice: true
                         template: Template1
                     """;
 
@@ -80,16 +75,12 @@ class AlertDefineYamlImExportServiceTest {
         inputStream = new ByteArrayInputStream(YAML_DATA.getBytes(StandardCharsets.UTF_8));
 
         AlertDefineDTO alertDefine = new AlertDefineDTO();
-        alertDefine.setApp("App1");
-        alertDefine.setMetric("Metric1");
-        alertDefine.setField("Field1");
-        alertDefine.setPreset(true);
+        alertDefine.setName("App1");
+        alertDefine.setType("realtime");
+        alertDefine.setPeriod(3000);
+        alertDefine.setTimes(3);
         alertDefine.setExpr("Expr1");
-        alertDefine.setPriority((byte) 1);
-        alertDefine.setTimes(1);
-        alertDefine.setTags(List.of());
         alertDefine.setEnable(true);
-        alertDefine.setRecoverNotice(true);
         alertDefine.setTemplate("Template1");
 
         ExportAlertDefineDTO exportAlertDefine = new ExportAlertDefineDTO();
@@ -141,8 +132,9 @@ class AlertDefineYamlImExportServiceTest {
         service.writeOs(alertDefineList, outputStream);
         String yamlOutput = outputStream.toString(StandardCharsets.UTF_8);
 
-        assertTrue(yamlOutput.contains("app: App1"));
-        assertTrue(yamlOutput.contains("metric: Metric1"));
+        assertTrue(yamlOutput.contains("name: App1"));
+        assertTrue(yamlOutput.contains("type: realtime"));
+        assertTrue(yamlOutput.contains("expr: Expr1"));
     }
 
     @Test

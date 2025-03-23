@@ -64,12 +64,8 @@ class AlertDefineControllerTest {
 
         this.alertDefine = AlertDefine.builder()
                 .id(1L)
-                .app("app")
-                .metric("test")
-                .field("test")
-                .preset(false)
+                .name("alertDefine")
                 .expr("1 > 0")
-                .priority((byte) 1)
                 .times(1)
                 .template("template")
                 .creator("tom")
@@ -125,9 +121,6 @@ class AlertDefineControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.id").value(alertDefine.getId()))
-                .andExpect(jsonPath("$.data.app").value(alertDefine.getApp()))
-                .andExpect(jsonPath("$.data.metric").value(alertDefine.getMetric()))
-                .andExpect(jsonPath("$.data.field").value(alertDefine.getField()))
                 .andExpect(jsonPath("$.data.expr").value(alertDefine.getExpr()))
                 .andExpect(jsonPath("$.data.template").value(alertDefine.getTemplate()))
                 .andExpect(jsonPath("$.data.gmtCreate").value(alertDefine.getGmtCreate()))
@@ -142,30 +135,6 @@ class AlertDefineControllerTest {
                         .content(JsonUtil.toJson(this.alertDefine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andReturn();
-    }
-
-    @Test
-    void applyAlertDefineMonitorsBind() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/alert/define/" + this.alertDefine.getId() + "/monitors")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(this.alertDefineMonitorBinds)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andReturn();
-    }
-
-    @Test
-    void getAlertDefineMonitorsBind() throws Exception {
-        Mockito.when(alertDefineService.getBindAlertDefineMonitors(this.alertDefine.getId()))
-                .thenReturn(this.alertDefineMonitorBinds);
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/alert/define/" + this.alertDefine.getId() + "/monitors")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data[0].id").value(alertDefineMonitorBinds.get(0).getId()))
-                .andExpect(jsonPath("$.data[0].monitor.id").value(alertDefineMonitorBinds.get(0).getMonitor().getId()))
                 .andReturn();
     }
 }

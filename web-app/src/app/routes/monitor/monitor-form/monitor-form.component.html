@@ -75,8 +75,8 @@
 
       <nz-collapse *ngIf="hasAdvancedParams" [nzGhost]="true" style="background: ghostwhite; margin-bottom: 24px">
         <ng-template #extraColHeader>
-          <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitors.advanced.tip' | i18n">
-            <span>{{ 'monitors.advanced' | i18n }}</span>
+          <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitor.advanced.tip' | i18n">
+            <span>{{ 'monitor.advanced' | i18n }}</span>
             <i nz-icon nzType="down-circle" nzTheme="outline"></i>
           </button>
         </ng-template>
@@ -129,15 +129,31 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label nzSpan="7" [nzFor]="'tags'" [nzTooltipTitle]="'tag.bind.tip' | i18n">{{ 'tag.bind' | i18n }} </nz-form-label>
+        <nz-form-label nzSpan="7" [nzFor]="'labels'" [nzTooltipTitle]="'label.bind.tip' | i18n">{{ 'label.bind' | i18n }} </nz-form-label>
         <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <app-form-field
             [item]="{
-              field: 'tags',
-              type: 'tags-selection'
+              field: 'labels',
+              type: 'labels'
             }"
-            [name]="'tags'"
-            [(ngModel)]="monitor.tags"
+            [name]="'labels'"
+            [(ngModel)]="monitor.labels"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'annotation'" [nzTooltipTitle]="'common.annotation.bind.tip' | i18n"
+          >{{ 'common.annotation.bind' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'annotations',
+              type: 'labels'
+            }"
+            [name]="'annotations'"
+            [(ngModel)]="monitor.annotations"
           />
         </nz-form-control>
       </nz-form-item>
@@ -198,7 +214,7 @@
             nzType="primary"
             type="submit"
             nz-tooltip
-            [nzTooltipTitle]="'monitors.detect.tip' | i18n"
+            [nzTooltipTitle]="'monitor.detect.tip' | i18n"
             (click)="onDetect(form.form)"
           >
             {{ 'common.button.detect' | i18n }}

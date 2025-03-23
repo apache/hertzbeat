@@ -22,6 +22,8 @@ import com.sun.net.httpserver.HttpServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollectE2eTest;
 import org.apache.hertzbeat.collector.collect.http.HttpCollectImpl;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
@@ -38,7 +40,12 @@ import org.springframework.util.ResourceUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Integration test for Docker monitoring functionality
@@ -52,9 +59,18 @@ public class DockerMonitorE2eTest extends AbstractCollectE2eTest {
     private static final String LOCALHOST = "127.0.0.1";
     private static HttpServer mockServer;
 
+    @AfterAll
+    public static void tearDown() {
+        if (mockServer != null) {
+            mockServer.stop(0);
+        }
+    }
+
     @BeforeEach
     public void setUp() throws Exception {
+
         super.setUp();
+        // Setup collect instance
         collect = new HttpCollectImpl();
 
         // Setup mock server and endpoints
@@ -65,6 +81,7 @@ public class DockerMonitorE2eTest extends AbstractCollectE2eTest {
         // Setup Docker API endpoints
         String containerResponse = loadResponseFromFile("classpath:http/docker/containers_result.txt");
         String infoResponse = loadResponseFromFile("classpath:http/docker/system_result.txt");
+        String containerStatsResponse = loadResponseFromFile("classpath:http/docker/containers_stats.txt");
 
         mockServer.createContext("/containers/json", exchange -> {
             String query = exchange.getRequestURI().getQuery();
@@ -77,6 +94,8 @@ public class DockerMonitorE2eTest extends AbstractCollectE2eTest {
         });
 
         mockServer.createContext("/info", exchange -> sendJsonResponse(exchange, infoResponse));
+        mockServer.createContext("/containers/34174a918eb2e38cdb097c910f74af845e7383b04765d26ad52f940f86342a64/stats", exchange -> sendJsonResponse(exchange, containerStatsResponse));
+
     }
 
     private String loadResponseFromFile(String resourcePath) throws Exception {
@@ -85,22 +104,22 @@ public class DockerMonitorE2eTest extends AbstractCollectE2eTest {
 
     private void sendJsonResponse(HttpExchange exchange, String response) throws IOException {
         exchange.getResponseHeaders().set("Content-Type", "application/json");
-        exchange.sendResponseHeaders(200, response.getBytes().length);
+        final byte[] array = response.getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(200, array.length);
         try (OutputStream os = exchange.getResponseBody()) {
-            os.write(response.getBytes());
+            os.write(array);
         }
     }
 
     @Test
     public void testDockerMonitor() {
         Job dockerJob = appService.getAppDefine("docker");
-        dockerJob.getMetrics().forEach(metricsDef -> {
-            // Skip metrics containing "^o^" as parameter substitution is not supported in e2e tests
-            if (metricsDef.getHttp().getUrl().contains("^o^")) {
-                return;
-            }
-            validateMetricsCollection(metricsDef, metricsDef.getName());
-        });
+        List<Map<String, Configmap>> configmapFromPreCollectData = new LinkedList<>();
+        for (Metrics metricsDef : dockerJob.getMetrics()) {
+            metricsDef = CollectUtil.replaceCryPlaceholderToMetrics(metricsDef, configmapFromPreCollectData.size() > 0 ? configmapFromPreCollectData.get(0) : new HashMap<>());
+            CollectRep.MetricsData metricsData = validateMetricsCollection(metricsDef, metricsDef.getName());
+            configmapFromPreCollectData = CollectUtil.getConfigmapFromPreCollectData(metricsData);
+        }
     }
 
     @Override
@@ -121,12 +140,5 @@ public class DockerMonitorE2eTest extends AbstractCollectE2eTest {
         HttpProtocol protocol = (HttpProtocol) buildProtocol(metricsDef);
         metrics.setHttp(protocol);
         return collectMetricsData(metrics, metricsDef);
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        if (mockServer != null) {
-            mockServer.stop(0);
-        }
     }
 }

@@ -18,9 +18,6 @@
 package org.apache.hertzbeat.manager.service;
 
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -32,6 +29,10 @@ import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Monitoring and management services
  */
@@ -39,6 +40,7 @@ public interface MonitorService {
 
     /**
      * Monitoring Availability Probes
+     *
      * @param monitor   Monitoring entity information
      * @param params    Parameter information
      * @param collector collector pinned
@@ -49,16 +51,17 @@ public interface MonitorService {
     /**
      * Add monitoring
      *
-     * @param monitor          Monitoring Entity
-     * @param params           Parameter information
-     * @param collector        collector pinned
-     * @param dashboard       grafana dashboard
+     * @param monitor   Monitoring Entity
+     * @param params    Parameter information
+     * @param collector collector pinned
+     * @param dashboard grafana dashboard
      * @throws RuntimeException Add process exception throw
      */
     void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard dashboard) throws RuntimeException;
 
     /**
      * Verify the correctness of request data parameters
+     *
      * @param monitorDto monitorDto
      * @param isModify   Whether it is a modification monitoring
      * @throws IllegalArgumentException Validation parameter error thrown
@@ -68,16 +71,17 @@ public interface MonitorService {
     /**
      * Modify update monitoring
      *
-     * @param monitor          Monitor Entity
-     * @param params           Parameter information
-     * @param collector        collector pinned
-     * @param dashboard        grafana dashboard
+     * @param monitor   Monitor Entity
+     * @param params    Parameter information
+     * @param collector collector pinned
+     * @param dashboard grafana dashboard
      * @throws RuntimeException Exception thrown during modification
      */
     void modifyMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard dashboard) throws RuntimeException;
 
     /**
      * Delete Monitor
+     *
      * @param id Monitor ID
      * @throws RuntimeException Exception thrown during deletion
      */
@@ -85,6 +89,7 @@ public interface MonitorService {
 
     /**
      * Batch delete monitoring
+     *
      * @param ids Monitoring ID List
      * @throws RuntimeException Exception thrown during deletion
      */
@@ -92,6 +97,7 @@ public interface MonitorService {
 
     /**
      * Get monitoring information
+     *
      * @param id Monitor ID
      * @return MonitorDto   Monitor Entity
      * @throws RuntimeException Exception thrown during query
@@ -100,40 +106,44 @@ public interface MonitorService {
 
     /**
      * Dynamic conditional query
+     *
      * @param monitorIds Monitor ID List
-     * @param app       Monitor Type
-     * @param name      Monitor Name support fuzzy query
-     * @param host      Monitor Host support fuzzy query
-     * @param status    Monitor Status 0:no monitor,1:usable,2:disabled,9:all status
-     * @param sort      Sort Field
-     * @param order     Sort mode eg:asc desc
-     * @param pageIndex List current page
-     * @param pageSize  Number of list pagination
-     * @param tag       Monitor tag
+     * @param app        Monitor Type
+     * @param search     Monitor Host support fuzzy query
+     * @param status     Monitor Status 0:no monitor,1:usable,2:disabled,9:all status
+     * @param sort       Sort Field
+     * @param order      Sort mode eg:asc desc
+     * @param pageIndex  List current page
+     * @param pageSize   Number of list pagination
+     * @param labels     Monitor labels
      * @return Search Result
      */
-    Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag);
+    Page<Monitor> getMonitors(List<Long> monitorIds, String app, String search, Byte status, String sort, String order, int pageIndex, int pageSize, String labels);
 
     /**
      * Unmanaged monitoring items in batches according to the monitoring ID list
+     *
      * @param ids Monitoring ID List
      */
     void cancelManageMonitors(HashSet<Long> ids);
 
     /**
      * Start the managed monitoring items in batches according to the monitoring ID list
+     *
      * @param ids Monitoring ID List
      */
     void enableManageMonitors(HashSet<Long> ids);
 
     /**
      * Query the monitoring category and its corresponding monitoring quantity
+     *
      * @return Monitoring Category and Monitoring Quantity Mapping
      */
     List<AppCount> getAllAppMonitorsCount();
 
     /**
      * Query monitoring
+     *
      * @param monitorId Monitor ID
      * @return Monitor information
      */
@@ -141,6 +151,7 @@ public interface MonitorService {
 
     /**
      * Update the status of the specified monitor
+     *
      * @param monitorId monitorId
      * @param status    monitor status
      */
@@ -148,28 +159,15 @@ public interface MonitorService {
 
     /**
      * Query the list of all monitoring information under the specified monitoring type
+     *
      * @param app Monitor Type
      * @return Monitor Entity List
      */
     List<Monitor> getAppMonitors(String app);
 
     /**
-     * add a new monitor with optional metrics
-     * @param metrics user metrics
-     * @param monitor Monitoring prompt
-     * @param params  configuration parameters
-     */
-    void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params);
-
-    /**
-     * Get monitor able metrics based on App name, not passed to get all metrics
-     * @param app app name
-     * @return metrics
-     */
-    List<String> getMonitorMetrics(String app);
-
-    /**
      * Export Monitoring Configuration
+     *
      * @param ids  monitor id list
      * @param type file type
      * @param res  response
@@ -179,6 +177,7 @@ public interface MonitorService {
 
     /**
      * Import Monitoring Configuration
+     *
      * @param file configuration file
      * @throws Exception This exception will be thrown if the export fails
      */
@@ -193,9 +192,17 @@ public interface MonitorService {
 
     /**
      * update app collect job by app
+     *
      * @param job job content
      */
     void updateAppCollectJob(Job job);
 
     void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector, SdMonitorParam sdMonitorParam, GrafanaDashboard grafanaDashboard);
+
+    /**
+     * Copy monitor by id
+     *
+     * @param id Monitor id
+     */
+    void copyMonitor(Long id);
 }

@@ -194,11 +194,9 @@
             </nz-tag>
           </td>
           <td nzAlign="center">
-            <a routerLink="/monitors" [queryParams]="{ tag: sliceTagName(data.tag) }">
-              <nz-tag class="hoverClass">
-                {{ sliceTagName(data.tag) }}
-              </nz-tag>
-            </a>
+            <nz-tag *ngFor="let label of data.labels | keyvalue" style="margin-top: 2px" [nzColor]="getLabelColor(label.key)">
+              {{ label.key }}:{{ label.value }}
+            </nz-tag>
           </td>
           <td nzAlign="center">{{ data.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
           <td nzAlign="center">
@@ -212,16 +210,24 @@
               >
                 <i nz-icon nzType="edit" nzTheme="outline"></i>
               </button>
-              <button
-                nz-button
-                nzType="primary"
-                nzDanger
-                (click)="onDeleteOneComponent(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'status.component.delete' | i18n"
-              >
-                <i nz-icon nzType="delete" nzTheme="outline"></i>
+              <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+                <span nz-icon nzType="ellipsis"></span>
               </button>
+              <nz-dropdown-menu #more_menu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item>
+                    <button
+                      nz-button
+                      nzDanger
+                      (click)="onDeleteOneComponent(data.id)"
+                      nz-tooltip
+                      [nzTooltipTitle]="'status.component.delete' | i18n"
+                    >
+                      <i nz-icon nzType="delete" nzTheme="outline"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
             </div>
           </td>
         </tr>
@@ -300,16 +306,24 @@
               >
                 <i nz-icon nzType="redo" nzTheme="outline"></i>
               </button>
-              <button
-                nz-button
-                nzType="primary"
-                nzDanger
-                (click)="onDeleteOneIncident(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'status.incident.delete' | i18n"
-              >
-                <i nz-icon nzType="delete" nzTheme="outline"></i>
+              <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+                <span nz-icon nzType="ellipsis"></span>
               </button>
+              <nz-dropdown-menu #more_menu="nzDropdownMenu">
+                <ul nz-menu>
+                  <li nz-menu-item>
+                    <button
+                      nz-button
+                      nzDanger
+                      (click)="onDeleteOneIncident(data.id)"
+                      nz-tooltip
+                      [nzTooltipTitle]="'status.incident.delete' | i18n"
+                    >
+                      <i nz-icon nzType="delete" nzTheme="outline"></i>
+                    </button>
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
             </div>
           </td>
         </tr>
@@ -377,19 +391,15 @@
           'status.component.tag' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-select
-            [(ngModel)]="matchTag"
-            (nzOpenChange)="loadTagsOption()"
-            [nzOptions]="tagsOption"
-            [nzMaxTagCount]="5"
-            [nzDropdownMatchSelectWidth]="false"
-            nzShowSearch
-            [nzPlaceHolder]="'alert.notice.rule.tag.placeholder' | i18n"
-            required
-            name="tag"
-            id="tag"
-          >
-          </nz-select>
+          <app-form-field
+            [item]="{
+              field: 'labels',
+              type: 'labels',
+              required: true
+            }"
+            [name]="'sourceLabels'"
+            [(ngModel)]="currentStatusComponent.labels"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="currentStatusComponent.method == 1">

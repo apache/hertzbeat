@@ -132,7 +132,7 @@ class VersionControllerTest {
         when(versionService.upload(any(), any())).thenReturn(true);
 
         mockMvc.perform(multipart("/version/upload")
-                        .file("file", "dummy content".getBytes())
+                        .file("file", "dummy content".getBytes(StandardCharsets.UTF_8))
                         .param("templateDto", templateDtoJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0));

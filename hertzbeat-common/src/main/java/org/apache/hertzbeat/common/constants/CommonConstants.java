@@ -83,39 +83,79 @@ public interface CommonConstants {
     byte MONITOR_BIND_TYPE_SD_MAIN_MONITOR = 0x01;
 
     /**
-     * Alarm status: 0 - normal alarm (to be processed)
+     * label key: instance
      */
-    byte ALERT_STATUS_CODE_PENDING = 0x00;
+    String LABEL_INSTANCE = "instance";
 
     /**
-     * Alarm Status: 1 - Threshold triggered but not reached the number of alarms
+     * label key: alert name
      */
-    byte ALERT_STATUS_CODE_NOT_REACH = 0x01;
+    String LABEL_ALERT_NAME = "alertname";
 
     /**
-     * Alarm Status: 2-Restore Alarm
+     * label key: instance host
      */
-    byte ALERT_STATUS_CODE_RESTORED = 0x02;
+    String LABEL_INSTANCE_HOST = "instancehost";
 
     /**
-     * Alert Status: 3-Handled
+     * label key: instance name
      */
-    byte ALERT_STATUS_CODE_SOLVED = 0x03;
+    String LABEL_INSTANCE_NAME = "instancename";
+    
+    /**
+     * Alarm severity label key
+     */
+    String LABEL_ALERT_SEVERITY = "severity";
 
     /**
-     * Alarm level: 0: high-emergency-emergency-red
+     * Alarm severity fatal level
      */
-    byte ALERT_PRIORITY_CODE_EMERGENCY = 0x00;
+    String LABEL_ALERT_FATAL = "fatal";
+    
+    /**
+     * alarm severity emergency level
+     */
+    String ALERT_SEVERITY_EMERGENCY = "emergency";
 
     /**
-     * Alarm severity: 1: medium-critical-critical alarm-orange
+     * alarm severity critical level
      */
-    byte ALERT_PRIORITY_CODE_CRITICAL = 0x01;
+    String ALERT_SEVERITY_CRITICAL = "critical";
 
     /**
-     * Warning level: 2: low-warning-warning warning-yellow
+     * alarm severity warning level
      */
-    byte ALERT_PRIORITY_CODE_WARNING = 0x02;
+    String ALERT_SEVERITY_WARNING = "warning";
+
+    /**
+     * alarm severity info level
+     */
+    String ALERT_SEVERITY_INFO = "info";
+
+    /**
+     * Alarm status: firing
+     */
+    String ALERT_STATUS_FIRING = "firing";
+
+    /**
+     * Alarm status: resolved
+     */
+    String ALERT_STATUS_RESOLVED = "resolved";
+
+    /**
+     * Alarm status: pending
+     */
+    String ALERT_STATUS_PENDING = "pending";
+
+    /**
+     * alert threshold type: realtime
+     */
+    String ALERT_THRESHOLD_TYPE_REALTIME = "realtime";
+
+    /**
+     * alert threshold type: periodic
+     */
+    String ALERT_THRESHOLD_TYPE_PERIODIC = "periodic";
 
     /**
      * Field parameter type: number
@@ -203,6 +243,11 @@ public interface CommonConstants {
     byte AUTH_TYPE_GITEE = 5;
 
     /**
+     * inner default label key __instance__
+     */
+    String LABEL_INNER_KEY_INSTANCE = "__instance__";
+    
+    /**
      * Inside the tag: monitorId Monitor task ID
      */
     String TAG_MONITOR_ID = "monitorId";
@@ -286,9 +331,19 @@ public interface CommonConstants {
     String CACHE_ALERT_SILENCE = "alert_silence";
 
     /**
+     * cache key alert define
+     */
+    String CACHE_ALERT_DEFINE = "alert_define";
+
+    /**
      * cache key alert converge
      */
-    String CACHE_ALERT_CONVERGE = "alert_converge";
+    String CACHE_ALERT_GROUP_CONVERGE = "alert_group_converge";
+
+    /**
+     * cache key alert inhibit
+     */
+    String CACHE_ALERT_INHIBIT = "alert_inhibit";
 
     /**
      * collector status online 0

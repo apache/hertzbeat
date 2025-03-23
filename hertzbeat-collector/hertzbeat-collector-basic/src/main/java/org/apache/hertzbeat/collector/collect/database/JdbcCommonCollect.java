@@ -26,20 +26,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
+import org.apache.hertzbeat.collector.collect.common.ssh.SshTunnelHelper;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.SshTunnel;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.postgresql.util.PSQLException;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
@@ -55,7 +60,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     private static final String QUERY_TYPE_MULTI_ROW = "multiRow";
     private static final String QUERY_TYPE_COLUMNS = "columns";
     private static final String RUN_SCRIPT = "runScript";
-    
+
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
@@ -73,18 +78,29 @@ public class JdbcCommonCollect extends AbstractCollect {
                 }
             }
         }
+        SshTunnelHelper.checkTunnelParam(metrics.getJdbc().getSshTunnel());
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
-        String databaseUrl = constructDatabaseUrl(jdbcProtocol);
+        SshTunnel sshTunnel = jdbcProtocol.getSshTunnel();
+
         int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
+        boolean reuseConnection = Boolean.parseBoolean(jdbcProtocol.getReuseConnection());
         Statement statement = null;
+        String databaseUrl;
         try {
+            if (sshTunnel != null && Boolean.parseBoolean(sshTunnel.getEnable())) {
+                int localPort = SshTunnelHelper.localPortForward(sshTunnel, jdbcProtocol.getHost(), jdbcProtocol.getPort());
+                databaseUrl = constructDatabaseUrl(jdbcProtocol, "localhost", String.valueOf(localPort));
+            } else {
+                databaseUrl = constructDatabaseUrl(jdbcProtocol, jdbcProtocol.getHost(), jdbcProtocol.getPort());
+            }
+
             statement = getConnection(jdbcProtocol.getUsername(),
-                    jdbcProtocol.getPassword(), databaseUrl, timeout);
+                    jdbcProtocol.getPassword(), databaseUrl, timeout, reuseConnection);
             switch (jdbcProtocol.getQueryType()) {
                 case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
                 case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
@@ -112,6 +128,14 @@ public class JdbcCommonCollect extends AbstractCollect {
             log.warn("Jdbc sql error: {}, code: {}.", sqlException.getMessage(), sqlException.getErrorCode());
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
+        } catch (SshException sshException) {
+            Throwable throwable = sshException.getCause();
+            if (throwable instanceof SshChannelOpenException) {
+                log.warn("[Jdbc collect] Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
+            }
+            String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg("Peer ssh connection failed: " + errorMsg);
         } catch (Exception e) {
             String errorMessage = CommonUtil.getMessageFromThrowable(e);
             log.error("Jdbc error: {}.", errorMessage, e);
@@ -119,10 +143,19 @@ public class JdbcCommonCollect extends AbstractCollect {
             builder.setMsg("Query Error: " + errorMessage);
         } finally {
             if (statement != null) {
+                Connection connection = null;
                 try {
+                    connection = statement.getConnection();
                     statement.close();
                 } catch (Exception e) {
                     log.error("Jdbc close statement error: {}", e.getMessage());
+                }
+                try {
+                    if (!reuseConnection && connection != null) {
+                        connection.close();
+                    }
+                } catch (Exception e) {
+                    log.error("Jdbc close connection error: {}", e.getMessage());
                 }
             }
         }
@@ -134,38 +167,40 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
 
-    private Statement getConnection(String username, String password, String url, Integer timeout) throws Exception {
+    private Statement getConnection(String username, String password, String url, Integer timeout, boolean reuseConnection) throws Exception {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
-        Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         Statement statement = null;
-        if (cacheOption.isPresent()) {
-            JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
-            try {
-                statement = jdbcConnect.getConnection().createStatement();
-                // set query timeout
-                int timeoutSecond = timeout / 1000;
-                timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
-                statement.setQueryTimeout(timeoutSecond);
-                // set query max row number
-                statement.setMaxRows(1000);
-            } catch (Exception e) {
-                log.info("The jdbc connect from cache, create statement error: {}", e.getMessage());
+        if (reuseConnection) {
+            Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
+            if (cacheOption.isPresent()) {
+                JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
                 try {
-                    if (statement != null) {
-                        statement.close();
+                    statement = jdbcConnect.getConnection().createStatement();
+                    // set query timeout
+                    int timeoutSecond = timeout / 1000;
+                    timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
+                    statement.setQueryTimeout(timeoutSecond);
+                    // set query max row number
+                    statement.setMaxRows(1000);
+                } catch (Exception e) {
+                    log.info("The jdbc connect from cache, create statement error: {}", e.getMessage());
+                    try {
+                        if (statement != null) {
+                            statement.close();
+                        }
+                        jdbcConnect.close();
+                    } catch (Exception e2) {
+                        log.error(e2.getMessage());
                     }
-                    jdbcConnect.close();
-                } catch (Exception e2) {
-                    log.error(e2.getMessage());
+                    statement = null;
+                    connectionCommonCache.removeCache(identifier);
                 }
-                statement = null;
-                connectionCommonCache.removeCache(identifier);
             }
-        }
-        if (statement != null) {
-            return statement;
+            if (statement != null) {
+                return statement;
+            }
         }
         // renew connection when failed
         Connection connection = DriverManager.getConnection(url, username, password);
@@ -175,8 +210,10 @@ public class JdbcCommonCollect extends AbstractCollect {
         timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
         statement.setQueryTimeout(timeoutSecond);
         statement.setMaxRows(1000);
-        JdbcConnect jdbcConnect = new JdbcConnect(connection);
-        connectionCommonCache.addCache(identifier, jdbcConnect);
+        if (reuseConnection) {
+            JdbcConnect jdbcConnect = new JdbcConnect(connection);
+            connectionCommonCache.addCache(identifier, jdbcConnect);
+        }
         return statement;
     }
 
@@ -185,13 +222,14 @@ public class JdbcCommonCollect extends AbstractCollect {
      * eg:
      * query metrics：one tow three four
      * query sql：select one, tow, three, four from book limit 1;
+     *
      * @param statement statement
-     * @param sql sql
-     * @param columns query metrics field list
+     * @param sql       sql
+     * @param columns   query metrics field list
      * @throws Exception when error happen
      */
     private void queryOneRow(Statement statement, String sql, List<String> columns,
-                                           CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
+                             CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
         statement.setMaxRows(1);
         try (ResultSet resultSet = statement.executeQuery(sql)) {
             if (resultSet.next()) {
@@ -216,14 +254,15 @@ public class JdbcCommonCollect extends AbstractCollect {
      * eg:
      * query metrics：one two three four
      * query sql：select key, value from book; the key is the query metrics fields
-     * select key, value from book; 
+     * select key, value from book;
      * one    -  value1
      * two    -  value2
      * three  -  value3
      * four   -  value4
+     *
      * @param statement statement
-     * @param sql sql
-     * @param columns query metrics field list
+     * @param sql       sql
+     * @param columns   query metrics field list
      * @throws Exception when error happen
      */
     private void queryOneRowByMatchTwoColumns(Statement statement, String sql, List<String> columns,
@@ -256,9 +295,10 @@ public class JdbcCommonCollect extends AbstractCollect {
      * query metrics：one tow three four
      * query sql：select one, tow, three, four from book;
      * and return multi row record mapping with the metrics
+     *
      * @param statement statement
-     * @param sql sql
-     * @param columns query metrics field list
+     * @param sql       sql
+     * @param columns   query metrics field list
      * @throws Exception when error happen
      */
     private void queryMultiRow(Statement statement, String sql, List<String> columns,
@@ -283,14 +323,16 @@ public class JdbcCommonCollect extends AbstractCollect {
 
     /**
      * construct jdbc url due the jdbc protocol
+     *
      * @param jdbcProtocol jdbc
      * @return URL
      */
-    private String constructDatabaseUrl(JdbcProtocol jdbcProtocol) {
+    private String constructDatabaseUrl(JdbcProtocol jdbcProtocol, String host, String port) {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
-            String url = jdbcProtocol.getUrl().toLowerCase(); // convert the URL to lowercase for case-insensitive checking
+            // convert the URL to lowercase for case-insensitive checking
+            String url = jdbcProtocol.getUrl().toLowerCase();
             // check whether the parameter is valid
             if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")
                     || url.contains("allowloadlocalinfile") || url.contains("allowloadlocalinfileinpath")
@@ -302,25 +344,19 @@ public class JdbcCommonCollect extends AbstractCollect {
             return jdbcProtocol.getUrl();
         }
         return switch (jdbcProtocol.getPlatform()) {
-            case "mysql", "mariadb" ->
-                    "jdbc:mysql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+            case "mysql", "mariadb" -> "jdbc:mysql://" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
                     + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
-            case "postgresql" ->
-                    "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+            case "postgresql" -> "jdbc:postgresql://" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-            case "clickhouse" ->
-                    "jdbc:clickhouse://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+            case "clickhouse" -> "jdbc:clickhouse://" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-            case "sqlserver" ->
-                    "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+            case "sqlserver" -> "jdbc:sqlserver://" + host + ":" + port
                     + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
                     + ";trustServerCertificate=true;";
-            case "oracle" ->
-                    "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+            case "oracle" -> "jdbc:oracle:thin:@" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-            case "dm" ->
-                    "jdbc:dm://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort();
+            case "dm" -> "jdbc:dm://" + host + ":" + port;
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
     }

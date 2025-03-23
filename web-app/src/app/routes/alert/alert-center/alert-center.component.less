@@ -1,0 +1,432 @@
+@import "~src/styles/theme";
+
+:host ::ng-deep app-toolbar {
+  .center-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 0 16px;
+
+    button {
+      flex-shrink: 0;
+    }
+
+    nz-select {
+      min-width: 120px;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.search-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.search-input {
+  width: 100%;
+
+  :global {
+    .ant-input {
+      height: 40px;
+      font-size: 14px;
+      border-radius: 6px;
+      padding: 4px 11px 4px 40px;
+    }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .search-wrapper {
+    max-width: 100%;
+    padding: 12px 16px;
+  }
+}
+
+.alert-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  transform-style: preserve-3d;
+  perspective: 1200px;
+}
+
+.alert-card {
+  position: relative;
+  background: @common-background-color;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  z-index: 1;
+
+  &.expanded {
+    z-index: 2;
+  }
+
+  &.status-firing {
+    border-left: 4px solid #ff4d4f;
+    opacity: 0.9;
+  }
+
+  &.status-resolved {
+    border-left: 4px solid #52c41a;
+    opacity: 0.7;
+  }
+
+  &.status-pending {
+    border-left: 4px solid #faad14;
+    opacity: 0.8;
+  }
+
+  &:hover {
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    z-index: 3;
+  }
+
+  ::ng-deep .ant-card-body {
+    padding: 12px 16px;
+  }
+
+  .alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+    .alert-info {
+      flex: 1;
+
+      .alert-labels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        nz-tag {
+          margin: 0;
+          border-radius: 2px;
+        }
+      }
+
+      .alert-meta-info {
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 12px;
+
+        i {
+          margin-right: 4px;
+        }
+
+        .alert-time {
+          display: flex;
+          align-items: center;
+        }
+      }
+    }
+
+    .alert-actions {
+      display: flex;
+      gap: 8px;
+      margin-left: 16px;
+      flex-shrink: 0;
+
+      button {
+        padding: 4px 8px;
+        height: 28px;
+
+        i {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .alert-details {
+    margin-top: 12px;
+    position: relative;
+    z-index: 4;
+
+    ::ng-deep {
+      .ant-collapse {
+        background: transparent;
+        border: none;
+        position: relative;
+        z-index: 5;
+
+        .ant-collapse-item {
+          border-radius: 2px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          margin-bottom: 8px;
+          position: relative;
+          z-index: 6;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          .ant-collapse-header {
+            padding: 8px 12px;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            z-index: 7;
+
+            &:hover {
+              background-color: rgba(0, 0, 0, 0.05);
+            }
+
+            .ant-collapse-header-text {
+              flex: 1;
+            }
+
+            .ant-collapse-extra {
+              margin: 0;
+              color: rgba(0, 0, 0, 0.5);
+              font-size: 12px;
+            }
+
+            .alert-content {
+              font-size: 13px;
+              line-height: 1.5;
+            }
+          }
+
+          .ant-collapse-content {
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 6;
+
+            .ant-collapse-content-box {
+              padding: 12px;
+            }
+          }
+        }
+      }
+    }
+
+    .detail-section {
+      margin-bottom: 16px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .section-title {
+        font-size: 13px;
+        color: #595959;
+        margin-bottom: 8px;
+        font-weight: 500;
+      }
+
+      .alert-count {
+        display: flex;
+        align-items: center;
+        color: #8c8c8c;
+        font-size: 12px;
+      }
+    }
+
+    .alert-annotations {
+      .annotation-item {
+        display: flex;
+        margin-bottom: 4px;
+        font-size: 13px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .annotation-key {
+          color: #8c8c8c;
+          margin-right: 8px;
+          min-width: 80px;
+        }
+
+        .annotation-value {
+          color: #262626;
+          flex: 1;
+        }
+      }
+    }
+
+    .time-info {
+      .time-item {
+        display: flex;
+        margin-bottom: 4px;
+        font-size: 13px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .time-label {
+          color: #8c8c8c;
+          margin-right: 8px;
+          min-width: 80px;
+        }
+
+        .time-value {
+          color: #262626;
+        }
+      }
+    }
+  }
+}
+
+.pagination {
+  margin: 16px;
+  text-align: right;
+}
+
+@keyframes slideInFromRight {
+  0% {
+    transform: translate3d(120%, 0, 0) scale(0.95) rotate(3deg);
+    opacity: 0;
+    filter: blur(2px);
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.18);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(-5%, 0, 0) scale(1) rotate(-1deg);
+  }
+  75% {
+    transform: translate3d(2%, 0, 0) scale(1) rotate(0.5deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.alert-card {
+  transition:
+    transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.5s ease-out,
+    box-shadow 0.3s ease;
+  will-change: transform, opacity;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.005);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0;
+    animation: slideGlow 1s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  &.new-alert {
+    animation:
+      slideInFromRight 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+      cardLanding 0.6s 0.3s ease-out forwards;
+  }
+}
+
+@keyframes slideGlow {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes cardLanding {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  80% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+
+.alert-card:nth-child(1) { animation-delay: 0.1s; }
+.alert-card:nth-child(2) { animation-delay: 0.15s; }
+.alert-card:nth-child(3) { animation-delay: 0.2s; }
+.alert-card:nth-child(n+4) { animation-delay: 0.25s; }
+
+[data-theme='dark'] {
+  :host {
+    .alert-card {
+      background-color: @common-background-color-dark;
+      .alert-header {
+        .alert-info {
+          .alert-meta-info {
+            color: rgb(214, 214, 214);
+          }
+        }
+      }
+      .alert-details {
+        ::ng-deep {
+          .ant-collapse {
+            .ant-collapse-item {
+              .ant-collapse-header {
+                &:hover {
+                  background-color: rgba(0, 0, 0, 0.05);
+                }
+                .ant-collapse-extra {
+                  color: rgb(236, 236, 236);
+                }
+              }
+            }
+          }
+        }
+        .detail-section {
+          .section-title {
+            color: #cdcdcd;
+          }
+          .alert-count {
+            color: #ececec;
+          }
+        }
+
+        .alert-annotations {
+          .annotation-item {
+            .annotation-key {
+              color: #dfdede;
+            }
+            .annotation-value {
+              color: #e3e3e3;
+            }
+          }
+        }
+
+        .time-info {
+          .time-item {
+            .time-label {
+              color: #dfdede;
+            }
+            .time-value {
+              color: #e3e3e3;
+            }
+          }
+        }
+      }
+    }
+  }
+}

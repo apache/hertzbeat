@@ -27,8 +27,13 @@ import { finalize } from 'rxjs/operators';
 import { AlibabaSmsConfig } from 'src/app/pojo/AlibabaSmsConfig';
 import { SmsNoticeSender } from 'src/app/pojo/SmsNoticeSender';
 import { TencentSmsConfig } from 'src/app/pojo/TencentSmsConfig';
+import { UniSmsConfig } from 'src/app/pojo/UniSmsConfig';
+import { SmsType, UniSmsAuthMode } from 'src/app/pojo/enums/sms-type.enum';
 
+import { AwsSmsConfig } from '../../../../pojo/AwsSmsConfig';
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
+import { SmslocalSmsConfig } from '../../../../pojo/SmslocalSmsConfig';
+import { TwilioSmsConfig } from '../../../../pojo/TwilioSmsConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
 @Component({
@@ -49,9 +54,13 @@ export class MessageServerComponent implements OnInit {
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
   isSmsServerModalVisible: boolean = false;
-  smsType: string = 'tencent';
+  smsType: SmsType = SmsType.TENCENT;
   emailSender = new EmailNoticeSender();
   smsNoticeSender = new SmsNoticeSender();
+  uniSmsAuthModes = UniSmsAuthMode;
+  SmsType = SmsType;
+  private tempSmsType: SmsType = SmsType.TENCENT;
+  private tempSmsNoticeSender = new SmsNoticeSender();
 
   ngOnInit(): void {
     this.loadEmailSenderServer();
@@ -131,12 +140,17 @@ export class MessageServerComponent implements OnInit {
         this.senderServerLoading = false;
         if (message.code === 0) {
           if (message.data) {
-            this.smsNoticeSender = message.data;
-            this.smsType = message.data.type;
+            const newSender = new SmsNoticeSender();
+            this.smsNoticeSender = { ...newSender, ...message.data };
+            this.smsNoticeSender.tencent = { ...new TencentSmsConfig(), ...message.data.tencent };
+            this.smsNoticeSender.alibaba = { ...new AlibabaSmsConfig(), ...message.data.alibaba };
+            this.smsNoticeSender.unisms = { ...new UniSmsConfig(), ...message.data.unisms };
+            this.smsNoticeSender.smslocal = { ...new SmslocalSmsConfig(), ...message.data.smslocal };
+            this.smsNoticeSender.aws = { ...new AwsSmsConfig(), ...message.data.aws };
+            this.smsNoticeSender.twilio = { ...new TwilioSmsConfig(), ...message.data.twilio };
+            this.smsType = message.data.type || 'tencent';
           } else {
             this.smsNoticeSender = new SmsNoticeSender();
-            this.smsNoticeSender.type = 'tencent';
-            this.smsNoticeSender.tencent = new TencentSmsConfig();
           }
         } else {
           console.warn(message.msg);
@@ -152,23 +166,40 @@ export class MessageServerComponent implements OnInit {
   }
 
   onConfigSmsServer() {
+    this.tempSmsType = this.smsType;
+    this.tempSmsNoticeSender = {
+      ...this.smsNoticeSender,
+      tencent: { ...this.smsNoticeSender.tencent },
+      alibaba: { ...this.smsNoticeSender.alibaba },
+      unisms: { ...this.smsNoticeSender.unisms },
+      smslocal: { ...this.smsNoticeSender.smslocal },
+      aws: { ...this.smsNoticeSender.aws },
+      twilio: { ...this.smsNoticeSender.twilio }
+    };
     this.isSmsServerModalVisible = true;
   }
 
   onCancelSmsServer() {
+    this.smsType = this.tempSmsType;
+    this.smsNoticeSender = {
+      ...this.tempSmsNoticeSender,
+      tencent: { ...this.tempSmsNoticeSender.tencent },
+      alibaba: { ...this.tempSmsNoticeSender.alibaba },
+      unisms: { ...this.tempSmsNoticeSender.unisms },
+      smslocal: { ...this.tempSmsNoticeSender.smslocal },
+      aws: { ...this.tempSmsNoticeSender.aws },
+      twilio: { ...this.tempSmsNoticeSender.twilio }
+    };
     this.isSmsServerModalVisible = false;
   }
 
-  onSmsTypeChange(value: string) {
-    if (value === 'tencent') {
-      // tencent sms sender
-      this.smsType = 'tencent';
-      this.smsNoticeSender.type = 'tencent';
-    } else if (value === 'alibaba') {
-      // alibaba sms sender
-      this.smsType = 'alibaba';
-      this.smsNoticeSender.type = 'alibaba';
-    }
+  onSmsTypeChange(value: SmsType) {
+    this.smsType = value;
+    this.smsNoticeSender.type = value;
+  }
+
+  isAccessKeySecretRequired(): boolean {
+    return this.smsNoticeSender.unisms.authMode === UniSmsAuthMode.HMAC;
   }
 
   onSaveSmsServer() {
@@ -180,12 +211,6 @@ export class MessageServerComponent implements OnInit {
         }
       });
       return;
-    }
-    if (this.smsNoticeSender.type === 'tencent') {
-      this.smsNoticeSender.alibaba = new AlibabaSmsConfig();
-    }
-    if (this.smsNoticeSender.type === 'alibaba') {
-      this.smsNoticeSender.tencent = new TencentSmsConfig();
     }
     const modalOk$ = this.noticeSenderSvc
       .saveGeneralConfig(this.smsNoticeSender, 'sms')

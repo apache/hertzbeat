@@ -19,7 +19,6 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 
 import { LayoutBasicComponent } from './basic/basic.component';
-import { HeaderClearStorageComponent } from './basic/widgets/clear-storage.component';
 import { HeaderFullScreenComponent } from './basic/widgets/fullscreen.component';
 import { HeaderI18nComponent } from './basic/widgets/i18n.component';
 import { HeaderSearchComponent } from './basic/widgets/search.component';
@@ -33,7 +32,6 @@ const HEADER_COMPONENTS = [
   HeaderSearchComponent,
   HeaderFullScreenComponent,
   HeaderI18nComponent,
-  HeaderClearStorageComponent,
   HeaderUserComponent,
   HeaderNotifyComponent
 ];
@@ -46,6 +44,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzListComponent, NzListItemActionComponent, NzListItemComponent, NzListItemMetaComponent } from 'ng-zorro-antd/list';
 import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
+import { NzCheckboxComponent } from 'ng-zorro-antd/checkbox';
 const PASSPORT = [LayoutPassportComponent];
 
 @NgModule({
@@ -76,7 +75,8 @@ const PASSPORT = [LayoutPassportComponent];
     NzListItemMetaComponent,
     NzStringTemplateOutletDirective,
     NzListItemActionComponent,
-    NzTooltipDirective
+    NzTooltipDirective,
+    NzCheckboxComponent
   ],
   declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT],
   exports: [...COMPONENTS, ...PASSPORT]

@@ -81,6 +81,17 @@ params:
     required: true
     defaultValue: true
   # field-param field key
+  - field: useProxy
+    # name-param field display i18n name
+    name:
+      zh-CN: 使用代理
+      en-US: Use Proxy Connection
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    defaultValue: false
+  # field-param field key
   - field: username
     # name-param field display i18n name
     name:
@@ -108,6 +119,83 @@ params:
     name:
       zh-CN: 私钥
       en-US: PrivateKey
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  - field: privateKeyPassphrase
+    # name-param field display i18n name
+    name:
+      zh-CN: 密钥短语
+      en-US: PrivateKey PassPhrase
+    # type-param field type(most mapping the html input type)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyHost
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机
+      en-US: Proxy Host
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  - field: proxyPort
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理端口
+      en-US: Proxy Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 22
+  # field-param field key
+  - field: proxyUsername
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理用户名
+      en-US: Proxy Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPassword
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理密码
+      en-US: Proxy Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPrivateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机私钥
+      en-US: proxyPrivateKey
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -158,8 +246,22 @@ metrics:
       password: ^_^password^_^
       # ssh private key
       privateKey: ^_^privateKey^_^
+      # ssh private key passphrase
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       # ssh run collect script
       script: (uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'
       # ssh response data parse type: oneRow, multiRow
@@ -226,8 +328,21 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       script: "LANG=C lscpu | awk -F: '$1==\"Model name\" {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"
       parseType: oneRow
 
@@ -293,8 +408,21 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       script: free -m | awk 'BEGIN{print "total used free buff_cache available"} NR==2{print $2,$3,$4,$6,$7}'
       parseType: multiRow
 
@@ -337,8 +465,21 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       script: vmstat -D | awk 'NR==1{print $1}';vmstat -D | awk 'NR==2{print $1}';vmstat 1 1 | awk 'NR==3{print $10}';vmstat 1 1 | awk 'NR==3{print $9}';vmstat 1 1 | awk 'NR==3{print $16}'
       parseType: oneRow
 
@@ -376,8 +517,21 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
       parseType: multiRow
 
@@ -423,8 +577,21 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       script: df -mP | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
       parseType: multiRow
 
@@ -464,8 +631,21 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       script: ps --no-headers -eo pid,%cpu,%mem,cmd --sort=-%cpu | head -n 10 | awk 'BEGIN {print "pid cpu_usage mem_usage command"} {print $1, $2, $3, $4}'
       parseType: multiRow
 
@@ -505,7 +685,20 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       script: ps --no-headers -eo pid,%cpu,%mem,cmd --sort=-%mem | head -n 10 | awk 'BEGIN {print "pid cpu_usage mem_usage command"} {print $1, $2, $3, $4}'
       parseType: multiRow

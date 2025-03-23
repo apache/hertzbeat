@@ -22,7 +22,7 @@ name: Frontend CI
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master, dev, action* ]
     paths:
       - 'web-app/**'
   pull_request:

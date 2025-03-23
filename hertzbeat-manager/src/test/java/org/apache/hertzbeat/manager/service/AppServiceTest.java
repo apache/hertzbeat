@@ -55,7 +55,7 @@ class AppServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        appService.run();
+        appService.afterPropertiesSet();
     }
 
     @Test

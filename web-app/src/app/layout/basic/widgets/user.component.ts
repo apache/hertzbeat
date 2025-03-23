@@ -70,6 +70,13 @@ import { CONSTANTS } from '../../../shared/constants';
           <nz-divider nzType="vertical"></nz-divider>
           <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat (incubating)</a>
         </div>
+        <label
+          style="margin-top: 16px;color:gray;font-size:13px"
+          (ngModelChange)="onNotShowAgainChange($event)"
+          nz-checkbox
+          [(ngModel)]="notShowAgain"
+          >{{ 'about.not-show-next-login' | i18n }}
+        </label>
         <nz-divider></nz-divider>
         <div style="margin-top: 10px; font-weight: bolder">
           <span nz-icon nzType="github"></span>
@@ -102,21 +109,27 @@ import { CONSTANTS } from '../../../shared/constants';
 })
 export class HeaderUserComponent {
   isAboutModalVisible = false;
+  notShowAgain = false;
   version = CONSTANTS.VERSION;
   currentYear = new Date().getFullYear();
   get user(): User {
     return this.settings.user;
   }
+  private readonly notShowAgainKey = 'NOT_SHOW_ABOUT_NEXT_LOGIN';
 
   constructor(private settings: SettingsService, private router: Router, private localStorageSvc: LocalStorageService) {
+    this.notShowAgain =
+      this.localStorageSvc.getData(this.notShowAgainKey) !== null
+        ? JSON.parse(<string>this.localStorageSvc.getData(this.notShowAgainKey))
+        : false;
     // @ts-ignore
-    if (router.getCurrentNavigation()?.previousNavigation?.finalUrl.toString() === '/passport/login') {
+    if (router.getCurrentNavigation()?.previousNavigation?.finalUrl.toString() === '/passport/login' && !this.notShowAgain) {
       this.showAndCloseAboutModal();
     }
   }
 
   logout(): void {
-    this.localStorageSvc.clear();
+    this.localStorageSvc.clearAuthorization();
     this.router.navigateByUrl('/passport/login');
   }
 
@@ -131,5 +144,10 @@ export class HeaderUserComponent {
   showAndCloseAboutModal() {
     this.isAboutModalVisible = true;
     setTimeout(() => (this.isAboutModalVisible = false), 20000);
+  }
+
+  onNotShowAgainChange(value: boolean): void {
+    this.notShowAgain = value;
+    this.localStorageSvc.putData(this.notShowAgainKey, JSON.stringify(value));
   }
 }

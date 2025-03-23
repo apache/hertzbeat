@@ -34,6 +34,10 @@ spring:
     exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
   freemarker:
     enabled: false
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 
 management:
   health:
@@ -159,7 +163,41 @@ alerter:
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
-
+  # alert inhibit ttl unit ms, default 14400000(4 hours)
+  inhibit:
+    ttl: 14400000
+  sms:
+    enable: false
+    type: tencent
+    tencent:
+      secret-id:
+      secret-key:
+      app-id:
+      sign-name:
+      template-id:
+    alibaba:
+      access-key-id:
+      access-key-secret:
+      sign-name:
+      template-code:
+    unisms:
+      # auth-mode: simple or hmac
+      auth-mode: simple
+      access-key-id: YOUR_ACCESS_KEY_ID
+      # hmac mode need to fill in access-key-secret
+      access-key-secret: YOUR_ACCESS_KEY_SECRET
+      signature: YOUR_SMS_SIGNATURE
+      template-id: YOUR_TEMPLATE_ID
+    smslocal:
+      api-key: YOUR_API_KEY_HERE
+    aws:
+      access-key-id: YOUR_ACCESS_KEY_ID
+      access-key-secret: YOUR_ACCESS_KEY_SECRET
+      region: AWS_REGION_FOR_END_USER_MESSAGING
+    twilio:
+      account-sid: YOUR_ACCOUNT_SID
+      auth-token: YOUR_AUTH_TOKEN 
+      twilio-phone-number: YOUR_TWILIO_PHONE_NUMBER
 scheduler:
   server:
     enabled: true

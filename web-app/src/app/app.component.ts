@@ -23,7 +23,6 @@ export class AppComponent implements OnInit {
     private router: Router,
     private titleSrv: TitleService,
     private modalSrv: NzModalService,
-    private themeService: ThemeService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {
     renderer.setAttribute(el.nativeElement, 'ng-alain-version', VERSION_ALAIN.full);
@@ -53,10 +52,5 @@ export class AppComponent implements OnInit {
         this.modalSrv.closeAll();
       }
     });
-    // set theme
-    const storedTheme = localStorage.getItem('theme');
-    if (storedTheme) {
-      this.themeService.changeTheme(storedTheme);
-    }
   }
 }

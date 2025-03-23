@@ -42,7 +42,7 @@ public class KafkaCollectTest {
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             collect.preCheck(null);
         });
 
@@ -51,22 +51,21 @@ public class KafkaCollectTest {
             collect.preCheck(Metrics.builder().build());
         });
 
+        KafkaProtocol kafka = new KafkaProtocol();
+        Metrics metric = Metrics.builder().kclient(kafka).build();
         // kafka srv host is null
         assertThrows(IllegalArgumentException.class, () -> {
-            KafkaProtocol kafka = new KafkaProtocol();
-            collect.preCheck(Metrics.builder().kclient(kafka).build());
+            collect.preCheck(metric);
         });
-
         // kafka port is null
         assertThrows(IllegalArgumentException.class, () -> {
-            KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").build();
-            collect.preCheck(Metrics.builder().kclient(kafka).build());
+            kafka.setHost("127.0.0.1");
+            collect.preCheck(metric);
         });
-
         // no exception throw
         assertDoesNotThrow(() -> {
-            KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
-            collect.preCheck(Metrics.builder().kclient(kafka).build());
+            kafka.setPort("9092");
+            collect.preCheck(metric);
         });
     }
 
@@ -78,12 +77,20 @@ public class KafkaCollectTest {
             collect.collect(builder, null);
         });
 
+        KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
+        Metrics metrics = Metrics.builder().kclient(kafka).build();
+        //test if not kafka command
         assertDoesNotThrow(() -> {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
-            Metrics metrics = Metrics.builder().kclient(kafka).build();
             collect.collect(builder, metrics);
         });
+        //test kafka command
+        assertDoesNotThrow(() -> {
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            metrics.getKclient().setCommand("topic-list");
+            collect.collect(builder, metrics);
+        });
+
     }
 
     @Test

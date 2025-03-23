@@ -23,12 +23,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -91,26 +88,6 @@ public class AlertDefineController {
         // If the alarm definition does not exist or is deleted successfully, the deletion succeeds
         alertDefineService.deleteAlertDefine(id);
         return ResponseEntity.ok(Message.success("Delete success"));
-    }
-
-    @PostMapping(path = "/{alertDefineId}/monitors")
-    @Operation(summary = "Application alarm definition is associated with monitoring",
-            description = "Applies the association between specified alarm definitions and monitoring")
-    public ResponseEntity<Message<Void>> applyAlertDefineMonitorsBind(
-            @Parameter(description = "Alarm Definition ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId,
-            @RequestBody List<AlertDefineMonitorBind> alertDefineMonitorBinds) {
-        alertDefineService.applyBindAlertDefineMonitors(alertDefineId, alertDefineMonitorBinds);
-        return ResponseEntity.ok(Message.success("Apply success"));
-    }
-
-    @GetMapping(path = "/{alertDefineId}/monitors")
-    @Operation(summary = "Application alarm definition is associated with monitoring",
-            description = "Applies the association between specified alarm definitions and monitoring")
-    public ResponseEntity<Message<List<AlertDefineMonitorBind>>> getAlertDefineMonitorsBind(
-            @Parameter(description = "Alarm Definition ID", example = "6565463543") @PathVariable("alertDefineId") long alertDefineId) {
-        List<AlertDefineMonitorBind> defineBinds = alertDefineService.getBindAlertDefineMonitors(alertDefineId);
-        defineBinds = defineBinds.stream().filter(item -> item.getMonitor() != null).collect(Collectors.toList());
-        return ResponseEntity.ok(Message.success(defineBinds));
     }
 
 }

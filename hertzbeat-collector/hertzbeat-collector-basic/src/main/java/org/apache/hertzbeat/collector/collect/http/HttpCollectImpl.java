@@ -22,9 +22,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.StringReader;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -41,7 +41,6 @@ import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.util.Base64;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
@@ -59,6 +58,7 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.Header;
@@ -86,6 +86,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriUtils;
+import org.xml.sax.InputSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -152,7 +154,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     case DispatchConstants.PARSE_XML_PATH ->
                             parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     case DispatchConstants.PARSE_WEBSITE ->
-                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, response);
+                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime);
                     case DispatchConstants.PARSE_SITE_MAP ->
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_HEADER ->
@@ -221,8 +223,7 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private void parseResponseByWebsite(String resp, Metrics metrics, HttpProtocol http,
-                                        CollectRep.MetricsData.Builder builder, Long responseTime,
-                                        CloseableHttpResponse response) {
+                                        CollectRep.MetricsData.Builder builder, Long responseTime) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : metrics.getAliasFields()) {
@@ -247,8 +248,11 @@ public class HttpCollectImpl extends AbstractCollect {
         boolean isXmlFormat = true;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            // see https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            dbf.setXIncludeAware(false);
             DocumentBuilder db = dbf.newDocumentBuilder();
-            Document document = db.parse(new ByteArrayInputStream(resp.getBytes(StandardCharsets.UTF_8)));
+            Document document = db.parse(new InputSource(new StringReader(resp)));
             NodeList urlList = document.getElementsByTagName("url");
             for (int i = 0; i < urlList.getLength(); i++) {
                 Node urlNode = urlList.item(i);
@@ -286,9 +290,10 @@ public class HttpCollectImpl extends AbstractCollect {
             long startTime = System.currentTimeMillis();
             try {
                 HttpGet httpGet = new HttpGet(siteUrl);
-                CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet);
-                statusCode = response.getStatusLine().getStatusCode();
-                EntityUtils.consume(response.getEntity());
+                try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet)) {
+                    statusCode = response.getStatusLine().getStatusCode();
+                    EntityUtils.consume(response.getEntity());
+                }
             } catch (ClientProtocolException e1) {
                 if (e1.getCause() != null) {
                     errorMsg = e1.getCause().getMessage();
@@ -505,13 +510,37 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         // params
         Map<String, String> params = httpProtocol.getParams();
+        boolean enableUrlEncoding = Boolean.parseBoolean(httpProtocol.getEnableUrlEncoding());
+        StringBuilder queryParams = new StringBuilder();
+        
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> param : params.entrySet()) {
-                if (StringUtils.hasText(param.getValue())) {
-                    requestBuilder.addParameter(param.getKey(), TimeExpressionUtil.calculate(param.getValue()));
+                String key = param.getKey();
+                String value = param.getValue();
+
+                if (!StringUtils.hasText(key)) {
+                    continue;
+                }
+
+                if (queryParams.length() > 0) {
+                    queryParams.append("&");
+                }
+
+                if (enableUrlEncoding) {
+                    key = UriUtils.encodeQueryParam(key, "UTF-8");
+                }
+                queryParams.append(key);
+
+                if (StringUtils.hasText(value)) {
+                    String calculatedValue = TimeExpressionUtil.calculate(value);
+                    if (enableUrlEncoding) {
+                        calculatedValue = UriUtils.encodeQueryParam(calculatedValue, "UTF-8");
+                    }
+                    queryParams.append("=").append(calculatedValue);
                 }
             }
         }
+        
         // The default request header can be overridden if customized
         // keep-alive
         requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
@@ -521,8 +550,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> header : headers.entrySet()) {
                 if (StringUtils.hasText(header.getValue())) {
-                    requestBuilder.addHeader(CollectUtil.replaceUriSpecialChar(header.getKey()),
-                            CollectUtil.replaceUriSpecialChar(header.getValue()));
+                    requestBuilder.addHeader(header.getKey(), header.getValue());
                 }
             }
         }
@@ -545,7 +573,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 if (StringUtils.hasText(authorization.getBasicAuthUsername())
                         && StringUtils.hasText(authorization.getBasicAuthPassword())) {
                     String authStr = authorization.getBasicAuthUsername() + SignConstants.DOUBLE_MARK + authorization.getBasicAuthPassword();
-                    String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                    String encodedAuth = Base64Util.encode(authStr);
                     requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, DispatchConstants.BASIC + SignConstants.BLANK + encodedAuth);
                 }
             }
@@ -556,11 +584,29 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
 
-        // uri
-        String uri = CollectUtil.replaceUriSpecialChar(httpProtocol.getUrl());
-        if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
+        // uri encode
+        String uri;
+        if (enableUrlEncoding) {
+            // if the url contains parameters directly
+            if (httpProtocol.getUrl().contains("?")) {
+                String path = httpProtocol.getUrl().substring(0, httpProtocol.getUrl().indexOf("?"));
+                String query = httpProtocol.getUrl().substring(httpProtocol.getUrl().indexOf("?") + 1);
+                uri = UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8");
+            } else {
+                uri = UriUtils.encodePath(httpProtocol.getUrl(), "UTF-8");
+            }
+        } else {
+            uri = httpProtocol.getUrl();
+        }
 
-            requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
+        // append query params
+        if (queryParams.length() > 0) {
+            uri += (uri.contains("?") ? "&" : "?") + queryParams.toString();
+        }
+        
+        String finalUri;
+        if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
+            finalUri = httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri;
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(httpProtocol.getHost());
             String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
@@ -568,10 +614,17 @@ public class HttpCollectImpl extends AbstractCollect {
                     : String.format("%s:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri);
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
-                requestBuilder.setUri(NetworkConstants.HTTPS_HEADER + baseUri);
+                finalUri = NetworkConstants.HTTPS_HEADER + baseUri;
             } else {
-                requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
+                finalUri = NetworkConstants.HTTP_HEADER + baseUri;
             }
+        }
+        
+        try {
+            requestBuilder.setUri(finalUri);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid URI with illegal characters: {}. User has disabled URL encoding, not applying any encoding.", finalUri);
+            throw e;
         }
 
         // custom timeout

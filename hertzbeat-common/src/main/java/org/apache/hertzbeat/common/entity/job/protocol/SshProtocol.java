@@ -60,6 +60,11 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
      * Private key (optional)
      */
     private String privateKey;
+
+    /**
+     * private key passphrase (optional)
+     */
+    private String privateKeyPassphrase;
     
     /**
      * reuse connection session
@@ -75,4 +80,34 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
      * Response data parsing mode：oneRow, multiRow
      */
     private String parseType;
+
+    /**
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER PROXY HOST
+     */
+    private String proxyHost;
+
+    /**
+     * Peer proxy host port
+     */
+    private String proxyPort;
+
+    /**
+     * Proxy UserName
+     */
+    private String proxyUsername;
+
+    /**
+     * Proxy Password (optional)
+     */
+    private String proxyPassword;
+
+    /**
+     * flag of use proxy
+     */
+    private String useProxy = "false";
+
+    /**
+     * Proxy private key (optional)
+     */
+    private String proxyPrivateKey;
 }

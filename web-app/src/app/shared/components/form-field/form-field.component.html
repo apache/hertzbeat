@@ -89,23 +89,71 @@
   </label>
 </nz-radio-group>
 
-<app-key-value-input
-  *ngIf="item.type === 'key-value'"
-  [(value)]="value"
-  (valueChange)="onChange($event)"
+<app-configurable-field
+  *ngIf="item.type === 'labels'"
+  [(ngModel)]="value"
+  (ngModelChange)="onChange($event)"
+  [configs]="[
+    {
+      key: 'key',
+      required: true,
+      separatorAfter: ':',
+      placeholder: 'placeholder.key' | i18n
+    },
+    {
+      key: 'value',
+      required: true,
+      placeholder: 'placeholder.value' | i18n
+    }
+  ]"
+  [name]="item.field"
   [id]="item.field"
-  keyAlias="Header Name"
-  valueAlias="Header Value"
 />
 
-<app-metrics-field-input
-  *ngIf="item.type === 'metrics-field'"
-  [(value)]="value"
-  (valueChange)="onChange($event)"
+<app-configurable-field
+  *ngIf="item.type === 'key-value'"
+  [(ngModel)]="value"
+  (ngModelChange)="onChange($event)"
+  [configs]="[
+    {
+      key: 'key',
+      required: true,
+      placeholder: 'monitor.headerName.tip' | i18n
+    },
+    {
+      key: 'value',
+      required: true,
+      placeholder: 'monitor.headerValue.tip' | i18n
+    }
+  ]"
+  [name]="item.field"
   [id]="item.field"
-  [FieldAlias]="'Field'"
-  [UnitAlias]="'Unit'"
-  [TypeAlias]="'Type'"
+/>
+
+<app-configurable-field
+  *ngIf="item.type === 'metrics-field'"
+  [(ngModel)]="value"
+  (ngModelChange)="onChange($event)"
+  [configs]="[
+    {
+      key: 'field',
+      required: true,
+      placeholder: 'Field'
+    },
+    {
+      key: 'unit',
+      required: true,
+      placeholder: 'Unit',
+      style: 'flex: 0; flex-basis: min-content; min-width: 50px'
+    },
+    {
+      key: 'type',
+      required: true,
+      placeholder: 'Type'
+    }
+  ]"
+  [name]="item.field"
+  [id]="item.field"
 />
 
 <ng-container *ngIf="item.type === 'collectors-selection'">
@@ -155,8 +203,6 @@
   </nz-input-number>
   <nz-tag style="margin-left: 6px">{{ 'common.time.unit.second' | i18n }}</nz-tag>
 </ng-container>
-
-<app-tags-select *ngIf="item.type === 'tags-selection'" [mode]="extra.tag_mode" [(value)]="value" (valueChange)="onChange($event)" />
 
 <nz-textarea-count *ngIf="item.type === 'textarea-limit'" [nzMaxCharacterCount]="extra.textarea_limit || 100">
   <textarea

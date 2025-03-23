@@ -96,7 +96,7 @@ public class SchedulerInit implements CommandLineRunner {
                 .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(List.of(CommonConstants.MONITOR_PAUSED_CODE));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndJobIdNotNull(List.of(CommonConstants.MONITOR_PAUSED_CODE));
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findAll();
         final Set<Long> sdMonitorIds = monitorBindDao.findAllByType(CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR).stream()
                 .map(MonitorBind::getBizId)
@@ -120,7 +120,11 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
-
+                Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                appDefine.setMetadata(metadata);
+                appDefine.setLabels(monitor.getLabels());
+                appDefine.setAnnotations(monitor.getAnnotations());
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());

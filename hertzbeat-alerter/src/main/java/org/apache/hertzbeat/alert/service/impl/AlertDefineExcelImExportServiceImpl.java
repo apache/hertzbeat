@@ -25,17 +25,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -97,15 +97,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         }
     }
 
-    private List<TagItem> extractTagDataFromRow(Cell cell) {
-        String jsonStr = getCellValueAsString(cell);
-        if (StringUtils.hasText(jsonStr)) {
-            return JsonUtil.fromJson(jsonStr, new TypeReference<>() {
-            });
-        }
-        return null;
-    }
-
 
     private String getCellValueAsString(Cell cell) {
         if (cell == null) {
@@ -153,18 +144,17 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
 
     private AlertDefineDTO extractAlertDefineDataFromRow(Row row) {
+        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
         AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
-        alertDefineDTO.setApp(getCellValueAsString(row.getCell(0)));
-        alertDefineDTO.setMetric(getCellValueAsString(row.getCell(1)));
-        alertDefineDTO.setField(getCellValueAsString(row.getCell(2)));
-        alertDefineDTO.setPreset(getCellValueAsBoolean(row.getCell(3)));
-        alertDefineDTO.setExpr(getCellValueAsString(row.getCell(4)));
-        alertDefineDTO.setPriority(getCellValueAsByte(row.getCell(5)));
-        alertDefineDTO.setTimes(getCellValueAsInteger(row.getCell(6)));
-        alertDefineDTO.setTags(extractTagDataFromRow(row.getCell(7)));
+        alertDefineDTO.setName(getCellValueAsString(row.getCell(0)));
+        alertDefineDTO.setType(getCellValueAsString(row.getCell(1)));
+        alertDefineDTO.setExpr(getCellValueAsString(row.getCell(2)));
+        alertDefineDTO.setPeriod(getCellValueAsInteger(row.getCell(3)));
+        alertDefineDTO.setTimes(getCellValueAsInteger(row.getCell(4)));
+        alertDefineDTO.setLabels(JsonUtil.fromJson(getCellValueAsString(row.getCell(5)), typeReference));
+        alertDefineDTO.setAnnotations(JsonUtil.fromJson(getCellValueAsString(row.getCell(6)), typeReference));
+        alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(7)));
         alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(8)));
-        alertDefineDTO.setRecoverNotice(getCellValueAsBoolean(row.getCell(9)));
-        alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(10)));
         return alertDefineDTO;
     }
 
@@ -178,11 +168,31 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
         try {
 
-            Workbook workbook = new HSSFWorkbook();
+            Workbook workbook = WorkbookFactory.create(true);
             String sheetName = "Export AlertDefine";
-            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, AlertDefineDTO.class);
+            Sheet sheet = workbook.createSheet(sheetName);
+            sheet.setDefaultColumnWidth(20);
+            sheet.setColumnWidth(2, 40 * 256);
+            sheet.setColumnWidth(5, 40 * 256);
+            sheet.setColumnWidth(6, 40 * 256);
+            sheet.setColumnWidth(7, 40 * 256);
+            // set header style
+            CellStyle headerCellStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerCellStyle.setFont(headerFont);
+            headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
             // set cell style
-            CellStyle cellStyle = ExcelExportUtils.setCellStyle(workbook);
+            CellStyle cellStyle = workbook.createCellStyle();
+            cellStyle.setAlignment(HorizontalAlignment.CENTER);
+            // set header
+            String[] headers = {"Name", "Type", "Expr", "Period", "Times", "Labels", "Annotations", "Template", "Enable"};
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerCellStyle);
+            }
 
             // Traverse the threshold rule list, each threshold rule object corresponds to a row of data
             int rowIndex = 1;
@@ -190,44 +200,33 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                 AlertDefineDTO alertDefineDTO = alertDefine.getAlertDefine();
                 Row row = sheet.createRow(rowIndex++);
                 // Threshold rule information only needs to be written once
-                Cell appCell = row.createCell(0);
-                appCell.setCellValue(alertDefineDTO.getApp());
-                appCell.setCellStyle(cellStyle);
-                Cell metricCell = row.createCell(1);
-                metricCell.setCellValue(alertDefineDTO.getMetric());
-                metricCell.setCellStyle(cellStyle);
-                Cell fieldCell = row.createCell(2);
-                fieldCell.setCellValue(alertDefineDTO.getField());
-                fieldCell.setCellStyle(cellStyle);
-                Cell presetCell = row.createCell(3);
-                presetCell.setCellValue(alertDefineDTO.getPreset() != null
-                        && alertDefineDTO.getPreset());
-                presetCell.setCellStyle(cellStyle);
-                Cell exprCell = row.createCell(4);
+                Cell nameCell = row.createCell(0);
+                nameCell.setCellValue(alertDefineDTO.getName());
+                nameCell.setCellStyle(cellStyle);
+                Cell typeCell = row.createCell(1);
+                typeCell.setCellValue(alertDefineDTO.getType());
+                typeCell.setCellStyle(cellStyle);
+                Cell exprCell = row.createCell(2);
                 exprCell.setCellValue(alertDefineDTO.getExpr());
                 exprCell.setCellStyle(cellStyle);
-                Cell priorityCell = row.createCell(5);
-                priorityCell.setCellValue(alertDefineDTO.getPriority());
-                priorityCell.setCellStyle(cellStyle);
-                Cell timesCell = row.createCell(6);
+                Cell periodCell = row.createCell(3);
+                periodCell.setCellValue(alertDefineDTO.getPeriod());
+                periodCell.setCellStyle(cellStyle);
+                Cell timesCell = row.createCell(4);
                 timesCell.setCellValue(alertDefineDTO.getTimes());
-                Cell tagCell = row.createCell(7);
-                // get tags
-                List<TagItem> tagList = alertDefineDTO.getTags();
-                String tagValue = tagList == null || tagList.isEmpty() ? "" : JsonUtil.toJson(tagList);
-                tagCell.setCellValue(tagValue);
-                tagCell.setCellStyle(cellStyle);
-                Cell enableCell = row.createCell(8);
-                enableCell.setCellValue(alertDefineDTO.getEnable() != null
-                        && alertDefineDTO.getEnable());
-                enableCell.setCellStyle(cellStyle);
-                Cell recoverNoticeCell = row.createCell(9);
-                recoverNoticeCell.setCellValue(alertDefineDTO.getRecoverNotice() != null
-                        && alertDefineDTO.getRecoverNotice());
-                recoverNoticeCell.setCellStyle(cellStyle);
-                Cell templateCell = row.createCell(10);
+                timesCell.setCellStyle(cellStyle);
+                Cell labelsCell = row.createCell(5);
+                labelsCell.setCellValue(JsonUtil.toJson(alertDefineDTO.getLabels()));
+                labelsCell.setCellStyle(cellStyle);
+                Cell annoCell = row.createCell(6);
+                annoCell.setCellValue(JsonUtil.toJson(alertDefineDTO.getAnnotations()));
+                annoCell.setCellStyle(cellStyle);
+                Cell templateCell = row.createCell(7);
                 templateCell.setCellValue(alertDefineDTO.getTemplate());
-                recoverNoticeCell.setCellStyle(cellStyle);
+                templateCell.setCellStyle(cellStyle);
+                Cell enableCell = row.createCell(8);
+                enableCell.setCellValue(alertDefineDTO.getEnable());
+                enableCell.setCellStyle(cellStyle);
             }
             workbook.write(os);
             os.close();

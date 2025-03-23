@@ -2,6 +2,8 @@ import { Platform } from '@angular/cdk/platform';
 import { registerLocaleData } from '@angular/common';
 import { HttpHeaders } from '@angular/common/http';
 import ngEn from '@angular/common/locales/en';
+import ngJa from '@angular/common/locales/ja';
+import ngPt from '@angular/common/locales/pt';
 import ngZh from '@angular/common/locales/zh';
 import ngZhTw from '@angular/common/locales/zh-Hant';
 import { Injectable } from '@angular/core';
@@ -12,12 +14,20 @@ import {
   en_US as delonEnUS,
   SettingsService,
   zh_CN as delonZhCn,
-  zh_TW as delonZhTw
+  zh_TW as delonZhTw,
+  ja_JP as delonJaJP
 } from '@delon/theme';
 import { AlainConfigService } from '@delon/util/config';
-import { enUS as dfEn, zhCN as dfZhCn, zhTW as dfZhTw } from 'date-fns/locale';
+import { enUS as dfEn, zhCN as dfZhCn, zhTW as dfZhTw, ja as dfJa, ptBR as dfPtBR } from 'date-fns/locale';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
-import { en_US as zorroEnUS, NzI18nService, zh_CN as zorroZhCN, zh_TW as zorroZhTW } from 'ng-zorro-antd/i18n';
+import {
+  en_US as zorroEnUS,
+  NzI18nService,
+  zh_CN as zorroZhCN,
+  zh_TW as zorroZhTW,
+  ja_JP as zorroJaJP,
+  pt_BR as zorroPtBR
+} from 'ng-zorro-antd/i18n';
 import { Observable, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -57,6 +67,22 @@ const LANGS: { [key: string]: LangConfigData } = {
     date: dfZhTw,
     delon: delonZhTw,
     abbr: '🇭🇰'
+  },
+  'ja-JP': {
+    text: '日本語',
+    ng: ngJa,
+    zorro: zorroJaJP,
+    date: dfJa,
+    delon: delonJaJP,
+    abbr: '🇯🇵'
+  },
+  'pt-BR': {
+    text: 'Português (Brasil)',
+    ng: ngPt,
+    zorro: zorroPtBR,
+    date: dfPtBR,
+    delon: delonEnUS, // Usando en-US como fallback (ou crie um locale personalizado)
+    abbr: '🇧🇷'
   }
 };
 

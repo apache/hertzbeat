@@ -77,7 +77,7 @@ Hi HertzBeat PPMC,
 
 This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our community new committer.
 
-Work list: https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
+Work list: https://github.com/apache/hertzbeat/commits?author=xxx
 
 Here is the list of ${NEW_COMMITTER_NAME}'s contributions in HertzBeat Community:
 

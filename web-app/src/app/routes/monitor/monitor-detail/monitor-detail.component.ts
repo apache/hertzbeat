@@ -123,7 +123,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           }
         },
         error => {
-          this.notifySvc.warning(this.i18nSvc.fanyi('monitors.detail.time-series.unavailable'), error);
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitor.detail.time-series.unavailable'), error);
         }
       );
   }

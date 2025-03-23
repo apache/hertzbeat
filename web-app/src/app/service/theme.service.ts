@@ -36,11 +36,10 @@ export class ThemeService {
     return localStorage.getItem(this.themeKey);
   }
 
-  clearTheme(): void {
-    localStorage.removeItem(this.themeKey);
-  }
-
-  changeTheme(theme: string): void {
+  changeTheme(theme: string | null): void {
+    if (theme == null) {
+      theme = this.getTheme();
+    }
     const style = this.doc.createElement('link');
     style.type = 'text/css';
     style.rel = 'stylesheet';
@@ -57,9 +56,6 @@ export class ThemeService {
 
       const compactDom = this.doc.getElementById('compact-theme');
       if (compactDom) compactDom.remove();
-
-      this.clearTheme();
-
       return;
     }
 
@@ -73,5 +69,6 @@ export class ThemeService {
 
     // add new theme
     this.doc.body.appendChild(style);
+    this.doc.body.setAttribute('data-theme', theme);
   }
 }

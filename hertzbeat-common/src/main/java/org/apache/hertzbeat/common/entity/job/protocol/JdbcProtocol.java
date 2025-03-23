@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.job.SshTunnel;
 
 /**
  * Database configuration information implemented by the common jdbc specification
@@ -70,4 +71,12 @@ public class JdbcProtocol implements CommonRequestProtocol, Protocol {
      * DATABASE LINK URL eg: jdbc:mysql://localhost:3306/usthe
      */
     private String url;
+    /**
+     * reuse connection session
+     */
+    private String reuseConnection = "true";
+    /**
+     * ssh tunnel
+     */
+    private SshTunnel sshTunnel;
 }

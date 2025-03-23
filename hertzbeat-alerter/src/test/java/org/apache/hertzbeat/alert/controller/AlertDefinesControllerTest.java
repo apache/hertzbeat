@@ -19,10 +19,8 @@ package org.apache.hertzbeat.alert.controller;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -92,8 +90,7 @@ class AlertDefinesControllerTest {
         pageRequest = PageRequest.of((Integer) content.get("pageIndex"), (Integer) content.get("pageSize"), sortExp);
     }
 
-    //    @Test
-    // todo: fix this test
+    @Test
     void getAlertDefines() throws Exception {
 
         // Test the correctness of the mock
@@ -110,32 +107,28 @@ class AlertDefinesControllerTest {
         //                return false;
         //            }
         //        }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
-        AlertDefine define = AlertDefine.builder().id(9L).app("linux").metric("disk").field("usage").expr("x").times(1).tags(new LinkedList<>()).build();
-        Mockito.when(alertDefineService.getAlertDefines(null, null, null, "id", "desc", 1, 10)).thenReturn(new PageImpl<>(Collections.singletonList(define)));
+        AlertDefine define = AlertDefine.builder().id(9L).expr("x").times(1).build();
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Order.asc(sort)));
+        Mockito.when(alertDefineService.getAlertDefines(
+                Mockito.eq(ids),
+                Mockito.isNull(),
+                Mockito.eq(sort),
+                Mockito.eq(order),
+                Mockito.eq(pageIndex),
+                Mockito.eq(pageSize)
+        )).thenReturn(new PageImpl<>(Collections.singletonList(define), pageRequest, 1));
 
-        mockMvc.perform(MockMvcRequestBuilders.get(
-                                "/api/alert/defines")
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alert/defines")
                         .param("ids", ids.toString().substring(1, ids.toString().length() - 1))
-                        .param("priority", priority.toString())
                         .param("sort", sort)
                         .param("order", order)
-                        .param("pageIndex", pageIndex.toString())
-                        .param("pageSize", pageSize.toString()))
+                        .param("pageIndex", String.valueOf(pageIndex))
+                        .param("pageSize", String.valueOf(pageSize)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data.content").value(new ArrayList<>()))
-                .andExpect(jsonPath("$.data.pageable").value("INSTANCE"))
-                .andExpect(jsonPath("$.data.totalPages").value(1))
-                .andExpect(jsonPath("$.data.totalElements").value(0))
-                .andExpect(jsonPath("$.data.last").value(true))
-                .andExpect(jsonPath("$.data.number").value(0))
-                .andExpect(jsonPath("$.data.size").value(0))
-                .andExpect(jsonPath("$.data.first").value(true))
-                .andExpect(jsonPath("$.data.numberOfElements").value(0))
-                .andExpect(jsonPath("$.data.empty").value(true))
-                .andExpect(jsonPath("$.data.sort.empty").value(true))
-                .andExpect(jsonPath("$.data.sort.sorted").value(false))
-                .andExpect(jsonPath("$.data.sort.unsorted").value(true))
+                .andExpect(jsonPath("$.data.content[0].id").value(9))
+                .andExpect(jsonPath("$.data.content[0].expr").value("x"))
+                .andExpect(jsonPath("$.data.content[0].times").value(1))
                 .andReturn();
     }
 

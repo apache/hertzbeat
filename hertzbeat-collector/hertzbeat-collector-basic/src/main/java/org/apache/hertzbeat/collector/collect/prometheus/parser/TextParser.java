@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.prometheus.parser;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -300,6 +299,6 @@ public class TextParser {
      * @return true/false
      */
     private static boolean isValidLabelValue(String s) {
-        return s != null && s.equals(new String(s.getBytes(StandardCharsets.UTF_8)));
+        return s != null;
     }
 }

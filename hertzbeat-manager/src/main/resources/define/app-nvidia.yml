@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-category: server
+category: llm
 # The monitoring type eg: linux windows tomcat mysql aws...
 app: nvidia
 # The monitoring i18n name
@@ -82,6 +82,17 @@ params:
     required: true
     defaultValue: true
   # field-param field key
+  - field: useProxy
+    # name-param field display i18n name
+    name:
+      zh-CN: 使用代理
+      en-US: Use Proxy Connection
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    defaultValue: false
+  # field-param field key
   - field: username
     # name-param field display i18n name
     name:
@@ -109,6 +120,139 @@ params:
     name:
       zh-CN: 私钥
       en-US: PrivateKey
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+# collect metrics config list
+  # field-param field key
+  - field: proxyHost
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机
+      en-US: Proxy Host
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  - field: proxyPort
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理端口
+      en-US: Proxy Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 22
+  # field-param field key
+  - field: proxyUsername
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理用户名
+      en-US: Proxy Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPassword
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理密码
+      en-US: Proxy Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPrivateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机私钥
+      en-US: proxyPrivateKey
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyHost
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机
+      en-US: Proxy Host
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  - field: proxyPort
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理端口
+      en-US: Proxy Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 22
+  # field-param field key
+  - field: proxyUsername
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理用户名
+      en-US: Proxy Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPassword
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理密码
+      en-US: Proxy Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPrivateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机私钥
+      en-US: proxyPrivateKey
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -192,6 +336,18 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       # ssh run collect script
       script: nvidia-smi --query-gpu=index,name,utilization.gpu,utilization.memory,memory.total,memory.used,memory.free,temperature.gpu --format=csv,nounits | sed 's/ *, */,/g' | sed 's/ / /g' | sed 's/,/ /g'
       # ssh response data parse type: oneRow, multiRow

@@ -24,10 +24,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineExcelImExportServiceImpl;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -42,7 +44,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 /**
  * test case for {@link AlertDefineExcelImExportServiceImpl}
  */
-
 @ExtendWith(MockitoExtension.class)
 public class AlertDefineExcelImExportServiceTest {
 
@@ -61,15 +62,13 @@ public class AlertDefineExcelImExportServiceTest {
         Row row = initialSheet.createRow(1);
         row.createCell(0).setCellValue("app1");
         row.createCell(1).setCellValue("metric1");
-        row.createCell(2).setCellValue("field1");
-        row.createCell(3).setCellValue(true);
-        row.createCell(4).setCellValue("expr1");
-        row.createCell(5).setCellValue(1);
-        row.createCell(6).setCellValue(10);
-        row.createCell(7).setCellValue("[{\"name\":\"tag1\",\"value\":\"value1\"}]");
+        row.createCell(2).setCellValue("expr1");
+        row.createCell(3).setCellValue(10);
+        row.createCell(4).setCellValue(1);
+        row.createCell(5).setCellValue(JsonUtil.toJson(Map.of("key", "value")));
+        row.createCell(6).setCellValue(JsonUtil.toJson(Map.of("key", "value")));
+        row.createCell(7).setCellValue("template1");
         row.createCell(8).setCellValue(true);
-        row.createCell(9).setCellValue(true);
-        row.createCell(10).setCellValue("template1");
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(toByteArray(initialWorkbook));
 
@@ -85,18 +84,15 @@ public class AlertDefineExcelImExportServiceTest {
 
             assertEquals(1, result.size());
             AlertDefineDTO alertDefineDTO = result.get(0).getAlertDefine();
-            assertEquals("app1", alertDefineDTO.getApp());
-            assertEquals("metric1", alertDefineDTO.getMetric());
-            assertEquals("field1", alertDefineDTO.getField());
-            assertTrue(alertDefineDTO.getPreset());
+            assertEquals("app1", alertDefineDTO.getName());
+            assertEquals("metric1", alertDefineDTO.getType());
             assertEquals("expr1", alertDefineDTO.getExpr());
-            assertEquals(10, alertDefineDTO.getTimes());
-            assertEquals(1, alertDefineDTO.getTags().size());
-            assertEquals("tag1", alertDefineDTO.getTags().get(0).getName());
-            assertEquals("value1", alertDefineDTO.getTags().get(0).getValue());
-            assertTrue(alertDefineDTO.getEnable());
-            assertTrue(alertDefineDTO.getRecoverNotice());
+            assertEquals(10, alertDefineDTO.getPeriod());
+            assertEquals(1, alertDefineDTO.getTimes());
+            assertEquals(Map.of("key", "value"), alertDefineDTO.getLabels());
+            assertEquals(Map.of("key", "value"), alertDefineDTO.getAnnotations());
             assertEquals("template1", alertDefineDTO.getTemplate());
+            assertTrue(alertDefineDTO.getEnable());
         }
     }
 
@@ -106,22 +102,15 @@ public class AlertDefineExcelImExportServiceTest {
         List<ExportAlertDefineDTO> exportAlertDefineList = new ArrayList<>();
         ExportAlertDefineDTO exportAlertDefineDTO = new ExportAlertDefineDTO();
         AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
-        alertDefineDTO.setApp("app1");
-        alertDefineDTO.setMetric("metric1");
-        alertDefineDTO.setField("field1");
-        alertDefineDTO.setPreset(true);
+        alertDefineDTO.setName("app1");
+        alertDefineDTO.setType("metric1");
         alertDefineDTO.setExpr("expr1");
-        alertDefineDTO.setPriority((byte) 1);
-        alertDefineDTO.setTimes(10);
-        List<TagItem> tags = new ArrayList<>();
-        TagItem tagItem = new TagItem();
-        tagItem.setName("tag1");
-        tagItem.setValue("value1");
-        tags.add(tagItem);
-        alertDefineDTO.setTags(tags);
-        alertDefineDTO.setEnable(true);
-        alertDefineDTO.setRecoverNotice(true);
+        alertDefineDTO.setPeriod(10);
+        alertDefineDTO.setTimes(1);
+        alertDefineDTO.setLabels(Map.of("key", "value"));
+        alertDefineDTO.setAnnotations(Map.of("key", "value"));
         alertDefineDTO.setTemplate("template1");
+        alertDefineDTO.setEnable(true);
         exportAlertDefineDTO.setAlertDefine(alertDefineDTO);
         exportAlertDefineList.add(exportAlertDefineDTO);
 
@@ -131,21 +120,26 @@ public class AlertDefineExcelImExportServiceTest {
             try (Workbook resultWorkbook = WorkbookFactory.create(new ByteArrayInputStream(outputStream.toByteArray()))) {
                 Sheet resultSheet = resultWorkbook.getSheetAt(0);
                 Row headerRow = resultSheet.getRow(0);
-                assertEquals("app", headerRow.getCell(0).getStringCellValue());
-                assertEquals("metric", headerRow.getCell(1).getStringCellValue());
+                assertEquals("Name", headerRow.getCell(0).getStringCellValue());
+                assertEquals("Type", headerRow.getCell(1).getStringCellValue());
+                assertEquals("Expr", headerRow.getCell(2).getStringCellValue());
+                assertEquals("Period", headerRow.getCell(3).getStringCellValue());
+                assertEquals("Times", headerRow.getCell(4).getStringCellValue());
+                assertEquals("Labels", headerRow.getCell(5).getStringCellValue());
+                assertEquals("Annotations", headerRow.getCell(6).getStringCellValue());
+                assertEquals("Template", headerRow.getCell(7).getStringCellValue());
+                assertEquals("Enable", headerRow.getCell(8).getStringCellValue());
 
                 Row dataRow = resultSheet.getRow(1);
                 assertEquals("app1", dataRow.getCell(0).getStringCellValue());
                 assertEquals("metric1", dataRow.getCell(1).getStringCellValue());
-                assertEquals("field1", dataRow.getCell(2).getStringCellValue());
-                assertTrue(dataRow.getCell(3).getBooleanCellValue());
-                assertEquals("expr1", dataRow.getCell(4).getStringCellValue());
-                assertEquals(1, (int) dataRow.getCell(5).getNumericCellValue());
-                assertEquals(10, (int) dataRow.getCell(6).getNumericCellValue());
-                assertEquals("[{\"name\":\"tag1\",\"value\":\"value1\"}]", dataRow.getCell(7).getStringCellValue());
+                assertEquals("expr1", dataRow.getCell(2).getStringCellValue());
+                assertEquals(10, (int) dataRow.getCell(3).getNumericCellValue());
+                assertEquals(1, (int) dataRow.getCell(4).getNumericCellValue());
+                assertEquals(JsonUtil.toJson(Map.of("key", "value")), dataRow.getCell(5).getStringCellValue());
+                assertEquals(JsonUtil.toJson(Map.of("key", "value")), dataRow.getCell(6).getStringCellValue());
+                assertEquals("template1", dataRow.getCell(7).getStringCellValue());
                 assertTrue(dataRow.getCell(8).getBooleanCellValue());
-                assertTrue(dataRow.getCell(9).getBooleanCellValue());
-                assertEquals("template1", dataRow.getCell(10).getStringCellValue());
             }
         }
     }

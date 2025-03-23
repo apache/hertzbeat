@@ -26,8 +26,10 @@ import { NzCascaderModule } from 'ng-zorro-antd/cascader';
 import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzPaginationComponent } from 'ng-zorro-antd/pagination';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -74,7 +76,9 @@ const COMPONENTS: Array<Type<void>> = [
     ClipboardModule,
     NzBadgeModule,
     NzRadioModule,
-    NzUploadComponent
+    NzUploadComponent,
+    NzPaginationComponent,
+    NzDropDownModule
   ],
   declarations: COMPONENTS
 })

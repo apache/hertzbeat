@@ -49,7 +49,7 @@ public class LocalFileStorageServiceImpl implements FileStorageService {
             // Define the file path
             File localFile = new File(directory,fileName);
             try (FileOutputStream outputStream = new FileOutputStream(localFile)) {
-                outputStream.write(file.getBytes());
+                outputStream.write(file.getBytes(StandardCharsets.UTF_8));
             }
 
             // Return the file URL (local file path in this case)
