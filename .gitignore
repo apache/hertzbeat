@@ -13,6 +13,7 @@ mvnw.bat
 package-lock.json
 *.zip
 jdk/
+data/
 
 ### STS ###
 .apt_generated
@@ -54,3 +55,5 @@ node_modules
 application-dev.yml
 application-mysql.yml
 application-pg.yml
+/package.json
+/yarn.lock
