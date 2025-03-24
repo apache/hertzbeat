@@ -37,13 +37,9 @@ COMMAND="docker buildx build --platform ${IMAGE_PLATFORM:-linux/arm64,linux/amd6
 
 # Build Local
 
-#COMMAND="docker build -t apache/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR "
+#COMMAND="docker build -t apache/hertzbeat:$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR "
 
-echo "$COMMAND"
-
-$COMMAND
-
-COMMAND="docker tag apache/hertzbeat:v$VERSION apache/hertzbeat:${IMAGE_VERSION:-latest}"
+#COMMAND="docker tag apache/hertzbeat:$VERSION apache/hertzbeat:${IMAGE_VERSION:-latest}"
 
 echo "$COMMAND"
 
