@@ -848,7 +848,7 @@ export class AlertSettingComponent implements OnInit {
     if (!this.define.labels) {
       this.define.labels = {};
     }
-    this.define.labels['severity'] = this.severity;
+    this.define.labels = { ...this.define.labels, severity: this.severity };
   }
 
   onManageModalCancel() {
