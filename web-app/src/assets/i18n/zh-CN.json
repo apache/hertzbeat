@@ -591,7 +591,7 @@
   "menu.monitor.cn": "云原生监控",
   "menu.monitor.custom": "自定义监控",
   "menu.monitor.db": "数据库监控",
-  "menu.monitor.llm": "Ai大模型",
+  "menu.monitor.llm": "AI大模型",
   "menu.monitor.mid": "中间件监控",
   "menu.monitor.network": "网络监控",
   "menu.monitor.os": "操作系统监控",

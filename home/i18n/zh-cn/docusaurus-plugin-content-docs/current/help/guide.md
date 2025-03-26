@@ -88,7 +88,7 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
 &emsp;&#x1F449;&emsp;[Flink](flink) <br />
 
-### Ai大模型监控
+### AI大模型监控
 
 &emsp;&#x1F449;&emsp;[OpenAi](openai) <br />
 
