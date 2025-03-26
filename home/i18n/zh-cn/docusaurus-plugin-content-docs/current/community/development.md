@@ -65,8 +65,8 @@ HertzBeat 包将生成为 `dist/hertzbeat-{version}.tar.gz`
 
 2. 在项目根目录运行: `mvn clean install`
 
-3. 切换到 `collector` 目录: `cd collector`
+3. 切换到 `hertzbeat-collector` 目录: `cd hertzbeat-collector`
 
-4. 在 `collector` 目录下执行: `mvn clean package -Pcluster`
+4. 在 `hertzbeat-collector` 目录下执行: `mvn clean package -Pcluster`
 
 HertzBeat 采样器包将生成为 `dist/hertzbeat-collector-{version}.tar.gz`
