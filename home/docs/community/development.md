@@ -62,8 +62,8 @@ The HertzBeat install package will at `dist/hertzbeat-{version}.tar.gz`
 
 2. Execute under the project root directory: `mvn clean install`
 
-3. Cd to the `collector` directory: `cd collector`
+3. Cd to the `hertzbeat-collector` directory: `cd hertzbeat-collector`
 
-4. Execute under `collector` directory: `mvn clean package -Pcluster`
+4. Execute under `hertzbeat-collector` directory: `mvn clean package -Pcluster`
 
 The HertzBeat collector package will at `dist/hertzbeat-collector-{version}.tar.gz`
