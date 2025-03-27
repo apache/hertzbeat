@@ -103,9 +103,11 @@ export class AlertSettingComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
 
   templateEnvVars = [
+    { name: '${__instance__}', description: 'alert.setting.template.vars.instance' },
+    { name: '${__instancename__}', description: 'alert.setting.template.vars.instance-name' },
+    { name: '${__instancehost__}', description: 'alert.setting.template.vars.instance-host' },
     { name: '${__app__}', description: 'alert.setting.template.vars.app' },
-    { name: '${__metrics__}', description: 'alert.setting.template.vars.metrics' },
-    { name: '${__instance__}', description: 'alert.setting.template.vars.instance' }
+    { name: '${__metrics__}', description: 'alert.setting.template.vars.metrics' }
   ];
 
   commonOperators = [
@@ -846,7 +848,7 @@ export class AlertSettingComponent implements OnInit {
     if (!this.define.labels) {
       this.define.labels = {};
     }
-    this.define.labels['severity'] = this.severity;
+    this.define.labels = { ...this.define.labels, severity: this.severity };
   }
 
   onManageModalCancel() {

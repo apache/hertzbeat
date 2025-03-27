@@ -15,34 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
-
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package org.apache.hertzbeat.common.constants;
 
 /**
- * Tencent Sms Sender configuration dto
+ * Import/Export task constants
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class SmsTencentConfig {
-    
-    @NotBlank(message = "SecretId cannot be empty")
-    private String secretId;
 
-    @NotBlank(message = "SecretKey cannot be empty")
-    private String secretKey;
+public interface ImExportTaskConstant {
 
-    @NotBlank(message = "SignName cannot be empty")
-    private String signName;
-
-    @NotBlank(message = "AppId cannot be null")
-    private String appId;
-
-    @NotBlank(message = "templateId cannot be null")
-    private String templateId;
-
+    /**
+     * If the number of tasks exceeds 100, progress information will broadcast
+     */
+    Integer IMPORT_TASK_PROCESS_THRESHOLD = 100;
 }

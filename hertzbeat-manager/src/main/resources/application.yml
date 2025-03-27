@@ -225,7 +225,16 @@ alerter:
       access-key-secret: YOUR_ACCESS_KEY_SECRET
       signature: YOUR_SMS_SIGNATURE
       template-id: YOUR_TEMPLATE_ID
-
+    smslocal:
+      api-key: YOUR_API_KEY_HERE
+    aws:
+      access-key-id: YOUR_ACCESS_KEY_ID
+      access-key-secret: YOUR_ACCESS_KEY_SECRET
+      region: AWS_REGION_FOR_END_USER_MESSAGING
+    twilio:
+      account-sid: YOUR_ACCOUNT_SID
+      auth-token: YOUR_AUTH_TOKEN
+      twilio-phone-number: YOUR_TWILIO_PHONE_NUMBER
 scheduler:
   server:
     enabled: true

@@ -72,6 +72,11 @@
               <br />
               {{ 'alert.notice.sender.sms.unisms.authMode' | i18n }}: {{ smsNoticeSender.unisms.authMode }}
             </ng-container>
+            <ng-container *ngSwitchCase="SmsType.TWILIO">
+              {{ 'alert.notice.sender.sms.twilio.accountSid' | i18n }}: {{ smsNoticeSender.twilio.accountSid }}
+              <br />
+              {{ 'alert.notice.sender.sms.twilio.twilioPhoneNumber' | i18n }}: {{ smsNoticeSender.twilio.twilioPhoneNumber }}
+            </ng-container>
           </ng-container>
           <br />
           {{ 'common.enable' | i18n }}: {{ smsNoticeSender.enable ? ('common.yes' | i18n) : ('common.no' | i18n) }}
@@ -139,7 +144,7 @@
   </div>
 </nz-modal>
 
-<!-- sms server modal -->
+<!-- sms server model -->
 <nz-modal
   [(nzVisible)]="isSmsServerModalVisible"
   [nzTitle]="'settings.server.sms.setting' | i18n"
@@ -158,9 +163,14 @@
             <nz-option [nzValue]="SmsType.TENCENT" nzLabel="{{ 'alert.notice.sender.sms.type.tencent' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.ALIBABA" nzLabel="{{ 'alert.notice.sender.sms.type.alibaba' | i18n }}"></nz-option>
             <nz-option [nzValue]="SmsType.UNISMS" nzLabel="{{ 'alert.notice.sender.sms.type.unisms' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.SMSLOCAL" nzLabel="{{ 'alert.notice.sender.sms.type.smslocal' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.AWS" nzLabel="{{ 'alert.notice.sender.sms.type.aws' | i18n }}"></nz-option>
+            <nz-option [nzValue]="SmsType.TWILIO" nzLabel="{{ 'alert.notice.sender.sms.type.twilio' | i18n }}"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
+
+      <!-- Tencent SMS -->
       <ng-container *ngIf="smsType === SmsType.TENCENT">
         <nz-form-item>
           <nz-form-label [nzSpan]="7" nzFor="secretId" nzRequired="true">
@@ -201,6 +211,8 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
+
+      <!-- Alibaba SMS -->
       <ng-container *ngIf="smsType === SmsType.ALIBABA">
         <nz-form-item>
           <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
@@ -256,6 +268,8 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
+
+      <!-- UniSMS -->
       <ng-container *ngIf="smsType === SmsType.UNISMS">
         <nz-form-item>
           <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
@@ -317,6 +331,96 @@
           </nz-form-control>
         </nz-form-item>
       </ng-container>
+
+      <!-- Smslocal SMS -->
+      <ng-container *ngIf="smsType === SmsType.SMSLOCAL">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="apiKey" nzRequired="true">
+            {{ 'alert.notice.sender.sms.smslocal.apiKey' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.smslocal.apiKey" nz-input required name="apiKey" type="password" id="apiKey" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
+
+      <!-- AWS SMS -->
+      <ng-container *ngIf="smsType === SmsType.AWS">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accessKeyId" nzRequired="true">
+            {{ 'alert.notice.sender.sms.aws.accessKeyId' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.aws.accessKeyId" nz-input required name="accessKeyId" type="password" id="awsAccessKeyId" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accessKeySecret" nzRequired="true">
+            {{ 'alert.notice.sender.sms.aws.accessKeySecret' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.aws.accessKeySecret"
+              nz-input
+              required
+              name="accessKeySecret"
+              type="password"
+              id="awsAccessKeySecret"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="region" nzRequired="true">
+            {{ 'alert.notice.sender.sms.aws.region' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.aws.region" nz-input required name="region" type="text" id="awsRegion" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
+
+      <!-- Twilio SMS -->
+      <ng-container *ngIf="smsType === SmsType.TWILIO">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="accountSid" nzRequired="true">
+            {{ 'alert.notice.sender.sms.twilio.accountSid' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.twilio.accountSid"
+              nz-input
+              required
+              name="accountSid"
+              type="password"
+              id="twilioAccountSid"
+            />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="authToken" nzRequired="true">
+            {{ 'alert.notice.sender.sms.twilio.authToken' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input [(ngModel)]="smsNoticeSender.twilio.authToken" nz-input required name="authToken" type="password" id="twilioAuthToken" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="7" nzFor="twilioPhoneNumber" nzRequired="true">
+            {{ 'alert.notice.sender.sms.twilio.twilioPhoneNumber' | i18n }}
+          </nz-form-label>
+          <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+            <input
+              [(ngModel)]="smsNoticeSender.twilio.twilioPhoneNumber"
+              nz-input
+              required
+              name="twilioPhoneNumber"
+              type="text"
+              id="twilioPhoneNumber"
+            />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
+
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="smsEnable" nzRequired="true">{{ 'common.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">

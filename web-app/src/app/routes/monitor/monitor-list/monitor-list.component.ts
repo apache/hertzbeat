@@ -72,6 +72,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   appSearchOrigin: any[] = [];
   appSearchLoading = false;
   intervalId: any;
+  // save the current sorting status
+  currentSortField: string | null = null;
+  currentSortOrder: string | null = null;
 
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
@@ -149,7 +152,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   sync() {
-    this.loadMonitorTable();
+    this.loadMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
   getAppIconName(app: string | undefined): string {
@@ -265,15 +268,20 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   onImportMonitors(info: NzUploadChangeParam): void {
-    if (info.file.response) {
+    console.log(info.type);
+    if (info.type === 'start') {
+      this.notifySvc.info(
+        this.i18nSvc.fanyi('common.notice'),
+        this.i18nSvc.fanyi('common.notify.import-submitted', { taskName: info.file.name })
+      );
+    }
+    if (info.type === 'success' && info.file.response) {
       this.tableLoading = true;
       const message = info.file.response;
       if (message.code === 0) {
-        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
         this.loadMonitorTable();
       } else {
         this.tableLoading = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
       }
     }
   }
@@ -494,9 +502,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
     const currentSort = sort.find(item => item.value !== null);
-    const sortField = (currentSort && currentSort.key) || null;
-    const sortOrder = (currentSort && currentSort.value) || null;
-    this.changeMonitorTable(sortField, sortOrder);
+    this.currentSortField = (currentSort && currentSort.key) || null;
+    this.currentSortOrder = (currentSort && currentSort.value) || null;
+    this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
   // begin: app type search filter

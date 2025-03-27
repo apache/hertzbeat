@@ -21,20 +21,20 @@ networks:
 
 services:
   mysql:
-    image: mysql:8
+    image: mariadb:11.7
     container_name: compose-mysql
     hostname: mysql
     restart: always
     healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --silent']
-      interval: 3s
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
       retries: 5
-      start_period: 3m
+      start_period: 30s
     ports:
-      - "3306"
+      - '13306:3306'
     environment:
       TZ: Asia/Shanghai
-      MYSQL_ROOT_PASSWORD: 123456
+      MARIADB_ROOT_PASSWORD: 123456
     volumes:
       - ./dbdata/mysqldata:/var/lib/mysql/
       - ./conf/sql:/docker-entrypoint-initdb.d/
@@ -55,15 +55,15 @@ services:
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "8181"
-      - "6667"
+      - "18181:8181"
+      - "16667:6667"
     volumes:
       - ./dbdata/iotdbdata:/iotdb/data
     networks:
       - hertzbeat
 
   hertzbeat:
-    image: apache/hertzbeat
+    image: apache/hertzbeat:1.7.0
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always

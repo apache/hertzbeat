@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.pojo.dto;
+package org.apache.hertzbeat.alert.config;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -23,21 +23,27 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Sms Sender configuration dto
+ * Twilio SMS configuration properties
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class SmsNoticeSender {
-    
-    @NotBlank(message = "Type cannot be empty")
-    private String type;
-    
-    private SmsTencentConfig tencent;
-    
-    private SmsAlibabaConfig alibaba;
+@NoArgsConstructor
+public class TwilioSmsProperties {
+    /**
+     * Twilio Account SID
+     */
+    @NotBlank(message = "Account SID cannot be empty")
+    private String accountSid;
 
-    private SmsUniSmsConfig unisms;
+    /**
+     * Twilio Auth Token
+     */
+    @NotBlank(message = "Auth Token cannot be empty")
+    private String authToken;
 
-    private boolean enable = true;
+    /**
+     * Twilio Issued Phone Number
+     */
+    @NotBlank(message = "Twilio Phone Number cannot be empty")
+    private String twilioPhoneNumber;
 }

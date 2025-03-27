@@ -43,6 +43,7 @@ import org.apache.arrow.vector.types.pojo.FieldType;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
+import org.apache.hertzbeat.common.util.JsonUtil;
 
 @SuppressWarnings("all")
 @Slf4j
@@ -138,17 +139,7 @@ public final class CollectRep {
         
         public static Builder newBuilder(MetricsData metricsData) {
             Builder builder = new Builder();
-            // get metadata from metricsData
-            Map<String, String> metadata = metricsData.getMetadata();
-            builder.setId(Long.parseLong(metadata.getOrDefault(MetricDataConstants.MONITOR_ID, "0")))
-                   .setTenantId(Long.parseLong(metadata.getOrDefault(MetricDataConstants.TENANT_ID, "0")))
-                   .setApp(metadata.getOrDefault(MetricDataConstants.APP, ""))
-                   .setMetrics(metadata.getOrDefault(MetricDataConstants.METRICS, ""))
-                   .setPriority(Integer.parseInt(metadata.getOrDefault(MetricDataConstants.PRIORITY, "0")))
-                   .setTime(Long.parseLong(metadata.getOrDefault(MetricDataConstants.TIME, "0")))
-                   .setCode(Code.forNumber(Integer.parseInt(metadata.getOrDefault(MetricDataConstants.CODE, "0"))))
-                   .setMsg(metadata.getOrDefault(MetricDataConstants.MSG, ""));
-            
+            builder.addMetadataAll(metricsData.getMetadata());
             metricsData.getFields().forEach(builder::addField);
             metricsData.getValues().forEach(builder::addValueRow);
             return builder;
@@ -191,42 +182,70 @@ public final class CollectRep {
         
         public long getId() {
             Map<String, String> metadata = getMetadata();
-            return Long.parseLong(metadata.getOrDefault("id", "0"));
+            return Long.parseLong(metadata.getOrDefault(MetricDataConstants.ID, "0"));
         }
 
         public long getTenantId() {
             Map<String, String> metadata = getMetadata();
-            return Long.parseLong(metadata.getOrDefault("tenantId", "0"));
+            return Long.parseLong(metadata.getOrDefault(MetricDataConstants.TENANT_ID, "0"));
         }
 
         public String getApp() {
             Map<String, String> metadata = getMetadata();
-            return metadata.getOrDefault("app", "");
+            return metadata.getOrDefault(MetricDataConstants.APP, "");
         }
 
         public String getMetrics() {
             Map<String, String> metadata = getMetadata();
-            return metadata.getOrDefault("metrics", "");
+            return metadata.getOrDefault(MetricDataConstants.METRICS, "");
         }
 
         public int getPriority() {
             Map<String, String> metadata = getMetadata();
-            return Integer.parseInt(metadata.getOrDefault("priority", "0"));
+            return Integer.parseInt(metadata.getOrDefault(MetricDataConstants.PRIORITY, "0"));
         }
 
         public long getTime() {
             Map<String, String> metadata = getMetadata();
-            return Long.parseLong(metadata.getOrDefault("time", "0"));
+            return Long.parseLong(metadata.getOrDefault(MetricDataConstants.TIME, "0"));
         }
 
         public Code getCode() {
             Map<String, String> metadata = getMetadata();
-            return Code.forNumber(Integer.parseInt(metadata.getOrDefault("code", "0")));
+            return Code.forNumber(Integer.parseInt(metadata.getOrDefault(MetricDataConstants.CODE, "0")));
         }
 
         public String getMsg() {
             Map<String, String> metadata = getMetadata();
-            return metadata.getOrDefault("msg", "");
+            return metadata.getOrDefault(MetricDataConstants.MSG, "");
+        }
+
+        public String getInstanceName() {
+            Map<String, String> metadata = getMetadata();
+            return metadata.getOrDefault(MetricDataConstants.INSTANCE_NAME, null);
+        }
+
+        public String getInstanceHost() {
+            Map<String, String> metadata = getMetadata();
+            return metadata.getOrDefault(MetricDataConstants.INSTANCE_HOST, null);
+        }
+
+        public Map<String, String> getLabels() {
+            Map<String, String> metadata = getMetadata();
+            String labelStr = metadata.getOrDefault(MetricDataConstants.LABELS, "");
+            if (labelStr == null || "".equals(labelStr)) {
+                return null;
+            }
+            return JsonUtil.fromJson(labelStr, Map.class);
+        }
+
+        public Map<String, String> getAnnotations() {
+            Map<String, String> metadata = getMetadata();
+            String annotationStr = metadata.getOrDefault(MetricDataConstants.ANNOTATIONS, "");
+            if (annotationStr == null || "".equals(annotationStr)) {
+                return null;
+            }
+            return JsonUtil.fromJson(annotationStr, Map.class);
         }
 
         private Map<String, String> getMetadata() {
@@ -298,54 +317,82 @@ public final class CollectRep {
 
         // Builder remains mostly the same, but build() method changes
         public static class Builder {
-            private long id;
-            private long tenantId;
-            private String app = "";
-            private String metrics = "";
-            private int priority;
-            private long time;
-            private Code code = Code.SUCCESS;
-            private String msg = "";
+            
+            private Map<String, String> metadata = new HashMap<>();
             private List<Field> fields = new ArrayList<>();
             private List<ValueRow> values = new ArrayList<>();
             
             public Builder setId(long id) {
-                this.id = id;
+                metadata.put(MetricDataConstants.ID, String.valueOf(id));
                 return this;
             }
 
             public Builder setTenantId(long tenantId) {
-                this.tenantId = tenantId;
+                metadata.put(MetricDataConstants.TENANT_ID, String.valueOf(tenantId));
                 return this;
             }
 
             public Builder setApp(String app) {
-                this.app = app;
+                metadata.put(MetricDataConstants.APP, app != null ? app : "");
                 return this;
             }
 
             public Builder setMetrics(String metrics) {
-                this.metrics = metrics;
+                metadata.put(MetricDataConstants.METRICS, metrics != null ? metrics : "");
+                return this;
+            }
+            
+            public Builder setLabels(Map<String, String> labels) {
+                if (labels == null || labels.isEmpty()) {
+                    return this;
+                }
+                String labelStr = JsonUtil.toJson(labels);
+                metadata.put(MetricDataConstants.LABELS, labelStr);
+                return this;
+            }
+            
+            public Builder setAnnotations(Map<String, String> annotations) {
+                if (annotations == null || annotations.isEmpty()) {
+                    return this;
+                }
+                String annotationStr = JsonUtil.toJson(annotations);
+                metadata.put(MetricDataConstants.ANNOTATIONS, annotationStr);
                 return this;
             }
 
             public Builder setPriority(int priority) {
-                this.priority = priority;
+                metadata.put(MetricDataConstants.PRIORITY, String.valueOf(priority));
                 return this;
             }
 
             public Builder setTime(long time) {
-                this.time = time;
+                metadata.put(MetricDataConstants.TIME, String.valueOf(time));
                 return this;
             }
 
             public Builder setCode(Code code) {
-                this.code = code;
+                metadata.put(MetricDataConstants.CODE, String.valueOf(code != null ? code.value : 0));
                 return this;
             }
 
             public Builder setMsg(String msg) {
-                this.msg = msg;
+                metadata.put(MetricDataConstants.MSG, msg != null ? msg : "");
+                return this;
+            }
+            
+            public Builder addMetadata(String key, String value) {
+                if (key == null || "".equals(key)) {
+                    return this;
+                }
+                metadata.put(key, value);
+                return this;
+            }
+            
+            public Builder addMetadataAll(Map<String, String> meta) {
+                if (meta == null || meta.isEmpty()) {
+                    return this;
+                }
+                this.metadata.putAll(meta);
                 return this;
             }
 
@@ -360,17 +407,6 @@ public final class CollectRep {
             }
 
             public MetricsData build() {
-                // Create metadata
-                Map<String, String> metadata = new HashMap<>();
-                metadata.put(MetricDataConstants.MONITOR_ID, String.valueOf(id));
-                metadata.put(MetricDataConstants.TENANT_ID, String.valueOf(tenantId));
-                metadata.put(MetricDataConstants.APP, app != null ? app : "");
-                metadata.put(MetricDataConstants.METRICS, metrics != null ? metrics : "");
-                metadata.put(MetricDataConstants.PRIORITY, String.valueOf(priority));
-                metadata.put(MetricDataConstants.TIME, String.valueOf(time));
-                metadata.put(MetricDataConstants.CODE, String.valueOf(code != null ? code.value : 0));
-                metadata.put(MetricDataConstants.MSG, msg != null ? msg : "");
-
                 BufferAllocator allocator = new RootAllocator();
                 try {
                     // Create Arrow fields with metadata
@@ -407,7 +443,17 @@ public final class CollectRep {
                                         fieldIndex < row.getColumnsList().size()) {
                                     String value = row.getColumns(fieldIndex);
                                     if (value != null) {
-                                        vector.set(rowIndex, value.getBytes(StandardCharsets.UTF_8));
+                                        // Check byte array size, Arrow buffer size is 32768 bytes
+                                        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+                                        if (bytes.length > 32700) {
+                                            log.warn("Value too large for Arrow buffer ({}), truncating to 32700 bytes. Meta: {}",
+                                                    bytes.length, JsonUtil.toJson(metadata));
+                                            byte[] truncatedBytes = new byte[32700];
+                                            System.arraycopy(bytes, 0, truncatedBytes, 0, 32700);
+                                            vector.set(rowIndex, truncatedBytes);
+                                        } else {
+                                            vector.set(rowIndex, bytes);
+                                        }
                                     }
                                 }
                             }
@@ -425,38 +471,65 @@ public final class CollectRep {
                     throw e;
                 }
             }
-
-            // Add getter methods
+            
             public long getId() {
-                return id;
+                return Long.parseLong(metadata.getOrDefault(MetricDataConstants.ID, "0"));
             }
 
             public long getTenantId() {
-                return tenantId;
+                return Long.parseLong(metadata.getOrDefault(MetricDataConstants.TENANT_ID, "0"));
             }
 
             public String getApp() {
-                return app;
+                return metadata.getOrDefault(MetricDataConstants.APP, "");
             }
 
             public String getMetrics() {
-                return metrics;
+                return metadata.getOrDefault(MetricDataConstants.METRICS, "");
             }
 
             public int getPriority() {
-                return priority;
+                return Integer.parseInt(metadata.getOrDefault(MetricDataConstants.PRIORITY, "0"));
             }
 
             public long getTime() {
-                return time;
+                return Integer.parseInt(metadata.getOrDefault(MetricDataConstants.TIME, "0"));
             }
 
             public Code getCode() {
-                return code;
+                return Code.forNumber(Integer.parseInt(metadata.getOrDefault(MetricDataConstants.CODE, "0")));
             }
 
             public String getMsg() {
-                return msg;
+                return metadata.getOrDefault(MetricDataConstants.MSG, "");
+            }
+            
+            public String getInstanceName() {
+                return metadata.getOrDefault(MetricDataConstants.INSTANCE_NAME, null);
+            }
+            
+            public String getInstanceHost() {
+                return metadata.getOrDefault(MetricDataConstants.INSTANCE_HOST, null);
+            }
+            
+            public Map<String, String> getLabels() {
+                String labelStr = metadata.getOrDefault(MetricDataConstants.LABELS, "");
+                if (labelStr == null || "".equals(labelStr)) {
+                    return null;
+                }
+                return JsonUtil.fromJson(labelStr, Map.class);
+            }
+            
+            public Map<String, String> getAnnotations() {
+                String annotationStr = metadata.getOrDefault(MetricDataConstants.ANNOTATIONS, "");
+                if (annotationStr == null || "".equals(annotationStr)) {
+                    return null;
+                }
+                return JsonUtil.fromJson(annotationStr, Map.class);
+            }
+            
+            public Map<String, String> getMetadata() {
+                return metadata;
             }
 
             public List<Field> getFieldsList() {
@@ -489,10 +562,6 @@ public final class CollectRep {
 
             public void clearValues() {
                 values = new LinkedList<>();
-            }
-
-            public void clearMetrics() {
-                metrics = null;
             }
 
             public void clearFields() {

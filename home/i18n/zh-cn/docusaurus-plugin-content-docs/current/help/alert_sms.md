@@ -153,7 +153,76 @@ alerter:
      - HMAC模式：此模式要求使用 AccessKey Secret 对请求参数进行验签，以加强保障请求的安全与真实性。
    :::
 
+### AWS Cloud SMS配置
+
+要激活和使用 AWS Cloud SMS 服务，请参考官方 AWS 文档: [SMS Getting Started Guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/what-is-sms-mms.html)
+
+您可以通过图形界面或 application.yml 文件配置 AWS Cloud SMS 服务。
+要使用 application.yml，请添加/填写以下 AWS Cloud SMS 配置（请用您的 SMS 服务器配置信息替换参数）：
+
+```yaml
+alerter:
+   sms:
+      enable: true    # Whether to enable
+      type: aws       # SMS provider type, supports "aws"
+      aws:            # AWS Cloud SMS configuration
+         access-key-id:      # Your AccessKey ID
+         access-key-secret:  # Your AccessKey Secret
+         region:             # Region Of Your AWS 
+```
+
+1. 创建 AWS 账户
+   - 如果您尚未创建 AWS 账户，请访问 [AWS Cloud SMS Console](https://aws.amazon.com/console/)进行注册。
+
+2. 获取访问密钥凭据（access-key-id, access-key-secret）
+   - 进入 AWS IAM（身份与访问管理）控制台。
+   - 创建一个具有编程访问权限的 IAM 用户，并附加必要的权限。
+   - 获取您的 Access Key ID 和 Secret Access Key（配置时需要）。
+
+3. 选择要用于 AWS 终端用户消息传递服务的特定区域
+   - 选择支持 AWS 终端用户消息传递（SMS 服务）的区域。
+   - 您可以在 这里 查看支持的区域[here](https://docs.aws.amazon.com/sms-voice/latest/userguide/phone-numbers-sms-by-country.html).
+
+4. 将 AWS SMS 从沙盒模式移动到生产模式
+   - 默认情况下，AWS SMS 以沙盒模式运行，在该模式下，短信仅能发送到已验证的电话号码。
+     要将消息发送到任意号码，您必须将您的账户升级到生产模式。请参考此 指南。 [guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/sandbox.html#sandbox-sms-move-to-production)
+
+5. 验证目标电话号码（适用于沙盒模式）
+   - 如果您的账户仍处于沙盒模式，您只能向已验证的电话号码发送短信。要添加已验证的号码，请参考此 [guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/verify-destination-phone-number.html)
+   - 注意： 您不需要创建 Origination Identity 或 Origination Simulator，只需使用 AWS CLI 添加已验证的电话号码。
+
+   > 短信模板格式固定如下：“Instance: {}, Priority: {}, Content: {}”
+
+   现在，您可以在您的 Hertzbeat 应用程序中配置这些信息.
+
 现在您可以把这些信息配置到您的hertzbeat应用中。
+
+### smslocal短信配置
+
+smslocal是一款面向企业的一体化短信服务平台，具备诸如多种发送方式、强大的安全性以及全天候支持等特性。你可以参考 smslocal 的[开发者文档](https://www.smslocal.com/developer/)来进行配置。
+
+在 `application.yml` 中添加/填写以下 smslocal 配置内容（请用你自己的短信服务器配置参数替换相关参数）：
+
+```yaml
+alerter:
+  sms:
+    enable: true    # 是否启用
+    type: smslocal   # 短信服务提供商类型，设置为smslocal
+    smslocal:        # smslocal配置
+       api-key: 在此处填入你的API密钥
+```
+
+1. 注册 smslocal 账号
+   - 访问 [smslocal官网](https://www.smslocal.com/)
+
+2. 获取 `api-key`
+   - 登录 [smslocal API accessKey访问页面](https://secure.smslocal.com/cpaas/pages/profile/settings/api-reference)
+   - 进入 “API 访问” 页面
+   - 点击眼睛图标按钮
+   - 复制显示的访问密钥
+   - 然后你就可以配置 `application.yml` 文件了
+
+现在你可以在你的 Hertzbeat 应用程序中配置这些信息。
 
 ## 操作步骤
 
