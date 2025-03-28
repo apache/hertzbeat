@@ -1,6 +1,6 @@
 ---
 id: collector
-title: HertzBeat Collector User Guide
+title: HertzBeat Collector
 sidebar_label: Collector 
 keywords: [monitoring, observability, collector, metrics]
 ---

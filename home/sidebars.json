@@ -284,6 +284,7 @@
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
+        "help/collector",
         "help/issue"
       ]
     },
@@ -389,6 +390,7 @@
         }
       ]
     },
+   
     {
       "type": "category",
       "label": "Others",
