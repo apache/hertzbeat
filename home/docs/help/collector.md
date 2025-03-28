@@ -56,7 +56,6 @@ Parameters explanation:
 - `-e MANAGER_PORT=1158`: (Optional) Set the port of the main HertzBeat server, default is 1158.
 - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs`: (Optional) Mount the log files to the local host.
 
-
 ## Operating Modes
 
 HertzBeat Collector supports two operating modes:
@@ -116,7 +115,6 @@ For monitoring across isolated networks:
       - `MANAGER_HOST=` pointing to your central HertzBeat server
 4. Ensure outbound connectivity from each isolated network to the central server
 5. Manage all monitoring tasks from the central HertzBeat dashboard
-
 
 ## Advanced Features
 
