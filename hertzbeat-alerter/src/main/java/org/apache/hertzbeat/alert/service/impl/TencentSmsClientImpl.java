@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import jakarta.xml.bind.DatatypeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.config.TencentSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
@@ -34,7 +35,6 @@ import org.apache.http.util.EntityUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
