@@ -251,7 +251,6 @@
         "help/grafana_dashboard",
         "help/collector",
         "help/alarm_center",
-        "help/collector",
         "help/issue"
       ]
     },
