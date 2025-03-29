@@ -2,7 +2,8 @@
 
 ### Prometheus 服务配置
 
-- 編輯 Prometheus 配置文件 `prometheus.yml`，添加 HertzBeat 作为告警接收端配置
+- 编辑 Prometheus 配置文件 `prometheus.yml`，添加 HertzBeat 作为告警接收端配置
+
 ```yaml
 # Alertmanager configuration
 alerting:
@@ -15,10 +16,11 @@ alerting:
         credentials: '{token}'
 
 ```
-- `{hertzbeat_host}:1157` 為 HertzBeat Server 地址和短裤，根据实际情况修改，需要保证网络连通性
+
+- `{hertzbeat_host}:1157` 為 HertzBeat Server 地址和端口，根据实际情况修改，需要保证网络连通性
 - `{token}` 为 HertzBeat Server 的授权 Token，申请新 Token 后替换值
 
-- 重新加载启动 Prometheus Server 
+- 重新加载启动 Prometheus Server
 
 ## 验证配置
 
@@ -38,4 +40,4 @@ alerting:
 - 检查 Prometheus 日志中是否有告警发送失败的错误信息
 - 验证告警规则表达式的正确性
 
-更多信息請參考 [Prometheus 告警配置文檔](https://prometheus.io/docs/alerting/latest/configuration/)
+更多信息请参考 [Prometheus 告警配置文档](https://prometheus.io/docs/alerting/latest/configuration/)
