@@ -1,0 +1,508 @@
+From 9386b916a9d637cb9cbe164f85c3ab94e5968258 Mon Sep 17 00:00:00 2001
+From: cuijianzhong <shangyuancjz@126.com>
+Date: Fri, 28 Mar 2025 11:24:20 +0800
+Subject: [PATCH 1/2] =?UTF-8?q?=E5=A2=9E=E5=8A=A0S7=E5=8D=8F=E8=AE=AE?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../hertzbeat-collector-basic/pom.xml         |   5 +
+ .../collector/collect/s7/S7CollectImpl.java   |  91 +++++++
+ ...ertzbeat.collector.collect.AbstractCollect |   3 +-
+ .../collector/dispatch/DispatchConstants.java |   5 +
+ .../hertzbeat/common/entity/job/Metrics.java  |   5 +
+ .../entity/job/protocol/S7Protocol.java       |  57 ++++
+ .../src/main/resources/define/app-s7.yml      | 252 ++++++++++++++++++
+ 7 files changed, 417 insertions(+), 1 deletion(-)
+ create mode 100644 hertzbeat-collector/hertzbeat-collector-basic/src/main/java/org/apache/hertzbeat/collector/collect/s7/S7CollectImpl.java
+ create mode 100644 hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/protocol/S7Protocol.java
+ create mode 100644 hertzbeat-manager/src/main/resources/define/app-s7.yml
+
+diff --git a/hertzbeat-collector/hertzbeat-collector-basic/pom.xml b/hertzbeat-collector/hertzbeat-collector-basic/pom.xml
+index 83281bfa..cc1956e7 100644
+--- a/hertzbeat-collector/hertzbeat-collector-basic/pom.xml
++++ b/hertzbeat-collector/hertzbeat-collector-basic/pom.xml
+@@ -155,6 +155,11 @@
+             <artifactId>plc4j-driver-modbus</artifactId>
+             <version>0.12.0</version>
+         </dependency>
++        <dependency>
++            <groupId>org.apache.plc4x</groupId>
++            <artifactId>plc4j-driver-s7</artifactId>
++            <version>0.12.0</version>
++        </dependency>
+         <dependency>
+             <groupId>org.apache.sshd</groupId>
+             <artifactId>sshd-sftp</artifactId>
+diff --git a/hertzbeat-collector/hertzbeat-collector-basic/src/main/java/org/apache/hertzbeat/collector/collect/s7/S7CollectImpl.java b/hertzbeat-collector/hertzbeat-collector-basic/src/main/java/org/apache/hertzbeat/collector/collect/s7/S7CollectImpl.java
+new file mode 100644
+index 00000000..6496d62d
+--- /dev/null
++++ b/hertzbeat-collector/hertzbeat-collector-basic/src/main/java/org/apache/hertzbeat/collector/collect/s7/S7CollectImpl.java
+@@ -0,0 +1,91 @@
++/*
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.
++ * The ASF licenses this file to You under the Apache License, Version 2.0
++ * (the "License"); you may not use this file except in compliance with
++ * the License.  You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package org.apache.hertzbeat.collector.collect.s7;
++
++import lombok.extern.slf4j.Slf4j;
++import org.apache.hertzbeat.collector.collect.plc.AbstractPlcCollectImpl;
++import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
++import org.apache.hertzbeat.common.entity.job.Metrics;
++import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
++import org.apache.hertzbeat.common.entity.job.protocol.S7Protocol;
++import org.apache.hertzbeat.common.entity.message.CollectRep;
++import org.apache.plc4x.java.api.PlcConnection;
++import org.apache.plc4x.java.api.messages.PlcReadRequest;
++import org.springframework.beans.BeanUtils;
++import org.springframework.util.StringUtils;
++
++import java.util.List;
++
++/**
++ * plc collect
++ */
++@Slf4j
++public class S7CollectImpl extends AbstractPlcCollectImpl {
++
++    @Override
++    public void preCheck(Metrics metrics) throws IllegalArgumentException {
++        S7Protocol s7 = metrics.getS7();
++        List<String> registerAddressList = s7.getRegisterAddresses();
++        // check RackId
++        if (!StringUtils.hasText(s7.getRackId())) {
++            s7.setRackId("0");
++        }
++        // check SlotId
++        if (!StringUtils.hasText(s7.getSlotId())) {
++            s7.setSlotId("0");
++        }
++        if (!StringUtils.hasText(s7.getTimeout())) {
++            s7.setTimeout("5000");
++        }
++        PlcProtocol plc = metrics.getPlc() == null ? new PlcProtocol() : metrics.getPlc();
++        plc.setRegisterAddresses(registerAddressList);
++        BeanUtils.copyProperties(s7, plc);
++        metrics.setPlc(plc);
++        super.preCheck(metrics);
++    }
++
++    @Override
++    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
++        super.collect(builder, metrics);
++    }
++
++    @Override
++    public String supportProtocol() {
++        return DispatchConstants.PROTOCOL_S7;
++    }
++
++    @Override
++    protected String getConnectionString(Metrics metrics) {
++        S7Protocol s7Protocol = metrics.getS7();
++        return "s7://" + s7Protocol.getHost() + ":" + s7Protocol.getPort() + "?remote-rack:" + s7Protocol.getRackId() +
++                "&remote-slot:" + s7Protocol.getSlotId() + "&controller-type=S7-1500";
++    }
++
++    @Override
++    protected PlcReadRequest buildRequest(Metrics metrics, PlcConnection connection) {
++        S7Protocol s7Protocol = metrics.getS7();
++        List<String> registerAddressList = s7Protocol.getRegisterAddresses();
++        // Create a new read request:
++        PlcReadRequest.Builder requestBuilder = connection.readRequestBuilder();
++        for (int i = 0; i < registerAddressList.size(); i++) {
++            String s1 = s7Protocol.getAddressSyntax() + ":" + registerAddressList.get(i);
++            requestBuilder.addTagAddress(metrics.getS7().getAddressSyntax() + ":" + i, s1);
++        }
++        return requestBuilder.build();
++    }
++}
+diff --git a/hertzbeat-collector/hertzbeat-collector-collector/src/main/resources/META-INF/services/org.apache.hertzbeat.collector.collect.AbstractCollect b/hertzbeat-collector/hertzbeat-collector-collector/src/main/resources/META-INF/services/org.apache.hertzbeat.collector.collect.AbstractCollect
+index 0cbd4f01..7a48ffc5 100644
+--- a/hertzbeat-collector/hertzbeat-collector-collector/src/main/resources/META-INF/services/org.apache.hertzbeat.collector.collect.AbstractCollect
++++ b/hertzbeat-collector/hertzbeat-collector-collector/src/main/resources/META-INF/services/org.apache.hertzbeat.collector.collect.AbstractCollect
+@@ -29,4 +29,5 @@ org.apache.hertzbeat.collector.collect.mqtt.MqttCollectImpl
+ org.apache.hertzbeat.collector.collect.ipmi2.IpmiCollectImpl
+ org.apache.hertzbeat.collector.collect.kafka.KafkaCollectImpl
+ org.apache.hertzbeat.collector.collect.sd.HttpSdCollectImpl
+-org.apache.hertzbeat.collector.collect.modbus.ModbusCollectImpl
+\ No newline at end of file
++org.apache.hertzbeat.collector.collect.modbus.ModbusCollectImpl
++org.apache.hertzbeat.collector.collect.s7.S7CollectImpl
+\ No newline at end of file
+diff --git a/hertzbeat-collector/hertzbeat-collector-common/src/main/java/org/apache/hertzbeat/collector/dispatch/DispatchConstants.java b/hertzbeat-collector/hertzbeat-collector-common/src/main/java/org/apache/hertzbeat/collector/dispatch/DispatchConstants.java
+index 569950cb..e2da8d63 100644
+--- a/hertzbeat-collector/hertzbeat-collector-common/src/main/java/org/apache/hertzbeat/collector/dispatch/DispatchConstants.java
++++ b/hertzbeat-collector/hertzbeat-collector-common/src/main/java/org/apache/hertzbeat/collector/dispatch/DispatchConstants.java
+@@ -227,4 +227,9 @@ public interface DispatchConstants {
+      * protocol modbus
+      */
+     String PROTOCOL_MODBUS = "modbus";
++
++    /**
++     * protocol modbus
++     */
++    String PROTOCOL_S7 = "s7";
+ }
+diff --git a/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/Metrics.java b/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/Metrics.java
+index 003f5792..e56bbf93 100644
+--- a/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/Metrics.java
++++ b/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/Metrics.java
+@@ -54,6 +54,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
+ import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
+ import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
+ import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
++import org.apache.hertzbeat.common.entity.job.protocol.S7Protocol;
+ import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
+ import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
+ import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
+@@ -270,6 +271,10 @@ public class Metrics {
+      * Monitoring configuration information using the public modBus protocol
+      */
+     private ModbusProtocol modbus;
++    /**
++     * Monitoring configuration information using the public s7 protocol
++     */
++    private S7Protocol s7;
+     /**
+      * collector use - Temporarily store subTask metrics response data
+      */
+diff --git a/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/protocol/S7Protocol.java b/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/protocol/S7Protocol.java
+new file mode 100644
+index 00000000..dd7f1481
+--- /dev/null
++++ b/hertzbeat-common/src/main/java/org/apache/hertzbeat/common/entity/job/protocol/S7Protocol.java
+@@ -0,0 +1,57 @@
++/*
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.
++ * The ASF licenses this file to You under the Apache License, Version 2.0
++ * (the "License"); you may not use this file except in compliance with
++ * the License.  You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package org.apache.hertzbeat.common.entity.job.protocol;
++
++import lombok.AllArgsConstructor;
++import lombok.Builder;
++import lombok.Data;
++import lombok.NoArgsConstructor;
++
++import java.util.List;
++
++
++/**
++ * Modbus Protocol
++ */
++@Data
++@Builder
++@AllArgsConstructor
++@NoArgsConstructor
++public class S7Protocol implements Protocol {
++
++    /**
++     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
++     */
++    private String host;
++    /**
++     * Port number
++     */
++    private String port;
++
++    private String driverName;
++
++    private String addressSyntax;
++
++    private String rackId;
++
++    private String slotId;
++
++    private String timeout;
++
++    private List<String> registerAddresses;
++}
+diff --git a/hertzbeat-manager/src/main/resources/define/app-s7.yml b/hertzbeat-manager/src/main/resources/define/app-s7.yml
+new file mode 100644
+index 00000000..c2c69fa6
+--- /dev/null
++++ b/hertzbeat-manager/src/main/resources/define/app-s7.yml
+@@ -0,0 +1,252 @@
++# 请在此通过编写YML内容来定义新的监控类型, 参考文档: https://hertzbeat.apache.org/docs/advanced/extend-point 
++# Licensed to the Apache Software Foundation (ASF) under one or more
++# contributor license agreements.  See the NOTICE file distributed with
++# this work for additional information regarding copyright ownership.
++# The ASF licenses this file to You under the Apache License, Version 2.0
++# (the "License"); you may not use this file except in compliance with
++# the License.  You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
++category: service
++# The monitoring type eg: linux windows tomcat mysql aws...
++app: s7
++# The app api i18n name
++name:
++  zh-CN: s7服务器
++  en-US: s7 Server
++# The description and help of this monitoring type
++help:
++  zh-CN: HertzBeat对支持s7协议的服务进行(保持寄存器和线圈)相关指标进行采集
++  en-US: HertzBeat collects metrics related to maintaining registers and coils for services that support s7 protocol
++  zh-TW: HertzBeat對支持s7協定的服務進行（保持寄存器和線圈）相關名額進行採集
++# Input params define for monitoring(render web ui by the definition)
++params:
++  # field-param field key
++  - field: host
++    # name-param field display i18n name
++    name:
++      zh-CN: s7服务Host
++      en-US: s7 Server Host
++    # type-param field type(most mapping the html input type)
++    type: host
++    # required-true or false
++    required: true
++  # field-param field key
++  - field: port
++    # name-param field display i18n name
++    name:
++      zh-CN: 端口
++      en-US: Port
++    # type-param field type(most mapping the html input type)
++    type: number
++    # when type is number, range is required
++    range: '[0,65535]'
++    # required-true or false
++    required: true
++    # default value
++    defaultValue: 102
++  - field: rackId
++    # name-param field display i18n name
++    name:
++      zh-CN: rackId
++      en-US: rackId
++    # type-param field type(most mapping the html input type)
++    type: text
++    # required-true or false
++    required: false
++    defaultValue: 0
++  - field: slotId
++    # name-param field display i18n name
++    name:
++      zh-CN: slotId
++      en-US: slotId
++    # type-param field type(most mapping the html input type)
++    type: text
++    # required-true or false
++    required: false
++    defaultValue: 0
++  - field: timeout
++    name:
++      zh-CN: 请求超时时间(ms)
++      en-US: Request Timeout(ms)
++    type: number
++    # when type is number, range is required
++    range: '[400,200000]'
++    required: false
++    defaultValue: 6000
++    hide: true
++  - field: holdingRegisterAddresses
++    # name-param field display i18n name
++    name:
++      zh-CN: 保持寄存器地址
++      en-US: Holding Registers address
++    # type-param field type(most mapping the html input type)
++    type: array
++    # param field input placeholder
++    placeholder: 'Input RegisterAddress'
++    # required-true or false
++    required: true
++    # hide param-true or false
++  #    hide: true
++  - field: coilRegisterAddresses
++    # name-param field display i18n name
++    name:
++      zh-CN: 线圈寄存器地址
++      en-US: Coil Register address
++    # type-param field type(most mapping the html input type)
++    type: array
++    # param field input placeholder
++    placeholder: 'Input RegisterAddress'
++    # required-true or false
++    required: true
++    # hide param-true or false
++#    hide: true
++
++# collect metrics config list
++metrics:
++  # metrics - summary
++  - name: holding-register
++    i18n:
++      zh-CN: 保持寄存器 统计信息
++      en-US: holding-register stats
++    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
++    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
++    priority: 0
++    # collect metrics content
++    fields:
++      - field: responseTime
++        type: 0
++        unit: ms
++        i18n:
++          zh-CN: 响应时间
++          en-US: Response Time
++      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
++      - field: address-0
++        type: 0
++        i18n:
++          zh-CN: address-0
++          en-US: address-0
++      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
++      - field: address-1-0
++        type: 0
++        i18n:
++          zh-CN: address-1-0
++          en-US: address-1-0
++      - field: address-1-1
++        type: 0
++        i18n:
++          zh-CN: address-1-1
++          en-US: address-1-1
++      - field: address-1-2
++        type: 0
++        i18n:
++          zh-CN: address-1-2
++          en-US: address-1-2
++    # 指标别名列表，按照寄存器地址来进行命名的
++    # 例如 地址为下标为0 ，值为m  holding-register:0
++    # 地址为下标为1，值为m[2]  holding-register:1-0  holding-register:1-1
++    aliasFields:
++      - responseTime
++      - holding-register:0
++      - holding-register:1-0
++      - holding-register:1-1
++      - holding-register:1-2
++      # mapping and conversion expressions, use thesand aliasField above to calculate metrics value# (可选)指标映射转换计算表达式，与上面的别名一起作用，计算出最终需要的指标值# eg: cores=core1+core2, usage=usage, waitTimeallTime-runningTime
++    calculates:
++      - responseTime=responseTime
++      - address-0=holding-register:0
++      - address-1-0=holding-register:1-0
++      - address-1-1=holding-register:1-1
++      - address-1-2=holding-register:1-2
++    protocol: s7
++    # the config content when protocol is http
++    s7:
++      # host
++      host: ^_^host^_^
++      # port
++      port: ^_^port^_^
++      driverName: s7
++      addressSyntax: holding-register
++      rackId: ^_^rackId^_^
++      slotId: ^_^slotId^_^
++      timeout: ^_^timeout^_^
++      registerAddresses: [ ^_^holdingRegisterAddresses^_^ ]
++
++  # metrics - summary
++  - name: coil
++    i18n:
++      zh-CN: 线圈 统计信息
++      en-US: coil stats
++    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
++    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
++    priority: 1
++    # collect metrics content
++    fields:
++      - field: responseTime
++        type: 0
++        unit: ms
++        i18n:
++          zh-CN: 响应时间
++          en-US: Response Time
++      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
++      - field: address-0
++        type: 0
++        i18n:
++          zh-CN: address-0
++          en-US: address-0
++      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
++      - field: address-1-0
++        type: 0
++        i18n:
++          zh-CN: address-1-0
++          en-US: address-1-0
++      - field: address-1-1
++        type: 0
++        i18n:
++          zh-CN: address-1-1
++          en-US: address-1-1
++      - field: address-1-2
++        type: 0
++        i18n:
++          zh-CN: address-1-2
++          en-US: address-1-2
++    # 指标别名列表，按照寄存器地址来进行命名的
++    # 例如 地址为下标为0 ，值为m  coil:0
++    # 地址为下标为1，值为m[2]  coil:1-0  coil:1-1
++    aliasFields:
++      - responseTime
++      - coil:0
++      - coil:1-0
++      - coil:1-1
++      - coil:1-2
++      # mapping and conversion expressions, use thesand aliasField above to calculate metrics value# (可选)指标映射转换计算表达式，与上面的别名一起作用，计算出最终需要的指标值# eg: cores=core1+core2, usage=usage, waitTimeallTime-runningTime
++    calculates:
++      - responseTime=responseTime
++      - address-0=coil:0
++      - address-1-0=coil:1-0
++      - address-1-1=coil:1-1
++      - address-1-2=coil:1-2
++    protocol: s7
++    # the config content when protocol is http
++    s7:
++      # host
++      host: ^_^host^_^
++      # port
++      port: ^_^port^_^
++      driverName: s7
++      addressSyntax: coil
++      rackId: ^_^rackId^_^
++      slotId: ^_^slotId^_^
++      timeout: ^_^timeout^_^
++      registerAddresses: [ ^_^coilRegisterAddresses^_^ ]
++
++
++
+-- 
+2.43.0.windows.1
+
