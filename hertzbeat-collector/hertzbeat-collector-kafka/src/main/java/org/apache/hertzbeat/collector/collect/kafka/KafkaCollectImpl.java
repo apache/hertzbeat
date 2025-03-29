@@ -242,6 +242,7 @@ public class KafkaCollectImpl extends AbstractCollect {
             boolean isKafkaCommand = SupportedCommand.isKafkaCommand(command);
             if (!isKafkaCommand) {
                 log.error("Unsupported command: {}", command);
+                builder.setCode(CollectRep.Code.FAIL);
                 return;
             }
 

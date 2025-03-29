@@ -71,26 +71,41 @@ public class KafkaCollectTest {
 
     @Test
     void collect() {
-        // metrics is null
+        // test if metrics is null
         assertThrows(NullPointerException.class, () -> {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             collect.collect(builder, null);
         });
 
-        KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
-        Metrics metrics = Metrics.builder().kclient(kafka).build();
-        //test if not kafka command
-        assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            collect.collect(builder, metrics);
-        });
-        //test kafka command
-        assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            metrics.getKclient().setCommand("topic-list");
-            collect.collect(builder, metrics);
-        });
+        KafkaProtocol kafka = KafkaProtocol.builder()
+            .host("127.0.0.1")
+            .port("9092")
+            .build();
+        Metrics metrics = Metrics.builder()
+            .kclient(kafka)
+            .build();
 
+        // test if not kafka command
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        collect.collect(builder, metrics);
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+
+        // test if kafka command
+        String[] commands = {
+            "topic-describe",
+            "topic-offset",
+            "topic-list",
+            "consumer-detail"
+        };
+
+        for (String command : commands) {
+            //reset status
+            builder.setCode(CollectRep.Code.forNumber(6));
+            metrics.getKclient().setCommand(command);
+            
+            collect.collect(builder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        }
     }
 
     @Test
