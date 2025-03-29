@@ -1,15 +1,15 @@
 ---
-id: api  
-title: Monitoring HTTP API      
-sidebar_label: HTTP API   
-keywords: [open source monitoring tool, monitoring http api]
+id: api
+title: Monitoring HTTP API
+sidebar_label: HTTP API
+keywords: [ open source monitoring tool, monitoring http api ]
 ---
 
 > Call HTTP API interface, check whether the interface is available, and monitor its response time and other Metrics.
 
 ### Configuration parameter
 
-|   Parameter name    |                                                                        Parameter help description                                                                         |
+| Parameter name      | Parameter help description                                                                                                                                                |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -22,7 +22,7 @@ keywords: [open source monitoring tool, monitoring http api]
 | Headers             | HTTP request headers                                                                                                                                                      |
 | Params              | HTTP query params, support [time expression](time_expression)                                                                                                             |
 | Content-Type        | Set the resource type when carrying the BODY request body data request                                                                                                    |
-| Request BODY        | Set the carry BODY request body data, which is valid when PUT or POST request method is used                                                                              |
+| Request BODY        | Set the carry BODY request body data, which is valid when PUT or POST request method is used, support [time expression](time_expression)                                  |
 | Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds                                                   |
 | Whether to detect   | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks | For more information about identifying and describing this monitoring, users can note information here                                                                    |
