@@ -1,13 +1,12 @@
 ---
-title: Behind the Scenes of HertzBeat: How Metric Collection Works
+title: "Behind the Scenes of HertzBeat: How Metric Collection Works"
 author: JuJinPark
 author_title: JuJin
 author_url: https://github.com/JuJinPark
 tags: [opensource, practice]
 keywords: [open source monitoring system]
 ---
-
-# Behind the Scenes of HertzBeat: How Metric Collection Works
+## Behind the Scenes of HertzBeat: How Metric Collection Works
 
 HertzBeat is an open-source, real-time monitoring system designed for flexibility and ease of use. But how exactly does it collect, process, and store metrics from various systems?
 
@@ -15,7 +14,7 @@ In this post, we’ll walk through the internal architecture behind **HertzBeat�
 
 ---
 
-## HertzBeat’s Metric Collection Architecture
+### HertzBeat’s Metric Collection Architecture
 
 ![HertzBeat Architecture](/img/docs/hertzbeat-metrics-collection-arch.png)
 
@@ -23,7 +22,7 @@ In this post, we’ll walk through the internal architecture behind **HertzBeat�
 
 ---
 
-## 1. Job Distribution: Assigning What to Monitor
+### 1. Job Distribution: Assigning What to Monitor
 
 When the **Manager** component starts, it loads monitoring targets from the database. These targets define the host, collection interval, and other parameters.
 
@@ -33,7 +32,7 @@ To distribute the workload, the Manager sends jobs to **external Collectors** ov
 
 ---
 
-## 2. Task Scheduling: When to Monitor
+### 2. Task Scheduling: When to Monitor
 
 Once a Collector receives a job, it registers it with the **`TimerDispatch`** system.
 
@@ -44,7 +43,7 @@ Each Collector runs a **`Timer`** in a background thread, which schedules tasks 
 
 ---
 
-## 3. Task Execution: How Metrics Are Collected
+### 3. Task Execution: How Metrics Are Collected
 
 When a `TimerTask` is triggered, it creates a `MetricsCollect` task and passes it to `MetricsTaskDispatch`, which places it in the **`MetricsCollectorQueue`**.
 
@@ -54,7 +53,7 @@ When a `TimerTask` is triggered, it creates a `MetricsCollect` task and passes i
 
 ---
 
-## 4. Result Processing: What Happens to Collected Data
+### 4. Result Processing: What Happens to Collected Data
 
 Once metrics are collected, the results are processed by the **`CollectDataDispatch`** module.
 
@@ -65,27 +64,29 @@ For external collectors, results are sent **back to the Manager** via the Netty 
 
 ---
 
-## 5. Alerting & Storage: Making Metrics Useful
+### 5. Alerting & Storage: Making Metrics Useful
 
 The Manager receives metric data and pushes it into the `MetricsDataToAlertQueue`, where it is processed through two main pipelines:
 
-### 🔔 Alerting
+#### 🔔 Alerting
+
 - The `RealTimeAlertCalculator` consumes metrics from the alert queue.
 - It checks each metric against user-defined alert rules and triggers alerts if conditions are met.
 
-### 🧠 Storage
+#### 🧠 Storage
+
 - After alert evaluation, metrics are added to the `MetricsDataToStorageQueue`.
 - A background thread (`DataStorageDispatch`) processes this queue and stores the metrics in a database for long-term analysis and dashboard visualization.
 
 ---
 
-## Standalone Mode: No External Collectors Required
+### Standalone Mode: No External Collectors Required
 
 Thanks to the built-in **main collector**, HertzBeat can operate entirely in standalone mode. This is especially useful for testing, small deployments, or quick setup. All core components — job scheduling, collection, alerting, and storage — run within a single process.
 
 ---
 
-## 🧠 Conclusion
+### 🧠 Conclusion
 
 HertzBeat’s metric collection system is designed for **performance, scalability, and flexibility**. With its:
 
@@ -97,7 +98,7 @@ it handles large-scale monitoring workloads with minimal overhead and high effic
 
 ---
 
-## 🙌 What’s Next?
+### 🙌 What’s Next?
 
 If you're curious to explore more:
 
