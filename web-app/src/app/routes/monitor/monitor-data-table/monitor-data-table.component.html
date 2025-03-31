@@ -99,6 +99,7 @@
         <tr>
           <th style="text-align: center" *ngFor="let field of fields" nzWidth="100px">
             {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+            <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
           </th>
         </tr>
       </thead>
@@ -108,8 +109,7 @@
             <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
             <ng-template #contentTemplate>
               {{ value.origin }}
-              <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
-              <nz-tag *ngIf="fields[i].unit">{{ fields[i].unit }}</nz-tag>
+              <nz-tag *ngIf="value.origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
             </ng-template>
           </td>
         </tr>
@@ -134,11 +134,11 @@
         <tr *ngFor="let field of fields; let i = index">
           <td>
             {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+            <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
           </td>
           <td
             >{{ rowValues[i].origin }}
-            <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
-            <nz-tag *ngIf="field.unit">{{ field.unit }}</nz-tag>
+            <nz-tag *ngIf="rowValues[i].origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
           </td>
         </tr>
       </tbody>
