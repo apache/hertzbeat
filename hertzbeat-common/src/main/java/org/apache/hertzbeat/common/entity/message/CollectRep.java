@@ -445,15 +445,7 @@ public final class CollectRep {
                                     if (value != null) {
                                         // Check byte array size, Arrow buffer size is 32768 bytes
                                         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-                                        if (bytes.length > 32700) {
-                                            log.warn("Value too large for Arrow buffer ({}), truncating to 32700 bytes. Meta: {}",
-                                                    bytes.length, JsonUtil.toJson(metadata));
-                                            byte[] truncatedBytes = new byte[32700];
-                                            System.arraycopy(bytes, 0, truncatedBytes, 0, 32700);
-                                            vector.set(rowIndex, truncatedBytes);
-                                        } else {
-                                            vector.set(rowIndex, bytes);
-                                        }
+                                        vector.setSafe(rowIndex, bytes);
                                     }
                                 }
                             }
