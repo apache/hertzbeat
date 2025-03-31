@@ -492,18 +492,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
   }
 
-  /**
-   * Paging callback
-   *
-   * @param params page info
-   */
-  onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
+  onPageIndexChange(pageIndex: number) {
     this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-    const currentSort = sort.find(item => item.value !== null);
-    this.currentSortField = (currentSort && currentSort.key) || null;
-    this.currentSortOrder = (currentSort && currentSort.value) || null;
     this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
@@ -604,17 +594,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     return hash;
   }
 
-  copyMonitor() {
-    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
-      return;
-    }
-    if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('monitor.copy.notify.one-select'), '');
-      return;
-    }
-    const monitorId = Array.from(this.checkedMonitorIds)[0];
-
+  copyMonitor(monitorId: number) {
     this.monitorSvc.copyMonitor(monitorId).subscribe(
       message => {
         if (message.code === 0) {

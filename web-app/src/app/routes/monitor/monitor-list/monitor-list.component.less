@@ -1,4 +1,5 @@
-@import '@delon/theme/index';
+@import "~src/styles/theme";
+
 ::ng-deep {
   .monitor-select-menu-modal {
     .ant-spin-container {
@@ -63,4 +64,185 @@
 .export-type-card.loading {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.monitor-card-list {
+  width: 100%;
+  position: relative;
+}
+
+.monitor-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.monitor-header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.monitor-card-list-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.monitor-card {
+  display: flex;
+  width: 100%;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.3s;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.monitor-card:hover {
+  border-color: @primary-color;
+  box-shadow: 0 1px 8px rgba(24, 144, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.monitor-card-checkbox {
+  padding-right: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.monitor-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.monitor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.monitor-card-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.monitor-card-title button {
+  padding: 0;
+  height: auto;
+  font-size: 16px;
+  font-weight: 500;
+  color: @primary-color;
+}
+
+.monitor-card-info {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-gap: 8px;
+}
+
+.monitor-card-info-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.host-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  button {
+    padding: 0;
+    height: auto;
+    
+    i {
+      margin-right: 4px;
+    }
+  }
+  
+  .action-button {
+    height: 32px;
+    padding: 0 8px;
+    min-width: 32px;
+    margin-left: auto;
+  }
+}
+
+.meta-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.label-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  max-width: 60%;
+}
+
+.time-ago {
+  margin-left: auto;
+  color: #999;
+  font-size: 12px;
+  white-space: nowrap;
+  
+  i {
+    margin-right: 4px;
+  }
+}
+
+.info-label {
+  display: none;
+}
+
+.monitor-card-status {
+  margin-left: auto;
+  
+  .ant-tag {
+    margin-right: 0;
+  }
+}
+
+.label-item {
+  display: none;
+}
+
+.danger-text {
+  color: #ff4d4f;
+}
+
+@media (max-width: 768px) {
+  .meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .time-ago {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+    
+  .label-tags {
+    max-width: 100%;
+  }
+}
+
+[data-theme='dark'] {
+  :host {
+    .monitor-card {
+      background-color: @common-background-color-dark;
+    } 
+  }
 }
