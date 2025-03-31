@@ -71,15 +71,15 @@
           ><p style="text-align: right">{{ 'monitor.detail.status' | i18n }}</p></div
         >
         <div nz-col nzSpan="16">
-          <nz-tag *ngIf="monitor.status == 0" nzColor="default">
+          <nz-tag *ngIf="monitor.status == 0" [nzColor]="'#b2b2b2'">
             <i nz-icon nzType="meh" nzTheme="outline"></i>
             <span>{{ 'monitor.status.paused' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor.status == 1" nzColor="success">
+          <nz-tag *ngIf="monitor.status == 1" [nzColor]="'#498765'">
             <i nz-icon nzType="smile" nzTheme="outline"></i>
             <span>{{ 'monitor.status.up' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor.status == 2" nzColor="error">
+          <nz-tag *ngIf="monitor.status == 2" [nzColor]="'#fd4357'">
             <i nz-icon nzType="frown" nzTheme="outline"></i>
             <span>{{ 'monitor.status.down' | i18n }}</span>
           </nz-tag>
