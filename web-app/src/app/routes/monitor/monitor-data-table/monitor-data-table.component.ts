@@ -96,4 +96,14 @@ export class MonitorDataTableComponent implements OnInit {
         }
       );
   }
+
+  getObjectLength(obj: Record<string, string> | undefined): number {
+    if (!obj) return 0;
+    return Object.keys(obj).length;
+  }
+
+  getObjectEntries(obj: Record<string, string> | undefined): Array<[string, string]> {
+    if (!obj) return [];
+    return Object.entries(obj);
+  }
 }
