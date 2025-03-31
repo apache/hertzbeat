@@ -29,85 +29,59 @@
     [nzLoading]="!app || loading"
     [nzExtra]="card ? (!monitor ? metrics_card_extra : monitor_card_extra) : ''"
   >
-    <div *ngIf="!!monitor">
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">ID</p></div>
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitorId }}</p></div
-        >
-      </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitor.detail.name' | i18n }}</p></div
-        >
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor.name }}</p></div
-        >
-      </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"><p style="text-align: right">HOST</p></div>
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor.host }}</p></div
-        >
-      </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitor.detail.port' | i18n }}</p></div
-        >
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ port }}</p></div
-        >
-      </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitor.detail.description' | i18n }}</p></div
-        >
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor.description }}</p></div
-        >
-      </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitor.detail.status' | i18n }}</p></div
-        >
-        <div nz-col nzSpan="16">
-          <nz-tag *ngIf="monitor.status == 0" nzColor="default">
+    <div *ngIf="!!monitor" class="monitor-detail-container">
+      <div class="monitor-basic-info">
+        <div class="monitor-info-header">
+          <div class="monitor-name">{{ monitor.name }}</div>
+          <nz-tag *ngIf="monitor.status == 0" [nzColor]="'#b2b2b2'" class="status-tag">
             <i nz-icon nzType="meh" nzTheme="outline"></i>
             <span>{{ 'monitor.status.paused' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor.status == 1" nzColor="success">
+          <nz-tag *ngIf="monitor.status == 1" [nzColor]="'#498765'" class="status-tag">
             <i nz-icon nzType="smile" nzTheme="outline"></i>
             <span>{{ 'monitor.status.up' | i18n }}</span>
           </nz-tag>
-          <nz-tag *ngIf="monitor.status == 2" nzColor="error">
+          <nz-tag *ngIf="monitor.status == 2" [nzColor]="'#fd4357'" class="status-tag">
             <i nz-icon nzType="frown" nzTheme="outline"></i>
             <span>{{ 'monitor.status.down' | i18n }}</span>
           </nz-tag>
         </div>
+
+        <div nz-row [nzGutter]="16">
+          <div nz-col [nzSpan]="24">
+            <nz-descriptions nzBordered [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }">
+              <nz-descriptions-item [nzTitle]="'ID'">{{ monitorId }}</nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'HOST'">{{ monitor.host }}</nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'monitor.detail.port' | i18n">{{ port }}</nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'monitor.intervals' | i18n">{{ monitor.intervals }}s</nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'label' | i18n" [nzSpan]="2">
+                <div class="tags-container">
+                  <ng-container *ngFor="let label of getObjectEntries(monitor.labels)">
+                    <nz-tag>{{ label[0] }}: {{ label[1] }}</nz-tag>
+                  </ng-container>
+                </div>
+              </nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'monitor.detail.description' | i18n" [nzSpan]="2">
+                {{ monitor.description }}
+              </nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'common.new-time' | i18n">
+                {{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}
+              </nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'common.edit-time' | i18n">
+                {{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
+              </nz-descriptions-item>
+            </nz-descriptions>
+          </div>
+        </div>
       </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'monitor.intervals' | i18n }}</p></div
-        >
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor.intervals }}s</p></div
-        >
-      </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'common.new-time' | i18n }}</p></div
-        >
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
-        >
-      </div>
-      <div nz-row nzGutter="16">
-        <div nz-col nzSpan="8"
-          ><p style="text-align: right">{{ 'common.edit-time' | i18n }}</p></div
-        >
-        <div nz-col nzSpan="16"
-          ><p style="text-align: left">{{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
-        >
+
+      <div class="monitor-annotations" *ngIf="monitor.annotations && getObjectLength(monitor.annotations) > 0">
+        <h3 class="section-title">{{ 'annotation' | i18n }}</h3>
+        <nz-descriptions nzBordered [nzColumn]="1" [nzSize]="'small'">
+          <nz-descriptions-item *ngFor="let annotation of getObjectEntries(monitor.annotations)" [nzTitle]="annotation[0]">
+            {{ annotation[1] }}
+          </nz-descriptions-item>
+        </nz-descriptions>
       </div>
     </div>
     <nz-table
@@ -124,6 +98,7 @@
         <tr>
           <th style="text-align: center" *ngFor="let field of fields" nzWidth="100px">
             {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+            <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
           </th>
         </tr>
       </thead>
@@ -133,8 +108,7 @@
             <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
             <ng-template #contentTemplate>
               {{ value.origin }}
-              <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
-              <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
+              <nz-tag *ngIf="value.origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
             </ng-template>
           </td>
         </tr>
@@ -159,11 +133,11 @@
         <tr *ngFor="let field of fields; let i = index">
           <td>
             {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+            <nz-tag *ngIf="field.unit" [nzBordered]="false">{{ field.unit }}</nz-tag>
           </td>
           <td
             >{{ rowValues[i].origin }}
-            <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
-            <nz-tag *ngIf="field.unit" nzColor="success">{{ field.unit }}</nz-tag>
+            <nz-tag *ngIf="rowValues[i].origin == null">{{ 'monitor.detail.value.null' | i18n }}</nz-tag>
           </td>
         </tr>
       </tbody>
