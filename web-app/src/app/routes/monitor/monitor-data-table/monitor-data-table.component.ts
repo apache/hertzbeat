@@ -62,6 +62,9 @@ export class MonitorDataTableComponent implements OnInit {
   scrollY: string = '100%';
   loading: boolean = false;
 
+  // 添加标签颜色缓存
+  private tagColorCache: Record<string, string> = {};
+
   constructor(private monitorSvc: MonitorService, private notifySvc: NzNotificationService) {}
 
   ngOnInit(): void {
@@ -95,5 +98,50 @@ export class MonitorDataTableComponent implements OnInit {
           metricData$.unsubscribe();
         }
       );
+  }
+
+  // 获取对象的长度
+  getObjectLength(obj: Record<string, string> | undefined): number {
+    if (!obj) return 0;
+    return Object.keys(obj).length;
+  }
+
+  // 获取对象的键值对数组
+  getObjectEntries(obj: Record<string, string> | undefined): Array<[string, string]> {
+    if (!obj) return [];
+    return Object.entries(obj);
+  }
+
+  // 根据标签名生成一个固定的颜色
+  getTagColor(tagName: string): string {
+    if (this.tagColorCache[tagName]) {
+      return this.tagColorCache[tagName];
+    }
+
+    // 简单的哈希函数生成颜色
+    let hash = 0;
+    for (let i = 0; i < tagName.length; i++) {
+      hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const colors = [
+      '#108ee9',
+      '#2db7f5',
+      '#87d068',
+      '#f50',
+      '#ff85c0',
+      '#7265e6',
+      '#ffbf00',
+      '#00a854',
+      '#f56a00',
+      '#ffc53d',
+      '#13c2c2',
+      '#6495ed'
+    ];
+
+    const index = Math.abs(hash) % colors.length;
+    this.tagColorCache[tagName] = colors[index];
+
+    return this.tagColorCache[tagName];
   }
 }
