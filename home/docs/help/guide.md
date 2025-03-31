@@ -107,6 +107,8 @@ sidebar_label: Help Center
 
 > The triggered alarm information center provides query and filtering of alarm deletion, alarm processing, mark unprocessed, alarm level status, etc.
 
+More details see&emsp;&#x1F449;&emsp;[Alarm center](alarm_center)
+
 ### Alarm configuration
 
 > The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
