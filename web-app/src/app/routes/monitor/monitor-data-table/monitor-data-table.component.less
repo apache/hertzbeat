@@ -1,3 +1,5 @@
+@import "~src/styles/theme";
+
 p {
   font-size: xx-small;
   word-wrap: break-word;
@@ -17,4 +19,49 @@ p {
   .ant-card {
     margin-bottom: inherit;
   }
+}
+
+.monitor-detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.monitor-basic-info {
+  width: 100%;
+}
+
+.monitor-info-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.monitor-name {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.status-tag {
+  margin-left: auto;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  border-left: 4px solid @primary-color;
+  padding-left: 10px;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.monitor-annotations {
+  width: 100%;
 }
