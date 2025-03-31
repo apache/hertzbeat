@@ -109,14 +109,20 @@ public class KafkaCollectTest {
         KafkaProtocol kafka = KafkaProtocol.builder()
                 .host(HOST)
                 .port(PORT)
-                .command(SupportedCommand.TOPIC_LIST.getCommand())
                 .build();
 
         Metrics metrics = Metrics.builder()
                 .kclient(kafka)
                 .build();
 
+        // test if not kafka command
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        collect.collect(builder, metrics);
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+
+        //test kafka command
+        kafka.setCommand(SupportedCommand.TOPIC_LIST.getCommand());
+        builder.setCode(CollectRep.Code.forNumber(6));
         collect.collect(builder, metrics);
 
         assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
