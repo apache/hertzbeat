@@ -274,7 +274,7 @@ public class KafkaCollectImpl extends AbstractCollect {
         }
     }
 
-    private AdminClient getAdminClient(KafkaProtocol kafkaProtocol) {
+    protected AdminClient getAdminClient(KafkaProtocol kafkaProtocol) {
         CacheIdentifier kafkaAdminClientIdentifier = CacheIdentifier.builder()
                 .ip(kafkaProtocol.getHost()).port(kafkaProtocol.getPort())
                 .build();
