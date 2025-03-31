@@ -85,12 +85,6 @@
             </button>
           </nz-upload>
         </li>
-        <li nz-menu-item>
-          <button nz-button (click)="copyMonitor()">
-            <i nz-icon nzType="copy" nzTheme="outline"></i>
-            {{ 'monitor.copy' | i18n }}
-          </button>
-        </li>
       </ul>
     </nz-dropdown-menu>
   </ng-template>
@@ -139,139 +133,137 @@
   </ng-template>
 </app-toolbar>
 
-<nz-table
-  #fixedTable
-  [nzData]="monitors"
-  [nzPageIndex]="pageIndex"
-  [nzPageSize]="pageSize"
-  [nzTotal]="total"
-  nzFrontPagination="false"
-  [nzLoading]="tableLoading"
-  nzShowSizeChanger
-  [nzShowTotal]="rangeTemplate"
-  [nzPageSizeOptions]="[8, 15, 25]"
-  (nzQueryParams)="onTablePageChange($event)"
-  nzShowPagination="true"
-  [nzScroll]="{ x: '1240px' }"
->
-  <thead>
-    <tr>
-      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="20%" nzColumnKey="name" [nzSortFn]="true">{{ 'monitor.name' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%" nzColumnKey="status" [nzSortFn]="true">{{ 'monitor.status' | i18n }}</th>
-      <th nzAlign="center" nzWidth="12%">{{ 'monitor.host' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%">{{ 'monitor.app' | i18n }}</th>
-      <th nzAlign="center" nzWidth="21%">{{ 'label' | i18n }}</th>
-      <th nzAlign="center" nzWidth="14%" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="10%" nzRight>{{ 'common.edit' | i18n }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let data of fixedTable.data">
-      <td nzAlign="center" nzLeft [nzChecked]="checkedMonitorIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-      <td nzAlign="center" nzEllipsis>
-        <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + data.id]">
-          {{ data.name }}
-          <span nz-icon nzType="area-chart"></span>
-        </button>
-      </td>
-      <td nzAlign="center">
-        <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
-          <i nz-icon nzType="meh" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.paused' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.status == 1" [nzColor]="'#498765'">
-          <i nz-icon nzType="smile" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.up' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="data.status == 2" [nzColor]="'#fd4357'">
-          <i nz-icon nzType="frown" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.down' | i18n }}</span>
-        </nz-tag>
-      </td>
-      <td nzAlign="center" nzEllipsis>
-        <button
-          nz-button
-          nzSize="default"
-          nzType="text"
-          [cdkCopyToClipboard]="data.host"
-          nz-tooltip
-          [nzTooltipTitle]="'common.button.copy.tip' | i18n"
-          (click)="notifyCopySuccess()"
-        >
-          {{ data.host }}
-          <span nz-icon nzType="copy"></span>
-        </button>
-      </td>
-      <td nzAlign="center">
-        <a routerLink="/monitors" [queryParams]="{ app: data.app }">
-          <nz-tag nzColor="processing" class="hoverClass">
-            <i nz-icon nzType="cloud"></i>
-            <span>{{ 'monitor.app.' + data.app | i18n }}</span>
-          </nz-tag>
-        </a>
-      </td>
-      <td nzAlign="left">
-        <nz-tag *ngFor="let label of data.labels | keyvalue" style="margin-top: 2px" [nzColor]="getLabelColor(label.key)">
-          {{ label.key }}:{{ label.value }}
-        </nz-tag>
-      </td>
-      <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
-      <td nzAlign="center" nzRight>
-        <div class="actions">
-          <button nz-button nzType="primary" [routerLink]="['/monitors/' + data.id]" nz-tooltip [nzTooltipTitle]="'monitor.detail' | i18n">
-            <i nz-icon nzType="area-chart" nzTheme="outline"></i>
-          </button>
-          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-            <span nz-icon nzType="ellipsis"></span>
-          </button>
-          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+<div class="monitor-card-list">
+  <div class="monitor-list-header">
+    <div class="monitor-header-actions">
+      <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
+      <nz-pagination [(nzPageIndex)]="pageIndex" [nzTotal]="total" (nzPageIndexChange)="onPageIndexChange($event)" nzSimple></nz-pagination>
+    </div>
+  </div>
+
+  <nz-spin [nzSpinning]="tableLoading">
+    <div class="monitor-card-list-content">
+      <div class="monitor-card" *ngFor="let data of monitors">
+        <div class="monitor-card-checkbox">
+          <label nz-checkbox [ngModel]="checkedMonitorIds.has(data.id)" (ngModelChange)="onItemChecked(data.id, $event)"></label>
+        </div>
+        <div class="monitor-card-content">
+          <div class="monitor-card-header">
+            <div class="monitor-card-title">
+              <button nz-button nzType="link" [routerLink]="['/monitors/' + data.id]">
+                <span nz-icon nzType="area-chart"></span>
+                {{ data.name }}
+              </button>
+            </div>
+            <div class="monitor-card-status">
+              <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
+                <i nz-icon nzType="meh" nzTheme="outline"></i>
+                <span>{{ 'monitor.status.paused' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.status == 1" [nzColor]="'#498765'">
+                <i nz-icon nzType="smile" nzTheme="outline"></i>
+                <span>{{ 'monitor.status.up' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="data.status == 2" [nzColor]="'#fd4357'">
+                <i nz-icon nzType="frown" nzTheme="outline"></i>
+                <span>{{ 'monitor.status.down' | i18n }}</span>
+              </nz-tag>
+            </div>
+          </div>
+
+          <div class="monitor-card-info">
+            <div class="monitor-card-info-item host-item">
+              <button
+                nz-button
+                nzType="text"
+                [cdkCopyToClipboard]="data.host"
+                nz-tooltip
+                [nzTooltipTitle]="'common.button.copy.tip' | i18n"
+                (click)="notifyCopySuccess()"
+              >
+                <i nz-icon nzType="global"></i>
+                {{ data.host }}
+              </button>
+
+              <button nz-button nz-dropdown [nzDropdownMenu]="actionMenu" class="action-button">
+                <i nz-icon nzType="ellipsis"></i>
+              </button>
+            </div>
+
+            <div class="monitor-card-info-item meta-row">
+              <a routerLink="/monitors" [queryParams]="{ app: data.app }">
+                <nz-tag nzColor="processing">
+                  <i nz-icon nzType="cloud"></i>
+                  <span>{{ 'monitor.app.' + data.app | i18n }}</span>
+                </nz-tag>
+              </a>
+
+              <div class="label-tags">
+                <nz-tag *ngFor="let label of data.labels | keyvalue" [nzColor]="getLabelColor(label.key)">
+                  {{ label.key }}:{{ label.value }}
+                </nz-tag>
+              </div>
+
+              <span
+                class="time-ago"
+                nz-tooltip
+                [nzTooltipTitle]="
+                  ('common.edit-time' | i18n) + ': ' + ((data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'yyyy-MM-dd HH:mm:ss')
+                "
+              >
+                <i nz-icon nzType="clock-circle"></i>
+                {{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | elapsedTime }}
+              </span>
+            </div>
+          </div>
+
+          <nz-dropdown-menu #actionMenu="nzDropdownMenu">
             <ul nz-menu>
               <li nz-menu-item>
-                <button nz-button (click)="onEditOneMonitor(data.id)" nz-tooltip [nzTooltipTitle]="'monitor.edit-monitor' | i18n">
-                  <i nz-icon nzType="edit" nzTheme="outline"></i>
+                <button nz-button [routerLink]="['/monitors/' + data.id]">
+                  <i nz-icon nzType="area-chart"></i>
+                  {{ 'monitor.detail' | i18n }}
                 </button>
               </li>
               <li nz-menu-item>
-                <button
-                  *ngIf="data.status == 0"
-                  nz-button
-                  (click)="onEnableManageOneMonitor(data.id)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'monitor.enable' | i18n"
-                >
-                  <i nz-icon nzType="play-circle" nzTheme="outline"></i>
+                <button nz-button (click)="onEditOneMonitor(data.id)">
+                  <i nz-icon nzType="edit"></i>
+                  {{ 'monitor.edit-monitor' | i18n }}
                 </button>
               </li>
               <li nz-menu-item>
-                <button
-                  *ngIf="data.status != 0"
-                  nz-button
-                  (click)="onCancelManageOneMonitor(data.id)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'monitor.cancel' | i18n"
-                >
-                  <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
+                <button nz-button (click)="copyMonitor(data.id)">
+                  <i nz-icon nzType="copy"></i>
+                  {{ 'monitor.copy' | i18n }}
                 </button>
               </li>
+              <li nz-menu-divider></li>
+              <li nz-menu-item *ngIf="data.status == 0">
+                <button nz-button (click)="onEnableManageOneMonitor(data.id)">
+                  <i nz-icon nzType="play-circle"></i>
+                  {{ 'monitor.enable' | i18n }}
+                </button>
+              </li>
+              <li nz-menu-item *ngIf="data.status != 0">
+                <button nz-button (click)="onCancelManageOneMonitor(data.id)">
+                  <i nz-icon nzType="pause-circle"></i>
+                  {{ 'monitor.cancel' | i18n }}
+                </button>
+              </li>
+              <li nz-menu-divider></li>
               <li nz-menu-item>
-                <button
-                  nz-button
-                  nzDanger
-                  (click)="onDeleteOneMonitor(data.id)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'monitor.delete-monitor' | i18n"
-                >
-                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                <button nz-button nzDanger (click)="onDeleteOneMonitor(data.id)">
+                  <i nz-icon nzType="delete"></i>
+                  {{ 'monitor.delete-monitor' | i18n }}
                 </button>
               </li>
             </ul>
           </nz-dropdown-menu>
         </div>
-      </td>
-    </tr>
-  </tbody>
-</nz-table>
+      </div>
+    </div>
+  </nz-spin>
+</div>
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
