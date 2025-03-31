@@ -88,7 +88,7 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
 &emsp;&#x1F449;&emsp;[Flink](flink) <br />
 
-### Ai大模型监控
+### AI大模型监控
 
 &emsp;&#x1F449;&emsp;[OpenAi](openai) <br />
 
@@ -106,6 +106,8 @@ sidebar_label: 帮助入门
 ### 告警中心
 
 > 已触发的告警信息中心，提供告警删除，告警处理，标记未处理，告警级别状态等查询过滤。
+
+详见&emsp;&#x1F449;&emsp;[告警中心](alarm_center)
 
 ### 告警配置
 

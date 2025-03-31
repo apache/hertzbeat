@@ -23,28 +23,19 @@
             {
               "type": "category",
               "label": "extern-deploy",
-              "items": [
-                "start/baota-deploy",
-                "start/rainbond-deploy"
-              ]
+              "items": ["start/baota-deploy", "start/rainbond-deploy"]
             }
           ]
         },
         {
           "type": "category",
           "label": "upgrade",
-          "items": [
-            "start/1.6.0-update",
-            "start/upgrade"
-          ]
+          "items": ["start/1.6.0-update", "start/upgrade"]
         },
         {
           "type": "category",
           "label": "setting",
-          "items": [
-            "start/account-modify",
-            "start/custom-config"
-          ]
+          "items": ["start/account-modify", "start/custom-config"]
         },
         {
           "type": "category",
@@ -60,9 +51,7 @@
         {
           "type": "category",
           "label": "use-case",
-          "items": [
-            "start/ssl-cert-practice"
-          ]
+          "items": ["start/ssl-cert-practice"]
         }
       ]
     },
@@ -132,11 +121,7 @@
         {
           "type": "category",
           "label": "cache",
-          "items": [
-            "help/redis",
-            "help/memcached",
-            "help/valkey"
-          ]
+          "items": ["help/redis", "help/memcached", "help/valkey"]
         },
         {
           "type": "category",
@@ -160,9 +145,7 @@
         {
           "type": "category",
           "label": "server",
-          "items": [
-            "help/ipmi"
-          ]
+          "items": ["help/ipmi"]
         },
         {
           "type": "category",
@@ -212,55 +195,37 @@
         {
           "type": "category",
           "label": "webserver",
-          "items": [
-            "help/tomcat",
-            "help/jetty"
-          ]
+          "items": ["help/tomcat", "help/jetty"]
         },
         {
           "type": "category",
           "label": "cloud-native",
-          "items": [
-            "help/docker",
-            "help/kubernetes"
-          ]
+          "items": ["help/docker", "help/kubernetes"]
         },
         {
           "type": "category",
           "label": "llm",
-          "items": [
-            "help/openai"
-          ]
+          "items": ["help/openai"]
         },
         {
           "type": "category",
           "label": "aiConfig",
-          "items": [
-            "help/aiConfig"
-          ]
+          "items": ["help/aiConfig"]
         },
         {
           "type": "category",
           "label": "custom",
-          "items": [
-            "help/kafka_promql",
-            "help/influxdb_promql"
-          ]
+          "items": ["help/kafka_promql", "help/influxdb_promql"]
         },
         {
           "type": "category",
           "label": "network",
-          "items": [
-            "help/huawei_switch"
-          ]
+          "items": ["help/huawei_switch"]
         },
         {
           "type": "category",
           "label": "threshold",
-          "items": [
-            "help/alert_threshold",
-            "help/alert_threshold_expr"
-          ]
+          "items": ["help/alert_threshold", "help/alert_threshold_expr"]
         },
         {
           "type": "category",
@@ -284,6 +249,8 @@
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
+        "help/collector",
+        "help/alarm_center",
         "help/issue"
       ]
     },
@@ -307,44 +274,32 @@
         {
           "type": "category",
           "label": "jdbc",
-          "items": [
-            "advanced/extend-jdbc"
-          ]
+          "items": ["advanced/extend-jdbc"]
         },
         {
           "type": "category",
           "label": "ssh",
-          "items": [
-            "advanced/extend-ssh"
-          ]
+          "items": ["advanced/extend-ssh"]
         },
         {
           "type": "category",
           "label": "telnet",
-          "items": [
-            "advanced/extend-telnet"
-          ]
+          "items": ["advanced/extend-telnet"]
         },
         {
           "type": "category",
           "label": "jmx",
-          "items": [
-            "advanced/extend-jmx"
-          ]
+          "items": ["advanced/extend-jmx"]
         },
         {
           "type": "category",
           "label": "snmp",
-          "items": [
-            "advanced/extend-snmp"
-          ]
+          "items": ["advanced/extend-snmp"]
         },
         {
           "type": "category",
           "label": "NGQL",
-          "items": [
-            "advanced/extend-ngql"
-          ]
+          "items": ["advanced/extend-ngql"]
         }
       ]
     },
@@ -389,13 +344,11 @@
         }
       ]
     },
+   
     {
       "type": "category",
       "label": "Others",
-      "items": [
-        "others/resource"
-      ]
+      "items": ["others/resource"]
     }
   ]
 }
-
