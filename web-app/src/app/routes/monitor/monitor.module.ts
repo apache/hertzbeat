@@ -26,6 +26,7 @@ import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
@@ -70,7 +71,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzUploadModule,
     SafePipe,
     NzListModule,
-    NzDescriptionsModule
+    NzDescriptionsModule,
+    NzPaginationModule
   ],
   declarations: COMPONENTS
 })
