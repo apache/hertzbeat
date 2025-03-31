@@ -151,8 +151,8 @@
           <div class="monitor-card-header">
             <div class="monitor-card-title">
               <button nz-button nzType="link" [routerLink]="['/monitors/' + data.id]">
-                {{ data.name }}
                 <span nz-icon nzType="area-chart"></span>
+                {{ data.name }}
               </button>
             </div>
             <div class="monitor-card-status">
@@ -204,7 +204,13 @@
                 </nz-tag>
               </div>
 
-              <span class="time-ago">
+              <span
+                class="time-ago"
+                nz-tooltip
+                [nzTooltipTitle]="
+                  ('common.edit-time' | i18n) + ': ' + ((data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'yyyy-MM-dd HH:mm:ss')
+                "
+              >
                 <i nz-icon nzType="clock-circle"></i>
                 {{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | elapsedTime }}
               </span>

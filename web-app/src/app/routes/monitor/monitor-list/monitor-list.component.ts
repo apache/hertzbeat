@@ -24,7 +24,6 @@ import { ALAIN_I18N_TOKEN, MenuService } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
