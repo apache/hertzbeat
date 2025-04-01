@@ -66,7 +66,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
   metrics = new Set<string>();
-  tempMetrics = new Set<string>();
   fields: Fields = {};
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -134,7 +133,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
     if (this.currentBulletin) {
       this.define = this.currentBulletin;
       this.onAppChange(this.define.app);
-      // this.tempMetrics.add(...this.define.fields.keys());
       this.isManageModalAdd = false;
       this.isManageModalVisible = true;
       this.isManageModalOkLoading = false;
@@ -395,14 +393,17 @@ export class BulletinComponent implements OnInit, OnDestroy {
     // add
     if (ret.to === 'right') {
       this.checkedNodeList.forEach(node => {
-        const item = ret.list.find(w => w.key === node.key);
+        // Check if each transferred node is in the left selected nodes
+        const item = ret.list.find(w => w.value === node.origin.value);
         if (item) {
+          // If it exists, disable the node and set it to checked
           node.isDisabled = true;
           node.isChecked = true;
-          this.tempMetrics.add(item.key);
+          // If the key does not exist, create an empty array
           if (!this.fields[item.key]) {
             this.fields[item.key] = [];
           }
+          // If the key exists but the value is not saved, add it to the value array
           if (!this.fields[item.key].includes(item.value)) {
             this.fields[item.key].push(item.value);
           }
@@ -412,17 +413,19 @@ export class BulletinComponent implements OnInit, OnDestroy {
     // delete
     else if (ret.to === 'left') {
       this.checkedNodeList.forEach(node => {
-        const item = ret.list.find(w => w.key === node.key);
+        // Check if each transferred node is in the left selected nodes
+        const item = ret.list.find(w => w.value === node.origin.value);
         if (item) {
+          // If it exists, enable the node and set it to unchecked
           node.isDisabled = false;
           node.isChecked = false;
-          this.tempMetrics.delete(item.key);
+          // If the key exists, delete the value
           if (this.fields[item.key]) {
             const index = this.fields[item.key].indexOf(item.value);
             if (index > -1) {
               this.fields[item.key].splice(index, 1);
             }
-            // 如果该 key 下的数组为空，则删除该 key
+            // If the array under this key is empty, delete the key
             if (this.fields[item.key].length === 0) {
               delete this.fields[item.key];
             }
