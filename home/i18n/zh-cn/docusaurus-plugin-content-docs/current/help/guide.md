@@ -116,6 +116,14 @@ sidebar_label: 帮助入门
 详见&emsp;&#x1F449;&emsp;[阈值告警](alert_threshold) <br />
 &emsp;&emsp;&emsp;&#x1F449;&emsp;[阈值表达式](alert_threshold_expr)
 
+### 告警收敛
+
+> 通过分组收敛、告警抑制等功能合并相关告警，减少由一个事件引发的告警风暴，降低告警噪声，提升告警响应效率。
+
+详见&emsp;&#x1F449;&emsp;[分组收敛](alarm_group) <br />
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[告警抑制](alarm_inhibit)
+
+
 ### 告警通知
 
 > 触发告警信息后，除了显示在告警中心列表外，还可以用指定方式(邮件钉钉微信飞书等)通知给指定接收人。
