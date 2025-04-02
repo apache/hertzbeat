@@ -73,4 +73,4 @@ Use advanced settings when adding `SqlServer` monitoring, customize JDBC URL, ad
 
 Example: ```jdbc:sqlserver://127.0.0.1:1433;DatabaseName=demo;encrypt=true;trustServerCertificate=true;```
 
-Reference document: [microsoft pkix-path-building-failed-unable-to-find-valid-certification](<https://techcommunity.microsoft.com/t5/azure-database-support-blog/pkix-path-building-> failed-unable-to-find-valid-certification/ba-p/2591304)
+Reference document: [microsoft pkix-path-building-failed-unable-to-find-valid-certification](<https://techcommunity.microsoft.com/t5/azure-database-support-blog/pkix-path-building-failed-unable-to-find-valid-certification/ba-p/2591304)
