@@ -15,4 +15,4 @@
 -- specific language governing permissions and limitations
 -- under the License.
 
-ALTER TABLE hzb_alert_define MODIFY COLUMN expr VARCHAR(6144);
+ALTER TABLE hzb_alert_define MODIFY COLUMN expr LONGTEXT;

@@ -15,4 +15,4 @@
 -- specific language governing permissions and limitations
 -- under the License.
 
-ALTER TABLE HZB_ALERT_DEFINE ALTER COLUMN expr VARCHAR(6144);
+ALTER TABLE HZB_ALERT_DEFINE ALTER COLUMN expr CLOB;
