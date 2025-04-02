@@ -53,6 +53,7 @@ ${FORMATTER [{ + | - }<DURATION> <TIME_UNIT>]}
 #### 在哪里可以使用
 
 - HTTP协议监控类型的请求参数
+- HTTP协议监控类型的请求体
 
 #### 使用示例
 

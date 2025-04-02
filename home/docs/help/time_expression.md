@@ -53,6 +53,7 @@ ${FORMATTER [{ + | - }<DURATION> <TIME_UNIT>]}
 #### Where to Use
 
 - Request parameters for HTTP protocol monitoring types
+- Request Body for HTTP protocol monitoring types
 
 #### Usage Examples
 
