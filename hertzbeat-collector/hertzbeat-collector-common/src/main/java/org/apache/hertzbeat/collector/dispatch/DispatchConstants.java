@@ -227,4 +227,9 @@ public interface DispatchConstants {
      * protocol modbus
      */
     String PROTOCOL_MODBUS = "modbus";
+
+    /**
+     * protocol modbus
+     */
+    String PROTOCOL_S7 = "s7";
 }
