@@ -123,7 +123,6 @@ sidebar_label: 帮助入门
 详见&emsp;&#x1F449;&emsp;[分组收敛](alarm_group) <br />
 &emsp;&emsp;&emsp;&#x1F449;&emsp;[告警抑制](alarm_inhibit)
 
-
 ### 告警通知
 
 > 触发告警信息后，除了显示在告警中心列表外，还可以用指定方式(邮件钉钉微信飞书等)通知给指定接收人。

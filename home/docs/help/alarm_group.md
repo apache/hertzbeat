@@ -21,6 +21,4 @@ keywords: [Open source monitoring system, alarm reduce, alarm grouping]
 - Interval time: The minimum time interval for sending group alarm notifications to avoid excessive alarm notifications, default 5 minutes
 - Repeat interval: The minimum notification interval for repeated alarms. For continuously triggered alarms, avoid repeated notifications, default 4 hours
 
-
 **Note**: Only grouped alarms can be suppressed using suppression rules.
-

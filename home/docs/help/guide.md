@@ -123,7 +123,6 @@ More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert_threshold) <br />
 More details see&emsp;&#x1F449;&emsp;[Alarm grouping](alarm_group) <br />
 &emsp;&emsp;&emsp;&#x1F449;&emsp;[Alarm inhibit](alarm_inhibit)
 
-
 ### Alarm notification
 
 > After triggering the alarm information, in addition to being displayed in the alarm center list, it can also be notified to the designated recipient in a specified way (e-mail, wechat and FeiShu etc.)
