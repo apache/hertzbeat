@@ -199,6 +199,7 @@
     "alert.setting.connect": "Associar Monitores ao Limite de Alarme",
     "alert.setting.connect.left": "Não Associado",
     "alert.setting.connect.right": "Associado",
+    "alert.setting.filter.labels": "Filtrar por rótulos...",
     "alert.setting.expr.tip": "Variáveis de ambiente e operadores suportados na expressão de disparo do limite",
     "alert.setting.expr.label": "Calcule e julgue se o limite foi disparado de acordo com esta expressão. As variáveis de ambiente e operadores da expressão são mostrados acima.",
     "alert.setting.expr.example": "Calcule se o limite foi disparado de acordo com esta expressão. Ex",

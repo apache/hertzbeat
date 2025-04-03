@@ -228,6 +228,7 @@
   "alert.setting.connect": "閾值規則關聯監控",
   "alert.setting.connect.left": "未關聯監控",
   "alert.setting.connect.right": "已關聯監控",
+  "alert.setting.filter.labels": "輸入標籤進行過濾...",
   "alert.setting.default": "應用全域",
   "alert.setting.default.tip": "此告警阈值配置是否應用于全局所有此類型監控",
   "alert.setting.delete": "刪除阈值規則",

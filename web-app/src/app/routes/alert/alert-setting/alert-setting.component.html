@@ -588,7 +588,7 @@
 >
   <nz-transfer
     *nzModalContent
-    [nzDataSource]="transferData"
+    [nzDataSource]="filteredTransferData"
     nzShowSearch="true"
     nzShowSelectAll="false"
     [nzRenderList]="[renderList, renderList]"
@@ -603,6 +603,39 @@
       let-onItemSelectAll="onItemSelectAll"
       let-onItemSelect="onItemSelect"
     >
+      <div class="label-filter-container">
+        <nz-select
+          *ngIf="direction == 'left'"
+          [(ngModel)]="leftFilterLabels"
+          (ngModelChange)="onLabelFilterChange($event, direction)"
+          name="groupLabels"
+          nzMode="tags"
+          [nzTokenSeparators]="[',']"
+          (keydown.enter)="$event.preventDefault()"
+          (nzOnSearch)="onLabelSearch($event, direction)"
+          nzAllowClear
+          [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
+          style="width: 92%"
+        >
+          <nz-option *ngFor="let label of leftMonitorLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
+        </nz-select>
+        <nz-select
+          *ngIf="direction == 'right'"
+          [(ngModel)]="rightFilterLabels"
+          (ngModelChange)="onLabelFilterChange($event, direction)"
+          name="groupLabels"
+          nzMode="tags"
+          [nzTokenSeparators]="[',']"
+          (keydown.enter)="$event.preventDefault()"
+          (nzOnSearch)="onLabelSearch($event, direction)"
+          nzAllowClear
+          [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
+          style="width: 92%"
+        >
+          <nz-option *ngFor="let label of rightMonitorLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
+        </nz-select>
+      </div>
+
       <nz-table #t [nzData]="$asTransferItems(items)" nzSize="small">
         <thead>
           <tr>

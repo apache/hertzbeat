@@ -229,6 +229,7 @@
   "alert.setting.connect": "アラート閾値をモニターに関連付ける",
   "alert.setting.connect.left": "関連付けなし",
   "alert.setting.connect.right": "関連付け済み",
+  "alert.setting.filter.labels": "ラベルを入力してフィルター...",
   "alert.setting.default": "グローバルデフォルト",
   "alert.setting.default.tip": "このアラーム閾値設定がグローバルにこのタイプの監視に適用されるかどうか",
   "alert.setting.delete": "閾値ルールを削除",

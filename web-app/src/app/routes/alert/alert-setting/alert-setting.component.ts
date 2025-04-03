@@ -943,8 +943,14 @@ export class AlertSettingComponent implements OnInit {
   // start -- associate alert definition and monitoring model
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
+  filteredTransferData: TransferItem[] = [];
   transferData: TransferItem[] = [];
   selectedMonitorIds = new Set<number>();
+  leftMonitorLabels: Set<string> = new Set(); // 左边所有可用的标签
+  rightMonitorLabels: Set<string> = new Set(); // 右边所有可用的标签
+  leftFilterLabels: string[] = []; // 左边用于筛选的标签
+  rightFilterLabels: string[] = []; // 右边用于筛选的标签
+
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
   onConnectModalCancel() {
     this.isConnectModalVisible = false;
@@ -979,6 +985,7 @@ export class AlertSettingComponent implements OnInit {
       }
       return e;
     });
+    this.updateMonitorLabel();
   }
   // end -- associate alert definition and monitoring model
 
@@ -1165,12 +1172,62 @@ export class AlertSettingComponent implements OnInit {
           key: item.id,
           title: item.name,
           description: item.host,
-          direction: this.selectedMonitorIds.has(item.id) ? 'right' : 'left'
+          direction: this.selectedMonitorIds.has(item.id) ? 'right' : 'left',
+          labels: Object.entries(item.labels).map(([key, value]) => `${key}:${value}`)
         }));
+        this.updateMonitorLabel();
+        this.filteredTransferData = [...this.transferData];
       }
     });
     this.isConnectModalVisible = true;
   }
+  onLabelSearch(value: string, direction: string): void {
+    const filterLabels = direction == 'left' ? this.leftFilterLabels : this.rightFilterLabels;
+    if (value) {
+      this.filteredTransferData = this.transferData.filter(item => {
+        if (item.direction !== direction) {
+          // 若不是当前方向，则不进行过滤
+          return true;
+        }
+        const labelSet = new Set(item.labels);
+        const tempFilterLabels = [...filterLabels, value];
+        return tempFilterLabels.some(label => labelSet.has(label));
+      });
+    } else if (!filterLabels.length) {
+      this.filteredTransferData = [...this.transferData];
+    }
+  }
+  onLabelFilterChange(event: Event, direction: string): void {
+    const filterLabels = direction == 'left' ? this.leftFilterLabels : this.rightFilterLabels;
+    if (filterLabels.length) {
+      this.filteredTransferData = this.transferData.filter(item => {
+        if (item.direction !== direction) {
+          // 若不是当前方向，则不进行过滤
+          return true;
+        }
+        const labelSet = new Set(item.labels);
+        return filterLabels.some(label => labelSet.has(label));
+      });
+    } else {
+      this.filteredTransferData = [...this.transferData];
+    }
+  }
+
+  updateMonitorLabel() {
+    // 提取所有标签
+    this.leftMonitorLabels.clear();
+    this.rightMonitorLabels.clear();
+    this.transferData.forEach(item => {
+      item.labels.forEach((label: string) => {
+        if (item.direction === 'left') {
+          this.leftMonitorLabels.add(label);
+        } else {
+          this.rightMonitorLabels.add(label);
+        }
+      });
+    });
+  }
+
   onFilterChange(): void {
     this.pageIndex = 1;
     this.loadAlertDefineTable();

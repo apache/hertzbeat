@@ -229,6 +229,7 @@
   "alert.setting.connect": "Alert Threshold Associate Monitors",
   "alert.setting.connect.left": "No Associate",
   "alert.setting.connect.right": "Associated",
+  "alert.setting.filter.labels": "Input labels to filter...",
   "alert.setting.default": "Global Default",
   "alert.setting.default.tip": "Whether this alarm threshold configuration applies to all this type of monitoring globally",
   "alert.setting.delete": "Delete Threshold Rule",
