@@ -372,5 +372,10 @@ public class Metrics {
          * Metric unit
          */
         private String unit;
+
+        /**
+         * when parse type is xmlParse, use it, like NetPortStatusList/NetPortStatus[id='1']/workSpeed
+         */
+        private String xpath;
     }
 }
