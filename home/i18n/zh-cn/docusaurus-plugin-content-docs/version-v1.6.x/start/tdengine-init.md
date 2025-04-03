@@ -41,7 +41,7 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
 
 ### 创建数据库实例
 
-> [TDengine CLI 小技巧](https://docs.taosdata.com/develop/model/)
+> [TDengine CLI 小技巧](https://docs.taosdata.com/develop/)
 
 1. 进入数据库Docker容器
 
