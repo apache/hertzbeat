@@ -229,6 +229,11 @@
         },
         {
           "type": "category",
+          "label": "reduce",
+          "items": ["help/alarm_group","help/alarm_inhibit"]
+        },
+        {
+          "type": "category",
           "label": "notice",
           "items": [
             "help/alert_email",
@@ -344,7 +349,7 @@
         }
       ]
     },
-   
+
     {
       "type": "category",
       "label": "Others",
