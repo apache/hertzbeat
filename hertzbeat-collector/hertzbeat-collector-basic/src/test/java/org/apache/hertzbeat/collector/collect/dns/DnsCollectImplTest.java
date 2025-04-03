@@ -47,31 +47,28 @@ public class DnsCollectImplTest {
                 .address("www.google.com")
                 .timeout("3000")
                 .port("53")
+                .tcp("tcp")
                 .build();
     }
 
     @Test
     public void testPreCheck() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            Metrics metrics = new Metrics();
-            metrics.setName("question");
-            metrics.setDns(dnsProtocol);
-            dnsCollect.preCheck(metrics);
-        });
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        //metrics is null
+        dnsCollect.collect(builder, null);
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
 
-        //query class is blank
+        //invalid DnsProtocol
+        Metrics metrics = new Metrics();
         assertThrows(IllegalArgumentException.class, () -> {
             DnsProtocol dns = DnsProtocol.builder().build();
-
-            Metrics metrics = new Metrics();
             metrics.setDns(dns);
             dnsCollect.preCheck(metrics);
         });
 
-        // no exception throws
+        //validated DnsProtocol
         assertDoesNotThrow(() -> {
-            dnsProtocol.setTcp("tcp");
-            Metrics metrics = new Metrics();
+            metrics.setName("question");
             metrics.setDns(dnsProtocol);
             dnsCollect.preCheck(metrics);
         });
@@ -80,28 +77,23 @@ public class DnsCollectImplTest {
     @Test
     public void testCollect() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        long monitorId = 666;
-        String app = "testDNS";
-        Metrics metrics = new Metrics();
-        metrics.setName("question");
-        metrics.setDns(dnsProtocol);
-        metrics.setAliasFields(Collections.singletonList("section"));
-        dnsCollect.collect(builder, metrics);
+        Metrics metrics0 = Metrics.builder()
+                .name("question")
+                .dns(dnsProtocol)
+                .aliasFields(Collections.singletonList("section"))
+                .build();
+        dnsCollect.collect(builder, metrics0);
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
         assertNotNull(builder.getValues(0).getColumns(0));
 
-        // dns is null, no exception throws
-        assertDoesNotThrow(() -> {
-            dnsCollect.collect(builder, null);
-        });
-
         // metric name is header
-        assertDoesNotThrow(() -> {
-            Metrics metrics1 = new Metrics();
-            metrics1.setName("header");
-            metrics1.setDns(dnsProtocol);
-            metrics1.setAliasFields(Collections.singletonList("section"));
-            dnsCollect.collect(builder, metrics1);
-        });
+        Metrics metrics1 = Metrics.builder()
+                .name("header")
+                .dns(dnsProtocol)
+                .aliasFields(Collections.singletonList("section"))
+                .build();
+        dnsCollect.collect(builder, metrics1);
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
     }
 
     @Test

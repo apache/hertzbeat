@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "v1.6.x",
+    "message": "v1.7.x",
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
@@ -51,6 +51,10 @@
     "message": "Threshold Alarm Setting",
     "description": "The label for category threshold in sidebar docs"
   },
+  "sidebar.docs.category.reduce": {
+      "message": "Alarm Reduce Setting",
+      "description": "The label for category reduce in sidebar docs"
+    },
   "sidebar.docs.category.notice": {
     "message": "Alarm Notice Setting",
     "description": "The label for category notice in sidebar docs"
