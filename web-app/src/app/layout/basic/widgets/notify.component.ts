@@ -156,7 +156,8 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
         }
       );
     this.loadData();
-    this.initSSEConnection();
+    this.initAlertSSEConnection();
+    this.initManagerSSEConnection();
   }
 
   ngOnDestroy() {
@@ -271,7 +272,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       });
   }
 
-  private initSSEConnection(): void {
+  private initAlertSSEConnection(): void {
     const sseUrl = '/api/alert/sse/subscribe';
 
     this.eventSource = new EventSource(sseUrl);
@@ -299,6 +300,36 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     });
     this.eventSource.onerror = error => {
       console.error('SSE connection error:', error);
+      this.eventSource.close();
+    };
+  }
+
+  private initManagerSSEConnection(): void {
+    const sseUrl = '/api/manager/sse/subscribe';
+    this.eventSource = new EventSource(sseUrl);
+    this.eventSource.addEventListener('IMPORT_TASK_EVENT', (evt: MessageEvent) => {
+      let msg = JSON.parse(evt.data);
+      if (msg.notifyLevel === 'SUCCESS') {
+        this.notifySvc.success(
+          this.i18nSvc.fanyi('common.notice'),
+          this.i18nSvc.fanyi('common.notify.import-success-detail', { taskName: msg.taskName })
+        );
+      } else if (msg.notifyLevel === 'ERROR') {
+        this.notifySvc.error(
+          this.i18nSvc.fanyi('common.notice'),
+          this.i18nSvc.fanyi('common.notify.import-fail-detail', { taskName: msg.taskName, errMsg: msg.errMsg })
+        );
+      } else if (msg.notifyLevel === 'INFO') {
+        this.notifySvc.info(
+          this.i18nSvc.fanyi('common.notice'),
+          this.i18nSvc.fanyi('common.notify.import-progress', { taskName: msg.taskName, progress: msg.progress })
+        );
+      } else {
+        console.error('Parse message error, msg:', evt.data);
+      }
+    });
+    this.eventSource.onerror = error => {
+      console.error('Manager SSE connection error:', error);
       this.eventSource.close();
     };
   }

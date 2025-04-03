@@ -42,7 +42,6 @@ import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
-import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
@@ -54,6 +53,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
+import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -90,7 +90,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -138,6 +137,8 @@ public class MonitorServiceImpl implements MonitorService {
     private WarehouseService warehouseService;
     @Autowired
     private DashboardService dashboardService;
+    @Autowired
+    private ManagerSseManager managerSseManager;
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
@@ -183,16 +184,20 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-
         var fileName = FileUtil.getFileName(file);
         var type = FileUtil.getFileType(file);
-        if (!imExportServiceMap.containsKey(type)) {
-            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
+        try {
+            if (!imExportServiceMap.containsKey(type)) {
+                String errMsg = ExportFileConstants.FILE + " " + fileName + " is not supported.";
+                throw new RuntimeException(errMsg);
+            }
+            var imExportService = imExportServiceMap.get(type);
+            imExportService.importConfig(fileName, file.getInputStream());
+        } catch (Exception e){
+            managerSseManager.broadcastImportTaskFail(fileName, e.getMessage());
+            throw e;
         }
-        var imExportService = imExportServiceMap.get(type);
-        imExportService.importConfig(file.getInputStream());
     }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -426,6 +431,11 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setDefaultInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
+            Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+            appDefine.setMetadata(metadata);
+            appDefine.setLabels(monitor.getLabels());
+            appDefine.setAnnotations(monitor.getAnnotations());
             List<Configmap> configmaps = params.stream().map(param ->
                     new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
             appDefine.setConfigmap(configmaps);
@@ -673,6 +683,11 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setDefaultInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
+            Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+            appDefine.setMetadata(metadata);
+            appDefine.setLabels(monitor.getLabels());
+            appDefine.setAnnotations(monitor.getAnnotations());
             List<Configmap> configmaps = params.stream().map(param ->
                     new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
             List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
@@ -783,6 +798,11 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+                Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                appDefine.setMetadata(metadata);
+                appDefine.setLabels(monitor.getLabels());
+                appDefine.setAnnotations(monitor.getAnnotations());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
                         param.getParamValue(), param.getType())).collect(Collectors.toList());
@@ -834,6 +854,11 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setDefaultInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
+        Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(), 
+                CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+        appDefine.setMetadata(metadata);
+        appDefine.setLabels(monitor.getLabels());
+        appDefine.setAnnotations(monitor.getAnnotations());
         resetMetricsCommonField(monitor, appDefine, sdMonitorParam);
 
         List<Configmap> configmaps = params.stream().map(param -> {
@@ -944,6 +969,11 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setMonitorId(monitorId);
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
+        Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+        appDefine.setMetadata(metadata);
+        appDefine.setLabels(monitor.getLabels());
+        appDefine.setAnnotations(monitor.getAnnotations());
         final Job sdJob = SdMonitorOperator.constructSdJob(appDefine, sdParam);
         List<CollectRep.MetricsData> collectRep;
         if (collector != null) {
@@ -977,6 +1007,11 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setMonitorId(monitorId);
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
+        Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+        appDefine.setMetadata(metadata);
+        appDefine.setLabels(monitor.getLabels());
+        appDefine.setAnnotations(monitor.getAnnotations());
         List<Configmap> configmaps = params.stream().map(param ->
                 new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
@@ -1002,15 +1037,6 @@ public class MonitorServiceImpl implements MonitorService {
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
         collectRep.forEach(CollectRep.MetricsData::close);
-    }
-
-    private List<Tag> filterTags(List<Tag> tags) {
-        if (tags == null || tags.isEmpty()) {
-            return new LinkedList<>();
-        }
-        return tags.stream()
-                .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -1070,6 +1096,11 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setDefaultInterval(newMonitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
+            Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, newMonitor.getName(),
+                    CommonConstants.LABEL_INSTANCE_HOST, newMonitor.getHost());
+            appDefine.setMetadata(metadata);
+            appDefine.setLabels(newMonitor.getLabels());
+            appDefine.setAnnotations(newMonitor.getAnnotations());
             List<Configmap> configmaps = sourceParams.stream()
                     .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
                     .collect(Collectors.toList());

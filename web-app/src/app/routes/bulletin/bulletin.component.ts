@@ -25,7 +25,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange } from 'ng-zorro-antd/transfer';
 import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
-import { finalize } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Fields } from '../../pojo/Fields';
@@ -65,7 +66,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
   metrics = new Set<string>();
-  tempMetrics = new Set<string>();
   fields: Fields = {};
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -73,22 +73,35 @@ export class BulletinComponent implements OnInit, OnDestroy {
   refreshInterval: any;
   deadline = 30;
   countDownTime: number = 0;
+  filterLabels: Record<string, string> = {};
+  filteredMonitors: Monitor[] = [];
+  private filterSubject = new Subject<string>(); //filter logic debouncing
 
   ngOnInit() {
     this.loadTabs();
     this.refreshInterval = setInterval(() => {
       this.countDown();
     }, 1000); // every 30 seconds refresh the tabs
+    this.filterSubject
+      .pipe(
+        debounceTime(300), // triggered after the user stops typing for 300ms
+        distinctUntilChanged()
+      )
+      .subscribe(value => {
+        this.filterMonitors();
+      });
   }
 
   ngOnDestroy() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    this.filterSubject.complete();
   }
 
   sync() {
     this.loadCurrentBulletinData();
+    this.clearFilters();
   }
 
   configRefreshDeadline(deadlineTime: number) {
@@ -120,7 +133,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
     if (this.currentBulletin) {
       this.define = this.currentBulletin;
       this.onAppChange(this.define.app);
-      // this.tempMetrics.add(...this.define.fields.keys());
       this.isManageModalAdd = false;
       this.isManageModalVisible = true;
       this.isManageModalOkLoading = false;
@@ -158,6 +170,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
     this.isManageModalVisible = false;
     // clear fields
     this.fields = {};
+    this.clearFilters();
   }
 
   resetManageModalData() {
@@ -254,6 +267,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
         message => {
           if (message.code === 0) {
             this.monitors = message.data;
+            this.filterMonitors();
             if (this.monitors != null) {
               this.isMonitorListLoading = true;
             }
@@ -378,37 +392,47 @@ export class BulletinComponent implements OnInit, OnDestroy {
   transferChange(ret: TransferChange): void {
     // add
     if (ret.to === 'right') {
-      ret.list.forEach(node => {
-        node.isDisabled = true;
-        node.isChecked = true;
-        this.tempMetrics.add(node.key);
-
-        if (!this.fields[node.key]) {
-          this.fields[node.key] = [];
-        }
-        if (!this.fields[node.key].includes(node.value)) {
-          this.fields[node.key].push(node.value);
+      this.checkedNodeList.forEach(node => {
+        // Check if each transferred node is in the left selected nodes
+        const item = ret.list.find(w => w.value === node.origin.value);
+        if (item) {
+          // If it exists, disable the node and set it to checked
+          node.isDisabled = true;
+          node.isChecked = true;
+          // If the key does not exist, create an empty array
+          if (!this.fields[item.key]) {
+            this.fields[item.key] = [];
+          }
+          // If the key exists but the value is not saved, add it to the value array
+          if (!this.fields[item.key].includes(item.value)) {
+            this.fields[item.key].push(item.value);
+          }
         }
       });
     }
     // delete
     else if (ret.to === 'left') {
-      ret.list.forEach(node => {
-        node.isDisabled = false;
-        node.isChecked = false;
-        this.tempMetrics.delete(node.key);
-
-        if (this.fields[node.key]) {
-          const index = this.fields[node.key].indexOf(node.value);
-          if (index > -1) {
-            this.fields[node.key].splice(index, 1);
-          }
-          // 如果该 key 下的数组为空，则删除该 key
-          if (this.fields[node.key].length === 0) {
-            delete this.fields[node.key];
+      this.checkedNodeList.forEach(node => {
+        // Check if each transferred node is in the left selected nodes
+        const item = ret.list.find(w => w.value === node.origin.value);
+        if (item) {
+          // If it exists, enable the node and set it to unchecked
+          node.isDisabled = false;
+          node.isChecked = false;
+          // If the key exists, delete the value
+          if (this.fields[item.key]) {
+            const index = this.fields[item.key].indexOf(item.value);
+            if (index > -1) {
+              this.fields[item.key].splice(index, 1);
+            }
+            // If the array under this key is empty, delete the key
+            if (this.fields[item.key].length === 0) {
+              delete this.fields[item.key];
+            }
           }
         }
       });
+      this.checkedNodeList = this.checkedNodeList.filter(item => item.isChecked);
     }
   }
 
@@ -567,5 +591,48 @@ export class BulletinComponent implements OnInit, OnDestroy {
       result = result.concat(find);
     }
     return result;
+  }
+
+  onFilterInputChange(value: string): void {
+    this.filterSubject.next(value); // push the input value to the debounce Subject
+  }
+
+  filterMonitors(): void {
+    const validLabels = this.cleanFilterLabels(this.filterLabels);
+    const activeFilters = Object.entries(validLabels).filter(([k, v]) => k !== '' && k !== 'null'); // Second filtering ensures key validity
+
+    if (activeFilters.length === 0) {
+      this.filteredMonitors = [...this.monitors];
+      return;
+    }
+
+    this.filteredMonitors = this.monitors.filter(monitor => {
+      if (!monitor.labels || typeof monitor.labels !== 'object') return false;
+
+      return activeFilters.every(([filterKey, filterValue]) => {
+        const keyExists = Object.prototype.hasOwnProperty.call(monitor.labels, filterKey);
+        const actualValue = (monitor.labels[filterKey] ?? '').toLowerCase();
+        return filterValue === '' ? keyExists : actualValue.includes(filterValue.toLowerCase());
+      });
+    });
+  }
+
+  private cleanFilterLabels(labels: any): Record<string, string> {
+    const cleaned: Record<string, string> = {};
+    Object.entries(labels ?? {}).forEach(([k, v]) => {
+      if (typeof k === 'string') {
+        const trimmedKey = k.trim();
+        if (trimmedKey !== '' && trimmedKey !== 'null') {
+          cleaned[trimmedKey] = (v ?? '').toString().trim();
+        }
+      }
+    });
+    return cleaned;
+  }
+
+  clearFilters(): void {
+    this.filterLabels = {};
+    this.filterMonitors();
+    this.cdr.detectChanges();
   }
 }

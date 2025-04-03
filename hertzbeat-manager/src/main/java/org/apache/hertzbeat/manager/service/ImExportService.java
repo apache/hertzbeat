@@ -29,9 +29,10 @@ public interface ImExportService {
 
     /**
      * Import Configuration
+     * @param taskName task name
      * @param is input stream
      */
-    void importConfig(InputStream is);
+    void importConfig(String taskName, InputStream is);
 
     /**
      * Export Configuration

@@ -19,10 +19,10 @@ $ docker buildx use mybuilder
 
 ```shell
 # Use the --platform flag to specify the target platforms for the build --push flag to push the image to a registry
-$ docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat:v1.0.0 . --push
+$ docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat:1.0.0 . --push
 
 $ docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:latest . --push
 
 # Inspect the image info
-$ docker buildx imagetools inspect apache/hertzbeat:v1.0.0
+$ docker buildx imagetools inspect apache/hertzbeat:1.0.0
 ```

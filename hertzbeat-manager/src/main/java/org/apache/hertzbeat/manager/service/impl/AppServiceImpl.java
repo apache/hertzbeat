@@ -63,7 +63,7 @@ import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.ObjectStoreService;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -75,12 +75,13 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * Monitoring Type Management Implementation
- * temporarily stores the monitoring configuration and parameter configuration in memory and then stores it in the
+ * Temporarily stores the monitoring configuration and parameter configuration in memory,
+ * and then persists it to a storage system.
  */
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
-public class AppServiceImpl implements AppService, CommandLineRunner {
+public class AppServiceImpl implements AppService, InitializingBean {
 
     private static final String PUSH_PROTOCOL_METRICS_NAME = "metrics";
 
@@ -500,7 +501,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void afterPropertiesSet() throws Exception {
         var objectStoreConfig = objectStoreConfigService.getConfig();
         refreshStore(objectStoreConfig);
     }

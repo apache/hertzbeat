@@ -63,6 +63,7 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
         String hashKey = metricsData.getMetrics();
         if (metricsData.getCode() == CollectRep.Code.SUCCESS) {
             redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> future.thenAccept(response -> {
+                metricsData.close();
                 if (response) {
                     log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
                 } else {

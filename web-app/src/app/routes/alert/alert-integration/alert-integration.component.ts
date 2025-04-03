@@ -62,12 +62,17 @@ export class AlertIntegrationComponent implements OnInit {
       id: 'alertmanager',
       name: this.i18nSvc.fanyi('alert.integration.source.alertmanager'),
       icon: 'assets/img/integration/prometheus.svg'
+    },
+    {
+      id: 'skywalking',
+      name: this.i18nSvc.fanyi('alert.integration.source.skywalking'),
+      icon: 'assets/img/integration/skywalking.svg'
+    },
+    {
+      id: 'tencent',
+      name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
+      icon: 'assets/img/integration/tencent.svg'
     }
-    // {
-    //   id: 'tencent',
-    //   name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
-    //   icon: 'assets/img/integration/tencent.svg'
-    // }
   ];
 
   selectedSource: DataSource | null = null;

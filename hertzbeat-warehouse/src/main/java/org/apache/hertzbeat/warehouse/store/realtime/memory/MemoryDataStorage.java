@@ -70,6 +70,7 @@ public class MemoryDataStorage extends AbstractRealTimeDataStorage {
         Long monitorId = metricsData.getId();
         String metrics = metricsData.getMetrics();
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            metricsData.close();
             return;
         }
         Map<String, CollectRep.MetricsData> metricsDataMap =

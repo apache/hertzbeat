@@ -30,7 +30,10 @@ import { TencentSmsConfig } from 'src/app/pojo/TencentSmsConfig';
 import { UniSmsConfig } from 'src/app/pojo/UniSmsConfig';
 import { SmsType, UniSmsAuthMode } from 'src/app/pojo/enums/sms-type.enum';
 
+import { AwsSmsConfig } from '../../../../pojo/AwsSmsConfig';
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
+import { SmslocalSmsConfig } from '../../../../pojo/SmslocalSmsConfig';
+import { TwilioSmsConfig } from '../../../../pojo/TwilioSmsConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
 @Component({
@@ -142,6 +145,9 @@ export class MessageServerComponent implements OnInit {
             this.smsNoticeSender.tencent = { ...new TencentSmsConfig(), ...message.data.tencent };
             this.smsNoticeSender.alibaba = { ...new AlibabaSmsConfig(), ...message.data.alibaba };
             this.smsNoticeSender.unisms = { ...new UniSmsConfig(), ...message.data.unisms };
+            this.smsNoticeSender.smslocal = { ...new SmslocalSmsConfig(), ...message.data.smslocal };
+            this.smsNoticeSender.aws = { ...new AwsSmsConfig(), ...message.data.aws };
+            this.smsNoticeSender.twilio = { ...new TwilioSmsConfig(), ...message.data.twilio };
             this.smsType = message.data.type || 'tencent';
           } else {
             this.smsNoticeSender = new SmsNoticeSender();
@@ -165,7 +171,10 @@ export class MessageServerComponent implements OnInit {
       ...this.smsNoticeSender,
       tencent: { ...this.smsNoticeSender.tencent },
       alibaba: { ...this.smsNoticeSender.alibaba },
-      unisms: { ...this.smsNoticeSender.unisms }
+      unisms: { ...this.smsNoticeSender.unisms },
+      smslocal: { ...this.smsNoticeSender.smslocal },
+      aws: { ...this.smsNoticeSender.aws },
+      twilio: { ...this.smsNoticeSender.twilio }
     };
     this.isSmsServerModalVisible = true;
   }
@@ -176,7 +185,10 @@ export class MessageServerComponent implements OnInit {
       ...this.tempSmsNoticeSender,
       tencent: { ...this.tempSmsNoticeSender.tencent },
       alibaba: { ...this.tempSmsNoticeSender.alibaba },
-      unisms: { ...this.tempSmsNoticeSender.unisms }
+      unisms: { ...this.tempSmsNoticeSender.unisms },
+      smslocal: { ...this.tempSmsNoticeSender.smslocal },
+      aws: { ...this.tempSmsNoticeSender.aws },
+      twilio: { ...this.tempSmsNoticeSender.twilio }
     };
     this.isSmsServerModalVisible = false;
   }

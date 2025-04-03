@@ -19,6 +19,7 @@
 
 package org.apache.hertzbeat.alert.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -30,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * SSE manager for alert
  */
+@Slf4j
 @Component
 public class AlertSseManager {
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
@@ -38,6 +40,7 @@ public class AlertSseManager {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         emitter.onCompletion(() -> removeEmitter(clientId));
         emitter.onTimeout(() -> removeEmitter(clientId));
+        emitter.onError((ex) -> removeEmitter(clientId));
         emitters.put(clientId, emitter);
         return emitter;
     }
@@ -50,7 +53,11 @@ public class AlertSseManager {
                         .id(String.valueOf(System.currentTimeMillis()))
                         .name("ALERT_EVENT")
                         .data(data));
-            } catch (IOException e) {
+            } catch (IOException | IllegalStateException e) {
+                emitter.complete();
+                removeEmitter(clientId);
+            } catch (Exception exception) {
+                log.error("Failed to broadcast alert data to client: {}", exception.getMessage());
                 emitter.complete();
                 removeEmitter(clientId);
             }

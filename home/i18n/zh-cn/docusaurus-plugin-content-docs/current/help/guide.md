@@ -88,7 +88,7 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
 &emsp;&#x1F449;&emsp;[Flink](flink) <br />
 
-### Ai大模型监控
+### AI大模型监控
 
 &emsp;&#x1F449;&emsp;[OpenAi](openai) <br />
 
@@ -107,12 +107,21 @@ sidebar_label: 帮助入门
 
 > 已触发的告警信息中心，提供告警删除，告警处理，标记未处理，告警级别状态等查询过滤。
 
+详见&emsp;&#x1F449;&emsp;[告警中心](alarm_center)
+
 ### 告警配置
 
 > 指标阈值配置，提供表达式形式的指标阈值配置，可设置告警级别，触发次数，告警通知模版和是否启用，关联监控等功能。
 
 详见&emsp;&#x1F449;&emsp;[阈值告警](alert_threshold) <br />
 &emsp;&emsp;&emsp;&#x1F449;&emsp;[阈值表达式](alert_threshold_expr)
+
+### 告警收敛
+
+> 通过分组收敛、告警抑制等功能合并相关告警，减少由一个事件引发的告警风暴，降低告警噪声，提升告警响应效率。
+
+详见&emsp;&#x1F449;&emsp;[分组收敛](alarm_group) <br />
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[告警抑制](alarm_inhibit)
 
 ### 告警通知
 

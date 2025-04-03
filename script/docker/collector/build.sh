@@ -31,17 +31,17 @@ fi
 # docker compile context
 CONTEXT_DIR=`pwd`
 
-COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
+COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat-collector:$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
 #COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat-collector:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
-#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
+#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
 #COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
 # Build Local
 
-#COMMAND="docker build -t apache/hertzbeat-collector:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR "
+#COMMAND="docker build -t apache/hertzbeat-collector:$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" "
 
 echo "$COMMAND"
 

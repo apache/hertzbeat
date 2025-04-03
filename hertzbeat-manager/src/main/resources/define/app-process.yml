@@ -82,6 +82,17 @@ params:
     required: true
     defaultValue: true
   # field-param field key
+  - field: useProxy
+    # name-param field display i18n name
+    name:
+      zh-CN: 使用代理
+      en-US: Use Proxy Connection
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    defaultValue: false
+  # field-param field key
   - field: username
     # name-param field display i18n name
     name:
@@ -127,6 +138,72 @@ params:
     limit: 100
     # required-true or false
     required: true
+  # field-param field key
+  - field: proxyHost
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机
+      en-US: Proxy Host
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  - field: proxyPort
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理端口
+      en-US: Proxy Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 22
+  # field-param field key
+  - field: proxyUsername
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理用户名
+      en-US: Proxy Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPassword
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理密码
+      en-US: Proxy Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPrivateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机私钥
+      en-US: proxyPrivateKey
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
 # collect metrics config list
 metrics:
   # metrics - basic, inner monitoring metrics (responseTime - response time)
@@ -192,6 +269,18 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
       script: output=$(ps -ef|grep '^_^process_name^_^'|grep -v grep); [ -n "$output" ] && ps -eo pid,user,%cpu,%mem,rss,cmd | grep -v grep | grep '^_^process_name^_^' | awk 'BEGIN {print "pid user cpu mem rss cmd"} {cmd=substr($0, index($0, $6)); gsub(/ /, " ", cmd); print $1, $2, $3, $4, $5, cmd}'
@@ -317,6 +406,18 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
       script: echo -e "pid VmPeak VmSize VmLck VmPin VmHWM VmRSS VmData VmStk VmExe VmLib VmPTE VmSwap";ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{ cmd=substr($0, index($0, $3)); sub(/ /, " ", cmd); print $1, cmd }' | while read pid _; do echo -n "$pid ";cat /proc/$pid/status | grep Vm | awk -F ':\t' '{gsub(/^ +| +$/, "", $2); print $2}' | paste -d' ' -s - | sed 's/[[:space:]]*[kKMmGg]*B//g';done
@@ -369,6 +470,18 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
       script: echo "pid path date fd_count" ; ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd}' | while read pid _; do cwd=$(readlink -f "/proc/$pid/cwd"); start_time=$(ps -p $pid -o lstart | tail -n 1 | sed 's/ / /g'); fd_count=$(ls -l /proc/$pid/fd/ 2>/dev/null | wc -l); echo "$pid $cwd $start_time $fd_count"; done
@@ -441,6 +554,18 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
       script: echo -e "pid rchar wchar syscr syscw read_bytes write_bytes cancelled_write_bytes";ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{ cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd }' | while read pid _; do echo -n "$pid ";cat /proc/$pid/io | awk -F ':' '{gsub(/^ +| +$/, "", $2); print $2}' | paste -d' ' -s -;done

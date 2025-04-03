@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "v1.6.x",
+    "message": "v1.7.x",
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
@@ -55,6 +55,10 @@
     "message": "阈值告警配置",
     "description": "The label for category threshold in sidebar docs"
   },
+  "sidebar.docs.category.reduce": {
+     "message": "告警收敛配置",
+     "description": "The label for category reduce in sidebar docs"
+   },
   "sidebar.docs.category.notice": {
     "message": "告警通知配置",
     "description": "The label for category notice in sidebar docs"
@@ -128,11 +132,11 @@
     "description": "The label for category NGQL in sidebar docs"
   },
   "sidebar.docs.category.llm": {
-    "message": "Ai大模型监控",
+    "message": "AI大模型监控",
     "description": "The label for category llm in sidebar docs"
   },
   "sidebar.docs.category.aiConfig": {
-    "message": "Ai大模型配置",
+    "message": "AI大模型配置",
     "description": "The label for category aiConfig in sidebar docs"
   },
   "sidebar.docs.category.install": {

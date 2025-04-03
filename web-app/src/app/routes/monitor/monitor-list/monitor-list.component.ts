@@ -24,7 +24,6 @@ import { ALAIN_I18N_TOKEN, MenuService } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
@@ -72,6 +71,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   appSearchOrigin: any[] = [];
   appSearchLoading = false;
   intervalId: any;
+  // save the current sorting status
+  currentSortField: string | null = null;
+  currentSortOrder: string | null = null;
 
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
@@ -149,7 +151,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   sync() {
-    this.loadMonitorTable();
+    this.loadMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
   getAppIconName(app: string | undefined): string {
@@ -265,15 +267,20 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   onImportMonitors(info: NzUploadChangeParam): void {
-    if (info.file.response) {
+    console.log(info.type);
+    if (info.type === 'start') {
+      this.notifySvc.info(
+        this.i18nSvc.fanyi('common.notice'),
+        this.i18nSvc.fanyi('common.notify.import-submitted', { taskName: info.file.name })
+      );
+    }
+    if (info.type === 'success' && info.file.response) {
       this.tableLoading = true;
       const message = info.file.response;
       if (message.code === 0) {
-        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
         this.loadMonitorTable();
       } else {
         this.tableLoading = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
       }
     }
   }
@@ -484,19 +491,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
   }
 
-  /**
-   * Paging callback
-   *
-   * @param params page info
-   */
-  onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
+  onPageIndexChange(pageIndex: number) {
     this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-    const currentSort = sort.find(item => item.value !== null);
-    const sortField = (currentSort && currentSort.key) || null;
-    const sortOrder = (currentSort && currentSort.value) || null;
-    this.changeMonitorTable(sortField, sortOrder);
+    this.changeMonitorTable(this.currentSortField, this.currentSortOrder);
   }
 
   // begin: app type search filter
@@ -596,17 +593,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     return hash;
   }
 
-  copyMonitor() {
-    if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
-      return;
-    }
-    if (this.checkedMonitorIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('monitor.copy.notify.one-select'), '');
-      return;
-    }
-    const monitorId = Array.from(this.checkedMonitorIds)[0];
-
+  copyMonitor(monitorId: number) {
     this.monitorSvc.copyMonitor(monitorId).subscribe(
       message => {
         if (message.code === 0) {

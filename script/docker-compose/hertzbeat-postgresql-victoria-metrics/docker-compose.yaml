@@ -32,14 +32,15 @@ services:
       retries: 5
       start_period: 30s
     ports:
-      - '5432:5432'
+      - '15432:5432'
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: 123456
       TZ: Asia/Shanghai
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - ./dbdata/pgdata/data:/var/lib/postgresql/data
-      - ./conf/sql:/docker-entrypoint-initdb.d/      
+      - ./dbdata/pgdata:/var/lib/postgresql/data
+      - ./conf/sql:/docker-entrypoint-initdb.d/
     networks:
       - hertzbeat
 
@@ -57,14 +58,14 @@ services:
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "8428"
+      - "18428:8428"
     volumes:
       - ./dbdata/tsdbdata:/victoria-metrics-data
     networks:
       - hertzbeat
 
   hertzbeat:
-    image: apache/hertzbeat
+    image: apache/hertzbeat:1.7.0
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always

@@ -17,7 +17,9 @@
 
 /home export-ignore
 /hip export-ignore
+/template-marketplace export-ignore
 /.github export-ignore
 /.idea export-ignore
+/.devcontainer export-ignore
 .gitattributes export-ignore  
 .gitignore export-ignore
