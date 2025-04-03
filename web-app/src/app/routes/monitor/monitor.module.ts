@@ -22,9 +22,11 @@ import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
+import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
@@ -68,7 +70,9 @@ const COMPONENTS: Array<Type<void>> = [
     ClipboardModule,
     NzUploadModule,
     SafePipe,
-    NzListModule
+    NzListModule,
+    NzDescriptionsModule,
+    NzPaginationModule
   ],
   declarations: COMPONENTS
 })
