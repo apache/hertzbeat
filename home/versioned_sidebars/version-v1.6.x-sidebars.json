@@ -1,0 +1,402 @@
+{
+  "docs": [
+    {
+      "type": "doc",
+      "id": "introduce"
+    },
+    {
+      "type": "category",
+      "label": "quickstart",
+      "items": [
+        {
+          "type": "category",
+          "label": "install",
+          "items": [
+            "start/docker-deploy",
+            "start/docker-compose-deploy",
+            "start/package-deploy",
+            {
+              "type": "link",
+              "label": "Install via Helm",
+              "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+            },
+            {
+              "type": "category",
+              "label": "extern-deploy",
+              "items": [
+                "start/baota-deploy",
+                "start/rainbond-deploy"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "category",
+          "label": "upgrade",
+          "items": [
+            "start/1.6.0-update",
+            "start/upgrade"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "setting",
+          "items": [
+            "start/account-modify",
+            "start/custom-config"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "change-db",
+          "items": [
+            "start/victoria-metrics-init",
+            "start/iotdb-init",
+            "start/influxdb-init",
+            "start/postgresql-change",
+            "start/mysql-change"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "use-case",
+          "items": [
+            "start/ssl-cert-practice"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "guides",
+      "items": [
+        "help/guide",
+        "help/security_model",
+        {
+          "type": "category",
+          "label": "service",
+          "items": [
+            "help/prometheus",
+            "help/website",
+            "help/api",
+            "help/ping",
+            "help/port",
+            "help/udp_port",
+            "help/fullsite",
+            "help/ssl_cert",
+            "help/nginx",
+            "help/imap",
+            "help/pop3",
+            "help/smtp",
+            "help/ntp",
+            "help/dns",
+            "help/ftp",
+            "help/websocket",
+            "help/mqtt",
+            "help/modbus"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "program",
+          "items": [
+            "help/process",
+            "help/jvm",
+            "help/springboot2",
+            "help/springboot3",
+            "help/dynamic_tp"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "database",
+          "items": [
+            "help/mysql",
+            "help/mariadb",
+            "help/postgresql",
+            "help/greenplum",
+            "help/vastbase",
+            "help/kingbase",
+            "help/sqlserver",
+            "help/oracle",
+            "help/dm",
+            "help/opengauss",
+            "help/nebulaGraph",
+            "help/nebulagraph_cluster",
+            "help/tidb",
+            "help/mongodb",
+            "help/mongodb_atlas",
+            "help/oceanbase"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "cache",
+          "items": [
+            "help/redis",
+            "help/memcached",
+            "help/valkey"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "os",
+          "items": [
+            "help/linux",
+            "help/windows",
+            "help/ubuntu",
+            "help/debian",
+            "help/centos",
+            "help/almalinux",
+            "help/opensuse",
+            "help/freebsd",
+            "help/redhat",
+            "help/rockylinux",
+            "help/euleros",
+            "help/linux_script",
+            "help/windows_script"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "server",
+          "items": [
+            "help/ipmi"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "mid",
+          "items": [
+            "help/activemq",
+            "help/kafka",
+            "help/kafka_client",
+            "help/pulsar",
+            "help/nacos",
+            "help/rabbitmq",
+            "help/rocketmq",
+            "help/shenyu",
+            "help/spring_gateway",
+            "help/zookeeper"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "bigdata",
+          "items": [
+            "help/airflow",
+            "help/hbase_master",
+            "help/hbase_regionserver",
+            "help/hdfs_datanode",
+            "help/hdfs_namenode",
+            "help/hugegraph",
+            "help/hadoop",
+            "help/hive",
+            "help/iceberg",
+            "help/clickhouse",
+            "help/doris_be",
+            "help/doris_fe",
+            "help/starrocks_be",
+            "help/starrocks_fe",
+            "help/elasticsearch",
+            "help/flink",
+            "help/flink_on_yarn",
+            "help/influxdb",
+            "help/iotdb",
+            "help/presto",
+            "help/seatunnel",
+            "help/spark",
+            "help/yarn"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "webserver",
+          "items": [
+            "help/tomcat",
+            "help/jetty"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "cloud-native",
+          "items": [
+            "help/docker",
+            "help/kubernetes"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "llm",
+          "items": [
+            "help/openai"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "aiConfig",
+          "items": [
+            "help/aiConfig"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "custom",
+          "items": [
+            "help/kafka_promql",
+            "help/influxdb_promql"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "network",
+          "items": [
+            "help/huawei_switch"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "threshold",
+          "items": [
+            "help/alert_threshold",
+            "help/alert_threshold_expr"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "notice",
+          "items": [
+            "help/alert_email",
+            "help/alert_sms",
+            "help/alert_webhook",
+            "help/alert_discord",
+            "help/alert_slack",
+            "help/alert_telegram",
+            "help/alert_wework",
+            "help/alert_dingtalk",
+            "help/alert_feishu",
+            "help/alert_console",
+            "help/alert_enterprise_wechat_app",
+            "help/alert_smn"
+          ]
+        },
+        "help/bulletin",
+        "help/plugin",
+        "help/time_expression",
+        "help/grafana_dashboard",
+        "help/collector",
+        "help/alarm_center",
+        "help/issue"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "custom",
+      "items": [
+        "advanced/extend-point",
+        "advanced/extend-tutorial",
+        {
+          "type": "category",
+          "label": "http",
+          "items": [
+            "advanced/extend-http",
+            "advanced/extend-http-default",
+            "advanced/extend-http-jsonpath",
+            "advanced/extend-http-example-hertzbeat",
+            "advanced/extend-http-example-token"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "jdbc",
+          "items": [
+            "advanced/extend-jdbc"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "ssh",
+          "items": [
+            "advanced/extend-ssh"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "telnet",
+          "items": [
+            "advanced/extend-telnet"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "jmx",
+          "items": [
+            "advanced/extend-jmx"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "snmp",
+          "items": [
+            "advanced/extend-snmp"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "NGQL",
+          "items": [
+            "advanced/extend-ngql"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "doc",
+      "id": "template"
+    },
+    {
+      "type": "category",
+      "label": "Community",
+      "items": [
+        "community/contact",
+        "community/development",
+        {
+          "type": "category",
+          "label": "contribution",
+          "items": [
+            "community/contribution",
+            "community/mailing_lists",
+            "community/become_committer",
+            "community/become_pmc_member",
+            "community/new_committer_process",
+            "community/new_pmc_ember_process"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "submit",
+          "items": [
+            "community/document",
+            "community/submit_code",
+            "community/code_style_and_quality_guide"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "release",
+          "items": [
+            "community/how_to_release",
+            "community/how_to_verify_release"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Others",
+      "items": [
+        "others/resource"
+      ]
+    }
+  ]
+}
