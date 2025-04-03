@@ -1,19 +1,75 @@
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+---
+id: extend-http-xmlpath
+title: HTTP Protocol XmlPath Parsing Method
+sidebar_label: XmlPath Parsing Method
+---
 
-# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+> After calling the HTTP API to obtain the response data, use the XmlPath script parsing method to parse the response data.
+
+Note⚠️ The response data must be in XML format.
+
+**Use XPath scripts to parse the response data into data that conforms to the data structure rules specified by HertzBeat.**
+
+### XmlPath Parsing Logic
+
+The XmlPath parsing method in HertzBeat uses a two-step XPath process:
+
+1.  **Main XPath Expression (`parseScript`)**: This XPath expression is defined in the `http` configuration section under `parseScript`. It is used to select one or more main XML nodes from the response. Each selected node will correspond to one row of metric data in HertzBeat.
+2.  **Relative Field XPath Expressions (`xpath`)**: For each metric field defined in the `fields` list, you can specify a relative `xpath`. This XPath expression is evaluated *relative to each main node* selected by the `parseScript` in step 1. It extracts the specific value for that metric field from the current main node.
+
+This allows you to easily parse structured XML data where multiple records or items are present.
+
+**Special Metrics**:
+*   `responseTime`: This built-in metric represents the HTTP request's response time and is automatically collected. It does not require an `xpath`.
+*   `keyword`: This built-in metric counts the occurrences of a specified keyword (configured in `http.keyword`) in the raw response body. It does not require an `xpath`.
+
+### Example
+
+Assume the HTTP API returns the following XML data:
+
+```xml
+<DeviceStatus xmlns="http://www.isapi.org/ver20/XMLSchema" version="2.0">
+    <CPUList>
+        <CPU>
+            <cpuUtilization>36.400002</cpuUtilization>
+        </CPU>
+    </CPUList>
+    <MemoryList>
+        <Memory>
+            <memoryUsage>399640</memoryUsage>
+            <memoryAvailable>98792</memoryAvailable>
+            <cacheSize>228492</cacheSize>
+        </Memory>
+    </MemoryList>
+    <NetPortStatusList>
+        <NetPortStatus>
+            <id>1</id>
+            <workSpeed>1000</workSpeed>
+        </NetPortStatus>
+        <NetPortStatus>
+            <id>2</id>
+            <workSpeed>0</workSpeed>
+        </NetPortStatus>
+    </NetPortStatusList>
+    <bootTime>2025-01-06 10:27:48</bootTime>
+    <deviceUpTime>87天0时55分59秒</deviceUpTime>
+    <lastCalibrationTime>2025-04-03 11:09:18</lastCalibrationTime>
+    <lastCalibrationTimeDiff>1</lastCalibrationTimeDiff>
+    <uploadTimeConsumingList>
+        <avgTime>16</avgTime>
+        <maxTime>23</maxTime>
+        <minTime>12</minTime>
+    </uploadTimeConsumingList>
+    <lastCalibrationTimeMode>NTP</lastCalibrationTimeMode>
+    <lastCalibrationTimeAddress>34.191.45.101</lastCalibrationTimeAddress>
+</DeviceStatus>
+```
+
+We want to monitor the device status and extract various metrics.
+
+Here's how you would configure the monitoring template YML:
+
+```yaml
 category: server
 # The monitoring type eg: linux windows tomcat mysql aws...
 app: hikvision_isapi
@@ -72,56 +128,6 @@ params:
 
 # collect metrics config list
 metrics:
-  - name: system_info
-    i18n:
-      zh-CN: 系统信息
-      en-US: System Info
-    priority: 0
-    protocol: http
-    http:
-      host: ^_^host^_^
-      port: ^_^port^_^
-      ssl: ^_^ssl^_^
-      url: /ISAPI/System/deviceInfo
-      method: GET
-      timeout: ^_^timeout^_^
-      authorization:
-        type: Digest Auth
-        digestAuthUsername: ^_^username^_^
-        digestAuthPassword: ^_^password^_^
-      parseType: xmlPath
-      parseScript: 'DeviceInfo'
-    fields:
-      - field: deviceName
-        type: 1
-        i18n:
-          zh-CN: 设备名称
-          en-US: Device Name
-        xpath: deviceName
-      - field: deviceID
-        type: 1
-        i18n:
-          zh-CN: 设备ID
-          en-US: Device ID
-        xpath: deviceID
-      - field: firmwareVersion
-        type: 1
-        i18n:
-          zh-CN: 固件版本
-          en-US: Firmware Version
-        xpath: firmwareVersion
-      - field: model
-        type: 1
-        i18n:
-          zh-CN: 设备型号
-          en-US: Device Model
-        xpath: model
-      - field: macAddress
-        type: 1
-        i18n:
-          zh-CN: mac地址
-          en-US: Mac Address
-        xpath: macAddress
   - name: status
     protocol: http
     http:
