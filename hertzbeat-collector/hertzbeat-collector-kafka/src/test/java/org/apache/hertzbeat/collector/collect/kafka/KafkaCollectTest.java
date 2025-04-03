@@ -17,12 +17,24 @@
 
 package org.apache.hertzbeat.collector.collect.kafka;
 
+import org.apache.hertzbeat.collector.collect.kafka.constants.SupportedCommand;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.ListTopicsOptions;
+import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.common.KafkaFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,12 +43,25 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * Test case for {@link KafkaCollectImpl}
  */
+@ExtendWith(MockitoExtension.class)
 public class KafkaCollectTest {
+
+    private static final String HOST = "127.0.0.1";
+    private static final String PORT = "9092";
+
     private KafkaCollectImpl collect;
+
+    @Mock
+    private AdminClient adminClient;
 
     @BeforeEach
     public void setUp() throws Exception {
-        collect = new KafkaCollectImpl();
+        collect = new KafkaCollectImpl(){
+            @Override
+            protected AdminClient getAdminClient(KafkaProtocol protocol) {
+                return adminClient;
+            }
+        };
     }
 
     @Test
@@ -59,38 +84,51 @@ public class KafkaCollectTest {
         });
         // kafka port is null
         assertThrows(IllegalArgumentException.class, () -> {
-            kafka.setHost("127.0.0.1");
+            kafka.setHost(HOST);
             collect.preCheck(metric);
         });
         // no exception throw
         assertDoesNotThrow(() -> {
-            kafka.setPort("9092");
+            kafka.setPort(PORT);
             collect.preCheck(metric);
         });
     }
 
     @Test
-    void collect() {
-        // metrics is null
-        assertThrows(NullPointerException.class, () -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            collect.collect(builder, null);
-        });
+    void testCollect() throws Exception {
+        Set<String> topicSet = new HashSet<>();
+        topicSet.add("test-topic");
 
-        KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
-        Metrics metrics = Metrics.builder().kclient(kafka).build();
-        //test if not kafka command
-        assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            collect.collect(builder, metrics);
-        });
+        ListTopicsResult listTopicsResult = Mockito.mock(ListTopicsResult.class);
+        KafkaFuture<Set<String>> future = Mockito.mock(KafkaFuture.class);
+
+        Mockito.when(adminClient.listTopics(Mockito.any(ListTopicsOptions.class))).thenReturn(listTopicsResult);
+        Mockito.when(listTopicsResult.names()).thenReturn(future);
+        Mockito.when(future.get()).thenReturn(topicSet);
+
+        KafkaProtocol kafka = KafkaProtocol.builder()
+                .host(HOST)
+                .port(PORT)
+                .build();
+
+        Metrics metrics = Metrics.builder()
+                .kclient(kafka)
+                .build();
+
+        // test if not kafka command
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        collect.collect(builder, metrics);
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+
         //test kafka command
-        assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            metrics.getKclient().setCommand("topic-list");
-            collect.collect(builder, metrics);
-        });
+        kafka.setCommand(SupportedCommand.TOPIC_LIST.getCommand());
+        builder.setCode(CollectRep.Code.forNumber(6));
+        collect.collect(builder, metrics);
 
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        assertEquals(1, builder.getValuesList().size());
+        assertEquals("test-topic", builder.getValues(0).getColumns(0));
+        Mockito.verify(adminClient).listTopics(Mockito.any(ListTopicsOptions.class));
     }
 
     @Test
