@@ -30,3 +30,4 @@ org.apache.hertzbeat.collector.collect.ipmi2.IpmiCollectImpl
 org.apache.hertzbeat.collector.collect.kafka.KafkaCollectImpl
 org.apache.hertzbeat.collector.collect.sd.HttpSdCollectImpl
 org.apache.hertzbeat.collector.collect.modbus.ModbusCollectImpl
+org.apache.hertzbeat.collector.collect.s7.S7CollectImpl

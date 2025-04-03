@@ -54,6 +54,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.S7Protocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
@@ -270,6 +271,10 @@ public class Metrics {
      * Monitoring configuration information using the public modBus protocol
      */
     private ModbusProtocol modbus;
+    /**
+     * Monitoring configuration information using the public s7 protocol
+     */
+    private S7Protocol s7;
     /**
      * collector use - Temporarily store subTask metrics response data
      */
