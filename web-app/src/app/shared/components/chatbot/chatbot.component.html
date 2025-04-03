@@ -1,0 +1,19 @@
+<button class="float" (click)="togglePopup()">
+  <img src="../assets/img/chatbot-icon.svg" alt="Ai Chat" />
+</button>
+<div class="popup" *ngIf="isPopupVisible">
+  <div class="popup-content">
+    <button class="close-btn" (click)="togglePopup()">✖</button>
+    <h3>Chatbot</h3>
+    <div class="chat-window">
+      <div class="chat-messages">
+        <app-chat-message *ngFor="let message of messages" [message]="message"></app-chat-message>
+      </div>
+      <div class="input-container">
+        <input type="text" [(ngModel)]="userInput" (keydown.enter)="sendMessage()" placeholder="Type your message..." />
+        <button (click)="sendMessage()">Send</button>
+        <button class="reset-btn" (click)="resetChat()">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
