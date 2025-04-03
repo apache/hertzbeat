@@ -21,7 +21,7 @@
   [help_message_content]="'bulletin.help.content' | i18n"
   [guild_link]="'bulletin.help.link' | i18n"
   [module_name]="'menu.monitor.bulletin'"
-  [icon_name]="'calculator'"
+  [icon_name]="'book'"
 ></app-help-message-show>
 
 <nz-divider></nz-divider>
@@ -226,7 +226,6 @@
                 nzBlockNode
                 nzCheckable
                 nzCheckStrictly
-                [(ngModel)]="tempMetrics"
                 name="metrics"
                 (nzCheckBoxChange)="treeCheckBoxChange($event, onItemSelect)"
               >

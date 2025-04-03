@@ -605,7 +605,7 @@ public class HttpCollectImpl extends AbstractCollect {
         Map<String, String> params = httpProtocol.getParams();
         boolean enableUrlEncoding = Boolean.parseBoolean(httpProtocol.getEnableUrlEncoding());
         StringBuilder queryParams = new StringBuilder();
-        
+
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> param : params.entrySet()) {
                 String key = param.getKey();
@@ -633,7 +633,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 }
             }
         }
-        
+
         // The default request header can be overridden if customized
         // keep-alive
         requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
@@ -674,7 +674,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
         // if it has payload, would override post params
         if (StringUtils.hasLength(httpProtocol.getPayload()) && (HttpMethod.POST.matches(httpMethod) || HttpMethod.PUT.matches(httpMethod))) {
-            requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
+            requestBuilder.setEntity(new StringEntity(TimeExpressionUtil.calculate(httpProtocol.getPayload()), StandardCharsets.UTF_8));
         }
 
         // uri encode
@@ -696,7 +696,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (queryParams.length() > 0) {
             uri += (uri.contains("?") ? "&" : "?") + queryParams.toString();
         }
-        
+
         String finalUri;
         if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
             finalUri = httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri;
@@ -712,7 +712,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 finalUri = NetworkConstants.HTTP_HEADER + baseUri;
             }
         }
-        
+
         try {
             requestBuilder.setUri(finalUri);
         } catch (IllegalArgumentException e) {
