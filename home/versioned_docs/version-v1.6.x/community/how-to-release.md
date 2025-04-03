@@ -341,7 +341,7 @@ svn commit -m "release for HertzBeat 1.6.0"
 
 - Check Apache SVN Commit Results
 
-> Visit the address <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/> in the browser, check if existed the new material package
+> Visit the address <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/> in the browser, check if existed the new material package
 
 ## 4. Enter the community voting stage
 
