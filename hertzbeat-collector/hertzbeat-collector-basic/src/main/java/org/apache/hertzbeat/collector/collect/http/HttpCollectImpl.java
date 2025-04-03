@@ -67,11 +67,9 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
@@ -81,8 +79,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.DigestScheme;
-import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
@@ -370,7 +366,7 @@ public class HttpCollectImpl extends AbstractCollect {
                         .anyMatch(alias -> NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)
                                 || CollectorConstants.KEYWORD.equalsIgnoreCase(alias));
 
-                if (requestedSummaryFields && !aliasFields.isEmpty()) {
+                if (requestedSummaryFields) {
                      CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                      for (String alias : aliasFields) {
                          if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
@@ -553,7 +549,6 @@ public class HttpCollectImpl extends AbstractCollect {
 
     /**
      * create httpContext
-     * 为 Digest 认证创建 HttpClient 上下文
      *
      * @param httpProtocol http protocol
      * @return context
@@ -615,7 +610,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     continue;
                 }
 
-                if (queryParams.length() > 0) {
+                if (!queryParams.isEmpty()) {
                     queryParams.append("&");
                 }
 
@@ -693,8 +688,8 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // append query params
-        if (queryParams.length() > 0) {
-            uri += (uri.contains("?") ? "&" : "?") + queryParams.toString();
+        if (!queryParams.isEmpty()) {
+            uri += (uri.contains("?") ? "&" : "?") + queryParams;
         }
 
         String finalUri;
