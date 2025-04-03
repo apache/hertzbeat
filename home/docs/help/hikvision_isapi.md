@@ -52,7 +52,9 @@ keywords: [ monitor, hikvision_isapi ]
 ## Implementation Principle
 
 The monitoring is implemented by accessing the Hikvision device's ISAPI interface:
+
 1. Collect system information through: `/ISAPI/System/deviceInfo`
+
 2. Collect device status through: `/ISAPI/System/status`
 
 It uses HTTP protocol with Digest Authentication to access the interfaces and parses XML response data to extract monitoring metrics.

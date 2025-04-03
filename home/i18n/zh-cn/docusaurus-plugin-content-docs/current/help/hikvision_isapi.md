@@ -52,7 +52,9 @@ keywords: [ monitor, hikvision_isapi, 海康 ]
 ## 监控实现原理
 
 通过海康威视设备的ISAPI接口获取设备信息和状态：
+
 1. 采集系统信息：`/ISAPI/System/deviceInfo`
+
 2. 采集设备状态：`/ISAPI/System/status`
 
 采用HTTP协议Digest认证方式访问接口，解析XML格式响应数据获取监控指标。
