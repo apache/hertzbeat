@@ -14,14 +14,16 @@ sidebar_label: XmlPath 解析方法
 
 HertzBeat 中的 XmlPath 解析方法使用两步 XPath 处理：
 
-1.  **主 XPath 表达式 (`parseScript`)**: 此 XPath 表达式在 `http` 配置部分的 `parseScript` 中定义。它用于从响应中选择一个或多个主要的 XML 节点。每个选中的节点将对应 HertzBeat 中的一行指标数据。
-2.  **相对字段 XPath 表达式 (`xpath`)**: 对于在 `fields` 列表中定义的每个指标字段，您可以指定一个相对的 `xpath`。此 XPath 表达式是*相对于*步骤 1 中 `parseScript` 选择的每个主节点进行评估的。它从当前主节点中提取该指标字段的具体值。
+1. **主 XPath 表达式 (`parseScript`)**: 此 XPath 表达式在 `http` 配置部分的 `parseScript` 中定义。它用于从响应中选择一个或多个主要的 XML 节点。每个选中的节点将对应 HertzBeat 中的一行指标数据。
+2. **相对字段 XPath 表达式 (`xpath`)**: 对于在 `fields` 列表中定义的每个指标字段，您可以指定一个相对的 `xpath`。此 XPath 表达式是*相对于*步骤 1 中 `parseScript` 选择的每个主节点进行评估的。它从当前主节点中提取该指标字段的具体值。
 
 这使您可以轻松地解析包含多个记录或项目的结构化 XML 数据。
 
 **特殊指标**:
-*   `responseTime`: 这个内置指标代表 HTTP 请求的响应时间，是自动收集的。它不需要 `xpath`。
-*   `keyword`: 这个内置指标计算原始响应体中指定关键字（在 `http.keyword` 中配置）的出现次数。它不需要 `xpath`。
+
+* `responseTime`: 这个内置指标代表 HTTP 请求的响应时间，是自动收集的。它不需要 `xpath`。
+
+* `keyword`: 这个内置指标计算原始响应体中指定关键字（在 `http.keyword` 中配置）的出现次数。它不需要 `xpath`。
 
 ### 示例
 

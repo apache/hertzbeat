@@ -355,8 +355,8 @@ public class HttpCollectImpl extends AbstractCollect {
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document document = db.parse(new InputSource(new StringReader(resp)));
 
-            XPathFactory xPathFactory = XPathFactory.newInstance();
-            XPath xpath = xPathFactory.newXPath();
+            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPath xpath = xpathFactory.newXPath();
 
             NodeList nodeList = (NodeList) xpath.evaluate(xpathExpression, document, XPathConstants.NODESET);
 
@@ -367,17 +367,17 @@ public class HttpCollectImpl extends AbstractCollect {
                                 || CollectorConstants.KEYWORD.equalsIgnoreCase(alias));
 
                 if (requestedSummaryFields) {
-                     CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                     for (String alias : aliasFields) {
-                         if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                             valueRowBuilder.addColumn(responseTime.toString());
-                         } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                             valueRowBuilder.addColumn(Integer.toString(keywordNum));
-                         } else {
-                             valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                         }
-                     }
-                     builder.addValueRow(valueRowBuilder.build());
+                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                    for (String alias : aliasFields) {
+                        if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                            valueRowBuilder.addColumn(responseTime.toString());
+                        } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                            valueRowBuilder.addColumn(Integer.toString(keywordNum));
+                        } else {
+                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                        }
+                    }
+                    builder.addValueRow(valueRowBuilder.build());
                 }
                 return;
             }

@@ -14,14 +14,16 @@ Note⚠️ The response data must be in XML format.
 
 The XmlPath parsing method in HertzBeat uses a two-step XPath process:
 
-1.  **Main XPath Expression (`parseScript`)**: This XPath expression is defined in the `http` configuration section under `parseScript`. It is used to select one or more main XML nodes from the response. Each selected node will correspond to one row of metric data in HertzBeat.
-2.  **Relative Field XPath Expressions (`xpath`)**: For each metric field defined in the `fields` list, you can specify a relative `xpath`. This XPath expression is evaluated *relative to each main node* selected by the `parseScript` in step 1. It extracts the specific value for that metric field from the current main node.
+1. **Main XPath Expression (`parseScript`)**: This XPath expression is defined in the `http` configuration section under `parseScript`. It is used to select one or more main XML nodes from the response. Each selected node will correspond to one row of metric data in HertzBeat.
+2. **Relative Field XPath Expressions (`xpath`)**: For each metric field defined in the `fields` list, you can specify a relative `xpath`. This XPath expression is evaluated *relative to each main node* selected by the `parseScript` in step 1. It extracts the specific value for that metric field from the current main node.
 
 This allows you to easily parse structured XML data where multiple records or items are present.
 
 **Special Metrics**:
-*   `responseTime`: This built-in metric represents the HTTP request's response time and is automatically collected. It does not require an `xpath`.
-*   `keyword`: This built-in metric counts the occurrences of a specified keyword (configured in `http.keyword`) in the raw response body. It does not require an `xpath`.
+
+* `responseTime`: This built-in metric represents the HTTP request's response time and is automatically collected. It does not require an `xpath`.
+
+* `keyword`: This built-in metric counts the occurrences of a specified keyword (configured in `http.keyword`) in the raw response body. It does not require an `xpath`.
 
 ### Example
 
