@@ -27,13 +27,19 @@ import java.util.Map;
 
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.SQL;
 
+/**
+ * abstract class for sql query executor
+ */
 @Slf4j
-public abstract class SQLQueryExecutor implements QueryExecutor {
+public abstract class SqlQueryExecutor implements QueryExecutor {
 
-    private final static String supportQueryLanguage = SQL;
+    private static final String supportQueryLanguage = SQL;
 
-    protected record ConnectorSQLProperties (
-    ){};
+    /**
+     * record class for sql connection
+     */
+    protected record ConnectorSqlProperties () {}
+
     protected abstract List<Map<String, Object>> do_sql(Map<String, Object> params);
 
     public MetricQueryData convertToMetricQueryData(Object object) {

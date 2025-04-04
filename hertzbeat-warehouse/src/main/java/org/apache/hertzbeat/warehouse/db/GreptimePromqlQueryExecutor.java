@@ -19,25 +19,11 @@ package org.apache.hertzbeat.warehouse.db;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.NetworkConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
-import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * query executor for victor metrics

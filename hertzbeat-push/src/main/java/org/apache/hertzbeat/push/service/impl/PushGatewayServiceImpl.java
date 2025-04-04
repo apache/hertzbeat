@@ -89,13 +89,10 @@ public class PushGatewayServiceImpl implements PushGatewayService {
                     return monitorId;
                 });
             }
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            builder.setId(id);
-            builder.setApp(job);
             for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
-                builder.clearMetrics();
-                builder.clearFields();
-                builder.clearValues();
+                CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+                builder.setId(id);
+                builder.setApp(job);
                 builder.setTime(curTime);
                 String metricsName = entry.getKey();
                 builder.setMetrics(metricsName);

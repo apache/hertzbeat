@@ -28,6 +28,7 @@ import java.util.Map;
 public interface QueryExecutor {
 
     MetricQueryData convertToMetricQueryData(Object object);
+
     List<Map<String, Object>> execute(String query);
 
     List<Map<String, Object>> query(String query, long time);

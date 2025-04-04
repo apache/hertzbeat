@@ -25,7 +25,11 @@ import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -40,15 +44,18 @@ import java.util.Map;
 
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL;
 
+/**
+ * abstract class for promql query executor
+ */
 @Slf4j
 public abstract class PromqlQueryExecutor implements QueryExecutor {
 
-    private final static String supportQueryLanguage = PROMQL;
-    protected final static String HTTP_QUERY_PARAM = "query";
-    protected final static String HTTP_TIME_PARAM = "time";
-    protected final static String HTTP_START_PARAM = "start";
-    protected final static String HTTP_END_PARAM = "end";
-    protected final static String HTTP_STEP_PARAM = "step";
+    private static final String supportQueryLanguage = PROMQL;
+    protected static final String HTTP_QUERY_PARAM = "query";
+    protected static final String HTTP_TIME_PARAM = "time";
+    protected static final String HTTP_START_PARAM = "start";
+    protected static final String HTTP_END_PARAM = "end";
+    protected static final String HTTP_STEP_PARAM = "step";
 
     private final RestTemplate restTemplate;
 
@@ -59,11 +66,14 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         this.httpPromqlProperties = httpPromqlProperties;
     }
 
+    /**
+     * record class for promql http connection
+     */
     protected record HttpPromqlProperties (
         String url,
         String username,
         String password
-    ){};
+    ){}
 
     protected List<Map<String, Object>> http_promql(Map<String, Object> params) {
         // http run the promql query
