@@ -396,13 +396,13 @@ public class HttpCollectImpl extends AbstractCollect {
                         valueRowBuilder.addColumn(Integer.toString(keywordNum));
                     } else {
                         Field field = fieldMap.get(alias);
-                        if (field == null || !StringUtils.hasText(field.getXpath())) {
+                        if (field == null || !StringUtils.hasText(field.getLocator())) {
                             log.warn("No field definition or xpath found for alias '{}' in XML path parsing.", alias);
                             valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                             continue;
                         }
 
-                        String relativeXpath = field.getXpath();
+                        String relativeXpath = field.getLocator();
                         try {
                             String value = (String) xpath.evaluate(relativeXpath, node, XPathConstants.STRING);
                             valueRowBuilder.addColumn(StringUtils.hasText(value) ? value : CommonConstants.NULL_VALUE);

@@ -97,31 +97,31 @@ metrics:
         i18n:
           zh-CN: 设备名称
           en-US: Device Name
-        xpath: deviceName
+        locator: deviceName
       - field: deviceID
         type: 1
         i18n:
           zh-CN: 设备ID
           en-US: Device ID
-        xpath: deviceID
+        locator: deviceID
       - field: firmwareVersion
         type: 1
         i18n:
           zh-CN: 固件版本
           en-US: Firmware Version
-        xpath: firmwareVersion
+        locator: firmwareVersion
       - field: model
         type: 1
         i18n:
           zh-CN: 设备型号
           en-US: Device Model
-        xpath: model
+        locator: model
       - field: macAddress
         type: 1
         i18n:
           zh-CN: mac地址
           en-US: Mac Address
-        xpath: macAddress
+        locator: macAddress
   - name: status
     protocol: http
     http:
@@ -144,100 +144,100 @@ metrics:
           en-US: CPU Utilization
         type: 0
         unit: '%'
-        xpath: CPUList/CPU/cpuUtilization
+        locator: CPUList/CPU/cpuUtilization
       - field: memoryUsage
         i18n:
           zh-CN: 内存使用量
           en-US: Memory Usage
         type: 0
         unit: MB
-        xpath: MemoryList/Memory/memoryUsage
+        locator: MemoryList/Memory/memoryUsage
       - field: memoryAvailable
         i18n:
           zh-CN: 可用内存
           en-US: Memory Available
         type: 0
         unit: MB
-        xpath: MemoryList/Memory/memoryAvailable
+        locator: MemoryList/Memory/memoryAvailable
       - field: cacheSize
         i18n:
           zh-CN: 缓存大小
           en-US: Cache Size
         type: 0
         unit: MB
-        xpath: MemoryList/Memory/cacheSize
+        locator: MemoryList/Memory/cacheSize
       - field: netPort1Speed
         i18n:
           zh-CN: 网口1速度
           en-US: Net Port 1 Speed
         type: 0
         unit: Mbps
-        xpath: NetPortStatusList/NetPortStatus[id='1']/workSpeed
+        locator: NetPortStatusList/NetPortStatus[id='1']/workSpeed
       - field: netPort2Speed
         i18n:
           zh-CN: 网口2速度
           en-US: Net Port 2 Speed
         type: 0
         unit: Mbps
-        xpath: NetPortStatusList/NetPortStatus[id='2']/workSpeed
+        locator: NetPortStatusList/NetPortStatus[id='2']/workSpeed
       - field: bootTime
         i18n:
           zh-CN: 启动时间
           en-US: Boot Time
         type: 1
-        xpath: bootTime
+        locator: bootTime
       - field: deviceUpTime
         i18n:
           zh-CN: 运行时长
           en-US: Device Uptime
         type: 1
-        xpath: deviceUpTime
+        locator: deviceUpTime
       - field: lastCalibrationTime
         i18n:
           zh-CN: 上次校时时间
           en-US: Last Calibration Time
         type: 1
-        xpath: lastCalibrationTime
+        locator: lastCalibrationTime
       - field: lastCalibrationTimeDiff
         i18n:
           zh-CN: 上次校时时间差
           en-US: Last Calibration Time Diff
         type: 0
         unit: s
-        xpath: lastCalibrationTimeDiff
+        locator: lastCalibrationTimeDiff
       - field: avgUploadTime
         i18n:
           zh-CN: 平均上传耗时
           en-US: Avg Upload Time
         type: 0
         unit: ms
-        xpath: uploadTimeConsumingList/avgTime
+        locator: uploadTimeConsumingList/avgTime
       - field: maxUploadTime
         i18n:
           zh-CN: 最大上传耗时
           en-US: Max Upload Time
         type: 0
         unit: ms
-        xpath: uploadTimeConsumingList/maxTime
+        locator: uploadTimeConsumingList/maxTime
       - field: minUploadTime
         i18n:
           zh-CN: 最小上传耗时
           en-US: Min Upload Time
         type: 0
         unit: ms
-        xpath: uploadTimeConsumingList/minTime
+        locator: uploadTimeConsumingList/minTime
       - field: lastCalibrationMode
         i18n:
           zh-CN: 上次校时模式
           en-US: Last Calibration Mode
         type: 1
-        xpath: lastCalibrationTimeMode
+        locator: lastCalibrationTimeMode
       - field: lastCalibrationAddress
         i18n:
           zh-CN: 上次校时地址
           en-US: Last Calibration Address
         type: 1
-        xpath: lastCalibrationTimeAddress
+        locator: lastCalibrationTimeAddress
       - field: responseTime
         i18n:
           zh-CN: 响应时间
