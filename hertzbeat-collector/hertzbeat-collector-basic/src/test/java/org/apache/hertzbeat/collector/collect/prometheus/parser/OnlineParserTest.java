@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.prometheus.parser;
 
-import org.apache.hertzbeat.common.entity.dto.MetricFamily;
-import org.apache.hertzbeat.common.util.OnlineParser;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.util;
+package org.apache.hertzbeat.collector.collect.prometheus.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.dto.MetricFamily;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -175,11 +174,6 @@ public class OnlineParser {
         } else {
             return i;
         }
-    }
-
-    private static CharChecker parseOneChar(InputStream inputStream) throws IOException, FormatException {
-        int i = getChar(inputStream);
-        return new CharChecker(i);
     }
 
     private static CharChecker parseOneDouble(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
