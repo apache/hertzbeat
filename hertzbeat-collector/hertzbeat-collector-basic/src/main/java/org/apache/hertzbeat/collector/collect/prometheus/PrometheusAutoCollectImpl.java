@@ -35,7 +35,6 @@ import javax.net.ssl.SSLException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.common.entity.dto.MetricFamily;
-import org.apache.hertzbeat.collector.collect.prometheus.parser.TextParser;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
