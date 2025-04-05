@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.prometheus.parser;
 
-import org.apache.hertzbeat.common.entity.dto.MetricFamily;
-import org.apache.hertzbeat.common.util.OnlineParser;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +26,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class OnlineParserTest {
 
@@ -46,13 +46,13 @@ class OnlineParserTest {
         String str = """
                 # HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
                 # TYPE go_gc_duration_seconds summary
-                go_gc_duration_seconds {  quantile="0"} 2.0209e-05 321312
-                go_gc_duration_seconds{  quantile = "0.25"  }   6.6917e-05
+                go_gc_duration_seconds{quantile="0"} 2.0209e-05
+                go_gc_duration_seconds{quantile="0.25"} 6.6917e-05
                 go_gc_duration_seconds{quantile="0.5"} -Inf
-                go_gc_duration_seconds{ quantile = "0.75"} +Inf
+                go_gc_duration_seconds{quantile="0.75"} +Inf
                 go_gc_duration_seconds{quantile="1"} NaN
-                go_gc_duration_seconds_sum 0.001134793 321314
-                go_gc_duration_seconds_count 5 43
+                go_gc_duration_seconds_sum 0.001134793
+                go_gc_duration_seconds_count 5
                 # HELP go_goroutines Number of goroutines that currently exist.
                 # TYPE go_goroutines gauge
                 go_goroutines 32
@@ -75,7 +75,18 @@ class OnlineParserTest {
                 # TYPE go_memstats_gc_sys_bytes gauge
                 go_memstats_gc_sys_bytes 4.614808e+06""";
         InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
-        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
-        assertNotNull(metricFamilyMap);
+        Map<String, MetricFamily> metricFamilyMap1 = OnlineParser.parseMetrics(inputStream);
+        Map<String, MetricFamily> metricFamilyMap2 = TextParser.textToMetricFamilies(str);
+        assertNotNull(metricFamilyMap1);
+        assertNotNull(metricFamilyMap2);
+        assertEquals(metricFamilyMap1.size(), metricFamilyMap2.size());
+        metricFamilyMap2.forEach((metricFamilyName, metricFamily2) -> {
+            if (!metricFamilyMap1.containsKey(metricFamilyName)) {
+                fail("parse failed, different result from two parser.");
+            }
+            MetricFamily metricFamily1 = metricFamilyMap1.get(metricFamilyName);
+            assertEquals(metricFamily1.getName(), metricFamily1.getName());
+            assertEquals(metricFamily1.getMetricList(), metricFamily2.getMetricList());
+        });
     }
 }
