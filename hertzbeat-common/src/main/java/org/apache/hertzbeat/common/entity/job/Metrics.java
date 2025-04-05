@@ -381,6 +381,6 @@ public class Metrics {
         /**
          * when parse type is xmlParse, use it, like NetPortStatusList/NetPortStatus[id='1']/workSpeed
          */
-        private String xpath;
+        private String locator;
     }
 }
