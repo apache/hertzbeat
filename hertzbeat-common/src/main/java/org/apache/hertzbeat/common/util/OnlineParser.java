@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class OnlineParser {
 
-    private static final Map<Integer, Integer> escapeMap = new HashMap<>();
+    private static final Map<Integer, Integer> escapeMap = new HashMap<>(8);
     
     static {
         escapeMap.put((int) 'n', (int) '\n');
@@ -49,6 +49,30 @@ public class OnlineParser {
         escapeMap.put((int) '\'', (int) '\'');
         escapeMap.put((int) '\"', (int) '\"');
         escapeMap.put((int) '\\', (int) '\\');
+    }
+
+    private OnlineParser() {
+    }
+
+    public static Map<String, MetricFamily> parseMetrics(InputStream inputStream) throws IOException {
+        Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
+        try {
+            int i = getChar(inputStream);
+            while (i != -1) {
+                if (i == '#' || i == '\n') {
+                    skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
+                } else {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append((char) i);
+                    parseMetric(inputStream, metricFamilyMap, stringBuilder);
+                }
+                i = getChar(inputStream);
+            }
+        } catch (FormatException e) {
+            log.error("prometheus parser failed because of wrong input format. {}", e.getMessage());
+            return null;
+        }
+        return metricFamilyMap;
     }
 
     private static class FormatException extends Exception {
@@ -133,7 +157,7 @@ public class OnlineParser {
             return this.i;
         }
 
-        private int getInt() throws FormatException {
+        private int getInt() {
             return this.i;
         }
 
@@ -160,7 +184,7 @@ public class OnlineParser {
 
     private static CharChecker parseOneDouble(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
         int i = getChar(inputStream);
-        while ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || i == '-' || i == '+' || i == 'e' || i == '.') {
+        while (i >= '0' && i <= '9' || i >= 'a' && i <= 'z' || i >= 'A' && i <= 'Z' || i == '-' || i == '+' || i == '.') {
             stringBuilder.append((char) i);
             i = getChar(inputStream);
         }
@@ -199,17 +223,10 @@ public class OnlineParser {
             if (i == '\\') {
                 i = getChar(inputStream);
                 switch (i) {
-                    case 'n':
-                        stringBuilder.append('\n');
-                        break;
-                    case '\\':
-                        stringBuilder.append('\\');
-                        break;
-                    case '\"':
-                        stringBuilder.append('\"');
-                        break;
-                    default:
-                        throw new FormatException();
+                    case 'n' -> stringBuilder.append('\n');
+                    case '\\' -> stringBuilder.append('\\');
+                    case '\"' -> stringBuilder.append('\"');
+                    default -> throw new FormatException();
                 }
             } else {
                 stringBuilder.append((char) i);
@@ -285,7 +302,7 @@ public class OnlineParser {
     }
 
     private static CharChecker parseMetric(InputStream inputStream, Map<String, MetricFamily> metricFamilyMap, StringBuilder stringBuilder) throws IOException, FormatException {
-        MetricFamily metricFamily = null;
+        MetricFamily metricFamily;
         MetricFamily.Metric metric = new MetricFamily.Metric();
         int i = parseMetricName(inputStream, stringBuilder).maybeSpace().maybeLeftBracket().noElse();
         String metricName = stringBuilder.toString();
@@ -333,26 +350,4 @@ public class OnlineParser {
         metricFamily.getMetricList().add(metric);
         return new CharChecker(i);
     }
-
-    public static Map<String, MetricFamily> parseMetrics(InputStream inputStream) throws IOException {
-        Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
-        try {
-            int i = getChar(inputStream);
-            while (i != -1) {
-                if (i == '#' || i == '\n') {
-                    skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
-                } else {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append((char) i);
-                    parseMetric(inputStream, metricFamilyMap, stringBuilder);
-                }
-                i = getChar(inputStream);
-            }
-        } catch (FormatException e) {
-            log.error("prometheus parser failed because of wrong input format. {}", e.getMessage());
-            return null;
-        }
-        return metricFamilyMap;
-    }
-
 }

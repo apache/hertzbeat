@@ -100,7 +100,7 @@ public class PrometheusAutoCollectImpl {
                 return null;
             }
             try {
-                return parseResponseByPrometheusExporter(response.getEntity().getContent(), metrics.getAliasFields(), builder);
+                return parseResponseByPrometheusExporter(response.getEntity().getContent(), builder);
             } catch (Exception e) {
                 log.info("parse error: {}.", e.getMessage(), e);
                 builder.setCode(CollectRep.Code.FAIL);
@@ -155,10 +155,12 @@ public class PrometheusAutoCollectImpl {
         }
     }
     
-    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(InputStream inputStream, List<String> aliasFields,
-                                                                           CollectRep.MetricsData.Builder builder) throws IOException {
+    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(InputStream inputStream, CollectRep.MetricsData.Builder builder) throws IOException {
         Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
         List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
+        if (metricFamilyMap == null) {
+            return metricsDataList;
+        }
         for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
             builder.clearFields();
             builder.clearValues();
