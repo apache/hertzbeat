@@ -75,7 +75,9 @@ class OnlineParserTest {
                 # TYPE go_memstats_gc_sys_bytes gauge
                 go_memstats_gc_sys_bytes 4.614808e+06""";
         InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
-        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
-        assertNotNull(metricFamilyMap);
+        Map<String, MetricFamily> metricFamilyMap1 = OnlineParser.parseMetrics(inputStream);
+        Map<String, MetricFamily> metricFamilyMap2 = TextParser.textToMetricFamilies(str);
+        assertNotNull(metricFamilyMap1);
+        assertNotNull(metricFamilyMap2);
     }
 }

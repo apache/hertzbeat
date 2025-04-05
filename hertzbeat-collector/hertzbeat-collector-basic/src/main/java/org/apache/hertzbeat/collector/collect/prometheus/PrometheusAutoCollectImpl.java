@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.prometheus;
 
 import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -46,6 +47,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.hertzbeat.common.util.OnlineParser;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -99,25 +101,12 @@ public class PrometheusAutoCollectImpl {
                 builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return null;
             }
-            // todo: The InputStream is directly converted to a String here
-            //       For large data in the Prometheus exporter, this can generate large objects, which could severely impact JVM memory space
-            // todo: Option one: Use InputStream for parsing, but this requires significant code changes
-            //       Option two: Manually trigger garbage collection, which can be referenced from Dubbo for long i
-            String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            long collectTime = System.currentTimeMillis();
-            builder.setTime(collectTime);
-            if (resp == null || !StringUtils.hasText(resp)) {
-                log.error("http response content is empty, status: {}.", statusCode);
+            try {
+                return parseResponseByPrometheusExporter(response.getEntity().getContent(), metrics.getAliasFields(), builder);
+            } catch (Exception e) {
+                log.info("parse error: {}.", e.getMessage(), e);
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("http response content is empty");
-            } else {
-                try {
-                    return parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
-                } catch (Exception e) {
-                    log.info("parse error: {}.", e.getMessage(), e);
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("parse response data error:" + e.getMessage());
-                }   
+                builder.setMsg("parse response data error:" + e.getMessage());
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
@@ -168,9 +157,9 @@ public class PrometheusAutoCollectImpl {
         }
     }
     
-    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
-                                                                           CollectRep.MetricsData.Builder builder) {
-        Map<String, MetricFamily> metricFamilyMap = TextParser.textToMetricFamilies(resp);
+    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(InputStream inputStream, List<String> aliasFields,
+                                                                           CollectRep.MetricsData.Builder builder) throws IOException {
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
         List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
         for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
             builder.clearFields();
