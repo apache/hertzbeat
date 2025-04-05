@@ -20,28 +20,18 @@
 package org.apache.hertzbeat.warehouse.service.impl;
 
 import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
-import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 import org.apache.hertzbeat.warehouse.service.MetricsDataQueryService;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class MetricsDataQueryServiceImpl implements MetricsDataQueryService {
+    @Autowired(required = false)
     List<QueryExecutor> executors;
-
-    MetricsDataQueryServiceImpl() {
-        executors = new ArrayList<>();
-        ApplicationContext context = SpringContextHolder.getApplicationContext();
-        Map<String, QueryExecutor> classes = context.getBeansOfType(QueryExecutor.class);
-        classes.forEach((k, v) -> {
-            executors.add(v);
-        });
-    }
 
     @Override
     public List<MetricQueryData> query(List<String> queries, String queryType, long time) {
