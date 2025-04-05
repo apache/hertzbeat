@@ -545,7 +545,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         boolean hasMeaningfulData = false;
-        for(int i=0; i < valueRow.getColumnsCount(); i++) {
+        for (int i = 0; i < valueRow.getColumnsCount(); i++) {
             String columnValue = valueRow.getColumns(i);
             String alias = aliasFields.get(i);
             if (!CommonConstants.NULL_VALUE.equals(columnValue) && (!NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias) && !CollectorConstants.KEYWORD.equalsIgnoreCase(alias))) {
