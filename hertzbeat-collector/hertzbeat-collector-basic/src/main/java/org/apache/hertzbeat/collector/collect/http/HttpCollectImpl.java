@@ -489,9 +489,9 @@ public class HttpCollectImpl extends AbstractCollect {
             }
             CollectRep.ValueRow valueRow = valueRowBuilder.build();
             if (hasMeaningfulDataInRow(valueRow, aliasFields)) {
-                 builder.addValueRow(valueRow);
+                builder.addValueRow(valueRow);
             } else {
-                 log.warn("No meaningful data found in single config object response for aliasFields: {}", aliasFields);
+                log.warn("No meaningful data found in single config object response for aliasFields: {}", aliasFields);
             }
         } else {
             Pattern pattern = Pattern.compile("^" + Pattern.quote(arrayBasePath) + "\\[(\\d+)]\\.");
@@ -535,31 +535,28 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private boolean hasMeaningfulDataInRow(CollectRep.ValueRow valueRow, List<String> aliasFields) {
-         if (valueRow.getColumnsCount() == 0) {
-             return false;
-         }
-         if (valueRow.getColumnsCount() != aliasFields.size()) {
-              log.error("Column count ({}) mismatch with aliasFields size ({}) when checking meaningful data.",
-                       valueRow.getColumnsCount(), aliasFields.size());
-               return false;
-         }
+        if (valueRow.getColumnsCount() == 0) {
+            return false;
+        }
+        if (valueRow.getColumnsCount() != aliasFields.size()) {
+            log.error("Column count ({}) mismatch with aliasFields size ({}) when checking meaningful data.",
+                    valueRow.getColumnsCount(), aliasFields.size());
+            return false;
+        }
 
-         boolean hasMeaningfulData = false;
-         for(int i=0; i < valueRow.getColumnsCount(); i++) {
-             String columnValue = valueRow.getColumns(i);
-             String alias = aliasFields.get(i);
-
-             if (!CommonConstants.NULL_VALUE.equals(columnValue) &&
-                 (!NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias) && !CollectorConstants.KEYWORD.equalsIgnoreCase(alias))) {
-                 hasMeaningfulData = true;
-                 break;
-             }
-             if ((NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias) || CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) &&
-                 !CommonConstants.NULL_VALUE.equals(columnValue)) {
-                 hasMeaningfulData = true;
-             }
-         }
-         return hasMeaningfulData;
+        boolean hasMeaningfulData = false;
+        for(int i=0; i < valueRow.getColumnsCount(); i++) {
+            String columnValue = valueRow.getColumns(i);
+            String alias = aliasFields.get(i);
+            if (!CommonConstants.NULL_VALUE.equals(columnValue) && (!NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias) && !CollectorConstants.KEYWORD.equalsIgnoreCase(alias))) {
+                hasMeaningfulData = true;
+                break;
+            }
+            if ((NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias) || CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) && !CommonConstants.NULL_VALUE.equals(columnValue)) {
+                hasMeaningfulData = true;
+            }
+        }
+        return hasMeaningfulData;
     }
 
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,

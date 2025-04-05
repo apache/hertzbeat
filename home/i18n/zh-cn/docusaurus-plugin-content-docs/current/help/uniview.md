@@ -12,7 +12,7 @@ keywords: [ monitor, uniview, 宇视 ]
 | 参数名称      | 参数帮助描述 |
 | ----------- | ----------- |
 | 监控Host     | 设备IP/域名 |
-| 监控名称     | 唯一标识名称 | 
+| 监控名称     | 唯一标识名称 |
 | 端口        | 默认80端口 |
 | 超时时间 | 毫秒级超时设置 |
 | 用户名      | 认证用户名 |
@@ -29,7 +29,7 @@ keywords: [ monitor, uniview, 宇视 ]
 - 固件版本
 - 设备型号
 
-### 校时信息 
+### 校时信息
 
 - NTP服务器IP
 - 校时端口
@@ -39,6 +39,7 @@ keywords: [ monitor, uniview, 宇视 ]
 ## 实现原理
 
 通过宇视HTTP API接口：
+
 1. 系统信息：`/LAPI/V1.0/System/DeviceInfo`
 
 2. 校时信息：`/LAPI/V1.0/System/Time/NTP`

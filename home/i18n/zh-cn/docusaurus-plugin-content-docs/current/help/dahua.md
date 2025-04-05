@@ -53,7 +53,7 @@ keywords: [ monitor, dahua, 大华 ]
 
 1. 网络信息：`/cgi-bin/configManager.cgi?action=getConfig&name=Network`
 
-2. 用户信息：`/cgi-bin/userManager.cgi?action=getActiveUserInfoAll` 
+2. 用户信息：`/cgi-bin/userManager.cgi?action=getActiveUserInfoAll`
 
 3. 校时信息：`/cgi-bin/configManager.cgi?action=getConfig&name=NTP`
 
