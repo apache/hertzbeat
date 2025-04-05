@@ -16,7 +16,7 @@ keywords: [ monitor, uniview ]
 | Port | Default 80 |
 | Timeout | Milliseconds |
 | Username | Auth username |
-| Password | Auth password | 
+| Password | Auth password |
 | SSL | HTTPS Enable |
 | Interval | ≥30 seconds |
 
@@ -33,7 +33,7 @@ keywords: [ monitor, uniview ]
 
 - NTP Server IP
 - NTP Port
-- Sync Interval 
+- Sync Interval
 - NTP Status
 
 ## Implementation
