@@ -145,7 +145,10 @@
         {
           "type": "category",
           "label": "server",
-          "items": ["help/ipmi"]
+          "items": [
+          "help/ipmi",
+          "help/hikvision_isapi"
+          ]
         },
         {
           "type": "category",
@@ -229,6 +232,11 @@
         },
         {
           "type": "category",
+          "label": "reduce",
+          "items": ["help/alarm_group","help/alarm_inhibit"]
+        },
+        {
+          "type": "category",
           "label": "notice",
           "items": [
             "help/alert_email",
@@ -267,6 +275,7 @@
             "advanced/extend-http",
             "advanced/extend-http-default",
             "advanced/extend-http-jsonpath",
+            "advanced/extend-http-xmlpath",
             "advanced/extend-http-example-hertzbeat",
             "advanced/extend-http-example-token"
           ]
@@ -344,7 +353,7 @@
         }
       ]
     },
-   
+
     {
       "type": "category",
       "label": "Others",
