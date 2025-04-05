@@ -108,10 +108,10 @@ class HttpCollectImplTest {
 
         // Set up Metrics with fields that have XPath expressions
         List<Metrics.Field> fields = new ArrayList<>();
-        fields.add(Metrics.Field.builder().field("name").xpath("name").build());
-        fields.add(Metrics.Field.builder().field("status").xpath("status").build());
-        fields.add(Metrics.Field.builder().field("cpu").xpath("metrics/cpu").build());
-        fields.add(Metrics.Field.builder().field("memory").xpath("metrics/memory").build());
+        fields.add(Metrics.Field.builder().field("name").locator("name").build());
+        fields.add(Metrics.Field.builder().field("status").locator("status").build());
+        fields.add(Metrics.Field.builder().field("cpu").locator("metrics/cpu").build());
+        fields.add(Metrics.Field.builder().field("memory").locator("metrics/memory").build());
 
         Metrics metrics = Metrics.builder()
                 .http(http)
