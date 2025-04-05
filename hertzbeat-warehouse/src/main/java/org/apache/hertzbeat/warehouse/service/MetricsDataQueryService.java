@@ -32,7 +32,7 @@ public interface MetricsDataQueryService {
      * @param time time
      * @return data
      */
-    List<MetricQueryData> query(List<String> queries, String queryType, long time);
+    List<MetricQueryData> query(List<String> queries, String queryType, Long time);
 
     /**
      * Query metrics data range
@@ -42,5 +42,5 @@ public interface MetricsDataQueryService {
      * @param step step
      * @return data
      */
-    List<MetricQueryData> queryRange(List<String> queries, String queryType, long start, long end, String step);
+    List<MetricQueryData> queryRange(List<String> queries, String queryType, Long start, Long end, String step);
 }

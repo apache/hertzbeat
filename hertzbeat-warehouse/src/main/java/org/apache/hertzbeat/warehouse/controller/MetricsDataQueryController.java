@@ -55,7 +55,7 @@ public class MetricsDataQueryController {
             @Parameter(description = "Query type", example = "promql")
             @RequestParam String type,
             @Parameter(description = "Query timestamp", example = "1725854804451")
-            @RequestParam long time) {
+            @RequestParam Long time) {
         return ResponseEntity.ok(Message.success(queryService.query(queries, type, time)));
     }
 
@@ -67,9 +67,9 @@ public class MetricsDataQueryController {
             @Parameter(description = "Query type", example = "promql")
             @RequestParam String type,
             @Parameter(description = "Query start timestamp", example = "1725854804451")
-            @RequestParam long start,
+            @RequestParam Long start,
             @Parameter(description = "Query end timestamp", example = "1733630804452")
-            @RequestParam long end,
+            @RequestParam Long end,
             @Parameter(description = "Query step", example = "4m")
             @RequestParam String step
     ) {

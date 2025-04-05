@@ -31,9 +31,9 @@ public interface QueryExecutor {
 
     List<Map<String, Object>> execute(String query);
 
-    List<Map<String, Object>> query(String query, long time);
+    List<Map<String, Object>> query(String query, Long time);
 
-    List<Map<String, Object>> query_range(String query, long start, long end, String step);
+    List<Map<String, Object>> query_range(String query, Long start, Long end, String step);
     
     boolean support(String datasource);
 }

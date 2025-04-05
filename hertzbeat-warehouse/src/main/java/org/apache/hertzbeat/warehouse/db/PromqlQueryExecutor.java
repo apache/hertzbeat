@@ -143,14 +143,14 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         return http_promql(params);
     }
 
-    public List<Map<String, Object>> query(String queryString, long time) {
+    public List<Map<String, Object>> query(String queryString, Long time) {
         Map<String, Object> params = new HashMap<>();
         params.put(HTTP_QUERY_PARAM, URLEncoder.encode(queryString, StandardCharsets.UTF_8));
         params.put(HTTP_TIME_PARAM, time);
         return http_promql(params);
     }
 
-    public List<Map<String, Object>> query_range(String queryString, long start, long end, String step) {
+    public List<Map<String, Object>> query_range(String queryString, Long start, Long end, String step) {
         Map<String, Object> params = new HashMap<>();
         params.put(HTTP_QUERY_PARAM, URLEncoder.encode(queryString, StandardCharsets.UTF_8));
         params.put(HTTP_START_PARAM, start);

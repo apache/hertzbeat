@@ -55,9 +55,9 @@ public abstract class SqlQueryExecutor implements QueryExecutor {
 
     public abstract List<Map<String, Object>> execute(String query);
 
-    public abstract List<Map<String, Object>> query(String query, long time);
+    public abstract List<Map<String, Object>> query(String query, Long time);
 
-    public abstract List<Map<String, Object>> query_range(String query, long start, long end, String step);
+    public abstract List<Map<String, Object>> query_range(String query, Long start, Long end, String step);
 
 
     public boolean support(String datasource) {

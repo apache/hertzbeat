@@ -34,7 +34,7 @@ public class MetricsDataQueryServiceImpl implements MetricsDataQueryService {
     List<QueryExecutor> executors;
 
     @Override
-    public List<MetricQueryData> query(List<String> queries, String queryType, long time) {
+    public List<MetricQueryData> query(List<String> queries, String queryType, Long time) {
         if (queries == null || executors.isEmpty()) {
             throw new IllegalArgumentException("No query executor found");
         }
@@ -50,7 +50,7 @@ public class MetricsDataQueryServiceImpl implements MetricsDataQueryService {
     }
 
     @Override
-    public List<MetricQueryData> queryRange(List<String> queries, String queryType, long start, long end, String step) {
+    public List<MetricQueryData> queryRange(List<String> queries, String queryType, Long start, Long end, String step) {
         if (queries == null || executors.isEmpty()) {
             throw new IllegalArgumentException("No query executor found");
         }
