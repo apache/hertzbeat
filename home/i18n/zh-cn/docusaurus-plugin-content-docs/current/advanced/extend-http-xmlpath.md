@@ -131,6 +131,10 @@ params:
 # collect metrics config list
 metrics:
   - name: status
+    i18n:
+      zh-CN: 设备状态
+      en-US: Status
+    priority: 0
     protocol: http
     http:
       host: ^_^host^_^

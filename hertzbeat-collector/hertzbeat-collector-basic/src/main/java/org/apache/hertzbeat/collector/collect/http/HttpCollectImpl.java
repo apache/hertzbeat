@@ -93,6 +93,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.apache.hertzbeat.common.entity.job.Metrics.Field;
 import java.util.function.Function;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * http https collect
@@ -161,6 +167,9 @@ public class HttpCollectImpl extends AbstractCollect {
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_HEADER ->
                             parseResponseByHeader(builder, metrics.getAliasFields(), response);
+                    case DispatchConstants.PARSE_CONFIG ->
+                            parseResponseByConfig(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime, metrics.getFields().stream()
+                                    .collect(Collectors.toMap(Field::getField, Function.identity(), (field1, field2) -> field1)));
                     default ->
                             parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
@@ -420,6 +429,137 @@ public class HttpCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Failed to parse XML response: " + e.getMessage());
         }
+    }
+
+    /**
+     * Parses the response body in Properties/Config format.
+     * Two modes are supported:
+     * 1. single-object mode: if http.parseScript is null, aliasFields are treated as indicator names.
+     * - If there is a locator in the indicator definition, use the locator as the key of the Properties.
+     * - Otherwise, use aliasField (metric name) as the key for Properties.
+     * Generate a single row of data.
+     * 2. array mode: if http.parseScript is not empty (e.g. “users”), treat it as an array base path.
+     * Treat aliasFields as the attribute name of an array element, and generate a single row of data for each array index. locator is invalid in this mode.
+     *
+     * @param resp Response body string
+     * @param aliasFields List of metrics aliases (i.e., the list of fields in metrics.fields).
+     * @param http http protocol configuration
+     * @param builder The metrics data builder.
+     * @param responseTime response time
+     * @param fieldMap Mapping of metric names to field definitions (new parameter)
+     */
+    private void parseResponseByConfig(String resp, List<String> aliasFields, HttpProtocol http,
+                                       CollectRep.MetricsData.Builder builder, Long responseTime,
+                                       Map<String, Field> fieldMap) {
+        if (!StringUtils.hasText(resp)) {
+            log.warn("Http collect parse type is config, but response body is empty.");
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Response body is empty");
+            return;
+        }
+
+        Properties properties = new Properties();
+        try (StringReader reader = new StringReader(resp)) {
+            properties.load(reader);
+        } catch (IOException e) {
+            log.warn("Failed to parse config response: {}", e.getMessage(), e);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Failed to parse config response: " + e.getMessage());
+            return;
+        }
+        String arrayBasePath = http.getParseScript();
+        int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
+
+        if (!StringUtils.hasText(arrayBasePath)) {
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String alias : aliasFields) {
+                if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumn(responseTime.toString());
+                } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumn(Integer.toString(keywordNum));
+                } else {
+                    Field field = fieldMap.get(alias);
+                    String propertyKey = alias;
+                    if (field != null && StringUtils.hasText(field.getLocator())) {
+                        propertyKey = field.getLocator();
+                    }
+                    String value = properties.getProperty(propertyKey);
+                    valueRowBuilder.addColumn(value != null ? value : CommonConstants.NULL_VALUE);
+                }
+            }
+            CollectRep.ValueRow valueRow = valueRowBuilder.build();
+            if (hasMeaningfulDataInRow(valueRow, aliasFields)) {
+                 builder.addValueRow(valueRow);
+            } else {
+                 log.warn("No meaningful data found in single config object response for aliasFields: {}", aliasFields);
+            }
+        } else {
+            Pattern pattern = Pattern.compile("^" + Pattern.quote(arrayBasePath) + "\\[(\\d+)]\\.");
+            Set<Integer> existingIndices = new HashSet<>();
+            for (String key : properties.stringPropertyNames()) {
+                Matcher matcher = pattern.matcher(key);
+                if (matcher.find()) {
+                    try {
+                        int index = Integer.parseInt(matcher.group(1));
+                        existingIndices.add(index);
+                    } catch (NumberFormatException e) {
+                        log.error("Could not parse index from key: {}", key);
+                    }
+                }
+            }
+            if (existingIndices.isEmpty()) {
+                log.warn("Could not find any array elements for base path '{}' in config response.", arrayBasePath);
+                return;
+            }
+            List<Integer> sortedIndices = new ArrayList<>(existingIndices);
+            Collections.sort(sortedIndices);
+            for (int i : sortedIndices) {
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String alias : aliasFields) {
+                    if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(responseTime.toString());
+                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(Integer.toString(keywordNum));
+                    } else {
+                        String currentKey = arrayBasePath + "[" + i + "]." + alias;
+                        String value = properties.getProperty(currentKey);
+                        valueRowBuilder.addColumn(value != null ? value : CommonConstants.NULL_VALUE);
+                    }
+                }
+                CollectRep.ValueRow valueRow = valueRowBuilder.build();
+                if (hasMeaningfulDataInRow(valueRow, aliasFields)) {
+                    builder.addValueRow(valueRow);
+                }
+            }
+        }
+    }
+
+    private boolean hasMeaningfulDataInRow(CollectRep.ValueRow valueRow, List<String> aliasFields) {
+         if (valueRow.getColumnsCount() == 0) {
+             return false;
+         }
+         if (valueRow.getColumnsCount() != aliasFields.size()) {
+              log.error("Column count ({}) mismatch with aliasFields size ({}) when checking meaningful data.",
+                       valueRow.getColumnsCount(), aliasFields.size());
+               return false;
+         }
+
+         boolean hasMeaningfulData = false;
+         for(int i=0; i < valueRow.getColumnsCount(); i++) {
+             String columnValue = valueRow.getColumns(i);
+             String alias = aliasFields.get(i);
+
+             if (!CommonConstants.NULL_VALUE.equals(columnValue) &&
+                 (!NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias) && !CollectorConstants.KEYWORD.equalsIgnoreCase(alias))) {
+                 hasMeaningfulData = true;
+                 break;
+             }
+             if ((NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias) || CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) &&
+                 !CommonConstants.NULL_VALUE.equals(columnValue)) {
+                 hasMeaningfulData = true;
+             }
+         }
+         return hasMeaningfulData;
     }
 
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
