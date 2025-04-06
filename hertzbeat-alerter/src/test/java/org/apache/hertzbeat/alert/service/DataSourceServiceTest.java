@@ -41,12 +41,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.HashMap;
 import org.apache.hertzbeat.alert.service.impl.DataSourceServiceImpl;
+import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import org.mockito.Mockito;
-import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 
 /**
  * test case for {@link DataSourceService}

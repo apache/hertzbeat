@@ -15,60 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.prometheus.parser;
+package org.apache.hertzbeat.warehouse.service;
+
+import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
 
 import java.util.List;
-import lombok.Data;
-import lombok.ToString;
 
 /**
- * metric family
+ * metrics data query service
  */
-@Data
-@ToString
-public class MetricFamily {
+public interface MetricsDataQueryService {
     
     /**
-     * metric name
+     * Query metrics data
+     * @param queries query expr
+     * @param time time
+     * @return data
      */
-    private String name;
+    List<MetricQueryData> query(List<String> queries, String queryType, long time);
 
     /**
-     * metrics
+     * Query metrics data range
+     * @param queries query expr
+     * @param start start
+     * @param end end
+     * @param step step
+     * @return data
      */
-    private List<Metric> metricList;
-
-    /**
-     * Metric
-     */
-    @Data
-    public static class Metric {
-
-        /**
-         * labels
-         */
-        private List<Label> labels;
-
-        /**
-         * value
-         */
-        private double value;
-    }
-
-    /**
-     * Label
-     */
-    @Data
-    public static class Label {
-
-        /**
-         * name
-         */
-        private String name;
-
-        /**
-         * value
-         */
-        private String value;
-    }
+    List<MetricQueryData> queryRange(List<String> queries, String queryType, long start, long end, String step);
 }
