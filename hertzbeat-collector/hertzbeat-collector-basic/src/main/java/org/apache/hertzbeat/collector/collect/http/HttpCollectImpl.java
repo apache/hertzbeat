@@ -464,7 +464,6 @@ public class HttpCollectImpl extends AbstractCollect {
                 } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumn(Integer.toString(keywordNum));
                 } else {
-                    // 直接使用alias作为属性键
                     String value = properties.getProperty(alias);
                     valueRowBuilder.addColumn(value != null ? value : CommonConstants.NULL_VALUE);
                 }
