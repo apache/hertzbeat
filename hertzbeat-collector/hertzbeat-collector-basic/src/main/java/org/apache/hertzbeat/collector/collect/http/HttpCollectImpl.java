@@ -502,7 +502,6 @@ public class HttpCollectImpl extends AbstractCollect {
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumn(Integer.toString(keywordNum));
                     } else {
-                        // 直接使用alias作为属性键的一部分
                         String currentKey = arrayBasePath + "[" + i + "]." + alias;
                         String value = properties.getProperty(currentKey);
                         valueRowBuilder.addColumn(value != null ? value : CommonConstants.NULL_VALUE);
