@@ -91,8 +91,6 @@ import org.xml.sax.InputSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.apache.hertzbeat.common.entity.job.Metrics.Field;
-import java.util.function.Function;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -168,8 +166,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     case DispatchConstants.PARSE_HEADER ->
                             parseResponseByHeader(builder, metrics.getAliasFields(), response);
                     case DispatchConstants.PARSE_CONFIG ->
-                            parseResponseByConfig(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime, metrics.getFields().stream()
-                                    .collect(Collectors.toMap(Field::getField, Function.identity(), (field1, field2) -> field1)));
+                            parseResponseByConfig(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     default ->
                             parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
@@ -391,9 +388,6 @@ public class HttpCollectImpl extends AbstractCollect {
                 return;
             }
 
-            Map<String, Field> fieldMap = metrics.getFields().stream()
-                    .collect(Collectors.toMap(Field::getField, Function.identity(), (field1, field2) -> field1));
-
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Node node = nodeList.item(i);
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -404,19 +398,11 @@ public class HttpCollectImpl extends AbstractCollect {
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumn(Integer.toString(keywordNum));
                     } else {
-                        Field field = fieldMap.get(alias);
-                        if (field == null || !StringUtils.hasText(field.getLocator())) {
-                            log.warn("No field definition or xpath found for alias '{}' in XML path parsing.", alias);
-                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
-                            continue;
-                        }
-
-                        String relativeXpath = field.getLocator();
                         try {
-                            String value = (String) xpath.evaluate(relativeXpath, node, XPathConstants.STRING);
+                            String value = (String) xpath.evaluate(alias, node, XPathConstants.STRING);
                             valueRowBuilder.addColumn(StringUtils.hasText(value) ? value : CommonConstants.NULL_VALUE);
                         } catch (XPathExpressionException e) {
-                            log.warn("Failed to evaluate relative XPath '{}' (from field definition) for node [{}]: {}", relativeXpath, node.getNodeName(), e.getMessage());
+                            log.warn("Failed to evaluate XPath '{}' for node [{}]: {}", alias, node.getNodeName(), e.getMessage());
                             valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                         }
                     }
@@ -430,6 +416,8 @@ public class HttpCollectImpl extends AbstractCollect {
             builder.setMsg("Failed to parse XML response: " + e.getMessage());
         }
     }
+
+
 
     /**
      * Parses the response body in Properties/Config format.
@@ -446,11 +434,9 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param http http protocol configuration
      * @param builder The metrics data builder.
      * @param responseTime response time
-     * @param fieldMap Mapping of metric names to field definitions (new parameter)
      */
     private void parseResponseByConfig(String resp, List<String> aliasFields, HttpProtocol http,
-                                       CollectRep.MetricsData.Builder builder, Long responseTime,
-                                       Map<String, Field> fieldMap) {
+                                       CollectRep.MetricsData.Builder builder, Long responseTime) {
         if (!StringUtils.hasText(resp)) {
             log.warn("Http collect parse type is config, but response body is empty.");
             builder.setCode(CollectRep.Code.FAIL);
@@ -478,12 +464,8 @@ public class HttpCollectImpl extends AbstractCollect {
                 } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumn(Integer.toString(keywordNum));
                 } else {
-                    Field field = fieldMap.get(alias);
-                    String propertyKey = alias;
-                    if (field != null && StringUtils.hasText(field.getLocator())) {
-                        propertyKey = field.getLocator();
-                    }
-                    String value = properties.getProperty(propertyKey);
+                    // 直接使用alias作为属性键
+                    String value = properties.getProperty(alias);
                     valueRowBuilder.addColumn(value != null ? value : CommonConstants.NULL_VALUE);
                 }
             }
@@ -521,6 +503,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumn(Integer.toString(keywordNum));
                     } else {
+                        // 直接使用alias作为属性键的一部分
                         String currentKey = arrayBasePath + "[" + i + "]." + alias;
                         String value = properties.getProperty(currentKey);
                         valueRowBuilder.addColumn(value != null ? value : CommonConstants.NULL_VALUE);
@@ -528,7 +511,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 }
                 CollectRep.ValueRow valueRow = valueRowBuilder.build();
                 if (hasMeaningfulDataInRow(valueRow, aliasFields)) {
-                    builder.addValueRow(valueRow);
+                    builder.addValueRow(valueRowBuilder.build());
                 }
             }
         }

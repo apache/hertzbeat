@@ -93,64 +93,76 @@ metrics:
     fields:
       - field: default_interface
         type: 1
-        locator: table.Network.DefaultInterface
         i18n:
           zh-CN: 默认网卡
           en-US: Default Interface
       - field: domain_name
         type: 1
-        locator: table.Network.Domain
         i18n:
           zh-CN: 域名
           en-US: Domain Name
       - field: hostname
         type: 1
-        locator: table.Network.Hostname
         i18n:
           zh-CN: 主机名
           en-US: Hostname
       - field: eth0_ip_address
         type: 1
-        locator: table.Network.eth0.IPAddress
         i18n:
           zh-CN: 网卡 eth0 IP地址
           en-US: Interface eth0 IP Address
       - field: eth0_gateway
         type: 1
-        locator: table.Network.eth0.DefaultGateway
         i18n:
           zh-CN: 网卡 eth0 默认网关
           en-US: Interface eth0 Default Gateway
       - field: eth0_mac_address
         type: 1
-        locator: table.Network.eth0.PhysicalAddress
         i18n:
           zh-CN: 网卡 eth0 物理地址
           en-US: Interface eth0 Physical Address
       - field: eth0_subnet_mask
         type: 1
-        locator: table.Network.eth0.SubnetMask
         i18n:
           zh-CN: 网卡 eth0 子网掩码
           en-US: Interface eth0 Subnet Mask
       - field: eth0_mtu
         type: 0
-        locator: table.Network.eth0.MTU
         i18n:
           zh-CN: 网卡 eth0 MTU
           en-US: Interface eth0 MTU
       - field: eth0_dns1
         type: 1
-        locator: table.Network.eth0.DnsServers[0]
         i18n:
           zh-CN: 网卡 eth0 DNS服务器1
           en-US: Interface eth0 DNS Server 1
       - field: eth0_dns2
         type: 1
-        locator: table.Network.eth0.DnsServers[1]
         i18n:
           zh-CN: 网卡 eth0 DNS服务器2
           en-US: Interface eth0 DNS Server 2
+    aliasFields:
+      - table.Network.DefaultInterface
+      - table.Network.Domain
+      - table.Network.Hostname
+      - table.Network.eth0.IPAddress
+      - table.Network.eth0.DefaultGateway
+      - table.Network.eth0.PhysicalAddress
+      - table.Network.eth0.SubnetMask
+      - table.Network.eth0.MTU
+      - table.Network.eth0.DnsServers[0]
+      - table.Network.eth0.DnsServers[1]
+    calculates:
+      - default_interface=table.Network.DefaultInterface
+      - domain_name=table.Network.Domain
+      - hostname=table.Network.Hostname
+      - eth0_ip_address=table.Network.eth0.IPAddress
+      - eth0_gateway=table.Network.eth0.DefaultGateway
+      - eth0_mac_address=table.Network.eth0.PhysicalAddress
+      - eth0_subnet_mask=table.Network.eth0.SubnetMask
+      - eth0_mtu=table.Network.eth0.MTU
+      - eth0_dns1=table.Network.eth0.DnsServers[0]
+      - eth0_dns2=table.Network.eth0.DnsServers[1]
   - name: user_info
     i18n:
       zh-CN: 用户信息
@@ -212,19 +224,24 @@ metrics:
     fields:
       - field: ntp_address
         type: 1
-        locator: table.NTP.Address
         i18n:
           zh-CN: 校时服务器
           en-US: Ntp Address
       - field: ntp_port
         type: 1
-        locator: table.NTP.Port
         i18n:
           zh-CN: 校时端口
           en-US: Ntp Port
       - field: ntp_update_period
         type: 1
-        locator: table.NTP.UpdatePeriod
         i18n:
           zh-CN: 校时间隔
           en-US: Ntp Update Period
+    aliasFields:
+      - table.NTP.Address
+      - table.NTP.Port
+      - table.NTP.UpdatePeriod
+    calculates:
+      - ntp_address=table.NTP.Address
+      - ntp_port=table.NTP.Port
+      - ntp_update_period=table.NTP.UpdatePeriod
