@@ -47,6 +47,12 @@ public class DatasourceQuery {
     
     @Schema(title = "query range type, like range or instant")
     private String timeType;
+
+    @Schema(title = "query range start time")
+    private Long start;
+
+    @Schema(title = "query range end time")
+    private Long end;
     
     @Schema(title = "query time step, like 5m or 1h")
     private String step;

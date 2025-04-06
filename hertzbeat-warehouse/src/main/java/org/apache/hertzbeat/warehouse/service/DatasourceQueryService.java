@@ -29,9 +29,7 @@ public interface DatasourceQueryService {
     /**
      * Query metrics data
      * @param queries query expr
-     * @param start start
-     * @param end end
      * @return data
      */
-    List<DatasourceQueryData> query(List<DatasourceQuery> queries, long start, long end);
+    List<DatasourceQueryData> query(List<DatasourceQuery> queries);
 }

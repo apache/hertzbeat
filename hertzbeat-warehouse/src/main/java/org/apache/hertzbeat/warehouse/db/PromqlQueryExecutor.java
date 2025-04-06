@@ -159,8 +159,8 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         return http_promql(params);
     }
 
-    public boolean support(String datasource) {
-        return supportQueryLanguage.equals(datasource);
+    public String support() {
+        return supportQueryLanguage;
     }
 
 }

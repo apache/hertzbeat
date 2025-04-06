@@ -43,17 +43,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class DataQueryController {
     
     @Autowired(required = false)
-    private DatasourceQueryService queryService;
+    private DatasourceQueryService datasourceQueryService;
 
     @PostMapping("/api/warehouse/query")
     @Operation(summary = "Warehouse Query")
     public ResponseEntity<Message<List<DatasourceQueryData>>> query(
             @Parameter(description = "Query expr list", example = "cpu")
-            @RequestBody List<DatasourceQuery> queries,
-            @Parameter(description = "Query start timestamp", example = "1725854804451")
-            @RequestParam long start,
-            @Parameter(description = "Query end timestamp", example = "1733630804452")
-            @RequestParam long end) {
-        return ResponseEntity.ok(Message.success(queryService.query(queries, start, end)));
+            @RequestBody List<DatasourceQuery> queries) {
+        return ResponseEntity.ok(Message.success(datasourceQueryService.query(queries)));
     }
 }

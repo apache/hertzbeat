@@ -42,26 +42,10 @@ public abstract class SqlQueryExecutor implements QueryExecutor {
 
     protected abstract List<Map<String, Object>> do_sql(Map<String, Object> params);
 
-    public MetricQueryData convertToMetricQueryData(Object object) {
-        MetricQueryData metricQueryData = new MetricQueryData();
-        try {
-            List<Map<String, Object>> metrics = (List<Map<String, Object>>) object;
-            // todo
-        } catch (Exception e) {
-            log.error("converting to metric query data failed.");
-        }
-        return metricQueryData;
-    }
-
-    public abstract List<Map<String, Object>> execute(String query);
-
     public abstract List<Map<String, Object>> query(String query, long time);
 
-    public abstract List<Map<String, Object>> query_range(String query, long start, long end, String step);
-
-
-    public boolean support(String datasource) {
-        return supportQueryLanguage.equals(datasource);
+    public String support() {
+        return supportQueryLanguage;
     }
 
 }
