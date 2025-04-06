@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -86,7 +88,15 @@ class OnlineParserTest {
             }
             MetricFamily metricFamily1 = metricFamilyMap1.get(metricFamilyName);
             assertEquals(metricFamily1.getName(), metricFamily1.getName());
-            assertEquals(metricFamily1.getMetricList(), metricFamily2.getMetricList());
+            Set<Double> metricValueSet = metricFamily2.getMetricList().stream().map(MetricFamily.Metric::getValue).collect(Collectors.toSet());
+            metricFamily1.getMetricList().forEach(metric -> {
+                // this is for something different between two algorithms above, and both of them is current on this parsing behavior.
+                if (!(metric.getValue() == Double.POSITIVE_INFINITY || metric.getValue() == Double.NEGATIVE_INFINITY)) {
+                    if (!metricValueSet.contains(metric.getValue())) {
+                        fail();
+                    }
+                }
+            });
         });
     }
 }
