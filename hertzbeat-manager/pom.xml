@@ -89,6 +89,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-grafana</artifactId>
         </dependency>
+        <!-- log -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-log</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -88,6 +88,7 @@
         <module>hertzbeat-push</module>
         <module>hertzbeat-plugin</module>
         <module>hertzbeat-grafana</module>
+        <module>hertzbeat-log</module>
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
     </modules>
@@ -229,6 +230,12 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-grafana</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- log -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-log</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- collector-basic -->
