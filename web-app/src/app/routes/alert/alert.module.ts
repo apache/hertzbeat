@@ -34,6 +34,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
@@ -76,7 +77,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzBadgeModule,
     NzUploadModule,
     QueryBuilderModule,
-    NzPaginationModule
+    NzPaginationModule,
+    NzEmptyModule,
   ],
   declarations: COMPONENTS
 })

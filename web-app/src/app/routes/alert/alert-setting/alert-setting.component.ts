@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -497,6 +497,7 @@ export class AlertSettingComponent implements OnInit {
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);
               this.parseMonitorIdsFromExpr(this.define.expr);
+              this.parseLabelFromExpr(this.define.expr);
               this.cascadeOnChange(this.cascadeValues);
               // Wait for cascade values to be set
               setTimeout(() => {
@@ -950,6 +951,12 @@ export class AlertSettingComponent implements OnInit {
   rightMonitorLabels: Set<string> = new Set(); // 右边所有可用的标签
   leftFilterLabels: string[] = []; // 左边用于筛选的标签
   rightFilterLabels: string[] = []; // 右边用于筛选的标签
+  labelInputVisible = false;
+  selectedLabels: Set<string> = new Set(); // 选中的标签
+  inputLabelValue = '';
+  labelInputElement!: ElementRef<HTMLInputElement>;
+  monitorDataByLabel: any[] = [];
+
 
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
   onConnectModalCancel() {
@@ -986,6 +993,41 @@ export class AlertSettingComponent implements OnInit {
       return e;
     });
     this.updateMonitorLabel();
+  }
+
+  handleDeleteLabel(removedLabel: string): void {
+    this.selectedLabels.delete(removedLabel);
+    this.showMonitorByLabel();
+  }
+
+  showLabelInput(): void {
+    this.labelInputVisible = true;
+    setTimeout(() => {
+      this.labelInputElement?.nativeElement.focus();
+    }, 10);
+  }
+
+  handleLabelInputConfirm(): void {
+    if (this.inputLabelValue && !this.selectedLabels.has(this.inputLabelValue)) {
+      this.selectedLabels.add(this.inputLabelValue);
+    }
+    this.showMonitorByLabel();
+    this.inputLabelValue = '';
+    this.labelInputVisible = false;
+  }
+
+  showMonitorByLabel(): void {
+    const monitorsByLabel = this.transferData.filter(item => 
+      item.labels.some((label: string) => this.selectedLabels.has(label))
+    );
+    this.monitorDataByLabel = monitorsByLabel.map(item => {
+      return {
+        key: item.key,
+        title: item.title,
+        description: item.description,
+        labels: item.labels
+      }
+    });
   }
   // end -- associate alert definition and monitoring model
 
@@ -1068,11 +1110,12 @@ export class AlertSettingComponent implements OnInit {
   public updateFinalExpr(): void {
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
     const monitorBindExpr = this.generateMonitorBindExpr();
+    const monitorLabelBindExpr = this.generateMonitorLabelBindExpr();
     let thresholdExpr = '';
     if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
       thresholdExpr = this.userExpr;
     }
-    const exprList = [baseExpr, monitorBindExpr, thresholdExpr].filter(e => e);
+    const exprList = [baseExpr, monitorBindExpr, monitorLabelBindExpr, thresholdExpr].filter(e => e);
 
     this.define.expr = exprList.length > 1 ? exprList.join(' && ') : exprList[0];
   }
@@ -1145,6 +1188,15 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
+  // Parse label from expression
+  private parseLabelFromExpr(expr: string){
+    const labelPattern = /equals\(__labels__,\s*"([^"]+)"\)/g;
+    let match;
+    while ((match = labelPattern.exec(expr)) !== null) {
+      this.selectedLabels.add(match[1]);
+    }
+  }
+
   // Generate monitor binding expression
   private generateMonitorBindExpr(): string {
     if (this.selectedMonitorIds.size === 0) return '';
@@ -1152,6 +1204,14 @@ export class AlertSettingComponent implements OnInit {
       .map(id => `equals(__instance__, "${id}")`)
       .join(' or ');
     return this.selectedMonitorIds.size > 1 ? `(${idExprs})` : idExprs;
+  }
+
+  // Generate monitor label binding expression
+  private generateMonitorLabelBindExpr(): string {
+    const labelExprs = Array.from(this.selectedLabels)
+      .map(label => `equals(__labels__, "${label}")`)
+      .join(' or ');
+    return this.selectedLabels.size > 1 ? `(${labelExprs})` : labelExprs;
   }
 
   // Load monitor binds
