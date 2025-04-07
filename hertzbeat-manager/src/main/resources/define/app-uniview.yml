@@ -1,0 +1,154 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: server
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: uniview
+# The monitoring i18n name
+name:
+  zh-CN: 宇视
+  en-US: Uniview
+# The description and help of this monitoring type
+help:
+  zh-CN: 通过HTTP接口监控宇视设备状态，获取设备健康数据。
+  en-US: Monitor Uniview devices through HTTP interface to collect health data.
+
+# Input params define for monitoring(render web ui by the definition)
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 80
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    range: '[1000,60000]'
+    required: true
+    defaultValue: 5000
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    required: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: true
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: SSL
+    type: boolean
+    required: false
+    defaultValue: false
+
+# collect metrics config list
+metrics:
+  - name: system_info
+    i18n:
+      zh-CN: 系统信息
+      en-US: System Info
+    priority: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      ssl: ^_^ssl^_^
+      url: /LAPI/V1.0/System/DeviceInfo
+      method: GET
+      timeout: ^_^timeout^_^
+      authorization:
+        type: Digest Auth
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.Response.Data'
+    fields:
+      - field: DeviceName
+        type: 1
+        i18n:
+          zh-CN: 设备名称
+          en-US: Device Name
+      - field: SerialNumber
+        type: 1
+        i18n:
+          zh-CN: 序列号
+          en-US: SerialNumber
+      - field: FirmwareVersion
+        type: 1
+        i18n:
+          zh-CN: 固件版本
+          en-US: Firmware Version
+      - field: DeviceModel
+        type: 1
+        i18n:
+          zh-CN: 设备型号
+          en-US: Device Model
+  - name: ntp_info
+    i18n:
+      zh-CN: 校时信息
+      en-US: NTP Info
+    priority: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      ssl: ^_^ssl^_^
+      url: /LAPI/V1.0/System/Time/NTP
+      method: GET
+      timeout: ^_^timeout^_^
+      authorization:
+        type: Digest Auth
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.Response.Data.NTPServerInfos[0]'
+    fields:
+      - field: IPAddress
+        type: 1
+        i18n:
+          zh-CN: IP地址
+          en-US: IPAddress
+      - field: Port
+        type: 1
+        i18n:
+          zh-CN: 端口号
+          en-US: Port
+      - field: SynchronizeInterval
+        type: 1
+        i18n:
+          zh-CN: 同步间隔
+          en-US: SynchronizeInterval
+      - field: Enabled
+        type: 1
+        i18n:
+          zh-CN: 是否启用
+          en-US: Enabled

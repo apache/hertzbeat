@@ -1,0 +1,247 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: server
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: dahua
+# The monitoring i18n name
+name:
+  zh-CN: 大华
+  en-US: Dahua
+# The description and help of this monitoring type
+help:
+  zh-CN: 通过http接口监控大华设备状态，获取设备健康数据。
+  en-US: Monitor Dahua devices through http interface to collect health data.
+
+# Input params define for monitoring(render web ui by the definition)
+params:
+  - field: host
+    name:
+      zh-CN: 主机Host
+      en-US: Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 80
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    range: '[1000,60000]'
+    required: true
+    defaultValue: 5000
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    required: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: true
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: SSL
+    type: boolean
+    required: false
+    defaultValue: false
+
+# collect metrics config list
+metrics:
+  - name: network_info # 指标集合名称
+    i18n:
+      zh-CN: 网络信息
+      en-US: Network Info
+    priority: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      ssl: ^_^ssl^_^
+      url: /cgi-bin/configManager.cgi?action=getConfig&name=Network
+      method: GET
+      timeout: ^_^timeout^_^
+      authorization:
+        type: Digest Auth
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: config
+    fields:
+      - field: default_interface
+        type: 1
+        i18n:
+          zh-CN: 默认网卡
+          en-US: Default Interface
+      - field: domain_name
+        type: 1
+        i18n:
+          zh-CN: 域名
+          en-US: Domain Name
+      - field: hostname
+        type: 1
+        i18n:
+          zh-CN: 主机名
+          en-US: Hostname
+      - field: eth0_ip_address
+        type: 1
+        i18n:
+          zh-CN: 网卡 eth0 IP地址
+          en-US: Interface eth0 IP Address
+      - field: eth0_gateway
+        type: 1
+        i18n:
+          zh-CN: 网卡 eth0 默认网关
+          en-US: Interface eth0 Default Gateway
+      - field: eth0_mac_address
+        type: 1
+        i18n:
+          zh-CN: 网卡 eth0 物理地址
+          en-US: Interface eth0 Physical Address
+      - field: eth0_subnet_mask
+        type: 1
+        i18n:
+          zh-CN: 网卡 eth0 子网掩码
+          en-US: Interface eth0 Subnet Mask
+      - field: eth0_mtu
+        type: 0
+        i18n:
+          zh-CN: 网卡 eth0 MTU
+          en-US: Interface eth0 MTU
+      - field: eth0_dns1
+        type: 1
+        i18n:
+          zh-CN: 网卡 eth0 DNS服务器1
+          en-US: Interface eth0 DNS Server 1
+      - field: eth0_dns2
+        type: 1
+        i18n:
+          zh-CN: 网卡 eth0 DNS服务器2
+          en-US: Interface eth0 DNS Server 2
+    aliasFields:
+      - table.Network.DefaultInterface
+      - table.Network.Domain
+      - table.Network.Hostname
+      - table.Network.eth0.IPAddress
+      - table.Network.eth0.DefaultGateway
+      - table.Network.eth0.PhysicalAddress
+      - table.Network.eth0.SubnetMask
+      - table.Network.eth0.MTU
+      - table.Network.eth0.DnsServers[0]
+      - table.Network.eth0.DnsServers[1]
+    calculates:
+      - default_interface=table.Network.DefaultInterface
+      - domain_name=table.Network.Domain
+      - hostname=table.Network.Hostname
+      - eth0_ip_address=table.Network.eth0.IPAddress
+      - eth0_gateway=table.Network.eth0.DefaultGateway
+      - eth0_mac_address=table.Network.eth0.PhysicalAddress
+      - eth0_subnet_mask=table.Network.eth0.SubnetMask
+      - eth0_mtu=table.Network.eth0.MTU
+      - eth0_dns1=table.Network.eth0.DnsServers[0]
+      - eth0_dns2=table.Network.eth0.DnsServers[1]
+  - name: user_info
+    i18n:
+      zh-CN: 用户信息
+      en-US: User Info
+    priority: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      ssl: ^_^ssl^_^
+      url: /cgi-bin/userManager.cgi?action=getActiveUserInfoAll
+      method: GET
+      timeout: ^_^timeout^_^
+      authorization:
+        type: Digest Auth
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: config
+      parseScript: users
+    fields:
+      - field: ClientAddress
+        type: 1
+        i18n:
+          zh-CN: 客户端地址
+          en-US: ClientAddress
+      - field: Name
+        type: 1
+        i18n:
+          zh-CN: 客户端用户
+          en-US: Name
+      - field: ClientType
+        type: 1
+        i18n:
+          zh-CN: 客户端登录类型
+          en-US: ClientType
+      - field: LoginTime
+        type: 1
+        i18n:
+          zh-CN: 客户端登录时间
+          en-US: LoginTime
+  - name: ntp_info
+    i18n:
+      zh-CN: 校时信息
+      en-US: Ntp Info
+    priority: 0
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      ssl: ^_^ssl^_^
+      url: /cgi-bin/configManager.cgi?action=getConfig&name=NTP
+      method: GET
+      timeout: ^_^timeout^_^
+      authorization:
+        type: Digest Auth
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: config
+    fields:
+      - field: ntp_address
+        type: 1
+        i18n:
+          zh-CN: 校时服务器
+          en-US: Ntp Address
+      - field: ntp_port
+        type: 1
+        i18n:
+          zh-CN: 校时端口
+          en-US: Ntp Port
+      - field: ntp_update_period
+        type: 1
+        i18n:
+          zh-CN: 校时间隔
+          en-US: Ntp Update Period
+    aliasFields:
+      - table.NTP.Address
+      - table.NTP.Port
+      - table.NTP.UpdatePeriod
+    calculates:
+      - ntp_address=table.NTP.Address
+      - ntp_port=table.NTP.Port
+      - ntp_update_period=table.NTP.UpdatePeriod
