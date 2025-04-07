@@ -242,8 +242,8 @@ metrics:
       - uploadTimeConsumingList/avgTime
       - uploadTimeConsumingList/maxTime
       - uploadTimeConsumingList/minTime
-      - lastCalibrationMode
-      - lastCalibrationAddress
+      - lastCalibrationTimeMode
+      - lastCalibrationTimeAddress
       - responseTime
     calculates:
       - CPU_utilization=CPUList/CPU/cpuUtilization
@@ -259,8 +259,8 @@ metrics:
       - avg_upload_time=uploadTimeConsumingList/avgTime
       - max_upload_time=uploadTimeConsumingList/maxTime
       - min_upload_time=uploadTimeConsumingList/minTime
-      - last_calibration_mode=lastCalibrationMode
-      - last_calibration_address=lastCalibrationAddress
+      - last_calibration_mode=lastCalibrationTimeMode
+      - last_calibration_address=lastCalibrationTimeAddress
       - response_time=responseTime
     units:
       - memory_usage=KB->MB
