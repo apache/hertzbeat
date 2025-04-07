@@ -304,6 +304,7 @@
   "alert.setting.template.vars.instance": "インスタンスID",
   "alert.setting.template.vars.instance-name": "インスタンス名",
   "alert.setting.template.vars.instance-host": "インスタンスホスト",
+  "alert.setting.template.vars.labels": "タグ",
   "alert.setting.template.vars.metrics": "メトリック名",
   "alert.setting.template.vars.threshold": "閾値式",
   "alert.setting.template.vars.time": "トリガー時間",

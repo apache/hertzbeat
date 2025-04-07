@@ -304,6 +304,7 @@
   "alert.setting.template.vars.instance": "Instance ID",
   "alert.setting.template.vars.instance-name": "Instance Name",
   "alert.setting.template.vars.instance-host": "Instance Host",
+  "alert.setting.template.vars.labels": "Labels",
   "alert.setting.template.vars.metrics": "Metrics Name",
   "alert.setting.template.vars.threshold": "Threshold Expression",
   "alert.setting.template.vars.time": "Trigger Time",

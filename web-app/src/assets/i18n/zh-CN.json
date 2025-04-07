@@ -304,6 +304,7 @@
   "alert.setting.template.vars.instance": "实例ID",
   "alert.setting.template.vars.instance-name": "实例名称",
   "alert.setting.template.vars.instance-host": "实例Host",
+  "alert.setting.template.vars.labels": "标签",
   "alert.setting.template.vars.metrics": "指标名称",
   "alert.setting.template.vars.threshold": "阈值表达式",
   "alert.setting.template.vars.time": "触发时间",

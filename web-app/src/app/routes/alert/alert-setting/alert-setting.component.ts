@@ -104,6 +104,7 @@ export class AlertSettingComponent implements OnInit {
 
   templateEnvVars = [
     { name: '${__instance__}', description: 'alert.setting.template.vars.instance' },
+    { name: '${__labels__}', description: 'alert.setting.template.vars.labels' },
     { name: '${__instancename__}', description: 'alert.setting.template.vars.instance-name' },
     { name: '${__instancehost__}', description: 'alert.setting.template.vars.instance-host' },
     { name: '${__app__}', description: 'alert.setting.template.vars.app' },
@@ -245,6 +246,7 @@ export class AlertSettingComponent implements OnInit {
     this.severity = '';
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
+    this.selectedLabels = new Set<string>();
     // Set default period for periodic alert
     if (type === 'periodic') {
       this.define.period = 300;
@@ -1079,6 +1081,9 @@ export class AlertSettingComponent implements OnInit {
         // Clean up any remaining && at start/end
         .replace(/^\s*&&\s*/, '')
         .replace(/\s*&&\s*$/, '')
+        // Remove monitor label binding expressions
+        .replace(/&&\s*\(?(equals\(__labels__,\s*"[^"]+"\)(\s*or\s*equals\(__labels__,\s*"[^"]+"\))*)\)?/, '')
+        .replace(/\(?(equals\(__labels__,\s*"[^"]+"\)(\s*or\s*equals\(__labels__,\s*"[^"]+"\))*)\)?\s*&&\s*/, '')
     );
   }
 
@@ -1192,6 +1197,7 @@ export class AlertSettingComponent implements OnInit {
   private parseLabelFromExpr(expr: string){
     const labelPattern = /equals\(__labels__,\s*"([^"]+)"\)/g;
     let match;
+    this.selectedLabels.clear();
     while ((match = labelPattern.exec(expr)) !== null) {
       this.selectedLabels.add(match[1]);
     }
@@ -1208,6 +1214,7 @@ export class AlertSettingComponent implements OnInit {
 
   // Generate monitor label binding expression
   private generateMonitorLabelBindExpr(): string {
+    if (this.selectedLabels.size === 0) return '';
     const labelExprs = Array.from(this.selectedLabels)
       .map(label => `equals(__labels__, "${label}")`)
       .join(' or ');
@@ -1223,6 +1230,7 @@ export class AlertSettingComponent implements OnInit {
     // Parse monitor IDs from expr first
     if (this.define.expr) {
       this.parseMonitorIdsFromExpr(this.define.expr);
+      this.parseLabelFromExpr(this.define.expr);
     }
     this.monitorSvc.getMonitorsByApp(this.cascadeValues[0]).subscribe(message => {
       if (message.code === 0) {
