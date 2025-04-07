@@ -1216,7 +1216,7 @@ export class AlertSettingComponent implements OnInit {
   private generateMonitorLabelBindExpr(): string {
     if (this.selectedLabels.size === 0) return '';
     const labelExprs = Array.from(this.selectedLabels)
-      .map(label => `equals(__labels__, "${label}")`)
+      .map(label => `contains(__labels__, "${label}")`)
       .join(' or ');
     return this.selectedLabels.size > 1 ? `(${labelExprs})` : labelExprs;
   }
