@@ -91,6 +91,9 @@ public class Monitor {
     @Max(4)
     private byte status;
     
+    @Schema(title = "Task type 0: Normal, 1: push auto create, 2: discovery auto create")
+    private byte type;
+    
     @Schema(title = "task label", example = "{env:test}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 4096)

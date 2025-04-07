@@ -531,7 +531,7 @@ public class MonitorServiceImpl implements MonitorService {
             MonitorDto monitorDto = new MonitorDto();
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
-            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())) {
+            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp()) || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {
                 List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
                 List<String> metrics = metricsDataList.stream().map(CollectRep.MetricsData::getMetrics).collect(Collectors.toList());
                 monitorDto.setMetrics(metrics);
