@@ -455,4 +455,19 @@ public interface CommonConstants {
      * status page incident state resolved
      */
     byte STATUS_PAGE_INCIDENT_STATE_RESOLVED = 3;
+
+    /**
+     * status page incident state resolved
+     */
+    byte MONITOR_TYPE_NORMAL = 0;
+
+    /**
+     * status page incident state resolved
+     */
+    byte MONITOR_TYPE_PUSH_AUTO_CREATE = 1;
+
+    /**
+     * status page incident state resolved
+     */
+    byte MONITOR_TYPE_DISCOVERY_AUTO_CREATE = 2;
 }

@@ -22,11 +22,9 @@ package org.apache.hertzbeat.push.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.InputStream;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.push.service.PushGatewayService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.hertzbeat.push.config.PushErrorRequestWrapper;
+import org.apache.hertzbeat.push.config.PushSuccessRequestWrapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,22 +35,23 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Metrics Push Gateway API")
 @RestController
-@RequestMapping(value = "/api/push/pushgateway")
-public class PushGatewayController {
-
-    @Autowired
-    private PushGatewayService pushGatewayService;
+@RequestMapping(value = "/api/push/prometheus/**")
+public class PushPrometheusController {
 
     @PostMapping()
-    @Operation(summary = "Push metric data to hertzbeat pushgateway", description = "Push metric data to hertzbeat pushgateway")
-    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) throws IOException {
-        InputStream inputStream = request.getInputStream();
-        boolean result = pushGatewayService.pushMetricsData(inputStream);
-        if (result) {
-            return ResponseEntity.ok(Message.success("Push success"));
+    @Operation(summary = "Prometheus push gateway", description = "Push prometheus metric data to hertzbeat")
+    public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) {
+        if (request instanceof PushErrorRequestWrapper error) {
+            return ResponseEntity.badRequest().body(Message.success(String.format("Push failed, job: %s, instance: %s", 
+                            error.getJob(), error.getInstance())));
+        }
+        else if (request instanceof PushSuccessRequestWrapper success) {
+            return ResponseEntity.ok(Message.success(String.format("Push success, job: %s, instance: %s",
+                    success.getJob(), success.getInstance())));
         }
         else {
-            return ResponseEntity.ok(Message.success("Push failed"));
+            return ResponseEntity.badRequest()
+                    .body(Message.success(String.format("Request  %s not matched.", request.getRequestURI())));
         }
     }
 
