@@ -17,7 +17,14 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
-import java.util.*;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -263,7 +270,7 @@ public class RealTimeAlertCalculator {
      * @param priority  Current priority
      * @return Filtered alert definitions
      */
-    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics,Map<String, String> labels, String instance, int priority) {
+    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
         return thresholds.stream()
                 .filter(define -> {
                     if (StringUtils.isBlank(define.getExpr())) {
@@ -428,7 +435,7 @@ public class RealTimeAlertCalculator {
     }
 
     private Set<String> kvLabelsToKvStringSet(Map<String, String> labels) {
-        if(labels == null || labels.isEmpty()){
+        if (labels == null || labels.isEmpty()) {
             return Collections.singleton("");
         }
         return labels.entrySet().stream()
