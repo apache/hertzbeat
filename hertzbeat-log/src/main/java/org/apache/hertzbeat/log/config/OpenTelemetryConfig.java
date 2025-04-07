@@ -106,8 +106,8 @@ public class OpenTelemetryConfig {
      * @param headers the map to which authentication headers will be added
      */
     private void addAuthenticationHeaders(Map<String, String> headers) {
-        if (StringUtils.isNotBlank(greptimeProperties.username()) &&
-                StringUtils.isNotBlank(greptimeProperties.password())) {
+        if (StringUtils.isNotBlank(greptimeProperties.username())
+                && StringUtils.isNotBlank(greptimeProperties.password())) {
             String credentials = greptimeProperties.username() + ":" + greptimeProperties.password();
             String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
             headers.put("Authorization", "Basic " + encodedCredentials);
