@@ -20,10 +20,14 @@
 package org.apache.hertzbeat.warehouse.db;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
 import org.apache.hertzbeat.common.util.Base64Util;
+import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
@@ -42,7 +46,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL;
+import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.*;
 
 /**
  * abstract class for promql query executor
@@ -51,6 +55,8 @@ import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL
 public abstract class PromqlQueryExecutor implements QueryExecutor {
 
     private static final String supportQueryLanguage = PROMQL;
+    private static final String QUERY_RANGE_PATH = "/api/v1/query_range";
+    private static final String QUERY_PATH = "/api/v1/query";
     protected static final String HTTP_QUERY_PARAM = "query";
     protected static final String HTTP_TIME_PARAM = "time";
     protected static final String HTTP_START_PARAM = "start";
@@ -89,6 +95,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+            
             UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url);
             for (Map.Entry<String, Object> entry : params.entrySet()) {
                 uriComponentsBuilder.queryParam(entry.getKey(), entry.getValue());
@@ -126,39 +133,77 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         return results;
     }
 
-    public MetricQueryData convertToMetricQueryData(Object object) {
-        MetricQueryData metricQueryData = new MetricQueryData();
+    @Override
+    public DatasourceQueryData query(DatasourceQuery datasourceQuery) {
+        DatasourceQueryData.DatasourceQueryDataBuilder queryDataBuilder = DatasourceQueryData.builder()
+                .refId(datasourceQuery.getRefId()).status(200);
         try {
-            List<Map<String, Object>> metrics = (List<Map<String, Object>>) object;
-            // todo
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            if (StringUtils.hasText(httpPromqlProperties.username())
+                    && StringUtils.hasText(httpPromqlProperties.password())) {
+                String authStr = httpPromqlProperties.username() + ":" + httpPromqlProperties.password();
+                String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + " " + encodedAuth);
+            }
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+            URI uri;
+            if (datasourceQuery.getTimeType().equals(RANGE)) {
+                uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_RANGE_PATH)
+                        .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
+                        .queryParam("start", datasourceQuery.getStart())
+                        .queryParam("end", datasourceQuery.getEnd())
+                        .queryParam("step", datasourceQuery.getStep())
+                        .build().toUri();
+            } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
+                uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_PATH)
+                        .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
+                        .build().toUri();
+            } else {
+                throw new IllegalArgumentException(String.format("no such time type for query id {}.", datasourceQuery.getRefId()));
+            }
+            ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,
+                    PromQlQueryContent.class);
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                log.debug("query metrics data from promql http api success. {}", uri);
+                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
+                        && responseEntity.getBody().getData().getResult() != null) {
+                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
+                    List<DatasourceQueryData.SchemaData> schemaDataList = new LinkedList<>();
+                    for (PromQlQueryContent.ContentData.Content content : contents) {
+                        DatasourceQueryData.MetricSchema.MetricSchemaBuilder schemaBuilder = DatasourceQueryData.MetricSchema
+                                .builder().fields(List.of(
+                                        DatasourceQueryData.MetricField.builder().name(INNER_KEY_TIME)
+                                                .type("time").build(),
+                                        DatasourceQueryData.MetricField.builder().name(INNER_KEY_VALUE)
+                                                .type("number").build()
+                                )).labels(content.getMetric());
+
+                        List<Object[]> values = content.getValues();
+                        values.forEach(objects -> {
+                            objects[0] = TimePeriodUtil.normalizeToMilliseconds(objects[0]);
+                        });
+                        DatasourceQueryData.SchemaData.SchemaDataBuilder schemaData = DatasourceQueryData.SchemaData.builder()
+                                .schema(schemaBuilder.build()).data(values);
+                        schemaDataList.add(schemaData.build());
+                    }
+                    queryDataBuilder.frames(schemaDataList);
+                }
+            } else {
+                log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
+                queryDataBuilder.msg("query metrics data from victoria-metrics failed. ");
+                queryDataBuilder.status(responseEntity.getStatusCode().value());
+            }
         } catch (Exception e) {
-            log.error("converting to metric query data failed.");
+            log.error("query metrics data from victoria-metrics error. {}.", e.getMessage(), e);
+            queryDataBuilder.msg("query metrics data from victoria-metrics error: " + e.getMessage());
+            queryDataBuilder.status(400);
         }
-        return metricQueryData;
+        return queryDataBuilder.build();
     }
 
-    public List<Map<String, Object>> execute(String queryString) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(HTTP_QUERY_PARAM, URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-        return http_promql(params);
-    }
-
-    public List<Map<String, Object>> query(String queryString, long time) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(HTTP_QUERY_PARAM, URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-        params.put(HTTP_TIME_PARAM, time);
-        return http_promql(params);
-    }
-
-    public List<Map<String, Object>> query_range(String queryString, long start, long end, String step) {
-        Map<String, Object> params = new HashMap<>();
-        params.put(HTTP_QUERY_PARAM, URLEncoder.encode(queryString, StandardCharsets.UTF_8));
-        params.put(HTTP_START_PARAM, start);
-        params.put(HTTP_END_PARAM, end);
-        params.put(HTTP_STEP_PARAM, step);
-        return http_promql(params);
-    }
-
+    @Override
     public String support() {
         return supportQueryLanguage;
     }

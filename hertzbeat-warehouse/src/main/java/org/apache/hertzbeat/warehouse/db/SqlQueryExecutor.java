@@ -20,6 +20,8 @@
 package org.apache.hertzbeat.warehouse.db;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
 
 import java.util.List;
@@ -40,10 +42,10 @@ public abstract class SqlQueryExecutor implements QueryExecutor {
      */
     protected record ConnectorSqlProperties () {}
 
-    protected abstract List<Map<String, Object>> do_sql(Map<String, Object> params);
+    @Override
+    public abstract DatasourceQueryData query(DatasourceQuery datasourceQuery);
 
-    public abstract List<Map<String, Object>> query(String query, long time);
-
+    @Override
     public String support() {
         return supportQueryLanguage;
     }

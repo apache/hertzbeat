@@ -30,7 +30,7 @@ public class DatasourceQueryServiceImpl implements DatasourceQueryService {
         for (DatasourceQuery datasourceQuery : queries) {
             QueryExecutor executor = executorMap.get(datasourceQuery.getDatasource());
             if (executor == null) {
-                throw new IllegalArgumentException("Unsupported datasource: " + queryType);
+                throw new IllegalArgumentException("Unsupported datasource: " + datasourceQuery.getDatasource());
             }
             datasourceQueryDataList.add(executor.query(datasourceQuery));
         }
