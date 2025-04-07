@@ -174,6 +174,8 @@
         <arrow.version>18.1.0</arrow.version>
         <snappy-java.version>1.1.10.7</snappy-java.version>
         <sshd-sftp.version>2.13.1</sshd-sftp.version>
+        <opentelemetry-api.version>1.49.0</opentelemetry-api.version>
+        <opentelemetry-logback.version>2.14.0-alpha</opentelemetry-logback.version>
     </properties>
 
     <dependencyManagement>
@@ -248,7 +250,6 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-devtools</artifactId>
-                <version>${spring-boot-dependencies.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -473,6 +474,34 @@
                 <groupId>org.apache.sshd</groupId>
                 <artifactId>sshd-sftp</artifactId>
                 <version>${sshd-sftp.version}</version>
+            </dependency>
+            <!-- OpenTelemetry -->
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-api</artifactId>
+                <version>${opentelemetry-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-sdk</artifactId>
+                <version>${opentelemetry-api.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-sdk-logs</artifactId>
+                <version>${opentelemetry-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-exporter-otlp</artifactId>
+                <version>${opentelemetry-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.instrumentation</groupId>
+                <artifactId>opentelemetry-logback-appender-1.0</artifactId>
+                <version>${opentelemetry-logback.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

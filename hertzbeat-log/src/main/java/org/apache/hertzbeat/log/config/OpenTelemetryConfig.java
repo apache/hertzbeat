@@ -19,7 +19,6 @@
 package org.apache.hertzbeat.log.config;
 
 import static io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME;
-import static io.opentelemetry.semconv.ServiceAttributes.SERVICE_VERSION;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.exporter.otlp.http.logs.OtlpHttpLogRecordExporter;
 import io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender;
@@ -34,12 +33,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -47,12 +44,8 @@ import org.springframework.context.annotation.Configuration;
  * It ensures that the initialization is done in a thread-safe manner and includes authentication for GrepTimeDB.
  */
 @Configuration
+@Slf4j
 public class OpenTelemetryConfig {
-
-    private static final Logger log = LoggerFactory.getLogger(OpenTelemetryConfig.class);
-
-    @Value("${hzb.version}")
-    private String version;
 
     @Autowired
     private GreptimeProperties greptimeProperties;
@@ -72,14 +65,12 @@ public class OpenTelemetryConfig {
             Resource resource = Resource.getDefault()
                     .merge(Resource.builder()
                             .put(SERVICE_NAME, "HertzBeat")
-                            .put(SERVICE_VERSION, version)
                             .build());
 
             Map<String, String> headers = new HashMap<>();
 
             headers.put("X-Greptime-DB-Name", "public");
-            headers.put("X-Greptime-Log-Table-Name", "HertzBeat");
-            headers.put("X-Greptime-Log-Extract-Keys", version);
+            headers.put("X-Greptime-Log-Table-Name", "hzb_log");
 
             addAuthenticationHeaders(headers);
 

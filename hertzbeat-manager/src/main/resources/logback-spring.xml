@@ -77,7 +77,7 @@
     </appender>
 
     <!-- OpenTelemetry Appender for shipping logs to GrepTimeDB -->
-    <appender name="OpenTelemetryAppender" class="io.opentelemetry.instrumentation.logback.v1_0.OpenTelemetryAppender">
+    <appender name="OpenTelemetryAppender" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
         <!-- Capture source code information (class name, method name, line number) -->
         <captureCodeAttributes>true</captureCodeAttributes>
 
