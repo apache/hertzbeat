@@ -40,6 +40,10 @@ import java.util.stream.Stream;
 import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
@@ -63,11 +67,9 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
@@ -77,8 +79,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.auth.DigestScheme;
-import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
@@ -91,6 +91,8 @@ import org.xml.sax.InputSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.apache.hertzbeat.common.entity.job.Metrics.Field;
+import java.util.function.Function;
 
 /**
  * http https collect
@@ -121,7 +123,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
             httpProtocol.setSuccessCodes(List.of(HttpStatus.SC_OK + ""));
         }
-
+        
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
@@ -152,7 +154,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     case DispatchConstants.PARSE_PROMETHEUS ->
                             parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_XML_PATH ->
-                            parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                            parseResponseByXmlPath(resp, metrics, builder, responseTime);
                     case DispatchConstants.PARSE_WEBSITE ->
                             parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime);
                     case DispatchConstants.PARSE_SITE_MAP ->
@@ -329,8 +331,95 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
-    private void parseResponseByXmlPath(String resp, List<String> aliasFields, HttpProtocol http,
-                                        CollectRep.MetricsData.Builder builder) {
+    private void parseResponseByXmlPath(String resp, Metrics metrics,
+                                        CollectRep.MetricsData.Builder builder, Long responseTime) {
+        HttpProtocol http = metrics.getHttp();
+        List<String> aliasFields = metrics.getAliasFields();
+        String xpathExpression = http.getParseScript();
+        if (!StringUtils.hasText(xpathExpression)) {
+            log.warn("Http collect parse type is xmlPath, but the xpath expression is empty.");
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("XPath expression is empty");
+            return;
+        }
+        int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
+
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            dbf.setXIncludeAware(false);
+            dbf.setExpandEntityReferences(false);
+
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document document = db.parse(new InputSource(new StringReader(resp)));
+
+            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPath xpath = xpathFactory.newXPath();
+
+            NodeList nodeList = (NodeList) xpath.evaluate(xpathExpression, document, XPathConstants.NODESET);
+
+            if (nodeList == null || nodeList.getLength() == 0) {
+                log.debug("XPath expression '{}' returned no nodes.", xpathExpression);
+                boolean requestedSummaryFields = aliasFields.stream()
+                        .anyMatch(alias -> NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)
+                                || CollectorConstants.KEYWORD.equalsIgnoreCase(alias));
+
+                if (requestedSummaryFields) {
+                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                    for (String alias : aliasFields) {
+                        if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                            valueRowBuilder.addColumn(responseTime.toString());
+                        } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                            valueRowBuilder.addColumn(Integer.toString(keywordNum));
+                        } else {
+                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                        }
+                    }
+                    builder.addValueRow(valueRowBuilder.build());
+                }
+                return;
+            }
+
+            Map<String, Field> fieldMap = metrics.getFields().stream()
+                    .collect(Collectors.toMap(Field::getField, Function.identity(), (field1, field2) -> field1));
+
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Node node = nodeList.item(i);
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
+                for (String alias : aliasFields) {
+                    if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(responseTime.toString());
+                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(Integer.toString(keywordNum));
+                    } else {
+                        Field field = fieldMap.get(alias);
+                        if (field == null || !StringUtils.hasText(field.getXpath())) {
+                            log.warn("No field definition or xpath found for alias '{}' in XML path parsing.", alias);
+                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                            continue;
+                        }
+
+                        String relativeXpath = field.getXpath();
+                        try {
+                            String value = (String) xpath.evaluate(relativeXpath, node, XPathConstants.STRING);
+                            valueRowBuilder.addColumn(StringUtils.hasText(value) ? value : CommonConstants.NULL_VALUE);
+                        } catch (XPathExpressionException e) {
+                            log.warn("Failed to evaluate relative XPath '{}' (from field definition) for node [{}]: {}", relativeXpath, node.getNodeName(), e.getMessage());
+                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                        }
+                    }
+                }
+                builder.addValueRow(valueRowBuilder.build());
+            }
+
+        } catch (Exception e) {
+            log.warn("Failed to parse XML response with XPath '{}': {}", xpathExpression, e.getMessage(), e);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Failed to parse XML response: " + e.getMessage());
+        }
     }
 
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
@@ -473,11 +562,10 @@ public class HttpCollectImpl extends AbstractCollect {
                 CredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(auth.getDigestAuthUsername(),
                         auth.getDigestAuthPassword());
-                provider.setCredentials(AuthScope.ANY, credentials);
-                AuthCache authCache = new BasicAuthCache();
-                authCache.put(new HttpHost(httpProtocol.getHost(), Integer.parseInt(httpProtocol.getPort())), new DigestScheme());
+                AuthScope authScope = new AuthScope(httpProtocol.getHost(), Integer.parseInt(httpProtocol.getPort()));
+                provider.setCredentials(authScope, credentials);
+
                 clientContext.setCredentialsProvider(provider);
-                clientContext.setAuthCache(authCache);
                 return clientContext;
             }
         }
@@ -522,7 +610,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     continue;
                 }
 
-                if (queryParams.length() > 0) {
+                if (!queryParams.isEmpty()) {
                     queryParams.append("&");
                 }
 
@@ -600,8 +688,8 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // append query params
-        if (queryParams.length() > 0) {
-            uri += (uri.contains("?") ? "&" : "?") + queryParams.toString();
+        if (!queryParams.isEmpty()) {
+            uri += (uri.contains("?") ? "&" : "?") + queryParams;
         }
 
         String finalUri;

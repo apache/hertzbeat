@@ -15,17 +15,60 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.push.service;
+package org.apache.hertzbeat.common.entity.dto;
 
-import org.apache.hertzbeat.common.entity.push.PushMetricsDto;
-import org.springframework.stereotype.Service;
+import java.util.List;
+import lombok.Data;
+import lombok.ToString;
 
 /**
- * push metrics
+ * metric family
  */
-@Service
-public interface PushService {
-    void pushMetricsData(PushMetricsDto pushMetricsData);
+@Data
+@ToString
+public class MetricFamily {
+    
+    /**
+     * metric name
+     */
+    private String name;
 
-    PushMetricsDto getPushMetricData(Long monitorId, Long time);
+    /**
+     * metrics
+     */
+    private List<Metric> metricList;
+
+    /**
+     * Metric
+     */
+    @Data
+    public static class Metric {
+
+        /**
+         * labels
+         */
+        private List<Label> labels;
+
+        /**
+         * value
+         */
+        private double value;
+    }
+
+    /**
+     * Label
+     */
+    @Data
+    public static class Label {
+
+        /**
+         * name
+         */
+        private String name;
+
+        /**
+         * value
+         */
+        private String value;
+    }
 }
