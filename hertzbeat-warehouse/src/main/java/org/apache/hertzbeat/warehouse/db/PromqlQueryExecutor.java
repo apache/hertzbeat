@@ -62,6 +62,8 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
     protected static final String HTTP_START_PARAM = "start";
     protected static final String HTTP_END_PARAM = "end";
     protected static final String HTTP_STEP_PARAM = "step";
+    private static final String INNER_KEY_TIME = "__ts__";
+    private static final String INNER_KEY_VALUE = "__value__";
 
     private final RestTemplate restTemplate;
 
@@ -151,14 +153,14 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             URI uri;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
                 uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_RANGE_PATH)
-                        .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
-                        .queryParam("start", datasourceQuery.getStart())
-                        .queryParam("end", datasourceQuery.getEnd())
-                        .queryParam("step", datasourceQuery.getStep())
+                        .queryParam(URLEncoder.encode(HTTP_QUERY_PARAM, StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
+                        .queryParam(HTTP_START_PARAM, datasourceQuery.getStart())
+                        .queryParam(HTTP_END_PARAM, datasourceQuery.getEnd())
+                        .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
                         .build().toUri();
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
                 uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_PATH)
-                        .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
+                        .queryParam(URLEncoder.encode(HTTP_QUERY_PARAM, StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
                         .build().toUri();
             } else {
                 throw new IllegalArgumentException(String.format("no such time type for query id {}.", datasourceQuery.getRefId()));
@@ -174,12 +176,13 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                     for (PromQlQueryContent.ContentData.Content content : contents) {
                         DatasourceQueryData.MetricSchema.MetricSchemaBuilder schemaBuilder = DatasourceQueryData.MetricSchema
                                 .builder().fields(List.of(
+                                        // todo: unit?
                                         DatasourceQueryData.MetricField.builder().name(INNER_KEY_TIME)
                                                 .type("time").build(),
                                         DatasourceQueryData.MetricField.builder().name(INNER_KEY_VALUE)
                                                 .type("number").build()
-                                )).labels(content.getMetric());
-
+                                )).labels(content.getMetric());// todo: meta?
+                        // todo: value or values
                         List<Object[]> values = content.getValues();
                         values.forEach(objects -> {
                             objects[0] = TimePeriodUtil.normalizeToMilliseconds(objects[0]);
