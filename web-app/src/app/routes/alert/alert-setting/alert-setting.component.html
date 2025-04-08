@@ -590,7 +590,6 @@
     <nz-card [nzTitle]="'alert.setting.connect.instance' | i18n">
       <nz-transfer
         [nzDataSource]="filteredTransferData"
-        nzShowSearch="true"
         nzShowSelectAll="false"
         [nzRenderList]="[renderList, renderList]"
         (nzChange)="change($event)"
@@ -604,37 +603,32 @@
           let-onItemSelectAll="onItemSelectAll"
           let-onItemSelect="onItemSelect"
         >
-          <div class="label-filter-container">
-            <nz-select
-              *ngIf="direction == 'left'"
-              [(ngModel)]="leftFilterLabels"
-              (ngModelChange)="onLabelFilterChange($event, direction)"
-              name="groupLabels"
-              nzMode="tags"
-              [nzTokenSeparators]="[',']"
-              (keydown.enter)="$event.preventDefault()"
-              (nzOnSearch)="onLabelSearch($event, direction)"
-              nzAllowClear
-              [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
-              style="width: 94%"
-            >
-              <nz-option *ngFor="let label of leftMonitorLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
-            </nz-select>
-            <nz-select
-              *ngIf="direction == 'right'"
-              [(ngModel)]="rightFilterLabels"
-              (ngModelChange)="onLabelFilterChange($event, direction)"
-              name="groupLabels"
-              nzMode="tags"
-              [nzTokenSeparators]="[',']"
-              (keydown.enter)="$event.preventDefault()"
-              (nzOnSearch)="onLabelSearch($event, direction)"
-              nzAllowClear
-              [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
-              style="width: 94%"
-            >
-              <nz-option *ngFor="let label of rightMonitorLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
-            </nz-select>
+          <div>
+            <div class="filter-container">
+              <input
+                type="text"
+                nz-input
+                [placeholder]="'alert.setting.filter.name' | i18n"
+                [ngModel]="getSearchValue(direction)"
+                (ngModelChange)="onSearchValueChange($event, direction)"
+                style="width: 94%"
+              />
+            </div>
+            <div class="filter-container">
+              <nz-select
+                [ngModel]="getFilterLabels(direction)"
+                (ngModelChange)="onFilterLabelsChange($event, direction)"
+                name="groupLabels"
+                nzMode="tags"
+                [nzTokenSeparators]="[',']"
+                (keydown.enter)="$event.preventDefault()"
+                nzAllowClear
+                [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
+                style="width: 94%"
+              >
+                <nz-option *ngFor="let label of getMonitorLabels(direction)" [nzLabel]="label" [nzValue]="label"></nz-option>
+              </nz-select>
+            </div>
           </div>
 
           <nz-table #t [nzData]="$asTransferItems(items)" nzSize="small">

@@ -203,6 +203,7 @@
   "alert.setting.connect.label": "Associar Rótulos",
   "alert.setting.connect.label.input": "Digite o rótulo",
   "alert.setting.connect.label.empty": "Não há objetos de monitoramento correspondentes, adicione rótulos",
+  "alert.setting.filter.name": "Digite o nome para filtrar...",
   "alert.setting.filter.labels": "Filtrar por rótulos...",
   "alert.setting.expr.tip": "Variáveis de ambiente e operadores suportados na expressão de disparo do limite",
   "alert.setting.expr.label": "Calcule e julgue se o limite foi disparado de acordo com esta expressão. As variáveis de ambiente e operadores da expressão são mostrados acima.",

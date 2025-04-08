@@ -951,6 +951,8 @@ export class AlertSettingComponent implements OnInit {
   selectedMonitorIds = new Set<number>();
   leftMonitorLabels: Set<string> = new Set(); // All available labels on the left side
   rightMonitorLabels: Set<string> = new Set(); // All available labels on the right side
+  leftSearchValue = '';
+  rightSearchValue = '';
   leftFilterLabels: string[] = []; // Labels used for filtering on the left side
   rightFilterLabels: string[] = []; // Labels used for filtering on the right side
   labelInputVisible = false;
@@ -1028,6 +1030,104 @@ export class AlertSettingComponent implements OnInit {
       };
     });
   }
+
+  onFilterLabelsChange(newLabels: string[], direction: string): void {
+    if (direction == 'left') {
+      this.leftFilterLabels = newLabels;
+    } else {
+      this.rightFilterLabels = newLabels;
+    }
+    this.handleSearch(direction);
+  }
+  onSearchValueChange(value: string, direction: string): void {
+    if (direction === 'left') {
+      this.leftSearchValue = value;
+    } else {
+      this.rightSearchValue = value;
+    }
+    this.handleSearch(direction);
+  }
+
+  getFilterLabels(direction: string): string[] {
+    return direction === 'left' ? this.leftFilterLabels : this.rightFilterLabels;
+  }
+
+  getSearchValue(direction: string): string {
+    return direction === 'left' ? this.leftSearchValue : this.rightSearchValue;
+  }
+
+  getMonitorLabels(direction: string): Set<string> {
+    return direction === 'left' ? this.leftMonitorLabels : this.rightMonitorLabels;
+  }
+
+  updateMonitorLabel() {
+    // Extract all labels
+    this.leftMonitorLabels.clear();
+    this.rightMonitorLabels.clear();
+    this.transferData.forEach(item => {
+      item.labels.forEach((label: string) => {
+        if (item.direction === 'left') {
+          this.leftMonitorLabels.add(label);
+        } else {
+          this.rightMonitorLabels.add(label);
+        }
+      });
+    });
+  }
+
+  handleSearch(direction: string): void {
+    // Handle name search
+    const nameSearchResult = this.handelNameSearch(direction);
+
+    // Handle label search
+    const labelSearchResult = this.handelLabelSearch(direction);
+
+    // If either search has no results, use the other's results
+    if (nameSearchResult.length === 0) {
+      this.filteredTransferData = labelSearchResult;
+    } else if (labelSearchResult.length === 0) {
+      this.filteredTransferData = nameSearchResult;
+    } else {
+      // Create Map of items by key for efficient lookup
+      const nameSearchMap = new Map(nameSearchResult.map(item => [item.title, item]));
+
+      // Find intersection - only keep items that exist in both result sets
+      this.filteredTransferData = labelSearchResult.filter(item => nameSearchMap.has(item.title));
+    }
+  }
+
+  handelNameSearch(direction: string): TransferItem[] {
+    // handel name search
+    const searchValue = this.getSearchValue(direction);
+    if (!searchValue) {
+      return [...this.transferData];
+    }
+    return this.transferData.filter(item => {
+      if (item.direction !== direction) {
+        // If not the current direction, skip filtering
+        return true;
+      }
+      return item.title.toLowerCase().includes(searchValue.toLowerCase());
+    });
+  }
+
+  handelLabelSearch(direction: string): TransferItem[] {
+    // handel label search
+    const filterLabels = direction == 'left' ? this.leftFilterLabels : this.rightFilterLabels;
+    if (filterLabels.length) {
+      return this.transferData.filter(item => {
+        if (item.direction !== direction) {
+          // If not the current direction, skip filtering
+          return true;
+        }
+        const labelSet = new Set(item.labels);
+        return filterLabels.some(label => labelSet.has(label));
+      });
+    } else {
+      return [...this.transferData];
+    }
+  }
+
   // end -- associate alert definition and monitoring model
 
   private cascadeValuesToExpr(values: string[]): string {
@@ -1246,53 +1346,6 @@ export class AlertSettingComponent implements OnInit {
     });
     this.isConnectModalVisible = true;
   }
-  onLabelSearch(value: string, direction: string): void {
-    const filterLabels = direction == 'left' ? this.leftFilterLabels : this.rightFilterLabels;
-    if (value) {
-      this.filteredTransferData = this.transferData.filter(item => {
-        if (item.direction !== direction) {
-          // If not the current direction, skip filtering
-          return true;
-        }
-        const labelSet = new Set(item.labels);
-        const tempFilterLabels = [...filterLabels, value];
-        return tempFilterLabels.some(label => labelSet.has(label));
-      });
-    } else if (!filterLabels.length) {
-      this.filteredTransferData = [...this.transferData];
-    }
-  }
-  onLabelFilterChange(event: Event, direction: string): void {
-    const filterLabels = direction == 'left' ? this.leftFilterLabels : this.rightFilterLabels;
-    if (filterLabels.length) {
-      this.filteredTransferData = this.transferData.filter(item => {
-        if (item.direction !== direction) {
-          // If not the current direction, skip filtering
-          return true;
-        }
-        const labelSet = new Set(item.labels);
-        return filterLabels.some(label => labelSet.has(label));
-      });
-    } else {
-      this.filteredTransferData = [...this.transferData];
-    }
-  }
-
-  updateMonitorLabel() {
-    // Extract all labels
-    this.leftMonitorLabels.clear();
-    this.rightMonitorLabels.clear();
-    this.transferData.forEach(item => {
-      item.labels.forEach((label: string) => {
-        if (item.direction === 'left') {
-          this.leftMonitorLabels.add(label);
-        } else {
-          this.rightMonitorLabels.add(label);
-        }
-      });
-    });
-  }
-
   onFilterChange(): void {
     this.pageIndex = 1;
     this.loadAlertDefineTable();

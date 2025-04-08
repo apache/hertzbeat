@@ -233,6 +233,7 @@
   "alert.setting.connect.label": "ラベル関連",
   "alert.setting.connect.label.input": "ラベルを入力",
   "alert.setting.connect.label.empty": "関連するモニターが見つかりません。ラベルを追加してください",
+  "alert.setting.filter.name": "名前を入力してフィルター...",
   "alert.setting.filter.labels": "ラベルを入力してフィルター...",
   "alert.setting.default": "グローバルデフォルト",
   "alert.setting.default.tip": "このアラーム閾値設定がグローバルにこのタイプの監視に適用されるかどうか",

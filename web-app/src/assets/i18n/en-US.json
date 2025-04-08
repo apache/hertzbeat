@@ -233,6 +233,7 @@
   "alert.setting.connect.label": "Label Associate",
   "alert.setting.connect.label.input": "Input Label",
   "alert.setting.connect.label.empty": "No matching monitoring objects found, please add labels",
+  "alert.setting.filter.name": "Input name to filter...",
   "alert.setting.filter.labels": "Input labels to filter...",
   "alert.setting.default": "Global Default",
   "alert.setting.default.tip": "Whether this alarm threshold configuration applies to all this type of monitoring globally",

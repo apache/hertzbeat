@@ -232,6 +232,7 @@
   "alert.setting.connect.label": "標籤關聯",
   "alert.setting.connect.label.input": "輸入標籤",
   "alert.setting.connect.label.empty": "暫無匹配的監控對象，請添加標籤",
+  "alert.setting.filter.name": "輸入名稱進行過濾...",
   "alert.setting.filter.labels": "輸入標籤進行過濾...",
   "alert.setting.default": "應用全域",
   "alert.setting.default.tip": "此告警阈值配置是否應用于全局所有此類型監控",
