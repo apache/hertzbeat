@@ -1076,56 +1076,65 @@ export class AlertSettingComponent implements OnInit {
   }
 
   handleSearch(direction: string): void {
+    // keep the items that are not in the current direction
+    let keepItems: TransferItem[] = this.filteredTransferData.filter(item => item.direction != direction);
+
+    // if the search value is empty
+    if (
+      (direction == 'left' && !this.leftSearchValue && !this.leftFilterLabels.length) ||
+      (direction == 'right' && !this.rightSearchValue && !this.rightFilterLabels.length)
+    ) {
+      const filteredItems = this.transferData.filter(item => item.direction === direction);
+      this.filteredTransferData = [...keepItems, ...filteredItems];
+      return;
+    }
+
     // Handle name search
     const nameSearchResult = this.handelNameSearch(direction);
 
     // Handle label search
     const labelSearchResult = this.handelLabelSearch(direction);
 
-    // If either search has no results, use the other's results
-    if (nameSearchResult.length === 0) {
-      this.filteredTransferData = labelSearchResult;
-    } else if (labelSearchResult.length === 0) {
-      this.filteredTransferData = nameSearchResult;
-    } else {
-      // Create Map of items by key for efficient lookup
-      const nameSearchMap = new Map(nameSearchResult.map(item => [item.title, item]));
-
-      // Find intersection - only keep items that exist in both result sets
-      this.filteredTransferData = labelSearchResult.filter(item => nameSearchMap.has(item.title));
-    }
+    // Create Map of items by key for efficient lookup
+    const nameSearchMap = new Map(nameSearchResult.map(item => [item.title, item]));
+    // Find intersection - only keep items that exist in both result sets
+    const filteredItems = labelSearchResult.filter(item => nameSearchMap.has(item.title));
+    const result = [...keepItems, ...filteredItems];
+    result.sort((a, b) => a.title.localeCompare(b.title));
+    this.filteredTransferData = result;
   }
 
   handelNameSearch(direction: string): TransferItem[] {
     // handel name search
     const searchValue = this.getSearchValue(direction);
-    if (!searchValue) {
-      return [...this.transferData];
-    }
-    return this.transferData.filter(item => {
+    // filter the items that match the search value
+    const filteredItems = this.transferData.filter(item => {
       if (item.direction !== direction) {
         // If not the current direction, skip filtering
-        return true;
+        return false;
       }
       return item.title.toLowerCase().includes(searchValue.toLowerCase());
     });
+    return filteredItems;
   }
 
   handelLabelSearch(direction: string): TransferItem[] {
     // handel label search
-    const filterLabels = direction == 'left' ? this.leftFilterLabels : this.rightFilterLabels;
-    if (filterLabels.length) {
-      return this.transferData.filter(item => {
-        if (item.direction !== direction) {
-          // If not the current direction, skip filtering
-          return true;
-        }
-        const labelSet = new Set(item.labels);
-        return filterLabels.some(label => labelSet.has(label));
-      });
-    } else {
-      return [...this.transferData];
+    const filterLabels = this.getFilterLabels(direction);
+    if (filterLabels.length === 0) {
+      const filteredItems = this.transferData.filter(item => item.direction === direction);
+      return filteredItems;
     }
+    // filter the items that match the filter labels
+    const filteredItems = this.transferData.filter(item => {
+      if (item.direction !== direction) {
+        // If not the current direction, skip filtering
+        return false;
+      }
+      const labelSet = new Set(item.labels);
+      return filterLabels.some(label => labelSet.has(label));
+    });
+    return filteredItems;
   }
 
   // end -- associate alert definition and monitoring model
