@@ -26,6 +26,7 @@ import { NzCascaderModule } from 'ng-zorro-antd/cascader';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
@@ -34,7 +35,6 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
-import { NzEmptyModule } from 'ng-zorro-antd/empty';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
@@ -78,7 +78,7 @@ const COMPONENTS: Array<Type<void>> = [
     NzUploadModule,
     QueryBuilderModule,
     NzPaginationModule,
-    NzEmptyModule,
+    NzEmptyModule
   ],
   declarations: COMPONENTS
 })
