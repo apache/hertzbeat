@@ -19,17 +19,24 @@
 
 package org.apache.hertzbeat.push.service;
 
-import java.io.IOException;
 import java.io.InputStream;
 import org.springframework.stereotype.Service;
 
 /**
- * push gateway metrics
+ * push gateway service
  */
 
 @Service
 public interface PushGatewayService {
 
-    boolean pushMetricsData(InputStream inputStream) throws IOException;
+
+    /**
+     * push prometheus metrics data
+     * @param inputStream input stream
+     * @param job job name, maybe null
+     * @param instance instance name, maybe null
+     * @return push success or not
+     */
+    boolean pushPrometheusMetrics(InputStream inputStream, String job, String instance);
 
 }

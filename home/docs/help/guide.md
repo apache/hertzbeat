@@ -116,6 +116,13 @@ More details see&emsp;&#x1F449;&emsp;[Alarm center](alarm_center)
 More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert_threshold) <br />
 &emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert_threshold_expr)
 
+### Alarm reduce
+
+> Combine related alarms through alarm grouping, alarm suppression and other functions to reduce the alarm storm caused by one event, reduce alarm noise and improve alarm response efficiency.
+
+More details see&emsp;&#x1F449;&emsp;[Alarm grouping](alarm_group) <br />
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[Alarm inhibit](alarm_inhibit)
+
 ### Alarm notification
 
 > After triggering the alarm information, in addition to being displayed in the alarm center list, it can also be notified to the designated recipient in a specified way (e-mail, wechat and FeiShu etc.)
