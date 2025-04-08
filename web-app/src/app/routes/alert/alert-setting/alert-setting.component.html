@@ -587,33 +587,60 @@
   [nzOkLoading]="isConnectModalOkLoading"
 >
   <div *nzModalContent>
-    <nz-card nzTitle="手动关联">
-      <nz-transfer [nzDataSource]="filteredTransferData" nzShowSearch="true" nzShowSelectAll="false"
-        [nzRenderList]="[renderList, renderList]" (nzChange)="change($event)" style="overflow-x: scroll">
-        <ng-template #renderList let-items let-direction="direction" let-stat="stat" let-onItemSelectAll="onItemSelectAll"
-          let-onItemSelect="onItemSelect">
+    <nz-card [nzTitle]="'alert.setting.connect.instance' | i18n">
+      <nz-transfer
+        [nzDataSource]="filteredTransferData"
+        nzShowSearch="true"
+        nzShowSelectAll="false"
+        [nzRenderList]="[renderList, renderList]"
+        (nzChange)="change($event)"
+        style="overflow-x: scroll"
+      >
+        <ng-template
+          #renderList
+          let-items
+          let-direction="direction"
+          let-stat="stat"
+          let-onItemSelectAll="onItemSelectAll"
+          let-onItemSelect="onItemSelect"
+        >
           <div class="label-filter-container">
-            <nz-select *ngIf="direction == 'left'" [(ngModel)]="leftFilterLabels"
-              (ngModelChange)="onLabelFilterChange($event, direction)" name="groupLabels" nzMode="tags"
-              [nzTokenSeparators]="[',']" (keydown.enter)="$event.preventDefault()"
-              (nzOnSearch)="onLabelSearch($event, direction)" nzAllowClear
-              [nzPlaceHolder]="'alert.setting.filter.labels' | i18n" style="width: 92%">
+            <nz-select
+              *ngIf="direction == 'left'"
+              [(ngModel)]="leftFilterLabels"
+              (ngModelChange)="onLabelFilterChange($event, direction)"
+              name="groupLabels"
+              nzMode="tags"
+              [nzTokenSeparators]="[',']"
+              (keydown.enter)="$event.preventDefault()"
+              (nzOnSearch)="onLabelSearch($event, direction)"
+              nzAllowClear
+              [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
+              style="width: 94%"
+            >
               <nz-option *ngFor="let label of leftMonitorLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
             </nz-select>
-            <nz-select *ngIf="direction == 'right'" [(ngModel)]="rightFilterLabels"
-              (ngModelChange)="onLabelFilterChange($event, direction)" name="groupLabels" nzMode="tags"
-              [nzTokenSeparators]="[',']" (keydown.enter)="$event.preventDefault()"
-              (nzOnSearch)="onLabelSearch($event, direction)" nzAllowClear
-              [nzPlaceHolder]="'alert.setting.filter.labels' | i18n" style="width: 92%">
+            <nz-select
+              *ngIf="direction == 'right'"
+              [(ngModel)]="rightFilterLabels"
+              (ngModelChange)="onLabelFilterChange($event, direction)"
+              name="groupLabels"
+              nzMode="tags"
+              [nzTokenSeparators]="[',']"
+              (keydown.enter)="$event.preventDefault()"
+              (nzOnSearch)="onLabelSearch($event, direction)"
+              nzAllowClear
+              [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
+              style="width: 94%"
+            >
               <nz-option *ngFor="let label of rightMonitorLabels" [nzLabel]="label" [nzValue]="label"></nz-option>
             </nz-select>
           </div>
-      
+
           <nz-table #t [nzData]="$asTransferItems(items)" nzSize="small">
             <thead>
               <tr>
-                <th [nzChecked]="stat.checkAll" [nzIndeterminate]="stat.checkHalf"
-                  (nzCheckedChange)="onItemSelectAll($event)"></th>
+                <th [nzChecked]="stat.checkAll" [nzIndeterminate]="stat.checkHalf" (nzCheckedChange)="onItemSelectAll($event)"></th>
                 <th *ngIf="direction == 'left'">{{ 'alert.setting.connect.left' | i18n }}</th>
                 <th *ngIf="direction == 'right'">{{ 'alert.setting.connect.right' | i18n }}</th>
               </tr>
@@ -628,39 +655,46 @@
         </ng-template>
       </nz-transfer>
     </nz-card>
-    <nz-card nzTitle="通过标签关联">
+    <nz-card [nzTitle]="'alert.setting.connect.label' | i18n">
       <div class="label-input-container">
         @for (label of selectedLabels; track label) {
-          <nz-tag [nzMode]="'closeable'" [nzColor]="'geekblue'" (nzOnClose)="handleDeleteLabel(label)">
-            {{ label }}
-          </nz-tag>
-          }
-        
-        @if (!labelInputVisible) {
-          <nz-tag nzNoAnimation (click)="showLabelInput()">
-            <i nz-icon nzType="plus"></i>
-            输入标签
-          </nz-tag>
-        } @else {
-          <input #labelInputElement nz-input nzSize="small" type="text" [(ngModel)]="inputLabelValue" style="width: 78px;"
-            (blur)="handleLabelInputConfirm()" (keydown.enter)="handleLabelInputConfirm()" />
+        <nz-tag [nzMode]="'closeable'" [nzColor]="'geekblue'" (nzOnClose)="handleDeleteLabel(label)">
+          {{ label }}
+        </nz-tag>
         }
+        <nz-tag *ngIf="!labelInputVisible" nzNoAnimation (click)="showLabelInput()">
+          <i nz-icon nzType="plus"></i>
+          {{ 'alert.setting.connect.label.input' | i18n }}
+        </nz-tag>
+        <input
+          *ngIf="labelInputVisible"
+          #labelInputElement
+          nz-input
+          nzSize="small"
+          type="text"
+          [(ngModel)]="inputLabelValue"
+          style="width: 78px"
+          (blur)="handleLabelInputConfirm()"
+          (keydown.enter)="handleLabelInputConfirm()"
+        />
       </div>
       <div>
-        @if (monitorDataByLabel.length <= 0) { 
-          <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="'匹配预览'"></nz-empty>
-        } @else {
-        <nz-list nzBordered>
+        <nz-empty
+          *ngIf="monitorDataByLabel.length <= 0"
+          nzNotFoundImage="simple"
+          [nzNotFoundContent]="'alert.setting.connect.label.empty' | i18n"
+        ></nz-empty>
+        <nz-list nzBordered *ngIf="monitorDataByLabel.length > 0">
           <div class="scroll-container">
             <nz-list-item *ngFor="let item of monitorDataByLabel">
               <span nz-typography>{{ item.title }}</span>
-              <span><nz-tag *ngFor="let label of item.labels">{{ label }}</nz-tag></span>
+              <span
+                ><nz-tag *ngFor="let label of item.labels">{{ label }}</nz-tag></span
+              >
             </nz-list-item>
           </div>
         </nz-list>
-        }
       </div>
-    
     </nz-card>
   </div>
 </nz-modal>

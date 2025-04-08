@@ -949,16 +949,15 @@ export class AlertSettingComponent implements OnInit {
   filteredTransferData: TransferItem[] = [];
   transferData: TransferItem[] = [];
   selectedMonitorIds = new Set<number>();
-  leftMonitorLabels: Set<string> = new Set(); // 左边所有可用的标签
-  rightMonitorLabels: Set<string> = new Set(); // 右边所有可用的标签
-  leftFilterLabels: string[] = []; // 左边用于筛选的标签
-  rightFilterLabels: string[] = []; // 右边用于筛选的标签
+  leftMonitorLabels: Set<string> = new Set(); // All available labels on the left side
+  rightMonitorLabels: Set<string> = new Set(); // All available labels on the right side
+  leftFilterLabels: string[] = []; // Labels used for filtering on the left side
+  rightFilterLabels: string[] = []; // Labels used for filtering on the right side
   labelInputVisible = false;
-  selectedLabels: Set<string> = new Set(); // 选中的标签
+  selectedLabels: Set<string> = new Set(); // Selected labels
   inputLabelValue = '';
   labelInputElement!: ElementRef<HTMLInputElement>;
   monitorDataByLabel: any[] = [];
-
 
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
   onConnectModalCancel() {
@@ -1019,16 +1018,14 @@ export class AlertSettingComponent implements OnInit {
   }
 
   showMonitorByLabel(): void {
-    const monitorsByLabel = this.transferData.filter(item => 
-      item.labels.some((label: string) => this.selectedLabels.has(label))
-    );
+    const monitorsByLabel = this.transferData.filter(item => item.labels.some((label: string) => this.selectedLabels.has(label)));
     this.monitorDataByLabel = monitorsByLabel.map(item => {
       return {
         key: item.key,
         title: item.title,
         description: item.description,
         labels: item.labels
-      }
+      };
     });
   }
   // end -- associate alert definition and monitoring model
@@ -1194,7 +1191,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   // Parse label from expression
-  private parseLabelFromExpr(expr: string){
+  private parseLabelFromExpr(expr: string) {
     const labelPattern = /equals\(__labels__,\s*"([^"]+)"\)/g;
     let match;
     this.selectedLabels.clear();
@@ -1254,7 +1251,7 @@ export class AlertSettingComponent implements OnInit {
     if (value) {
       this.filteredTransferData = this.transferData.filter(item => {
         if (item.direction !== direction) {
-          // 若不是当前方向，则不进行过滤
+          // If not the current direction, skip filtering
           return true;
         }
         const labelSet = new Set(item.labels);
@@ -1270,7 +1267,7 @@ export class AlertSettingComponent implements OnInit {
     if (filterLabels.length) {
       this.filteredTransferData = this.transferData.filter(item => {
         if (item.direction !== direction) {
-          // 若不是当前方向，则不进行过滤
+          // If not the current direction, skip filtering
           return true;
         }
         const labelSet = new Set(item.labels);
@@ -1282,7 +1279,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   updateMonitorLabel() {
-    // 提取所有标签
+    // Extract all labels
     this.leftMonitorLabels.clear();
     this.rightMonitorLabels.clear();
     this.transferData.forEach(item => {
