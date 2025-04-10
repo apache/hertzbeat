@@ -7,7 +7,6 @@ keywords: [ Open Source Monitoring System, Alert Silence ]
 
 > The alert silence management allows you to configure silence policies to suppress alert notifications during specified time periods, such as during system maintenance or when you don’t want to be disturbed by alerts at night or on weekends. Alert silence rules support both one-time and periodic time periods, and can match specific alerts using labels and alert levels.
 
-
 ## One-Time Time Period Silence Configuration
 
 - Silence Strategy Name: A unique name to identify the silence policy;
