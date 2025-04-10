@@ -47,7 +47,7 @@ public class MetricsDataQueryController {
     private MetricsDataQueryService queryService;
     
 
-    @GetMapping("/api/warehouse/query")
+    //    @GetMapping("/api/warehouse/query")
     @Operation(summary = "Query Real Time Metrics Data")
     public ResponseEntity<Message<List<MetricQueryData>>> queryMetricsData(
             @Parameter(description = "Query PromQL expr list", example = "cpu")

@@ -18,11 +18,14 @@
 package org.apache.hertzbeat.collector.collect.http;
 
 import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.StringReader;
 import java.net.ConnectException;
@@ -34,9 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.net.ssl.SSLException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,13 +45,14 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
 import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
-import org.apache.hertzbeat.collector.collect.http.promethus.exporter.ExporterParser;
-import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFamily;
+import org.apache.hertzbeat.collector.collect.prometheus.parser.MetricFamily;
+import org.apache.hertzbeat.collector.collect.prometheus.parser.OnlineParser;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
@@ -103,10 +105,13 @@ import java.util.Collections;
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
-    private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();
-    private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
-            HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
-            HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
+    private final Set<Integer> defaultSuccessStatusCodes = Set.of(
+            HttpStatus.SC_OK,
+            HttpStatus.SC_CREATED,
+            HttpStatus.SC_ACCEPTED,
+            HttpStatus.SC_MULTIPLE_CHOICES,
+            HttpStatus.SC_MOVED_PERMANENTLY,
+            HttpStatus.SC_MOVED_TEMPORARILY);
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -127,7 +132,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
             httpProtocol.setSuccessCodes(List.of(HttpStatus.SC_OK + ""));
         }
-        
+
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
@@ -139,10 +144,11 @@ public class HttpCollectImpl extends AbstractCollect {
                 builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
-            // todo This code converts an InputStream directly to a String. For large data in Prometheus exporters,
-            // this could create large objects, potentially impacting JVM memory space significantly.
-            // Option 1: Parse using InputStream, but this requires significant code changes;
-            // Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
+            /*
+             this could create large objects, potentially impacting JVM memory space significantly.
+             Option 1: Parse using InputStream, but this requires significant code changes;
+             Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
+             */
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             if (!StringUtils.hasText(resp)) {
                 log.info("http response entity is empty, status: {}.", statusCode);
@@ -156,7 +162,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     case DispatchConstants.PARSE_PROM_QL ->
                             parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     case DispatchConstants.PARSE_PROMETHEUS ->
-                            parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
+                            parseResponseByPrometheusExporter(response.getEntity().getContent(), metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_XML_PATH ->
                             parseResponseByXmlPath(resp, metrics, builder, responseTime);
                     case DispatchConstants.PARSE_WEBSITE ->
@@ -594,36 +600,22 @@ public class HttpCollectImpl extends AbstractCollect {
         prometheusParser.handle(resp, aliasFields, http, builder);
     }
 
-    private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
-                                                   CollectRep.MetricsData.Builder builder) {
-        if (!EXPORTER_PARSER_TABLE.containsKey(builder.getId())) {
-            EXPORTER_PARSER_TABLE.put(builder.getId(), new ExporterParser());
+    private void parseResponseByPrometheusExporter(InputStream content, List<String> aliasFields, CollectRep.MetricsData.Builder builder) throws IOException {
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(content);
+        if (metricFamilyMap == null || metricFamilyMap.isEmpty()) {
+            return;
         }
-        ExporterParser parser = EXPORTER_PARSER_TABLE.get(builder.getId());
-        Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
         String metrics = builder.getMetrics();
         if (metricFamilyMap.containsKey(metrics)) {
             MetricFamily metricFamily = metricFamilyMap.get(metrics);
             for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
-                Map<String, String> labelMap = metric.getLabelPair()
+                Map<String, String> labelMap = metric.getLabels()
                         .stream()
                         .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : aliasFields) {
                     if ("value".equals(aliasField)) {
-                        if (metric.getCounter() != null) {
-                            valueRowBuilder.addColumn(String.valueOf(metric.getCounter().getValue()));
-                        } else if (metric.getGauge() != null) {
-                            valueRowBuilder.addColumn(String.valueOf(metric.getGauge().getValue()));
-                        } else if (metric.getUntyped() != null) {
-                            valueRowBuilder.addColumn(String.valueOf(metric.getUntyped().getValue()));
-                        } else if (metric.getInfo() != null) {
-                            valueRowBuilder.addColumn(String.valueOf(metric.getInfo().getValue()));
-                        } else if (metric.getSummary() != null) {
-                            valueRowBuilder.addColumn(String.valueOf(metric.getSummary().getValue()));
-                        } else if (metric.getHistogram() != null) {
-                            valueRowBuilder.addColumn(String.valueOf(metric.getHistogram().getValue()));
-                        }
+                        valueRowBuilder.addColumn(String.valueOf(metric.getValue()));
                     } else {
                         String columnValue = labelMap.get(aliasField);
                         valueRowBuilder.addColumn(columnValue == null ? CommonConstants.NULL_VALUE : columnValue);

@@ -15,20 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.db;
-
-import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
-import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
-import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
+package org.apache.hertzbeat.warehouse.service;
 
 import java.util.List;
-import java.util.Map;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 
 /**
- * query executor interface
+ * metrics data query service
  */
-public interface QueryExecutor {
-    DatasourceQueryData query(DatasourceQuery datasourceQuery);
+public interface DatasourceQueryService {
 
-    String support();
+    /**
+     * Query metrics data
+     * @param queries query expr
+     * @return data
+     */
+    List<DatasourceQueryData> query(List<DatasourceQuery> queries);
 }

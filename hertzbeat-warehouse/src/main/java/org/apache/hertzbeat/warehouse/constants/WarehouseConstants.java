@@ -60,4 +60,8 @@ public interface WarehouseConstants {
 
     String SQL = "sql";
 
+    String RANGE = "range";
+
+    String INSTANT = "instant";
+
 }
