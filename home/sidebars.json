@@ -237,7 +237,6 @@
           "label": "reduce",
           "items": ["help/alarm_group","help/alarm_inhibit"]
         },
-        "help/alarm_silence",
         {
           "type": "category",
           "label": "notice",
