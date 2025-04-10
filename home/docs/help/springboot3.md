@@ -28,7 +28,7 @@ management:
     web:
       exposure:
         include: '*'
-    enabled-by-default: on
+    enabled-by-default: true
 ```
 
 *Note: If your project also introduces authentication related dependencies, such as springboot security, the interfaces exposed by SpringBoot Actor may be intercepted. In this case, you need to manually release these interfaces. Taking springboot security as an example, you should add the following code to the Security Configuration class:*
