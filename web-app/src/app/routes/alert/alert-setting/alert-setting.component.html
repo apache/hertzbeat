@@ -586,40 +586,111 @@
   nzWidth="60%"
   [nzOkLoading]="isConnectModalOkLoading"
 >
-  <nz-transfer
-    *nzModalContent
-    [nzDataSource]="transferData"
-    nzShowSearch="true"
-    nzShowSelectAll="false"
-    [nzRenderList]="[renderList, renderList]"
-    (nzChange)="change($event)"
-    style="overflow-x: scroll"
-  >
-    <ng-template
-      #renderList
-      let-items
-      let-direction="direction"
-      let-stat="stat"
-      let-onItemSelectAll="onItemSelectAll"
-      let-onItemSelect="onItemSelect"
-    >
-      <nz-table #t [nzData]="$asTransferItems(items)" nzSize="small">
-        <thead>
-          <tr>
-            <th [nzChecked]="stat.checkAll" [nzIndeterminate]="stat.checkHalf" (nzCheckedChange)="onItemSelectAll($event)"></th>
-            <th *ngIf="direction == 'left'">{{ 'alert.setting.connect.left' | i18n }}</th>
-            <th *ngIf="direction == 'right'">{{ 'alert.setting.connect.right' | i18n }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let data of t.data" (click)="onItemSelect(data)">
-            <td [nzChecked]="!!data.checked" (nzCheckedChange)="onItemSelect(data)"></td>
-            <td>{{ data.title }}</td>
-          </tr>
-        </tbody>
-      </nz-table>
-    </ng-template>
-  </nz-transfer>
+  <div *nzModalContent>
+    <nz-card [nzTitle]="'alert.setting.connect.instance' | i18n">
+      <nz-transfer
+        [nzDataSource]="filteredTransferData"
+        nzShowSelectAll="false"
+        [nzRenderList]="[renderList, renderList]"
+        (nzChange)="change($event)"
+        style="overflow-x: scroll"
+      >
+        <ng-template
+          #renderList
+          let-items
+          let-direction="direction"
+          let-stat="stat"
+          let-onItemSelectAll="onItemSelectAll"
+          let-onItemSelect="onItemSelect"
+        >
+          <div>
+            <div class="filter-container">
+              <input
+                type="text"
+                nz-input
+                [placeholder]="'alert.setting.filter.name' | i18n"
+                [ngModel]="getSearchValue(direction)"
+                (ngModelChange)="onSearchValueChange($event, direction)"
+                style="width: 94%"
+              />
+            </div>
+            <div class="filter-container">
+              <nz-select
+                [ngModel]="getFilterLabels(direction)"
+                (ngModelChange)="onFilterLabelsChange($event, direction)"
+                name="groupLabels"
+                nzMode="tags"
+                [nzTokenSeparators]="[',']"
+                (keydown.enter)="$event.preventDefault()"
+                nzAllowClear
+                [nzPlaceHolder]="'alert.setting.filter.labels' | i18n"
+                style="width: 94%"
+              >
+                <nz-option *ngFor="let label of getMonitorLabels(direction)" [nzLabel]="label" [nzValue]="label"></nz-option>
+              </nz-select>
+            </div>
+          </div>
+
+          <nz-table #t [nzData]="$asTransferItems(items)" nzSize="small">
+            <thead>
+              <tr>
+                <th [nzChecked]="stat.checkAll" [nzIndeterminate]="stat.checkHalf" (nzCheckedChange)="onItemSelectAll($event)"></th>
+                <th *ngIf="direction == 'left'">{{ 'alert.setting.connect.left' | i18n }}</th>
+                <th *ngIf="direction == 'right'">{{ 'alert.setting.connect.right' | i18n }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let data of t.data" (click)="onItemSelect(data)">
+                <td [nzChecked]="!!data.checked" (nzCheckedChange)="onItemSelect(data)"></td>
+                <td>{{ data.title }}</td>
+              </tr>
+            </tbody>
+          </nz-table>
+        </ng-template>
+      </nz-transfer>
+    </nz-card>
+    <nz-card [nzTitle]="'alert.setting.connect.label' | i18n">
+      <div class="label-input-container">
+        @for (label of selectedLabels; track label) {
+        <nz-tag [nzMode]="'closeable'" [nzColor]="'geekblue'" (nzOnClose)="handleDeleteLabel(label)">
+          {{ label }}
+        </nz-tag>
+        }
+        <nz-tag *ngIf="!labelInputVisible" nzNoAnimation (click)="showLabelInput()">
+          <i nz-icon nzType="plus"></i>
+          {{ 'alert.setting.connect.label.input' | i18n }}
+        </nz-tag>
+        <input
+          *ngIf="labelInputVisible"
+          #labelInputElement
+          nz-input
+          nzSize="small"
+          type="text"
+          [(ngModel)]="inputLabelValue"
+          style="width: 78px"
+          (blur)="handleLabelInputConfirm()"
+          (keydown.enter)="handleLabelInputConfirm()"
+        />
+      </div>
+      <div>
+        <nz-empty
+          *ngIf="monitorDataByLabel.length <= 0"
+          nzNotFoundImage="simple"
+          [nzNotFoundContent]="'alert.setting.connect.label.empty' | i18n"
+        ></nz-empty>
+        <nz-list nzBordered *ngIf="monitorDataByLabel.length > 0">
+          <div class="scroll-container">
+            <nz-list-item *ngFor="let item of monitorDataByLabel">
+              <span nz-typography>{{ item.title }}</span>
+              <span
+                ><nz-tag *ngFor="let label of item.labels">{{ label }}</nz-tag></span
+              >
+            </nz-list-item>
+          </div>
+        </nz-list>
+      </div>
+    </nz-card>
+  </div>
 </nz-modal>
 
 <!-- export alert definitions pop-up box -->
