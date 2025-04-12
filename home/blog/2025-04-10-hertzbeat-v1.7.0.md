@@ -10,7 +10,7 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 
 Dear Community Members,
 
-We are thrilled to announce the official release of Apache Hertzbeat version 1.7.0!   
+We are thrilled to announce the official release of Apache Hertzbeat version 1.7.0!
 
 ## Downloads and Documentation
 
@@ -63,7 +63,6 @@ We are thrilled to announce the official release of Apache Hertzbeat version 1.7
 - **Updated Monitoring Metrics Documentation**: Updated documentation for multiple monitoring metrics, including Kafka, Linux processes, etc., improving the accuracy and completeness of the documentation.
 - **Updated Developer Documentation**: Added documentation for custom collector development, helping developers with secondary development.
 - **More Documentation Updates**
-
 
 ## Acknowledgements
 

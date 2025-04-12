@@ -12,7 +12,6 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 
 我们很高兴地宣布 Apache Hertzbeat 1.7.0 版本正式发布！
 
-
 ## Downloads and Documentation
 
 - **Apache Hertzbeat 1.7.0 Download Link**: <https://hertzbeat.apache.org/zh-cn/docs/download>
@@ -65,10 +64,9 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 - **更新开发者文档**：新增了自定义开发采集器的文档，方便开发者进行二次开发。
 - **更多的文档更新**
 
-
 ## Acknowledgements
 
-感谢以下社区成员的共同努力: 
+感谢以下社区成员的共同努力:
 
 > @ghyghoo8 @kerwin612 @pjfanning @helei1030 @shinestare @simonsigre @myangle1120 @MasamiYui @Craaaaazy77 @tomsun28 @Aias00 @zhangshenghang @wanhao23 @zqr10159 @LiuTianyou
 > @hasimmollah @lixiaobaivv @LL-LIN @JuJinPark @ponfee @starryCoder @NikhilMurugesan @leo-934 @Rancho-7 @MonsterChenzhuo @zuobiao-zhou @pwallk @bigcyy @ZY945 @sarthakeash
