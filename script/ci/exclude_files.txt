@@ -25,3 +25,5 @@
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/introduce.md
 ./home/docs/introduce.md
 ./home/docs/community/contact.md
+./home/i18n/zh-cn/docusaurus-plugin-content-blog/2024-06-15-hertzbeat-v1.6.0.md
+./home/blog/2024-06-15-hertzbeat-v1.6.0.md
