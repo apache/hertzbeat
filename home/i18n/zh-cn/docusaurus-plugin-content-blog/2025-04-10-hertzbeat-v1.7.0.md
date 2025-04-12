@@ -75,6 +75,8 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 > @All-The-Best-for @TJxiaobao @yyahang @yunfan24 @a-little-fool @yasminvo @Yanshuming1 @ayu-v0 @jonasHanhan @Calvin979 @Suvrat1629 @Vedant7789 @notbugggg @lctking @po-168 @doveLin0818
 
 ## What's Changed
+
+```markdown
 * [doc](download): update for v1.6.1 release by @zqr10159 in https://github.com/apache/hertzbeat/pull/2794
 * [Doc] improve website by @zhangshenghang in https://github.com/apache/hertzbeat/pull/2795
 * [doc] update deploy doc by @tomsun28 in https://github.com/apache/hertzbeat/pull/2796
@@ -288,6 +290,7 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 * [bugfix] fix bind Labels are not updated when the Alarm Severity switches by @bigcyy in https://github.com/apache/hertzbeat/pull/3170
 * [improve] update git archive export ignore by @tomsun28 in https://github.com/apache/hertzbeat/pull/3172
 * [improve] update notice copyright years by @tomsun28 in https://github.com/apache/hertzbeat/pull/3171
+```
 
 ## Apache Hertzbeat
 
