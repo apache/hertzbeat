@@ -25,9 +25,11 @@ import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
-import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.INSTANT;
+import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL;
+import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.RANGE;
 import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
@@ -45,8 +47,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.*;
 
 /**
  * abstract class for promql query executor
@@ -77,11 +77,12 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
     /**
      * record class for promql http connection
      */
-    protected record HttpPromqlProperties (
-        String url,
-        String username,
-        String password
-    ){}
+    protected record HttpPromqlProperties(
+            String url,
+            String username,
+            String password
+    ) {
+    }
 
     protected List<Map<String, Object>> http_promql(Map<String, Object> params) {
         // http run the promql query
@@ -94,10 +95,10 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                     && StringUtils.hasText(httpPromqlProperties.password())) {
                 String authStr = httpPromqlProperties.username() + ":" + httpPromqlProperties.password();
                 String encodedAuth = Base64Util.encode(authStr);
-                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
+                headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            
+
             UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url);
             for (Map.Entry<String, Object> entry : params.entrySet()) {
                 uriComponentsBuilder.queryParam(entry.getKey(), entry.getValue());
@@ -147,7 +148,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                     && StringUtils.hasText(httpPromqlProperties.password())) {
                 String authStr = httpPromqlProperties.username() + ":" + httpPromqlProperties.password();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + " " + encodedAuth);
+                headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri;
@@ -181,7 +182,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                                                 .type("time").build(),
                                         DatasourceQueryData.MetricField.builder().name(INNER_KEY_VALUE)
                                                 .type("number").build()
-                                )).labels(content.getMetric());// todo: meta?
+                                )).labels(content.getMetric());
                         // todo: value or values
                         List<Object[]> values = content.getValues();
                         values.forEach(objects -> {
@@ -209,6 +210,11 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
     @Override
     public String support() {
         return supportQueryLanguage;
+    }
+    
+    @Override
+    public boolean support(String queryLanguage) {
+        return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(supportQueryLanguage);
     }
 
 }

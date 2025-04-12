@@ -76,7 +76,7 @@ public class VictoriaMetricsDataQuery implements DatasourceQueryService {
     }
 
     @Override
-    public List<DatasourceQueryData> query(List<DatasourceQuery> queries, long start, long end) {
+    public List<DatasourceQueryData> query(List<DatasourceQuery> queries) {
         if (queries == null || queries.isEmpty()) {
             return List.of();
         }
@@ -97,8 +97,8 @@ public class VictoriaMetricsDataQuery implements DatasourceQueryService {
                 HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
                 URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                         .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode(query.getExpr(), StandardCharsets.UTF_8))
-                        .queryParam("start", start)
-                        .queryParam("end", end)
+                        .queryParam("start", query.getStart())
+                        .queryParam("end", query.getEnd())
                         .queryParam("step", query.getStep())
                         .build(true).toUri();
                 ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,

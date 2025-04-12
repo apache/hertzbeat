@@ -31,7 +31,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -48,8 +47,7 @@ public class DataQueryController {
     @PostMapping("/api/warehouse/query")
     @Operation(summary = "Warehouse Query")
     public ResponseEntity<Message<List<DatasourceQueryData>>> query(
-            @Parameter(description = "Query expr list", example = "cpu")
-            @RequestBody List<DatasourceQuery> queries) {
+            @Parameter(description = "Query Expr") @RequestBody List<DatasourceQuery> queries) {
         return ResponseEntity.ok(Message.success(datasourceQueryService.query(queries)));
     }
 }

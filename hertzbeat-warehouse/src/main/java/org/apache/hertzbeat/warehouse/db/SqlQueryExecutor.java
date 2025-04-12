@@ -22,12 +22,9 @@ package org.apache.hertzbeat.warehouse.db;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
-import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.SQL;
+import org.springframework.util.StringUtils;
 
 /**
  * abstract class for sql query executor
@@ -48,6 +45,11 @@ public abstract class SqlQueryExecutor implements QueryExecutor {
     @Override
     public String support() {
         return supportQueryLanguage;
+    }
+
+    @Override
+    public boolean support(String queryLanguage) {
+        return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(supportQueryLanguage);
     }
 
 }
