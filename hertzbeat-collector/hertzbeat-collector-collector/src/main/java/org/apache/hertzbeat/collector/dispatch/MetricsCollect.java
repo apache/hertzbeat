@@ -302,7 +302,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                             value = String.valueOf(objValue);
                         }
                     } catch (Exception e) {
-                        log.info("[calculates execute warning] {}.", e.getMessage());
+                        log.warn("[calculates execute warning, use original value.] {}", e.getMessage());
                         value = Optional.ofNullable(fieldValueMap.get(expression.getSourceText()))
                                 .map(String::valueOf)
                                 .orElse(null);

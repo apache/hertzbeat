@@ -15,19 +15,60 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.push.dao;
+package org.apache.hertzbeat.common.entity.dto;
 
-import org.apache.hertzbeat.common.entity.push.PushMetrics;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import lombok.Data;
+import lombok.ToString;
 
 /**
- * push metrics dao
+ * metric family
  */
-public interface PushMetricsDao extends JpaRepository<PushMetrics, Long> {
+@Data
+@ToString
+public class MetricFamily {
     
-    PushMetrics findFirstByMonitorIdOrderByTimeDesc(Long monitorId);
+    /**
+     * metric name
+     */
+    private String name;
 
-    @Transactional(rollbackFor = Exception.class)
-    void deleteAllByTimeBefore(Long time);
+    /**
+     * metrics
+     */
+    private List<Metric> metricList;
+
+    /**
+     * Metric
+     */
+    @Data
+    public static class Metric {
+
+        /**
+         * labels
+         */
+        private List<Label> labels;
+
+        /**
+         * value
+         */
+        private double value;
+    }
+
+    /**
+     * Label
+     */
+    @Data
+    public static class Label {
+
+        /**
+         * name
+         */
+        private String name;
+
+        /**
+         * value
+         */
+        private String value;
+    }
 }

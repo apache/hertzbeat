@@ -15,17 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.push.service;
+package org.apache.hertzbeat.warehouse.service;
 
-import org.apache.hertzbeat.common.entity.push.PushMetricsDto;
-import org.springframework.stereotype.Service;
+import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
+
+import java.util.List;
 
 /**
- * push metrics
+ * metrics data query service
  */
-@Service
-public interface PushService {
-    void pushMetricsData(PushMetricsDto pushMetricsData);
+public interface MetricsDataQueryService {
+    
+    /**
+     * Query metrics data
+     * @param queries query expr
+     * @param time time
+     * @return data
+     */
+    List<MetricQueryData> query(List<String> queries, String queryType, long time);
 
-    PushMetricsDto getPushMetricData(Long monitorId, Long time);
+    /**
+     * Query metrics data range
+     * @param queries query expr
+     * @param start start
+     * @param end end
+     * @param step step
+     * @return data
+     */
+    List<MetricQueryData> queryRange(List<String> queries, String queryType, long start, long end, String step);
 }

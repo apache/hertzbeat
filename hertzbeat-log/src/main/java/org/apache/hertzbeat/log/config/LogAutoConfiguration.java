@@ -15,60 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.prometheus.parser;
+package org.apache.hertzbeat.log.config;
 
-import java.util.List;
-import lombok.Data;
-import lombok.ToString;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
- * metric family
+ * Log auto configuration.
  */
-@Data
-@ToString
-public class MetricFamily {
-    
-    /**
-     * metric name
-     */
-    private String name;
-
-    /**
-     * metrics
-     */
-    private List<Metric> metricList;
-
-    /**
-     * Metric
-     */
-    @Data
-    public static class Metric {
-
-        /**
-         * labels
-         */
-        private List<Label> labels;
-
-        /**
-         * value
-         */
-        private double value;
-    }
-
-    /**
-     * Label
-     */
-    @Data
-    public static class Label {
-
-        /**
-         * name
-         */
-        private String name;
-
-        /**
-         * value
-         */
-        private String value;
-    }
+@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
+		+ SignConstants.DOT
+		+ ConfigConstants.FunctionModuleConstants.LOG
+)
+@EnableConfigurationProperties(GreptimeProperties.class)
+public class LogAutoConfiguration {
 }
