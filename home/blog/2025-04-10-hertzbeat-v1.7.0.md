@@ -14,8 +14,8 @@ We are thrilled to announce the official release of Apache Hertzbeat version 1.7
 
 ## Downloads and Documentation
 
-- **Apache Hertzbeat 1.7.0 Download Link**: <https://hertzbeat.apache.org/zh-cn/docs/download>
-- **Apache Hertzbeat Documentation**: <https://hertzbeat.apache.org/zh-cn/docs/>
+- **Apache Hertzbeat 1.7.0 Download Link**: <https://hertzbeat.apache.org/docs/download>
+- **Apache Hertzbeat Documentation**: <https://hertzbeat.apache.org/docs/>
 
 ## Major Updates
 
@@ -303,7 +303,7 @@ Special thanks to the following community members for their collaborative effort
 
 **Apache Hertzbeat Download Link:**
 
-<https://hertzbeat.apache.org/zh-cn/docs/download>
+<https://hertzbeat.apache.org/docs/download>
 
 **Apache Hertzbeat Docker Images:**
 
@@ -314,4 +314,4 @@ Apache Hertzbeat provides Docker images for each release, available on Docker Hu
 
 **How to Contribute to the Apache Hertzbeat Open Source Community?**
 
-<https://hertzbeat.apache.org/zh-cn/docs/community/contribution>
+<https://hertzbeat.apache.org/docs/community/contribution>
