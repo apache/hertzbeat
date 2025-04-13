@@ -427,6 +427,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         if (jobId == null) {
             return;
         }
+        jobContentCache.remove(jobId);
         for (ConsistentHash.Node node : consistentHash.getAllNodes().values()) {
             AssignJobs assignJobs = node.getAssignJobs();
             if (assignJobs.getPinnedJobs().remove(jobId)
