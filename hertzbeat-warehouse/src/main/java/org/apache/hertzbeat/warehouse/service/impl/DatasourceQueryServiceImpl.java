@@ -38,7 +38,7 @@ public class DatasourceQueryServiceImpl implements DatasourceQueryService {
     Map<String, QueryExecutor> executorMap;
 
     DatasourceQueryServiceImpl(List<QueryExecutor> executors) {
-        executorMap = executors.stream().collect(Collectors.toMap(QueryExecutor::support, executor -> executor));
+        executorMap = executors.stream().collect(Collectors.toMap(QueryExecutor::getDatasource, executor -> executor));
     }
 
     @Override

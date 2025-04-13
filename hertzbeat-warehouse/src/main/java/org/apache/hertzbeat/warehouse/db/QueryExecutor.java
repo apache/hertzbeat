@@ -20,14 +20,20 @@ package org.apache.hertzbeat.warehouse.db;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
 import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * query executor interface
  */
 public interface QueryExecutor {
+
+    List<Map<String, Object>> execute(String query);
     
     DatasourceQueryData query(DatasourceQuery datasourceQuery);
 
-    String support();
-    
+//    String support();
+    String getDatasource();
+
     boolean support(String queryLanguage);
 }

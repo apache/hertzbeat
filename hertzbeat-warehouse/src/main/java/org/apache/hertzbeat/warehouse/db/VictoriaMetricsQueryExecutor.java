@@ -33,13 +33,20 @@ import org.springframework.web.client.RestTemplate;
 public class VictoriaMetricsQueryExecutor extends PromqlQueryExecutor {
 
     private static final String QUERY_PATH = "/api/v1/query";
+
+    private static final String Datasource = "VictoriaMetrics";
     
     private final VictoriaMetricsProperties victoriaMetricsProp;
 
     public VictoriaMetricsQueryExecutor(VictoriaMetricsProperties victoriaMetricsProp, RestTemplate restTemplate) {
-        super(restTemplate, new HttpPromqlProperties(victoriaMetricsProp.url() + QUERY_PATH,
+        super(restTemplate, new HttpPromqlProperties(victoriaMetricsProp.url(),
                 victoriaMetricsProp.username(), victoriaMetricsProp.password()));
         this.victoriaMetricsProp = victoriaMetricsProp;
+    }
+
+    @Override
+    public String getDatasource() {
+        return Datasource;
     }
 
 }

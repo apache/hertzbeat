@@ -26,6 +26,9 @@ import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.SQL;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * abstract class for sql query executor
  */
@@ -40,12 +43,19 @@ public abstract class SqlQueryExecutor implements QueryExecutor {
     protected record ConnectorSqlProperties () {}
 
     @Override
-    public abstract DatasourceQueryData query(DatasourceQuery datasourceQuery);
+    public List<Map<String, Object>> execute(String query) {
+        return null;
+    }
 
     @Override
-    public String support() {
-        return supportQueryLanguage;
+    public DatasourceQueryData query(DatasourceQuery datasourceQuery) {
+        return null;
     }
+
+//    @Override
+//    public String support() {
+//        return supportQueryLanguage;
+//    }
 
     @Override
     public boolean support(String queryLanguage) {

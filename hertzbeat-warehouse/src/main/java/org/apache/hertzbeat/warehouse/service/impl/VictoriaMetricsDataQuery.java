@@ -49,7 +49,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics", name = "enabled", havingValue = "true")
 @Slf4j
-public class VictoriaMetricsDataQuery implements DatasourceQueryService {
+public class VictoriaMetricsDataQuery {
     
     /**
      * <a href="https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-export-data-in-json-line-format">
@@ -75,7 +75,6 @@ public class VictoriaMetricsDataQuery implements DatasourceQueryService {
         victoriaMetricsProp = victoriaMetricsProperties;
     }
 
-    @Override
     public List<DatasourceQueryData> query(List<DatasourceQuery> queries) {
         if (queries == null || queries.isEmpty()) {
             return List.of();

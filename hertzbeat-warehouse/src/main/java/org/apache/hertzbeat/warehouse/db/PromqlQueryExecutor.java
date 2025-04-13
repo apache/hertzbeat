@@ -84,8 +84,8 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
     ) {
     }
 
-    protected List<Map<String, Object>> http_promql(Map<String, Object> params) {
-        // http run the promql query
+    @Override
+    public List<Map<String, Object>> execute(String queryString) {
         List<Map<String, Object>> results = new LinkedList<>();
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -100,9 +100,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
             UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url);
-            for (Map.Entry<String, Object> entry : params.entrySet()) {
-                uriComponentsBuilder.queryParam(entry.getKey(), entry.getValue());
-            }
+            uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
             URI uri = uriComponentsBuilder.build(true).toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, PromQlQueryContent.class);
@@ -154,14 +152,14 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             URI uri;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
                 uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_RANGE_PATH)
-                        .queryParam(URLEncoder.encode(HTTP_QUERY_PARAM, StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
+                        .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .queryParam(HTTP_START_PARAM, datasourceQuery.getStart())
                         .queryParam(HTTP_END_PARAM, datasourceQuery.getEnd())
                         .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
                         .build().toUri();
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
                 uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_PATH)
-                        .queryParam(URLEncoder.encode(HTTP_QUERY_PARAM, StandardCharsets.UTF_8), URLEncoder.encode(datasourceQuery.getExpr(), StandardCharsets.UTF_8))
+                        .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .build().toUri();
             } else {
                 throw new IllegalArgumentException(String.format("no such time type for query id {}.", datasourceQuery.getRefId()));
@@ -183,8 +181,13 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                                         DatasourceQueryData.MetricField.builder().name(INNER_KEY_VALUE)
                                                 .type("number").build()
                                 )).labels(content.getMetric());
-                        // todo: value or values
-                        List<Object[]> values = content.getValues();
+                        List<Object[]> values;
+                        if (datasourceQuery.getTimeType().equals(RANGE)) {
+                            values = content.getValues();
+                        }
+                        else {
+                            values = List.<Object[]>of(content.getValue());
+                        }
                         values.forEach(objects -> {
                             objects[0] = TimePeriodUtil.normalizeToMilliseconds(objects[0]);
                         });
@@ -207,10 +210,10 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         return queryDataBuilder.build();
     }
 
-    @Override
-    public String support() {
-        return supportQueryLanguage;
-    }
+//    @Override
+//    public String support() {
+//        return supportQueryLanguage;
+//    }
     
     @Override
     public boolean support(String queryLanguage) {
