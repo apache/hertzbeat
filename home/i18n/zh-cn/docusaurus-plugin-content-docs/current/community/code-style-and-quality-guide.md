@@ -64,8 +64,8 @@ limitations under the License.
 ### 2.2 文档样式检查
 
 1. 安装`markdownlint-cli2`，运行`npm install markdownlint-cli2 --global`
-2. 在项目中运行`markdownlint  "home/**/*.md"`，会执行Markdown文件格式自动检测。
-3. 在项目中运行`markdownlint --fix "home/**/*.md"`，会执行Markdown文件格式自动格化，以确保所有文档都符合规范。
+2. 在项目中运行`markdownlint-cli2  "home/**/*.md"`，会执行Markdown文件格式自动检测。
+3. 在项目中运行`markdownlint-cli2 --fix "home/**/*.md"`，会执行Markdown文件格式自动格式化，以确保所有文档都符合规范。
 
 > 提示: 修复只能修复部分问题，根据检查后的错误信息，手动调整。
 
