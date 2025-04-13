@@ -142,3 +142,14 @@ article thead {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: left;
 }
+
+@media (min-width: 1440px) {
+    .container {
+        max-width: inherit;
+        margin-left: 20px;
+    }   
+}
+.container {
+    max-width: inherit;
+    margin-left: 20px;
+}  
