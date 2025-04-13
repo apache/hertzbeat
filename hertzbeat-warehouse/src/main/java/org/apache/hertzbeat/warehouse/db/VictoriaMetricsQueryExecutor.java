@@ -31,9 +31,6 @@ import org.springframework.web.client.RestTemplate;
 @ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics", name = "enabled", havingValue = "true")
 @Slf4j
 public class VictoriaMetricsQueryExecutor extends PromqlQueryExecutor {
-
-    private static final String QUERY_PATH = "/api/v1/query";
-
     private static final String Datasource = "VictoriaMetrics";
     
     private final VictoriaMetricsProperties victoriaMetricsProp;
