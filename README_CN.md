@@ -518,6 +518,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/PengJingzhao"><img src="https://avatars.githubusercontent.com/u/97368949?v=4?s=100" width="100px;" alt="彭镜肇"/><br /><sub><b>彭镜肇</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=PengJingzhao" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gagaradio"><img src="https://avatars.githubusercontent.com/u/18532370?v=4?s=100" width="100px;" alt="Walter Jia"/><br /><sub><b>Walter Jia</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=gagaradio" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/boyucjz"><img src="https://avatars.githubusercontent.com/u/18730041?v=4?s=100" width="100px;" alt="boyucjz"/><br /><sub><b>boyucjz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=boyucjz" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Cyanty"><img src="https://avatars.githubusercontent.com/u/153884653?v=4?s=100" width="100px;" alt="Cyanty"/><br /><sub><b>Cyanty</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Cyanty" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
