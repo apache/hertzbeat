@@ -41,7 +41,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -209,11 +208,6 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         }
         return queryDataBuilder.build();
     }
-
-//    @Override
-//    public String support() {
-//        return supportQueryLanguage;
-//    }
     
     @Override
     public boolean support(String queryLanguage) {

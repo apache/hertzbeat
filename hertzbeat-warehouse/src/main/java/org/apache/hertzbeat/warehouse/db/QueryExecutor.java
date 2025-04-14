@@ -32,7 +32,6 @@ public interface QueryExecutor {
     
     DatasourceQueryData query(DatasourceQuery datasourceQuery);
 
-//    String support();
     String getDatasource();
 
     boolean support(String queryLanguage);

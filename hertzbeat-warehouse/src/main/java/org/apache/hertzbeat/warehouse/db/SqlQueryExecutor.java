@@ -52,11 +52,6 @@ public abstract class SqlQueryExecutor implements QueryExecutor {
         return null;
     }
 
-//    @Override
-//    public String support() {
-//        return supportQueryLanguage;
-//    }
-
     @Override
     public boolean support(String queryLanguage) {
         return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(supportQueryLanguage);
