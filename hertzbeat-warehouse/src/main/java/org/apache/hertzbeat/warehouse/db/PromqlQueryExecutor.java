@@ -41,6 +41,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -98,9 +99,9 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
-            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url);
+            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url + QUERY_PATH);
             uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
-            URI uri = uriComponentsBuilder.build(true).toUri();
+            URI uri = uriComponentsBuilder.build().toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
