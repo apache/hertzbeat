@@ -26,6 +26,7 @@ import { NzCascaderModule } from 'ng-zorro-antd/cascader';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
@@ -76,7 +77,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzBadgeModule,
     NzUploadModule,
     QueryBuilderModule,
-    NzPaginationModule
+    NzPaginationModule,
+    NzEmptyModule
   ],
   declarations: COMPONENTS
 })

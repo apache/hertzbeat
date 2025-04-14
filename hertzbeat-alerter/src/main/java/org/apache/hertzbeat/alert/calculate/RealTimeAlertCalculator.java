@@ -17,11 +17,14 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
+
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,12 +65,14 @@ public class RealTimeAlertCalculator {
     private static final String KEY_PRIORITY = "__priority__";
     private static final String KEY_CODE = "__code__";
     private static final String KEY_AVAILABLE  = "__available__";
+    private static final String KEY_LABELS = "__labels__";
     private static final String UP = "up";
     private static final String DOWN = "down";
     private static final String KEY_ROW = "__row__";
 
     private static final Pattern APP_PATTERN = Pattern.compile("equals\\(__app__,\"([^\"]+)\"\\)");
     private static final Pattern AVAILABLE_PATTERN = Pattern.compile("equals\\(__available__,\"([^\"]+)\"\\)");
+    private static final Pattern LABEL_PATTERN = Pattern.compile("contains\\(__labels__,\\s*\"([^\"]+)\"\\)");
     private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\"(\\d+)\"\\)");
     private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
@@ -136,8 +141,8 @@ public class RealTimeAlertCalculator {
         Map<String, String> labels = metricsData.getLabels();
         Map<String, String> annotations = metricsData.getAnnotations();
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
-        // Filter thresholds by app, metrics and instance
-        thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance, priority);
+        // Filter thresholds by app, metrics, labels and instance
+        thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, labels, instance, priority);
         if (thresholds.isEmpty()) {
             return;
         }
@@ -149,6 +154,7 @@ public class RealTimeAlertCalculator {
         commonContext.put(KEY_PRIORITY, priority);
         commonContext.put(KEY_CODE, code);
         commonContext.put(KEY_METRICS, metrics);
+        commonContext.put(KEY_LABELS, String.join(",", kvLabelsToKvStringSet(labels)));
         if (priority == 0) {
             commonContext.put(KEY_AVAILABLE, metricsData.getCode() == CollectRep.Code.SUCCESS ? UP : DOWN);
         }
@@ -264,7 +270,7 @@ public class RealTimeAlertCalculator {
      * @param priority  Current priority
      * @return Filtered alert definitions
      */
-    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, String instance, int priority) {
+    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
         return thresholds.stream()
                 .filter(define -> {
                     if (StringUtils.isBlank(define.getExpr())) {
@@ -294,16 +300,26 @@ public class RealTimeAlertCalculator {
 
                     // Extract and check instance - optional with multiple values
                     Matcher instanceMatcher = INSTANCE_PATTERN.matcher(expr);
-                    // If no instance specified in expr, accept all instances
-                    if (!instanceMatcher.find()) {
+                    Matcher labelMatcher = LABEL_PATTERN.matcher(expr);
+                    // If no instance and instance labels specified in expr, accept all instances
+                    if (!instanceMatcher.find() && !labelMatcher.find()) {
                         return true;
                     }
                     
                     // Reset matcher to check all instances
                     instanceMatcher.reset();
+                    labelMatcher.reset();
                     // If instances specified, current instance must match one of them
                     while (instanceMatcher.find()) {
                         if (Objects.equals(instance, instanceMatcher.group(1))) {
+                            return true;
+                        }
+                    }
+                    // If instance labels specified, current instance must match one of them
+                    Set<String> labelKvStringSet = kvLabelsToKvStringSet(labels);
+                    while (labelMatcher.find()) {
+                        String label = labelMatcher.group(1);
+                        if (labelKvStringSet.contains(label)) {
                             return true;
                         }
                     }
@@ -416,5 +432,14 @@ public class RealTimeAlertCalculator {
         List<String> valueList = fingerPrints.values().stream().filter(Objects::nonNull).sorted().toList();
         return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
                 + Arrays.hashCode(valueList.toArray(new String[0]));
+    }
+
+    private Set<String> kvLabelsToKvStringSet(Map<String, String> labels) {
+        if (labels == null || labels.isEmpty()) {
+            return Collections.singleton("");
+        }
+        return labels.entrySet().stream()
+                .map(item -> item.getKey() + ":" + item.getValue())
+                .collect(Collectors.toSet());
     }
 }

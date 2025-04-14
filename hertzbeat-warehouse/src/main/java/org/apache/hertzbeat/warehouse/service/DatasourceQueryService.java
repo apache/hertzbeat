@@ -15,60 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.warehouse.service;
 
 import java.util.List;
-import lombok.Data;
-import lombok.ToString;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 
 /**
- * metric family
+ * metrics data query service
  */
-@Data
-@ToString
-public class MetricFamily {
-    
-    /**
-     * metric name
-     */
-    private String name;
+public interface DatasourceQueryService {
 
     /**
-     * metrics
+     * Query metrics data
+     * @param queries query expr
+     * @return data
      */
-    private List<Metric> metricList;
-
-    /**
-     * Metric
-     */
-    @Data
-    public static class Metric {
-
-        /**
-         * labels
-         */
-        private List<Label> labels;
-
-        /**
-         * value
-         */
-        private double value;
-    }
-
-    /**
-     * Label
-     */
-    @Data
-    public static class Label {
-
-        /**
-         * name
-         */
-        private String name;
-
-        /**
-         * value
-         */
-        private String value;
-    }
+    List<DatasourceQueryData> query(List<DatasourceQuery> queries);
 }
