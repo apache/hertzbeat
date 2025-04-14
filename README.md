@@ -516,6 +516,7 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sarthakeash"><img src="https://avatars.githubusercontent.com/u/74091160?v=4?s=100" width="100px;" alt="Sarthak Arora"/><br /><sub><b>Sarthak Arora</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=sarthakeash" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/PengJingzhao"><img src="https://avatars.githubusercontent.com/u/97368949?v=4?s=100" width="100px;" alt="彭镜肇"/><br /><sub><b>彭镜肇</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=PengJingzhao" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
