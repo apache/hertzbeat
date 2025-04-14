@@ -9,7 +9,7 @@ keywords: [Grafana, 历史图表]
 
 ### 前提条件
 
-- `Grafana`版本为8.1.0或以上。
+- 我们推荐使用最新的`Grafana`版本，早期的版本可能不支持暴露 api。
 - `Grafana`服务已经启动，并配置好了账号密码。
 - `HertzBeat`服务已经启动，并配置好了`VictoriaMetrics`时序数据库(注意: `VictoriaMetrics`数据源是必须的)。
 
@@ -22,6 +22,10 @@ keywords: [Grafana, 历史图表]
 参考: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>
 修改配置文件`grafana.ini`中的`allow_embedding = true`
 修改配置文件`grafana.ini`中的`[auth.anonymous]` 为 `true`
+或者通过`docker`运行`Grafana`,使用以下命令:
+
+```bash
+docker run -itd --name grafana -p 3000:3000 -e "GF_AUTH_PROXY_ENABLED=true" -e "GF_AUTH_ANONYMOUS_ENABLED=true" -e "GF_SECURITY_ALLOW_EMBEDDING=true" grafana/grafana:latest
 
 ```ini
 allow_embedding = true
