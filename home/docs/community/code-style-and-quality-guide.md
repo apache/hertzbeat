@@ -64,8 +64,8 @@ limitations under the License.
 ### 2.2 Document style check
 
 1. Install `markdownlint-cli2` and run `npm install markdownlint-cli2 --global`
-2. Run `markdownlint "home/**/*.md"` in the project to automatically detect the Markdown file format.
-3. Run `markdownlint --fix "home/**/*.md"` in the project to automatically format the Markdown file format to ensure that all documents meet the specifications.
+2. Run `markdownlint-cli2 "home/**/*.md"` in the project to automatically detect the Markdown file format.
+3. Run `markdownlint-cli2 --fix "home/**/*.md"` in the project to automatically format the Markdown file format to ensure that all documents meet the specifications.
 
 Error code description:
 

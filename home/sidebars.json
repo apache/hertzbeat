@@ -147,7 +147,9 @@
           "label": "server",
           "items": [
           "help/ipmi",
-          "help/hikvision_isapi"
+          "help/hikvision_isapi",
+          "help/dahua",
+          "help/uniview"
           ]
         },
         {
@@ -235,6 +237,7 @@
           "label": "reduce",
           "items": ["help/alarm_group","help/alarm_inhibit"]
         },
+        "help/alarm_silence",
         {
           "type": "category",
           "label": "notice",
