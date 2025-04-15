@@ -20,12 +20,14 @@
 package org.apache.hertzbeat.warehouse.db;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
+
+import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.SQL;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
-
-import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.SQL;
 
 /**
  * abstract class for sql query executor
@@ -40,28 +42,19 @@ public abstract class SqlQueryExecutor implements QueryExecutor {
      */
     protected record ConnectorSqlProperties () {}
 
-    protected abstract List<Map<String, Object>> do_sql(Map<String, Object> params);
-
-    public MetricQueryData convertToMetricQueryData(Object object) {
-        MetricQueryData metricQueryData = new MetricQueryData();
-        try {
-            List<Map<String, Object>> metrics = (List<Map<String, Object>>) object;
-            // todo
-        } catch (Exception e) {
-            log.error("converting to metric query data failed.");
-        }
-        return metricQueryData;
+    @Override
+    public List<Map<String, Object>> execute(String query) {
+        return null;
     }
 
-    public abstract List<Map<String, Object>> execute(String query);
+    @Override
+    public DatasourceQueryData query(DatasourceQuery datasourceQuery) {
+        return null;
+    }
 
-    public abstract List<Map<String, Object>> query(String query, long time);
-
-    public abstract List<Map<String, Object>> query_range(String query, long start, long end, String step);
-
-
-    public boolean support(String datasource) {
-        return supportQueryLanguage.equals(datasource);
+    @Override
+    public boolean support(String queryLanguage) {
+        return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(supportQueryLanguage);
     }
 
 }

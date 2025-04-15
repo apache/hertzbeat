@@ -40,6 +40,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,6 +72,11 @@ public class DashboardService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<?> createOrUpdateDashboard(String dashboardJson, Long monitorId) {
+        if (!grafanaProperties.enabled()) {
+            log.info("HertzBeat Grafana config not enabled");
+            throw new RuntimeException("HertzBeat Grafana config not enabled");
+        }
+
         String token = serviceAccountService.getToken();
         String url = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + CREATE_DASHBOARD_API;
 
@@ -103,6 +109,12 @@ public class DashboardService {
                 log.error("create dashboard error: {}", response.getStatusCode());
                 throw new RuntimeException("create dashboard error");
             }
+        } catch (HttpClientErrorException.Forbidden ex) {
+            log.error("Grafana Access denied to save dashboard", ex);
+            throw new RuntimeException("Grafana Access denied to save dashboard", ex);
+        } catch (HttpClientErrorException.NotFound ex){
+            log.error("Grafana Dashboard not found", ex);
+            throw new RuntimeException("Grafana Dashboard not found", ex);
         } catch (Exception ex) {
             log.error("create dashboard error", ex);
             throw new RuntimeException("create dashboard error", ex);

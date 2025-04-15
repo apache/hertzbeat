@@ -1,12 +1,11 @@
 @import '@delon/theme/index';
 @import '../../../../styles/theme.less';
 ::ng-deep {
-
   .row {
     margin-top: 6px;
 
     .ruleset {
-      border: 1px solid #CCC;
+      border: 1px solid #ccc;
     }
   }
 
@@ -20,14 +19,14 @@
   }
 
   .ruleset-invalid {
-    border: none!important;
+    border: none !important;
 
     .ruleset {
       border: 1px solid #ff4d4f !important;
     }
 
-    >p {
-      margin: 0!important;
+    > p {
+      margin: 0 !important;
       color: #ff4d4f !important;
     }
   }
@@ -44,7 +43,7 @@
     min-width: 300px;
     overflow-x: auto;
     padding: 6px 8px;
-    border: 1px solid #CCC;
+    border: 1px solid #ccc;
 
     .q-rule-content {
       flex: 1;
@@ -349,5 +348,20 @@
       width: 100%;
       min-width: auto;
     }
+  }
+
+  .filter-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .label-input-container {
+    margin-bottom: 10px;
+  }
+
+  .scroll-container {
+    height: 200px;
+    overflow-y: auto;
   }
 }

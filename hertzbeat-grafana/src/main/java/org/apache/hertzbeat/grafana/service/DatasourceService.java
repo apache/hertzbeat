@@ -61,6 +61,11 @@ public class DatasourceService {
      * Create a new datasource in Grafana.
      */
     public void existOrCreateDatasource(String token) {
+        if (!warehouseProperties.enabled()) {
+            log.info("HertzBeat VictoriaMetrics config not enabled");
+            return;
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);

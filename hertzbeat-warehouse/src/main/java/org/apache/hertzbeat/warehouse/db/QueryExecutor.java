@@ -17,7 +17,8 @@
 
 package org.apache.hertzbeat.warehouse.db;
 
-import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQuery;
+import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 
 import java.util.List;
 import java.util.Map;
@@ -27,13 +28,11 @@ import java.util.Map;
  */
 public interface QueryExecutor {
 
-    MetricQueryData convertToMetricQueryData(Object object);
-
     List<Map<String, Object>> execute(String query);
-
-    List<Map<String, Object>> query(String query, long time);
-
-    List<Map<String, Object>> query_range(String query, long start, long end, String step);
     
-    boolean support(String datasource);
+    DatasourceQueryData query(DatasourceQuery datasourceQuery);
+
+    String getDatasource();
+
+    boolean support(String queryLanguage);
 }
