@@ -253,7 +253,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\""
-                + "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
+                + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -347,7 +347,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\""
-                + "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
+                + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
