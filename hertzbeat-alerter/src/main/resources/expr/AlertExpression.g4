@@ -1,11 +1,15 @@
-grammar ThresholdExpression;
+grammar AlertExpression;
 
-// Parser rules
+expression
+    : expr EOF
+    ;
+
 expr
     : '(' expr ')'                       # ParenExpr
-    | left=expr op=('and' | 'or') right=expr   # LogicalExpr
+    | left=expr op=('>='|'<='|'>'|'<'|'=='|'!=') right=expr  # ComparisonExpr
+    | left=expr 'and' right=expr         # AndExpr
     | left=expr 'unless' right=expr      # UnlessExpr
-    | identifier op=('>' | '>=' | '<' | '<=' | '==' | '!=') number  # ComparisonExpr
+    | left=expr 'or' right=expr          # OrExpr
     | identifier                         # QueryExpr
     | number                             # LiteralExpr
     ;
