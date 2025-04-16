@@ -63,7 +63,6 @@ public class DataSourceServiceImpl implements DataSourceService {
             .recordStats()
             .build();
 
-
     @Override
     public List<Map<String, Object>> calculate(String datasource, String expr) {
         if (!StringUtils.hasText(expr)) {

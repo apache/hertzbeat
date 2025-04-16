@@ -20,12 +20,12 @@
 package org.apache.hertzbeat.alert.expr;
 
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 
 /**
  * Alert expression visitor implement
@@ -55,7 +55,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     public List<Map<String, Object>> visitComparisonExpr(AlertExpressionParser.ComparisonExprContext ctx) {
         List<Map<String, Object>> leftResult = visit(ctx.left);
         List<Map<String, Object>> rightResult = visit(ctx.right);
-
         if (rightResult.size() == 1 && rightResult.get(0).containsKey(THRESHOLD)) {
             double threshold = (double) rightResult.get(0).get(THRESHOLD);
             String operator = ctx.op.getText();
@@ -76,7 +75,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
             }
             return result;
         }
-
         return new LinkedList<>();
     }
 
@@ -89,7 +87,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         boolean leftMatch = false;
         Map<String, Object> rightMap = null;
         boolean rightMatch = false;
-
         for (Map<String, Object> item : leftOperand) {
             if (leftMap == null) {
                 leftMap = item;
@@ -100,7 +97,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 break;
             }
         }
-
         for (Map<String, Object> item : rightOperand) {
             if (rightMap == null) {
                 rightMap = item;
@@ -111,7 +107,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 break;
             }
         }
-
         if (leftMatch && rightMatch) {
             rightMap.putAll(leftMap);
             return new LinkedList<>(List.of(rightMap));
@@ -122,7 +117,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
             rightMap.put(VALUE, null);
             return new LinkedList<>(List.of(rightMap));
         }
-
         return new LinkedList<>();
     }
 
@@ -135,7 +129,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         boolean leftMatch = false;
         Map<String, Object> rightMap = null;
         boolean rightMatch = false;
-
         for (Map<String, Object> item : leftOperand) {
             if (leftMap == null) {
                 leftMap = item;
@@ -146,7 +139,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 break;
             }
         }
-
         for (Map<String, Object> item : rightOperand) {
             if (rightMap == null) {
                 rightMap = item;
@@ -157,7 +149,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 break;
             }
         }
-
         if (leftMatch && rightMatch) {
             rightMap.putAll(leftMap);
             return new LinkedList<>(List.of(rightMap));
@@ -171,11 +162,10 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 return new LinkedList<>(List.of(rightMap));
             } else if (leftMap != null) {
                 return new LinkedList<>(List.of(leftMap));
-            } else if (rightMap != null){
+            } else if (rightMap != null) {
                 return new LinkedList<>(List.of(rightMap));
             }
         }
-
         return new LinkedList<>();
     }
 
@@ -183,12 +173,10 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     public List<Map<String, Object>> visitUnlessExpr(AlertExpressionParser.UnlessExprContext ctx) {
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
-
         Map<String, Object> leftMap = null;
         boolean leftMatch = false;
         Map<String, Object> rightMap = null;
         boolean rightMatch = false;
-
         for (Map<String, Object> item : leftOperand) {
             if (leftMap == null) {
                 leftMap = item;
@@ -199,7 +187,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 break;
             }
         }
-
         for (Map<String, Object> item : rightOperand) {
             if (rightMap == null) {
                 rightMap = item;
@@ -210,7 +197,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 break;
             }
         }
-
         if (leftMatch && !rightMatch) {
             return new LinkedList<>(List.of(leftMap));
         } else {
@@ -224,7 +210,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 }
             }
         }
-
         return new LinkedList<>();
     }
 
@@ -238,7 +223,9 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     public List<Map<String, Object>> visitLiteralExpr(AlertExpressionParser.LiteralExprContext ctx) {
         double value = Double.parseDouble(ctx.number().getText());
         List<Map<String, Object>> numAsList = new ArrayList<>();
-        numAsList.add(Map.of(THRESHOLD, value));
+        Map<String, Object> valueMap = new HashMap<>();
+        valueMap.put(THRESHOLD, value);
+        numAsList.add(valueMap);
         return numAsList;
     }
 
@@ -248,8 +235,7 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
             case ">":
                 // if value is list, return the max value
                 if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString()))
-                            .max(Double::compareTo).orElse(null);
+                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).max(Double::compareTo).orElse(null);
                     if (doubleValue != null) {
                         return doubleValue > threshold ? doubleValue : null;
                     } else {
@@ -260,8 +246,7 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 }
             case ">=":
                 if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString()))
-                            .max(Double::compareTo).orElse(null);
+                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).max(Double::compareTo).orElse(null);
                     if (doubleValue != null) {
                         return doubleValue >= threshold ? doubleValue : null;
                     } else {
@@ -272,8 +257,7 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 }
             case "<":
                 if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString()))
-                            .min(Double::compareTo).orElse(null);
+                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).min(Double::compareTo).orElse(null);
                     if (doubleValue != null) {
                         return doubleValue < threshold ? doubleValue : null;
                     } else {
@@ -284,8 +268,7 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 }
             case "<=":
                 if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString()))
-                            .min(Double::compareTo).orElse(null);
+                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).min(Double::compareTo).orElse(null);
                     if (doubleValue != null) {
                         return doubleValue <= threshold ? doubleValue : null;
                     } else {
