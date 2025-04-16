@@ -142,3 +142,16 @@ article thead {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: left;
 }
+
+@media (min-width: 1440px) {
+    .container {
+        max-width: 100%;
+        padding-left: 20px;
+        padding-right: 20px;
+    }   
+}
+.container {
+    max-width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+}  

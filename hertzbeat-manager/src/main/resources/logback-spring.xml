@@ -76,6 +76,26 @@
         </filter>
     </appender>
 
+    <!-- OpenTelemetry Appender for shipping logs to GrepTimeDB -->
+    <appender name="OpenTelemetryAppender" class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <!-- Capture source code information (class name, method name, line number) -->
+        <captureCodeAttributes>true</captureCodeAttributes>
+
+        <!-- Capture MDC context values -->
+        <captureMdcAttributes>
+            <pattern>.*</pattern>
+        </captureMdcAttributes>
+
+        <!-- Capture experimental attributes like exception details -->
+        <captureExperimentalAttributes>true</captureExperimentalAttributes>
+
+        <!-- Capture marker attributes -->
+        <captureMarkerAttribute>true</captureMarkerAttribute>
+
+        <!-- Capture logger context attributes -->
+        <captureLoggerContext>true</captureLoggerContext>
+    </appender>
+
     <!-- Settings for this logger: for example, all output logs under the org.springframework package must be at level info or above to be output! -->
     <!-- This can avoid outputting many common debug information of the spring framework! -->
     <logger name="org.springframework" level="info"/>
@@ -90,12 +110,14 @@
     <logger name="org.mongodb" level="warn"/>
     <logger name="io.greptime" level="warn"/>
     <logger name="org.apache.kafka" level="warn"/>
+    <logger name="io.opentelemetry" level="info"/>
 
     <!-- Production environment configuration -->
     <springProfile name="prod">
         <root level="INFO">
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
+            <appender-ref ref="OpenTelemetryAppender"/>
         </root>
         <!-- North log -->
         <Logger name="com.obs.services.AbstractClient" level="OFF"
@@ -118,6 +140,7 @@
             <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
+            <appender-ref ref="OpenTelemetryAppender"/>
         </root>
     </springProfile>
 
@@ -127,6 +150,7 @@
             <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
+            <appender-ref ref="OpenTelemetryAppender"/>
         </root>
     </springProfile>
 
@@ -136,6 +160,7 @@
             <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
+            <appender-ref ref="OpenTelemetryAppender"/>
         </root>
     </springProfile>
 

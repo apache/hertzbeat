@@ -15,32 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.service;
+package org.apache.hertzbeat.log.config;
 
-import org.apache.hertzbeat.common.entity.dto.query.MetricQueryData;
-
-import java.util.List;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
- * metrics data query service
+ * Log auto configuration.
  */
-public interface MetricsDataQueryService {
-    
-    /**
-     * Query metrics data
-     * @param queries query expr
-     * @param time time
-     * @return data
-     */
-    List<MetricQueryData> query(List<String> queries, String queryType, long time);
-
-    /**
-     * Query metrics data range
-     * @param queries query expr
-     * @param start start
-     * @param end end
-     * @param step step
-     * @return data
-     */
-    List<MetricQueryData> queryRange(List<String> queries, String queryType, long start, long end, String step);
+@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
+		+ SignConstants.DOT
+		+ ConfigConstants.FunctionModuleConstants.LOG
+)
+@EnableConfigurationProperties(GreptimeProperties.class)
+public class LogAutoConfiguration {
 }

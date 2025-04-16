@@ -18,13 +18,12 @@
 package org.apache.hertzbeat.common.entity.dto.query;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Metric History Range Query Data
@@ -34,14 +33,36 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Metric Query Data")
-public class MetricQueryData {
+public class DatasourceQueryData {
+
+    @Schema(title = "Ref Id, unique id for the query")
+    private String refId;
     
-    @Schema(title = "Metric Schema")
-    private MetricSchema schema;
+    @Schema(title = "query status code, 200 for success, other for error")
+    private Integer status;
+    
+    @Schema(title = "query error message")
+    private String msg;
+    
+    @Schema(title = "query result data frames")
+    private List<SchemaData> frames;
+    
+    /**
+     * Schema Data
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static final class SchemaData {
 
-    @Schema(title = "metrics row values, first is the timestamp-ts", example = "[[29,32,44],[32,34,true]]")
-    private List<List<Object>> values;
+        @Schema(title = "Metric Schema")
+        private MetricSchema schema;
 
+        @Schema(title = "metrics row values, first is the timestamp-ts", example = "[[29,32,44],[32,34,true]]")
+        private List<Object[]> data;
+    }
+    
     /**
      * Metric Schema
      */
@@ -53,6 +74,9 @@ public class MetricQueryData {
 
         @Schema(title = "Metrics Field")
         private List<MetricField> fields;
+        
+        @Schema(title = "This frame labels")
+        private Map<String, String> labels;
         
         @Schema(title = "Meta Information")
         private Map<String, String> meta;
@@ -75,8 +99,5 @@ public class MetricQueryData {
 
         @Schema(title = "Field Unit: %, Mb, Kbps etc.")
         private String unit;
-
-        @Schema(title = "Whether is a label")
-        private Boolean label;
     }
 }
