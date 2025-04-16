@@ -331,17 +331,49 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
-            // convert the URL to lowercase for case-insensitive checking
-            String url = jdbcProtocol.getUrl().toLowerCase();
-            // check whether the parameter is valid
-            if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")
-                    || url.contains("allowloadlocalinfile") || url.contains("allowloadlocalinfileinpath")
-                    || url.contains("uselocalinfile") || url.contains("autodeserialize") || url.contains("detectcustomcollations")
-                    || url.contains("serverstatusdiffinterceptor")) {
-                throw new IllegalArgumentException("Invalid JDBC URL: contains malicious characters.");
+            // 1. 限制URL长度
+            if (jdbcProtocol.getUrl().length() > 2048) {
+                throw new IllegalArgumentException("JDBC URL length exceeds maximum limit of 2048 characters");
             }
-            // when has config jdbc url, use it 
-            return jdbcProtocol.getUrl();
+            
+            // 2. 去除特殊字符
+            String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F]", "");
+            
+            // 3. 黑名单检查
+            String url = cleanedUrl.toLowerCase();
+            // 黑名单列表
+            String[] blacklist = {
+                // 危险SQL命令 - 可能导致数据库结构破坏或数据泄露
+                "create trigger", "create alias", "runscript from", "shutdown", "drop table", 
+                "drop database", "create function", "alter system", "grant all", "revoke all",
+                
+                // 文件IO相关 - 可能导致服务器文件被读取或写入
+                "allowloadlocalinfile", "allowloadlocalinfileinpath", "uselocalinfile", 
+                
+                // 代码执行相关 - 可能导致远程代码执行
+                "init=", "javaobjectserializer=", "runscript", 
+                "queryinterceptors=", "statementinterceptors=", "exceptioninterceptors=",
+                
+                // 多语句执行 - 可能导致SQL注入
+                "allowmultiqueries",
+                
+                // 反序列化相关 - 可能导致远程代码执行
+                "autodeserialize"
+            };
+            
+            // 黑名单检查
+            for (String keyword : blacklist) {
+                if (url.contains(keyword)) {
+                    throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious parameter: " + keyword);
+                }
+            }
+            
+            // 4. 检查URL格式
+            if (!url.matches("^jdbc:[a-zA-Z0-9]+://[^\\s]+$")) {
+                throw new IllegalArgumentException("Invalid JDBC URL format");
+            }
+            
+            return cleanedUrl;
         }
         return switch (jdbcProtocol.getPlatform()) {
             case "mysql", "mariadb" -> "jdbc:mysql://" + host + ":" + port
