@@ -331,44 +331,41 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
-            // 1. 限制URL长度
+            // limit url length
             if (jdbcProtocol.getUrl().length() > 2048) {
                 throw new IllegalArgumentException("JDBC URL length exceeds maximum limit of 2048 characters");
             }
-            
-            // 2. 去除特殊字符
+            // remove special characters
             String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F]", "");
-            
-            // 3. 黑名单检查
+
             String url = cleanedUrl.toLowerCase();
-            // 黑名单列表
+            // backlist
             String[] blacklist = {
-                // 危险SQL命令 - 可能导致数据库结构破坏或数据泄露
+                // dangerous SQL commands - may cause database structure damage or data leakage
                 "create trigger", "create alias", "runscript from", "shutdown", "drop table", 
                 "drop database", "create function", "alter system", "grant all", "revoke all",
-                
-                // 文件IO相关 - 可能导致服务器文件被读取或写入
+
+                // file IO related - may cause server files to be read or written
                 "allowloadlocalinfile", "allowloadlocalinfileinpath", "uselocalinfile", 
                 
-                // 代码执行相关 - 可能导致远程代码执行
+                // code execution related - may result in remote code execution
                 "init=", "javaobjectserializer=", "runscript", 
                 "queryinterceptors=", "statementinterceptors=", "exceptioninterceptors=",
                 
-                // 多语句执行 - 可能导致SQL注入
+                // multiple statement execution - may lead to SQL injection
                 "allowmultiqueries",
                 
-                // 反序列化相关 - 可能导致远程代码执行
+                // deserialization related - may result in remote code execution
                 "autodeserialize"
             };
-            
-            // 黑名单检查
+
+            // backlist check
             for (String keyword : blacklist) {
                 if (url.contains(keyword)) {
                     throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious parameter: " + keyword);
                 }
             }
-            
-            // 4. 检查URL格式
+            // url format check
             if (!url.matches("^jdbc:[a-zA-Z0-9]+://[^\\s]+$")) {
                 throw new IllegalArgumentException("Invalid JDBC URL format");
             }
