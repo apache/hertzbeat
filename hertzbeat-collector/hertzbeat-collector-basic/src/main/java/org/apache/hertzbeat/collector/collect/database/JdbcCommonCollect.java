@@ -367,7 +367,6 @@ public class JdbcCommonCollect extends AbstractCollect {
             if (!url.matches("^jdbc:[a-zA-Z0-9]+://[^\\s]+$")) {
                 throw new IllegalArgumentException("Invalid JDBC URL format");
             }
-            
             return cleanedUrl;
         }
         return switch (jdbcProtocol.getPlatform()) {
