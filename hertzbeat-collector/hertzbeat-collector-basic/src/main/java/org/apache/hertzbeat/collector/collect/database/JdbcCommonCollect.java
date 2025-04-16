@@ -63,6 +63,25 @@ public class JdbcCommonCollect extends AbstractCollect {
 
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
+    private static final String[] BLACK_LIST = {
+            // dangerous SQL commands - may cause database structure damage or data leakage
+            "create trigger", "create alias", "runscript from", "shutdown", "drop table",
+            "drop database", "create function", "alter system", "grant all", "revoke all",
+
+            // file IO related - may cause server files to be read or written
+            "allowloadlocalinfile", "allowloadlocalinfileinpath", "uselocalinfile",
+
+            // code execution related - may result in remote code execution
+            "init=", "javaobjectserializer=", "runscript", "serverstatusdiffinterceptor",
+            "queryinterceptors=", "statementinterceptors=", "exceptioninterceptors=",
+
+            // multiple statement execution - may lead to SQL injection
+            "allowmultiqueries",
+
+            // deserialization related - may result in remote code execution
+            "autodeserialize", "detectcustomcollations",
+    };
+
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
 
@@ -337,30 +356,9 @@ public class JdbcCommonCollect extends AbstractCollect {
             }
             // remove special characters
             String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F]", "");
-
             String url = cleanedUrl.toLowerCase();
-            // backlist
-            String[] blacklist = {
-                // dangerous SQL commands - may cause database structure damage or data leakage
-                "create trigger", "create alias", "runscript from", "shutdown", "drop table", 
-                "drop database", "create function", "alter system", "grant all", "revoke all",
-
-                // file IO related - may cause server files to be read or written
-                "allowloadlocalinfile", "allowloadlocalinfileinpath", "uselocalinfile", 
-                
-                // code execution related - may result in remote code execution
-                "init=", "javaobjectserializer=", "runscript", 
-                "queryinterceptors=", "statementinterceptors=", "exceptioninterceptors=",
-                
-                // multiple statement execution - may lead to SQL injection
-                "allowmultiqueries",
-                
-                // deserialization related - may result in remote code execution
-                "autodeserialize"
-            };
-
             // backlist check
-            for (String keyword : blacklist) {
+            for (String keyword : BLACK_LIST) {
                 if (url.contains(keyword)) {
                     throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious parameter: " + keyword);
                 }
