@@ -543,8 +543,8 @@ class DataSourceServiceTest {
         Cache<String, ParseTree> expressionCache = dataSourceService.getExpressionCache();
         expressionCache.invalidateAll();
         long beforeHits = expressionCache.stats().hitCount();
-        dataSourceService.calculate("promql", expr);//first execution miss cache
-        dataSourceService.calculate("promql", expr);//second execution hits cache
+        dataSourceService.calculate("promql", expr); //first execution miss cache
+        dataSourceService.calculate("promql", expr); //second execution hits cache
         long actualHits = expressionCache.stats().hitCount() - beforeHits;
         assertEquals(1, actualHits, "expression cache should hit but miss");
     }

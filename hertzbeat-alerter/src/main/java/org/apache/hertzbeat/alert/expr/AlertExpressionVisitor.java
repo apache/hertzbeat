@@ -53,7 +53,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
      */
     T visitQueryExpr(AlertExpressionParser.QueryExprContext ctx);
 
-	/**
+    /**
      * Visit a parse tree produced by the {@code ComparisonExpr}
      * labeled alternative in AlertExpressionParser#expr
      * @param ctx the parse tree
