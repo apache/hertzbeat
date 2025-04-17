@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -104,6 +104,7 @@ export class AlertSettingComponent implements OnInit {
 
   templateEnvVars = [
     { name: '${__instance__}', description: 'alert.setting.template.vars.instance' },
+    { name: '${__labels__}', description: 'alert.setting.template.vars.labels' },
     { name: '${__instancename__}', description: 'alert.setting.template.vars.instance-name' },
     { name: '${__instancehost__}', description: 'alert.setting.template.vars.instance-host' },
     { name: '${__app__}', description: 'alert.setting.template.vars.app' },
@@ -245,6 +246,7 @@ export class AlertSettingComponent implements OnInit {
     this.severity = '';
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
+    this.selectedLabels = new Set<string>();
     // Set default period for periodic alert
     if (type === 'periodic') {
       this.define.period = 300;
@@ -497,6 +499,7 @@ export class AlertSettingComponent implements OnInit {
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);
               this.parseMonitorIdsFromExpr(this.define.expr);
+              this.parseLabelFromExpr(this.define.expr);
               this.cascadeOnChange(this.cascadeValues);
               // Wait for cascade values to be set
               setTimeout(() => {
@@ -943,8 +946,21 @@ export class AlertSettingComponent implements OnInit {
   // start -- associate alert definition and monitoring model
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
+  filteredTransferData: TransferItem[] = [];
   transferData: TransferItem[] = [];
   selectedMonitorIds = new Set<number>();
+  leftMonitorLabels: Set<string> = new Set(); // All available labels on the left side
+  rightMonitorLabels: Set<string> = new Set(); // All available labels on the right side
+  leftSearchValue = '';
+  rightSearchValue = '';
+  leftFilterLabels: string[] = []; // Labels used for filtering on the left side
+  rightFilterLabels: string[] = []; // Labels used for filtering on the right side
+  labelInputVisible = false;
+  selectedLabels: Set<string> = new Set(); // Selected labels
+  inputLabelValue = '';
+  labelInputElement!: ElementRef<HTMLInputElement>;
+  monitorDataByLabel: any[] = [];
+
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
   onConnectModalCancel() {
     this.isConnectModalVisible = false;
@@ -979,7 +995,148 @@ export class AlertSettingComponent implements OnInit {
       }
       return e;
     });
+    this.updateMonitorLabel();
   }
+
+  handleDeleteLabel(removedLabel: string): void {
+    this.selectedLabels.delete(removedLabel);
+    this.showMonitorByLabel();
+  }
+
+  showLabelInput(): void {
+    this.labelInputVisible = true;
+    setTimeout(() => {
+      this.labelInputElement?.nativeElement.focus();
+    }, 10);
+  }
+
+  handleLabelInputConfirm(): void {
+    if (this.inputLabelValue && !this.selectedLabels.has(this.inputLabelValue)) {
+      this.selectedLabels.add(this.inputLabelValue);
+    }
+    this.showMonitorByLabel();
+    this.inputLabelValue = '';
+    this.labelInputVisible = false;
+  }
+
+  showMonitorByLabel(): void {
+    const monitorsByLabel = this.transferData.filter(item => item.labels.some((label: string) => this.selectedLabels.has(label)));
+    this.monitorDataByLabel = monitorsByLabel.map(item => {
+      return {
+        key: item.key,
+        title: item.title,
+        description: item.description,
+        labels: item.labels
+      };
+    });
+  }
+
+  onFilterLabelsChange(newLabels: string[], direction: string): void {
+    if (direction == 'left') {
+      this.leftFilterLabels = newLabels;
+    } else {
+      this.rightFilterLabels = newLabels;
+    }
+    this.handleSearch(direction);
+  }
+  onSearchValueChange(value: string, direction: string): void {
+    if (direction === 'left') {
+      this.leftSearchValue = value;
+    } else {
+      this.rightSearchValue = value;
+    }
+    this.handleSearch(direction);
+  }
+
+  getFilterLabels(direction: string): string[] {
+    return direction === 'left' ? this.leftFilterLabels : this.rightFilterLabels;
+  }
+
+  getSearchValue(direction: string): string {
+    return direction === 'left' ? this.leftSearchValue : this.rightSearchValue;
+  }
+
+  getMonitorLabels(direction: string): Set<string> {
+    return direction === 'left' ? this.leftMonitorLabels : this.rightMonitorLabels;
+  }
+
+  updateMonitorLabel() {
+    // Extract all labels
+    this.leftMonitorLabels.clear();
+    this.rightMonitorLabels.clear();
+    this.transferData.forEach(item => {
+      item.labels.forEach((label: string) => {
+        if (item.direction === 'left') {
+          this.leftMonitorLabels.add(label);
+        } else {
+          this.rightMonitorLabels.add(label);
+        }
+      });
+    });
+  }
+
+  handleSearch(direction: string): void {
+    // keep the items that are not in the current direction
+    let keepItems: TransferItem[] = this.filteredTransferData.filter(item => item.direction != direction);
+
+    // if the search value is empty
+    if (
+      (direction == 'left' && !this.leftSearchValue && !this.leftFilterLabels.length) ||
+      (direction == 'right' && !this.rightSearchValue && !this.rightFilterLabels.length)
+    ) {
+      const filteredItems = this.transferData.filter(item => item.direction === direction);
+      this.filteredTransferData = [...keepItems, ...filteredItems];
+      return;
+    }
+
+    // Handle name search
+    const nameSearchResult = this.handelNameSearch(direction);
+
+    // Handle label search
+    const labelSearchResult = this.handelLabelSearch(direction);
+
+    // Create Map of items by key for efficient lookup
+    const nameSearchMap = new Map(nameSearchResult.map(item => [item.title, item]));
+    // Find intersection - only keep items that exist in both result sets
+    const filteredItems = labelSearchResult.filter(item => nameSearchMap.has(item.title));
+    const result = [...keepItems, ...filteredItems];
+    result.sort((a, b) => a.title.localeCompare(b.title));
+    this.filteredTransferData = result;
+  }
+
+  handelNameSearch(direction: string): TransferItem[] {
+    // handel name search
+    const searchValue = this.getSearchValue(direction);
+    // filter the items that match the search value
+    const filteredItems = this.transferData.filter(item => {
+      if (item.direction !== direction) {
+        // If not the current direction, skip filtering
+        return false;
+      }
+      return item.title.toLowerCase().includes(searchValue.toLowerCase());
+    });
+    return filteredItems;
+  }
+
+  handelLabelSearch(direction: string): TransferItem[] {
+    // handel label search
+    const filterLabels = this.getFilterLabels(direction);
+    if (filterLabels.length === 0) {
+      const filteredItems = this.transferData.filter(item => item.direction === direction);
+      return filteredItems;
+    }
+    // filter the items that match the filter labels
+    const filteredItems = this.transferData.filter(item => {
+      if (item.direction !== direction) {
+        // If not the current direction, skip filtering
+        return false;
+      }
+      const labelSet = new Set(item.labels);
+      return filterLabels.some(label => labelSet.has(label));
+    });
+    return filteredItems;
+  }
+
   // end -- associate alert definition and monitoring model
 
   private cascadeValuesToExpr(values: string[]): string {
@@ -1030,6 +1187,9 @@ export class AlertSettingComponent implements OnInit {
         // Clean up any remaining && at start/end
         .replace(/^\s*&&\s*/, '')
         .replace(/\s*&&\s*$/, '')
+        // Remove monitor label binding expressions
+        .replace(/&&\s*\(?(equals\(__labels__,\s*"[^"]+"\)(\s*or\s*equals\(__labels__,\s*"[^"]+"\))*)\)?/, '')
+        .replace(/\(?(equals\(__labels__,\s*"[^"]+"\)(\s*or\s*equals\(__labels__,\s*"[^"]+"\))*)\)?\s*&&\s*/, '')
     );
   }
 
@@ -1061,11 +1221,12 @@ export class AlertSettingComponent implements OnInit {
   public updateFinalExpr(): void {
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
     const monitorBindExpr = this.generateMonitorBindExpr();
+    const monitorLabelBindExpr = this.generateMonitorLabelBindExpr();
     let thresholdExpr = '';
     if (this.cascadeValues.length >= 2 && this.cascadeValues[1] !== 'availability') {
       thresholdExpr = this.userExpr;
     }
-    const exprList = [baseExpr, monitorBindExpr, thresholdExpr].filter(e => e);
+    const exprList = [baseExpr, monitorBindExpr, monitorLabelBindExpr, thresholdExpr].filter(e => e);
 
     this.define.expr = exprList.length > 1 ? exprList.join(' && ') : exprList[0];
   }
@@ -1138,6 +1299,16 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
+  // Parse label from expression
+  private parseLabelFromExpr(expr: string) {
+    const labelPattern = /equals\(__labels__,\s*"([^"]+)"\)/g;
+    let match;
+    this.selectedLabels.clear();
+    while ((match = labelPattern.exec(expr)) !== null) {
+      this.selectedLabels.add(match[1]);
+    }
+  }
+
   // Generate monitor binding expression
   private generateMonitorBindExpr(): string {
     if (this.selectedMonitorIds.size === 0) return '';
@@ -1145,6 +1316,15 @@ export class AlertSettingComponent implements OnInit {
       .map(id => `equals(__instance__, "${id}")`)
       .join(' or ');
     return this.selectedMonitorIds.size > 1 ? `(${idExprs})` : idExprs;
+  }
+
+  // Generate monitor label binding expression
+  private generateMonitorLabelBindExpr(): string {
+    if (this.selectedLabels.size === 0) return '';
+    const labelExprs = Array.from(this.selectedLabels)
+      .map(label => `contains(__labels__, "${label}")`)
+      .join(' or ');
+    return this.selectedLabels.size > 1 ? `(${labelExprs})` : labelExprs;
   }
 
   // Load monitor binds
@@ -1156,6 +1336,7 @@ export class AlertSettingComponent implements OnInit {
     // Parse monitor IDs from expr first
     if (this.define.expr) {
       this.parseMonitorIdsFromExpr(this.define.expr);
+      this.parseLabelFromExpr(this.define.expr);
     }
     this.monitorSvc.getMonitorsByApp(this.cascadeValues[0]).subscribe(message => {
       if (message.code === 0) {
@@ -1165,8 +1346,11 @@ export class AlertSettingComponent implements OnInit {
           key: item.id,
           title: item.name,
           description: item.host,
-          direction: this.selectedMonitorIds.has(item.id) ? 'right' : 'left'
+          direction: this.selectedMonitorIds.has(item.id) ? 'right' : 'left',
+          labels: Object.entries(item.labels).map(([key, value]) => `${key}:${value}`)
         }));
+        this.updateMonitorLabel();
+        this.filteredTransferData = [...this.transferData];
       }
     });
     this.isConnectModalVisible = true;

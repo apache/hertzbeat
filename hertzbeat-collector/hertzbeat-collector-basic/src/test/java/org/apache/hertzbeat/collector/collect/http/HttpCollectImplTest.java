@@ -99,26 +99,26 @@ class HttpCollectImplTest {
                     </server>
                 </root>
                 """;
-
+    
         // Set up HttpProtocol with XML path parsing
         HttpProtocol http = HttpProtocol.builder()
                 .parseType(DispatchConstants.PARSE_XML_PATH)
                 .parseScript("//server")  // XPath to select all server nodes
                 .build();
-
+    
         // Set up Metrics with fields that have XPath expressions
         List<Metrics.Field> fields = new ArrayList<>();
-        fields.add(Metrics.Field.builder().field("name").xpath("name").build());
-        fields.add(Metrics.Field.builder().field("status").xpath("status").build());
-        fields.add(Metrics.Field.builder().field("cpu").xpath("metrics/cpu").build());
-        fields.add(Metrics.Field.builder().field("memory").xpath("metrics/memory").build());
-
+        fields.add(Metrics.Field.builder().field("name").build());
+        fields.add(Metrics.Field.builder().field("status").build());
+        fields.add(Metrics.Field.builder().field("metrics/cpu").build());
+        fields.add(Metrics.Field.builder().field("metrics/memory").build());
+    
         Metrics metrics = Metrics.builder()
                 .http(http)
                 .fields(fields)
-                .aliasFields(Arrays.asList("name", "status", "cpu", "memory"))
+                .aliasFields(Arrays.asList("name", "status", "metrics/cpu", "metrics/memory"))
                 .build();
-
+    
         // Create a custom builder that captures added rows
         List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
         CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
@@ -128,7 +128,7 @@ class HttpCollectImplTest {
                 return super.addValueRow(valueRow);
             }
         };
-
+    
         // Use reflection to access the private parseResponseByXmlPath method
         Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
                 "parseResponseByXmlPath", 
@@ -137,13 +137,13 @@ class HttpCollectImplTest {
                 CollectRep.MetricsData.Builder.class, 
                 Long.class);
         parseMethod.setAccessible(true);
-
+    
         // Call the method
         parseMethod.invoke(httpCollectImpl, xmlResponse, metrics, builder, 100L);
-
+    
         // Verify the results
         assertEquals(2, capturedRows.size(), "Should have parsed 2 server nodes");
-
+    
         // Check first server
         CollectRep.ValueRow firstRow = capturedRows.get(0);
         assertEquals(4, firstRow.getColumnsCount(), "First row should have 4 columns");
@@ -151,7 +151,7 @@ class HttpCollectImplTest {
         assertEquals("Running", firstRow.getColumns(1), "First server status should be Running");
         assertEquals("75.5", firstRow.getColumns(2), "First server CPU should be 75.5");
         assertEquals("1024", firstRow.getColumns(3), "First server memory should be 1024");
-
+    
         // Check second server
         CollectRep.ValueRow secondRow = capturedRows.get(1);
         assertEquals(4, secondRow.getColumnsCount(), "Second row should have 4 columns");

@@ -24,14 +24,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
-import org.apache.hertzbeat.common.entity.dto.MetricFamily;
 import org.apache.hertzbeat.common.util.StrBuffer;
 
 /**
  * Resolves the data passed by prometheus's exporter interface http:xxx/metrics
  * Reference: prometheus text_parse.go code, entry: TextToMetricFamilies
+ * recommend use OnlineParser
  */
 @Slf4j
+@Deprecated(since = "1.7.0")
 public class TextParser {
     private static final String NAME_LABEL = "__name__";
     private static final char LEFT_CURLY_BRACKET = '{';
@@ -45,7 +46,6 @@ public class TextParser {
 
     /**
      * parser prometheus exporter text metrics data
-     * todo use inputStream bytebuffer instead of resp string
      * @param resp txt data
      * @return metrics family
      */

@@ -9,7 +9,7 @@ keywords: [Grafana, Historical Dashboard]
 
 ### Prerequisites
 
-- The `Grafana` version 8.1.0 or later is installed and running.
+- We recommend using the latest version of Grafana. Earlier versions may not support the exposed API.
 - The `Grafana` service is started and the account password is configured.
 - The `HertzBeat` service is started and the `VictoriaMetrics` time-series database is configured (note: the `VictoriaMetrics` data source is required).
 
@@ -22,6 +22,10 @@ keywords: [Grafana, Historical Dashboard]
 ref: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>
 In the `Grafana` configuration file `grafana.ini`, set the `allow_embedding = true`.
 In the `Grafana` configuration file `grafana.ini`, set the `[auth.anonymous]` option to `true`.
+Or run `Grafana` with the following command via `docker`:
+
+```bash
+docker run -itd --name grafana -p 3000:3000 -e "GF_AUTH_PROXY_ENABLED=true" -e "GF_AUTH_ANONYMOUS_ENABLED=true" -e "GF_SECURITY_ALLOW_EMBEDDING=true" grafana/grafana:latest
 
 ```ini
 allow_embedding = true
