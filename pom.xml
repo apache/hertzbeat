@@ -91,6 +91,7 @@
         <module>hertzbeat-log</module>
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
+        <module>hertzbeat-mcp</module>
     </modules>
 
     <properties>
