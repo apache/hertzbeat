@@ -25,7 +25,7 @@
       "content": "${alert.content?json_string}",
       </#if>
       "triggerTimes": ${alert.triggerTimes!0},
-      "startAt": "${((alert.startAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}",
+      "startAt": "${((alert.startAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}"
       <#if alert.activeAt?? && alert.activeAt gt 0>,
       "activeAt": "${((alert.activeAt!0)?number_to_datetime)?string('yyyy-MM-dd HH:mm:ss')}"
       </#if>
