@@ -69,6 +69,8 @@ public class LogService {
                    - Get latest 10 logs: SELECT * FROM hzb_log ORDER BY timestamp DESC LIMIT 10
                    - Query ERROR level logs: SELECT * FROM hzb_log WHERE severity_number=17
                    - Query specific time range: SELECT * FROM hzb_log WHERE timestamp > '2024-01-01 00:00:00'
+                   - Query last ten minutes: SELECT * FROM hzb_log WHERE  timestamp >= now() - Interval '10m' AND timestamp < now()
+                   - Query logs at or above the INFO level: SELECT * FROM hzb_log WHERE severity_number >= 9
                 
                 Field descriptions:
                 1. severity_number (log level):
