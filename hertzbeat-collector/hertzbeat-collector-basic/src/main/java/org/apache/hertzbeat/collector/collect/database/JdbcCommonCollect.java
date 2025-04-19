@@ -383,6 +383,8 @@ public class JdbcCommonCollect extends AbstractCollect {
             case "oracle" -> "jdbc:oracle:thin:@" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
             case "dm" -> "jdbc:dm://" + host + ":" + port;
+            case "testcontainers" -> "jdbc:tc:" + host + ":" + port
+                    + ":///" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase()) + "?user=root&password=root";
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
     }
