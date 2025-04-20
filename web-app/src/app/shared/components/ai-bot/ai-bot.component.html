@@ -1,0 +1,37 @@
+<div class="ai-bot-container">
+  <!-- 简化聊天图标实现 -->
+  <div class="ai-bot-icon" (click)="toggleChat()" [class.active]="isOpen">
+    <span *ngIf="!isOpen">AI</span>
+    <span *ngIf="isOpen">X</span>
+  </div>
+
+  <!-- 聊天窗口 -->
+  <div class="ai-bot-chat-window" *ngIf="isOpen">
+    <div class="chat-header">
+      <div class="chat-title">AI 助手</div>
+      <span class="close-btn" (click)="toggleChat()">X</span>
+    </div>
+    
+    <div class="chat-messages">
+      <div *ngFor="let message of messages" class="message" [class.user-message]="message.isUser" [class.bot-message]="!message.isUser">
+        <div class="message-content">{{ message.content }}</div>
+        <div class="message-time">{{ message.timestamp | date:'HH:mm' }}</div>
+      </div>
+      <div *ngIf="isLoading" class="bot-message loading-message">
+        <nz-spin nzSimple></nz-spin>
+      </div>
+    </div>
+    
+    <div class="chat-input">
+      <input 
+        nz-input 
+        placeholder="请输入问题..." 
+        [(ngModel)]="currentMessage"
+        (keyup.enter)="sendMessage()"
+      />
+      <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()">
+        发送
+      </button>
+    </div>
+  </div>
+</div> 

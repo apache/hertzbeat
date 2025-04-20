@@ -1,10 +1,19 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
+import { Observable, of } from 'rxjs';
+import { delay, tap } from 'rxjs/operators';
 
 import { CONSTANTS } from '../../shared/constants';
+
+// 聊天消息接口
+interface ChatMessage {
+  content: string;
+  isUser: boolean;
+  timestamp: Date;
+}
 
 @Component({
   selector: 'layout-basic',
@@ -71,9 +80,48 @@ import { CONSTANTS } from '../../shared/constants';
       </div>
     </global-footer>
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
-  `
+
+    <!-- AI聊天机器人 -->
+    <div class="ai-chatbot-container">
+      <div class="ai-chatbot-button" (click)="toggleChatbot()">
+        <span *ngIf="!isChatbotOpen">AI</span>
+        <span *ngIf="isChatbotOpen">X</span>
+      </div>
+
+      <div class="ai-chatbot-window" *ngIf="isChatbotOpen">
+        <div class="chatbot-header">
+          <div class="chatbot-title">AI 助手</div>
+          <div class="chatbot-close" (click)="toggleChatbot()">X</div>
+        </div>
+        <div class="chatbot-messages">
+          <div *ngFor="let message of chatMessages" 
+              [class.user-message]="message.isUser" 
+              [class.bot-message]="!message.isUser"
+              class="message">
+            <div class="message-content">{{message.content}}</div>
+            <div class="message-time">{{message.timestamp | date:'HH:mm'}}</div>
+          </div>
+          <div *ngIf="isLoading" class="bot-message loading-message">
+            <nz-spin nzSimple></nz-spin>
+          </div>
+        </div>
+        <div class="chatbot-input">
+          <input 
+            nz-input 
+            placeholder="请输入问题..." 
+            [(ngModel)]="currentMessage"
+            (keyup.enter)="sendMessage()"
+          />
+          <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()">
+            发送
+          </button>
+        </div>
+      </div>
+    </div>
+  `,
+  styleUrls: ['./basic.component.less']
 })
-export class LayoutBasicComponent {
+export class LayoutBasicComponent implements OnInit {
   options: LayoutDefaultOptions = {
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
@@ -97,5 +145,62 @@ export class LayoutBasicComponent {
     }
   }
 
+  // AI聊天机器人相关属性
+  isChatbotOpen = false;
+  chatMessages: ChatMessage[] = [];
+  currentMessage = '';
+  isLoading = false;
+
   constructor(private settings: SettingsService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+
+  ngOnInit(): void {
+    // 初始化欢迎消息
+    this.chatMessages.push({
+      content: '你好！我是AI助手，有什么可以帮助你的吗？',
+      isUser: false,
+      timestamp: new Date()
+    });
+    
+    console.log('AI聊天机器人初始化完成');
+  }
+
+  toggleChatbot(): void {
+    this.isChatbotOpen = !this.isChatbotOpen;
+    console.log('切换聊天机器人状态:', this.isChatbotOpen ? '打开' : '关闭');
+  }
+
+  sendMessage(): void {
+    if (!this.currentMessage.trim()) return;
+    
+    // 添加用户消息
+    this.chatMessages.push({
+      content: this.currentMessage,
+      isUser: true,
+      timestamp: new Date()
+    });
+    
+    const userMessage = this.currentMessage;
+    this.currentMessage = '';
+    this.isLoading = true;
+    
+    // 模拟AI响应
+    this.getAIResponse(userMessage).subscribe(response => {
+      this.chatMessages.push(response);
+      this.isLoading = false;
+    });
+  }
+
+  // 模拟AI响应
+  private getAIResponse(message: string): Observable<ChatMessage> {
+    console.log('发送消息:', message);
+    
+    return of({
+      content: `收到你的问题："${message}"。我是AI助手，很高兴为您服务！`,
+      isUser: false,
+      timestamp: new Date()
+    }).pipe(
+      delay(1000),
+      tap(response => console.log('AI响应:', response.content))
+    );
+  }
 }
