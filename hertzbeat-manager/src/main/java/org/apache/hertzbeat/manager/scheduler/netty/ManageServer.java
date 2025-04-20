@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
@@ -56,6 +57,8 @@ public class ManageServer implements CommandLineRunner {
 
     private final CollectorJobScheduler collectorJobScheduler;
 
+    private final CollectorAlertHandler collectorAlertHandler;
+
     private ScheduledExecutorService channelSchedule;
 
     private RemotingServer remotingServer;
@@ -64,9 +67,11 @@ public class ManageServer implements CommandLineRunner {
 
     public ManageServer(final SchedulerProperties schedulerProperties,
                         final CollectorJobScheduler collectorJobScheduler,
-                        final CommonThreadPool threadPool) {
+                        final CommonThreadPool threadPool,
+                        final CollectorAlertHandler collectorAlertHandler) {
         this.collectorJobScheduler = collectorJobScheduler;
         this.collectorJobScheduler.setManageServer(this);
+        this.collectorAlertHandler = collectorAlertHandler;
         this.init(schedulerProperties, threadPool);
     }
 
@@ -98,6 +103,7 @@ public class ManageServer implements CommandLineRunner {
                         channel.closeFuture();
                         this.clientChannelTable.remove(collector);
                         this.collectorJobScheduler.collectorGoOffline(collector);
+                        this.collectorAlertHandler.offline(collector);
                     }
                 });   
             } catch (Exception e) {
@@ -131,6 +137,7 @@ public class ManageServer implements CommandLineRunner {
             preChannel.close();
         }
         this.clientChannelTable.put(identity, channel);
+        this.collectorAlertHandler.online(identity);
     }
 
     public void closeChannel(final String identity) {
