@@ -83,7 +83,7 @@ import org.springframework.data.jpa.domain.Specification;
  * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
  * Test case for {@link MonitorService}
  *
- * @see TagServiceTest
+ * @see LabelServiceTest
  */
 @ExtendWith(MockitoExtension.class)
 class MonitorServiceTest {
@@ -101,7 +101,7 @@ class MonitorServiceTest {
     private AppService appService;
 
     @Mock
-    private TagService tagService;
+    private LabelService tagService;
 
     @Mock
     private CollectJobScheduling collectJobScheduling;

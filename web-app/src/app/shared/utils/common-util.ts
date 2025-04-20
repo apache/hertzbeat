@@ -17,13 +17,13 @@
  * under the License.
  */
 
-import { Tag } from '../../pojo/Tag';
+import { Label } from '../../pojo/Label';
 
-export function formatTagName(tag: Tag): string {
-  if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
-    return `${tag.name}:${tag.tagValue}`;
+export function formatLabelName(label: Label): string {
+  if (label.tagValue != undefined && label.tagValue.trim() != '') {
+    return `${label.name}:${label.tagValue}`;
   } else {
-    return tag.name;
+    return label.name;
   }
 }
 

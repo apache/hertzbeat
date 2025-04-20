@@ -22,9 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.manager.service.impl.TagServiceImpl;
+import org.apache.hertzbeat.manager.service.impl.LabelServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,32 +37,31 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * Test case for {@link TagController}
+ * Test case for {@link LabelController}
  */
 @ExtendWith(MockitoExtension.class)
-class TagControllerTest {
+class LabelControllerTest {
 
     private MockMvc mockMvc;
 
     @Mock
-    private TagServiceImpl tagService;
+    private LabelServiceImpl tagService;
 
     @InjectMocks
-    private TagController tagController;
+    private LabelController labelController;
 
     @BeforeEach
     void setUp() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(tagController).build();
+        this.mockMvc = MockMvcBuilders.standaloneSetup(labelController).build();
     }
 
     @Test
     void addNewTags() throws Exception {
-        List<Tag> tags = new ArrayList<>();
-        Tag tag = new Tag();
+        List<Label> tags = new ArrayList<>();
+        Label tag = new Label();
         tag.setId(87584674384L);
         tag.setName("app");
         tag.setTagValue("23");
-        tag.setColor("#ffff");
         tag.setType((byte) 1);
         tag.setCreator("tom");
         tag.setModifier("tom");
@@ -70,7 +69,7 @@ class TagControllerTest {
         tags.add(tag);
 
 
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/tag")
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/label")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(tags)))
                 .andExpect(status().isOk())
@@ -80,17 +79,16 @@ class TagControllerTest {
     }
 
     @Test
-    void modifyMonitor() throws Exception {
-        Tag tag = new Tag();
+    void modifyLabel() throws Exception {
+        Label tag = new Label();
         tag.setId(87584674384L);
         tag.setName("app");
         tag.setTagValue("23");
-        tag.setColor("#ffff");
         tag.setType((byte) 1);
         tag.setCreator("tom");
         tag.setModifier("tom");
 
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/tag")
+        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/label")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(tag)))
                 .andExpect(status().isOk())
@@ -101,7 +99,7 @@ class TagControllerTest {
 
     @Test
     void getTags() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/tag?type={type}&search={search}",
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/label?type={type}&search={search}",
                         (byte) 1, "status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -110,7 +108,7 @@ class TagControllerTest {
 
     @Test
     void deleteTags() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/tag")
+        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/label")
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .param("ids", "6565463543"))
                 .andExpect(status().isOk())

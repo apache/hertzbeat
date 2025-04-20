@@ -43,7 +43,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
- * Tag Entity
+ * Label Entity
  */
 @Entity
 @Table(name = "hzb_tag")
@@ -51,30 +51,27 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Tag Entity")
+@Schema(description = "Label Entity")
 @EntityListeners(AuditingEntityListener.class)
-public class Tag {
+public class Label {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "Tag Primary key index ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "Primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "Tag Field", example = "app", accessMode = READ_WRITE)
+    @Schema(title = "Label Field", example = "app", accessMode = READ_WRITE)
     @NotBlank(message = "name can not null")
     private String name;
 
-    @Schema(title = "Tag Value", example = "23", accessMode = READ_WRITE)
+    @Schema(title = "Label Value", example = "23", accessMode = READ_WRITE)
     @Column(length = 2048)
     private String tagValue;
 
-    @Schema(title = "Tag Color", example = "#ffff", accessMode = READ_WRITE)
-    private String color;
-
-    @Schema(title = "Tag Color", example = "Used for monitoring mysql", accessMode = READ_WRITE)
+    @Schema(title = "Label Description", example = "Used for monitoring mysql", accessMode = READ_WRITE)
     private String description;
 
-    @Schema(title = "Tag type 0: Auto-generated monitor (monitorId,monitorName) 1: user-generated 2: system preset",
+    @Schema(title = "Tag type 0: Auto-generated 1: user-generated 2: system preset",
             accessMode = READ_WRITE)
     @Min(0)
     @Max(3)
@@ -104,7 +101,7 @@ public class Tag {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Tag tag = (Tag) o;
+        Label tag = (Label) o;
         return Objects.equals(name, tag.name) && Objects.equals(tagValue, tag.tagValue);
     }
 
