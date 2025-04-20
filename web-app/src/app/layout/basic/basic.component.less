@@ -1,3 +1,6 @@
+@import 'node_modules/ng-zorro-antd/ng-zorro-antd.less';
+@import 'src/styles/theme.less';
+
 /* 现有样式 */
 // ... existing code ...
 
@@ -13,8 +16,8 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #1890ff;
-  color: white;
+  background-color: @primary-color;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -27,21 +30,49 @@
   &:hover {
     transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    background-color: @primary-5;
+  }
+  
+  &.active {
+    background-color: @error-color;
   }
 }
 
 .ai-chatbot-window {
-  position: absolute;
+  position: fixed;
   bottom: 80px;
-  right: 0;
+  right: 30px;
   width: 350px;
   height: 500px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  background-color: @component-background;
+  border-radius: @border-radius-base;
+  box-shadow: @box-shadow-base;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border: 1px solid @border-color-split;
+  transition: all 0.3s ease;
+  z-index: 99999;
+  
+  /* 最大化状态 */
+  &.maximized {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    height: 75%;
+    max-width: 1000px;
+    max-height: 800px;
+    right: auto;
+    bottom: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    
+    /* 确保在小屏幕上也有合适的大小 */
+    @media (max-width: 768px) {
+      width: 90%;
+      height: 80%;
+    }
+  }
 }
 
 .chatbot-header {
@@ -49,17 +80,27 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background-color: #1890ff;
-  color: white;
+  background-color: @primary-color;
+  color: #fff;
   
   .chatbot-title {
     font-weight: 500;
     font-size: 16px;
   }
   
-  .chatbot-close {
-    cursor: pointer;
-    font-weight: bold;
+  .chatbot-controls {
+    display: flex;
+    align-items: center;
+    
+    .control-item {
+      cursor: pointer;
+      margin-left: 12px;
+      font-size: 14px;
+      
+      &:hover {
+        opacity: 0.8;
+      }
+    }
   }
 }
 
@@ -70,13 +111,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background-color: #f5f5f5;
+  background-color: @background-color-light;
 }
 
 .message {
   max-width: 80%;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: @border-radius-base;
   position: relative;
   
   .message-content {
@@ -93,14 +134,14 @@
 
 .user-message {
   align-self: flex-end;
-  background-color: #e6f7ff;
-  color: #0050b3;
+  background-color: @primary-1;
+  color: @text-color;
 }
 
 .bot-message {
   align-self: flex-start;
-  background-color: white;
-  border: 1px solid #e8e8e8;
+  background-color: @component-background;
+  border: 1px solid @border-color-split;
   
   &.loading-message {
     padding: 16px;
@@ -111,9 +152,10 @@
 
 .chatbot-input {
   padding: 12px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid @border-color-split;
   display: flex;
   gap: 8px;
+  background-color: @component-background;
   
   input {
     flex: 1;

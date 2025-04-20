@@ -83,15 +83,21 @@ interface ChatMessage {
 
     <!-- AI聊天机器人 -->
     <div class="ai-chatbot-container">
-      <div class="ai-chatbot-button" (click)="toggleChatbot()">
-        <span *ngIf="!isChatbotOpen">AI</span>
-        <span *ngIf="isChatbotOpen">X</span>
+      <div class="ai-chatbot-button" (click)="toggleChatbot()" *ngIf="!isChatbotOpen">
+        <span>AI</span>
       </div>
 
-      <div class="ai-chatbot-window" *ngIf="isChatbotOpen">
+      <div class="ai-chatbot-window" *ngIf="isChatbotOpen" [class.maximized]="isChatbotMaximized">
         <div class="chatbot-header">
           <div class="chatbot-title">AI 助手</div>
-          <div class="chatbot-close" (click)="toggleChatbot()">X</div>
+          <div class="chatbot-controls">
+            <span class="control-item" (click)="toggleMaximize()" title="{{isChatbotMaximized ? '还原' : '最大化'}}">
+              <i nz-icon [nzType]="isChatbotMaximized ? 'fullscreen-exit' : 'fullscreen'" nzTheme="outline"></i>
+            </span>
+            <span class="control-item" (click)="toggleChatbot()" title="关闭">
+              <i nz-icon nzType="close" nzTheme="outline"></i>
+            </span>
+          </div>
         </div>
         <div class="chatbot-messages">
           <div *ngFor="let message of chatMessages" 
@@ -147,6 +153,7 @@ export class LayoutBasicComponent implements OnInit {
 
   // AI聊天机器人相关属性
   isChatbotOpen = false;
+  isChatbotMaximized = false; // 是否最大化
   chatMessages: ChatMessage[] = [];
   currentMessage = '';
   isLoading = false;
@@ -166,7 +173,25 @@ export class LayoutBasicComponent implements OnInit {
 
   toggleChatbot(): void {
     this.isChatbotOpen = !this.isChatbotOpen;
+    
+    // 关闭聊天窗口时，同时取消最大化状态
+    if (!this.isChatbotOpen) {
+      setTimeout(() => {
+        // 确保在关闭动画完成后才重置最大化状态
+        this.isChatbotMaximized = false;
+      }, 300);
+    }
+    
     console.log('切换聊天机器人状态:', this.isChatbotOpen ? '打开' : '关闭');
+  }
+  
+  // 切换最大化状态
+  toggleMaximize(): void {
+    // 添加一个小延迟，确保DOM有时间响应
+    setTimeout(() => {
+      this.isChatbotMaximized = !this.isChatbotMaximized;
+      console.log('聊天窗口最大化状态:', this.isChatbotMaximized ? '最大化' : '正常');
+    }, 10);
   }
 
   sendMessage(): void {
@@ -187,7 +212,22 @@ export class LayoutBasicComponent implements OnInit {
     this.getAIResponse(userMessage).subscribe(response => {
       this.chatMessages.push(response);
       this.isLoading = false;
+      
+      // 确保消息显示后滚动到最底部
+      setTimeout(() => this.scrollToBottom(), 100);
     });
+  }
+  
+  // 滚动到消息底部
+  private scrollToBottom(): void {
+    try {
+      const chatMessages = document.querySelector('.chatbot-messages');
+      if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    } catch (err) {
+      console.error('滚动到底部失败:', err);
+    }
   }
 
   // 模拟AI响应
