@@ -17,19 +17,17 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
+import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -47,22 +45,13 @@ public class PeriodicAlertCalculator {
 
     private final DataSourceService dataSourceService;
     private final AlarmCommonReduce alarmCommonReduce;
-    /**
-     * The alarm in the process is triggered
-     * key - labels fingerprint
-     */
-    private final Map<String, SingleAlert> pendingAlertMap;
-    /**
-     * The not recover alert
-     * key - labels fingerprint
-     */
-    private final Map<String, SingleAlert> firingAlertMap;
-    
-    public PeriodicAlertCalculator(DataSourceService dataSourceService, AlarmCommonReduce alarmCommonReduce) {
+    private final AlarmCacheManager alarmCacheManager;
+
+    public PeriodicAlertCalculator(DataSourceService dataSourceService, AlarmCommonReduce alarmCommonReduce,
+                                   AlarmCacheManager alarmCacheManager) {
         this.dataSourceService = dataSourceService;
         this.alarmCommonReduce = alarmCommonReduce;
-        this.pendingAlertMap = new ConcurrentHashMap<>(8);
-        this.firingAlertMap = new ConcurrentHashMap<>(8);
+        this.alarmCacheManager = alarmCacheManager;
     }
     
     public void calculate(AlertDefine rule) {
@@ -122,8 +111,8 @@ public class PeriodicAlertCalculator {
 
     private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
                                          Map<String, Object> fieldValueMap, AlertDefine define) {
-        String fingerprint = calculateFingerprint(fingerPrints);
-        SingleAlert existingAlert = pendingAlertMap.get(fingerprint);
+        String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
+        SingleAlert existingAlert = alarmCacheManager.getPending(fingerprint);
         Map<String, String> labels = new HashMap<>(8);
         fieldValueMap.putAll(define.getLabels());
         labels.putAll(fingerPrints);
@@ -144,11 +133,11 @@ public class PeriodicAlertCalculator {
             // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
                 newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                firingAlertMap.put(fingerprint, newAlert);
+                alarmCacheManager.putFiring(fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
             } else {
                 // Otherwise put into pending queue first
-                pendingAlertMap.put(fingerprint, newAlert);
+                alarmCacheManager.putPending(fingerprint, newAlert);
             }
         } else {
             // Update existing alert
@@ -158,17 +147,17 @@ public class PeriodicAlertCalculator {
             // Check if required trigger times reached
             if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
                 // Reached trigger times threshold, change to firing status
-                pendingAlertMap.remove(fingerprint);
+                alarmCacheManager.removePending(fingerprint);
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                firingAlertMap.put(fingerprint, existingAlert);
+                alarmCacheManager.putFiring(fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }
     }
 
     private void handleRecoveredAlert(Map<String, String> fingerprints) {
-        String fingerprint = calculateFingerprint(fingerprints);
-        SingleAlert firingAlert = firingAlertMap.remove(fingerprint);
+        String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(fingerprint);
         if (firingAlert != null) {
             // todo consider multi times to tig for resolved alert
             firingAlert.setTriggerTimes(1);
@@ -176,13 +165,7 @@ public class PeriodicAlertCalculator {
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
-        pendingAlertMap.remove(fingerprint);
+        alarmCacheManager.removePending(fingerprint);
     }
 
-    private String calculateFingerprint(Map<String, String> fingerPrints) {
-        List<String> keyList = fingerPrints.keySet().stream().filter(Objects::nonNull).sorted().toList();
-        List<String> valueList = fingerPrints.values().stream().filter(Objects::nonNull).sorted().toList();
-        return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
-                + Arrays.hashCode(valueList.toArray(new String[0]));
-    }
 } 
