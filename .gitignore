@@ -13,7 +13,7 @@ package-lock.json
 jdk/
 data/
 
-!e2e/**/data/**
+!/e2e/**/data/
 
 ### STS ###
 .apt_generated
