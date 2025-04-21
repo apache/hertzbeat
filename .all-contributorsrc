@@ -1767,7 +1767,8 @@
         "doc",
         "blog",
         "bug",
-        "test"
+        "test",
+        "design"
       ]
     },
     {
