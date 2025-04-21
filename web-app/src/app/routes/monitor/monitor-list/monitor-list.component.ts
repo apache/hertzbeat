@@ -31,7 +31,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
-import {findDeepestSelected, renderLabelColor} from '../../../shared/utils/common-util';
+import { findDeepestSelected, renderLabelColor } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-list',
