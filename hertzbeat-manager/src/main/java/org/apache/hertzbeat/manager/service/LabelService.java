@@ -15,39 +15,42 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.manager.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import java.util.HashSet;
+import org.apache.hertzbeat.common.entity.manager.Label;
+import org.springframework.data.domain.Page;
 
 /**
- * tag repository
+ * Label service
  */
-public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecutor<Tag> {
+public interface LabelService {
 
     /**
-     * delete tags by tag id
-     * @param ids id list
+     * new Label
+     * @param label label
      */
-    void deleteTagsByIdIn(Set<Long> ids);
+    void addLabel(Label label);
 
     /**
-     * find tags by tag id
-     * @param ids id list
-     * @return tag list
+     * update label
+     * @param label label
      */
-    List<Tag> findByIdIn(Set<Long> ids);
-    
+    void modifyLabel(Label label);
+
     /**
-     * find tag by name and value
-     * @param name tag name
-     * @param value tag value
-     * @return tag
+     * get label page list
+     * @param search        label content search
+     * @param type          label type
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pagination
+     * @return label
      */
-    Optional<Tag> findTagByNameAndTagValue(String name, String value);
-    
+    Page<Label> getLabels(String search, Byte type, int pageIndex, int pageSize);
+
+    /**
+     * delete labels
+     * @param ids label id list
+     */
+    void deleteLabels(HashSet<Long> ids);
 }

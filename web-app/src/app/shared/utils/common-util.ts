@@ -17,14 +17,27 @@
  * under the License.
  */
 
-import { Tag } from '../../pojo/Tag';
+import { Label } from '../../pojo/Label';
 
-export function formatTagName(tag: Tag): string {
-  if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
-    return `${tag.name}:${tag.tagValue}`;
+export function formatLabelName(label: Label): string {
+  if (label.tagValue != undefined && label.tagValue.trim() != '') {
+    return `${label.name}:${label.tagValue}`;
   } else {
-    return tag.name;
+    return label.name;
   }
+}
+
+const colors = ['blue', 'green', 'orange', 'purple', 'cyan', 'yellow', 'pink', 'lime', 'red', 'geekblue', 'volcano', 'magenta'];
+export function renderLabelColor(key: string): string {
+  // Hash the key to get a consistent index
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    const char = key.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
 }
 
 export function findDeepestSelected(nodes: any): any {
