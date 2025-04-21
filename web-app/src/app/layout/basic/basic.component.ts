@@ -1,19 +1,13 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, SettingsService, User } from '@delon/theme';
 import { LayoutDefaultOptions } from '@delon/theme/layout-default';
 import { environment } from '@env/environment';
-import { Observable, of } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
+import { Observable, Subject, of } from 'rxjs';
+import { delay, tap, finalize, catchError, takeUntil } from 'rxjs/operators';
 
 import { CONSTANTS } from '../../shared/constants';
-
-// 聊天消息接口
-interface ChatMessage {
-  content: string;
-  isUser: boolean;
-  timestamp: Date;
-}
+import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service';
 
 @Component({
   selector: 'layout-basic',
@@ -99,7 +93,7 @@ interface ChatMessage {
             </span>
           </div>
         </div>
-        <div class="chatbot-messages">
+        <div class="chatbot-messages" #chatMessagesContainer>
           <div *ngFor="let message of chatMessages" 
               [class.user-message]="message.isUser" 
               [class.bot-message]="!message.isUser"
@@ -107,7 +101,11 @@ interface ChatMessage {
             <div class="message-content">{{message.content}}</div>
             <div class="message-time">{{message.timestamp | date:'HH:mm'}}</div>
           </div>
-          <div *ngIf="isLoading" class="bot-message loading-message">
+          <div *ngIf="currentBotMessage && isLoading" class="bot-message streaming-message">
+            <div class="message-content">{{currentBotMessage.content}}</div>
+            <div class="message-time">{{currentBotMessage.timestamp | date:'HH:mm'}}</div>
+          </div>
+          <div *ngIf="isLoading && !currentBotMessage" class="bot-message loading-message">
             <nz-spin nzSimple></nz-spin>
           </div>
         </div>
@@ -117,8 +115,9 @@ interface ChatMessage {
             placeholder="请输入问题..." 
             [(ngModel)]="currentMessage"
             (keyup.enter)="sendMessage()"
+            [disabled]="isLoading"
           />
-          <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()">
+          <button nz-button nzType="primary" [disabled]="!currentMessage.trim() || isLoading" (click)="sendMessage()">
             发送
           </button>
         </div>
@@ -127,7 +126,7 @@ interface ChatMessage {
   `,
   styleUrls: ['./basic.component.less']
 })
-export class LayoutBasicComponent implements OnInit {
+export class LayoutBasicComponent implements OnInit, OnDestroy {
   options: LayoutDefaultOptions = {
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
@@ -153,12 +152,20 @@ export class LayoutBasicComponent implements OnInit {
 
   // AI聊天机器人相关属性
   isChatbotOpen = false;
-  isChatbotMaximized = false; // 是否最大化
+  isChatbotMaximized = false;
   chatMessages: ChatMessage[] = [];
   currentMessage = '';
   isLoading = false;
+  currentBotMessage: ChatMessage | null = null;
+  
+  // 用于取消订阅
+  private destroy$ = new Subject<void>();
 
-  constructor(private settings: SettingsService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+  constructor(
+    private settings: SettingsService, 
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private aiBotService: AiBotService
+  ) {}
 
   ngOnInit(): void {
     // 初始化欢迎消息
@@ -170,24 +177,29 @@ export class LayoutBasicComponent implements OnInit {
     
     console.log('AI聊天机器人初始化完成');
   }
+  
+  ngOnDestroy(): void {
+    // 组件销毁时取消所有订阅
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   toggleChatbot(): void {
     this.isChatbotOpen = !this.isChatbotOpen;
     
-    // 关闭聊天窗口时，同时取消最大化状态
     if (!this.isChatbotOpen) {
       setTimeout(() => {
-        // 确保在关闭动画完成后才重置最大化状态
         this.isChatbotMaximized = false;
       }, 300);
+    } else {
+      // 打开窗口时，滚动到底部
+      setTimeout(() => this.scrollToBottom(), 100);
     }
     
     console.log('切换聊天机器人状态:', this.isChatbotOpen ? '打开' : '关闭');
   }
   
-  // 切换最大化状态
   toggleMaximize(): void {
-    // 添加一个小延迟，确保DOM有时间响应
     setTimeout(() => {
       this.isChatbotMaximized = !this.isChatbotMaximized;
       console.log('聊天窗口最大化状态:', this.isChatbotMaximized ? '最大化' : '正常');
@@ -195,7 +207,7 @@ export class LayoutBasicComponent implements OnInit {
   }
 
   sendMessage(): void {
-    if (!this.currentMessage.trim()) return;
+    if (!this.currentMessage.trim() || this.isLoading) return;
     
     // 添加用户消息
     this.chatMessages.push({
@@ -207,15 +219,46 @@ export class LayoutBasicComponent implements OnInit {
     const userMessage = this.currentMessage;
     this.currentMessage = '';
     this.isLoading = true;
+    this.currentBotMessage = null;
     
-    // 模拟AI响应
-    this.getAIResponse(userMessage).subscribe(response => {
-      this.chatMessages.push(response);
-      this.isLoading = false;
-      
-      // 确保消息显示后滚动到最底部
-      setTimeout(() => this.scrollToBottom(), 100);
-    });
+    // 确保消息显示后滚动到最底部
+    setTimeout(() => this.scrollToBottom(), 100);
+    
+    // 调用AI服务获取响应
+    this.aiBotService.sendMessage(userMessage)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.isLoading = false;
+          
+          // 如果有当前消息，将其添加到聊天记录中
+          if (this.currentBotMessage) {
+            this.chatMessages.push({...this.currentBotMessage});
+            this.currentBotMessage = null;
+          }
+          
+          // 确保消息显示后滚动到最底部
+          setTimeout(() => this.scrollToBottom(), 100);
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          console.log('接收到AI响应更新:', response);
+          // 更新当前正在接收的消息
+          this.currentBotMessage = response;
+          // 实时滚动到底部
+          this.scrollToBottom();
+        },
+        error: (error) => {
+          console.error('AI响应出错:', error);
+          // 添加错误消息
+          this.chatMessages.push({
+            content: '抱歉，连接AI助手时出现问题，请稍后再试。',
+            isUser: false,
+            timestamp: new Date()
+          });
+        }
+      });
   }
   
   // 滚动到消息底部
@@ -228,19 +271,5 @@ export class LayoutBasicComponent implements OnInit {
     } catch (err) {
       console.error('滚动到底部失败:', err);
     }
-  }
-
-  // 模拟AI响应
-  private getAIResponse(message: string): Observable<ChatMessage> {
-    console.log('发送消息:', message);
-    
-    return of({
-      content: `收到你的问题："${message}"。我是AI助手，很高兴为您服务！`,
-      isUser: false,
-      timestamp: new Date()
-    }).pipe(
-      delay(1000),
-      tap(response => console.log('AI响应:', response.content))
-    );
   }
 }

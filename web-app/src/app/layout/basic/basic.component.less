@@ -112,6 +112,7 @@
   flex-direction: column;
   gap: 12px;
   background-color: @background-color-light;
+  scroll-behavior: smooth; /* 添加平滑滚动 */
 }
 
 .message {
@@ -122,6 +123,7 @@
   
   .message-content {
     word-break: break-word;
+    white-space: pre-wrap; /* 保留换行符 */
   }
   
   .message-time {
@@ -148,6 +150,22 @@
     display: flex;
     justify-content: center;
   }
+  
+  /* 流式接收消息的样式 */
+  &.streaming-message {
+    .message-content::after {
+      content: '|';
+      display: inline-block;
+      opacity: 1;
+      animation: cursor-blink 0.8s infinite;
+      margin-left: 2px;
+    }
+  }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .chatbot-input {
@@ -159,5 +177,10 @@
   
   input {
     flex: 1;
+    
+    &:disabled {
+      background-color: @background-color-light;
+      cursor: not-allowed;
+    }
   }
 } 
