@@ -799,7 +799,8 @@
         "doc",
         "code",
         "blog",
-        "bug"
+        "bug",
+        "test"
       ]
     },
     {
