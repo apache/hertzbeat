@@ -26,14 +26,12 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.manager.dao.TagDao;
-import org.apache.hertzbeat.manager.service.impl.TagServiceImpl;
+import org.apache.hertzbeat.common.entity.manager.Label;
+import org.apache.hertzbeat.manager.dao.LabelDao;
+import org.apache.hertzbeat.manager.service.impl.LabelServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,50 +42,48 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
- * Test case for {@link TagService}
+ * Test case for {@link LabelService}
  */
 @ExtendWith(MockitoExtension.class)
-class TagServiceTest {
+class LabelServiceTest {
     
     @InjectMocks
-    private TagServiceImpl tagService;
+    private LabelServiceImpl labelService;
     
     @Mock
-    private TagDao tagDao;
+    private LabelDao labelDao;
     
     @Test
-    void addTags() {
+    void addLabel() {
         // Prepare test data
-        List<Tag> tags = Collections.singletonList(
-                Tag.builder().id(1L).name("tagname").tagValue("tagvalue").build()
-        );
-        when(tagDao.findTagByNameAndTagValue(anyString(), anyString())).thenReturn(Optional.empty());
+        Label label =  Label.builder().id(1L).name("tagname").tagValue("tagvalue").build();
+        when(labelDao.findLabelByNameAndTagValue(anyString(), anyString())).thenReturn(Optional.empty());
         
-        tagService.addTags(tags);
+        labelService.addLabel(label);
         
-        verify(tagDao).saveAll(tags);
+        verify(labelDao).save(label);
         
     }
     
     @Test
-    void modifyTag() {
-        Tag tag = Tag.builder().id(1L).build();
-        when(tagDao.findById(1L)).thenReturn(Optional.of(tag));
-        when(tagDao.save(tag)).thenReturn(tag);
-        assertDoesNotThrow(() -> tagService.modifyTag(tag));
+    void modifyLabel() {
+        Label tag = Label.builder().id(1L).build();
+        when(labelDao.findById(1L)).thenReturn(Optional.of(tag));
+        when(labelDao.save(tag)).thenReturn(tag);
+        assertDoesNotThrow(() -> labelService.modifyLabel(tag));
         reset();
-        when(tagDao.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> tagService.modifyTag(tag));
+        when(labelDao.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(IllegalArgumentException.class, () -> labelService.modifyLabel(tag));
     }
     
     @Test
-    void getTags() {
-        when(tagDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
-        assertNotNull(tagService.getTags(null, null, 1, 10));
+    void getLabels() {
+        when(labelDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
+        assertNotNull(labelService.getLabels(null, null, 1, 10));
     }
     
     @Test
-    void deleteTags() {
-        assertDoesNotThrow(() -> tagService.deleteTags(new HashSet<>(1)));
+    void deleteLabels() {
+        assertDoesNotThrow(() -> labelService.deleteLabels(new HashSet<>(1)));
     }
 }

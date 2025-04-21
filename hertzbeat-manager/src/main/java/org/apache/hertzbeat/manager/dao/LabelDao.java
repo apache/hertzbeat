@@ -17,36 +17,29 @@
 
 package org.apache.hertzbeat.manager.dao;
 
-import java.util.List;
 import java.util.Optional;
-import org.apache.hertzbeat.common.entity.manager.Collector;
+import java.util.Set;
+import org.apache.hertzbeat.common.entity.manager.Label;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 
 /**
- * Collector repository
+ * Label repository
  */
-public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
+public interface LabelDao extends JpaRepository<Label, Long>, JpaSpecificationExecutor<Label> {
+
+    /**
+     * delete Label by Label id
+     * @param ids id list
+     */
+    void deleteLabelsByIdIn(Set<Long> ids);
     
     /**
-     * find collector by name
-     * @param name name
-     * @return collector
+     * find Label by name and value
+     * @param name Label name
+     * @param value Label value
+     * @return Label
      */
-    Optional<Collector> findCollectorByName(String name);
-
-    /**
-     * find collectors by names
-     * @param names collector name list
-     * @return collector list
-     */
-    List<Collector> findCollectorsByNameIn(List<String> names);
-
-    /**
-     * delete collector by name
-     * @param collector collector name
-     */
-    @Modifying
-    void deleteCollectorByName(String collector);
+    Optional<Label> findLabelByNameAndTagValue(String name, String value);
+    
 }

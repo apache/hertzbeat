@@ -15,43 +15,26 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.alert.util;
 
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.springframework.data.domain.Page;
+import java.util.Map;
+import java.util.Objects;
 
 /**
- * tag service
+ * alert util
  */
-public interface TagService {
+public class AlertUtil {
 
     /**
-     * new tags
-     * @param tags tag
+     * calculate fingerprint
+     * @param fingerPrints finger prints
      */
-    void addTags(List<Tag> tags);
-
-    /**
-     * update tag
-     * @param tag Tag
-     */
-    void modifyTag(Tag tag);
-
-    /**
-     * get tag page list
-     * @param search        Tag content search
-     * @param type          Tag type
-     * @param pageIndex     List current page
-     * @param pageSize      Number of list pagination
-     * @return Tags
-     */
-    Page<Tag> getTags(String search, Byte type, int pageIndex, int pageSize);
-
-    /**
-     * delete tags
-     * @param ids tag id list
-     */
-    void deleteTags(HashSet<Long> ids);
+    public static String calculateFingerprint(Map<String, String> fingerPrints) {
+        List<String> keyList = fingerPrints.keySet().stream().filter(Objects::nonNull).sorted().toList();
+        List<String> valueList = fingerPrints.values().stream().filter(Objects::nonNull).sorted().toList();
+        return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
+                + Arrays.hashCode(valueList.toArray(new String[0]));
+    }
 }

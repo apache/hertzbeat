@@ -15,38 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.alert.dao;
 
-import java.util.List;
-import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 
 /**
- * Collector repository
+ * Alert Collector Dao
  */
-public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
-    
+public interface AlertCollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
+
     /**
-     * find collector by name
-     * @param name name
+     * Query collector by name
+     * @param name collector name
      * @return collector
      */
-    Optional<Collector> findCollectorByName(String name);
-
-    /**
-     * find collectors by names
-     * @param names collector name list
-     * @return collector list
-     */
-    List<Collector> findCollectorsByNameIn(List<String> names);
-
-    /**
-     * delete collector by name
-     * @param collector collector name
-     */
-    @Modifying
-    void deleteCollectorByName(String collector);
+    Collector findCollectorByName(String name);
 }

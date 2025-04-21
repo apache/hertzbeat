@@ -21,24 +21,24 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import { Label } from '../pojo/Label';
 import { Message } from '../pojo/Message';
 import { Page } from '../pojo/Page';
-import { Tag } from '../pojo/Tag';
 
-const tag_uri = '/tag';
+const label_uri = '/label';
 
 @Injectable({
   providedIn: 'root'
 })
-export class TagService {
+export class LabelService {
   constructor(private http: HttpClient) {}
 
-  public loadTags(
+  public loadLabels(
     search: string | undefined,
     type: number | undefined,
     pageIndex: number,
     pageSize: number
-  ): Observable<Message<Page<Tag>>> {
+  ): Observable<Message<Page<Label>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // HttpParams is unmodifiable, so we need to save the return value of append/set
@@ -54,31 +54,25 @@ export class TagService {
       httpParams = httpParams.append('search', search.trim());
     }
     const options = { params: httpParams };
-    return this.http.get<Message<Page<Tag>>>(tag_uri, options);
+    return this.http.get<Message<Page<Label>>>(label_uri, options);
   }
 
-  public newTags(body: Tag[]): Observable<Message<any>> {
-    return this.http.post<Message<any>>(tag_uri, body);
+  public newLabel(body: Label): Observable<Message<any>> {
+    return this.http.post<Message<any>>(label_uri, body);
   }
 
-  public newTag(body: Tag): Observable<Message<any>> {
-    const tags = [];
-    tags.push(body);
-    return this.http.post<Message<any>>(tag_uri, tags);
+  public editLabel(body: Label): Observable<Message<any>> {
+    return this.http.put<Message<any>>(label_uri, body);
   }
 
-  public editTag(body: Tag): Observable<Message<any>> {
-    return this.http.put<Message<any>>(tag_uri, body);
-  }
-
-  public deleteTags(tagIds: Set<number>): Observable<Message<any>> {
+  public deleteLabels(ids: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
-    tagIds.forEach(tagId => {
+    ids.forEach(id => {
       // HttpParams is unmodifiable, so we need to save the return value of append/set
       // Method append can append same key, set will replace the previous value
-      httpParams = httpParams.append('ids', tagId);
+      httpParams = httpParams.append('ids', id);
     });
     const options = { params: httpParams };
-    return this.http.delete<Message<any>>(tag_uri, options);
+    return this.http.delete<Message<any>>(label_uri, options);
   }
 }

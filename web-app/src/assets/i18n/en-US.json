@@ -220,6 +220,8 @@
   "alert.notice.type.userId": "User ID",
   "alert.notice.type.wechat": "Open WeChat",
   "alert.notice.type.wechat-id": "WeChat OPENID",
+  "alert.notify.title": "New Alert",
+  "alert.notify.body": "You have a new alert, please handle it in time",
   "alert.setting.bind.available": "Available Monitors",
   "alert.setting.bind.manage": "Manage Associations",
   "alert.setting.bind.monitors": "Associated Monitors",

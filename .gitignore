@@ -7,8 +7,6 @@ build/
 out/
 micronaut-cli.yml
 .mvn/
-mvnw
-mvnw.bat
 *.log
 package-lock.json
 *.zip
