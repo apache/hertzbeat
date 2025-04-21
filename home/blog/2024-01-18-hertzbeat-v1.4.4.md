@@ -144,7 +144,6 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * @tslj1024 made their first contribution in <https://github.com/apache/hertzbeat/pull/1461>
 * @ldysdu made their first contribution in <https://github.com/apache/hertzbeat/pull/1455>
 
-
 ---
 
 ## ⛄ Supported

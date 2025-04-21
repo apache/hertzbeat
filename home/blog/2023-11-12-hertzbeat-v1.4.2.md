@@ -116,7 +116,6 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * @XiaTian688 made their first contribution in <https://github.com/apache/hertzbeat/pull/1308>
 * @liyin made their first contribution in <https://github.com/apache/hertzbeat/pull/1311>
 
-
 ---
 
 ## ⛄ Supported
@@ -134,4 +133,3 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
-
