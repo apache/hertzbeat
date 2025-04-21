@@ -1,9 +1,9 @@
 @import "~src/styles/theme";
 
-.tag-cards-container {
+.label-cards-container {
   padding: 24px 0;
 
-  .tag-card {
+  .label-card {
     transition: all 0.3s;
     border-radius: 8px;
 
@@ -46,13 +46,13 @@
     }
   }
 
-  .tag-header {
+  .label-header {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 8px;
   }
-  .tag-description {
+  .label-description {
     font-size: 12px;
     margin: 0;
     display: -webkit-box;
@@ -65,13 +65,13 @@
   }
 }
 
-.tag-content {
+.label-content {
   min-height: 80px;
   display: flex;
   flex-direction: column;
 }
 
-.tag-name {
+.label-name {
   font-size: 18px;
   padding: 4px 8px;
   border-radius: 4px;
@@ -84,7 +84,7 @@
 
 [data-theme='dark'] {
   :host {
-    .tag-name {
+    .label-name {
       background: @common-background-color-dark;
     }
   }
