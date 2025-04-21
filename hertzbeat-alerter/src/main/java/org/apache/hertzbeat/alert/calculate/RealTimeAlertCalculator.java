@@ -44,6 +44,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -72,7 +73,7 @@ public class RealTimeAlertCalculator {
     private static final Pattern APP_PATTERN = Pattern.compile("equals\\(__app__,\"([^\"]+)\"\\)");
     private static final Pattern AVAILABLE_PATTERN = Pattern.compile("equals\\(__available__,\"([^\"]+)\"\\)");
     private static final Pattern LABEL_PATTERN = Pattern.compile("contains\\(__labels__,\\s*\"([^\"]+)\"\\)");
-    private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\\s\"(\\d+)\"\\)");
+    private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\\s*\"(\\d+)\"\\)");
     private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
     private final AlerterWorkerPool workerPool;
@@ -81,18 +82,38 @@ public class RealTimeAlertCalculator {
     private final AlarmCommonReduce alarmCommonReduce;
     private final AlarmCacheManager alarmCacheManager;
 
+    @Autowired
     public RealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                                    AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
                                    AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
+        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, true);
+    }
+
+    /**
+     * Constructor for RealTimeAlertCalculator with a toggle to control whether to start alert calculation threads.
+     *
+     * @param workerPool          The worker pool used for concurrent alert calculation.
+     * @param dataQueue           The queue from which metric data is pulled and pushed.
+     * @param alertDefineService  The service providing alert definition rules.
+     * @param singleAlertDao      The DAO for fetching persisted alert states from storage.
+     * @param alarmCommonReduce   The component responsible for reducing and sending alerts.
+     * @param start               If true, the alert calculation threads will start automatically;
+     *                            set to false to disable thread start (useful for unit testing).
+     */
+    public RealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
+                                   AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager, boolean start) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alarmCommonReduce = alarmCommonReduce;
         this.alertDefineService = alertDefineService;
         this.alarmCacheManager = alarmCacheManager;
-        startCalculate();
+        if (start) {
+            startCalculate();
+        }
     }
 
-    private void startCalculate() {
+    public void startCalculate() {
         Runnable runnable = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -252,7 +273,7 @@ public class RealTimeAlertCalculator {
      * @param priority  Current priority
      * @return Filtered alert definitions
      */
-    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
+    public List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
         return thresholds.stream()
                 .filter(define -> {
                     if (StringUtils.isBlank(define.getExpr())) {
