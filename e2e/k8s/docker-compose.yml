@@ -41,7 +41,7 @@ services:
         kubectl create clusterrolebinding -n kube-system cluster-admin-binding --clusterrole=cluster-admin --serviceaccount=kube-system:cluster-admin-sa
         cd /testcase
         kubectl create token cluster-admin-sa -n kube-system --duration=24h
-        echo $(sed "s/#TOKEN#/$(echo $(kubectl create token cluster-admin-sa -n kube-system --duration=24h))/g" data.json)>tmp.json
+        echo $(sed "s/#TOKEN#/$(echo $(kubectl create token cluster-admin-sa -n kube-system --duration=24h))/g" create_k8s_monitor_data.json)>tmp.json
         # install metrics server 
         kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
         sleep 30
