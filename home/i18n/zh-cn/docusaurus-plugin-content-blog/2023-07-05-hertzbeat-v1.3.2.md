@@ -21,8 +21,6 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 >
 > 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。
 
-![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
-
 **Github: <https://github.com/apache/hertzbeat>**
 
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
