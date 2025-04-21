@@ -219,6 +219,8 @@
   "alert.notice.type.userId": "用戶ID",
   "alert.notice.type.wechat": "微信公衆號",
   "alert.notice.type.wechat-id": "微信OPENID",
+  "alert.notify.title": "新告警通知",
+  "alert.notify.body": "您有一條新的告警，請及時處理！",
   "alert.setting.bind.available": "可選監控",
   "alert.setting.bind.manage": "關聯監控",
   "alert.setting.bind.monitors": "關聯監控",
