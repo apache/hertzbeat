@@ -47,5 +47,7 @@ jobs:
           sudo chmod u+x /usr/local/bin/docker-compose
 
           cd e2e/k8s
+          ls -la
+          ls ./data
           sudo docker-compose version
           sudo docker-compose up --exit-code-from testing --remove-orphans
