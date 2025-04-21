@@ -26,7 +26,7 @@ services:
     entrypoint: /bin/bash
     networks:
       k3s_network:
-        ipv4_address: 172.28.0.10
+        ipv4_address: 172.29.0.10
     volumes:
       - ./data/config/k3s.yaml:/.kube/config
       - ./data:/testcase
@@ -53,10 +53,10 @@ services:
     ports:
       - "6443:6443"
       - "80:80"
-    command: server  --bind-address 172.28.0.11
+    command: server  --bind-address 172.29.0.11
     networks:
       k3s_network:
-        ipv4_address: 172.28.0.11
+        ipv4_address: 172.29.0.11
     healthcheck:
       test: [ "CMD-SHELL",
               "kubectl cluster-info && echo $(cat  /var/lib/rancher/k3s/server/node-token)>node-token.txt" ]
@@ -91,7 +91,7 @@ services:
     command: atest run -p /work/testsuite.yaml --level debug --thread 3
     networks:
       k3s_network:
-        ipv4_address: 172.28.0.12
+        ipv4_address: 172.29.0.12
     depends_on:
       checker:
         condition: service_healthy
@@ -115,7 +115,7 @@ services:
       start_period: 10s
     networks:
       k3s_network:
-        ipv4_address: 172.28.0.13
+        ipv4_address: 172.29.0.13
     depends_on:
       - init
   hertzbeat:
@@ -127,10 +127,10 @@ services:
       - "1157:1157"
     networks:
       k3s_network:
-        ipv4_address: 172.28.0.14
+        ipv4_address: 172.29.0.14
 networks:
   k3s_network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.28.0.0/16
+        - subnet: 172.29.0.0/16
