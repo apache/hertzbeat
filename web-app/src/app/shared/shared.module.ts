@@ -17,7 +17,7 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzSwitchComponent } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 
-// 注册要使用的图标
+// Icon to be used for registration
 const icons: IconDefinition[] = [RobotOutline, CloseOutline, SendOutline];
 
 import { AiBotComponent } from './components/ai-bot/ai-bot.component';
