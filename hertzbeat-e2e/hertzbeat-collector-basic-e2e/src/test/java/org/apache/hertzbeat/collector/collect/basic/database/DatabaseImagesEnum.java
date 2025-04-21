@@ -64,9 +64,9 @@ public enum DatabaseImagesEnum {
 
     @Override
     public String toString() {
-        return "DatabaseImageNameEnum{" +
-                "imageName='" + imageName + '\'' +
-                ", defaultTag='" + defaultTag + '\'' +
-                '}';
+        return "DatabaseImagesEnum{"
+                + "imageName='" + imageName + '\''
+                + ", defaultTag='" + defaultTag + '\''
+                + '}';
     }
 }
