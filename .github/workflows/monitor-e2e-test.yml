@@ -22,7 +22,8 @@ name: Monitor E2E Test
 
 
 on:
-  - pull_request_target
+  push:
+    branches: [ master, dev, k8s-e2e ]
 jobs:
   check-license-header:
     name: check-license-header
