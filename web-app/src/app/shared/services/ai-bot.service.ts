@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable, Subject, throwError, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
@@ -58,44 +58,49 @@ export class AiBotService {
     });
 
     // Send POST request using HttpClient
-    this.http.post(`${AI_API_URI}/get`, requestBody, {
-      responseType: 'text',
-      headers: new HttpHeaders({
-        'Accept': 'text/event-stream',
-        'Content-Type': 'application/json'
+    this.http
+      .post(`${AI_API_URI}/get`, requestBody, {
+        responseType: 'text',
+        headers: new HttpHeaders({
+          Accept: 'text/event-stream',
+          'Content-Type': 'application/json'
+        })
       })
-    }).pipe(
-      tap(response => console.log('Received AI response, length:', response.length)),
-      catchError(error => {
-        console.error('AI request failed:', error);
+      .pipe(
+        tap(response => console.log('Received AI response, length:', response.length)),
+        catchError(error => {
+          console.error('AI request failed:', error);
 
-        // Provide friendly error message
-        responseSubject.next({
-          content: 'Sorry, the AI service is temporarily unavailable. Please try again later.\nError details: ' + this.getErrorMessage(error),
-          isUser: false,
-          timestamp: new Date()
-        });
+          // Provide friendly error message
+          responseSubject.next({
+            content: `Sorry, the AI service is temporarily unavailable. Please try again later.\nError details: ${this.getErrorMessage(
+              error
+            )}`,
+            isUser: false,
+            timestamp: new Date()
+          });
 
-        responseSubject.complete();
-        return throwError(() => error);
-      })
-    ).subscribe(response => {
-      console.log('Received complete response');
+          responseSubject.complete();
+          return throwError(() => error);
+        })
+      )
+      .subscribe(response => {
+        console.log('Received complete response');
 
-      // Check if response is in SSE format
-      if (response.includes('data:')) {
-        // Process SSE format response
-        this.processSSEResponse(response, responseSubject);
-      } else {
-        // If not SSE format, send response directly
-        responseSubject.next({
-          content: response,
-          isUser: false,
-          timestamp: new Date()
-        });
-        responseSubject.complete();
-      }
-    });
+        // Check if response is in SSE format
+        if (response.includes('data:')) {
+          // Process SSE format response
+          this.processSSEResponse(response, responseSubject);
+        } else {
+          // If not SSE format, send response directly
+          responseSubject.next({
+            content: response,
+            isUser: false,
+            timestamp: new Date()
+          });
+          responseSubject.complete();
+        }
+      });
 
     return responseSubject.asObservable();
   }

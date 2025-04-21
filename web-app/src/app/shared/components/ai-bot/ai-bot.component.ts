@@ -17,7 +17,8 @@
  * under the License.
  */
 
- import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+
 import { AiBotService, ChatMessage } from '../../services/ai-bot.service';
 
 @Component({

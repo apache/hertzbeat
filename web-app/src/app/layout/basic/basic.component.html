@@ -14,27 +14,17 @@
       <div class="chatbot-close" (click)="toggleChatbot()">X</div>
     </div>
     <div class="chatbot-messages">
-      <div *ngFor="let message of chatMessages" 
-          [class.user-message]="message.isUser" 
-          [class.bot-message]="!message.isUser"
-          class="message">
-        <div class="message-content">{{message.content}}</div>
-        <div class="message-time">{{message.timestamp | date:'HH:mm'}}</div>
+      <div *ngFor="let message of chatMessages" [class.user-message]="message.isUser" [class.bot-message]="!message.isUser" class="message">
+        <div class="message-content">{{ message.content }}</div>
+        <div class="message-time">{{ message.timestamp | date : 'HH:mm' }}</div>
       </div>
       <div *ngIf="isLoading" class="bot-message loading-message">
         <nz-spin nzSimple></nz-spin>
       </div>
     </div>
     <div class="chatbot-input">
-      <input 
-        nz-input 
-        placeholder="请输入问题..." 
-        [(ngModel)]="currentMessage"
-        (keyup.enter)="sendMessage()"
-      />
-      <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()">
-        发送
-      </button>
+      <input nz-input placeholder="请输入问题..." [(ngModel)]="currentMessage" (keyup.enter)="sendMessage()" />
+      <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()"> 发送 </button>
     </div>
   </div>
-</div> 
+</div>
