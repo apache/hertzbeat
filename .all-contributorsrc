@@ -1608,7 +1608,8 @@
         "doc",
         "bug",
         "test",
-        "blog"
+        "blog",
+        "design"
       ]
     },
     {
