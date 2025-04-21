@@ -25,47 +25,46 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
-import { Tag } from '../../../pojo/Tag';
-import { TagService } from '../../../service/tag.service';
-import { formatTagName } from '../../../shared/utils/common-util';
+import { Label } from '../../../pojo/Label';
+import { LabelService } from '../../../service/label.service';
+import { formatLabelName, renderLabelColor } from '../../../shared/utils/common-util';
 
 @Component({
-  selector: 'app-setting-tags',
-  templateUrl: './tags.component.html',
-  styleUrls: ['./tags.component.less']
+  selector: 'app-setting-label',
+  templateUrl: './label.component.html',
+  styleUrls: ['./label.component.less']
 })
-export class SettingTagsComponent implements OnInit {
-  @ViewChild('tagForm', { static: false }) tagForm: NgForm | undefined;
+export class SettingLabelComponent implements OnInit {
+  @ViewChild('labelForm', { static: false }) labelForm: NgForm | undefined;
 
   constructor(
     private notifySvc: NzNotificationService,
     private modal: NzModalService,
-    private tagService: TagService,
+    private labelService: LabelService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
   total: number = 0;
-  tags!: Tag[];
+  labels!: Label[];
   tableLoading: boolean = false;
-  // used for filtering tag name or tag value
   search: string | undefined;
 
   ngOnInit(): void {
-    this.loadTagsTable();
+    this.loadLabelTable();
   }
 
   sync() {
-    this.loadTagsTable();
+    this.loadLabelTable();
   }
 
-  loadTagsTable() {
+  loadLabelTable() {
     this.tableLoading = true;
-    let labelsInit$ = this.tagService.loadTags(this.search, 1, 0, 9999).subscribe(
+    let labelsInit$ = this.labelService.loadLabels(this.search, 1, 0, 9999).subscribe(
       message => {
         this.tableLoading = false;
         if (message.code === 0) {
           let page = message.data;
-          this.tags = page.content;
+          this.labels = page.content;
           this.total = page.totalElements;
         } else {
           console.warn(message.msg);
@@ -80,9 +79,9 @@ export class SettingTagsComponent implements OnInit {
     );
   }
 
-  onDeleteOneTag(tagId: number) {
-    let alerts = new Set<number>();
-    alerts.add(tagId);
+  onDeleteLabel(id: number) {
+    let ids = new Set<number>();
+    ids.add(id);
     this.modal.confirm({
       nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
@@ -90,18 +89,18 @@ export class SettingTagsComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteTags(alerts)
+      nzOnOk: () => this.deleteLabels(ids)
     });
   }
 
-  deleteTags(tagIds: Set<number>) {
+  deleteLabels(ids: Set<number>) {
     this.tableLoading = true;
-    const deleteTags$ = this.tagService.deleteTags(tagIds).subscribe(
+    const deleteLabels$ = this.labelService.deleteLabels(ids).subscribe(
       message => {
-        deleteTags$.unsubscribe();
+        deleteLabels$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.loadTagsTable();
+          this.loadLabelTable();
         } else {
           this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
@@ -109,24 +108,24 @@ export class SettingTagsComponent implements OnInit {
       },
       error => {
         this.tableLoading = false;
-        deleteTags$.unsubscribe();
+        deleteLabels$.unsubscribe();
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
   }
 
-  // start 新增修改Tag model
+  // start model
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
-  tag!: Tag;
-  onNewTag() {
-    this.tag = new Tag();
+  label!: Label;
+  onNewLabel() {
+    this.label = new Label();
     this.isManageModalVisible = true;
     this.isManageModalAdd = true;
   }
-  onEditOneTag(tagValue: Tag) {
-    this.tag = tagValue;
+  onEditLabel(labelValue: Label) {
+    this.label = labelValue;
     this.isManageModalVisible = true;
     this.isManageModalAdd = false;
   }
@@ -134,8 +133,8 @@ export class SettingTagsComponent implements OnInit {
     this.isManageModalVisible = false;
   }
   onManageModalOk() {
-    if (this.tagForm?.invalid) {
-      Object.values(this.tagForm.controls).forEach(control => {
+    if (this.labelForm?.invalid) {
+      Object.values(this.labelForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
           control.updateValueAndValidity({ onlySelf: true });
@@ -144,16 +143,16 @@ export class SettingTagsComponent implements OnInit {
       return;
     }
     this.isManageModalOkLoading = true;
-    this.tag.name = this.tag.name.trim();
-    if (this.tag.tagValue != undefined) {
-      this.tag.tagValue = this.tag.tagValue.trim();
+    this.label.name = this.label.name.trim();
+    if (this.label.tagValue != undefined) {
+      this.label.tagValue = this.label.tagValue.trim();
     }
-    if (this.tag.description != undefined) {
-      this.tag.description = this.tag.description.trim();
+    if (this.label.description != undefined) {
+      this.label.description = this.label.description.trim();
     }
     if (this.isManageModalAdd) {
-      const modalOk$ = this.tagService
-        .newTag(this.tag)
+      const modalOk$ = this.labelService
+        .newLabel(this.label)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();
@@ -165,7 +164,7 @@ export class SettingTagsComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-              this.loadTagsTable();
+              this.loadLabelTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
             }
@@ -175,8 +174,8 @@ export class SettingTagsComponent implements OnInit {
           }
         );
     } else {
-      const modalOk$ = this.tagService
-        .editTag(this.tag)
+      const modalOk$ = this.labelService
+        .editLabel(this.label)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();
@@ -188,7 +187,7 @@ export class SettingTagsComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-              this.loadTagsTable();
+              this.loadLabelTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
@@ -199,13 +198,16 @@ export class SettingTagsComponent implements OnInit {
         );
     }
   }
-  // end 新增修改告警定义model
-  protected readonly formatTagName = formatTagName;
+  // end model
 
-  copyTagValue(tag: any) {
-    const tagText = this.formatTagName(tag);
+  protected readonly getLabelColor = renderLabelColor;
+
+  protected readonly formatLabelName = formatLabelName;
+
+  copyLabelValue(label: any) {
+    const text = this.formatLabelName(label);
     navigator.clipboard
-      .writeText(tagText)
+      .writeText(text)
       .then(() => {
         this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), '');
       })

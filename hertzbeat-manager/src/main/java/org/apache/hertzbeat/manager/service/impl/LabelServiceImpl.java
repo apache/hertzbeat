@@ -23,13 +23,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.manager.dao.TagDao;
-import org.apache.hertzbeat.manager.service.TagService;
+import org.apache.hertzbeat.common.entity.manager.Label;
+import org.apache.hertzbeat.manager.dao.LabelDao;
+import org.apache.hertzbeat.manager.service.LabelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,50 +37,47 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Tag service implementation.
+ * Label service implementation.
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
-public class TagServiceImpl implements TagService {
+public class LabelServiceImpl implements LabelService {
 
     @Autowired
-    private TagDao tagDao;
+    private LabelDao labelDao;
 
     @Override
-    public void addTags(List<Tag> tags) {
+    public void addLabel(Label label) {
         // Verify request data
-        tags = tags.stream().peek(tag -> {
-            Optional<Tag> tagOptional = tagDao.findTagByNameAndTagValue(tag.getName(), tag.getTagValue());
-            if (tagOptional.isPresent()) {
-                throw new IllegalArgumentException("The tag already exists.");
-            }
-            tag.setType((byte) 1);
-            tag.setId(null);
-        }).distinct().collect(Collectors.toList());
-        tagDao.saveAll(tags);
+        Optional<Label> optional = labelDao.findLabelByNameAndTagValue(label.getName(), label.getTagValue());
+        if (optional.isPresent()) {
+            throw new IllegalArgumentException("The label already exists.");
+        }
+        label.setType((byte) 1);
+        label.setId(null);
+        labelDao.save(label);
     }
 
     @Override
-    public void modifyTag(Tag tag) {
-        Optional<Tag> tagOptional = tagDao.findById(tag.getId());
-        if (tagOptional.isPresent()) {
+    public void modifyLabel(Label label) {
+        Optional<Label> optional = labelDao.findById(label.getId());
+        if (optional.isPresent()) {
             
-            Optional<Tag> tagExistOptional = tagDao.findTagByNameAndTagValue(tag.getName(), tag.getTagValue());
-            if (tagExistOptional.isPresent() && !tagExistOptional.get().getId().equals(tag.getId())) {
-                throw new IllegalArgumentException("The tag with same key and value already exists.");
+            Optional<Label> existOptional = labelDao.findLabelByNameAndTagValue(label.getName(), label.getTagValue());
+            if (existOptional.isPresent() && !existOptional.get().getId().equals(label.getId())) {
+                throw new IllegalArgumentException("The label with same key and value already exists.");
             }
-            tag.setTagValue(StringUtils.isEmpty(tag.getTagValue()) ? null : tag.getTagValue());
-            tagDao.save(tag);
+            label.setTagValue(StringUtils.isEmpty(label.getTagValue()) ? null : label.getTagValue());
+            labelDao.save(label);
         } else {
-            throw new IllegalArgumentException("The tag is not existed");
+            throw new IllegalArgumentException("The label is not existed");
         }
     }
 
     @Override
-    public Page<Tag> getTags(String search, Byte type, int pageIndex, int pageSize) {
-        // Get tag information
-        Specification<Tag> specification = (root, query, criteriaBuilder) -> {
+    public Page<Label> getLabels(String search, Byte type, int pageIndex, int pageSize) {
+        Specification<Label> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (type != null) {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("type"), type);
@@ -111,14 +107,14 @@ public class TagServiceImpl implements TagService {
             }
         };
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
-        return tagDao.findAll(specification, pageRequest);
+        return labelDao.findAll(specification, pageRequest);
     }
 
     @Override
-    public void deleteTags(HashSet<Long> ids) {
+    public void deleteLabels(HashSet<Long> ids) {
         if (CollectionUtils.isEmpty(ids)){
             return;
         }
-        tagDao.deleteTagsByIdIn(ids);
+        labelDao.deleteLabelsByIdIn(ids);
     }
 }
