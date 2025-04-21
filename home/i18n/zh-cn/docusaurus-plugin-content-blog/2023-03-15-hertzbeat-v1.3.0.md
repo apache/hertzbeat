@@ -10,8 +10,6 @@ keywords: [开源监控系统, 告警系统, Linux监控]
 
 官网: hertzbeat.com | tancloud.cn
 
-![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
-
 ### What is HertzBeat?
 
 > HertzBeat赫兹跳动 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
@@ -22,8 +20,6 @@ keywords: [开源监控系统, 告警系统, Linux监控]
 >
 > 您相信只需定义YML就能立刻适配一款K8s或Docker等新的监控类型吗？
 
-![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
-
 **Github: <https://github.com/apache/hertzbeat>**
 
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
@@ -33,8 +29,6 @@ keywords: [开源监控系统, 告警系统, Linux监控]
 经过一个月的迭代更新，HertzBeat v1.3.0 在上周末正式发布啦, **推荐升级食用**！
 
 - **支持在浏览器页面自定义监控**。hertzbeat拥有强大自定义监控能力，我们所有的已支持监控类型都映射为一个YML，之前用户使用自定义监控功能适配指标需要在后台编写YML文件并重启，体验欠佳且没有直观的感受。这次我们带来了自定义监控页面化，欢迎大家使用和分享贡献自己的监控类型定义。
-
-![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b5c9dd3e28c54c72b49a7470012a0c36~tplv-k3u1fbpfcp-zoom-1.image)
 
 - **支持对网络交换机的监控**。hertzbeat很早之前就支持了snmp协议，windows监控就是通过snmp协议来监控的，这个版本我们不仅支持了更多windows性能指标，还支持了snmp walk，适配了几款常见网络交换机的监控，欢迎贡献更多类型与指标给社区。
 
