@@ -22,8 +22,11 @@ name: Monitor E2E Test
 
 
 on:
+  schedule:
+    # trigger at 01:00 everyday
+    - cron: '0 1 * * *'
   push:
-    branches: [ master, dev, k8s-e2e ]
+    branches: [ action* ]
 jobs:
   check-license-header:
     name: Monitor E2E Test
