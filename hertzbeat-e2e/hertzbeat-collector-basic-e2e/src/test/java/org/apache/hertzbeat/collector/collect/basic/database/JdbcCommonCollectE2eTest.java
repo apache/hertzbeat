@@ -39,6 +39,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+/**
+ * E2e test monitored by Jdbc Common
+ */
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 public class JdbcCommonCollectE2eTest extends AbstractCollectE2eTest {
