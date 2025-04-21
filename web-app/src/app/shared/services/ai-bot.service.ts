@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, Subject, throwError, of } from 'rxjs';
-import { catchError, tap, mergeMap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 
 export interface ChatMessage {
   content: string;
@@ -31,8 +31,14 @@ export class AiBotService {
     // 构建请求体
     const requestBody = { text: message };
     
+    // 发送初始消息
+    responseSubject.next({
+      content: '正在思考中...',
+      isUser: false,
+      timestamp: new Date()
+    });
+    
     // 使用HttpClient发送POST请求
-    // 注意：这里使用了responseType: 'text'，与其他服务保持一致
     this.http.post(`${AI_API_URI}/get`, requestBody, {
       responseType: 'text',
       headers: new HttpHeaders({
@@ -40,7 +46,7 @@ export class AiBotService {
         'Content-Type': 'application/json'
       })
     }).pipe(
-      tap(response => console.log('AI响应成功')),
+      tap(response => console.log('收到AI响应，长度:', response.length)),
       catchError(error => {
         console.error('AI请求失败:', error);
         
@@ -55,39 +61,78 @@ export class AiBotService {
         return throwError(() => error);
       })
     ).subscribe(response => {
-      // 处理成功的响应
-      if (response) {
+      console.log('收到完整响应');
+      
+      // 检查是否为SSE格式
+      if (response.includes('data:')) {
+        // 处理SSE格式的响应
+        this.processSSEResponse(response, responseSubject);
+      } else {
+        // 如果不是SSE格式，直接发送响应
         responseSubject.next({
           content: response,
           isUser: false,
           timestamp: new Date()
         });
+        responseSubject.complete();
       }
-      
-      responseSubject.complete();
     });
     
     return responseSubject.asObservable();
   }
   
   /**
-   * 尝试使用备用方式获取AI响应
+   * 处理SSE格式的响应数据
    */
-  private tryAlternativeMethod(message: string): Observable<string> {
-    // 使用标准POST请求作为备用
-    const requestBody = { text: message };
+  private processSSEResponse(response: string, subject: Subject<ChatMessage>): void {
+    const lines = response.split('\n');
+    let fullMessage = '';
+    const dataChunks = [];
     
-    return this.http.post(`${AI_API_URI}/get`, requestBody, {
-      responseType: 'text',
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json'
-      })
-    }).pipe(
-      catchError(error => {
-        console.error('备用方法也失败:', error);
-        return of('抱歉，AI服务暂时不可用。请稍后再试。');
-      })
-    );
+    // 首先收集所有data:行
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith('data:')) {
+        // 提取data:后面的内容
+        const content = trimmedLine.substring(5).trim();
+        if (content) {
+          dataChunks.push(content);
+        }
+      }
+    }
+    
+    console.log(`找到${dataChunks.length}个数据块`);
+    
+    // 如果没有找到有效数据块，发送原始响应
+    if (dataChunks.length === 0) {
+      subject.next({
+        content: response,
+        isUser: false,
+        timestamp: new Date()
+      });
+      subject.complete();
+      return;
+    }
+    
+    // 模拟流式效果：每隔100毫秒发送一个块
+    dataChunks.forEach((chunk, index) => {
+      setTimeout(() => {
+        // 累积消息
+        fullMessage += chunk;
+        
+        // 发送更新的消息
+        subject.next({
+          content: fullMessage,
+          isUser: false,
+          timestamp: new Date()
+        });
+        
+        // 如果是最后一个块，完成流
+        if (index === dataChunks.length - 1) {
+          subject.complete();
+        }
+      }, index * 100);
+    });
   }
   
   /**
