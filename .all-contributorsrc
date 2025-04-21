@@ -362,7 +362,8 @@
         "bug",
         "code",
         "doc",
-        "test"
+        "test",
+        "design"
       ]
     },
     {
