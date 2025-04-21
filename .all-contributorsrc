@@ -1265,7 +1265,8 @@
       "contributions": [
         "code",
         "doc",
-        "blog"
+        "blog",
+        "bug"
       ]
     },
     {
