@@ -16,29 +16,29 @@ const AI_API_URI = '/ai';
 })
 export class AiBotService {
   constructor(private http: HttpClient) {
-    console.log('AI助手服务已初始化');
+    console.log('AI Assistant Service Initialized');
   }
 
   /**
-   * 发送消息到AI并获取响应
+   * Send message to AI and get response
    */
   sendMessage(message: string): Observable<ChatMessage> {
-    console.log('发送消息到AI:', message);
+    console.log('Sending message to AI:', message);
     
-    // 创建一个Subject用于处理流式响应
+    // Create a Subject for handling streaming response
     const responseSubject = new Subject<ChatMessage>();
     
-    // 构建请求体
+    // Build request body
     const requestBody = { text: message };
     
-    // 发送初始消息
+    // Send initial message
     responseSubject.next({
-      content: '正在思考中...',
+      content: 'Thinking...',
       isUser: false,
       timestamp: new Date()
     });
     
-    // 使用HttpClient发送POST请求
+    // Send POST request using HttpClient
     this.http.post(`${AI_API_URI}/get`, requestBody, {
       responseType: 'text',
       headers: new HttpHeaders({
@@ -46,13 +46,13 @@ export class AiBotService {
         'Content-Type': 'application/json'
       })
     }).pipe(
-      tap(response => console.log('收到AI响应，长度:', response.length)),
+      tap(response => console.log('Received AI response, length:', response.length)),
       catchError(error => {
-        console.error('AI请求失败:', error);
+        console.error('AI request failed:', error);
         
-        // 提供友好的错误信息
+        // Provide friendly error message
         responseSubject.next({
-          content: '抱歉，AI服务暂时不可用。请稍后再试。\n错误详情: ' + this.getErrorMessage(error),
+          content: 'Sorry, the AI service is temporarily unavailable. Please try again later.\nError details: ' + this.getErrorMessage(error),
           isUser: false,
           timestamp: new Date()
         });
@@ -61,14 +61,14 @@ export class AiBotService {
         return throwError(() => error);
       })
     ).subscribe(response => {
-      console.log('收到完整响应');
+      console.log('Received complete response');
       
-      // 检查是否为SSE格式
+      // Check if response is in SSE format
       if (response.includes('data:')) {
-        // 处理SSE格式的响应
+        // Process SSE format response
         this.processSSEResponse(response, responseSubject);
       } else {
-        // 如果不是SSE格式，直接发送响应
+        // If not SSE format, send response directly
         responseSubject.next({
           content: response,
           isUser: false,
@@ -82,18 +82,18 @@ export class AiBotService {
   }
   
   /**
-   * 处理SSE格式的响应数据
+   * Process SSE format response data
    */
   private processSSEResponse(response: string, subject: Subject<ChatMessage>): void {
     const lines = response.split('\n');
     let fullMessage = '';
     const dataChunks = [];
     
-    // 首先收集所有data:行
+    // First collect all data: lines
     for (const line of lines) {
       const trimmedLine = line.trim();
       if (trimmedLine.startsWith('data:')) {
-        // 提取data:后面的内容
+        // Extract content after data:
         const content = trimmedLine.substring(5).trim();
         if (content) {
           dataChunks.push(content);
@@ -101,9 +101,9 @@ export class AiBotService {
       }
     }
     
-    console.log(`找到${dataChunks.length}个数据块`);
+    console.log(`Found ${dataChunks.length} data chunks`);
     
-    // 如果没有找到有效数据块，发送原始响应
+    // If no valid data chunks found, send original response
     if (dataChunks.length === 0) {
       subject.next({
         content: response,
@@ -114,20 +114,20 @@ export class AiBotService {
       return;
     }
     
-    // 模拟流式效果：每隔100毫秒发送一个块
+    // Simulate streaming effect: send a chunk every 100ms
     dataChunks.forEach((chunk, index) => {
       setTimeout(() => {
-        // 累积消息
+        // Accumulate message
         fullMessage += chunk;
         
-        // 发送更新的消息
+        // Send updated message
         subject.next({
           content: fullMessage,
           isUser: false,
           timestamp: new Date()
         });
         
-        // 如果是最后一个块，完成流
+        // If this is the last chunk, complete the stream
         if (index === dataChunks.length - 1) {
           subject.complete();
         }
@@ -136,24 +136,24 @@ export class AiBotService {
   }
   
   /**
-   * 从错误对象中获取可读的错误消息
+   * Get readable error message from error object
    */
   private getErrorMessage(error: any): string {
     if (error.error instanceof ErrorEvent) {
-      // 客户端错误
-      return `客户端错误: ${error.error.message}`;
+      // Client-side error
+      return `Client error: ${error.error.message}`;
     } else if (error.status) {
-      // 服务器返回的错误
+      // Server-side error
       if (error.status === 401) {
-        return '认证失败，请重新登录系统';
+        return 'Authentication failed, please log in again';
       } else if (error.status === 403) {
-        return '您没有权限访问此功能';
+        return 'You do not have permission to access this feature';
       } else {
-        return `服务器错误: ${error.status} ${error.statusText}`;
+        return `Server error: ${error.status} ${error.statusText}`;
       }
     } else {
-      // 其他错误
-      return error.message || '未知错误';
+      // Other errors
+      return error.message || 'Unknown error';
     }
   }
 }

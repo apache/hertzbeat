@@ -75,7 +75,7 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
     </global-footer>
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
 
-    <!-- AI聊天机器人 -->
+    <!-- AI Chatbot -->
     <div class="ai-chatbot-container">
       <div class="ai-chatbot-button" (click)="toggleChatbot()" *ngIf="!isChatbotOpen">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="white" style="min-width:28px; min-height:28px;">
@@ -157,7 +157,7 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
     }
   }
 
-  // AI聊天机器人相关属性
+  // AI Chatbot related properties
   isChatbotOpen = false;
   isChatbotMaximized = false;
   chatMessages: ChatMessage[] = [];
@@ -165,7 +165,7 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
   isLoading = false;
   currentBotMessage: ChatMessage | null = null;
   
-  // 用于取消订阅
+  // For subscription cleanup
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -175,18 +175,18 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // 初始化欢迎消息
+    // Initialize welcome message
     this.chatMessages.push({
       content: '你好！我是AI助手，有什么可以帮助你的吗？',
       isUser: false,
       timestamp: new Date()
     });
     
-    console.log('AI聊天机器人初始化完成');
+    console.log('AI Chatbot initialization completed');
   }
   
   ngOnDestroy(): void {
-    // 组件销毁时取消所有订阅
+    // Cancel all subscriptions when component is destroyed
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -199,24 +199,24 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
         this.isChatbotMaximized = false;
       }, 300);
     } else {
-      // 打开窗口时，滚动到底部
+      // Scroll to bottom when window opens
       setTimeout(() => this.scrollToBottom(), 100);
     }
     
-    console.log('切换聊天机器人状态:', this.isChatbotOpen ? '打开' : '关闭');
+    console.log('Toggle chatbot status:', this.isChatbotOpen ? 'open' : 'closed');
   }
   
   toggleMaximize(): void {
     setTimeout(() => {
       this.isChatbotMaximized = !this.isChatbotMaximized;
-      console.log('聊天窗口最大化状态:', this.isChatbotMaximized ? '最大化' : '正常');
+      console.log('Chat window maximize status:', this.isChatbotMaximized ? 'maximized' : 'normal');
     }, 10);
   }
 
   sendMessage(): void {
     if (!this.currentMessage.trim() || this.isLoading) return;
     
-    // 添加用户消息
+    // Add user message
     this.chatMessages.push({
       content: this.currentMessage,
       isUser: true,
@@ -228,37 +228,37 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.currentBotMessage = null;
     
-    // 确保消息显示后滚动到最底部
+    // Ensure scrolling to bottom after message display
     setTimeout(() => this.scrollToBottom(), 100);
     
-    // 调用AI服务获取响应
+    // Call AI service to get response
     this.aiBotService.sendMessage(userMessage)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
           this.isLoading = false;
           
-          // 如果有当前消息，将其添加到聊天记录中
+          // If there is a current message, add it to chat history
           if (this.currentBotMessage) {
             this.chatMessages.push({...this.currentBotMessage});
             this.currentBotMessage = null;
           }
           
-          // 确保消息显示后滚动到最底部
+          // Ensure scrolling to bottom after message display
           setTimeout(() => this.scrollToBottom(), 100);
         })
       )
       .subscribe({
         next: (response) => {
-          console.log('接收到AI响应更新:', response);
-          // 更新当前正在接收的消息
+          console.log('Received AI response update:', response);
+          // Update currently receiving message
           this.currentBotMessage = response;
-          // 实时滚动到底部
+          // Scroll to bottom in real-time
           this.scrollToBottom();
         },
         error: (error) => {
-          console.error('AI响应出错:', error);
-          // 添加错误消息
+          console.error('AI response error:', error);
+          // Add error message
           this.chatMessages.push({
             content: '抱歉，连接AI助手时出现问题，请稍后再试。',
             isUser: false,
@@ -268,7 +268,7 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
       });
   }
   
-  // 滚动到消息底部
+  // Scroll to bottom of messages
   private scrollToBottom(): void {
     try {
       const chatMessages = document.querySelector('.chatbot-messages');
@@ -276,7 +276,7 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
     } catch (err) {
-      console.error('滚动到底部失败:', err);
+      console.error('Failed to scroll to bottom:', err);
     }
   }
 }

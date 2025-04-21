@@ -2,14 +2,12 @@
   <router-outlet></router-outlet>
 </div>
 
-<!-- 直接在这里添加AI助手按钮，不使用组件 -->
 <div class="ai-chatbot-container">
   <div class="ai-chatbot-button" (click)="toggleChatbot()">
     <span *ngIf="!isChatbotOpen">AI</span>
     <span *ngIf="isChatbotOpen">X</span>
   </div>
 
-  <!-- 聊天窗口 -->
   <div class="ai-chatbot-window" *ngIf="isChatbotOpen">
     <div class="chatbot-header">
       <div class="chatbot-title">AI 助手</div>
