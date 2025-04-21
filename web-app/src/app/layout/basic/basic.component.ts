@@ -64,7 +64,7 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
         <router-outlet></router-outlet>
       </ng-template>
     </layout-default>
-    <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; margin:0;">
+    <global-footer>
       <div style="margin-top: 30px">
         Apache HertzBeat (incubating) {{ version }}<br />
         Copyright &copy; {{ currentYear }}
@@ -78,12 +78,19 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
     <!-- AI聊天机器人 -->
     <div class="ai-chatbot-container">
       <div class="ai-chatbot-button" (click)="toggleChatbot()" *ngIf="!isChatbotOpen">
-        <span>AI</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="white" style="min-width:28px; min-height:28px;">
+          <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5A2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5a2.5 2.5 0 0 0 2.5 2.5a2.5 2.5 0 0 0 2.5-2.5a2.5 2.5 0 0 0-2.5-2.5z"/>
+        </svg>
       </div>
 
       <div class="ai-chatbot-window" *ngIf="isChatbotOpen" [class.maximized]="isChatbotMaximized">
         <div class="chatbot-header">
-          <div class="chatbot-title">AI 助手</div>
+          <div class="chatbot-title">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="white" style="margin-right: 6px; vertical-align: middle;">
+              <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5A2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5a2.5 2.5 0 0 0 2.5 2.5a2.5 2.5 0 0 0 2.5-2.5a2.5 2.5 0 0 0-2.5-2.5z"/>
+            </svg>
+            AI 助手
+          </div>
           <div class="chatbot-controls">
             <span class="control-item" (click)="toggleMaximize()" title="{{isChatbotMaximized ? '还原' : '最大化'}}">
               <i nz-icon [nzType]="isChatbotMaximized ? 'fullscreen-exit' : 'fullscreen'" nzTheme="outline"></i>
