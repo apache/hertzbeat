@@ -267,7 +267,8 @@
       "contributions": [
         "code",
         "bug",
-        "design"
+        "design",
+        "test"
       ]
     },
     {
