@@ -27,6 +27,19 @@ export function formatLabelName(label: Label): string {
   }
 }
 
+const colors = ['blue', 'green', 'orange', 'purple', 'cyan', 'yellow', 'pink', 'lime', 'red', 'geekblue', 'volcano', 'magenta'];
+export function renderLabelColor(key: string): string {
+  // Hash the key to get a consistent index
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    const char = key.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
 export function findDeepestSelected(nodes: any): any {
   let deepestSelectedNode = null;
   for (let node of nodes) {

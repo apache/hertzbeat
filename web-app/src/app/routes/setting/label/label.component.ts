@@ -27,7 +27,7 @@ import { finalize } from 'rxjs/operators';
 
 import { Label } from '../../../pojo/Label';
 import { LabelService } from '../../../service/label.service';
-import { formatLabelName } from '../../../shared/utils/common-util';
+import {formatLabelName, renderLabelColor} from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-setting-label',
@@ -199,6 +199,9 @@ export class SettingLabelComponent implements OnInit {
     }
   }
   // end model
+
+  protected readonly getLabelColor = renderLabelColor;
+
   protected readonly formatLabelName = formatLabelName;
 
   copyLabelValue(label: any) {
