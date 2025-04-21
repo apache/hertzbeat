@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.collector.collect.basic.database;
 
+/**
+ * Database type (image mame) and image tag enumeration class
+ */
 public enum DatabaseImagesEnum {
     MYSQL("mysql", "8.0.36"),
     POSTGRESQL("postgresql", "15");
