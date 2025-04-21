@@ -1266,7 +1266,8 @@
         "code",
         "doc",
         "blog",
-        "bug"
+        "bug",
+        "design"
       ]
     },
     {
