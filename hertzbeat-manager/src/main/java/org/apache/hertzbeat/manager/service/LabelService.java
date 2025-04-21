@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.manager.service;
 
 import java.util.HashSet;
-import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.Label;
 import org.springframework.data.domain.Page;
 

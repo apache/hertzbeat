@@ -26,9 +26,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.hertzbeat.common.entity.manager.Label;
@@ -56,21 +54,19 @@ class LabelServiceTest {
     private LabelDao labelDao;
     
     @Test
-    void addTags() {
+    void addLabel() {
         // Prepare test data
-        List<Label> tags = Collections.singletonList(
-                Label.builder().id(1L).name("tagname").tagValue("tagvalue").build()
-        );
+        Label label =  Label.builder().id(1L).name("tagname").tagValue("tagvalue").build();
         when(labelDao.findLabelByNameAndTagValue(anyString(), anyString())).thenReturn(Optional.empty());
         
-        labelService.addLabels(tags);
+        labelService.addLabel(label);
         
-        verify(labelDao).saveAll(tags);
+        verify(labelDao).save(label);
         
     }
     
     @Test
-    void modifyTag() {
+    void modifyLabel() {
         Label tag = Label.builder().id(1L).build();
         when(labelDao.findById(1L)).thenReturn(Optional.of(tag));
         when(labelDao.save(tag)).thenReturn(tag);
@@ -81,13 +77,13 @@ class LabelServiceTest {
     }
     
     @Test
-    void getTags() {
+    void getLabels() {
         when(labelDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
         assertNotNull(labelService.getLabels(null, null, 1, 10));
     }
     
     @Test
-    void deleteTags() {
+    void deleteLabels() {
         assertDoesNotThrow(() -> labelService.deleteLabels(new HashSet<>(1)));
     }
 }

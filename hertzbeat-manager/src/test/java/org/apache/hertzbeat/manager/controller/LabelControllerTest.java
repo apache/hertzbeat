@@ -19,8 +19,6 @@ package org.apache.hertzbeat.manager.controller;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -45,7 +43,7 @@ class LabelControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private LabelServiceImpl tagService;
+    private LabelServiceImpl labelService;
 
     @InjectMocks
     private LabelController labelController;
@@ -56,22 +54,19 @@ class LabelControllerTest {
     }
 
     @Test
-    void addNewTags() throws Exception {
-        List<Label> tags = new ArrayList<>();
-        Label tag = new Label();
-        tag.setId(87584674384L);
-        tag.setName("app");
-        tag.setTagValue("23");
-        tag.setType((byte) 1);
-        tag.setCreator("tom");
-        tag.setModifier("tom");
-
-        tags.add(tag);
+    void addNewLabel() throws Exception {
+        Label label = new Label();
+        label.setId(87584674384L);
+        label.setName("app");
+        label.setTagValue("23");
+        label.setType((byte) 1);
+        label.setCreator("tom");
+        label.setModifier("tom");
 
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/label")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(tags)))
+                        .content(JsonUtil.toJson(label)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))
@@ -98,7 +93,7 @@ class LabelControllerTest {
     }
 
     @Test
-    void getTags() throws Exception {
+    void getLabels() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/label?type={type}&search={search}",
                         (byte) 1, "status"))
                 .andExpect(status().isOk())
@@ -107,7 +102,7 @@ class LabelControllerTest {
     }
 
     @Test
-    void deleteTags() throws Exception {
+    void deleteLabels() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/label")
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .param("ids", "6565463543"))
