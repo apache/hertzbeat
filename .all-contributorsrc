@@ -1654,7 +1654,8 @@
         "test",
         "code",
         "doc",
-        "design"
+        "design",
+        "bug"
       ]
     },
     {
