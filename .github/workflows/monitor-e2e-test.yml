@@ -30,6 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v4
+      - uses: ./script/ci/github-actions/setup-deps
+      - name: Build with Maven
+        run: mvn clean -B package -Prelease -Dmaven.test.skip=false --file pom.xml
       - name: Build Image
         uses: docker/build-push-action@v3
         with:
