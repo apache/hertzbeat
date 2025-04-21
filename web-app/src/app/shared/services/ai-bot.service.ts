@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, Subject, throwError, of } from 'rxjs';
@@ -24,20 +43,20 @@ export class AiBotService {
    */
   sendMessage(message: string): Observable<ChatMessage> {
     console.log('Sending message to AI:', message);
-    
+
     // Create a Subject for handling streaming response
     const responseSubject = new Subject<ChatMessage>();
-    
+
     // Build request body
     const requestBody = { text: message };
-    
+
     // Send initial message
     responseSubject.next({
       content: 'Thinking...',
       isUser: false,
       timestamp: new Date()
     });
-    
+
     // Send POST request using HttpClient
     this.http.post(`${AI_API_URI}/get`, requestBody, {
       responseType: 'text',
@@ -49,20 +68,20 @@ export class AiBotService {
       tap(response => console.log('Received AI response, length:', response.length)),
       catchError(error => {
         console.error('AI request failed:', error);
-        
+
         // Provide friendly error message
         responseSubject.next({
           content: 'Sorry, the AI service is temporarily unavailable. Please try again later.\nError details: ' + this.getErrorMessage(error),
           isUser: false,
           timestamp: new Date()
         });
-        
+
         responseSubject.complete();
         return throwError(() => error);
       })
     ).subscribe(response => {
       console.log('Received complete response');
-      
+
       // Check if response is in SSE format
       if (response.includes('data:')) {
         // Process SSE format response
@@ -77,10 +96,10 @@ export class AiBotService {
         responseSubject.complete();
       }
     });
-    
+
     return responseSubject.asObservable();
   }
-  
+
   /**
    * Process SSE format response data
    */
@@ -88,7 +107,7 @@ export class AiBotService {
     const lines = response.split('\n');
     let fullMessage = '';
     const dataChunks = [];
-    
+
     // First collect all data: lines
     for (const line of lines) {
       const trimmedLine = line.trim();
@@ -100,9 +119,9 @@ export class AiBotService {
         }
       }
     }
-    
+
     console.log(`Found ${dataChunks.length} data chunks`);
-    
+
     // If no valid data chunks found, send original response
     if (dataChunks.length === 0) {
       subject.next({
@@ -113,20 +132,20 @@ export class AiBotService {
       subject.complete();
       return;
     }
-    
+
     // Simulate streaming effect: send a chunk every 100ms
     dataChunks.forEach((chunk, index) => {
       setTimeout(() => {
         // Accumulate message
         fullMessage += chunk;
-        
+
         // Send updated message
         subject.next({
           content: fullMessage,
           isUser: false,
           timestamp: new Date()
         });
-        
+
         // If this is the last chunk, complete the stream
         if (index === dataChunks.length - 1) {
           subject.complete();
@@ -134,7 +153,7 @@ export class AiBotService {
       }, index * 100);
     });
   }
-  
+
   /**
    * Get readable error message from error object
    */
