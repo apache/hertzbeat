@@ -1,7 +1,7 @@
 ---
-id: aiConfig
+id: ai_config
 title: AI QuickStart  
-sidebar_label: AI QuickStartr
+sidebar_label: AI QuickStart
 keywords: [AI]
 ---
 

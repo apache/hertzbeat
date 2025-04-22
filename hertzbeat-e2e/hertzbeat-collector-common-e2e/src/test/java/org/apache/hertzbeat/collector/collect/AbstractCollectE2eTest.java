@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.Protocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.junit.jupiter.api.Assertions;
@@ -34,6 +35,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,10 +65,13 @@ public abstract class AbstractCollectE2eTest {
     private Timeout timeout;
     @Mock
     private Job job;
+    @Mock
+    private DefineDao defineDao;
 
     public void setUp() throws Exception {
         // Initialize mocks
         MockitoAnnotations.openMocks(this);
+        when(defineDao.findAll()).thenReturn(new ArrayList<>());
         when(timeout.task()).thenReturn(timerJob);
         when(timerJob.getJob()).thenReturn(job);
         metricsCollect = new MetricsCollect(mock(Metrics.class), timeout, mock(CollectDataDispatch.class), null, List.of());
@@ -78,6 +83,7 @@ public abstract class AbstractCollectE2eTest {
 
     /**
      * Validate metrics collection, check if the metrics values are not empty <br/>
+     *
      * @param metricsDef metrics definition
      * @param metricName metric name
      * @return metrics data

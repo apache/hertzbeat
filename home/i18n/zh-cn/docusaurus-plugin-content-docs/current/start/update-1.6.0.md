@@ -1,7 +1,7 @@
 ---
 id: 1.6.0-update  
-title: 如何升级到1.6.0     
-sidebar_label: 1.6.0升级指南
+title: 如何升级到 1.6.0     
+sidebar_label: 1.6.0 升级指南
 ---
 
 ## HertzBeat 1.6.0 升级指南

@@ -51,16 +51,12 @@
     "message": "中间件监控",
     "description": "The label for category mid in sidebar docs"
   },
-  "sidebar.docs.category.threshold": {
-    "message": "阈值告警配置",
+  "sidebar.docs.category.alert": {
+    "message": "阈值告警",
     "description": "The label for category threshold in sidebar docs"
   },
-  "sidebar.docs.category.reduce": {
-     "message": "告警收敛配置",
-     "description": "The label for category reduce in sidebar docs"
-   },
   "sidebar.docs.category.notice": {
-    "message": "告警通知配置",
+    "message": "消息通知",
     "description": "The label for category notice in sidebar docs"
   },
   "sidebar.docs.category.Others": {

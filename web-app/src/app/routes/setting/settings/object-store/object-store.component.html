@@ -31,8 +31,8 @@
               [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
               (ngModelChange)="onChange()"
             >
-              <nz-option [nzValue]="ObjectStoreType.FILE" [nzLabel]="'settings.object-store.type.file' | i18n"></nz-option>
               <nz-option [nzValue]="ObjectStoreType.DATABASE" [nzLabel]="'settings.object-store.type.database' | i18n"></nz-option>
+              <nz-option [nzValue]="ObjectStoreType.FILE" [nzLabel]="'settings.object-store.type.file' | i18n"></nz-option>
               <nz-option [nzValue]="ObjectStoreType.OBS" [nzLabel]="'settings.object-store.type.obs' | i18n"></nz-option>
             </nz-select>
           </nz-form-control>
