@@ -241,9 +241,9 @@ Built-in support for monitoring types include:
 
 ### Alarm Threshold
 
-- Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.
-- Support real-time threshold and scheduled threshold, real-time threshold can directly trigger the alarm when monitoring data is collected, scheduled threshold supports PromQL and other expressions to calculate the trigger alarm within a specified time period.
-- Support visual page configuration or more flexible expression rule configuration, support configuring trigger times, alarm levels, notification templates, associated specified monitoring and so on.
+* Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.
+* Support real-time threshold and scheduled threshold, real-time threshold can directly trigger the alarm when monitoring data is collected, scheduled threshold supports PromQL and other expressions to calculate the trigger alarm within a specified time period.
+* Support visual page configuration or more flexible expression rule configuration, support configuring trigger times, alarm levels, notification templates, associated specified monitoring and so on.
 
 ![HertzBeat](/img/home/6.png)
 
@@ -251,21 +251,21 @@ Built-in support for monitoring types include:
 
 ### Alarm Integration
 
-- Integration with third-party monitoring systems such as `Prometheus`, `WebHook`, `Skywalking`, `AlertManager`, etc. to receive alarm messages from these systems and perform alarm processing.
+* Integration with third-party monitoring systems such as `Prometheus`, `WebHook`, `Skywalking`, `AlertManager`, etc. to receive alarm messages from these systems and perform alarm processing.
 
 ![HertzBeat](/img/home/11.png)
 
 ### Alarm Grouping
 
-- Group convergence supports merging alarms for specified group labels by grouping. It deduplicates and converges the same repeated alarms in a time period.
-- When the threshold rule triggers an alarm or an external alarm is reported, it will enter the grouping convergence for alarm grouping and alarm deduplication to avoid alarm storms caused by a large number of alarm messages.
+* Group convergence supports merging alarms for specified group labels by grouping. It deduplicates and converges the same repeated alarms in a time period.
+* When the threshold rule triggers an alarm or an external alarm is reported, it will enter the grouping convergence for alarm grouping and alarm deduplication to avoid alarm storms caused by a large number of alarm messages.
 
 ![HertzBeat](/img/home/12.png)
 
 ### Alarm Inhibition
 
-- Alarm suppression is used to configure the suppression relationship between alarms. For example, high-level alarms suppress low-level alarms under the same instance.
-- When an alarm occurs, it can suppress the occurrence of other alarms. For example, when a server crashes, it can suppress all alarms on that server.
+* Alarm suppression is used to configure the suppression relationship between alarms. For example, high-level alarms suppress low-level alarms under the same instance.
+* When an alarm occurs, it can suppress the occurrence of other alarms. For example, when a server crashes, it can suppress all alarms on that server.
 
 ![HertzBeat](/img/home/13.png)
 
@@ -302,16 +302,16 @@ Built-in support for monitoring types include:
 
 ### Collector Cluster
 
-- Users can configure collector clusters to achieve distributed collection of large-scale monitoring tasks.
-- The collector cluster supports multi-node deployment, automatic load balancing, automatic failover, etc.
-- Supports unified management of multiple isolated networks, cloud-edge collaboration.
+* Users can configure collector clusters to achieve distributed collection of large-scale monitoring tasks.
+* The collector cluster supports multi-node deployment, automatic load balancing, automatic failover, etc.
+* Supports unified management of multiple isolated networks, cloud-edge collaboration.
 
 ![HertzBeat](/img/home/18.png)
 
 ### Status Page
 
-- Based on HertzBeat, quickly build an external status page for your own product and easily convey the real-time status of your product service to users. For example, the service status page provided by Github https://www.githubstatus.com.
-- Support synchronization between the status of the status page component and the monitoring status, as well as the fault event maintenance management mechanism, etc. Improve your transparency, professionalism, and user trust, and reduce communication costs.
+* Based on HertzBeat, quickly build an external status page for your own product and easily convey the real-time status of your product service to users. For example, the service status page provided by Github <https://www.githubstatus.com>.
+* Support synchronization between the status of the status page component and the monitoring status, as well as the fault event maintenance management mechanism, etc. Improve your transparency, professionalism, and user trust, and reduce communication costs.
 
 ![HertzBeat](/img/home/19.png)
 

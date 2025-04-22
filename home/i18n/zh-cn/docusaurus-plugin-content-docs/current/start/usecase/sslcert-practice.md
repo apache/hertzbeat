@@ -25,7 +25,7 @@ github: <https://github.com/apache/hertzbeat>
 2. 安装成功浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 :::note
-生产环境建议完整部署方式, 参考 https://hertzbeat.apache.org/docs/start/docker-compose-deploy
+生产环境建议完整部署方式, 参考 <https://hertzbeat.apache.org/docs/start/docker-compose-deploy>
 :::
 
 ## 监控 SSL 证书
@@ -52,8 +52,7 @@ github: <https://github.com/apache/hertzbeat>
 
 4. 设置阈值(证书过期时触发)
 
-    > 系统页面 -> 告警 -> 告警阈值 -> 新增阈值 -> 新增实时阈值规则
-
+    > 系统页面 -> 告警 -> 告警阈值 -> 新增阈值 -> 新增实时阈值规则  
     > 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模版信息等。
 
     ![HertzBeat](/img/docs/start/ssl_5.png)

@@ -24,7 +24,7 @@ github: <https://github.com/apache/hertzbeat>
 
 2. After the installation is successful, the browser can access `localhost:1157` to start, the default account password is `admin/hertzbeat`
 
-The production environment recommends a complete deployment method, refer https://hertzbeat.apache.org/docs/start/docker-compose-deploy
+The production environment recommends a complete deployment method, refer <https://hertzbeat.apache.org/docs/start/docker-compose-deploy>
 
 ## Monitoring SSL Certificates
 
@@ -51,8 +51,7 @@ The production environment recommends a complete deployment method, refer https:
 
 4. Set the threshold (triggered when the certificate expires)
 
-   > HertzBeat Page -> Alerting -> Threshold -> New Threshold -> ReadTime Threshold Rule
-
+   > HertzBeat Page -> Alerting -> Threshold -> New Threshold -> ReadTime Threshold Rule  
    > Configure the threshold, select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
    ![HertzBeat](/img/docs/start/ssl_5.png)

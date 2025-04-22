@@ -311,7 +311,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ### 状态页面
 
-- 基于 HertzBeat 快速构建自己产品的对外状态页，轻松向用户传达您产品服务的实时状态。例如 Github 提供的服务状态页 https://www.githubstatus.com。
+- 基于 HertzBeat 快速构建自己产品的对外状态页，轻松向用户传达您产品服务的实时状态。例如 Github 提供的服务状态页 <https://www.githubstatus.com>。
 - 支持状态页组件状态和监控状态联动同步，故障事件维护管理机制等。提高您的透明度，专业度和用户信任，降低沟通成本。
 
 ![HertzBeat](/img/home/19.png)
