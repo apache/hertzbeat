@@ -1,7 +1,7 @@
 ---
 id: alert_threshold  
-title: 阈值告警配置  
-sidebar_label: 阈值告警配置
+title: 告警阈值规则配置  
+sidebar_label: 阈值规则
 ---
 
 > 对监控指标配置告警阈值(警告告警，严重告警，紧急告警)，系统根据阈值配置和采集指标数据计算触发告警。

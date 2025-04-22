@@ -68,7 +68,7 @@
         },
         {
           "type": "category",
-          "label": "threshold",
+          "label": "alert",
           "items": [
             "help/alarm_center",
             "help/alert_threshold", 
