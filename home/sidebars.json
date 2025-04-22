@@ -30,7 +30,7 @@
         {
           "type": "category",
           "label": "upgrade",
-          "items": ["start/1.6.0-update", "start/upgrade"]
+          "items": ["start/1.7.0-update","start/1.6.0-update", "start/upgrade"]
         },
         {
           "type": "category",
