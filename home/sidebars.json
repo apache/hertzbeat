@@ -51,7 +51,7 @@
         {
           "type": "category",
           "label": "use-case",
-          "items": ["start/ssl-cert-practice"]
+          "items": ["start/usecase/ssl-cert-practice"]
         }
       ]
     },
@@ -61,6 +61,11 @@
       "items": [
         "help/guide",
         "help/security_model",
+        {
+          "type": "category",
+          "label": "use-case",
+          "items": ["start/usecase/ssl-cert-practice"]
+        },
         {
           "type": "category",
           "label": "service",
@@ -219,13 +224,13 @@
         },
         {
           "type": "category",
-          "label": "custom",
-          "items": ["help/kafka_promql", "help/influxdb_promql"]
+          "label": "network",
+          "items": ["help/huawei_switch"]
         },
         {
           "type": "category",
-          "label": "network",
-          "items": ["help/huawei_switch"]
+          "label": "custom",
+          "items": ["help/kafka_promql", "help/influxdb_promql"]
         },
         {
           "type": "category",
