@@ -25,8 +25,6 @@ Website: hertzbeat.com | tancloud.cn
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
 > We also provide **[Monitoring SaaS Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system in order to monitor resources. **[Get started for free](https://console.tancloud.cn)**.
 
-![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
-
 **Github: <https://github.com/apache/hertzbeat>**
 
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

@@ -10,8 +10,6 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 官网: hertzbeat.com | tancloud.cn
 
-![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
-
 ### What is HertzBeat?
 
 > HertzBeat赫兹跳动 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
@@ -21,8 +19,6 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 > 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。
 >
 > 您相信只需定义YML就能立刻适配一款K8s或Docker等新的监控类型吗？
-
-![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
 **Github: <https://github.com/apache/hertzbeat>**
 

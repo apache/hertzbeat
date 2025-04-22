@@ -144,8 +144,6 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * @tslj1024 made their first contribution in <https://github.com/apache/hertzbeat/pull/1461>
 * @ldysdu made their first contribution in <https://github.com/apache/hertzbeat/pull/1455>
 
-**Full Changelog**: <https://github.com/apache/hertzbeat/compare/v1.4.3...v1.4.4>
-
 ---
 
 ## ⛄ Supported
@@ -163,29 +161,3 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
-
-### **Download Link**
-
-**hertzbeat server**
-
-* ⬇️ [hertzbeat-1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-1.4.4.tar.gz)
-* ⬇️ [hertzbeat-1.4.4.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-1.4.4.zip)
-* ⬇️ [hertzbeat-linux_amd64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-linux_amd64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-linux_arm64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-linux_arm64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-macos_arm64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-macos_arm64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-macos_amd64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-macos_amd64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-windows64_1.4.4.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-windows64_1.4.4.zip)
-
-**hertzbeat collector**
-
-* ⬇️ [hertzbeat-collector-1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-1.4.4.tar.gz)
-* ⬇️ [hertzbeat-collector-1.4.4.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-1.4.4.zip)
-* ⬇️ [hertzbeat-collector-linux_amd64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-linux_amd64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-collector-linux_arm64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-linux_arm64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-collector-macos_arm64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-macos_arm64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-collector-macos_amd64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-macos_amd64_1.4.4.tar.gz)
-* ⬇️ [hertzbeat-collector-windows64_1.4.4.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-windows64_1.4.4.zip)
-
-**hertzbeat docker compose script**
-
-* ⬇️ [docker-compose.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/docker-compose.zip)
