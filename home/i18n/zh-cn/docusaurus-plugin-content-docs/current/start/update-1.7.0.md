@@ -4,38 +4,38 @@ title: 如何升级到 1.7.0
 sidebar_label: 1.7.0 升级指南
 ---
 
-## HertzBeat 1.7.0 Upgrade Guide
+## HertzBeat 1.7.0 升级指南
 
 :::note
-This guide is applicable for upgrading from 1.6.x to version 1.7.0.  
-If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.6.0 and then follow this guide to 1.7.0.
+该指南适用于 1.6.x 向1.6.0 版本升级 1.7.0  
+如果你使用更老的版本，建议使用导出功能重新安装，或先升级到 1.6.0 再按本指南升级到 1.7.0
 :::
 
-Follow the [HertzBeat New Version Upgrade](upgrade)
+其它请参考 [版本更新指引](upgrade)
 
-## Installation Upgrade
+## 升级注意
 
-### Upgrade Database
+### 变更数据库
 
-In 1.7.0, we use the `label` instead of `tag`, in some environment, we need drop or delete the table `hzb_tag_monitor_bind` in database.
+在 1.7.0 中，我们使用 `label` 代替 `tag`，在某些环境中，我们需要删除数据库中的表 `hzb_tag_monitor_bind`。
 
 ```sql
 DELETE FROM hzb_tag_monitor_bind;
 ```
 
-### Upgrade Alarm Threshold
+### 更新告警阈值
 
-In 1.7.0, we redesign the new alarm threshold, include the Real-Time Threshold and Scheduled Threshold.  
-We need reconfigure the alarm threshold, alarm group by manual.  
+在 1.7.0 中，我们重新设计了新的告警阈值，包括实时阈值和计划阈值。  
+我们需要手动重新配置告警阈值和告警分组。
 
 :::tip
-There are no default built-in threshold rules, such as the previous availability threshold.  
-So if you find that there is no alarm after the monitoring is down, you need to configure the corresponding availability threshold yourself.
+新版本没有内置的默认阈值规则，比如之前的可用性阈值。
+如果您发现监控下线后没有告警，您需要自己配置相应的可用性阈值。
 :::
 
-## Upgrade via Export and Import
+## 通过导出导入升级
 
-If you do not want to go through the tedious script upgrade method mentioned above, you can directly export and import the monitoring tasks and threshold information from the old environment.
+若不想如上繁琐的脚本升级方式，可以直接将老环境的监控任务导出导入。
 
-- Deploy a new environment with the latest version.
-- Export the monitoring tasks and threshold information from the old environment on the page
+- 部署一套最新版本的新环境
+- 在页面上将老环境的监控任务导出再导入
