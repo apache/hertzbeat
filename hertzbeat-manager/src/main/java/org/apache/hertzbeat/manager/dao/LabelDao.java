@@ -15,43 +15,31 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.dao;
 
-import java.util.HashSet;
-import java.util.List;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.springframework.data.domain.Page;
+import java.util.Optional;
+import java.util.Set;
+import org.apache.hertzbeat.common.entity.manager.Label;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * tag service
+ * Label repository
  */
-public interface TagService {
+public interface LabelDao extends JpaRepository<Label, Long>, JpaSpecificationExecutor<Label> {
 
     /**
-     * new tags
-     * @param tags tag
+     * delete Label by Label id
+     * @param ids id list
      */
-    void addTags(List<Tag> tags);
-
+    void deleteLabelsByIdIn(Set<Long> ids);
+    
     /**
-     * update tag
-     * @param tag Tag
+     * find Label by name and value
+     * @param name Label name
+     * @param value Label value
+     * @return Label
      */
-    void modifyTag(Tag tag);
-
-    /**
-     * get tag page list
-     * @param search        Tag content search
-     * @param type          Tag type
-     * @param pageIndex     List current page
-     * @param pageSize      Number of list pagination
-     * @return Tags
-     */
-    Page<Tag> getTags(String search, Byte type, int pageIndex, int pageSize);
-
-    /**
-     * delete tags
-     * @param ids tag id list
-     */
-    void deleteTags(HashSet<Long> ids);
+    Optional<Label> findLabelByNameAndTagValue(String name, String value);
+    
 }

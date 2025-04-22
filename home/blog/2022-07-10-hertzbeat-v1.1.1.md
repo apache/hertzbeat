@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
-> Friendly Cloud Monitoring Tool. | 易用友好的实时监控工具, 无需Agent, 强大自定义监控能力.
+> Friendly Cloud Monitoring Tool.
 
 **Home: [hertzbeat.com](https://hertzbeat.com)**
 

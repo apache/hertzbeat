@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,20 +34,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Test case for {@link TagDao}
+ * Test case for {@link LabelDao}
  */
 @Transactional
-class TagDaoTest extends AbstractSpringIntegrationTest {
+class LabelDaoTest extends AbstractSpringIntegrationTest {
 
     @Resource
-    private TagDao tagDao;
+    private LabelDao labelDao;
 
     @BeforeEach
     void setUp() {
-        Tag tag = Tag.builder()
+        Label tag = Label.builder()
                 .name("mock tag")
                 .tagValue("mock value")
-                .color("mock color")
                 .type((byte) 1)
                 .creator("mock creator")
                 .modifier("mock modifier")
@@ -55,26 +54,26 @@ class TagDaoTest extends AbstractSpringIntegrationTest {
                 .gmtUpdate(LocalDateTime.now())
                 .build();
 
-        tag = tagDao.saveAndFlush(tag);
+        tag = labelDao.saveAndFlush(tag);
         assertNotNull(tag);
     }
 
     @AfterEach
     void tearDown() {
-        tagDao.deleteAll();
+        labelDao.deleteAll();
     }
 
     @Test
     void deleteTagsByIdIn() {
-        List<Tag> tagList = tagDao.findAll();
+        List<Label> tagList = labelDao.findAll();
 
         assertNotNull(tagList);
         assertFalse(tagList.isEmpty());
 
-        Set<Long> ids = tagList.stream().map(Tag::getId).collect(Collectors.toSet());
-        assertDoesNotThrow(() -> tagDao.deleteTagsByIdIn(ids));
+        Set<Long> ids = tagList.stream().map(Label::getId).collect(Collectors.toSet());
+        assertDoesNotThrow(() -> labelDao.deleteLabelsByIdIn(ids));
 
-        tagList = tagDao.findAll();
+        tagList = labelDao.findAll();
         assertNotNull(tagList);
         assertTrue(tagList.isEmpty());
     }
