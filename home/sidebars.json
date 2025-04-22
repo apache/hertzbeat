@@ -68,6 +68,36 @@
         },
         {
           "type": "category",
+          "label": "threshold",
+          "items": [
+            "help/alarm_center",
+            "help/alert_threshold", 
+            "help/alert_threshold_expr",
+            "help/alarm_group",
+            "help/alarm_inhibit",
+            "help/alarm_silence"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "notice",
+          "items": [
+            "help/alert_email",
+            "help/alert_sms",
+            "help/alert_webhook",
+            "help/alert_discord",
+            "help/alert_slack",
+            "help/alert_telegram",
+            "help/alert_wework",
+            "help/alert_dingtalk",
+            "help/alert_feishu",
+            "help/alert_console",
+            "help/alert_enterprise_wechat_app",
+            "help/alert_smn"
+          ]
+        },
+        {
+          "type": "category",
           "label": "service",
           "items": [
             "help/prometheus",
@@ -219,11 +249,6 @@
         },
         {
           "type": "category",
-          "label": "aiConfig",
-          "items": ["help/aiConfig"]
-        },
-        {
-          "type": "category",
           "label": "network",
           "items": ["help/huawei_switch"]
         },
@@ -232,41 +257,12 @@
           "label": "custom",
           "items": ["help/kafka_promql", "help/influxdb_promql"]
         },
-        {
-          "type": "category",
-          "label": "threshold",
-          "items": ["help/alert_threshold", "help/alert_threshold_expr"]
-        },
-        {
-          "type": "category",
-          "label": "reduce",
-          "items": ["help/alarm_group","help/alarm_inhibit"]
-        },
-        "help/alarm_silence",
-        {
-          "type": "category",
-          "label": "notice",
-          "items": [
-            "help/alert_email",
-            "help/alert_sms",
-            "help/alert_webhook",
-            "help/alert_discord",
-            "help/alert_slack",
-            "help/alert_telegram",
-            "help/alert_wework",
-            "help/alert_dingtalk",
-            "help/alert_feishu",
-            "help/alert_console",
-            "help/alert_enterprise_wechat_app",
-            "help/alert_smn"
-          ]
-        },
         "help/bulletin",
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
         "help/collector",
-        "help/alarm_center",
+        "help/ai_config",
         "help/issue"
       ]
     },
