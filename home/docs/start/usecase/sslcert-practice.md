@@ -59,7 +59,7 @@ The production environment recommends a complete deployment method, refer <https
     ![HertzBeat](/img/docs/start/ssl_5.png)
 
     > Threshold rule has others function you can try eg: associating thresholds with monitoring, trigger times so on.
-   
+
 5. Set the threshold (triggered one week before the certificate expires)
 
     > In the same way, switch coding threshold, add a new configuration threshold and configure an alarm expression - when the metric expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now() + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
