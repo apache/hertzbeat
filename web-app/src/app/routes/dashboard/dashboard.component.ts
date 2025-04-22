@@ -32,10 +32,10 @@ import { CollectorSummary } from '../../pojo/CollectorSummary';
 import { SingleAlert } from '../../pojo/SingleAlert';
 import { AlertService } from '../../service/alert.service';
 import { CollectorService } from '../../service/collector.service';
+import { LabelService } from '../../service/label.service';
 import { MonitorService } from '../../service/monitor.service';
-import { TagService } from '../../service/tag.service';
 import { ThemeService } from '../../service/theme.service';
-import { formatTagName } from '../../shared/utils/common-util';
+import { formatLabelName } from '../../shared/utils/common-util';
 
 @Component({
   selector: 'app-dashboard',
@@ -48,7 +48,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private msg: NzMessageService,
     private monitorSvc: MonitorService,
     private alertSvc: AlertService,
-    private tagSvc: TagService,
+    private labelSvc: LabelService,
     private collectorSvc: CollectorService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private router: Router,
@@ -83,8 +83,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   refreshWordCloudContent(): void {
     this.wordCloudDataLoading = true;
-    let tagsInit$ = this.tagSvc
-      .loadTags(undefined, 1, 0, 10000)
+    let tagsInit$ = this.labelSvc
+      .loadLabels(undefined, 1, 0, 10000)
       .pipe(finalize(() => (this.wordCloudDataLoading = false)))
       .subscribe(
         message => {
@@ -95,7 +95,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
               let tmpData: CloudData[] = [];
               tags.forEach(item => {
                 tmpData.push({
-                  text: formatTagName(item),
+                  text: formatLabelName(item),
                   weight: Math.random() * (10 - 5) + 5
                 });
               });
