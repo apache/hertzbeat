@@ -67,19 +67,6 @@ services:
     volumes:
       - ./data/config/k3s.yaml:/etc/rancher/k3s/k3s.yaml
       - ./data/config/node-token.txt:/node-token.txt
-#  k3s-agent:
-#    image: rancher/k3s:v1.31.0-k3s1
-#    container_name: k3s-agent
-#    privileged: true
-#    depends_on:
-#      k3s:
-#        condition: service_healthy
-#    command:  agent --server https://172.28.0.11:6443 --token $(cat /node-token.txt)
-#    volumes:
-#      - ./data/config/node-token.txt:/node-token.txt
-#    networks:
-#      k3s_network:
-#        ipv4_address: 172.28.0.15
   testing:
     image: ghcr.io/linuxsuren/api-testing:v0.0.17
     environment:
