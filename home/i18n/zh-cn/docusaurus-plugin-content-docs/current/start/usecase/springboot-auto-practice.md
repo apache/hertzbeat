@@ -51,18 +51,18 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
    > 切换元数据储存数据源
    >
    > 修改位于 `hertzbeat/config/application.yml` 的配置文件，替换为 PostgreSQL 服务。
-   
-   :::note
-   PostgreSQL 配置请查阅文档：[元数据存储PostgreSQL(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/postgresql-change) 
-   :::
-   
+
+:::note
+PostgreSQL 配置请查阅文档：[元数据存储PostgreSQL(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/postgresql-change) 
+:::
+
    > 配置时序数据库存储指标
    >
    > 同理，修改 `hertzbeat/config/application.yml` 的配置文件，开启 VictoriaMetrics 服务用于存储指标。
-   
-   :::note
-   VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/victoria-metrics-init) 
-   :::
+
+:::note
+VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/victoria-metrics-init) 
+:::
 
 4. 启动 HertzBeat
 
@@ -127,7 +127,7 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
 
 2. 验证端点
 
-   > SpringBoot 程序启动后，请求URL: 
+   > SpringBoot 程序启动后，请求URL:
    >
    > - `http://<your-host>:<port>/actuator`: 验证已启用的端点，
    > - `http://<your-host>:<port>/actuator/prometheus`: 应返回指标数据。
@@ -157,9 +157,9 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
 
    > 点击进入新建监控，可以查看指标数据详情及指标历史图表等。
    >
-   
+
    ![HertzBeat](/img/docs/start/springboot-auto-practice-3.png)
-   
+
    ![HertzBeat](/img/docs/start/springboot-auto-practice-4.png)
 
 ## Grafana可视化集成 (可选)
@@ -167,10 +167,10 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
 1. Grafana 图表配置
 
    > 需启用 Grafana 可嵌入功能，并开启匿名访问。
-   
-   :::note
-   完整配置请参考文档：[Grafana历史图表](https://hertzbeat.apache.org/zh-cn/docs/help/grafana_dashboard) 
-   :::
+
+:::note
+完整配置请参考文档：[Grafana历史图表](https://hertzbeat.apache.org/zh-cn/docs/help/grafana_dashboard)
+:::
 
 2. 在 HertzBeat 监控中嵌入 Grafana 仪表盘
 
@@ -190,7 +190,7 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
 
 1. HertzBeat 告警配置
 
-   > 系统页面 -> 告警 -> 阈值规则 -> 新增 -> 新增阈值 
+   > 系统页面 -> 告警 -> 阈值规则 -> 新增 -> 新增阈值
    >
 
    ![HertzBeat](/img/docs/start/springboot-auto-practice-7.png)
@@ -217,18 +217,17 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
 
    ![HertzBeat](/img/docs/start/springboot-auto-practice-9.png)
 
-4. 告警通知
+3. 告警通知
 
    > 系统页面 -> 消息通知 -> 通知媒介 -> 新增接收对象
    >
-   
+
    ![HertzBeat](/img/docs/start/springboot-auto-practice-10.png)
-   
+
    > 系统页面 -> 消息通知 -> 通知策略 -> 新增通知策略 -> 选择接收对象并启用通知
    >
 
    ![HertzBeat](/img/docs/start/springboot-auto-practice-11.png)
-   
 
 4. OK！当阈值规则触发后我们就可以收到对应告警消息啦，如果没有配置通知，也可以在告警中心查看告警信息。
 
@@ -237,7 +236,6 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
 这篇文章通过简洁的监控配置，用户在几分钟之内就可搭建完整的监控体系，这充分体现了 HertzBeat 的几点优势：
 
 - 无需部署 Exporter 和 Agent 即可监控 SpringBoot Actuator 端点，支持自定义指标采集与告警规则。
-
 - 轻量化：相比传统 Prometheus + AlertManager 组合，HertzBeat 简化了部署和维护流程。
 - 无缝集成 Grafana，HertzBeat 将采集的时序数据实时推送至 Grafana 构建可视化仪表盘。
 - 监控+告警+通知功能整合联动，全协议覆盖 + 实时/周期阈值检测 + 多通道通知（钉钉/飞书/Webhook等）。
