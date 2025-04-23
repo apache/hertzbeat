@@ -65,7 +65,7 @@ import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
-import org.apache.hertzbeat.manager.service.TagService;
+import org.apache.hertzbeat.manager.service.LabelService;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
@@ -116,7 +116,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Autowired
     private AppService appService;
     @Autowired
-    private TagService tagService;
+    private LabelService tagService;
     @Autowired
     private CollectJobScheduling collectJobScheduling;
     @Autowired

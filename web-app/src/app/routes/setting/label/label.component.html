@@ -1,0 +1,136 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'labels.help' | i18n"
+  [guild_link]="'labels.help.link' | i18n"
+  [module_name]="'menu.advanced.labels'"
+  [icon_name]="'tags'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <button nz-button nzType="primary" (click)="onNewLabel()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'common.button.new' | i18n }}
+    </button>
+  </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      class="mobile-hide"
+      groupStyle="width: 250px;"
+      [placeholder]="'label.search' | i18n"
+      [(value)]="search"
+      (keydown.enter)="loadLabelTable()"
+      (cleared)="loadLabelTable()"
+    />
+    <button nz-button nzType="primary" (click)="loadLabelTable()" class="mobile-hide">
+      {{ 'common.search' | i18n }}
+    </button>
+  </ng-template>
+</app-toolbar>
+
+<div class="label-cards-container">
+  <nz-row [nzGutter]="[8, 8]">
+    <nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4" *ngFor="let data of labels">
+      <nz-card [nzActions]="[copyAction, editAction, deleteAction]" [nzBorderless]="true" class="label-card" [nzSize]="'small'">
+        <div class="label-content">
+          <div class="label-header">
+            <a routerLink="/monitors" [queryParams]="{ labels: formatLabelName(data) }">
+              <nz-tag class="label-name" [nzColor]="getLabelColor(data.name)">
+                {{ formatLabelName(data) }}
+              </nz-tag>
+            </a>
+          </div>
+
+          <div class="label-description" *ngIf="data.description">
+            {{ data.description }}
+          </div>
+        </div>
+
+        <ng-template #copyAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.copy.button' | i18n" (click)="copyLabelValue(data)">
+            <i nz-icon nzType="copy" nzTheme="outline"></i>
+          </span>
+        </ng-template>
+
+        <ng-template #editAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.button.edit' | i18n" (click)="onEditLabel(data)">
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </span>
+        </ng-template>
+
+        <ng-template #deleteAction>
+          <span nz-tooltip [nzTooltipTitle]="'common.button.delete' | i18n" (click)="onDeleteLabel(data.id)">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </span>
+        </ng-template>
+      </nz-card>
+    </nz-col>
+  </nz-row>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isManageModalVisible"
+  [nzTitle]="isManageModalAdd ? ('label.new' | i18n) : ('label.edit' | i18n)"
+  (nzOnCancel)="onManageModalCancel()"
+  (nzOnOk)="onManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="30%"
+  [nzOkLoading]="isManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #labelForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'label.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="label.name" nz-input required name="name" type="text" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="value">{{ 'label.value' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="label.tagValue" nz-input name="value" type="text" id="value" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="description">{{ 'label.description' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input [(ngModel)]="label.description" nz-input name="description" type="text" id="description" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="label.name != undefined">
+        <nz-form-label [nzSpan]="7" nzFor="color">{{ 'label.display' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-tag *ngIf="label.tagValue == undefined || label.tagValue.trim() == ''" [nzColor]="getLabelColor(label.name)">{{
+            label.name
+          }}</nz-tag>
+          <nz-tag *ngIf="label.tagValue != undefined && label.tagValue.trim() != ''" [nzColor]="getLabelColor(label.name)">{{
+            label.name + ':' + label.tagValue
+          }}</nz-tag>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

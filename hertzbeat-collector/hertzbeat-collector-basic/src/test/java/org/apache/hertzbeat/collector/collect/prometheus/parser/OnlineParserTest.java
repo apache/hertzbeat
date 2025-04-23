@@ -48,6 +48,13 @@ class OnlineParserTest {
         String str = """
                 # HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
                 # TYPE go_gc_duration_seconds summary
+                jvm_gc_pause_seconds_count{action="end of major GC",cause="Metadata GC Threshold",} 1.0
+                jvm_gc_pause_seconds_sum{action="end of major GC",cause="Metadata GC Threshold",} 0.139
+                jvm_gc_pause_seconds_count{action="end of minor GC",cause="Metadata GC Threshold",} 1.0
+                jvm_gc_pause_seconds_sum{action="end of minor GC",cause="Metadata GC Threshold",} 0.02
+                jvm_gc_pause_seconds_count{action="end of minor GC",cause="Allocation Failure",} 5.0
+                jvm_gc_pause_seconds_sum{action="end of minor GC",cause="Allocation Failure",} 0.082
+                go_gc_duration_seconds{quantile="0"} 2.0209e-05
                 go_gc_duration_seconds{quantile="0"} 2.0209e-05
                 go_gc_duration_seconds{quantile="0.25"} 6.6917e-05
                 go_gc_duration_seconds{quantile="0.5"} -Inf
@@ -87,7 +94,6 @@ class OnlineParserTest {
                 fail("parse failed, different result from two parser.");
             }
             MetricFamily metricFamily1 = metricFamilyMap1.get(metricFamilyName);
-            assertEquals(metricFamily1.getName(), metricFamily1.getName());
             Set<Double> metricValueSet = metricFamily2.getMetricList().stream().map(MetricFamily.Metric::getValue).collect(Collectors.toSet());
             metricFamily1.getMetricList().forEach(metric -> {
                 // this is for something different between two algorithms above, and both of them is current on this parsing behavior.

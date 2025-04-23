@@ -116,8 +116,6 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * @XiaTian688 made their first contribution in <https://github.com/apache/hertzbeat/pull/1308>
 * @liyin made their first contribution in <https://github.com/apache/hertzbeat/pull/1311>
 
-**Full Changelog**: <https://github.com/apache/hertzbeat/compare/v1.4.1...v1.4.2>
-
 ---
 
 ## ⛄ Supported
@@ -135,25 +133,3 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
-
-### **Download Link**
-
-**hertzbeat server**
-
-* ⬇️ [hertzbeat-1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.tar.gz)
-* ⬇️ [hertzbeat-1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.zip)
-* ⬇️ [hertzbeat-linux_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_amd64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-linux_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_arm64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_arm64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_amd64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-windows64_1.4.2.zip)
-
-**hertzbeat collector**
-
-* ⬇️ [hertzbeat-collector-1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.tar.gz)
-* ⬇️ [hertzbeat-collector-1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.zip)
-* ⬇️ [hertzbeat-collector-linux_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_amd64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-collector-linux_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_arm64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-collector-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_arm64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-collector-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_amd64_1.4.2.tar.gz)
-* ⬇️ [hertzbeat-collector-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-windows64_1.4.2.zip)

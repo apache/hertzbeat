@@ -1,7 +1,7 @@
 ---
 id: alarm_silence
-title: Alert Silence
-sidebar_label: Alert Silence
+title: Alarm Silence
+sidebar_label: Alarm Silence
 keywords: [ Open Source Monitoring System, Alert Silence ]
 ---
 

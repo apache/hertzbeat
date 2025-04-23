@@ -18,7 +18,7 @@
  */
 
 export class ObjectStore<T> {
-  type: ObjectStoreType = ObjectStoreType.FILE;
+  type: ObjectStoreType = ObjectStoreType.DATABASE;
   config!: T;
   appDefineStoreType!: ObjectStoreType;
 }
