@@ -61,7 +61,7 @@ PostgreSQL 配置请查阅文档：[元数据存储PostgreSQL(推荐)](https://h
    > 同理，修改 `hertzbeat/config/application.yml` 的配置文件，开启 VictoriaMetrics 服务用于存储指标。
 
 :::note
-VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/victoria-metrics-init) 
+VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/victoria-metrics-init)
 :::
 
 4. 启动 HertzBeat
@@ -246,7 +246,7 @@ VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推�
 
 监控 SpringBoot 应用的实践就到这里，当然对 HertzBeat 来说这个功能只是冰山一角，如果您觉得 HertzBeat 这个开源项目不错的话欢迎在 GitHub、Gitee 点 **Star** 哦，您的 Star 是我们持续优化的动力！欢迎点亮小星星✨
 
-**让监控更简单，期待与您共建生态！** 💝  
+**让监控更简单，期待与您共建生态！** 💝
 
 **github: <https://github.com/apache/hertzbeat>**
 
