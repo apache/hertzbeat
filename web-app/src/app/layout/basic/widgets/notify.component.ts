@@ -116,6 +116,7 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
       clearText: this.i18nSvc.fanyi('alert.center.clear')
     }
   ];
+  notifiedAlert: any[] = [];
   count = 0;
   loading = false;
   popoverVisible = false;
@@ -247,6 +248,16 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     const updatedMuteState = !this.mute.mute;
     const updatedMuteConfig = { ...this.mute, mute: updatedMuteState };
+    // request notification permission
+    debugger;
+    if (!updatedMuteState) {
+      Notification.requestPermission().then(permission => {
+        if (permission !== 'granted') {
+          console.log('Notification permission denied.');
+        }
+      });
+    }
+
     let saveConfig$ = this.configSvc
       .saveGeneralConfig(updatedMuteConfig, 'mute')
       .pipe(
@@ -290,11 +301,21 @@ export class HeaderNotifyComponent implements OnInit, OnDestroy {
         status: alert.status,
         type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
       };
+      console.log('alert:', alert);
       list.push(item);
-
       this.data = this.updateNoticeData(list);
-      if (!this.mute.mute) {
+      if (!this.mute.mute && !this.notifiedAlert.includes(alert.id)) {
+        this.notifiedAlert.push(alert.id);
         this.alertSound.playAlertSound(this.i18nSvc.currentLang);
+        const notification = new Notification(this.i18nSvc.fanyi('alert.notify.title'), {
+          body: this.i18nSvc.fanyi('alert.notify.body'),
+          icon: 'assets/logo.svg'
+        });
+        notification.onclick = () => {
+          window.focus();
+          this.router.navigateByUrl(`/alert/center`);
+          notification.close();
+        };
       }
       this.cdr.detectChanges();
     });

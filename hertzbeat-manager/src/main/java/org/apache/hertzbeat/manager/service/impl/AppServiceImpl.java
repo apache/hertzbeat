@@ -518,7 +518,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
      */
     private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
         if (objectStoreConfig == null) {
-            appDefineStore = new LocalFileAppDefineStoreImpl();
+            appDefineStore = new DatabaseAppDefineStoreImpl();
         } else {
             if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
                 appDefineStore = new ObjectStoreAppDefineStoreImpl();

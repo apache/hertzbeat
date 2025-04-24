@@ -1,4 +1,4 @@
-@import "~src/styles/theme";
+@import '~src/styles/theme';
 
 ::ng-deep {
   .monitor-select-menu-modal {
@@ -158,16 +158,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   button {
     padding: 0;
     height: auto;
-    
+
     i {
       margin-right: 4px;
     }
   }
-  
+
   .action-button {
     height: 32px;
     padding: 0 8px;
@@ -197,7 +197,7 @@
   color: #999;
   font-size: 12px;
   white-space: nowrap;
-  
+
   i {
     margin-right: 4px;
   }
@@ -209,7 +209,7 @@
 
 .monitor-card-status {
   margin-left: auto;
-  
+
   .ant-tag {
     margin-right: 0;
   }
@@ -228,12 +228,12 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .time-ago {
     margin-left: 0;
     margin-top: 8px;
   }
-    
+
   .label-tags {
     max-width: 100%;
   }
@@ -245,68 +245,68 @@
       background-color: @common-background-color-dark;
       border-color: #303030;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-      
+
       &:hover {
         border-color: @primary-color;
         box-shadow: 0 1px 8px rgba(24, 144, 255, 0.3);
       }
     }
-    
+
     .monitor-card-title button {
       color: @primary-color;
     }
-    
+
     .time-ago {
       color: #a0a0a0;
     }
-    
-    .host-item button[nzType="text"] {
+
+    .host-item button[nzType='text'] {
       color: #d9d9d9;
-      
+
       &:hover {
         color: @primary-color;
       }
     }
-    
+
     .action-button {
       background-color: #303030;
       border-color: #434343;
-      
+
       &:hover {
         background-color: #1f1f1f;
         border-color: @primary-color;
       }
     }
-    
+
     .label-tags .ant-tag {
       background-color: #303030;
     }
-    
+
     .export-type-card {
       background-color: @common-background-color-dark;
       border-color: #303030;
-      
+
       &:hover {
         border-color: @primary-color;
         box-shadow: 0 0 8px rgba(24, 144, 255, 0.3);
       }
-      
+
       &.loading {
         opacity: 0.5;
         background-color: #1f1f1f;
       }
     }
-    
+
     .export-type-icon {
       color: @primary-color;
       background: rgba(24, 144, 255, 0.2);
     }
-    
+
     .export-type-info {
       h3 {
         color: #d9d9d9;
       }
-      
+
       p {
         color: #a0a0a0;
       }

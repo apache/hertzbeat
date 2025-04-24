@@ -7,15 +7,6 @@ slug: /
 
 > A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-[![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
-[![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
-[![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
-[![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
-[![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
-
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
 ## 🎡 <font color="green">Introduction</font>
@@ -36,7 +27,7 @@ slug: /
 
 ---
 
-### Powerful Monitoring Templates
+### Powerful Monitoring Template
 
 > Before we discuss the customizable monitoring capabilities of HertzBeat, which we mentioned at the beginning, let's introduce the different monitoring templates of HertzBeat. And it is because of this monitoring template design that the advanced features come later.
 
@@ -91,7 +82,7 @@ Do you believe that users can just write a monitoring template on the UI page, c
 * And More Your Custom Template.
 * Notified Support `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
-### Powerful Customization
+### Customization
 
 > From the previous introduction of **Monitoring Templates**, it is clear that `HertzBeat` has powerful customization features.
 > Each monitor type is considered as a monitor template, no matter it is built-in or user-defined. You can easily add, modify and delete indicators by modifying the monitoring template.
@@ -156,7 +147,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 
 ---
 
-## Quickly Start
+## 🥐 Experience Now
 
 Just run a single command in a Docker environment: `docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`
 Browser access `http://localhost:1157` default account password `admin/hertzbeat`
@@ -171,7 +162,7 @@ Browser access `http://localhost:1157` default account password `admin/hertzbeat
 
 * The global overview page shows the distribution of current monitoring categories, users can visualize the current monitoring types and quantities and click to jump to the corresponding monitoring types for maintenance and management.
 * Show the status of currently registered collector clusters, including collector on-line status, monitoring tasks, startup time, IP address, name and so on.
-* Show the list of recent alarm messages, alarm level distribution and alarm processing rate.
+* Show the list of recent alarm messages, alarm level distribution etc.
 
 ![HertzBeat](/img/home/1.png)
 
@@ -222,7 +213,7 @@ Built-in support for monitoring types include:
 
 ![HertzBeat](/img/home/2.png)
 
-### Add and Modify Surveillance
+### New Monitor
 
 * You can add or modify monitoring instances of a specific monitoring type, configure the IP, port and other parameters of the monitoring on the other end, set the collection period, collection task scheduling method, support detecting availability in advance, etc. The monitoring instances on the page are defined by the corresponding monitoring templates.
 * The monitoring parameters configured on the page are defined by the monitoring template of the corresponding monitoring type, and users can modify the configuration parameters on the page by modifying the monitoring template.
@@ -235,7 +226,7 @@ Built-in support for monitoring types include:
 * The monitoring data detail page shows the basic parameter information of the current monitoring, and the monitoring indicator data information.
 * Monitor Real-time Data Report displays the real-time values of all the currently monitored indicators in the form of a list of small cards, and users can configure alarm threshold rules based on the real-time values for reference.
 * Monitor Historical Data Report displays the historical values of the currently monitored metrics in the form of trend charts, supports querying hourly, daily and monthly historical data, and supports configuring the page refresh time.
-* ⚠️ Note that the monitoring history charts need to be configured with an external timing database in order to get the full functionality, timing database support: IOTDB, TDengine, InfluxDB, GreptimeDB
+* ⚠️ Note that the monitoring history charts need to be configured with an external timing database in order to get the full functionality.
 
 ![HertzBeat](/img/home/3.png)
 
@@ -248,23 +239,33 @@ Built-in support for monitoring types include:
 
 ![HertzBeat](/img/home/7.png)
 
-### Threshold Rules
+### Alarm Threshold
 
-* Threshold rules can be configured for monitoring the availability status, and alerts can be issued when the value of a particular metric exceeds the expected range.
-* There are three levels of alerts: notification alerts, critical alerts, and emergency alerts.
-* Threshold rules support visual page configuration or expression rule configuration for more flexibility.
-* It supports configuring the number of triggers, alarm levels, notification templates, associated with a specific monitor and so on.
+* Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.
+* Support real-time threshold and scheduled threshold, real-time threshold can directly trigger the alarm when monitoring data is collected, scheduled threshold supports PromQL and other expressions to calculate the trigger alarm within a specified time period.
+* Support visual page configuration or more flexible expression rule configuration, support configuring trigger times, alarm levels, notification templates, associated specified monitoring and so on.
 
 ![HertzBeat](/img/home/6.png)
 
+![HertzBeat](/img/docs/start/ssl_5.png)
+
+### Alarm Integration
+
+* Integration with third-party monitoring systems such as `Prometheus`, `WebHook`, `Skywalking`, `AlertManager`, etc. to receive alarm messages from these systems and perform alarm processing.
+
 ![HertzBeat](/img/home/11.png)
 
-### Alarm Convergence
+### Alarm Grouping
 
-* When the alarm is triggered by the threshold rule, it will enter into the alarm convergence, the alarm convergence will be based on the rules of the specific time period of the duplicate alarm message de-emphasis convergence, to avoid a large number of repetitive alarms lead to the receiver alarm numbness.
-* Alarm convergence rules support duplicate alarm effective time period, label matching and alarm level matching filter.
+* Group convergence supports merging alarms for specified group labels by grouping. It deduplicates and converges the same repeated alarms in a time period.
+* When the threshold rule triggers an alarm or an external alarm is reported, it will enter the grouping convergence for alarm grouping and alarm deduplication to avoid alarm storms caused by a large number of alarm messages.
 
 ![HertzBeat](/img/home/12.png)
+
+### Alarm Inhibition
+
+* Alarm suppression is used to configure the suppression relationship between alarms. For example, high-level alarms suppress low-level alarms under the same instance.
+* When an alarm occurs, it can suppress the occurrence of other alarms. For example, when a server crashes, it can suppress all alarms on that server.
 
 ![HertzBeat](/img/home/13.png)
 
@@ -273,8 +274,6 @@ Built-in support for monitoring types include:
 * When the alarm is triggered by the threshold rule, it will enter into the alarm silence, the alarm silence will be based on the rules of a specific one-time time period or periodic time period of the alarm message blocking silence, this time period does not send alarm messages.
 * This application scenario, such as users in the system maintenance, do not need to send known alarms. Users will only receive alarm messages on weekdays, and users need to avoid disturbances at night.
 * Alarm silence rules support one-time time period or periodic time period, support label matching and alarm level matching.
-
-![HertzBeat](/img/home/14.png)
 
 ![HertzBeat](/img/home/15.png)
 
@@ -292,17 +291,38 @@ Built-in support for monitoring types include:
 
 ![HertzBeat](/img/home/8.png)
 
-### Monitoring Templates
+![HertzBeat](/img/home/14.png)
+
+### Monitoring Template
 
 * HertzBeat makes `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` and other protocols configurable so that you can customize the metrics you want to collect using these protocols by simply configuring the monitoring template `YML` in your browser. Would you believe that you can instantly adapt a new monitoring type such as `K8s` or `Docker` just by configuring it?
 * All our built-in monitoring types (mysql, website, jvm, k8s) are also mapped to corresponding monitoring templates, so you can add and modify monitoring templates to customize your monitoring functions.
 
 ![HertzBeat](/img/home/9.png)
 
+### Collector Cluster
+
+* Users can configure collector clusters to achieve distributed collection of large-scale monitoring tasks.
+* The collector cluster supports multi-node deployment, automatic load balancing, automatic failover, etc.
+* Supports unified management of multiple isolated networks, cloud-edge collaboration.
+
+![HertzBeat](/img/home/18.png)
+
+### Status Page
+
+* Based on HertzBeat, quickly build an external status page for your own product and easily convey the real-time status of your product service to users. For example, the service status page provided by Github <https://www.githubstatus.com>.
+* Support synchronization between the status of the status page component and the monitoring status, as well as the fault event maintenance management mechanism, etc. Improve your transparency, professionalism, and user trust, and reduce communication costs.
+
+![HertzBeat](/img/home/19.png)
+
+![HertzBeat](/img/home/status.png)
+
 ---
 
-**There's so much more to discover. Have Fun!**
+**More functions are welcome to be explored. Have Fun!**
 
 ---
 
 **Github: <https://github.com/apache/hertzbeat>**
+
+**Home: <https://hertzbeat.apache.org/>**

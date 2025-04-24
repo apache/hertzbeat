@@ -31,7 +31,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { findDeepestSelected } from '../../../shared/utils/common-util';
+import { findDeepestSelected, renderLabelColor } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-list',
@@ -577,21 +577,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     );
   }
 
-  getLabelColor(key: string): string {
-    const colors = ['blue', 'green', 'orange', 'purple', 'cyan'];
-    const index = Math.abs(this.hashString(key)) % colors.length;
-    return colors[index];
-  }
-
-  private hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return hash;
-  }
+  protected readonly getLabelColor = renderLabelColor;
 
   copyMonitor(monitorId: number) {
     this.monitorSvc.copyMonitor(monitorId).subscribe(

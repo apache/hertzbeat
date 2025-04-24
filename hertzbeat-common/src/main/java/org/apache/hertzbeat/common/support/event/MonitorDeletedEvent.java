@@ -20,7 +20,7 @@ package org.apache.hertzbeat.common.support.event;
 import org.springframework.context.ApplicationEvent;
 
 /**
- * the event for system config change
+ * the event for monitor delete
  */
 public class MonitorDeletedEvent extends ApplicationEvent {
     

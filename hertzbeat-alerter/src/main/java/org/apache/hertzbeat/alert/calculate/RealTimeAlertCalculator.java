@@ -17,12 +17,13 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
-import java.util.Arrays;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -35,6 +36,7 @@ import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
+import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -42,6 +44,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -62,50 +65,55 @@ public class RealTimeAlertCalculator {
     private static final String KEY_PRIORITY = "__priority__";
     private static final String KEY_CODE = "__code__";
     private static final String KEY_AVAILABLE  = "__available__";
+    private static final String KEY_LABELS = "__labels__";
     private static final String UP = "up";
     private static final String DOWN = "down";
     private static final String KEY_ROW = "__row__";
 
     private static final Pattern APP_PATTERN = Pattern.compile("equals\\(__app__,\"([^\"]+)\"\\)");
     private static final Pattern AVAILABLE_PATTERN = Pattern.compile("equals\\(__available__,\"([^\"]+)\"\\)");
-    private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\"(\\d+)\"\\)");
+    private static final Pattern LABEL_PATTERN = Pattern.compile("contains\\(__labels__,\\s*\"([^\"]+)\"\\)");
+    private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\\s*\"(\\d+)\"\\)");
     private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
-    /**
-     * The alarm in the process is triggered
-     * key - labels fingerprint
-     */
-    private final Map<String, SingleAlert> pendingAlertMap;
-    /**
-     * The not recover alert
-     * key - labels fingerprint
-     */
-    private final Map<String, SingleAlert> firingAlertMap;
     private final AlerterWorkerPool workerPool;
     private final CommonDataQueue dataQueue;
     private final AlertDefineService alertDefineService;
     private final AlarmCommonReduce alarmCommonReduce;
+    private final AlarmCacheManager alarmCacheManager;
 
+    @Autowired
     public RealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                                    AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                   AlarmCommonReduce alarmCommonReduce) {
+                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
+        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, true);
+    }
+
+    /**
+     * Constructor for RealTimeAlertCalculator with a toggle to control whether to start alert calculation threads.
+     *
+     * @param workerPool          The worker pool used for concurrent alert calculation.
+     * @param dataQueue           The queue from which metric data is pulled and pushed.
+     * @param alertDefineService  The service providing alert definition rules.
+     * @param singleAlertDao      The DAO for fetching persisted alert states from storage.
+     * @param alarmCommonReduce   The component responsible for reducing and sending alerts.
+     * @param start               If true, the alert calculation threads will start automatically;
+     *                            set to false to disable thread start (useful for unit testing).
+     */
+    public RealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
+                                   AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager, boolean start) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alarmCommonReduce = alarmCommonReduce;
         this.alertDefineService = alertDefineService;
-        this.pendingAlertMap = new ConcurrentHashMap<>(8);
-        this.firingAlertMap = new ConcurrentHashMap<>(8);
-        // Initialize firing stateAlertMap
-        List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
-        for (SingleAlert singleAlert : singleAlerts) {
-            String fingerprint = calculateFingerprint(singleAlert.getLabels());
-            singleAlert.setId(null);
-            firingAlertMap.put(fingerprint, singleAlert);
+        this.alarmCacheManager = alarmCacheManager;
+        if (start) {
+            startCalculate();
         }
-        startCalculate();
     }
 
-    private void startCalculate() {
+    public void startCalculate() {
         Runnable runnable = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -136,8 +144,8 @@ public class RealTimeAlertCalculator {
         Map<String, String> labels = metricsData.getLabels();
         Map<String, String> annotations = metricsData.getAnnotations();
         List<AlertDefine> thresholds = this.alertDefineService.getRealTimeAlertDefines();
-        // Filter thresholds by app, metrics and instance
-        thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, instance, priority);
+        // Filter thresholds by app, metrics, labels and instance
+        thresholds = filterThresholdsByAppAndMetrics(thresholds, app, metrics, labels, instance, priority);
         if (thresholds.isEmpty()) {
             return;
         }
@@ -149,6 +157,7 @@ public class RealTimeAlertCalculator {
         commonContext.put(KEY_PRIORITY, priority);
         commonContext.put(KEY_CODE, code);
         commonContext.put(KEY_METRICS, metrics);
+        commonContext.put(KEY_LABELS, String.join(",", kvLabelsToKvStringSet(labels)));
         if (priority == 0) {
             commonContext.put(KEY_AVAILABLE, metricsData.getCode() == CollectRep.Code.SUCCESS ? UP : DOWN);
         }
@@ -264,7 +273,7 @@ public class RealTimeAlertCalculator {
      * @param priority  Current priority
      * @return Filtered alert definitions
      */
-    private List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, String instance, int priority) {
+    public List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
         return thresholds.stream()
                 .filter(define -> {
                     if (StringUtils.isBlank(define.getExpr())) {
@@ -294,16 +303,26 @@ public class RealTimeAlertCalculator {
 
                     // Extract and check instance - optional with multiple values
                     Matcher instanceMatcher = INSTANCE_PATTERN.matcher(expr);
-                    // If no instance specified in expr, accept all instances
-                    if (!instanceMatcher.find()) {
+                    Matcher labelMatcher = LABEL_PATTERN.matcher(expr);
+                    // If no instance and instance labels specified in expr, accept all instances
+                    if (!instanceMatcher.find() && !labelMatcher.find()) {
                         return true;
                     }
                     
                     // Reset matcher to check all instances
                     instanceMatcher.reset();
+                    labelMatcher.reset();
                     // If instances specified, current instance must match one of them
                     while (instanceMatcher.find()) {
                         if (Objects.equals(instance, instanceMatcher.group(1))) {
+                            return true;
+                        }
+                    }
+                    // If instance labels specified, current instance must match one of them
+                    Set<String> labelKvStringSet = kvLabelsToKvStringSet(labels);
+                    while (labelMatcher.find()) {
+                        String label = labelMatcher.group(1);
+                        if (labelKvStringSet.contains(label)) {
                             return true;
                         }
                     }
@@ -313,8 +332,8 @@ public class RealTimeAlertCalculator {
     }
 
     private void handleRecoveredAlert(Map<String, String> fingerprints) {
-        String fingerprint = calculateFingerprint(fingerprints);
-        SingleAlert firingAlert = firingAlertMap.remove(fingerprint);
+        String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(fingerprint);
         if (firingAlert != null) {
             // todo consider multi times to tig for resolved alert
             firingAlert.setTriggerTimes(1);
@@ -322,13 +341,13 @@ public class RealTimeAlertCalculator {
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
-        pendingAlertMap.remove(fingerprint);
+        alarmCacheManager.removePending(fingerprint);
     }
 
     private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
                                          Map<String, Object> fieldValueMap, AlertDefine define, Map<String, String> annotations) {
-        String fingerprint = calculateFingerprint(fingerPrints);
-        SingleAlert existingAlert = pendingAlertMap.get(fingerprint);
+        String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
+        SingleAlert existingAlert = alarmCacheManager.getPending(fingerprint);
         fieldValueMap.putAll(define.getLabels());
         int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
         if (existingAlert == null) {
@@ -360,11 +379,11 @@ public class RealTimeAlertCalculator {
             // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
                 newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                firingAlertMap.put(fingerprint, newAlert);
+                alarmCacheManager.putFiring(fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
             } else {
                 // Otherwise put into pending queue first
-                pendingAlertMap.put(fingerprint, newAlert);
+                alarmCacheManager.putPending(fingerprint, newAlert);
             }
         } else {
             // Update existing alert
@@ -374,9 +393,9 @@ public class RealTimeAlertCalculator {
             // Check if required trigger times reached
             if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
                 // Reached trigger times threshold, change to firing status
-                pendingAlertMap.remove(fingerprint);
+                alarmCacheManager.removePending(fingerprint);
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                firingAlertMap.put(fingerprint, existingAlert);
+                alarmCacheManager.putFiring(fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }
@@ -410,11 +429,13 @@ public class RealTimeAlertCalculator {
         }
         return match != null && match;
     }
-    
-    private String calculateFingerprint(Map<String, String> fingerPrints) {
-        List<String> keyList = fingerPrints.keySet().stream().filter(Objects::nonNull).sorted().toList();
-        List<String> valueList = fingerPrints.values().stream().filter(Objects::nonNull).sorted().toList();
-        return Arrays.hashCode(keyList.toArray(new String[0])) + "-"
-                + Arrays.hashCode(valueList.toArray(new String[0]));
+
+    private Set<String> kvLabelsToKvStringSet(Map<String, String> labels) {
+        if (labels == null || labels.isEmpty()) {
+            return Collections.singleton("");
+        }
+        return labels.entrySet().stream()
+                .map(item -> item.getKey() + ":" + item.getValue())
+                .collect(Collectors.toSet());
     }
 }

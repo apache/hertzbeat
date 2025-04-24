@@ -267,7 +267,9 @@
       "contributions": [
         "code",
         "bug",
-        "design"
+        "design",
+        "test",
+        "blog"
       ]
     },
     {
@@ -361,7 +363,9 @@
       "contributions": [
         "bug",
         "code",
-        "doc"
+        "doc",
+        "test",
+        "design"
       ]
     },
     {
@@ -683,7 +687,8 @@
       "contributions": [
         "code",
         "test",
-        "doc"
+        "doc",
+        "design"
       ]
     },
     {
@@ -797,7 +802,11 @@
       "profile": "https://github.com/zqr10159",
       "contributions": [
         "doc",
-        "code"
+        "code",
+        "blog",
+        "bug",
+        "test",
+        "design"
       ]
     },
     {
@@ -889,7 +898,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/50475131?v=4",
       "profile": "https://github.com/l646505418",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -898,7 +908,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/78642589?v=4",
       "profile": "http://www.carpewang.com",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -1263,7 +1274,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/105542329?v=4",
       "profile": "https://github.com/a-little-fool",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "blog",
+        "bug",
+        "design"
       ]
     },
     {
@@ -1326,7 +1341,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/67301054?v=4",
       "profile": "http://www.jimmyqiao.top",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -1419,7 +1435,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/28394742?v=4",
       "profile": "https://github.com/Clownsw",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -1430,7 +1447,9 @@
       "contributions": [
         "doc",
         "code",
-        "design"
+        "design",
+        "bug",
+        "test"
       ]
     },
     {
@@ -1469,7 +1488,8 @@
       "contributions": [
         "code",
         "design",
-        "doc"
+        "doc",
+        "bug"
       ]
     },
     {
@@ -1541,7 +1561,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/42080876?v=4",
       "profile": "https://github.com/yqxxgh",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "bug"
       ]
     },
     {
@@ -1586,7 +1608,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/55646681?v=4",
       "profile": "https://github.com/starmilkxin",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -1605,7 +1628,11 @@
       "profile": "https://github.com/LiuTianyou",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "bug",
+        "test",
+        "blog",
+        "design"
       ]
     },
     {
@@ -1651,9 +1678,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/71874373?v=4",
       "profile": "https://github.com/gjjjj0101",
       "contributions": [
+        "test",
         "code",
+        "doc",
         "design",
-        "test"
+        "bug"
       ]
     },
     {
@@ -1662,7 +1691,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/37864182?v=4",
       "profile": "https://jangto.tistory.com/",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -1672,7 +1702,10 @@
       "profile": "https://crossoverjie.top/",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "blog",
+        "test",
+        "design"
       ]
     },
     {
@@ -1708,7 +1741,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/8465969?v=4",
       "profile": "https://github.com/xuziyang",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug"
       ]
     },
     {
@@ -1762,7 +1797,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/29418975?v=4",
       "profile": "http://www.hadoop.wiki/",
       "contributions": [
-        "code"
+        "code",
+        "ideas",
+        "doc",
+        "blog",
+        "bug",
+        "test",
+        "design"
       ]
     },
     {
@@ -1771,7 +1812,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/61108539?v=4",
       "profile": "https://github.com/zuobiao-zhou",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug",
+        "blog",
+        "test"
       ]
     },
     {
@@ -1807,7 +1852,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/25810623?v=4",
       "profile": "https://github.com/Aias00",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug",
+        "ideas",
+        "test"
       ]
     },
     {
@@ -1825,7 +1874,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/77964041?v=4",
       "profile": "https://blog.csdn.net/qq_52397471",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "test",
+        "blog"
       ]
     },
     {
@@ -1834,7 +1886,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/118667222?v=4",
       "profile": "https://github.com/Yanshuming1",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug"
       ]
     },
     {
@@ -1934,8 +1988,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/3371163?v=4",
       "profile": "https://github.com/kerwin612",
       "contributions": [
+        "design",
         "code",
-        "design"
+        "doc",
+        "bug"
       ]
     },
     {
@@ -1962,7 +2018,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/69385076?v=4",
       "profile": "https://github.com/pwallk",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug"
       ]
     },
     {
@@ -2007,7 +2065,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/83876361?v=4",
       "profile": "https://github.com/keaifafafa",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -2142,7 +2201,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/59016860?v=4",
       "profile": "https://github.com/Rancho-7",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "bug"
       ]
     },
     {
@@ -2160,7 +2221,11 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/91836599?v=4",
       "profile": "https://zzrl.cc/",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug",
+        "test",
+        "blog"
       ]
     },
     {
@@ -2178,7 +2243,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/14932913?v=4",
       "profile": "https://simonsigre.com/",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -2241,7 +2307,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/11783444?v=4",
       "profile": "https://medium.com/@pjfanning",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "test"
       ]
     },
     {
@@ -2259,7 +2327,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/22274133?v=4",
       "profile": "https://github.com/MasamiYui",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug"
       ]
     },
     {
@@ -2314,7 +2384,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/147966331?v=4",
       "profile": "https://github.com/notbugggg",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -2332,7 +2403,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/44892459?v=4",
       "profile": "https://github.com/JuJinPark",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "ideas",
+        "blog"
       ]
     },
     {
@@ -2341,7 +2415,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/43002118?v=4",
       "profile": "https://github.com/LL-LIN",
       "contributions": [
-        "code"
+        "code",
+        "bug"
       ]
     },
     {
@@ -2350,7 +2425,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/73413979?v=4",
       "profile": "https://bigcyy.github.io/",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "bug"
       ]
     },
     {
@@ -2358,6 +2435,53 @@
       "name": "Sarthak Arora",
       "avatar_url": "https://avatars.githubusercontent.com/u/74091160?v=4",
       "profile": "https://github.com/sarthakeash",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "PengJingzhao",
+      "name": "彭镜肇",
+      "avatar_url": "https://avatars.githubusercontent.com/u/97368949?v=4",
+      "profile": "https://github.com/PengJingzhao",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "gagaradio",
+      "name": "Walter Jia",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18532370?v=4",
+      "profile": "https://github.com/gagaradio",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "boyucjz",
+      "name": "boyucjz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18730041?v=4",
+      "profile": "https://github.com/boyucjz",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Cyanty",
+      "name": "Cyanty",
+      "avatar_url": "https://avatars.githubusercontent.com/u/153884653?v=4",
+      "profile": "https://github.com/Cyanty",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "KevinLLF",
+      "name": "Jay丿167",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85452733?v=4",
+      "profile": "https://github.com/KevinLLF",
       "contributions": [
         "code"
       ]

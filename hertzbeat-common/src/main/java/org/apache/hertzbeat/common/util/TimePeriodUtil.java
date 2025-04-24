@@ -49,4 +49,46 @@ public final class TimePeriodUtil {
             return Duration.parse("PT" + tokenTime);
         }
     }
+
+    /**
+     * transform any timestamp to milliseconds
+     * @param timestamp timestamp
+     * @return milliseconds
+     */
+    public static long normalizeToMilliseconds(Object timestamp) {
+        if (timestamp instanceof String timestampStr) {
+            // string type, may be second, millisecond or decimal second
+            // eg: "1672531199000", "1672531199", "1672531199.123"
+            if (timestampStr.contains(".")) {
+                // contains decimal point, parse as second timestamp
+                double seconds = Double.parseDouble(timestampStr);
+                return (long) (seconds * 1000);
+            } else {
+                // integer form, determine second or millisecond
+                long numericTimestamp = Long.parseLong(timestampStr);
+                return convertNumericTimestamp(numericTimestamp);
+            }
+        } else if (timestamp instanceof Number) {
+            // number eg Integer、Long、Double
+            if (timestamp instanceof Double || timestamp instanceof Float) {
+                // float type, treat as second timestamp
+                double seconds = ((Number) timestamp).doubleValue();
+                return (long) (seconds * 1000);
+            } else {
+                // integer type, directly determine second or millisecond
+                long numericTimestamp = ((Number) timestamp).longValue();
+                return convertNumericTimestamp(numericTimestamp);
+            }
+        } else {
+            throw new IllegalArgumentException("Not support this timestamp type: " + timestamp.getClass().getName());
+        }
+    }
+
+    private static long convertNumericTimestamp(long numericTimestamp) {
+        if (String.valueOf(numericTimestamp).length() <= 10) {
+            return numericTimestamp * 1000;
+        } else {
+            return numericTimestamp;
+        }
+    }
 }

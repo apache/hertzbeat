@@ -33,7 +33,9 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
 
-    private static final String QUERY_PATH = "/v1/prometheus/api/v1/query";
+    private static final String QUERY_PATH = "/v1/prometheus";
+
+    private static final String Datasource = "Greptime";
 
     private final GreptimeProperties greptimeProperties;
 
@@ -42,4 +44,10 @@ public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
                 greptimeProperties.username(), greptimeProperties.password()));
         this.greptimeProperties = greptimeProperties;
     }
+
+    @Override
+    public String getDatasource() {
+        return Datasource;
+    }
+
 }

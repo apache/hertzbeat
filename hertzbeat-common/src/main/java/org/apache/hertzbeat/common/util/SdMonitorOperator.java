@@ -32,7 +32,7 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
-import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 /**
@@ -128,13 +128,13 @@ public class SdMonitorOperator {
         return sdJob;
     }
 
-    public static List<Tag> addMainMonitorTag(List<Tag> tagList, Param sdParam) {
+    public static List<Label> addMainMonitorTag(List<Label> tagList, Param sdParam) {
         tagList = tagList.stream()
                 .filter(tag -> !StringUtils.equals(tag.getName(), CommonConstants.TAG_SD_MAIN_MONITOR))
                 .filter(tag -> !StringUtils.equals(tag.getName(), CommonConstants.TAG_AUTO_CREATED))
                 .collect(Collectors.toList());
 
-        tagList.add(Tag.builder().name(CommonConstants.TAG_SD_MAIN_MONITOR)
+        tagList.add(Label.builder().name(CommonConstants.TAG_SD_MAIN_MONITOR)
                 .tagValue(ServiceDiscoveryProtocol.Type.getType(sdParam.getField()).name())
                 .type(CommonConstants.TAG_TYPE_AUTO_GENERATE)
                 .build());
