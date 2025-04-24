@@ -108,13 +108,13 @@ volumes:
 Start the cluster with:
 
 ```shell
-$ docker-compose up -d
+docker-compose up -d
 ```
 
 Check all components are running via:
 
 ```shell
-$ docker ps
+docker ps
 ```
 
 #### 2. Configure HertzBeat for Cluster Mode
@@ -140,6 +140,7 @@ warehouse:
 ```
 
 **Note:**
+
 - Set `enabled: true` under `cluster` to enable cluster mode.
 - Ensure the URLs match your Docker Compose network or deployment addresses.
 

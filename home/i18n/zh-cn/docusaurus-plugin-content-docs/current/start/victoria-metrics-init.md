@@ -110,13 +110,13 @@ volumes:
 使用以下命令启动集群：
 
 ```shell
-$ docker-compose up -d
+docker-compose up -d
 ```
 
 使用以下命令确认所有组件是否运行成功：
 
 ```shell
-$ docker ps
+docker ps
 ```
 
 #### 2. 配置 HertzBeat 使用集群模式
@@ -142,6 +142,7 @@ warehouse:
 ```
 
 **注意事项：**
+
 - `cluster.enabled` 设置为 `true` 表示启用集群模式；
 - `select.url` 和 `insert.url` 需与部署时的地址保持一致，确保网络互通。
 
