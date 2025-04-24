@@ -133,7 +133,6 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             );
 
             String result = responseEntity.getBody();
-//            String result = restTemplate.getForObject(selectNodeStatusUrl, String.class);
 
             JsonNode jsonNode = JsonUtil.fromJson(result);
             if (jsonNode != null && STATUS_SUCCESS.equalsIgnoreCase(jsonNode.get(STATUS).asText())) {
