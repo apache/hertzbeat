@@ -2,15 +2,25 @@ import { CommonModule } from '@angular/common';
 import { NgModule, Type } from '@angular/core';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { IconDefinition } from '@ant-design/icons-angular';
+import { RobotOutline, CloseOutline, SendOutline } from '@ant-design/icons-angular/icons';
 import { DelonACLModule } from '@delon/acl';
 import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzRadioComponent, NzRadioGroupComponent } from 'ng-zorro-antd/radio';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzSwitchComponent } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 
+// Icon to be used for registration
+const icons: IconDefinition[] = [RobotOutline, CloseOutline, SendOutline];
+
+import { AiBotComponent } from './components/ai-bot/ai-bot.component';
 import { ConfigurableFieldComponent } from './components/configurable-field/configurable-field.component';
 import { FormFieldComponent } from './components/form-field/form-field.component';
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
@@ -30,7 +40,8 @@ const COMPONENTS: Array<Type<void>> = [
   ToolbarComponent,
   ConfigurableFieldComponent,
   FormFieldComponent,
-  MonitorSelectMenuComponent
+  MonitorSelectMenuComponent,
+  AiBotComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
@@ -51,7 +62,11 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     NzDividerComponent,
     NzRadioGroupComponent,
     NzRadioComponent,
-    NzSwitchComponent
+    NzSwitchComponent,
+    NzButtonModule,
+    NzInputModule,
+    NzIconModule.forChild(icons),
+    NzSpinModule
   ],
   declarations: [...COMPONENTS, ...DIRECTIVES, HelpMessageShowComponent],
   exports: [

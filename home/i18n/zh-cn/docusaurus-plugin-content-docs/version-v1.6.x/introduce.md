@@ -256,7 +256,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ![HertzBeat](/img/home/6.png)
 
-![HertzBeat](/img/home/11.png)
+![HertzBeat](/img/docs/start/ssl_5.png)
 
 ### 告警收敛
 

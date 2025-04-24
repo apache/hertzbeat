@@ -56,7 +56,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   port: number | undefined;
   metrics!: string[];
   chartMetrics: any[] = [];
-  deadline = 30;
+  deadline = 90;
   countDownTime: number = 0;
   interval$!: any;
   whichTabIndex = 0;
