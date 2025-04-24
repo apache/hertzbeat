@@ -37,7 +37,7 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
    > Docker 安装 PostgreSQL
 
    ```sh
-   docker run -d --name postgresql -p 5432:5432 -v "$PWD/postgresql:/var/lib/postgresql/data" -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgres:15      
+   docker run -d --name postgresql -p 5432:5432 -v "$PWD/postgresql:/var/lib/postgresql/data" -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgres:15
    ```
 
    > Docker 安装 VictoriaMetrics
@@ -52,17 +52,19 @@ Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Ag
    >
    > 修改位于 `hertzbeat/config/application.yml` 的配置文件，替换为 PostgreSQL 服务。
 
-:::note
-PostgreSQL 配置请查阅文档：[元数据存储PostgreSQL(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/postgresql-change) 
-:::
+   :::note
+
+   PostgreSQL 配置请查阅文档：[元数据存储PostgreSQL(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/postgresql-change)
+   :::
 
    > 配置时序数据库存储指标
    >
    > 同理，修改 `hertzbeat/config/application.yml` 的配置文件，开启 VictoriaMetrics 服务用于存储指标。
 
-:::note
-VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/victoria-metrics-init)
-:::
+   :::note
+
+   VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推荐)](https://hertzbeat.apache.org/zh-cn/docs/start/victoria-metrics-init)
+   :::
 
 4. 启动 HertzBeat
 
@@ -71,7 +73,7 @@ VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推�
    > 启动成功后，浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`。
 
    ```sh
-   ./startup.sh 
+   ./startup.sh
    ```
 
 ## SpringBoot 应用配置
@@ -168,9 +170,10 @@ VictoriaMetrics 配置请查阅文档：[指标数据存储VictoriaMetrics(推�
 
    > 需启用 Grafana 可嵌入功能，并开启匿名访问。
 
-:::note
-完整配置请参考文档：[Grafana历史图表](https://hertzbeat.apache.org/zh-cn/docs/help/grafana_dashboard)
-:::
+   :::note
+
+   完整配置请参考文档：[Grafana历史图表](https://hertzbeat.apache.org/zh-cn/docs/help/grafana_dashboard)
+   :::
 
 2. 在 HertzBeat 监控中嵌入 Grafana 仪表盘
 
