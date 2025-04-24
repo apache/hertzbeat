@@ -7,13 +7,13 @@ build/
 out/
 micronaut-cli.yml
 .mvn/
-mvnw
-mvnw.bat
 *.log
 package-lock.json
 *.zip
 jdk/
 data/
+
+!/e2e/**/data/
 
 ### STS ###
 .apt_generated

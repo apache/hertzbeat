@@ -1,7 +1,7 @@
 ---
 id: alert_enterprise_wechat_app  
 title: 企业微信应用告警通知      
-sidebar_label: 企业微信应用告警通知
+sidebar_label: 告警企业微信应用通知
 keywords: [开源告警系统, 开源监控告警系统, 企业微信应用告警通知]
 ---
 

@@ -38,6 +38,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 
 import { CollectorComponent } from './collector/collector.component';
 import { DefineComponent } from './define/define.component';
+import { SettingLabelComponent } from './label/label.component';
 import { SettingPluginsComponent } from './plugins/plugin.component';
 import { SettingRoutingModule } from './setting-routing.module';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
@@ -45,10 +46,9 @@ import { ObjectStoreComponent } from './settings/object-store/object-store.compo
 import { SettingsComponent } from './settings/settings.component';
 import { SystemConfigComponent } from './settings/system-config/system-config.component';
 import { StatusComponent } from './status/status.component';
-import { SettingTagsComponent } from './tags/tags.component';
 
 const COMPONENTS: Array<Type<void>> = [
-  SettingTagsComponent,
+  SettingLabelComponent,
   DefineComponent,
   SettingsComponent,
   MessageServerComponent,

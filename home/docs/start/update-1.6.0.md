@@ -6,8 +6,12 @@ sidebar_label: Update to 1.6.0 guide
 
 ## HertzBeat 1.6.0 Upgrade Guide
 
-**Note: This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.**
-**If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.5.0 and then follow this guide to 1.6.0.**
+:::note
+This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.  
+If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.5.0 and then follow this guide to 1.6.0.
+:::
+
+Follow the [HertzBeat New Version Upgrade](upgrade)
 
 ## Binary Installation Package Upgrade
 

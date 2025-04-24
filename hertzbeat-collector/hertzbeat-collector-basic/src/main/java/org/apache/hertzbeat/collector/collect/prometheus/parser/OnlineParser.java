@@ -38,7 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OnlineParser {
 
     private static final Map<Integer, Integer> escapeMap = new HashMap<>(8);
-    
+
+    private static final char RIGHT_BRACKET = '}';
+    private static final char LEFT_BRACKET = '{';
+
     static {
         escapeMap.put((int) 'n', (int) '\n');
         escapeMap.put((int) 'b', (int) '\b');
@@ -94,14 +97,14 @@ public class OnlineParser {
         }
 
         private CharChecker maybeLeftBracket() {
-            if (i == '{') {
+            if (i == LEFT_BRACKET) {
                 satisfied = true;
             }
             return this;
         }
 
         private CharChecker maybeRightBracket() {
-            if (i == '}') {
+            if (i == RIGHT_BRACKET) {
                 satisfied = true;
             }
             return this;
@@ -264,35 +267,52 @@ public class OnlineParser {
         }
     }
 
-    private static CharChecker parseLabels(InputStream inputStream, StringBuilder stringBuilder, List<MetricFamily.Label> labelList) throws IOException, FormatException {
+
+    /**
+     * parse single label like  label_name="label_value"
+     */
+    private static CharChecker parseLabel(InputStream inputStream, StringBuilder stringBuilder, List<MetricFamily.Label> labelList) throws IOException, FormatException {
+        int i;
+        MetricFamily.Label label = new MetricFamily.Label();
+        i = skipSpaces(inputStream).getInt();
+        if (i == RIGHT_BRACKET) {
+            return new CharChecker(i);
+        }
+        stringBuilder.append((char) i);
+        i = parseLabelName(inputStream, stringBuilder).maybeSpace().maybeEqualsSign().noElse();
+        label.setName(stringBuilder.toString());
+        stringBuilder.delete(0, stringBuilder.length());
+        if (i == ' ') {
+            skipSpaces(inputStream).maybeEqualsSign().noElse();
+        }
+
+        skipSpaces(inputStream).maybeQuotationMark().noElse();
+        parseLabelValue(inputStream, stringBuilder).maybeQuotationMark().noElse();
+        String labelValue = stringBuilder.toString();
+        if (!labelValue.equals(new String(labelValue.getBytes(StandardCharsets.UTF_8)))) {
+            throw new FormatException();
+        }
+        label.setValue(labelValue);
+        stringBuilder.delete(0, stringBuilder.length());
+        labelList.add(label);
+        return new CharChecker(i);
+    }
+
+
+    private static void parseLabels(InputStream inputStream, StringBuilder stringBuilder, List<MetricFamily.Label> labelList) throws IOException, FormatException {
         int i;
         while (true) {
-            MetricFamily.Label label = new MetricFamily.Label();
-            i = skipSpaces(inputStream).getInt();
-            stringBuilder.append((char) i);
-            i = parseLabelName(inputStream, stringBuilder).maybeSpace().maybeEqualsSign().noElse();
-            label.setName(stringBuilder.toString());
-            stringBuilder.delete(0, stringBuilder.length());
-            if (i == ' ') {
-                skipSpaces(inputStream).maybeEqualsSign().noElse();
+            // deal with labels like {label1="aaa",label2=bbb",}
+            CharChecker charChecker = parseLabel(inputStream, stringBuilder, labelList);
+            if (charChecker.i == RIGHT_BRACKET) {
+                return;
             }
-
-            skipSpaces(inputStream).maybeQuotationMark().noElse();
-            parseLabelValue(inputStream, stringBuilder).maybeQuotationMark().noElse();
-            String labelValue = stringBuilder.toString();
-            if (!labelValue.equals(new String(labelValue.getBytes(StandardCharsets.UTF_8)))) {
-                throw new FormatException();
-            }
-            label.setValue(labelValue);
-            stringBuilder.delete(0, stringBuilder.length());
-
+            //deal with labels like {label1="aaa",label2=bbb"}
             i = skipSpaces(inputStream).maybeSpace().maybeComma().maybeRightBracket().noElse();
-            labelList.add(label);
-            if (i == '}') {
-                break;
+            if (i == RIGHT_BRACKET) {
+                return;
             }
         }
-        return new CharChecker(i);
     }
 
     private static CharChecker parseMetric(InputStream inputStream, Map<String, MetricFamily> metricFamilyMap, StringBuilder stringBuilder) throws IOException, FormatException {

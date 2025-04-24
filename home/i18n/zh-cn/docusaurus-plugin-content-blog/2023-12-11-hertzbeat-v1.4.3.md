@@ -149,8 +149,6 @@ keywords: [open source monitoring system, alerting system]
 - @jinyaoMa made their first contribution in <https://github.com/apache/hertzbeat/pull/1379>
 - @LinuxSuRen made their first contribution in <https://github.com/apache/hertzbeat/pull/1387>
 
-**Full Changelog**: <https://github.com/apache/hertzbeat/compare/v1.4.2...v1.4.3>
-
 ---
 
 ## ⛄ Supported
@@ -168,25 +166,3 @@ keywords: [open source monitoring system, alerting system]
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
-
-### **下载链接**
-
-**hertzbeat server**
-
-- ⬇️ [hertzbeat-1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-1.4.3.tar.gz)
-- ⬇️ [hertzbeat-1.4.3.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-1.4.3.zip)
-- ⬇️ [hertzbeat-linux_amd64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-linux_amd64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-linux_arm64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-linux_arm64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-macos_arm64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-macos_arm64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-macos_amd64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-macos_amd64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-windows64_1.4.3.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-windows64_1.4.3.zip)
-
-**hertzbeat collector**
-
-- ⬇️ [hertzbeat-collector-1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-collector-1.4.3.tar.gz)
-- ⬇️ [hertzbeat-collector-1.4.3.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-collector-1.4.3.zip)
-- ⬇️ [hertzbeat-collector-linux_amd64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-collector-linux_amd64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-collector-linux_arm64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-collector-linux_arm64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-collector-macos_arm64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-collector-macos_arm64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-collector-macos_amd64_1.4.3.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-collector-macos_amd64_1.4.3.tar.gz)
-- ⬇️ [hertzbeat-collector-windows64_1.4.3.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.3/hertzbeat-collector-windows64_1.4.3.zip)

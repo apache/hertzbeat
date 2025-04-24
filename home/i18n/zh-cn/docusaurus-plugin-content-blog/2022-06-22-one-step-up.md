@@ -36,65 +36,8 @@ Bugfix.
 Online <https://console.tancloud.cn>.
 
 ---
-Windows Monitor coming：
-
-<img width="1444" alt="2022-06-19 11 30 57" src="https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png"/>
 
 ⚠️ ⚠️⚠️⚠️请注意其它版本升级到v1.1.0需要先执行下面的SQL脚本.  现在我们的表名称有个统一前缀 hzb_ prefix.
-
-```properties
-ALTER  TABLE alert RENAME TO hzb_alert;
-ALTER  TABLE alert_define RENAME TO hzb_alert_define;
-ALTER  TABLE alert_define_monitor_bind RENAME TO hzb_alert_define_monitor_bind;
-ALTER  TABLE monitor RENAME TO hzb_monitor;
-ALTER  TABLE notice_receiver RENAME TO hzb_notice_receiver;
-ALTER  TABLE notice_rule RENAME TO hzb_notice_rule;
-ALTER  TABLE param RENAME TO hzb_param;
-ALTER  TABLE param_define RENAME TO hzb_param_define;
-ALTER  TABLE tag RENAME TO hzb_tag;
-ALTER  TABLE tag_monitor_bind RENAME TO hzb_tag_monitor_bind;
-commit;
-```
-
-Have Fun!
-
----
-
-## V1.1.0
-
-Home: hertzbeat.com | tancloud.cn
-
-Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.
-Another major change is that we use the H2 database by default to replace the MYSQL database as storage to facilitate the installation and deployment of users. Now only one docker command is needed to install and experience hertzbeat： `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
-Let's Try It!
-
-Thanks to the contributors! 👍👍
-
-Feature：
-
-1. [[monitor]feature: support snmp collect protocol and windows monitor type #192](https://github.com/apache/hertzbeat/pull/192).  contribute by @ChineseTony
-2. [[monitor]change default database mysql to h2 #191](https://github.com/apache/hertzbeat/pull/191)
-3. [[manager]support monitor params name i18n #184](https://github.com/apache/hertzbeat/pull/184).
-4. [[script]build multi cpu arch hertzbeat docker version #189](https://github.com/apache/hertzbeat/pull/189).
-5. [[monitor]feature: support oracle multi tablespaces #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
-6. [[monitor]database tables append prefix hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
-
-Bugfix.
-
-1. [[monitor]fix can not collect cpu metrics in tencent centos #164](https://github.com/apache/hertzbeat/pull/164) contribute by @wyt199905 .
-2. [[manager]fix oracle config yml percentage error #168](https://github.com/apache/hertzbeat/pull/168)
-3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
-4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
-
-Online <https://console.tancloud.cn>.
-
----
-
-Windows Monitor coming：
-
-<img width="1444" alt="2022-06-19 11 30 57" src="https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png"/>
-
-⚠️ ⚠️⚠️⚠️Attention other version upgrade to v1.1.0 need run sql script.  Now the tables name has hzb_ prefix.
 
 ```properties
 ALTER  TABLE alert RENAME TO hzb_alert;
