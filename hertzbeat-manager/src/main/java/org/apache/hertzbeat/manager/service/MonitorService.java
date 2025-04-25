@@ -22,14 +22,12 @@ import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -125,14 +123,14 @@ public interface MonitorService {
      *
      * @param ids Monitoring ID List
      */
-    void cancelManageMonitors(HashSet<Long> ids);
+    void cancelManageMonitors(Set<Long> ids);
 
     /**
      * Start the managed monitoring items in batches according to the monitoring ID list
      *
      * @param ids Monitoring ID List
      */
-    void enableManageMonitors(HashSet<Long> ids);
+    void enableManageMonitors(Set<Long> ids);
 
     /**
      * Query the monitoring category and its corresponding monitoring quantity
@@ -184,21 +182,12 @@ public interface MonitorService {
     void importConfig(MultipartFile file) throws Exception;
 
     /**
-     * Copy monitor in batches based on the id
-     *
-     * @param ids monitor id
-     */
-    void copyMonitors(List<Long> ids);
-
-    /**
      * update app collect job by app
      *
      * @param job job content
      */
     void updateAppCollectJob(Job job);
-
-    void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector, SdMonitorParam sdMonitorParam, GrafanaDashboard grafanaDashboard);
-
+    
     /**
      * Copy monitor by id
      *

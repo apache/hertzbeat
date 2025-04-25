@@ -127,16 +127,4 @@ public class MonitorsController {
         monitorService.importConfig(file);
         return ResponseEntity.ok(Message.success("Import success"));
     }
-
-
-    @PostMapping("/copy")
-    @Operation(summary = "copy monitors by ids", description = "copy monitors by ids")
-    public ResponseEntity<Message<Void>> duplicateMonitors(
-            @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam List<Long> ids
-    ) {
-        if (ids != null && !ids.isEmpty()) {
-            monitorService.copyMonitors(ids);
-        }
-        return ResponseEntity.ok(Message.success("copy success"));
-    }
 }

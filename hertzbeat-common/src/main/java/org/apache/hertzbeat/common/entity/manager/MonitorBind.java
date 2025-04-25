@@ -60,17 +60,15 @@ public class MonitorBind {
     @Schema(title = "primary id", example = "23")
     private Long id;
 
-    @Schema(title = "collector name", example = "87432674384")
+    @Schema(title = "key string: ip:port")
+    private String keyStr;
+    
+    @Schema(title = "connect bind id", example = "87432674384")
     private Long bizId;
 
     @Schema(title = "monitor ID", example = "87432674336")
     @Column(name = "monitor_id")
     private Long monitorId;
-
-    @Schema(title = "Bind type 0: sd", accessMode = READ_WRITE)
-    @Min(0)
-    @Max(3)
-    private byte type;
 
     @Schema(title = "The creator of this record", example = "tom")
     @CreatedBy

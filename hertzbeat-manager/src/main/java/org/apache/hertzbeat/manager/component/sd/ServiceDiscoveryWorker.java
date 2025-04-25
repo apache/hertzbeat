@@ -17,35 +17,31 @@
 
 package org.apache.hertzbeat.manager.component.sd;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import java.util.HashSet;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.scheduler.ManagerWorkerPool;
 import org.apache.hertzbeat.manager.service.MonitorService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 /**
  * Service Discovery Worker
@@ -83,74 +79,67 @@ public class ServiceDiscoveryWorker implements InitializingBean {
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
                 try (final CollectRep.MetricsData metricsData = dataQueue.pollServiceDiscoveryData()) {
-
                     Long monitorId = metricsData.getId();
-                    final Monitor mainMonitor = monitorDao.findMonitorsByIdIn(Sets.newHashSet(monitorId)).get(0);
-                    mainMonitor.getLabels().remove(CommonConstants.TAG_SD_MAIN_MONITOR);
+                    final Monitor mainMonitor = monitorDao.findById(monitorId).orElse(null);
+                    if (mainMonitor == null) {
+                        log.warn("No monitor found for id {}", monitorId);
+                        continue;
+                    }
                     // collector
-                    final Optional<CollectorMonitorBind> collectorBind = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(mainMonitor.getId());
+                    final Optional<CollectorMonitorBind> collectorBind = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitorId);
                     String collector = collectorBind.map(CollectorMonitorBind::getCollector).orElse(null);
-                    // param
-                    List<Param> mainMonitorParamList = paramDao.findParamsByMonitorId(mainMonitor.getId());
-                    mainMonitorParamList = SdMonitorOperator.removeSdParam(mainMonitorParamList);
-
-                    final Set<Long> subMonitorIdSet = monitorBindDao.findMonitorBindByBizIdAndType(monitorId, CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR)
-                            .stream()
-                            .map(MonitorBind::getMonitorId)
-                            .collect(Collectors.toSet());
-                    final Map<String, List<Monitor>> hostMonitorMap = CollectionUtils.isEmpty(subMonitorIdSet)
-                            ? Maps.newHashMap()
-                            : monitorDao.findMonitorsByIdIn(subMonitorIdSet).stream().collect(Collectors.groupingBy(Monitor::getHost));
-
+                    // params
+                    List<Param> mainMonitorParams = paramDao.findParamsByMonitorId(monitorId);
+                    List<Param> params = new ArrayList<>();
+                    if (!mainMonitorParams.isEmpty()) {
+                        for (Param sourceParam : mainMonitorParams) {
+                            Param newParam = new Param();
+                            BeanUtils.copyProperties(sourceParam, newParam, "id");
+                            params.add(newParam);
+                        }
+                    }
+                    final Map<String, MonitorBind> subMonitorBindMap = monitorBindDao.findMonitorBindsByBizId(monitorId)
+                            .stream().collect(Collectors.toMap(MonitorBind::getKeyStr, item -> item));
                     RowWrapper rowWrapper = metricsData.readRow();
-
                     while (rowWrapper.hasNextRow()) {
                         rowWrapper = rowWrapper.nextRow();
-
-
                         final String host = rowWrapper.nextCell().getValue();
                         final String port = rowWrapper.nextCell().getValue();
-                        final List<Monitor> monitorList = hostMonitorMap.get(host);
-                        if (CollectionUtils.isEmpty(monitorList)) {
-                            monitorService.addAndSaveMonitorJob(mainMonitor.clone(), SdMonitorOperator.cloneParamList(mainMonitorParamList), collector,
-                                    SdMonitorParam.builder()
-                                            .detectedHost(host)
-                                            .detectedPort(port)
-                                            .bizId(mainMonitor.getId())
-                                            .build(), null);
-                            return;
+                        final String keyStr = host + ":" + port;
+                        if (subMonitorBindMap.containsKey(keyStr)) {
+                            subMonitorBindMap.remove(keyStr);
+                            continue;
                         }
-
-                        for (Monitor monitor : monitorList) {
-                            // make sure monitor that has the same host and port is not existed.
-                            final Optional<Param> samePortParam = paramDao.findParamsByMonitorId(monitor.getId()).stream()
-                                    .filter(param -> StringUtils.equals(param.getField(), "port"))
-                                    .filter(param -> StringUtils.equals(param.getParamValue(), port))
-                                    .findFirst();
-                            if (samePortParam.isEmpty()) {
-                                monitorService.addAndSaveMonitorJob(mainMonitor.clone(), SdMonitorOperator.cloneParamList(mainMonitorParamList), collector,
-                                        SdMonitorParam.builder()
-                                                .detectedHost(host)
-                                                .detectedPort(port)
-                                                .bizId(mainMonitor.getId())
-                                                .build(), null);
-                            } else {
-                                monitorService.enableManageMonitors(Sets.newHashSet(monitor.getId()));
+                        mainMonitor.setId(null);
+                        mainMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
+                        mainMonitor.setGmtCreate(LocalDateTime.now());
+                        mainMonitor.setGmtUpdate(LocalDateTime.now());
+                        // replace host port
+                        List<Param> currentParams = new ArrayList<>(params);
+                        for (Param param : currentParams) {
+                            if ("host".equals(param.getField())) {
+                                param.setParamValue(host);
+                            } else if ("port".equals(param.getField())) {
+                                param.setParamValue(port);
                             }
                         }
-
-                        // make sure hostMonitorMap contains monitors that have not judged yet.
-                        hostMonitorMap.remove(host);
+                        monitorService.addMonitor(mainMonitor, params, collector, null);
+                        MonitorBind monitorBind = MonitorBind.builder()
+                                .bizId(monitorId)
+                                .monitorId(mainMonitor.getId())
+                                .keyStr(keyStr)
+                                .build();
+                        monitorBindDao.save(monitorBind);
                     }
-
                     // hostMonitorMap only contains monitors which are already existed but not in service discovery data
                     // due to monitors that coincide with service discovery data are removed.
                     // Thus, all monitors still in hostMonitorMap need to be cancelled.
-                    final HashSet<Long> needCancelMonitorIdSet = Sets.newHashSet();
-                    hostMonitorMap.forEach((key, value) -> needCancelMonitorIdSet.addAll(value.stream()
-                            .map(Monitor::getId)
-                            .collect(Collectors.toSet())));
+                    final Set<Long> needCancelMonitorIdSet = subMonitorBindMap.values().stream()
+                            .map(MonitorBind::getMonitorId).collect(Collectors.toSet());
                     monitorService.cancelManageMonitors(needCancelMonitorIdSet);
+                    for (Long id : needCancelMonitorIdSet) {
+                        monitorBindDao.deleteMonitorBindByBizIdAndMonitorId(monitorId, id);
+                    }
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
                 }

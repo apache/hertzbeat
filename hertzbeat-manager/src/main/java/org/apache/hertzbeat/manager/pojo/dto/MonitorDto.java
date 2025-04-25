@@ -36,12 +36,12 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 @Schema(description = "Monitoring information entities")
 public class MonitorDto {
     
-    @Schema(description = "Monitor Content", accessMode = READ_WRITE)
+    @Schema(description = "monitor content", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private Monitor monitor;
     
-    @Schema(description = "Monitor Params", accessMode = READ_WRITE)
+    @Schema(description = "monitor params", accessMode = READ_WRITE)
     @NotEmpty
     @Valid
     private List<Param> params;

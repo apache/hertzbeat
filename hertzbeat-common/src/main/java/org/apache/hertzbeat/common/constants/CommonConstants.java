@@ -73,14 +73,14 @@ public interface CommonConstants {
     byte MONITOR_DOWN_CODE = 0x02;
 
     /**
-     * Monitor bind type, 0: monitor that auto-created by sd
+     * scrape type static
      */
-    byte MONITOR_BIND_TYPE_SD_SUB_MONITOR = 0x00;
+    String SCRAPE_STATIC = "static";
 
     /**
-     * Monitor bind type, 1: the main monitor of sd
+     * scrape type 
      */
-    byte MONITOR_BIND_TYPE_SD_MAIN_MONITOR = 0x01;
+    String SCRAPE_HTTP_SD = "http_sd";
 
     /**
      * label key: instance

@@ -15,53 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.sd;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
-import java.util.Arrays;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * service discovery common field
+ * Dns protocol
  */
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class ServiceDiscoveryProtocol {
-    private Long id;
-    private List<Long> jobIdList;
-    /**
-     * sd type
-     */
-    private Type type;
-    /**
-     * Target sd sources by which collector updates SDCache.
-     */
-    private String sdSource;
+@NoArgsConstructor
+public class HttpSdProtocol implements CommonRequestProtocol, Protocol {
+    
+    private String url;
 
-    /**
-     * sd Type
-     */
-    public enum Type {
-        HTTP_SD("httpsd"),
-        ;
+    @Override
+    public void setHost(String host) {
+    }
 
-        private final String protocolName;
-
-        Type(String protocolName) {
-            this.protocolName = protocolName;
-        }
-
-        public static Type getType(String str) {
-            return Arrays.stream(Type.values()).filter(t -> t.toString().equalsIgnoreCase(str)).findFirst().orElse(null);
-        }
-
-        public String getProtocolName() {
-            return protocolName;
-        }
+    @Override
+    public void setPort(String port) {
+        
     }
 }
