@@ -132,14 +132,19 @@ warehouse:
       # (please set this configuration reasonably as history records can affect performance when it is large)
       max-history-record-num: 6000
     victoria-metrics:
+      # Standalone mode toggle — must be set to false when using cluster mode
+      enabled: false
+      url: http://localhost:8428
+      username: root
+      password: root
       cluster:
         enabled: false
         select:
-          url: http://127.0.0.1:8481
+          url: http://localhost:8481
           username: root
           password: root
         insert:
-          url: http://127.0.0.1:8480
+          url: http://localhost:8480
           username: root
           password: root
     td-engine:
