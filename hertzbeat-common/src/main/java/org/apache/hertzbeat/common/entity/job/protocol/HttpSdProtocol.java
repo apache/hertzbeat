@@ -29,16 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class HttpSdProtocol implements CommonRequestProtocol, Protocol {
+public class HttpSdProtocol implements Protocol {
     
     private String url;
-
-    @Override
-    public void setHost(String host) {
-    }
-
-    @Override
-    public void setPort(String port) {
-        
-    }
 }
