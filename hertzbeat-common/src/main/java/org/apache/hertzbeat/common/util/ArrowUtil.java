@@ -64,6 +64,7 @@ public final class ArrowUtil {
                 writer.writeBatch();
                 writer.end();
                 writer.close();
+                root.close();
             }
             return out.toByteArray();
         } catch (IOException e) {
