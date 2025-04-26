@@ -35,7 +35,7 @@ sidebar_label: Docker方式安装
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选) 挂载日志文件到本地主机方便查看
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (可选) 挂载配置文件到容器中(请确保本地已有此文件)。[下载源](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选) 挂载账户配置文件到容器中(请确保本地已有此文件)。[下载源](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
-   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (可选) 挂载外部的第三方 JAR 包 [mysql-jdbc](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip) [oracle-jdbc](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (可选) 挂载外部的第三方 JAR 包 [mysql-jdbc](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip) [oracle-jdbc](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
    - `--name hertzbeat` : (可选) 命名容器名称为 hertzbeat
    - `--restart=always` : (可选) 配置容器自动重启。
    - `apache/hertzbeat` : 使用[官方应用镜像](https://hub.docker.com/r/apache/hertzbeat)来启动容器, 若网络超时可用`quay.io/tancloud/hertzbeat`代替。
