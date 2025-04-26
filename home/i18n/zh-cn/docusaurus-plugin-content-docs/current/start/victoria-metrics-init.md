@@ -62,6 +62,94 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
 
 4. 重启 HertzBeat
 
+### 使用 VictoriaMetrics 集群模式（Cluster Mode）
+
+VictoriaMetrics 支持 **集群模式**，将数据写入（`vminsert`）、存储（`vmstorage`）与查询（`vmselect`）分别由独立组件负责。以下是如何部署 VictoriaMetrics 集群并集成至 HertzBeat 的说明。
+
+#### 1. 使用 Docker Compose 部署 VictoriaMetrics 集群
+
+创建一个名为 `docker-compose.yml` 的文件，内容如下：
+
+```yaml
+version: "3"
+
+services:
+  vmstorage1:
+    image: victoriametrics/vmstorage
+    command:
+      - "-retentionPeriod=1"
+      - "-storageDataPath=/storage"
+    volumes:
+      - vmstorage-data:/storage
+    ports:
+      - "8400:8400"  # 提供给 vminsert 写入连接
+      - "8401:8401"  # 提供给 vmselect 查询连接
+
+  vminsert:
+    image: victoriametrics/vminsert
+    command:
+      - "-storageNode=vmstorage1:8400"
+      - "-httpAuth.username=root"
+      - "-httpAuth.password=root"
+    ports:
+      - "8480:8480"  # 数据写入端口
+
+  vmselect:
+    image: victoriametrics/vmselect
+    command:
+      - "-storageNode=vmstorage1:8401"
+      - "-httpAuth.username=root"
+      - "-httpAuth.password=root"
+    ports:
+      - "8481:8481"  # 查询接口端口
+
+volumes:
+  vmstorage-data:
+```
+
+使用以下命令启动集群：
+
+```shell
+docker-compose up -d
+```
+
+使用以下命令确认所有组件是否运行成功：
+
+```shell
+docker ps
+```
+
+#### 2. 配置 HertzBeat 使用集群模式
+
+修改 `hertzbeat/config/application.yml` 配置文件，内容如下：
+
+```yaml
+warehouse:
+  store:
+    jpa:
+      enabled: false
+    victoria-metrics:
+      cluster:
+        enabled: true
+        select:
+          url: http://127.0.0.1:8481
+          username: root
+          password: root
+        insert:
+          url: http://127.0.0.1:8480
+          username: root
+          password: root
+```
+
+**注意事项：**
+
+- `cluster.enabled` 设置为 `true` 表示启用集群模式；
+- `select.url` 和 `insert.url` 需与部署时的地址保持一致，确保网络互通。
+
+#### 3. 重启 HertzBeat
+
+完成配置后，重启 HertzBeat 以连接至 VictoriaMetrics 集群。
+
 ### 常见问题
 
 1. 时序数据库是否都需要配置，能不能都用
