@@ -76,11 +76,12 @@ class PeriodicAlertCalculatorTest {
         verify(alarmCacheManager).putFiring(idCaptor.capture(), alertCaptor.capture());
         // Assertion alarm status and content
         SingleAlert alert = alertCaptor.getValue();
-        assertAll(() -> assertEquals(CommonConstants.ALERT_STATUS_FIRING, alert.getStatus()), () -> assertEquals("High CPU usage (95.0%)", alert.getContent()));
+        assertAll(() -> assertEquals(CommonConstants.ALERT_STATUS_FIRING, alert.getStatus()),
+                () -> assertEquals("High CPU usage (95.0%)", alert.getContent()));
     }
 
     @Test
-    void testNoTriggerAlertWhenNotReachingThreshold() {
+    void testNoTriggerAlertWhenNotMatchThreshold() {
         reset(alarmCacheManager);
         Map<String, Object> result = new HashMap<>();
         result.put("__value__", null); // null, not matched with threshold
@@ -103,7 +104,9 @@ class PeriodicAlertCalculatorTest {
         ArgumentCaptor<SingleAlert> resolvedCaptor = ArgumentCaptor.forClass(SingleAlert.class);
         verify(alarmCommonReduce).reduceAndSendAlarm(resolvedCaptor.capture());
         SingleAlert resolvedAlert = resolvedCaptor.getValue();
-        assertAll(() -> assertEquals(CommonConstants.ALERT_STATUS_RESOLVED, resolvedAlert.getStatus()), () -> assertNotNull(resolvedAlert.getEndAt()), () -> assertTrue(resolvedAlert.getEndAt() > resolvedAlert.getStartAt()));
+        assertAll(() -> assertEquals(CommonConstants.ALERT_STATUS_RESOLVED, resolvedAlert.getStatus()),
+                () -> assertNotNull(resolvedAlert.getEndAt()),
+                () -> assertTrue(resolvedAlert.getEndAt() > resolvedAlert.getStartAt()));
     }
 
     @ParameterizedTest
