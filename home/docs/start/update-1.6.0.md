@@ -6,8 +6,12 @@ sidebar_label: Update to 1.6.0 guide
 
 ## HertzBeat 1.6.0 Upgrade Guide
 
-**Note: This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.**
-**If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.5.0 and then follow this guide to 1.6.0.**
+:::note
+This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.  
+If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.5.0 and then follow this guide to 1.6.0.
+:::
+
+Follow the [HertzBeat New Version Upgrade](upgrade)
 
 ## Binary Installation Package Upgrade
 
@@ -103,7 +107,7 @@ Due to the Apache Foundation's requirements for license compliance, HertzBeat's 
 
 - MySQL: [https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip)
 - Oracle (If you want to monitor Oracle, these two drivers are required):
-  - [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)
+  - [https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar)
   - [https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
 
 Next, run the start-up script as before to experience the latest HertzBeat 1.6.0!

@@ -60,6 +60,94 @@ After the installation you can check if the Docker version normally output at th
 
 4. Restart HertzBeat
 
+### Use VictoriaMetrics in Cluster Mode
+
+VictoriaMetrics provides a **cluster mode** with separate components for ingestion (`vminsert`), storage (`vmstorage`), and querying (`vmselect`). The following section explains how to deploy VictoriaMetrics in cluster mode and integrate it with HertzBeat.
+
+#### 1. Deploy VictoriaMetrics Cluster via Docker Compose
+
+Create a `docker-compose.yml` file with the following content:
+
+```yaml
+version: "3"
+
+services:
+  vmstorage1:
+    image: victoriametrics/vmstorage
+    command:
+      - "-retentionPeriod=1"
+      - "-storageDataPath=/storage"
+    volumes:
+      - vmstorage-data:/storage
+    ports:
+      - "8400:8400"  # vminsert connects here
+      - "8401:8401"  # vmselect connects here
+
+  vminsert:
+    image: victoriametrics/vminsert
+    command:
+      - "-storageNode=vmstorage1:8400"
+      - "-httpAuth.username=root"
+      - "-httpAuth.password=root"
+    ports:
+      - "8480:8480"  # ingestion endpoint
+
+  vmselect:
+    image: victoriametrics/vmselect
+    command:
+      - "-storageNode=vmstorage1:8401"
+      - "-httpAuth.username=root"
+      - "-httpAuth.password=root"
+    ports:
+      - "8481:8481"  # query endpoint
+
+volumes:
+  vmstorage-data:
+```
+
+Start the cluster with:
+
+```shell
+docker-compose up -d
+```
+
+Check all components are running via:
+
+```shell
+docker ps
+```
+
+#### 2. Configure HertzBeat for Cluster Mode
+
+Edit the `hertzbeat/config/application.yml` configuration file as follows:
+
+```yaml
+warehouse:
+  store:
+    jpa:
+      enabled: false
+    victoria-metrics:
+      cluster:
+        enabled: true
+        select:
+          url: http://127.0.0.1:8481
+          username: root
+          password: root
+        insert:
+          url: http://127.0.0.1:8480
+          username: root
+          password: root
+```
+
+**Note:**
+
+- Set `enabled: true` under `cluster` to enable cluster mode.
+- Ensure the URLs match your Docker Compose network or deployment addresses.
+
+#### 3. Restart HertzBeat
+
+Once configured, restart HertzBeat to connect to the VictoriaMetrics cluster.
+
 ### FAQ
 
 1. Do both the time series databases need to be configured? Can they both be used?

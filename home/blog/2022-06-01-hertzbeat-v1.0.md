@@ -53,17 +53,9 @@ Bug fix.
 5. [[collector]bugfix: fix warehouse data queue consume error #153](https://github.com/apache/hertzbeat/pull/153).  issue by @daqianxiaoyao
 6. [[web-app]bugfix:fix input blocking when input error in dark theme #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
 
-**Full Changelog**: <https://github.com/apache/hertzbeat/compare/v1.0-beta.8...v1.0>
-
 Online <https://console.tancloud.cn>.
 
 -----------------------
-
-Redis monitor is coming：
-
-<img width="1910" alt="2022-05-29 20 23 58" src="https://user-images.githubusercontent.com/24788200/170868079-325ccc08-165f-4d0e-9ebb-18b0b5c9db3f.png"/>
-
-<img width="959" alt="2022-05-29 20 24 21" src="https://user-images.githubusercontent.com/24788200/170868094-3c4de70f-934a-4a13-ae1a-0744c30f14f3.png"/>
 
 > [HertzBeat](https://github.com/apache/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project with a user-friendly visual interface that supports monitoring types such as websites, APIs, PING, ports, databases, operating systems, and more.
 > Of course, we also provide a corresponding [SaaS cloud monitoring version](https://console.tancloud.cn), so small and medium-sized teams and individuals no longer need to deploy a cumbersome monitoring system to monitor their website resources; you can [log in](https://console.tancloud.cn) to start monitoring for free.

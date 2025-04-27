@@ -257,7 +257,7 @@ Built-in support for monitoring types include:
 
 ![HertzBeat](/img/home/6.png)
 
-![HertzBeat](/img/home/11.png)
+![HertzBeat](/img/docs/start/ssl_5.png)
 
 ### Alarm Convergence
 

@@ -1,5 +1,5 @@
 ---
-id: aiConfig
+id: ai_config
 title: AI 快速入门  
 sidebar_label: AI 快速入门
 keywords: [人工智能 AI]
