@@ -539,7 +539,9 @@ public class MonitorServiceImpl implements MonitorService {
                 monitorDto.setMetrics(metrics);
                 monitorDto.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
             } else {
-                Job job = appService.getAppDefine(monitor.getApp());
+                boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
+                String type = isStatic ? monitor.getApp() : monitor.getScrape();
+                Job job = appService.getAppDefine(type);
                 List<String> metrics = job.getMetrics().stream()
                         .filter(Metrics::isVisible)
                         .map(Metrics::getName).collect(Collectors.toList());
