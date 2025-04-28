@@ -758,6 +758,8 @@
   "monitor.sshPort.tip": "Required When Enabling SSH Tunnel",
   "monitor.sshUsername.tip": "Required When Enabling SSH Tunnel",
   "monitor.sshPrivateKey.tip": "BEGIN RSA PRIVATE KEY",
+  "monitor.scrape.type.static": "Static Scrape",
+  "monitor.scrape.type.http_sd": "Http Service Discovery",
   "placeholder.key": "Key",
   "placeholder.value": "Value",
   "plugin.delete": "Delete Plugin",

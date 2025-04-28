@@ -29,8 +29,8 @@
             name="scrape"
             (ngModelChange)="onScrapeChange($event)"
           >
-            <nz-option nzValue="static" nzLabel="Static Scrape"></nz-option>
-            <nz-option nzValue="http_sd" nzLabel="Http Service Discovery"></nz-option>
+            <nz-option nzValue="static" [nzLabel]="'monitor.scrape.type.static' | i18n"></nz-option>
+            <nz-option nzValue="http_sd" [nzLabel]="'monitor.scrape.type.http_sd' | i18n"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
