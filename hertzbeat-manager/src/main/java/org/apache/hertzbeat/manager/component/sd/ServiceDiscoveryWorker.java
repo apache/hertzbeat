@@ -17,8 +17,9 @@
 
 package org.apache.hertzbeat.manager.component.sd;
 
+import com.google.common.collect.Maps;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +40,6 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.scheduler.ManagerWorkerPool;
 import org.apache.hertzbeat.manager.service.MonitorService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
@@ -49,6 +49,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class ServiceDiscoveryWorker implements InitializingBean {
+    
+    private static final String FILED_HOST = "host";
+    private static final String FILED_PORT = "port";
     private final MonitorService monitorService;
     private final ParamDao paramDao;
     private final MonitorDao monitorDao;
@@ -90,43 +93,49 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     String collector = collectorBind.map(CollectorMonitorBind::getCollector).orElse(null);
                     // params
                     List<Param> mainMonitorParams = paramDao.findParamsByMonitorId(monitorId);
-                    List<Param> params = new ArrayList<>();
-                    if (!mainMonitorParams.isEmpty()) {
-                        for (Param sourceParam : mainMonitorParams) {
-                            Param newParam = new Param();
-                            BeanUtils.copyProperties(sourceParam, newParam, "id");
-                            params.add(newParam);
-                        }
-                    }
                     final Map<String, MonitorBind> subMonitorBindMap = monitorBindDao.findMonitorBindsByBizId(monitorId)
                             .stream().collect(Collectors.toMap(MonitorBind::getKeyStr, item -> item));
                     RowWrapper rowWrapper = metricsData.readRow();
+                    Map<String, String> fieldsValue = Maps.newHashMapWithExpectedSize(8);
                     while (rowWrapper.hasNextRow()) {
                         rowWrapper = rowWrapper.nextRow();
-                        final String host = rowWrapper.nextCell().getValue();
-                        final String port = rowWrapper.nextCell().getValue();
+                        fieldsValue.clear();
+                        rowWrapper.cellStream().forEach(cell -> {
+                            String value = cell.getValue();
+                            fieldsValue.put(cell.getField().getName(), value);
+                        });
+                        final String host = fieldsValue.get(FILED_HOST);
+                        final String port = fieldsValue.get(FILED_PORT);
                         final String keyStr = host + ":" + port;
                         if (subMonitorBindMap.containsKey(keyStr)) {
                             subMonitorBindMap.remove(keyStr);
                             continue;
                         }
-                        mainMonitor.setId(null);
-                        mainMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
-                        mainMonitor.setGmtCreate(LocalDateTime.now());
-                        mainMonitor.setGmtUpdate(LocalDateTime.now());
+                        Monitor newMonitor = mainMonitor.clone();
+                        newMonitor.setId(null);
+                        newMonitor.setHost(host);
+                        newMonitor.setName(newMonitor.getName() + "-" + host + ":" + port);
+                        newMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
+                        newMonitor.setGmtCreate(LocalDateTime.now());
+                        newMonitor.setGmtUpdate(LocalDateTime.now());
                         // replace host port
-                        List<Param> currentParams = new ArrayList<>(params);
-                        for (Param param : currentParams) {
-                            if ("host".equals(param.getField())) {
-                                param.setParamValue(host);
-                            } else if ("port".equals(param.getField())) {
-                                param.setParamValue(port);
+                        List<Param> newParams = new LinkedList<>();
+                        for (Param param : mainMonitorParams) {
+                            Param newParam = param.clone();
+                            newParam.setId(null);
+                            newParam.setGmtUpdate(null);
+                            newParam.setGmtCreate(null);
+                            if (FILED_HOST.equals(newParam.getField())) {
+                                newParam.setParamValue(host);
+                            } else if (FILED_PORT.equals(newParam.getField())) {
+                                newParam.setParamValue(port);
                             }
+                            newParams.add(newParam);
                         }
-                        monitorService.addMonitor(mainMonitor, params, collector, null);
+                        monitorService.addMonitor(newMonitor, newParams, collector, null);
                         MonitorBind monitorBind = MonitorBind.builder()
                                 .bizId(monitorId)
-                                .monitorId(mainMonitor.getId())
+                                .monitorId(newMonitor.getId())
                                 .keyStr(keyStr)
                                 .build();
                         monitorBindDao.save(monitorBind);
