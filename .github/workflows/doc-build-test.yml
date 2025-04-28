@@ -46,20 +46,10 @@ jobs:
       - name: Check filenames
         run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
 
-      - name: Get all changed markdown files
-        id: changed-markdown-files
-        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c
-        with:
-          files: |
-            ./home/**/*.md
-
       - name: Dead Link Check
-        if: steps.changed-markdown-files.outputs.any_changed == 'true'
-        env:
-          ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files }}
         run: |
           sudo npm install -g markdown-link-check@3.8.7
-          for file in ${ALL_CHANGED_FILES}; do
+          for file in $(find ./home -name "*.md"); do
             if ! grep -Fxq "$file" ./script/ci/exclude_files.txt; then
               markdown-link-check -c ./script/ci/link_check.json -q "$file"
             fi
