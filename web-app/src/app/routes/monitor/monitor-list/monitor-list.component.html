@@ -185,7 +185,7 @@
                 <i nz-icon nzType="global"></i>
                 {{ data.host }}
               </button>
-              <button nz-button nzType="text" *ngIf="data.scrape != 'static'">
+              <button nz-button nzType="text" *ngIf="data.scrape && data.scrape != 'static'">
                 <i nz-icon nzType="partition"></i>
                 {{ 'monitor.scrape.type.' + data.scrape | i18n }}
               </button>
