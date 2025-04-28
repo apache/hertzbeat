@@ -36,10 +36,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link PeriodicAlertCalculator}
@@ -114,7 +121,11 @@ class PeriodicAlertCalculatorTest {
         Map<String, Object> result = new HashMap<>();
         result.put("__value__", null); // null, not matched with threshold
         result.put("__timestamp__", System.currentTimeMillis());
-        SingleAlert pendingAlert = SingleAlert.builder().status(CommonConstants.ALERT_STATUS_FIRING).triggerTimes(2).startAt(System.currentTimeMillis() - 60000).activeAt(System.currentTimeMillis() - 30000).build();
+        SingleAlert pendingAlert = SingleAlert.builder()
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .triggerTimes(2).startAt(System.currentTimeMillis() - 60000)
+                .activeAt(System.currentTimeMillis() - 30000)
+                .build();
         when(alarmCacheManager.removeFiring(anyString())).thenReturn(pendingAlert);
         when(dataSourceService.calculate(anyString(), anyString())).thenReturn(List.of(result));
         periodicAlertCalculator.calculate(rule);
