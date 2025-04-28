@@ -9,7 +9,7 @@ keywords: [开源监控系统, 开源数据库监控, Oracle数据库监控]
 
 ### 注意, 必须添加 ORACLE jdbc 驱动 jar
 
-- 下载 ORACLE jdbc 驱动 jar 包，例如 [ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+- 下载 ORACLE jdbc 驱动 jar 包，例如 [ojdbc8.jar](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
 - 将 jar 包复制到 `hertzbeat/ext-lib` 目录下。
 - 重启 HertzBeat 服务。
 
