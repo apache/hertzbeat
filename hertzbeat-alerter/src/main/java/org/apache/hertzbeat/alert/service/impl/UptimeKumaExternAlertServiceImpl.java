@@ -45,20 +45,20 @@ public class UptimeKumaExternAlertServiceImpl implements ExternAlertService {
          * Convert UptimeKuma alert to SingleAlert
          */
         public SingleAlert convert(UptimeKumaExternAlert alert) {
-            // 构建基本信息
+            // build basic info
             SingleAlert.SingleAlertBuilder builder = SingleAlert.builder()
                     .status(convertStatus(alert.getHeartbeat().getStatus()))
                     .startAt(parseTime(alert.getHeartbeat().getTime()))
                     .activeAt(parseTime(alert.getHeartbeat().getTime()))
                     .triggerTimes(1);
 
-            // 构建标签
+            // build labels
             Map<String, String> labels = new HashMap<>();
             labels.put("__source__", "uptime_kuma");
             labels.put("monitor_id", String.valueOf(alert.getMonitor().getId()));
             labels.put("monitor_name", alert.getMonitor().getName());
 
-            // 构建注解
+            // build annotations
             Map<String, String> annotations = new HashMap<>();
             annotations.put("description", alert.getMonitor().getDescription());
             annotations.put("message", alert.getHeartbeat().getMsg());
@@ -79,7 +79,7 @@ public class UptimeKumaExternAlertServiceImpl implements ExternAlertService {
         }
 
         private String convertStatus(int status) {
-            // uptime-kuma status: 1-up, 0-down, 2-pending
+            // uptime kuma status: 1-up, 0-down, 2-pending
             return status == 1 ? CommonConstants.ALERT_STATUS_RESOLVED : CommonConstants.ALERT_STATUS_FIRING;
         }
 
