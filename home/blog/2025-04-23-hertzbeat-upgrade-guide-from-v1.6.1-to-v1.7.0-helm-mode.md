@@ -101,6 +101,3 @@ kubectl get pods -n <your-namespace> -l app.kubernetes.io/instance=hertzbeat
 # 检查日志
 kubectl logs -n <your-namespace> -l app.kubernetes.io/instance=hertzbeat --tail=100
 ```
-
-
-
