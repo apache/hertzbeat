@@ -8,10 +8,12 @@
    - Git (optional)
 
 2. Verify current deployment information:
+
    ```bash
    helm list -n <your-namespace>
    # If the old chart package is missing, export values.yaml with:
    helm get values hertzbeat -n <your-namespace> > hertzbeat-1.6.1-values.yaml
+   ```
 
 3. Data Backup:
 
@@ -91,6 +93,3 @@ helm status hertzbeat -n <your-namespace>
 kubectl get pods -n <your-namespace> -l app.kubernetes.io/instance=hertzbeat
 kubectl logs -n <your-namespace> -l app.kubernetes.io/instance=hertzbeat --tail=100
 ```
-
-
-
