@@ -1,6 +1,6 @@
 # HertzBeat Upgrade Guide (Docker Mode)
 
-## Docker-based Upgrade 
+## Docker-based Upgrade
 
 ### 1. Data Backup
 

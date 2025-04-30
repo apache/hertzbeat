@@ -1,9 +1,10 @@
-# hertzbeat 升级指导-docker模式
+# HertzBeat 升级指导-(Docker Mode)
 
-## Docker 方式升级 - Mysql数据库
+## Docker 方式升级 - Mysql 数据库
 
 1. 数据备份
-    - 备份数据库，将mysql数据库手动做备份，按需备份
+
+    - 备份数据库，将 mysql 数据手动做备份，按需备份
 
       ```bash
       mysqldump -h<HOST-IP> -P<PORT> -uroot -p"PASSWORD" <库名> hertzbeat_backup-`date +%Y-%m-%d`.sql #单库备份
@@ -17,7 +18,7 @@
       cp -R data data-`date +%Y-%m-%d`. bak
       ```
 
-2. 关闭 并HertzBeat 容器
+2. 关闭 并移除 HertzBeat 容器
 
     ```shell
     docker stop hertzbeat && docker rm hertzbeat
@@ -25,9 +26,9 @@
 
 3. 升级数据库脚本
 
-    打开[https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration)， 选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件在 Mysql 执行升级sql。
+    打开[https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration)， 选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件在 Mysql 执行升级 sql。
 
-4. 更换镜像重新启动HertzBeat 容器
+4. 更换镜像重新启动 HertzBeat 容器
 
     ```bash
     $ docker run -d -p 1157:1157 -p 1158:1158 \
@@ -48,22 +49,22 @@
       默认为：
 
       ```yaml
-        datasource:
-          driver-class-name: com.mysql.cj.jdbc.Driver
-          username: root
-          password: root
-          url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-          hikari:
-            max-lifetime: 120000
-      
-        jpa:
-          show-sql: false
-          database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
-          database: mysql
-          properties:
-            eclipselink:
-              logging:
-                level: SEVERE
+      datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        username: root
+        password: root
+        url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+        hikari:
+          max-lifetime: 120000
+
+      jpa:
+        show-sql: false
+        database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+        database: mysql
+        properties:
+          eclipselink:
+            logging:
+              level: SEVERE
       ```
 
     - `sureness.yml`修改是可选的，一般在你需要修改账号密码时
@@ -94,9 +95,9 @@
 
 6. 添加相应的数据库驱动
 
-    由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
+    由于 apache 基金会对于 license 合规的要求，HertzBeat 的安装包不能包含 mysql，oracle 等 gpl 许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
 
     mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)
-    oracle（如果你要监控oracle，这两个驱动是必须的）：
+    oracle（如果你要监控 oracle，这两个驱动是必须的）：
     [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)
     [https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar?utm_source=mavenlibs.com)
