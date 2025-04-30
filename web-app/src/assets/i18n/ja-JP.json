@@ -98,6 +98,7 @@
   "alert.integration.source.tencent": "Tencent Cloud",
   "alert.integration.source.webhook": "デフォルトWebhook",
   "alert.integration.source.skywalking": "SkyWalking",
+  "alert.integration.source.uptime-kuma": "Uptime Kuma",
   "alert.integration.token.desc": "HertzBeat APIにアクセスするために生成したトークン。",
   "alert.integration.token.new": "トークンを生成するにはクリック",
   "alert.integration.token.notice": "トークンは一度だけ表示されます。トークンを安全に保管し、他人と共有しないでください。",
