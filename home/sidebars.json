@@ -30,7 +30,7 @@
         {
           "type": "category",
           "label": "upgrade",
-          "items": ["start/1.7.0-update","start/1.6.0-update", "start/upgrade"]
+          "items": ["start/1.7.0-update", "start/1.6.0-update", "start/upgrade"]
         },
         {
           "type": "category",
@@ -77,11 +77,12 @@
           "label": "alert",
           "items": [
             "help/alarm_center",
-            "help/alert_threshold", 
+            "help/alert_threshold",
             "help/alert_threshold_expr",
             "help/alarm_group",
             "help/alarm_inhibit",
-            "help/alarm_silence"
+            "help/alarm_silence",
+            "help/alert_integration"
           ]
         },
         {
@@ -187,10 +188,10 @@
           "type": "category",
           "label": "server",
           "items": [
-          "help/ipmi",
-          "help/hikvision_isapi",
-          "help/dahua",
-          "help/uniview"
+            "help/ipmi",
+            "help/hikvision_isapi",
+            "help/dahua",
+            "help/uniview"
           ]
         },
         {
