@@ -47,9 +47,9 @@ fi
 
 # JVM Configuration
 if [ -z "$JAVA_OPTS" ]; then
-  JAVA_OPTS=" -Doracle.jdbc.timezoneAsRegion=false --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
+  JAVA_OPTS=" -Dfile.encoding=UTF-8 -Doracle.jdbc.timezoneAsRegion=false --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED"
 else
-  JAVA_OPTS="${JAVA_OPTS} -Doracle.jdbc.timezoneAsRegion=false"
+  JAVA_OPTS="${JAVA_OPTS} -Dfile.encoding=UTF-8 -Doracle.jdbc.timezoneAsRegion=false"
 fi
 
 # JVM Configuration
