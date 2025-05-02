@@ -114,7 +114,7 @@ public class Job {
     /**
      * Refresh time list for one cycle of the job
      */
-    private LinkedList<Long> intervals;
+    private volatile LinkedList<Long> intervals;
     /**
      * Whether it is a recurring periodic task true is yes, false is no
      */
@@ -328,7 +328,7 @@ public class Job {
      * @param metricsIntervals A unique list composed of intervals for all metrics
      * Generate a list of refresh intervals for metric collection
      */
-    public void generateMetricsIntervals(List<Long> metricsIntervals) {
+    public synchronized void generateMetricsIntervals(List<Long> metricsIntervals) {
         // 1. To find the least common multiple (LCM) of all metric refresh intervals
         long lcm = lcm(metricsIntervals);
         List<Long> refreshTimes = new LinkedList<>();
@@ -351,11 +351,13 @@ public class Job {
         setIntervals(intervals);
     }
 
-    public long getInterval() {
+    public synchronized long getInterval() {
         if (!CollectionUtils.isEmpty(getIntervals())) {
-            long interval = getIntervals().remove();
-            getIntervals().add(interval);
-            return interval;
+            Long interval = getIntervals().remove();
+            if (interval != null) {
+                getIntervals().add(interval);
+                return interval;
+            }
         }
         return getDefaultInterval();
     }
