@@ -40,7 +40,7 @@ public final class AlertTemplateUtil {
 
     public static String render(String template, Map<String, Object> replaceData) {
         if (!StringUtils.hasText(template)) {
-            return null;  
+            return template;  
         }
         if (replaceData == null) {
             log.warn("The render replace data is null.");
