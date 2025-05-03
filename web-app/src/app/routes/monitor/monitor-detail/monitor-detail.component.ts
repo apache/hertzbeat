@@ -145,6 +145,9 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           if (message.code === 0) {
             this.monitor = message.data.monitor;
             this.app = this.monitor?.app;
+            if (this.monitor.scrape && this.monitor.scrape != 'static') {
+              this.app = this.monitor.scrape;
+            }
             let params: Param[] = message.data.params;
             params.forEach(param => {
               if (param.field === 'port') {

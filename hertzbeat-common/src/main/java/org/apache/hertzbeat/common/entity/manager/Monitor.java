@@ -77,6 +77,10 @@ public class Monitor {
     @Size(max = 100)
     private String app;
     
+    @Schema(title = "Scrape type: static | http_sd", example = "static", accessMode = READ_WRITE)
+    @Size(max = 100)
+    private String scrape;
+    
     @Schema(title = "peer host: ipv4, ipv6, domain name", example = "192.167.25.11", accessMode = READ_WRITE)
     @Size(max = 100)
     @HostValid

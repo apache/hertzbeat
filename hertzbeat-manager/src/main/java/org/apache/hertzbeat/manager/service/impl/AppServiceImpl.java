@@ -270,10 +270,6 @@ public class AppServiceImpl implements AppService, InitializingBean {
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
         for (var job : appDefines.values()) {
-            // TODO temporarily filter out push to solve the front-end problem, and open it after the subsequent design optimization
-            if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
-                continue;
-            }
             queryAppHierarchy(lang, hierarchies, job);
         }
         return hierarchies;
