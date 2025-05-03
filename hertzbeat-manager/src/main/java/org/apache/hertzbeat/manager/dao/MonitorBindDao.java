@@ -18,22 +18,20 @@
 package org.apache.hertzbeat.manager.dao;
 
 import java.util.List;
-import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 
 /**
- * AuthResources database operation
+ * MonitorBind database operation
  */
 public interface MonitorBindDao extends JpaRepository<MonitorBind, Long>, JpaSpecificationExecutor<MonitorBind> {
-    List<MonitorBind> findAllByBizIdInAndType(Set<Long> bizIdList, byte type);
 
-    List<MonitorBind> findMonitorBindByBizIdAndType(Long bizId, byte type);
-
-    MonitorBind findMonitorBindByBizIdAndMonitorIdAndType(Long bizId, Long monitorId, byte type);
-
-    List<MonitorBind> findAllByType(byte type);
+    List<MonitorBind> findMonitorBindsByBizId(Long bizId);
 
     void deleteByMonitorId(Long monitorId);
+    
+    @Modifying
+    void deleteMonitorBindByBizIdAndMonitorId(Long bizId, Long monitorId);
 }

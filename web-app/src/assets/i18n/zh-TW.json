@@ -758,6 +758,8 @@
   "monitor.sshPort.tip": "SSH隧道開啓時必填",
   "monitor.sshUsername.tip": "SSH隧道開啓時必填",
   "monitor.sshPrivateKey.tip": "啟動RSA私鑰",
+  "monitor.scrape.type.static": "靜態配置",
+  "monitor.scrape.type.http_sd": "Http 服務發現",
   "placeholder.key": "鍵",
   "placeholder.value": "值",
   "plugin.delete": "刪除插件",

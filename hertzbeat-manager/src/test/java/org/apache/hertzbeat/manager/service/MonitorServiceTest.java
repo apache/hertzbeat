@@ -744,7 +744,7 @@ class MonitorServiceTest {
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
-        assertDoesNotThrow(() -> monitorService.copyMonitors(List.of(1L)));
+        assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
 
     }
 }
