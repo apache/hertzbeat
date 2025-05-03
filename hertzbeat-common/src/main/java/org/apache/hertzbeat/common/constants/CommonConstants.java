@@ -73,14 +73,14 @@ public interface CommonConstants {
     byte MONITOR_DOWN_CODE = 0x02;
 
     /**
-     * Monitor bind type, 0: monitor that auto-created by sd
+     * scrape type static
      */
-    byte MONITOR_BIND_TYPE_SD_SUB_MONITOR = 0x00;
+    String SCRAPE_STATIC = "static";
 
     /**
-     * Monitor bind type, 1: the main monitor of sd
+     * scrape type 
      */
-    byte MONITOR_BIND_TYPE_SD_MAIN_MONITOR = 0x01;
+    String SCRAPE_HTTP_SD = "http_sd";
 
     /**
      * label key: instance
@@ -193,11 +193,6 @@ public interface CommonConstants {
     String PROM_VALUE = "value";
 
     /**
-     * Monitor total availability metrics
-     */
-    String AVAILABILITY = "availability";
-
-    /**
      * Parameter Type Number
      */
     byte PARAM_TYPE_NUMBER = 0;
@@ -221,104 +216,6 @@ public interface CommonConstants {
      * Parameter Type arrays values
      */
     byte PARAM_TYPE_ARRAY = 4;
-
-    /**
-     * Authentication type Account password
-     */
-    byte AUTH_TYPE_PASSWORD = 1;
-
-    /**
-     * Authentication type GitHub three-party login
-     */
-    byte AUTH_TYPE_GITHUB = 2;
-
-    /**
-     * Authentication type WeChat three-party login
-     */
-    byte AUTH_TYPE_WEIXIN = 3;
-
-    /**
-     * Authentication type GITEE three-party login
-     */
-    byte AUTH_TYPE_GITEE = 5;
-
-    /**
-     * inner default label key __instance__
-     */
-    String LABEL_INNER_KEY_INSTANCE = "__instance__";
-    
-    /**
-     * Inside the tag: monitorId Monitor task ID
-     */
-    String TAG_MONITOR_ID = "monitorId";
-
-    /**
-     * Inside the tag: monitorName Task name
-     */
-    String TAG_MONITOR_NAME = "monitorName";
-
-    /**
-     * Inside the tag: indicate that this monitor is auto-created by main monitor
-     */
-    String TAG_AUTO_CREATED = "autoCreated";
-
-    /**
-     * Inside the tag: indicate that this monitor is a main monitor which provides service discovery
-     */
-    String TAG_SD_MAIN_MONITOR = "sdMainMonitor";
-
-    /**
-     * Inside the tag: monitorHost Task host
-     */
-    String TAG_MONITOR_HOST = "monitorHost";
-
-    /**
-     * Inside the tag: policyId Alarm threshold rule ID
-     */
-    String TAG_THRESHOLD_ID = "thresholdId";
-
-    /**
-     * Inside the tag: app Type of monitoring
-     */
-    String TAG_MONITOR_APP = "app";
-
-    /**
-     * Inside the tag: metrics
-     */
-    String TAG_METRICS = "metrics";
-
-    /**
-     * Inside the tag: metric
-     */
-    String TAG_METRIC = "metric";
-
-    /**
-     * Inside the tag: code
-     */
-    String TAG_CODE = "code";
-
-    /**
-     * Tag Type: Auto-generated
-     */
-    byte TAG_TYPE_AUTO_GENERATE = 0;
-    /**
-     * Tag Type: User-generated
-     */
-    byte TAG_TYPE_USER_GENERATE = 1;
-    /**
-     * Tag Type: System preset
-     */
-    byte TAG_TYPE_SYSTEM_PRESET = 2;
-
-    /**
-     * notice_period type Type field, daily type
-     */
-    int NOTICE_PERIOD_DAILY = 0;
-
-    /**
-     * key is receiver.id, value is noticePeriod cache key prefix
-     */
-    String RECEIVER_NOTICE_PERIOD_CACHE_PREFIX = "receiver_notice_period:";
 
     /**
      * cache key notice_rule

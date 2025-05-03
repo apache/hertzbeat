@@ -21,6 +21,7 @@ export class Monitor {
   id!: number;
   name!: string;
   app!: string;
+  scrape!: string;
   host!: string;
   intervals: number = 60;
   // Monitoring status 0: Paused, 1: Up, 2: Down

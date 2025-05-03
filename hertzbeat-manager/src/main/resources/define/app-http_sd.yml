@@ -16,65 +16,47 @@
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: __system__
 # Monitoring application type name (consistent with file name) eg: linux windows tomcat mysql aws...
-app: push
+app: http_sd
 # The app api i18n name
 name:
-  zh-CN: 推送方式监控
-  en-US: Push Style Monitor
+  zh-CN: Http Service Discovery
+  en-US: Http Service Discovery
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
-  - field: host
+  - field: __sd_url__
     # name-param field display i18n name
     name:
-      zh-CN: 推送模块Host
-      en-US: Push Module Host
+      zh-CN: 服务发现地址
+      en-US: Service Discovery Url
     # type-param field type(most mapping the html input type)
-    type: host
-    # required-true or false
-    required: true
-    # field-param field key
-    defaultValue: 127.0.0.1
-  - field: port
-    # name-param field display i18n name
-    name:
-      zh-CN: 端口
-      en-US: Port
-    # type-param field type(most mapping the html input type)
-    type: number
-    # when type is number, range is required
-    range: '[0,65535]'
-    # required-true or false
-    required: true
-    # default value
-    defaultValue: 1157
-  - field: fields
-    # name-param field display i18n name
-    name:
-      zh-CN: 监控数据字段
-      en-US: Metrics fields
-    # type-param field type(most mapping the html input type)
-    type: metrics-field
+    type: text
     # required-true or false
     required: true
 
-# collect metrics config list
 metrics:
-  # metrics - all
-  - name: metrics
+  - name: target
     i18n:
-      zh-CN: 指标
-      en-US: Metrics
+      zh-CN: 监控目标
+      en-US: Monitor Target
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: Host
+          en-US: Host
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: Port
+          en-US: Port
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: push
-    # the config content when protocol is http
-    push:
-      # http host: ipv4 ipv6 domain
-      host: ^_^host^_^
-      # http port
-      port: ^_^port^_^
-      # http uri
-      uri: /api/push
+    protocol: http_sd
+    # the config content when protocol is http_sd
+    http_sd:
+      url: ^_^__sd_url__^_^

@@ -174,6 +174,7 @@
           <div class="monitor-card-info">
             <div class="monitor-card-info-item host-item">
               <button
+                *ngIf="data.scrape == 'static' || !data.scrape"
                 nz-button
                 nzType="text"
                 [cdkCopyToClipboard]="data.host"
@@ -183,6 +184,10 @@
               >
                 <i nz-icon nzType="global"></i>
                 {{ data.host }}
+              </button>
+              <button nz-button nzType="text" *ngIf="data.scrape && data.scrape != 'static'">
+                <i nz-icon nzType="partition"></i>
+                {{ 'monitor.scrape.type.' + data.scrape | i18n }}
               </button>
 
               <button nz-button nz-dropdown [nzDropdownMenu]="actionMenu" class="action-button">

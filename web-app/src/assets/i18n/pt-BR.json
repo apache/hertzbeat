@@ -571,6 +571,8 @@
     "monitor.sshPort.tip": "Obrigatório quando túnel SSH está ativo",
     "monitor.sshUsername.tip": "Obrigatório quando túnel SSH está ativo",
     "monitor.sshPrivateKey.tip": "Chave privada RSA",
+    "monitor.scrape.type.static": "Estatico",
+    "monitor.scrape.type.http_sd": "Http Service Discovery",
     "common.name": "Nome da Métrica",
     "common.value": "Valor da Métrica",
     "common.search": "Pesquisar",

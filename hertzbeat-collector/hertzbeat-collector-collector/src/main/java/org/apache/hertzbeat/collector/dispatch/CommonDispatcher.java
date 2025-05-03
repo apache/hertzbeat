@@ -281,7 +281,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             }
             // If it is an asynchronous periodic cyclic task, directly response the collected data
             if (job.isSd()) {
-                commonDataQueue.sendServiceDiscoveryData(metricsData);
+                CollectRep.MetricsData sdMetricsData = CollectRep.MetricsData.newBuilder(metricsData).build();
+                commonDataQueue.sendServiceDiscoveryData(sdMetricsData);
             }
             commonDataQueue.sendMetricsData(metricsData);
         } else {
