@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -114,7 +115,7 @@ public class Job {
     /**
      * Refresh time list for one cycle of the job
      */
-    private volatile LinkedList<Long> intervals;
+    private ConcurrentLinkedDeque<Long> intervals;
     /**
      * Whether it is a recurring periodic task true is yes, false is no
      */
@@ -348,14 +349,14 @@ public class Job {
         for (int i = 1; i < refreshTimes.size(); i++) {
             intervals.add(refreshTimes.get(i) - refreshTimes.get(i - 1));
         }
-        setIntervals(intervals);
+        setIntervals(new ConcurrentLinkedDeque<>(intervals));
     }
 
     public synchronized long getInterval() {
-        if (!CollectionUtils.isEmpty(getIntervals())) {
-            Long interval = getIntervals().remove();
+        if (!CollectionUtils.isEmpty(this.intervals)) {
+            Long interval = this.intervals.removeFirst();
             if (interval != null) {
-                getIntervals().add(interval);
+                this.intervals.addLast(interval);
                 return interval;
             }
         }

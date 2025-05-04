@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.collector.dispatch.timer;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +87,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             for (Metrics metric : addJob.getMetrics()) {
                 metric.setInterval(0L);
             }
-            addJob.setIntervals(new LinkedList<>(List.of(0L)));
+            addJob.setIntervals(new ConcurrentLinkedDeque<>(List.of(0L)));
             Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
             currentTempTaskMap.put(addJob.getId(), timeout);
             eventListeners.put(addJob.getId(), eventListener);
