@@ -1,0 +1,42 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# config case
+targetHost: mysql-test
+taskName: mysql-monitor-edit
+port: 3306
+databaseName: test_db
+username: root
+password: 123456
+advanced:
+  queryTimeout: 6000
+  url: service:jmx:rmi:///jndi/rmi://host:port/jmxrmi
+  enableSshTunnel: true # default false
+  sshHost: mysql-test
+  sshPort: 22
+  sshTimeout: 6000
+  sshUsername: root
+  sshPassword: 123456
+  shareSshConnection: false # default true
+  sshPrivateKey: lssa_9tAe3j0pQODpNm6i5NvV9HJMo3q6KwRY_5b9499e0
+  sshPrivateKeyPassPhrase: 123456
+collector:
+  collectorName: main-default-collector # & Default System Dispatch
+intervals: 10
+bindLabelsKey: test
+bindLabelsValue: mysql
+bindAnnotationKey: note
+bindAnnotationValue: this is a test case
+description: This is a mysql monitoring task for testing
