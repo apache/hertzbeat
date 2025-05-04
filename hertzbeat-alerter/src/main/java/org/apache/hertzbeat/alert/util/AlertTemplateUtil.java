@@ -51,10 +51,8 @@ public final class AlertTemplateUtil {
             StringBuilder builder = new StringBuilder();
             while (matcher.find()) {
                 Object objectValue = replaceData.getOrDefault(matcher.group(1), "NullValue");
-                if (objectValue != null) {
-                    String value = objectValue.toString();
-                    matcher.appendReplacement(builder, Matcher.quoteReplacement(value));   
-                }
+                String value = objectValue != null ? objectValue.toString() : "NullValue";
+                matcher.appendReplacement(builder, Matcher.quoteReplacement(value));
             }
             matcher.appendTail(builder);
             return builder.toString();
