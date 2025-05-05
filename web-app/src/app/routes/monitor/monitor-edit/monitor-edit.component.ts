@@ -85,6 +85,9 @@ export class MonitorEditComponent implements OnInit {
           if (message.code === 0) {
             let paramValueMap = new Map<String, Param>();
             this.monitor = message.data.monitor;
+            if (this.monitor.scrape == null || this.monitor.scrape == undefined) {
+              this.monitor.scrape = 'static';
+            }
             this.grafanaDashboard = message.data.grafanaDashboard != undefined ? message.data.grafanaDashboard : new GrafanaDashboard();
             this.collector = message.data.collector == null ? '' : message.data.collector;
             this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
