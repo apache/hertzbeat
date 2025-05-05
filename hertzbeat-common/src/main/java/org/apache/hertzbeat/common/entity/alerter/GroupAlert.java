@@ -86,7 +86,7 @@ public class GroupAlert {
     
     @Schema(title = "Alert Fingerprints", example = "[\"dxsdfdsf\"]")
     @Convert(converter = JsonStringListAttributeConverter.class)
-    @Column(length = 2048)
+    @Column(length = 8192)
     private List<String> alertFingerprints;
 
     @Schema(title = "The creator of this record", example = "tom")
