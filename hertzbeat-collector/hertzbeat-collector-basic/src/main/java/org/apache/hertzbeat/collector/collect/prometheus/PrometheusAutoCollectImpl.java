@@ -156,6 +156,8 @@ public class PrometheusAutoCollectImpl {
     }
     
     private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(InputStream inputStream, CollectRep.MetricsData.Builder builder) throws IOException {
+        long endTime = System.currentTimeMillis();
+        builder.setTime(endTime);
         Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
         List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
         if (metricFamilyMap == null) {

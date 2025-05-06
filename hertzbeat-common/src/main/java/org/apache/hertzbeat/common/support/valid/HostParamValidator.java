@@ -20,6 +20,7 @@ package org.apache.hertzbeat.common.support.valid;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.springframework.util.StringUtils;
 
 /**
  * Host Param Validator
@@ -33,10 +34,13 @@ public class HostParamValidator implements ConstraintValidator<HostValid, String
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value != null && value.toLowerCase().contains(HTTP)){
+        if (!StringUtils.hasText(value)) {
+            return true;
+        }
+        if (value.toLowerCase().contains(HTTP)){
             value = value.replaceFirst(PATTERN_HTTP, BLANK);
         }
-        if (value != null && value.toLowerCase().contains(HTTPS)){
+        if (value.toLowerCase().contains(HTTPS)){
             value = value.replaceFirst(PATTERN_HTTPS, BLANK);
         }
 

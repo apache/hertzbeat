@@ -52,7 +52,7 @@ public class HttpSdCollectImpl extends AbstractCollect {
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         List<ConnectionConfig> configList = Lists.newArrayList();
-        HttpUriRequest request = RequestBuilder.get().setUri(metrics.getSdProtocol().getSdSource()).build();
+        HttpUriRequest request = RequestBuilder.get().setUri(metrics.getHttp_sd().getUrl()).build();
 
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();

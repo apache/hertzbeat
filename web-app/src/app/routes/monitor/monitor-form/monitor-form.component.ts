@@ -46,11 +46,14 @@ export class MonitorFormComponent implements OnChanges {
   @Input() paramDefines!: ParamDefine[];
   @Input() advancedParamDefines!: ParamDefine[];
   @Input() paramValueMap!: Map<String, Param>;
+  @Input() sdDefines!: ParamDefine[];
+  @Input() sdParams!: Param[];
 
   @Output() readonly formSubmit = new EventEmitter<any>();
   @Output() readonly formCancel = new EventEmitter<any>();
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
+  @Output() readonly scrapeChange = new EventEmitter<string>();
   @Output() readonly collectorChange = new EventEmitter<string>();
 
   hasAdvancedParams: boolean = false;
@@ -87,7 +90,7 @@ export class MonitorFormComponent implements OnChanges {
       });
       return;
     }
-    this.monitor.host = this.monitor.host.trim();
+    this.monitor.host = this.monitor.host ? this.monitor.host.trim() : '';
     this.monitor.name = this.monitor.name.trim();
     // todo Set the host property value separately for now
     this.params.forEach(param => {
@@ -103,7 +106,18 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
+    this.sdParams.forEach(param => {
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
+      }
+    });
+    this.formDetect.emit({
+      monitor: this.monitor,
+      sdParams: this.sdParams,
+      params: this.params,
+      advancedParams: this.advancedParams,
+      collector: this.collector
+    });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -132,8 +146,14 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
+    this.sdParams.forEach(param => {
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
+      }
+    });
     this.formSubmit.emit({
       monitor: this.monitor,
+      sdParams: this.sdParams,
       params: this.params,
       advancedParams: this.advancedParams,
       collector: this.collector,
@@ -143,6 +163,10 @@ export class MonitorFormComponent implements OnChanges {
 
   onCancel() {
     this.formCancel.emit();
+  }
+
+  onScrapeChange(scrape: string) {
+    this.scrapeChange.emit(scrape);
   }
 
   onHostChange(host: string) {
@@ -189,6 +213,17 @@ export class MonitorFormComponent implements OnChanges {
           this.params[index].display = false;
           if (fieldValues.map(String).includes(dependValue)) {
             this.params[index].display = true;
+          }
+        }
+      }
+    });
+    this.sdDefines.forEach((paramDefine, index) => {
+      if (paramDefine.depend) {
+        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
+        if (fieldValues) {
+          this.sdParams[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.sdParams[index].display = true;
           }
         }
       }

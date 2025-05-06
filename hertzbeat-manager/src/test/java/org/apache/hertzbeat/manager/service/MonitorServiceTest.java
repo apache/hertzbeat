@@ -83,7 +83,7 @@ import org.springframework.data.jpa.domain.Specification;
  * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
  * Test case for {@link MonitorService}
  *
- * @see TagServiceTest
+ * @see LabelServiceTest
  */
 @ExtendWith(MockitoExtension.class)
 class MonitorServiceTest {
@@ -101,7 +101,7 @@ class MonitorServiceTest {
     private AppService appService;
 
     @Mock
-    private TagService tagService;
+    private LabelService tagService;
 
     @Mock
     private CollectJobScheduling collectJobScheduling;
@@ -744,7 +744,7 @@ class MonitorServiceTest {
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
-        assertDoesNotThrow(() -> monitorService.copyMonitors(List.of(1L)));
+        assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
 
     }
 }

@@ -31,7 +31,7 @@ import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
-import org.apache.hertzbeat.manager.service.TagService;
+import org.apache.hertzbeat.manager.service.LabelService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
@@ -55,7 +55,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
     private MonitorService monitorService;
 
     @Resource
-    private TagService tagService;
+    private LabelService tagService;
 
     @Resource
     private ManagerSseManager managerSseManager;

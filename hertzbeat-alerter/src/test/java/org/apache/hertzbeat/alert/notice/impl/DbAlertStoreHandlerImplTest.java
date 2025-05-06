@@ -57,6 +57,7 @@ class DbAlertStoreHandlerImplTest {
     public void setUp() {
         groupAlert = new GroupAlert();
         singleAlert = new SingleAlert();
+        singleAlert.setFingerprint("test-fingerprint");
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
@@ -77,11 +78,13 @@ class DbAlertStoreHandlerImplTest {
         when(groupAlertDao.findByGroupKey(groupKey)).thenReturn(null);
 
         SingleAlert savedSingleAlert = new SingleAlert();
+        savedSingleAlert.setFingerprint("test-finger");
         when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(savedSingleAlert);
 
         GroupAlert savedGroupAlert = new GroupAlert();
+        savedGroupAlert.setGroupKey(groupKey);
         when(groupAlertDao.save(any(GroupAlert.class))).thenReturn(savedGroupAlert);
-
+        
         dbAlertStoreHandler.store(groupAlert);
 
         verify(singleAlertDao).save(any(SingleAlert.class));

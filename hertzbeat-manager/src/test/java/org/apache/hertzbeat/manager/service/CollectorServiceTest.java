@@ -41,6 +41,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -66,6 +67,9 @@ public class CollectorServiceTest {
 
     @Mock
     private ManageServer manageServer;
+
+    @Mock
+    private ApplicationContext applicationContext;
 
 
     @Test

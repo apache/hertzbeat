@@ -1,0 +1,91 @@
+@import "~src/styles/theme";
+
+.label-cards-container {
+  padding: 24px 0;
+
+  .label-card {
+    transition: all 0.3s;
+    border-radius: 8px;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    ::ng-deep {
+      .ant-card-body {
+        padding: 12px;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .ant-card-actions {
+        border-radius: 0 0 8px 8px;
+        border-top: 1px solid rgba(240, 240, 240, 0.5);
+        min-height: 32px;
+
+        > li {
+          margin: 0;
+
+          > span {
+            padding: 4px 0;
+
+            &:hover {
+              color: @primary-color;
+            }
+
+            i {
+              font-size: 14px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .label-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .label-description {
+    font-size: 12px;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    width: 100%;
+  }
+}
+
+.label-content {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.label-name {
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  background: @common-background-color;
+}
+
+[data-theme='dark'] {
+  :host {
+    .label-name {
+      background: @common-background-color-dark;
+    }
+  }
+}

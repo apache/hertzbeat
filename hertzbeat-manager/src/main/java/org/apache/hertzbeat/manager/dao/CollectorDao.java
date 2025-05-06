@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,7 +35,14 @@ public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecifi
      * @return collector
      */
     Optional<Collector> findCollectorByName(String name);
-    
+
+    /**
+     * find collectors by names
+     * @param names collector name list
+     * @return collector list
+     */
+    List<Collector> findCollectorsByNameIn(List<String> names);
+
     /**
      * delete collector by name
      * @param collector collector name

@@ -17,13 +17,8 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-import java.util.Collections;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
@@ -34,6 +29,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link AppService}
@@ -48,6 +52,9 @@ class AppServiceTest {
     private MonitorDao monitorDao;
 
     @Mock
+    private DefineDao defineDao;
+
+    @Mock
     private WarehouseService warehouseService;
 
     @Mock
@@ -55,6 +62,7 @@ class AppServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        when(defineDao.findAll()).thenReturn(new ArrayList<>());
         appService.afterPropertiesSet();
     }
 

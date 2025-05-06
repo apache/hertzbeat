@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-category: service
+category: __system__
 # Monitoring application type name (consistent with file name) eg: linux windows tomcat mysql aws...
 app: push
 # The app api i18n name

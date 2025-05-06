@@ -1,0 +1,37 @@
+{
+  "detected": true,
+  "monitor": {
+    "intervals": 10,
+    "tags": [],
+    "app": "kubernetes",
+    "host": "172.29.0.11",
+    "name": "Brave_Stingray_55yR"
+  },
+  "collector": "",
+  "params": [
+    {
+      "display": true,
+      "field": "host",
+      "type": 1,
+      "paramValue": "172.29.0.11"
+    },
+    {
+      "display": true,
+      "field": "port",
+      "type": 0,
+      "paramValue": 6443
+    },
+    {
+      "display": true,
+      "field": "authType",
+      "type": 1,
+      "paramValue": "Bearer Token"
+    },
+    {
+      "display": true,
+      "field": "token",
+      "type": 1,
+      "paramValue": "#TOKEN#"
+    }
+  ]
+}

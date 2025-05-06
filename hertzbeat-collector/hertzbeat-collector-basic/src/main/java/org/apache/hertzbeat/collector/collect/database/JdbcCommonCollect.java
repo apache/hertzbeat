@@ -63,6 +63,25 @@ public class JdbcCommonCollect extends AbstractCollect {
 
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
+    private static final String[] BLACK_LIST = {
+            // dangerous SQL commands - may cause database structure damage or data leakage
+            "create trigger", "create alias", "runscript from", "shutdown", "drop table",
+            "drop database", "create function", "alter system", "grant all", "revoke all",
+
+            // file IO related - may cause server files to be read or written
+            "allowloadlocalinfile", "allowloadlocalinfileinpath", "uselocalinfile",
+
+            // code execution related - may result in remote code execution
+            "init=", "javaobjectserializer=", "runscript", "serverstatusdiffinterceptor",
+            "queryinterceptors=", "statementinterceptors=", "exceptioninterceptors=",
+
+            // multiple statement execution - may lead to SQL injection
+            "allowmultiqueries",
+
+            // deserialization related - may result in remote code execution
+            "autodeserialize", "detectcustomcollations",
+    };
+
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
 
@@ -331,17 +350,24 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
-            // convert the URL to lowercase for case-insensitive checking
-            String url = jdbcProtocol.getUrl().toLowerCase();
-            // check whether the parameter is valid
-            if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")
-                    || url.contains("allowloadlocalinfile") || url.contains("allowloadlocalinfileinpath")
-                    || url.contains("uselocalinfile") || url.contains("autodeserialize") || url.contains("detectcustomcollations")
-                    || url.contains("serverstatusdiffinterceptor")) {
-                throw new IllegalArgumentException("Invalid JDBC URL: contains malicious characters.");
+            // limit url length
+            if (jdbcProtocol.getUrl().length() > 2048) {
+                throw new IllegalArgumentException("JDBC URL length exceeds maximum limit of 2048 characters");
             }
-            // when has config jdbc url, use it 
-            return jdbcProtocol.getUrl();
+            // remove special characters
+            String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F]", "");
+            String url = cleanedUrl.toLowerCase();
+            // backlist check
+            for (String keyword : BLACK_LIST) {
+                if (url.contains(keyword)) {
+                    throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious parameter: " + keyword);
+                }
+            }
+            // url format check
+            if (!url.matches("^jdbc:[a-zA-Z0-9]+://[^\\s]+$")) {
+                throw new IllegalArgumentException("Invalid JDBC URL format");
+            }
+            return cleanedUrl;
         }
         return switch (jdbcProtocol.getPlatform()) {
             case "mysql", "mariadb" -> "jdbc:mysql://" + host + ":" + port
@@ -357,6 +383,8 @@ public class JdbcCommonCollect extends AbstractCollect {
             case "oracle" -> "jdbc:oracle:thin:@" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
             case "dm" -> "jdbc:dm://" + host + ":" + port;
+            case "testcontainers" -> "jdbc:tc:" + host + ":" + port
+                    + ":///" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase()) + "?user=root&password=root";
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
     }

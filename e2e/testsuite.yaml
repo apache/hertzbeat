@@ -29,7 +29,7 @@ param:
   monitorUDP: "{{randAlpha 6}}"
   monitorWebsite: "{{randAlpha 6}}"
   monitorFTP: "{{randAlpha 6}}"
-  tagName: "{{randAlpha 3}}"
+  labelName: "{{randAlpha 3}}"
 items:
 - name: login
   request:
@@ -342,39 +342,35 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
 
-## Tag
-- name: createTag
+## Label
+- name: createLabel
   request:
-    api: /api/tag
+    api: /api/label
     method: POST
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
     body: |
-      [
-        {
-          "color": "#ff4081",
-          "name": "{{.param.tagName}}"
-        }
-      ]
-- name: listTags
+      {
+        "name": "{{.param.labelName}}"
+      }
+- name: listLabels
   request:
-    api: /api/tag?pageIndex=0&pageSize=8&type=1
+    api: /api/label?pageIndex=0&pageSize=8&type=1
     header:
       Authorization: Bearer {{.login.data.token}}
-- name: updateTag
+- name: updateLabel
   request:
-    api: /api/tag
+    api: /api/label
     method: PUT
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
     body: |
       {
-        "id": {{(index .listTags.data.content 0).id | int64}},
+        "id": {{(index .listLabels.data.content 0).id | int64}},
         "name": "{{randAlpha 3}}",
         "tagValue": "{{randAlpha 3}}",
-        "color": "#ff4081",
         "type": 1,
         "creator": "admin",
         "modifier": "admin"
@@ -382,9 +378,9 @@ items:
   expect:
     bodyFieldsExpect:
       code: "0"
-- name: deleteTag
+- name: deleteLabel
   request:
-    api: /api/tag?ids={{(index .listTags.data.content 0).id | int64}}
+    api: /api/label?ids={{(index .listLabels.data.content 0).id | int64}}
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}

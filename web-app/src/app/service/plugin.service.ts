@@ -24,7 +24,6 @@ import { Observable } from 'rxjs';
 import { Message } from '../pojo/Message';
 import { Page } from '../pojo/Page';
 import { Plugin } from '../pojo/Plugin';
-import { Tag } from '../pojo/Tag';
 
 const plugin_uri = '/plugin';
 

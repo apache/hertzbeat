@@ -24,8 +24,8 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzUploadFile } from 'ng-zorro-antd/upload';
-import { throwError } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { of, throwError } from 'rxjs';
+import { finalize, switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
 import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
@@ -54,6 +54,8 @@ export class MonitorEditComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  sdDefines: ParamDefine[] = [];
+  sdParams: Param[] = [];
   paramDefines!: ParamDefine[];
   hostName!: string;
   params!: Param[];
@@ -83,6 +85,9 @@ export class MonitorEditComponent implements OnInit {
           if (message.code === 0) {
             let paramValueMap = new Map<String, Param>();
             this.monitor = message.data.monitor;
+            if (this.monitor.scrape == null || this.monitor.scrape == undefined) {
+              this.monitor.scrape = 'static';
+            }
             this.grafanaDashboard = message.data.grafanaDashboard != undefined ? message.data.grafanaDashboard : new GrafanaDashboard();
             this.collector = message.data.collector == null ? '' : message.data.collector;
             this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
@@ -172,27 +177,142 @@ export class MonitorEditComponent implements OnInit {
           return this.collectorSvc.getCollectors();
         })
       )
+      .pipe(
+        switchMap((message: any) => {
+          if (message.code === 0) {
+            this.collectors = message.data.content?.map((item: { collector: any }) => item.collector);
+          } else {
+            console.warn(message.msg);
+          }
+          if (this.monitor.scrape == 'static') {
+            return of({ code: 0, data: [], msg: '' });
+          } else {
+            return this.appDefineSvc.getAppParamsDefine(this.monitor.scrape);
+          }
+        })
+      )
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.collectors = message.data.content?.map(item => item.collector);
+            if (message.data.length > 0) {
+              let params: Param[] = [];
+              let paramDefines: ParamDefine[] = [];
+              message.data.forEach(define => {
+                let param = this.paramValueMap.get(define.field);
+                if (param === undefined) {
+                  param = new Param();
+                  param.field = define.field;
+                  if (define.type === 'number') {
+                    param.type = 0;
+                  } else if (define.type === 'key-value') {
+                    param.type = 3;
+                  } else if (define.type === 'array') {
+                    param.type = 4;
+                  } else {
+                    param.type = 1;
+                  }
+                  if (define.type === 'boolean') {
+                    param.paramValue = define.defaultValue == 'true';
+                  } else if (param.field === 'host') {
+                    param.paramValue = this.monitor.host;
+                  } else if (define.defaultValue != undefined) {
+                    if (define.type === 'number') {
+                      param.paramValue = Number(define.defaultValue);
+                    } else if (define.type === 'boolean') {
+                      param.paramValue = define.defaultValue.toLowerCase() == 'true';
+                    } else {
+                      param.paramValue = define.defaultValue;
+                    }
+                  }
+                } else {
+                  if (define.type === 'boolean') {
+                    if (param.paramValue != null) {
+                      param.paramValue = param.paramValue.toLowerCase() == 'true';
+                    } else {
+                      param.paramValue = false;
+                    }
+                  }
+                }
+                define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.scrape}.param.${define.field}`);
+                if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
+                  define.placeholder = this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
+                }
+                params.push(param);
+                paramDefines.push(define);
+              });
+              this.sdParams = [...params];
+              this.sdDefines = [...paramDefines];
+            }
           } else {
             console.warn(message.msg);
           }
           this.isSpinning = false;
         },
         error => {
-          console.error(error);
           this.isSpinning = false;
         }
       );
+  }
+
+  onScrapeChange(scrapeValue: string) {
+    this.monitor.scrape = scrapeValue;
+    if (this.monitor.scrape !== 'static') {
+      this.isSpinning = true;
+      let queryScrapeDefine$ = this.appDefineSvc
+        .getAppParamsDefine(this.monitor.scrape)
+        .pipe(
+          finalize(() => {
+            queryScrapeDefine$.unsubscribe();
+            this.isSpinning = false;
+          })
+        )
+        .subscribe(message => {
+          if (message.code === 0) {
+            let params: Param[] = [];
+            let paramDefines: ParamDefine[] = [];
+            message.data.forEach(define => {
+              let param = new Param();
+              param.field = define.field;
+              if (define.type === 'number') {
+                param.type = 0;
+              } else if (define.type === 'key-value') {
+                param.type = 3;
+              } else if (define.type === 'array') {
+                param.type = 4;
+              } else {
+                param.type = 1;
+              }
+              if (define.type === 'boolean') {
+                param.paramValue = false;
+              }
+              if (define.defaultValue != undefined) {
+                if (define.type === 'number') {
+                  param.paramValue = Number(define.defaultValue);
+                } else if (define.type === 'boolean') {
+                  param.paramValue = define.defaultValue.toLowerCase() == 'true';
+                } else {
+                  param.paramValue = define.defaultValue;
+                }
+              }
+              define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.scrape}.param.${define.field}`);
+              if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
+                define.placeholder = this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
+              }
+              params.push(param);
+              paramDefines.push(define);
+            });
+            this.sdParams = [...params];
+            this.sdDefines = [...paramDefines];
+          }
+        });
+    }
   }
 
   onSubmit(info: any) {
     let addMonitor = {
       monitor: info.monitor,
       collector: info.collector,
-      params: info.params.concat(info.advancedParams),
+      params: info.params.concat(info.advancedParams).concat(info.sdParams),
       grafanaDashboard: info.grafanaDashboard
     };
     this.spinningTip = 'Loading...';
@@ -218,7 +338,7 @@ export class MonitorEditComponent implements OnInit {
     let detectMonitor = {
       monitor: info.monitor,
       collector: info.collector,
-      params: info.params.concat(info.advancedParams)
+      params: info.params.concat(info.advancedParams).concat(info.sdParams)
     };
     this.spinningTip = this.i18nSvc.fanyi('monitor.spinning-tip.detecting');
     this.isSpinning = true;

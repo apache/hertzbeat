@@ -201,6 +201,9 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
             List<Predicate> andList = new ArrayList<>();
             Predicate predicateMonitorId = criteriaBuilder.equal(root.get("monitorId"), monitorId);
             Predicate predicateMonitorType = criteriaBuilder.equal(root.get("app"), app);
+            if (CommonConstants.PROMETHEUS.equals(app)) {
+                predicateMonitorType = criteriaBuilder.like(root.get("app"), CommonConstants.PROMETHEUS_APP_PREFIX + "%");
+            }
             Predicate predicateMonitorMetrics = criteriaBuilder.equal(root.get("metrics"), metrics);
             Predicate predicateMonitorMetric = criteriaBuilder.equal(root.get("metric"), metric);
             andList.add(predicateMonitorId);

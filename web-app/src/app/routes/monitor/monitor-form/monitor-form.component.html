@@ -21,6 +21,45 @@
   <div class="-inner-content">
     <form nz-form #form="ngForm">
       <nz-form-item>
+        <nz-form-control nzSpan="4" nzOffset="9" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            style="text-align: center"
+            [nzDropdownStyle]="{ textAlign: 'center' }"
+            [(ngModel)]="monitor.scrape"
+            name="scrape"
+            (ngModelChange)="onScrapeChange($event)"
+          >
+            <nz-option nzValue="static" [nzLabel]="'monitor.scrape.type.static' | i18n"></nz-option>
+            <nz-option nzValue="http_sd" [nzLabel]="'monitor.scrape.type.http_sd' | i18n"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <ng-container *ngIf="monitor.scrape != 'static'">
+        <ng-container *ngFor="let sdPramDefine of sdDefines; let i = index">
+          <nz-form-item *ngIf="sdParams[i].display !== false">
+            <nz-form-label nzSpan="7" [nzRequired]="sdPramDefine.required" [nzFor]="sdPramDefine.field"
+              >{{ sdPramDefine.name }}
+            </nz-form-label>
+            <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+              <app-form-field
+                [item]="sdPramDefine"
+                [name]="sdPramDefine.field"
+                [(ngModel)]="sdParams[i].paramValue"
+                (ngModelChange)="
+                  sdPramDefine.type === 'boolean'
+                    ? onParamBooleanChanged($event, sdPramDefine.field)
+                    : sdPramDefine.type === 'radio'
+                    ? onDependChanged($event, sdPramDefine.field)
+                    : null
+                "
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </ng-container>
+      </ng-container>
+
+      <nz-form-item *ngIf="monitor.scrape == 'static'">
         <nz-form-label nzSpan="7" [nzRequired]="true" [nzFor]="'host'">{{ hostName ? hostName : ('monitor.host' | i18n) }} </nz-form-label>
         <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <app-form-field
@@ -52,6 +91,8 @@
           />
         </nz-form-control>
       </nz-form-item>
+
+      <nz-divider></nz-divider>
 
       <ng-container *ngFor="let paramDefine of paramDefines; let i = index">
         <nz-form-item *ngIf="params[i].display !== false && paramDefine.field !== 'host'">
