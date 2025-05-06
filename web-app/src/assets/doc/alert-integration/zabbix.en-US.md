@@ -10,7 +10,7 @@ Send Zabbix alerts to the HertzBeat alert platform via Webhook.
 
    | Name | Value |
       |-----|-----|
-   | URL | http://your-hertzbeat-server:1157/api/alerter/alert/receive/webhook |
+   | URL | http://your-hertzbeat-server:1157/api/report/zabbix |
    | AlertName | {TRIGGER.NAME} |
    | AlertId | {EVENT.ID} |
    | HostName | {HOST.NAME} |
