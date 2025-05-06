@@ -10,7 +10,7 @@
 
    | 名称 | 值 |
    |-----|-----|
-   | URL | http://your-hertzbeat-server:1157/api/alerter/alert/receive/webhook |
+   | URL | http://{your_system_host}/api/report/zabbix |
    | AlertName | {TRIGGER.NAME} |
    | AlertId | {EVENT.ID} |
    | HostName | {HOST.NAME} |
