@@ -77,6 +77,11 @@ export class AlertIntegrationComponent implements OnInit {
       id: 'uptime-kuma',
       name: this.i18nSvc.fanyi('alert.integration.source.uptime-kuma'),
       icon: 'assets/img/integration/uptime-kuma.svg'
+    },
+    {
+      id: 'zabbix',
+      name: this.i18nSvc.fanyi('alert.integration.source.zabbix'),
+      icon: 'assets/img/integration/zabbix.svg'
     }
   ];
 
