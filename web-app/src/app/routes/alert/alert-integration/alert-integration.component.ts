@@ -69,14 +69,19 @@ export class AlertIntegrationComponent implements OnInit {
       icon: 'assets/img/integration/skywalking.svg'
     },
     {
-      id: 'tencent',
-      name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
-      icon: 'assets/img/integration/tencent.svg'
-    },
-    {
       id: 'uptime-kuma',
       name: this.i18nSvc.fanyi('alert.integration.source.uptime-kuma'),
       icon: 'assets/img/integration/uptime-kuma.svg'
+    },
+    {
+      id: 'zabbix',
+      name: this.i18nSvc.fanyi('alert.integration.source.zabbix'),
+      icon: 'assets/img/integration/zabbix.svg'
+    },
+    {
+      id: 'tencent',
+      name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
+      icon: 'assets/img/integration/tencent.svg'
     }
   ];
 

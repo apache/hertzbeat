@@ -1126,6 +1126,7 @@
   "alert.export.use-type": "Exportar regras no formato de arquivo {{type}}",
   "alert.integration.source.skywalking": "SkyWalking",
   "alert.integration.source.uptime-kuma": "Uptime Kuma",
+  "alert.integration.source.zabbix": "Zabbix",
   "dashboard.alerts.title": "Lista de Alarmes Recentes",
   "dashboard.alerts.title-no": "Alarmes Pendentes Recentes",
   "dashboard.alerts.no": "Nenhum Alarme Pendente",
