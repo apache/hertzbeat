@@ -79,7 +79,7 @@ public class OpenTelemetryConfig {
     private Map<String, String> buildGreptimeOtlpLogHeaders(GreptimeProperties greptimeProps) {
         Map<String, String> headers = new HashMap<>();
         headers.put(GREPTIME_DB_NAME_HEADER, DEFAULT_GREPTIME_DB_NAME);
-        headers.put(GREPTIME_LOG_TABLE_NAME_HEADER, DEFAULT_LOGS_TABLE_NAME );
+        headers.put(GREPTIME_LOG_TABLE_NAME_HEADER, DEFAULT_LOGS_TABLE_NAME);
         addAuthenticationHeaders(headers, greptimeProps);
         return Collections.unmodifiableMap(headers);
     }

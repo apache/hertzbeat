@@ -49,9 +49,9 @@ public class OpenTelemetryLogbackAppenderInstaller implements InitializingBean {
             log.info("Auto-configured OpenTelemetry SDK detected. Installing OpenTelemetryAppender for Logback.");
             OpenTelemetryAppender.install(this.openTelemetry);
         } else {
-            log.warn("OpenTelemetry SDK is not an instance of OpenTelemetrySdk (type: {}). " +
-                            "OpenTelemetryAppender for Logback will not be installed. " +
-                            "Ensure OpenTelemetry auto-configuration is active and correctly providing an SDK.",
+            log.warn("OpenTelemetry SDK is not an instance of OpenTelemetrySdk (type: {}). "
+                            + "OpenTelemetryAppender for Logback will not be installed. "
+                            + "Ensure OpenTelemetry auto-configuration is active and correctly providing an SDK.",
                     this.openTelemetry != null ? this.openTelemetry.getClass().getName() : "null");
         }
     }
