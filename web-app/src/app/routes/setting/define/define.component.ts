@@ -94,6 +94,9 @@ export class DefineComponent implements OnInit {
               if (app.value == 'prometheus') {
                 return;
               }
+              if (app.category == '__system__') {
+                return;
+              }
               this.appLabel[app.value] = app.label;
               let menus = appMenus[app.category];
               if (menus == undefined) {

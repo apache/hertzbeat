@@ -5,6 +5,9 @@
     },
     {
       "pattern": "!\\[.*\\]\\((?!http).*\\)"
+    },
+    {
+      "pattern": "^https:\\/\\/github\\.com\\/apache\\/hertzbeat\\/pull\\/.*"
     }
   ],
   "timeout": "10s",

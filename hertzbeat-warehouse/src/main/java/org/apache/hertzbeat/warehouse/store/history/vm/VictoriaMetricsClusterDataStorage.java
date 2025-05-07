@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.Arrays;
@@ -33,6 +34,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
@@ -76,11 +80,13 @@ import static org.apache.hertzbeat.common.constants.ConfigConstants.FunctionModu
 @Slf4j
 public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorage {
 
-    private static final String IMPORT_PATH = "/api/v1/import";
-    private static final String EXPORT_PATH = "/api/v1/export";
-    private static final String STATUS_PATH = "/api/v1/status/tsdb";
+    private static final String VM_INSERT_BASE_PATH = "/insert/%s/%s";
+    private static final String VM_SELECT_BASE_PATH = "/select/%s/%s";
+    private static final String IMPORT_PATH = "prometheus/api/v1/import";
+    private static final String EXPORT_PATH = "prometheus/api/v1/export";
+    private static final String STATUS_PATH = "prometheus/api/v1/status/tsdb";
     private static final String STATUS_SUCCESS = "success";
-    private static final String QUERY_RANGE_PATH = "/api/v1/query_range";
+    private static final String QUERY_RANGE_PATH = "prometheus/api/v1/query_range";
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_JOB = "job";
     private static final String LABEL_KEY_INSTANCE = "instance";
@@ -88,6 +94,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
 
+    private final VictoriaMetricsClusterProperties vmClusterProps;
     private final VictoriaMetricsInsertProperties vmInsertProps;
     private final VictoriaMetricsSelectProperties vmSelectProps;
 
@@ -100,6 +107,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             throw new IllegalArgumentException("please config Warehouse victoriaMetrics cluster props");
         }
         this.restTemplate = restTemplate;
+        this.vmClusterProps = vmClusterProps;
         this.vmInsertProps = vmClusterProps.insert();
         this.vmSelectProps = vmClusterProps.select();
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
@@ -108,7 +116,23 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private boolean checkVictoriaMetricsDatasourceAvailable() {
         // check server status
         try {
-            String result = restTemplate.getForObject(vmSelectProps.url() + STATUS_PATH, String.class);
+            String selectNodeStatusUrl = vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), STATUS_PATH);
+            HttpHeaders headers = new HttpHeaders();
+            if (StringUtils.hasText(vmInsertProps.username())
+                    && StringUtils.hasText(vmInsertProps.password())) {
+                String authStr = vmInsertProps.username() + ":" + vmInsertProps.password();
+                String encodedAuth = Base64Util.encode(authStr);
+                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
+            }
+            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    selectNodeStatusUrl,
+                    HttpMethod.GET,
+                    requestEntity,
+                    String.class
+            );
+
+            String result = responseEntity.getBody();
 
             JsonNode jsonNode = JsonUtil.fromJson(result);
             if (jsonNode != null && STATUS_SUCCESS.equalsIgnoreCase(jsonNode.get(STATUS).asText())) {
@@ -225,7 +249,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                     stringBuilder.append(JsonUtil.toJson(content)).append("\n");
                 }
                 HttpEntity<String> httpEntity = new HttpEntity<>(stringBuilder.toString(), headers);
-                ResponseEntity<String> responseEntity = restTemplate.postForEntity(vmInsertProps.url() + IMPORT_PATH,
+                String importUrl = vmClusterProps.insert().url() + VM_INSERT_BASE_PATH.formatted(vmClusterProps.accountID(), IMPORT_PATH);
+                ResponseEntity<String> responseEntity = restTemplate.postForEntity(importUrl,
                         httpEntity, String.class);
                 if (responseEntity.getStatusCode().is2xxSuccessful()) {
                     log.debug("insert metrics data to victoria-metrics success.");
@@ -252,9 +277,11 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
-        String timeSeriesSelector =
-                LABEL_KEY_NAME + "=\"" + labelName + "\"" + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" + ","
-                        + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
+        String timeSeriesSelector = Stream.of(
+                LABEL_KEY_NAME + "=\"" + labelName + "\"",
+                LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"",
+                CommonConstants.PROMETHEUS.equals(app) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
+        ).filter(Objects::nonNull).collect(Collectors.joining(","));
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -267,11 +294,15 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(vmSelectProps.url() + EXPORT_PATH)
-                    .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8),
-                            URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
-                    .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
-                    .queryParam("end", "now").build(true).toUri();
+            Instant end = Instant.now();
+            Duration duration = Duration.ofHours(Long.parseLong(history.replace("h", "")));
+            Instant start = end.minus(duration);
+            String exportUrl =  vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), EXPORT_PATH);
+            URI uri = UriComponentsBuilder.fromHttpUrl(exportUrl)
+                    .queryParam("match", URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
+                    .queryParam("start", String.valueOf(start.getEpochSecond()))
+                    .queryParam("end", String.valueOf(end.getEpochSecond()))
+                    .build(true).toUri();
             ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,
                     String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -347,9 +378,11 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
-        String timeSeriesSelector =
-                LABEL_KEY_NAME + "=\"" + labelName + "\"" + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" + ","
-                        + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
+        String timeSeriesSelector = Stream.of(
+                LABEL_KEY_NAME + "=\"" + labelName + "\"",
+                LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"",
+                CommonConstants.PROMETHEUS.equals(app) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
+        ).filter(Objects::nonNull).collect(Collectors.joining(","));
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -362,10 +395,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(vmSelectProps.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8),
-                            URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
+            String rangeUrl = VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), QUERY_RANGE_PATH);
+            URI uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+                    .queryParam("query", URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
+                    .queryParam("step", "4h")
+                    .queryParam("start", startTime)
+                    .queryParam("end", endTime)
+                    .build(true)
                     .toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET,
                     httpEntity, PromQlQueryContent.class);
@@ -400,10 +436,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
             // max
-            uri = UriComponentsBuilder.fromHttpUrl(vmSelectProps.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8),
-                            URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
+            uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+                    .queryParam("query", URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
+                    .queryParam("step", "4h")
+                    .queryParam("start", startTime)
+                    .queryParam("end", endTime)
+                    .build(true)
                     .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -436,10 +474,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 }
             }
             // min
-            uri = UriComponentsBuilder.fromHttpUrl(vmSelectProps.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8),
-                            URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
+            uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+                    .queryParam("query", URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
+                    .queryParam("step", "4h")
+                    .queryParam("start", startTime)
+                    .queryParam("end", endTime)
+                    .build(true)
                     .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -472,10 +512,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 }
             }
             // avg
-            uri = UriComponentsBuilder.fromHttpUrl(vmSelectProps.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8),
-                            URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
+            uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+                    .queryParam("query", URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
+                    .queryParam("step", "4h")
+                    .queryParam("start", startTime)
+                    .queryParam("end", endTime)
+                    .build(true)
                     .toUri();
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {

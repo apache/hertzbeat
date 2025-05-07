@@ -28,7 +28,6 @@ import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
 import { Monitor } from '../../../pojo/Monitor';
-import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { findDeepestSelected, renderLabelColor } from '../../../shared/utils/common-util';
@@ -46,7 +45,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     private notifySvc: NzNotificationService,
     private monitorSvc: MonitorService,
     private storageSvc: MemoryStorageService,
-    private appDefineSvc: AppDefineService,
     private menuService: MenuService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
@@ -506,43 +504,29 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   onAppSwitchModalOpen() {
     this.appSwitchModalVisible = true;
     this.appSearchLoading = true;
-    const getHierarchy$ = this.appDefineSvc
-      .getAppHierarchy(this.i18nSvc.defaultLang)
-      .pipe(
-        finalize(() => {
-          getHierarchy$.unsubscribe();
-          this.appSearchLoading = false;
-        })
-      )
-      .subscribe(
-        message => {
-          if (message.code === 0) {
-            let appMenus: Record<string, any> = {};
-            message.data.forEach((app: any) => {
-              let menus = appMenus[app.category];
-              app.categoryLabel = this.i18nSvc.fanyi(`menu.monitor.${app.category}`);
-              if (app.categoryLabel == `menu.monitor.${app.category}`) {
-                app.categoryLabel = app.category.toUpperCase();
-              }
-              if (menus == undefined) {
-                menus = { label: app.categoryLabel, child: [app] };
-              } else {
-                menus.child.push(app);
-              }
-              appMenus[app.category] = menus;
-            });
-            this.appSearchOrigin = Object.entries(appMenus);
-            this.appSearchOrigin.sort((a, b) => {
-              return b[1].length - a[1].length;
-            });
-          } else {
-            console.warn(message.msg);
-          }
-        },
-        error => {
-          console.warn(error.msg);
-        }
-      );
+    let appMenus: Record<string, any> = {};
+    let hierarchy: any[] = this.storageSvc.getData('hierarchy');
+    hierarchy.forEach((app: any) => {
+      if (app.category == '__system__') {
+        return;
+      }
+      let menus = appMenus[app.category];
+      app.categoryLabel = this.i18nSvc.fanyi(`menu.monitor.${app.category}`);
+      if (app.categoryLabel == `menu.monitor.${app.category}`) {
+        app.categoryLabel = app.category.toUpperCase();
+      }
+      if (menus == undefined) {
+        menus = { label: app.categoryLabel, child: [app] };
+      } else {
+        menus.child.push(app);
+      }
+      appMenus[app.category] = menus;
+    });
+    this.appSearchOrigin = Object.entries(appMenus);
+    this.appSearchOrigin.sort((a, b) => {
+      return b[1].length - a[1].length;
+    });
+    this.appSearchLoading = false;
   }
 
   onAppSwitchModalCancel() {

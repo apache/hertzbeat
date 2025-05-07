@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.manager;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,15 +23,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * sd monitor param
+ * Dns protocol
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SdMonitorParam {
-    private String detectedHost;
-    private String detectedPort;
-    private Param sdParam;
-    private Long bizId;
+public class HttpSdProtocol implements Protocol {
+    
+    private String url;
 }

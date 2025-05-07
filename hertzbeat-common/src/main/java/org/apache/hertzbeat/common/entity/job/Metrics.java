@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ModbusProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
@@ -63,7 +64,6 @@ import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 /**
  * Details of the monitoring metrics collected
@@ -74,6 +74,7 @@ import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 @NoArgsConstructor
 @Builder
 @Slf4j
+@SuppressWarnings("checkstyle:MemberName")
 public class Metrics {
 
     /**
@@ -260,9 +261,9 @@ public class Metrics {
      */
     private KafkaProtocol kclient;
     /**
-     * Collect sd data protocol
+     * http sd protocol
      */
-    private ServiceDiscoveryProtocol sdProtocol;
+    private HttpSdProtocol http_sd;
     /**
      * Monitoring configuration information using the public plc protocol
      */
