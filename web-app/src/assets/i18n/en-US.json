@@ -99,6 +99,7 @@
   "alert.integration.source.webhook": "Default Webhook",
   "alert.integration.source.skywalking": "SkyWalking",
   "alert.integration.source.uptime-kuma": "Uptime Kuma",
+  "alert.integration.source.zabbix": "Zabbix",
   "alert.integration.token.desc": "Token you generated that can be used to access the HertzBeat API.",
   "alert.integration.token.new": "Click to Generate Token",
   "alert.integration.token.notice": "Token only be displayed once. Please keep your token secure. Do not share it with others.",
