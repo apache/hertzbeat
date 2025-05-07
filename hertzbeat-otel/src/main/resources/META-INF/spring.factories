@@ -14,4 +14,4 @@
 # limitations under the License.
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.apache.hertzbeat.log.config.LogAutoConfiguration
+org.apache.hertzbeat.otel.config.LogAutoConfiguration
