@@ -115,6 +115,7 @@
     <!-- Production environment configuration -->
     <springProfile name="prod">
         <root level="INFO">
+            <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
             <appender-ref ref="OpenTelemetryAppender"/>

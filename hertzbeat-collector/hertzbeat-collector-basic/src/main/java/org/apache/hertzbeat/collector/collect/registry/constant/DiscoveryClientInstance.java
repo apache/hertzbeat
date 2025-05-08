@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum DiscoveryClientInstance {
     CONSUL("Consul"),
     NACOS("Nacos"),
+    DNS("Dns"),
     NOT_SUPPORT("Not support discovery client instance!");
 
     private final String name;

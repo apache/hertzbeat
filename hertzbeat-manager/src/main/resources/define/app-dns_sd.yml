@@ -16,19 +16,19 @@
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: __system__
 # Monitoring application type name (consistent with file name) eg: linux windows tomcat mysql aws...
-app: http_sd
+app: dns_sd
 # The app api i18n name
 name:
-  zh-CN: Http Service Discovery
-  en-US: Http Service Discovery
+  zh-CN: Dns Service Discovery
+  en-US: Dns Service Discovery
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
   - field: __sd_url__
     # name-param field display i18n name
     name:
-      zh-CN: 服务发现地址222
-      en-US: Service Discovery Url
+      zh-CN: Dns服务地址
+      en-US: Dns Url
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -56,7 +56,7 @@ metrics:
           zh-CN: Port
           en-US: Port
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: http_sd
-    # the config content when protocol is http_sd
-    http_sd:
+    protocol: dns_sd
+    # the config content when protocol is dns_sd
+    dns_sd:
       url: ^_^__sd_url__^_^

@@ -22,6 +22,7 @@ package org.apache.hertzbeat.collector.collect.registry.discovery;
 import java.util.Objects;
 import org.apache.hertzbeat.collector.collect.registry.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.collector.collect.registry.discovery.impl.ConsulDiscoveryClient;
+import org.apache.hertzbeat.collector.collect.registry.discovery.impl.DnsDiscoveryClient;
 import org.apache.hertzbeat.collector.collect.registry.discovery.impl.NacosDiscoveryClient;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 
@@ -47,6 +48,7 @@ public class DiscoveryClientManagement {
         switch (discoveryClientInstance) {
             case CONSUL -> discoveryClient = new ConsulDiscoveryClient();
             case NACOS -> discoveryClient = new NacosDiscoveryClient();
+            case DNS -> discoveryClient = new DnsDiscoveryClient();
             default -> { return null; }
         }
         discoveryClient.initClient(discoveryClient.buildConnectConfig(registryProtocol));
