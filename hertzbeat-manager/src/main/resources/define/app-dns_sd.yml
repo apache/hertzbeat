@@ -24,16 +24,36 @@ name:
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
-  - field: __sd_url__
+  - field: __sd_host__
     # name-param field display i18n name
     name:
-      zh-CN: Dns服务地址
-      en-US: Dns Url
+      zh-CN: DNS地址
+      en-US: DNS Host
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
     required: true
-
+  # field-param field key
+  - field: __sd_port__
+    # name-param field display i18n name
+    name:
+      zh-CN: DNS端口
+      en-US: DNS Port
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 53
+  - field: __sd_server_name__
+    # name-param field display i18n name
+    name:
+      zh-CN: 服务名
+      en-US: Server Name
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: true
 metrics:
   - name: target
     i18n:
@@ -59,4 +79,6 @@ metrics:
     protocol: dns_sd
     # the config content when protocol is dns_sd
     dns_sd:
-      url: ^_^__sd_url__^_^
+      host: ^_^__sd_host__^_^
+      port: ^_^__sd_port__^_^
+      serverName: ^_^__sd_server_name__^_^

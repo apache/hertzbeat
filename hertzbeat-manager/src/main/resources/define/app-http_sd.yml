@@ -27,7 +27,7 @@ params:
   - field: __sd_url__
     # name-param field display i18n name
     name:
-      zh-CN: 服务发现地址222
+      zh-CN: 服务发现地址
       en-US: Service Discovery Url
     # type-param field type(most mapping the html input type)
     type: text

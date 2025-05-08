@@ -29,7 +29,6 @@ import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.TextParseException;
 import org.xbill.DNS.Type;
 
-import java.net.InetAddress;
 import java.time.Duration;
 import java.util.Arrays;
 
@@ -39,6 +38,8 @@ import java.util.Arrays;
 @Slf4j
 public class DnsSdCollectImpl extends AbstractCollect {
 
+    private static final int DEFAULT_TIME_OUT = 3;
+
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
 
@@ -46,38 +47,34 @@ public class DnsSdCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
-        String url = metrics.getDns_sd().getUrl();
+        String hostName = metrics.getDns_sd().getHost();
         try {
-            if (log.isDebugEnabled()) {
-                log.debug("Starting SRV record lookup for url: {}", url);
-            }
-            // 设置DNS查询器
-            Lookup lookup = new Lookup("_myservice._tcp.example.com", Type.SRV);
-            SimpleResolver resolver = new SimpleResolver("127.0.0.1"); // 使用系统默认DNS服务器
-            resolver.setPort(5353);
-            resolver.setTimeout(Duration.ofMillis(5)); // 新增超时设置（单位：秒）
+            Lookup lookup = new Lookup(metrics.getDns_sd().getServerName(), Type.SRV);
+            SimpleResolver resolver = new SimpleResolver(metrics.getDns_sd().getHost());
+            resolver.setPort(Integer.parseInt(metrics.getDns_sd().getPort()));
+            resolver.setTimeout(Duration.ofMillis(DEFAULT_TIME_OUT));
             lookup.setResolver(resolver);
-            lookup.setCache(null); // 禁用缓存
-            lookup.setSearchPath(new String[0]); // 禁用搜索路径
+            lookup.setCache(null);
+            lookup.setSearchPath(new String[0]);
 
             // 执行查询
             lookup.run();
             if (lookup.getResult() != Lookup.SUCCESSFUL) {
-                handleLookupFailure(builder, url, lookup.getErrorString());
+                handleLookupFailure(builder, hostName, lookup.getErrorString());
                 return;
             }
-            Record[] records = lookup.getAnswers(); //读取的还是旧的，好像没有生效啊
+            Record[] records = lookup.getAnswers();
             if (records == null || records.length == 0) {
-                log.info("No SRV records found for url: {}", url);
+                log.info("No SRV records found for hostName: {}", hostName);
                 builder.setCode(CollectRep.Code.SUCCESS);
                 return;
             }
             // 转换并处理结果
             processSrvRecords(builder, records);
         } catch (TextParseException e) {
-            handleParseError(builder, url, e);
+            handleParseError(builder, hostName, e);
         } catch (Exception e) {
-            handleUnexpectedError(builder, url, e);
+            handleUnexpectedError(builder, hostName, e);
         }
     }
 

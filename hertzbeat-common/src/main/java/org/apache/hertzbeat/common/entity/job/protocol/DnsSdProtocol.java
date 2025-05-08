@@ -31,5 +31,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DnsSdProtocol implements Protocol {
     
-    private String url;
+    private String host;
+
+    private String port;
+
+    private String serverName;
 }

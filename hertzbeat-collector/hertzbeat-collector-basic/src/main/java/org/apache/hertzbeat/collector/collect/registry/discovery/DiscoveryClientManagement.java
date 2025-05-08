@@ -22,7 +22,6 @@ package org.apache.hertzbeat.collector.collect.registry.discovery;
 import java.util.Objects;
 import org.apache.hertzbeat.collector.collect.registry.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.collector.collect.registry.discovery.impl.ConsulDiscoveryClient;
-import org.apache.hertzbeat.collector.collect.registry.discovery.impl.DnsDiscoveryClient;
 import org.apache.hertzbeat.collector.collect.registry.discovery.impl.NacosDiscoveryClient;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 
