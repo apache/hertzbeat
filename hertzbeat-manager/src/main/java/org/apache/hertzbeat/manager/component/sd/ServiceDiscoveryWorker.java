@@ -104,20 +104,9 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             String value = cell.getValue();
                             fieldsValue.put(cell.getField().getName(), value);
                         });
-                        final String host = fieldsValue.get(FILED_HOST);
-                        final String port = fieldsValue.get(FILED_PORT);
-                        final String keyStr = host + ":" + port;
-                        if (subMonitorBindMap.containsKey(keyStr)) {
-                            subMonitorBindMap.remove(keyStr);
-                            continue;
-                        }
+                        String host = fieldsValue.get(FILED_HOST);
+                        String port = fieldsValue.get(FILED_PORT);
                         Monitor newMonitor = mainMonitor.clone();
-                        newMonitor.setId(null);
-                        newMonitor.setHost(host);
-                        newMonitor.setName(newMonitor.getName() + "-" + host + ":" + port);
-                        newMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
-                        newMonitor.setGmtCreate(LocalDateTime.now());
-                        newMonitor.setGmtUpdate(LocalDateTime.now());
                         // replace host port
                         List<Param> newParams = new LinkedList<>();
                         for (Param param : mainMonitorParams) {
@@ -128,10 +117,26 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             if (FILED_HOST.equals(newParam.getField())) {
                                 newParam.setParamValue(host);
                             } else if (FILED_PORT.equals(newParam.getField())) {
+                                // when use dns sd, some cases the port cannot be obtained (like: A, AAAA record type)
+                                // the port will use user filled.
+                                if (port == null || port.isEmpty()){
+                                    port = newParam.getParamValue();
+                                }
                                 newParam.setParamValue(port);
                             }
                             newParams.add(newParam);
                         }
+                        final String keyStr = host + ":" + port;
+                        if (subMonitorBindMap.containsKey(keyStr)) {
+                            subMonitorBindMap.remove(keyStr);
+                            continue;
+                        }
+                        newMonitor.setId(null);
+                        newMonitor.setHost(host);
+                        newMonitor.setName(newMonitor.getName() + "-" + host + ":" + port);
+                        newMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
+                        newMonitor.setGmtCreate(LocalDateTime.now());
+                        newMonitor.setGmtUpdate(LocalDateTime.now());
                         monitorService.addMonitor(newMonitor, newParams, collector, null);
                         MonitorBind monitorBind = MonitorBind.builder()
                                 .bizId(monitorId)

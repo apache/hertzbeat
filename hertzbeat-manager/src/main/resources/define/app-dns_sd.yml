@@ -45,11 +45,32 @@ params:
     required: true
     # default value
     defaultValue: 53
-  - field: __sd_server_name__
+  - field: __sd_record_type__
     # name-param field display i18n name
     name:
-      zh-CN: 服务名
-      en-US: Server Name
+      zh-CN: 记录类型
+      en-US: Record Type
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: SRV
+        value: 33
+      - label: A
+        value: 1
+      - label: AAAA
+        value: 28
+      - label: MX
+        value: 15
+      - label: NS
+        value: 2
+  - field: __sd_record_name__
+    # name-param field display i18n name
+    name:
+      zh-CN: 记录名
+      en-US: Record Name
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -81,4 +102,5 @@ metrics:
     dns_sd:
       host: ^_^__sd_host__^_^
       port: ^_^__sd_port__^_^
-      serverName: ^_^__sd_server_name__^_^
+      recordType: ^_^__sd_record_type__^_^
+      recordName: ^_^__sd_record_name__^_^

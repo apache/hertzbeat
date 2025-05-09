@@ -35,5 +35,7 @@ public class DnsSdProtocol implements Protocol {
 
     private String port;
 
-    private String serverName;
+    private String recordType;
+
+    private String recordName;
 }

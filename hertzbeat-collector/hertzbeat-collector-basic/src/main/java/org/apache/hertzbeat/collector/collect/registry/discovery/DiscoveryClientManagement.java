@@ -47,7 +47,6 @@ public class DiscoveryClientManagement {
         switch (discoveryClientInstance) {
             case CONSUL -> discoveryClient = new ConsulDiscoveryClient();
             case NACOS -> discoveryClient = new NacosDiscoveryClient();
-            case DNS -> discoveryClient = new DnsDiscoveryClient();
             default -> { return null; }
         }
         discoveryClient.initClient(discoveryClient.buildConnectConfig(registryProtocol));
