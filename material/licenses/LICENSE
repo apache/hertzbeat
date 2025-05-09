@@ -435,10 +435,7 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/org.webjars/swagger-ui/5.10.3 Apache-2.0
     https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java/1.12.0 Apache-2.0
     https://mvnrepository.com/artifact/com.vesoft/client/3.6.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-api/1.49.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk/1.49.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-sdk-logs/1.49.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-exporter-otlp/1.49.0 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-boot-starter-2.15.0 Apache-2.0
     https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-logback-appender-1.0 Apache-2.0
 
 ========================================================================

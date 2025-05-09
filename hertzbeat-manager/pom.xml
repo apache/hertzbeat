@@ -92,7 +92,7 @@
         <!-- log -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-log</artifactId>
+            <artifactId>hertzbeat-otel</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>

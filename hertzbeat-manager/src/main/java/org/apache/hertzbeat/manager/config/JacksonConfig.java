@@ -35,7 +35,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 public class JacksonConfig {
 
     @Bean
-    public Jackson2ObjectMapperBuilderCustomizer customizer() {
+    public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
         return builder -> {
             JavaTimeModule javaTimeModule = new JavaTimeModule();
             final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");

@@ -24,7 +24,7 @@
         <version>2.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>hertzbeat-log</artifactId>
+    <artifactId>hertzbeat-otel</artifactId>
     <name>${project.artifactId}</name>
     <properties>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
@@ -44,24 +44,13 @@
         </dependency>
         <!-- OpenTelemetry -->
         <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-sdk</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-sdk-logs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-exporter-otlp</artifactId>
-        </dependency>
-        <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-logback-appender-1.0</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.opentelemetry.instrumentation</groupId>
+            <artifactId>opentelemetry-spring-boot-starter</artifactId>
+        </dependency>
+
     </dependencies>
 </project>
