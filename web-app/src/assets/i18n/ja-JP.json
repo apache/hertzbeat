@@ -762,6 +762,7 @@
   "monitor.sshPrivateKey.tip": "RSA秘密鍵の起動",
   "monitor.scrape.type.static": "静的",
   "monitor.scrape.type.http_sd": "Http Service Discovery",
+  "monitor.scrape.type.nacos_sd": "Nacos Service Discovery",
   "placeholder.key": "キー",
   "placeholder.value": "値",
   "plugin.delete": "プラグインを削除",
