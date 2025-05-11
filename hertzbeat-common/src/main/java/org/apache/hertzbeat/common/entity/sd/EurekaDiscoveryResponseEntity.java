@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * eureka service discovery  entity
+ * eureka service discovery entity
  */
 @Data
 @Builder
