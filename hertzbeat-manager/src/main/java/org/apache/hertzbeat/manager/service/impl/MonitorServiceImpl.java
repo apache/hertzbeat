@@ -61,6 +61,7 @@ import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.ImExportService;
+import org.apache.hertzbeat.manager.service.LabelService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -85,7 +86,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -133,6 +133,8 @@ public class MonitorServiceImpl implements MonitorService {
     private ManagerSseManager managerSseManager;
     @Autowired
     private LabelDao labelDao;
+    @Autowired
+    private LabelService labelService;
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
@@ -158,28 +160,11 @@ public class MonitorServiceImpl implements MonitorService {
             labels = new HashMap<>(8);
             monitor.setLabels(labels);
         }
+        List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
 
-        Set<Map.Entry<String, String>> bindLabels = labels.entrySet();
-
-        // Get all labels from the database
-        Set<Map.Entry<String, String>> allLabels = labelDao.findAll().stream()
-                .map(label -> Map.entry(label.getName(), label.getTagValue()))
-                .collect(Collectors.toSet());
-
-        // If the bound label (key:value) does not exist, then add it
-        Set<Map.Entry<String, String>> addLabelsKv = bindLabels.stream()
-                .filter(label -> !allLabels.contains(label))
-                .collect(Collectors.toCollection(HashSet::new));
-        List<Label> addLabels = addLabelsKv.stream().map(kv -> {
-            Label label = new Label();
-            label.setId(null);
-            label.setName(kv.getKey());
-            label.setTagValue(kv.getValue());
-            label.setType((byte) 0);
-            return label;
-        }).toList();
-
-        labelDao.saveAll(addLabels);
+        if (!addLabels.isEmpty()) {
+            labelDao.saveAll(addLabels);
+        }
 
         // Construct the collection task Job entity
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
@@ -458,6 +443,13 @@ public class MonitorServiceImpl implements MonitorService {
             labels = new HashMap<>(8);
             monitor.setLabels(labels);
         }
+
+        List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
+
+        if (!addLabels.isEmpty()) {
+            labelDao.saveAll(addLabels);
+        }
+
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
