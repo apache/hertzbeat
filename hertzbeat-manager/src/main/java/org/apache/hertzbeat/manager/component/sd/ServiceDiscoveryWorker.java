@@ -49,7 +49,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class ServiceDiscoveryWorker implements InitializingBean {
-    
+
     private static final String FILED_HOST = "host";
     private static final String FILED_PORT = "port";
     private final MonitorService monitorService;
@@ -104,9 +104,8 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             String value = cell.getValue();
                             fieldsValue.put(cell.getField().getName(), value);
                         });
-                        String host = fieldsValue.get(FILED_HOST);
+                        final String host = fieldsValue.get(FILED_HOST);
                         String port = fieldsValue.get(FILED_PORT);
-                        Monitor newMonitor = mainMonitor.clone();
                         // replace host port
                         List<Param> newParams = new LinkedList<>();
                         for (Param param : mainMonitorParams) {
@@ -115,13 +114,11 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             newParam.setGmtUpdate(null);
                             newParam.setGmtCreate(null);
                             if (FILED_HOST.equals(newParam.getField())) {
-                                newParam.setParamValue(host);
-                            } else if (FILED_PORT.equals(newParam.getField())) {
-                                // some cases the port cannot be obtained (like: dns A, AAAA record type)
-                                // the port will use user filled.
+                                // when ds cannot get port, the port will use user filled at configuration page.
                                 if (port == null || port.isEmpty()) {
                                     port = newParam.getParamValue();
                                 }
+                            } else if (FILED_PORT.equals(newParam.getField())) {
                                 newParam.setParamValue(port);
                             }
                             newParams.add(newParam);
@@ -131,12 +128,14 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             subMonitorBindMap.remove(keyStr);
                             continue;
                         }
+                        Monitor newMonitor = mainMonitor.clone();
                         newMonitor.setId(null);
                         newMonitor.setHost(host);
                         newMonitor.setName(newMonitor.getName() + "-" + host + ":" + port);
                         newMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
                         newMonitor.setGmtCreate(LocalDateTime.now());
                         newMonitor.setGmtUpdate(LocalDateTime.now());
+
                         monitorService.addMonitor(newMonitor, newParams, collector, null);
                         MonitorBind monitorBind = MonitorBind.builder()
                                 .bizId(monitorId)
