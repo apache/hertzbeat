@@ -117,9 +117,9 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             if (FILED_HOST.equals(newParam.getField())) {
                                 newParam.setParamValue(host);
                             } else if (FILED_PORT.equals(newParam.getField())) {
-                                // when use dns sd, some cases the port cannot be obtained (like: A, AAAA record type)
+                                // some cases the port cannot be obtained (like: dns A, AAAA record type)
                                 // the port will use user filled.
-                                if (port == null || port.isEmpty()){
+                                if (port == null || port.isEmpty()) {
                                     port = newParam.getParamValue();
                                 }
                                 newParam.setParamValue(port);

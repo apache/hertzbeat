@@ -22,6 +22,7 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
 import org.xbill.DNS.AAAARecord;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.Lookup;
@@ -49,8 +50,17 @@ public class DnsSdCollectImpl extends AbstractCollect {
         if (metrics.getDns_sd() == null) {
             throw new IllegalArgumentException("DNS SD configuration cannot be null");
         }
+        if (metrics.getDns_sd().getHost() == null || metrics.getDns_sd().getHost().isEmpty()) {
+            throw new IllegalArgumentException("DNS host cannot be null or empty");
+        }
+        if (metrics.getDns_sd().getPort() == null || metrics.getDns_sd().getPort().isEmpty()) {
+            throw new IllegalArgumentException("DNS port cannot be null or empty");
+        }
         if (metrics.getDns_sd().getRecordType() == null || metrics.getDns_sd().getRecordType().isEmpty()) {
             throw new IllegalArgumentException("DNS record type cannot be null or empty");
+        }
+        if (metrics.getDns_sd().getRecordName() == null || metrics.getDns_sd().getRecordName().isEmpty()) {
+            throw new IllegalArgumentException("DNS record name cannot be null or empty");
         }
     }
 
@@ -59,9 +69,9 @@ public class DnsSdCollectImpl extends AbstractCollect {
         String hostName = metrics.getDns_sd().getHost();
         int type = Integer.parseInt(metrics.getDns_sd().getRecordType());
         Type.check(type);
-        String name = metrics.getDns_sd().getRecordName();
+        String recordName = metrics.getDns_sd().getRecordName();
         try {
-            Lookup lookup = new Lookup(name, type);
+            Lookup lookup = new Lookup(recordName, type);
             SimpleResolver resolver = new SimpleResolver(metrics.getDns_sd().getHost());
             resolver.setPort(Integer.parseInt(metrics.getDns_sd().getPort()));
             resolver.setTimeout(Duration.ofMillis(DEFAULT_TIME_OUT));
@@ -69,20 +79,26 @@ public class DnsSdCollectImpl extends AbstractCollect {
             lookup.setCache(null);
             lookup.run();
             if (lookup.getResult() != Lookup.SUCCESSFUL) {
-                handleLookupFailure(builder, name, lookup.getErrorString());
+                handleLookupFailure(builder, recordName, lookup.getErrorString());
                 return;
             }
             Record[] records = lookup.getAnswers();
             if (records == null || records.length == 0) {
-                log.info("No record type:{} records found for host: {}", type, hostName);
+                log.info("No record type: {} records found for host: {}", type, hostName);
                 builder.setCode(CollectRep.Code.SUCCESS);
                 return;
             }
             processRecords(builder, records, type);
         } catch (TextParseException e) {
-            handleParseError(builder, name, e);
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.warn("Failed to parse dns query... {}", errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
-            handleUnexpectedError(builder, name, e);
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.error("Failed to fetch dns sd...{}", errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
     }
 
@@ -113,7 +129,7 @@ public class DnsSdCollectImpl extends AbstractCollect {
         Arrays.stream(records).filter(ARecord.class::isInstance).map(ARecord.class::cast).forEach(aRecord -> {
             CollectRep.ValueRow.Builder row = CollectRep.ValueRow.newBuilder();
             row.addColumn(aRecord.getAddress().getHostAddress());
-            row.addColumn("");
+            row.addColumn(""); //A record has no port
             builder.addValueRow(row.build());
         });
     }
@@ -123,7 +139,7 @@ public class DnsSdCollectImpl extends AbstractCollect {
         Arrays.stream(records).filter(AAAARecord.class::isInstance).map(AAAARecord.class::cast).forEach(aaaaRecord -> {
             CollectRep.ValueRow.Builder row = CollectRep.ValueRow.newBuilder();
             row.addColumn(aaaaRecord.getAddress().getHostAddress());
-            row.addColumn("");
+            row.addColumn(""); //AAAA record has no port
             builder.addValueRow(row.build());
         });
     }
@@ -141,7 +157,7 @@ public class DnsSdCollectImpl extends AbstractCollect {
         Arrays.stream(records).filter(MXRecord.class::isInstance).map(MXRecord.class::cast).forEach(mxRecord -> {
             CollectRep.ValueRow.Builder row = CollectRep.ValueRow.newBuilder();
             row.addColumn(mxRecord.getTarget().toString(true));
-            row.addColumn("");
+            row.addColumn(""); //MX record has no port
             builder.addValueRow(row.build());
         });
     }
@@ -150,30 +166,16 @@ public class DnsSdCollectImpl extends AbstractCollect {
         Arrays.stream(records).filter(NSRecord.class::isInstance).map(NSRecord.class::cast).forEach(nsRecord -> {
             CollectRep.ValueRow.Builder row = CollectRep.ValueRow.newBuilder();
             row.addColumn(nsRecord.getTarget().toString(true));
-            row.addColumn("");
+            row.addColumn(""); //NS record has no port
             builder.addValueRow(row.build());
         });
     }
 
     private void handleLookupFailure(CollectRep.MetricsData.Builder builder, String host, String errorMsg) {
-        String msg = String.format("DNS lookup failed for name: %s, error: %s", host, errorMsg);
+        String msg = String.format("DNS lookup failed for: %s, error: %s", host, errorMsg);
         log.warn(msg);
         builder.setCode(CollectRep.Code.FAIL);
         builder.setMsg(msg);
-    }
-
-    private void handleParseError(CollectRep.MetricsData.Builder builder, String host, TextParseException e) {
-        String msg = String.format("DNS query parse error for name: %s, error: %s", host, e.getMessage());
-        log.warn(msg, e);
-        builder.setCode(CollectRep.Code.FAIL);
-        builder.setMsg(msg);
-    }
-
-    private void handleUnexpectedError(CollectRep.MetricsData.Builder builder, String host, Exception e) {
-        String msg = String.format("Unexpected error during DNS lookup for: %s", host);
-        log.error(msg, e);
-        builder.setCode(CollectRep.Code.FAIL);
-        builder.setMsg(msg + ": " + e.getMessage());
     }
 
     @Override
