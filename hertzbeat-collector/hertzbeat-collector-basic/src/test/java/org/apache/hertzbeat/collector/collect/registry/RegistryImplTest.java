@@ -33,6 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockedStatic;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -48,8 +49,6 @@ class RegistryImplTest {
     @Mock
     private DiscoveryClient client;
 
-    @Mock
-    private DiscoveryClientManagement discoveryClientManagement;
 
     @Test
     void testServerCollect() {
@@ -71,20 +70,22 @@ class RegistryImplTest {
         metrics.setRegistry(registryProtocol);
         metrics.setAliasFields(aliasField);
 
-        Mockito.when(discoveryClientManagement.getClient(registryProtocol)).thenReturn(client);
-        ServerInfo serverInfo = ServerInfo.builder()
-                .address(host)
-                .port(port)
-                .build();
-        Mockito.when(client.getServerInfo()).thenReturn(serverInfo);
-        registry.setDiscoveryClientManagement(discoveryClientManagement);
-        registry.preCheck(metrics);
-        registry.collect(builder, metrics);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(host, valueRow.getColumns(0));
-            assertEquals(port, valueRow.getColumns(1));
-            assertNotNull(valueRow.getColumns(2));
+        try (MockedStatic<DiscoveryClientManagement> dcmMock = Mockito.mockStatic(DiscoveryClientManagement.class)){
+            dcmMock.when(() -> DiscoveryClientManagement.getClient(registryProtocol)).thenReturn(client);
+            ServerInfo serverInfo = ServerInfo.builder()
+                    .address(host)
+                    .port(port)
+                    .build();
+            Mockito.when(client.getServerInfo()).thenReturn(serverInfo);
+            registry.preCheck(metrics);
+            registry.collect(builder, metrics);
+            for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
+                assertEquals(host, valueRow.getColumns(0));
+                assertEquals(port, valueRow.getColumns(1));
+                assertNotNull(valueRow.getColumns(2));
+            }
         }
+
     }
 
     @Test
@@ -108,29 +109,30 @@ class RegistryImplTest {
         metrics.setRegistry(registryProtocol);
         metrics.setAliasFields(aliasField);
 
-        Mockito.when(discoveryClientManagement.getClient(registryProtocol)).thenReturn(client);
+        try (MockedStatic<DiscoveryClientManagement> dcmMock = Mockito.mockStatic(DiscoveryClientManagement.class)){
+            dcmMock.when(() -> DiscoveryClientManagement.getClient(registryProtocol)).thenReturn(client);
+            String serviceId = "test";
+            String serviceName = "service";
+            List<ServiceInstance> serviceInstances = new ArrayList<>();
+            serviceInstances.add(ServiceInstance.builder()
+                    .serviceId(serviceId)
+                    .serviceName(serviceName)
+                    .address(host)
+                    .port(Integer.parseInt(port))
+                    .build());
 
-        String serviceId = "test";
-        String serviceName = "service";
-        List<ServiceInstance> serviceInstances = new ArrayList<>();
-        serviceInstances.add(ServiceInstance.builder()
-                .serviceId(serviceId)
-                .serviceName(serviceName)
-                .address(host)
-                .port(Integer.parseInt(port))
-                .build());
-
-        Mockito.when(client.getServices()).thenReturn(serviceInstances);
-        registry.setDiscoveryClientManagement(discoveryClientManagement);
-        registry.preCheck(metrics);
-        registry.collect(builder, metrics);
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(serviceId, valueRow.getColumns(0));
-            assertEquals(serviceName, valueRow.getColumns(1));
-            assertEquals(host, valueRow.getColumns(2));
-            assertEquals(port, valueRow.getColumns(3));
+            Mockito.when(client.getServices()).thenReturn(serviceInstances);
+            registry.preCheck(metrics);
+            registry.collect(builder, metrics);
+            assertEquals(builder.getValuesCount(), 1);
+            for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
+                assertEquals(serviceId, valueRow.getColumns(0));
+                assertEquals(serviceName, valueRow.getColumns(1));
+                assertEquals(host, valueRow.getColumns(2));
+                assertEquals(port, valueRow.getColumns(3));
+            }
         }
+
     }
 
 }

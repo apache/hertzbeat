@@ -30,11 +30,11 @@ import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
  */
 public class DiscoveryClientManagement {
 
-    public DiscoveryClient getClient(RegistryProtocol registryProtocol) {
+    public static DiscoveryClient getClient(RegistryProtocol registryProtocol) {
         return createClient(registryProtocol, DiscoveryClientInstance.getByName(registryProtocol.getDiscoveryClientTypeName()));
     }
 
-    private DiscoveryClient createClient(RegistryProtocol registryProtocol, DiscoveryClientInstance discoveryClientInstance) {
+    private static DiscoveryClient createClient(RegistryProtocol registryProtocol, DiscoveryClientInstance discoveryClientInstance) {
         if (Objects.equals(discoveryClientInstance, DiscoveryClientInstance.NOT_SUPPORT)) {
             return null;
         }
@@ -42,7 +42,7 @@ public class DiscoveryClientManagement {
         return doCreateClient(registryProtocol, discoveryClientInstance);
     }
 
-    private DiscoveryClient doCreateClient(RegistryProtocol registryProtocol, DiscoveryClientInstance discoveryClientInstance) {
+    private static DiscoveryClient doCreateClient(RegistryProtocol registryProtocol, DiscoveryClientInstance discoveryClientInstance) {
         DiscoveryClient discoveryClient;
         switch (discoveryClientInstance) {
             case CONSUL -> discoveryClient = new ConsulDiscoveryClient();
