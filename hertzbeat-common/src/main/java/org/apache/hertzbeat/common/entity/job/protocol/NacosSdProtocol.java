@@ -60,4 +60,4 @@ public class NacosSdProtocol implements Protocol {
     public boolean isInvalid() {
         return StringUtils.isAnyBlank(host, port);
     }
-} 
+}
