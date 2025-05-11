@@ -20,8 +20,10 @@
 package org.apache.hertzbeat.collector.collect.registry;
 
 import com.ecwid.consul.transport.TransportException;
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.Field;
 import java.util.Objects;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -43,6 +45,10 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 public class RegistryImpl extends AbstractCollect {
     private static final String SERVER = "server";
 
+    @Setter
+    @VisibleForTesting
+    private DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
+
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         RegistryProtocol registryProtocol = metrics.getRegistry();
@@ -55,7 +61,7 @@ public class RegistryImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         RegistryProtocol registryProtocol = metrics.getRegistry();
 
-        try (DiscoveryClient discoveryClient = DiscoveryClientManagement.getClient(registryProtocol)) {
+        try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(registryProtocol)) {
             collectMetrics(builder, metrics, discoveryClient);
         } catch (TransportException e1) {
             String errorMsg = "Consul " + CommonUtil.getMessageFromThrowable(e1);

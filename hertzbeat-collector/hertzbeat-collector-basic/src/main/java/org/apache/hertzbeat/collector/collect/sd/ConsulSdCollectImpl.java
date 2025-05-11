@@ -39,6 +39,8 @@ import java.util.List;
 @Slf4j
 public class ConsulSdCollectImpl extends AbstractCollect {
 
+    private static final DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
+
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         ConsulSdProtocol consulSd = metrics.getConsul_sd();
@@ -55,7 +57,7 @@ public class ConsulSdCollectImpl extends AbstractCollect {
                 .port(metrics.getConsul_sd().getPort())
                 .discoveryClientTypeName(DiscoveryClientInstance.CONSUL.name())
                 .build();
-        try (DiscoveryClient client = DiscoveryClientManagement.getClient(registryProtocol)){
+        try (DiscoveryClient client = discoveryClientManagement.getClient(registryProtocol)){
             List<ServiceInstance> services = client.getServices();
             if (CollectionUtils.isEmpty(services)) {
                 return;
