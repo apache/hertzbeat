@@ -37,11 +37,11 @@ export class LabelSelectorComponent implements ControlValueAccessor {
   @Input() id!: string;
   @Input() labelKeys: string[] = [];
   @Input() labelMap: { [key: string]: string[] } = {};
-  @Input() value: any[] = [];
 
   @Output() readonly valueChange = new EventEmitter<string>();
   @Output() readonly cleared = new EventEmitter<void>();
 
+  value: { key: string; value: string }[] = [];
   customInputKey: string = '';
   customInputValue: string = '';
 
@@ -53,15 +53,7 @@ export class LabelSelectorComponent implements ControlValueAccessor {
   }
 
   onKeyChange(index: number, value: string) {
-    this.value[index].key = value;
-    this._onChange(this.value);
-    this._onTouched();
-  }
-
-  onValueChange(index: number, value: string) {
-    this.value[index].value = value;
-    this._onChange(this.value);
-    this._onTouched();
+    this.value[index].value = '';
   }
 
   onSearch(value: string, index: number, type: 'key' | 'value'): void {
