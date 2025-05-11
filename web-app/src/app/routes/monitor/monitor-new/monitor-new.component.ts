@@ -329,7 +329,7 @@ export class MonitorNewComponent implements OnInit {
   }
 
   loadLabels() {
-    let labelsInit$ = this.labelSvc.loadLabels(undefined, 1, 0, 9999).subscribe(
+    let labelsInit$ = this.labelSvc.loadLabels(undefined, undefined, 0, 9999).subscribe(
       message => {
         if (message.code === 0) {
           let page = message.data;
