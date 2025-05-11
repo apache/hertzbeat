@@ -114,12 +114,12 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             newParam.setGmtUpdate(null);
                             newParam.setGmtCreate(null);
                             if (FILED_HOST.equals(newParam.getField())) {
+                                newParam.setParamValue(host);
+                            } else if (FILED_PORT.equals(newParam.getField())) {
                                 // when ds cannot get port, the port will use user filled at configuration page.
                                 if (port == null || port.isEmpty()) {
                                     port = newParam.getParamValue();
                                 }
-                            } else if (FILED_PORT.equals(newParam.getField())) {
-                                newParam.setParamValue(port);
                             }
                             newParams.add(newParam);
                         }
