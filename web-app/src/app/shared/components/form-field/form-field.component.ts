@@ -73,16 +73,12 @@ export class FormFieldComponent implements ControlValueAccessor, Validator {
         value: String(value)
       }));
       this.value = newValue;
-    } else if (this.item.type === 'label-selector') {
-      if (value && value instanceof Array) {
-        let newValue = Object.entries(value).map(([key, value]) => ({
-          key: String(key),
-          value: String(value)
-        }));
-        this.value = newValue;
-      } else {
-        this.value = [{}];
-      }
+    } else if (this.item.type === 'label-selector' && value && !(value instanceof Array)) {
+      let newValue = Object.entries(value).map(([key, value]) => ({
+        key: String(key),
+        value: String(value)
+      }));
+      this.value = newValue;
     } else {
       this.value = value;
     }
