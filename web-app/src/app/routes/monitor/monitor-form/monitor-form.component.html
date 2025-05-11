@@ -175,7 +175,11 @@
           <app-form-field
             [item]="{
               field: 'labels',
-              type: 'labels'
+              type: 'label-selector'
+            }"
+            [extra]="{
+              labelKeys: labelKeys,
+              labelMap: labelMap
             }"
             [name]="'labels'"
             [(ngModel)]="monitor.labels"

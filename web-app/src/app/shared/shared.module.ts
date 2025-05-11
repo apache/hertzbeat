@@ -32,6 +32,7 @@ import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
+import { LabelSelectorComponent } from './components/label-selector/label-selector.component';
 
 const ThirdModules: Array<Type<void>> = [];
 const COMPONENTS: Array<Type<void>> = [
@@ -41,7 +42,8 @@ const COMPONENTS: Array<Type<void>> = [
   ConfigurableFieldComponent,
   FormFieldComponent,
   MonitorSelectMenuComponent,
-  AiBotComponent
+  AiBotComponent,
+  LabelSelectorComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
