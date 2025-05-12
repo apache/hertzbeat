@@ -14,7 +14,7 @@
   "about.point.6": "強力なステータスページを簡単に構築し、リアルタイムのステータスをユーザーと共有。",
   "about.pr": "貢献",
   "about.star": "スター",
-  "about.title": "オープンソースのリアルタイム監視システム、エージェントレス、クラスタ対応、Prometheus互換、カスタムおよびステータスページ付き。",
+  "about.title": "Apache HertzBeat (incubating) はオープンソースのリアルタイム監視システム、エージェントレス、クラスタ対応、Prometheus互換、カスタムおよびステータスページ付き。",
   "about.upgrade": "アップグレード",
   "alert": "アラート",
   "alert.center.clear": "すべてクリア",
@@ -900,5 +900,10 @@
   "validation.standard.required": "メトリックを入力してください",
   "validation.title.required": "タイトルを入力してください",
   "validation.verification-code.invalid": "無効な認証コード。6桁である必要があります！",
-  "validation.verification-code.required": "認証コードを入力してください！"
+  "validation.verification-code.required": "認証コードを入力してください！",
+  "ai.bot.title": "AI アシスタント",
+  "ai.bot.greeting": "こんにちは！私はAIアシスタントです。何かお手伝いできることはありますか？",
+  "ai.bot.input.placeholder": "質問を入力してください...",
+  "ai.bot.send": "送信",
+  "ai.bot.connect-fail": "申し訳ありません、AIアシスタントへの接続中に問題が発生しました。後ほど再度お試しください。"
 }
