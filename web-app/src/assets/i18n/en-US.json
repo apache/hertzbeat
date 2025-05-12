@@ -899,5 +899,10 @@
   "validation.standard.required": "Please enter a metric",
   "validation.title.required": "Please enter a title",
   "validation.verification-code.invalid": "Invalid verification code, should be 6 digits！",
-  "validation.verification-code.required": "Please enter the verification code!"
+  "validation.verification-code.required": "Please enter the verification code!",
+  "ai.bot.title": "AI Assistant",
+  "ai.bot.greeting": "Hello! I am an AI assistant. How can I help you?",
+  "ai.bot.input.placeholder": "Please enter a question...",
+  "ai.bot.send": "Send",
+  "ai.bot.connect-fail": "Sorry, there was an issue connecting to the AI assistant. Please try again later."
 }

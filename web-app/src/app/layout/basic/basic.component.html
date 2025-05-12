@@ -10,7 +10,7 @@
 
   <div class="ai-chatbot-window" *ngIf="isChatbotOpen">
     <div class="chatbot-header">
-      <div class="chatbot-title">AI 助手</div>
+      <div class="chatbot-title">{{ 'ai.bot.title' | i18n }}</div>
       <div class="chatbot-close" (click)="toggleChatbot()">X</div>
     </div>
     <div class="chatbot-messages">
@@ -23,8 +23,8 @@
       </div>
     </div>
     <div class="chatbot-input">
-      <input nz-input placeholder="请输入问题..." [(ngModel)]="currentMessage" (keyup.enter)="sendMessage()" />
-      <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()"> 发送 </button>
+      <input nz-input placeholder="{{ 'ai.bot.input.placeholder' | i18n }}" [(ngModel)]="currentMessage" (keyup.enter)="sendMessage()" />
+      <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()"> {{ 'ai.bot.send' | i18n }} </button>
     </div>
   </div>
 </div>

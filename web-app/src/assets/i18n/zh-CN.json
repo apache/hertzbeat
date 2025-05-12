@@ -899,5 +899,10 @@
   "validation.standard.required": "请输入衡量标准",
   "validation.title.required": "请输入标题",
   "validation.verification-code.invalid": "无效的验证码,应是6位数字！",
-  "validation.verification-code.required": "请输入验证码！"
+  "validation.verification-code.required": "请输入验证码！",
+  "ai.bot.title": "AI 助手",
+  "ai.bot.greeting": "你好！我是AI助手，有什么可以帮助你的吗？",
+  "ai.bot.input.placeholder": "请输入问题...",
+  "ai.bot.send": "发送",
+  "ai.bot.connect-fail": "抱歉，连接AI助手时出现问题，请稍后再试。"
 }
