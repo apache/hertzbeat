@@ -137,8 +137,16 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
           </div>
         </div>
         <div class="chatbot-input">
-          <input nz-input placeholder="{{ 'ai.bot.input.placeholder' | i18n }}" [(ngModel)]="currentMessage" (keyup.enter)="sendMessage()" [disabled]="isLoading" />
-          <button nz-button nzType="primary" [disabled]="!currentMessage.trim() || isLoading" (click)="sendMessage()"> {{ 'ai.bot.send' | i18n }} </button>
+          <input
+            nz-input
+            placeholder="{{ 'ai.bot.input.placeholder' | i18n }}"
+            [(ngModel)]="currentMessage"
+            (keyup.enter)="sendMessage()"
+            [disabled]="isLoading"
+          />
+          <button nz-button nzType="primary" [disabled]="!currentMessage.trim() || isLoading" (click)="sendMessage()">
+            {{ 'ai.bot.send' | i18n }}
+          </button>
         </div>
       </div>
     </div>

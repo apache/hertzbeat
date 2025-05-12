@@ -33,10 +33,7 @@ export class AiBotComponent implements OnInit {
   currentMessage = '';
   isLoading = false;
 
-  constructor(
-    private aiBotService: AiBotService,
-    private i18nSvc: I18NService
-  ) {}
+  constructor(private aiBotService: AiBotService, private i18nSvc: I18NService) {}
 
   ngOnInit(): void {
     // add greeting message
