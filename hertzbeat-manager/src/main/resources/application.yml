@@ -69,17 +69,17 @@ spring:
       on-profile: prod
 
   datasource:
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: Yingey@2024
+    url: jdbc:mysql:///hertzbeat?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
     hikari:
       max-lifetime: 120000
 
   jpa:
     show-sql: false
     database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
-    database: h2
+    database: mysql
     properties:
       eclipselink:
         logging:
