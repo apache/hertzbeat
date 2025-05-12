@@ -79,7 +79,10 @@ public class DnsSdCollectImpl extends AbstractCollect {
             lookup.setCache(null);
             lookup.run();
             if (lookup.getResult() != Lookup.SUCCESSFUL) {
-                handleLookupFailure(builder, recordName, lookup.getErrorString());
+                String msg = String.format("DNS lookup failed for: %s, error: %s", recordName, lookup.getErrorString());
+                log.warn(msg);
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg(msg);
                 return;
             }
             Record[] records = lookup.getAnswers();
@@ -169,13 +172,6 @@ public class DnsSdCollectImpl extends AbstractCollect {
             row.addColumn(""); //NS record has no port
             builder.addValueRow(row.build());
         });
-    }
-
-    private void handleLookupFailure(CollectRep.MetricsData.Builder builder, String host, String errorMsg) {
-        String msg = String.format("DNS lookup failed for: %s, error: %s", host, errorMsg);
-        log.warn(msg);
-        builder.setCode(CollectRep.Code.FAIL);
-        builder.setMsg(msg);
     }
 
     @Override

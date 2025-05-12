@@ -47,7 +47,7 @@
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-base</artifactId>
-        </dependency>        
+        </dependency>
         <!-- data warehouse -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
@@ -152,7 +152,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-<!--            <scope>provided</scope>-->
+            <scope>provided</scope>
         </dependency>
         <!-- email -->
         <dependency>
@@ -409,5 +409,5 @@
             </build>
         </profile>
     </profiles>
-    
+
 </project>
