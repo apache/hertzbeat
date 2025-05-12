@@ -4,9 +4,10 @@
   </a>
 </p>
 
-<h4 align="center">
-<a href="README.md">English Document</a> | <a href="README_CN.md">中文文档</a>
-</h4>
+<p align="center">
+<b>Readme</b>:
+<b><a href="README.md">English</a></b> | <a href="README_CN.md">中文</a> | <a href="README_JP.md">日本語</a>
+</p>
 
 > A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 

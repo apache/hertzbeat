@@ -6,10 +6,10 @@
 
 <p align="center">
 <b>Readme</b>:
-<a href="README.md">English</a> | <b><a href="README_CN.md">中文</a></b> | <a href="README_JP.md">日本語</a>
-</p>
+<a href="README.md">English</a> | <a href="README_CN.md">中文</a> | <b><a href="README_JP.md">日本語</a></b>
+</p>  
 
-> 实时监控系统，无需 Agent，性能集群，兼容 Prometheus，自定义监控和状态页构建能力。
+> オープンソースのリアルタイム監視システム、エージェントレス、クラスタ対応、Prometheus互換、カスタムおよびステータスページ付き。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -22,26 +22,26 @@
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 
 
-**官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
-**邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅邮件列表
+**公式サイト: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
+**メール:**　メーリングリストに登録するために、<a href="mailto:dev-subscribe@hertzbeat.apache.org">dev-subscribe@hertzbeat.apache.org</a>にメールを送ってください。
 
 
-## 🎡 <font color="green">介绍</font>
+## 🎡 <font color="green">紹介</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) （incubating）是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat](https://github.com/apache/hertzbeat) （incubating）はオープンソースのリアルタイム監視システム、エージェントレス、クラスタ対応、Prometheus互換、カスタムおよびステータスページ付き。     
 
-### 特点
+### 特性
 
-- 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
-- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。    
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
-- 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
-- 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
-- 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
+- **モニター・アラーム・通知** を一体化し、Web、データベース、キャッシュ、OS、ミドルウェア、クラウドネイティブ、ネットワークなどをサポート。
+- 使いやすさを重視し、マウスのクリックだけで完全なWebベースの操作が可能。
+- `Http、Jmx、Ssh、Snmp、jdbc、Prometheus`などのプロトコルを設定可能にし、テンプレート`YML`ファイルをオンラインで設定するだけで、あらゆるメトリクスを収集できるようにします。HertzBeatでオンライン設定するだけで、`K8S`や`Docker`のような新しい監視タイプに素早く対応できることを想像してみてください。
+- `Prometheus`のエコシステム互換、Prometheusが監視できるものを、全てオンライン設定によって監視することができます。
+- 高性能で、コレクタークラスタ、マルチアイソレートネットワーク、クラウドエッジをサポート。
+- 柔軟なアラーム閾値ルールで、メール、discord、slack、telegramなどを通じてタイムリーに通知。
+- 強力なステータスページを簡単に構築し、リアルタイムのステータスをユーザーと共有。
 
 
-> `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。    
+> `HertzBeat`の強力なカスタマイズ、多種類のサポート、高性能および容易な拡張性は、ユーザーが迅速に独自の監視システムを構築するのを支援することを目的としています。    
 
 ----
 
@@ -53,14 +53,14 @@
 
 ----
 
-## 🥐 模块  
+## 🥐 モジュール  
 
 ![hertzBeat](home/static/img/docs/hertzbeat-arch.png)      
 
-## ⛄ 已支持    
+## ⛄ 利用可能    
 
-> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 监控模版，用户可以导入这些模版来支持对应类型的监控!    
-> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
+> `mysql`、`jvm`、`k8s` などのすべての監視コレクション タイプを `YML` 監視テンプレートとして定義し、ユーザーがそれらをインポートして対応するタイプの監視をサポートできるようにしています。 
+> カスタマイズされた一般的なモニターのテンプレートを提供することを歓迎します。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
@@ -98,49 +98,49 @@
 - [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-- 和更多自定义监控模版。
-- 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
+- その他、カスタマイズされたモニターテンプレート。
+- 通知利用可能 `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`。
 
-## 🐕 快速开始  
+## 🐕 クイックスタート  
 
-- 如果您是想将 HertzBeat 部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。  
+- HertzBeat をローカルに展開する場合は、以下のデプロイメントドキュメントを参照してください。
 
-### 🍞 HertzBeat 安装
-> HertzBeat 支持通过源码安装启动，Docker 容器运行和安装包方式安装部署，CPU 架构支持 x86/arm64。
+### 🍞 HertzBeatのインストール
+> HertzBeatは、ソースコードのインストールとブート、Dockerコンテナの実行とインストールパッケージによるインストールとデプロイをサポートし、CPUアーキテクチャはx86/arm64をサポートします。
 
-##### 方式一：Docker 方式快速安装  
+##### 方式１：Docker
 
-1. `docker` 环境仅需一条命令即可开始     
+1. `docker` で以下のコメントを実行します： 
 
    ```shell
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
-2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+2. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
-3. 部署采集器集群（可选）
+3. コレクタークラスタのデプロイメント（オプション）
 
    ```shell
    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
-   - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-    - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
-    - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertaBeat 服务的对外 IP。
-    - `-e MANAGER_PORT=1158` : 配置连接主 HertzBeat 服务的对外端口，默认1158。
+   - `-e IDENTITY=custom-collector-name` ：コレクターのユニーク ID。
+    - `-e MODE=public` ：実行モード(パブリッククラスタまたはプライベートクラウドエッジ)。
+    - `-e MANAGER_HOST=127.0.0.1` ：メインhertzbeatサーバーのIP。
+    - `-e MANAGER_PORT=1158` ：メインhertzbeatサーバポート。
 
 
-更多配置详细步骤参考 [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
+詳細ステップ [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
-##### 方式二：通过安装包安装
+##### 方式２：インストールパッケージ
 
-1. 下载您系统环境对应的安装包 `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
-2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml` (可选)
-3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
-4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
-5. 部署采集器集群（可选）
-   - 下载采集器安装包 `hertzbeat-collector-xx.tar.gz` 到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
-   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主 HertzBeat 服务的对外 IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
+1. リリースパッケージをダウンロード `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+2. HertzBeatのymlファイルを設定 `hertzbeat/config/application.yml` （オプション）
+3. コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行
+4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`
+5. コレクタークラスタのデプロイメント（オプション）
+   - コレクターパッケージを別のホストにダウンロード `hertzbeat-collector-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+   - コレクターのymlファイルを設定 `hertzbeat-collector/config/application.yml`
      ```yaml
      collector:
        dispatch:
@@ -152,38 +152,42 @@
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
-   - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
-   - 浏览器访问主 HertzBeat 服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
+     - `identity: ${IDENTITY:}`：コレクターのユニークID。
+     - `mode: ${MODE:public}`：実行モード(パブリッククラスタまたはプライベートクラウドエッジ)。
+     - `manager-host: ${MANAGER_HOST:127.0.0.1}`：メインhertzbeatサーバーのIP。
+     - `manager-port: ${MANAGER_PORT:1158}`：メインhertzbeatサーバポート。
+   - コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行。
+   - `http://localhost:1157`にアクセスし、登録された新しいコレクターを見ることがでます。
 
-更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
+詳細ステップ [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
 
-##### 方式三：本地代码启动
+##### 方式３：ローカルの実行
 
-1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `manager` 和前端工程 `web-app`
-2. 后端：需要 `maven3+`, `java17` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `manager` 服务即可。
-3. 前端：需要 `nodejs npm angular-cli`环境，待本地后端启动后，在 `web-app` 目录下启动 `ng serve --open`
-4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
+1. ローカルの実行には、バックエンドのプロジェクト`manager`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
+2. バックエンド：`maven3+`、`java17`と`lombok`の環境は必要です。`YML` 設定を修正し、JVM パラメータ `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`manager` を起動します。
+3. フロントエンド：`nodejs npm angular-cli`の環境は必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `ng serve --open` というコマンドを実行します。
+4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
-详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
+詳細ステップ [貢献ガイド](CONTRIBUTING.md)
 
-##### 方式四：Docker-Compose 统一安装 hertzbeat+postgresql+tsdb
+##### 方式４：Docker-Compose
 
-通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 postgresql/mysql 数据库, victoria-metrics/iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
+[Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzbeat一括デプロイ。
 
-详细步骤参考 [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
+詳細ステップ [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
 
-##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+postgresql+tsdb
+##### 方式５：Kubernetes Helm Charts
 
-通过 Helm Chart 一次性将 HertzBeat 集群组件部署到 Kubernetes 集群中。
+Helm ChartでHertzBeatクラスタコンポーネントをKubernetesクラスタに一括デプロイ。
 
-详细步骤参考 [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
+詳細ステップ [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 **HAVE FUN**
 
 ## ✨ Contributors
 
 Thanks these wonderful people, welcome to join us:   
-[贡献者指南](CONTRIBUTING.md)    
+[貢献ガイド](CONTRIBUTING.md)    
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -530,19 +534,19 @@ Thanks these wonderful people, welcome to join us:
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->  
 
-## 💬 社区交流
+## 💬 コミュニティ交流
 
-##### Channel 
+##### チャネル
 
-[订阅邮件列表](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : 发送邮件至 `dev-subscribe@hertzbeat.apache.org` 来订阅邮件列表.
+[メール](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : メーリングリストに登録するために、```dev-subscribe@hertzbeat.apache.org```にメールを送ってください。
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
-微信交流群 : 加 `ahertzbeat` 好友邀请进群.
+WeChatグループ : `ahertzbeat` を検索.
 
-微信公众号 : 搜索 ID `usthecom`.
+WeChat公式アカウント : `usthecom`を検索.
 
-[QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : 群号 `630061200`
+[QQグループ](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : グループ番号　`630061200`
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
