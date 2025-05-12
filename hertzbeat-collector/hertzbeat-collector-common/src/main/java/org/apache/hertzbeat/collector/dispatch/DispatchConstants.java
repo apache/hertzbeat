@@ -128,7 +128,7 @@ public interface DispatchConstants {
      */
     String PROTOCOL_HTTP_SD = "http_sd";
     /**
-     * protocol http sd
+     * protocol dns sd
      */
     String PROTOCOL_DNS_SD = "dns_sd";
     /**

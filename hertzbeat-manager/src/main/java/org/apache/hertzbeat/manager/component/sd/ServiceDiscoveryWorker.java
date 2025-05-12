@@ -104,25 +104,15 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             String value = cell.getValue();
                             fieldsValue.put(cell.getField().getName(), value);
                         });
+                        String defaultPort = mainMonitorParams.stream()
+                                .filter(param -> FILED_PORT.equals(param.getField()))
+                                .findFirst()
+                                .map(Param::getParamValue)
+                                .orElse("");
                         final String host = fieldsValue.get(FILED_HOST);
-                        String port = fieldsValue.get(FILED_PORT);
-                        // replace host port
-                        List<Param> newParams = new LinkedList<>();
-                        for (Param param : mainMonitorParams) {
-                            Param newParam = param.clone();
-                            newParam.setId(null);
-                            newParam.setGmtUpdate(null);
-                            newParam.setGmtCreate(null);
-                            if (FILED_HOST.equals(newParam.getField())) {
-                                newParam.setParamValue(host);
-                            } else if (FILED_PORT.equals(newParam.getField())) {
-                                // when ds cannot get port, the port will use user filled at configuration page.
-                                if (port == null || port.isEmpty()) {
-                                    port = newParam.getParamValue();
-                                }
-                            }
-                            newParams.add(newParam);
-                        }
+                        final String port = Optional.ofNullable(fieldsValue.get(FILED_PORT))
+                                .filter(p -> !p.isEmpty())
+                                .orElse(defaultPort);
                         final String keyStr = host + ":" + port;
                         if (subMonitorBindMap.containsKey(keyStr)) {
                             subMonitorBindMap.remove(keyStr);
@@ -135,7 +125,20 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                         newMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
                         newMonitor.setGmtCreate(LocalDateTime.now());
                         newMonitor.setGmtUpdate(LocalDateTime.now());
-
+                        // replace host port
+                        List<Param> newParams = new LinkedList<>();
+                        for (Param param : mainMonitorParams) {
+                            Param newParam = param.clone();
+                            newParam.setId(null);
+                            newParam.setGmtUpdate(null);
+                            newParam.setGmtCreate(null);
+                            if (FILED_HOST.equals(newParam.getField())) {
+                                newParam.setParamValue(host);
+                            } else if (FILED_PORT.equals(newParam.getField())) {
+                                newParam.setParamValue(port);
+                            }
+                            newParams.add(newParam);
+                        }
                         monitorService.addMonitor(newMonitor, newParams, collector, null);
                         MonitorBind monitorBind = MonitorBind.builder()
                                 .bizId(monitorId)
