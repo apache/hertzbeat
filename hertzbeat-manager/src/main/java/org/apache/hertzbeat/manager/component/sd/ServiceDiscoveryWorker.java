@@ -155,8 +155,6 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     monitorService.cancelManageMonitors(needCancelMonitorIdSet);
                     for (Long id : needCancelMonitorIdSet) {
                         monitorBindDao.deleteMonitorBindByBizIdAndMonitorId(monitorId, id);
-                        //AI帮我看一下，我感觉是不是要加上deleteById，如果服务ip 变更了，应该删除旧的数据？
-                        monitorDao.deleteById(id);
                     }
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
