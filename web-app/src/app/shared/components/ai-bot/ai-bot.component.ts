@@ -18,6 +18,7 @@
  */
 
 import { Component, OnInit } from '@angular/core';
+import { I18NService } from '@core';
 
 import { AiBotService, ChatMessage } from '../../services/ai-bot.service';
 
@@ -32,29 +33,26 @@ export class AiBotComponent implements OnInit {
   currentMessage = '';
   isLoading = false;
 
-  constructor(private aiBotService: AiBotService) {}
+  constructor(private aiBotService: AiBotService, private i18nSvc: I18NService) {}
 
   ngOnInit(): void {
-    // 添加欢迎消息
+    // add greeting message
     this.messages.push({
-      content: '你好！我是AI助手，有什么可以帮助你的吗？',
+      content: this.i18nSvc.fanyi('ai.bot.greeting'),
       isUser: false,
       timestamp: new Date()
     });
-
-    // 记录组件已加载，用于调试
-    console.log('AI助手组件已加载');
+    console.log('The AI assistant component has loaded.');
   }
 
   toggleChat(): void {
     this.isOpen = !this.isOpen;
-    console.log('切换聊天窗口状态:', this.isOpen ? '打开' : '关闭');
   }
 
   sendMessage(): void {
     if (!this.currentMessage.trim()) return;
 
-    // 添加用户消息
+    // add user message
     this.messages.push({
       content: this.currentMessage,
       isUser: true,
@@ -65,7 +63,7 @@ export class AiBotComponent implements OnInit {
     this.currentMessage = '';
     this.isLoading = true;
 
-    // 调用服务获取AI响应
+    // call service to fetch AI response
     this.aiBotService.sendMessage(userMessage).subscribe(response => {
       this.messages.push(response);
       this.isLoading = false;
