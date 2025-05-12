@@ -898,5 +898,10 @@
   "validation.standard.required": "請輸入衡量標准",
   "validation.title.required": "請輸入標題",
   "validation.verification-code.invalid": "無效的驗證碼,應是6位數字！",
-  "validation.verification-code.required": "請輸入驗證碼！"
+  "validation.verification-code.required": "請輸入驗證碼！",
+  "ai.bot.title": "AI 助手",
+  "ai.bot.greeting": "你好！我是AI助手，有什麽可以幫助你的嗎？",
+  "ai.bot.input.placeholder": "請輸入問題...",
+  "ai.bot.send": "傳送",
+  "ai.bot.connect-fail": "抱歉，連線至AI助手時出現問題，請稍後再試。"
 }
