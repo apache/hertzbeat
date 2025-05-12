@@ -573,6 +573,7 @@
     "monitor.sshPrivateKey.tip": "Chave privada RSA",
     "monitor.scrape.type.static": "Estatico",
     "monitor.scrape.type.http_sd": "Http Service Discovery",
+    "monitor.scrape.type.eureka_sd": "Eureka Service Discovery",
     "monitor.scrape.type.consul_sd": "Consul Service Discovery",
     "common.name": "Nome da Métrica",
     "common.value": "Valor da Métrica",
@@ -1528,5 +1529,10 @@
   "validation.goal.required": "Por favor, insira uma descrição do objetivo",
   "validation.standard.required": "Por favor, insira uma métrica",
   "expand": "Expandir",
-  "collapse": "Recolher"
+  "collapse": "Recolher",
+  "ai.bot.title": "Assistente de IA",
+  "ai.bot.greeting": "Olá! Sou um assistente de IA. Como posso te ajudar?",
+  "ai.bot.input.placeholder": "Digite sua pergunta...",
+  "ai.bot.send": "Enviar",
+  "ai.bot.connect-fail": "Desculpe, ocorreu um problema ao conectar ao assistente de IA. Por favor, tente novamente mais tarde."
 }

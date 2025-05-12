@@ -33,6 +33,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpSdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.EurekaSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ConsulSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ModbusProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
@@ -265,6 +266,10 @@ public class Metrics {
      * http sd protocol
      */
     private HttpSdProtocol http_sd;
+    /**
+     * eureka sd protocol
+     */
+    private EurekaSdProtocol eureka_sd;
     /**
      * consul sd protocol
      */
