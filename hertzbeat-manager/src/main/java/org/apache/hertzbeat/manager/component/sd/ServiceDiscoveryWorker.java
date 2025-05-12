@@ -97,6 +97,11 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             .stream().collect(Collectors.toMap(MonitorBind::getKeyStr, item -> item));
                     RowWrapper rowWrapper = metricsData.readRow();
                     Map<String, String> fieldsValue = Maps.newHashMapWithExpectedSize(8);
+                    String defaultPort = mainMonitorParams.stream()
+                            .filter(param -> FILED_PORT.equals(param.getField()))
+                            .findFirst()
+                            .map(Param::getParamValue)
+                            .orElse("");
                     while (rowWrapper.hasNextRow()) {
                         rowWrapper = rowWrapper.nextRow();
                         fieldsValue.clear();
@@ -104,11 +109,6 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             String value = cell.getValue();
                             fieldsValue.put(cell.getField().getName(), value);
                         });
-                        String defaultPort = mainMonitorParams.stream()
-                                .filter(param -> FILED_PORT.equals(param.getField()))
-                                .findFirst()
-                                .map(Param::getParamValue)
-                                .orElse("");
                         final String host = fieldsValue.get(FILED_HOST);
                         final String port = Optional.ofNullable(fieldsValue.get(FILED_PORT))
                                 .filter(p -> !p.isEmpty())
@@ -155,6 +155,8 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     monitorService.cancelManageMonitors(needCancelMonitorIdSet);
                     for (Long id : needCancelMonitorIdSet) {
                         monitorBindDao.deleteMonitorBindByBizIdAndMonitorId(monitorId, id);
+                        //AI帮我看一下，我感觉是不是要加上deleteById，如果服务ip 变更了，应该删除旧的数据？
+                        monitorDao.deleteById(id);
                     }
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
