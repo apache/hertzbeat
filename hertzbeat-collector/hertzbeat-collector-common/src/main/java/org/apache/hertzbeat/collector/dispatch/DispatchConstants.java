@@ -132,6 +132,11 @@ public interface DispatchConstants {
      */
     String PROTOCOL_DNS_SD = "dns_sd";
     /**
+     * protocol eureka sd
+     */
+    String PROTOCOL_EUREKA_SD = "eureka_sd";
+
+    /**
      * protocol redfish
      */
     String PROTOCOL_REDFISH = "redfish";

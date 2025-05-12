@@ -763,6 +763,8 @@
   "monitor.scrape.type.static": "静的",
   "monitor.scrape.type.http_sd": "Http Service Discovery",
   "monitor.scrape.type.dns_sd": "Dns サービスディスカバリー",
+  "monitor.scrape.type.http_sd": "Http サービスディスカバリー",
+  "monitor.scrape.type.eureka_sd": "Eurekaサービスディスカバリー",
   "placeholder.key": "キー",
   "placeholder.value": "値",
   "plugin.delete": "プラグインを削除",
@@ -900,5 +902,10 @@
   "validation.standard.required": "メトリックを入力してください",
   "validation.title.required": "タイトルを入力してください",
   "validation.verification-code.invalid": "無効な認証コード。6桁である必要があります！",
-  "validation.verification-code.required": "認証コードを入力してください！"
+  "validation.verification-code.required": "認証コードを入力してください！",
+  "ai.bot.title": "AI アシスタント",
+  "ai.bot.greeting": "こんにちは！私はAIアシスタントです。何かお手伝いできることはありますか？",
+  "ai.bot.input.placeholder": "質問を入力してください...",
+  "ai.bot.send": "送信",
+  "ai.bot.connect-fail": "申し訳ありません、AIアシスタントへの接続中に問題が発生しました。後ほど再度お試しください。"
 }

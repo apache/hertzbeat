@@ -33,7 +33,10 @@ import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpSdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.EurekaSdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.ModbusProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
@@ -269,6 +272,10 @@ public class Metrics {
      * dns sd protocol
      */
     private DnsSdProtocol dns_sd;
+    /**
+     * eureka sd protocol
+     */
+    private EurekaSdProtocol eureka_sd;
     /**
      * Monitoring configuration information using the public plc protocol
      */
