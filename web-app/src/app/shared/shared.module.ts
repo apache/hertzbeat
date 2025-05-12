@@ -24,6 +24,7 @@ import { AiBotComponent } from './components/ai-bot/ai-bot.component';
 import { ConfigurableFieldComponent } from './components/configurable-field/configurable-field.component';
 import { FormFieldComponent } from './components/form-field/form-field.component';
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
+import { LabelSelectorComponent } from './components/label-selector/label-selector.component';
 import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -32,7 +33,6 @@ import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
-import { LabelSelectorComponent } from './components/label-selector/label-selector.component';
 
 const ThirdModules: Array<Type<void>> = [];
 const COMPONENTS: Array<Type<void>> = [

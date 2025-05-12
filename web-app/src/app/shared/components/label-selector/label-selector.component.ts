@@ -38,7 +38,7 @@ export class LabelSelectorComponent implements ControlValueAccessor {
   @Input() labelKeys: string[] = [];
   @Input() labelMap: { [key: string]: string[] } = {};
 
-  value: { key: string; value: string }[] = [];
+  value: Array<{ key: string; value: string }> = [];
   customInputKey: string = '';
   customInputValue: string = '';
 

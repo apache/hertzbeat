@@ -35,8 +35,8 @@ import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
 import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
-import { MonitorService } from '../../../service/monitor.service';
 import { LabelService } from '../../../service/label.service';
+import { MonitorService } from '../../../service/monitor.service';
 
 @Component({
   selector: 'app-monitor-modify',
