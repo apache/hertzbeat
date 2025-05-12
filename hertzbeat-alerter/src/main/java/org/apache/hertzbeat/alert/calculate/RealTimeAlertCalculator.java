@@ -220,11 +220,11 @@ public class RealTimeAlertCalculator {
                 fingerPrints.putAll(commonFingerPrints);
                 for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
                     String valueStr = valueRow.getColumns(index);
+                    final CollectRep.Field field = fields.get(index);
                     if (CommonConstants.NULL_VALUE.equals(valueStr)) {
+                        fieldValueMap.put(field.getName(), null);
                         continue;
                     }
-                    
-                    final CollectRep.Field field = fields.get(index);
                     final int fieldType = field.getType();
 
                     if (fieldType == CommonConstants.TYPE_NUMBER) {
