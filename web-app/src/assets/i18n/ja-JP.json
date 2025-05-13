@@ -760,7 +760,7 @@
   "monitor.sshPort.tip": "SSHトンネルオープン時に必要",
   "monitor.sshUsername.tip": "SSHトンネルオープン時に必要",
   "monitor.sshPrivateKey.tip": "RSA秘密鍵の起動",
-  "monitor.scrape.type.static": "静的",
+  "monitor.scrape.type.static": "静的な設定",
   "monitor.scrape.type.http_sd": "Http Service Discovery",
   "monitor.scrape.type.dns_sd": "Dns サービスディスカバリー",
   "monitor.scrape.type.http_sd": "Http サービスディスカバリー",
