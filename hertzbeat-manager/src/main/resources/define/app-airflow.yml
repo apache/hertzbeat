@@ -21,11 +21,13 @@ app: airflow
 name:
   zh-CN: Apache Airflow
   en-US: Apache Airflow
+  ja-JP: Apache Airflow
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Apache Airflow 通用性能指标（airflow health、airflow version）进行采集监控。<br>您可以点击“<i>新建 Apache Airflow </i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors Apache Airflow through general performance metrics such as airflow health and airflow version. You could click the "<i>New Apache Airflow</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat對Apache Airflow通用性能指標（airflow health、airflow version）進行採集監控。<br>您可以點擊“<i>新建 Apache Airflow</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeatは、Apache Airflowの一般的なパフォーマンス指標を監視します。 <br><i>新規Apache Airflow</i>をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/airflow/
   en-US: https://hertzbeat.apache.org/docs/help/airflow/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 服务器 Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 服务端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -60,6 +64,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     type: boolean
     hide: true
     required: true
@@ -68,6 +73,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     type: number
     hide: true
     required: false
@@ -78,22 +84,26 @@ metrics:
     i18n:
       zh-CN: airflow 健康状态
       en-US: airflow health status
+      ja-JP: airflow　健全状態
     priority: 0
     fields:
       - field: metadatabase
         i18n:
           zh-CN: metadatabase 健康情况
           en-US: metadatabase status
+          ja-JP: metadatabase　健全状態
         type: 1
       - field: scheduler
         i18n:
           zh-CN: scheduler 健康情况
           en-US: scheduler status
+          ja-JP: scheduler　健全状態
         type: 1
       - field: triggerer
         i18n:
           zh-CN: triggerer 健康情况
           en-US: triggerer status
+          ja-JP: triggerer　健全状態
         type: 1
     aliasFields:
       - $.metadatabase.status
@@ -121,18 +131,21 @@ metrics:
   - name: airflow_version
     i18n:
       zh-CN: Airflow 版本
-      en-US: airflow version
+      en-US: Airflow version
+      ja-JP: Airflowバージョン
     priority: 1
     fields:
       - field: version
         i18n:
           zh-CN: Airflow 版本
           en-US: Airflow version
+          ja-JP: Airflowバージョン
         type: 1
       - field: git_version
         i18n:
           zh-CN: Airflow git版本
           en-US: git version
+          ja-JP: Gitバージョン
         type: 1
     protocol: http
     http:
