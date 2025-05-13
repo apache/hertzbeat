@@ -20,6 +20,7 @@
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/apache/hertzbeat)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
 **Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe mailing lists**
