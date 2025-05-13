@@ -137,6 +137,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             thread.setDaemon(true);
             return thread;
         }, 1, TimeUnit.SECONDS, 512);
+        metricsFlushtask = new MetricsFlushTask();
         this.metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.SECONDS);
     }
 
