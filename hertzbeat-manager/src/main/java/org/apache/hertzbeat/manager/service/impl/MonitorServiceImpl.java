@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -509,12 +510,15 @@ public class MonitorServiceImpl implements MonitorService {
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
+        Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
+        ids.addAll(subMonitorIds);
         List<Monitor> monitors = monitorDao.findMonitorsByIdIn(ids);
         if (!monitors.isEmpty()) {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
             Set<Long> monitorIds = monitors.stream().map(Monitor::getId).collect(Collectors.toSet());
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
+            monitorBindDao.deleteMonitorBindByBizIdIn(monitorIds);
             for (Monitor monitor : monitors) {
                 monitorBindDao.deleteByMonitorId(monitor.getId());
                 collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
@@ -630,6 +634,8 @@ public class MonitorServiceImpl implements MonitorService {
         }
         // Update monitoring status Delete corresponding monitoring periodic task
         // The jobId is not deleted, and the jobId is reused again after the management is started.
+        Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
+        ids.addAll(subMonitorIds);
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
@@ -646,6 +652,8 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void enableManageMonitors(Set<Long> ids) {
         // Update monitoring status Add corresponding monitoring periodic task
+        Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
+        ids.addAll(subMonitorIds);
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
