@@ -143,7 +143,7 @@ metrics:
         type: 1
       - field: git_version
         i18n:
-          zh-CN: Airflow git版本
+          zh-CN: git版本
           en-US: git version
           ja-JP: Gitバージョン
         type: 1
