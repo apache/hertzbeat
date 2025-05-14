@@ -24,6 +24,7 @@ import { AiBotComponent } from './components/ai-bot/ai-bot.component';
 import { ConfigurableFieldComponent } from './components/configurable-field/configurable-field.component';
 import { FormFieldComponent } from './components/form-field/form-field.component';
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
+import { LabelSelectorComponent } from './components/label-selector/label-selector.component';
 import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -41,7 +42,8 @@ const COMPONENTS: Array<Type<void>> = [
   ConfigurableFieldComponent,
   FormFieldComponent,
   MonitorSelectMenuComponent,
-  AiBotComponent
+  AiBotComponent,
+  LabelSelectorComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
