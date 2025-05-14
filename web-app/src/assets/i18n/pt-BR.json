@@ -574,6 +574,7 @@
     "monitor.scrape.type.static": "Estatico",
     "monitor.scrape.type.http_sd": "Http Service Discovery",
     "monitor.scrape.type.eureka_sd": "Eureka Service Discovery",
+    "monitor.scrape.type.consul_sd": "Consul Service Discovery",
     "common.name": "Nome da Métrica",
     "common.value": "Valor da Métrica",
     "common.search": "Pesquisar",

@@ -763,6 +763,7 @@
   "monitor.scrape.type.static": "静的な設定",
   "monitor.scrape.type.http_sd": "Http サービスディスカバリー",
   "monitor.scrape.type.eureka_sd": "Eurekaサービスディスカバリー",
+  "monitor.scrape.type.consul_sd": "Consulサービスディスカバリー",
   "placeholder.key": "キー",
   "placeholder.value": "値",
   "plugin.delete": "プラグインを削除",
