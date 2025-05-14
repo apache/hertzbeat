@@ -18,6 +18,10 @@
 package org.apache.hertzbeat.manager.service;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.hertzbeat.common.entity.manager.Label;
 import org.springframework.data.domain.Page;
 
@@ -53,4 +57,11 @@ public interface LabelService {
      * @param ids label id list
      */
     void deleteLabels(HashSet<Long> ids);
+
+    /**
+     * Identifies new labels from the given entry that are not yet in the database
+     * @param originLabels k-v entry
+     * @return new labels
+     */
+    List<Label> determineNewLabels(Set<Map.Entry<String, String>> originLabels);
 }

@@ -73,6 +73,12 @@ export class FormFieldComponent implements ControlValueAccessor, Validator {
         value: String(value)
       }));
       this.value = newValue;
+    } else if (this.item.type === 'label-selector' && value && !(value instanceof Array)) {
+      let newValue = Object.entries(value).map(([key, value]) => ({
+        key: String(key),
+        value: String(value)
+      }));
+      this.value = newValue;
     } else {
       this.value = value;
     }
@@ -115,12 +121,15 @@ export class FormFieldComponent implements ControlValueAccessor, Validator {
         newValue[item.key] = item.value;
       });
       this._onChange(JSON.stringify(newValue));
-    } else if (this.item.type === 'labels' && value) {
+    } else if ((this.item.type === 'labels' || this.item.type === 'label-selector') && value) {
       // It is compatible with the lables type data structure of existing data. For the conversion from the new to the old:
       // Old structure: {1:"2", 3:"4"}
       // New structure: [{key: "1", value: "2"}, {key: "3", value: "4"}]
       const newValue: any = {};
       value.forEach((item: any) => {
+        if (!item || !item.key || item.key === '' || !item.value || item.value === '') {
+          return;
+        }
         newValue[item.key] = item.value;
       });
       this._onChange(newValue);
