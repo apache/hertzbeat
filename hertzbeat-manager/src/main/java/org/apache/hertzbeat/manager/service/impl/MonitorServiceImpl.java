@@ -511,8 +511,9 @@ public class MonitorServiceImpl implements MonitorService {
             return;
         }
         Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
-        ids.addAll(subMonitorIds);
-        List<Monitor> monitors = monitorDao.findMonitorsByIdIn(ids);
+        Set<Long> allMonitorIds = new HashSet<>(ids);
+        allMonitorIds.addAll(subMonitorIds);
+        List<Monitor> monitors = monitorDao.findMonitorsByIdIn(allMonitorIds);
         if (!monitors.isEmpty()) {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
