@@ -110,9 +110,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             fieldsValue.put(cell.getField().getName(), value);
                         });
                         final String host = fieldsValue.get(FILED_HOST);
-                        final String port = Optional.ofNullable(fieldsValue.get(FILED_PORT))
-                                .filter(p -> !p.isEmpty())
-                                .orElse(defaultPort);
+                        final String port = fieldsValue.getOrDefault(FILED_PORT, defaultPort);
                         final String keyStr = host + ":" + port;
                         if (subMonitorBindMap.containsKey(keyStr)) {
                             subMonitorBindMap.remove(keyStr);
