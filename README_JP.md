@@ -110,7 +110,7 @@
 
 ##### 方式１：Docker
 
-1. `docker` で以下のコメントを実行します： 
+1. `docker` で以下の指令を実行します： 
 
    ```shell
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
