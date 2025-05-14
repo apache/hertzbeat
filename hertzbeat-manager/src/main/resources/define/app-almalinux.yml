@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 AlmaLinux 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 AlmaLinux</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH protocol</a> to monitors AlmaLinux operating system's general performance metrics such as cpu, memory, disk, basic, interface, disk_free, top_process etc. <br>You can click the "<i>New AlmaLinux</i>" and config host port and other related params to add, auth support password or secretKey. Or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 對 AlmaLinux 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建AlmaLinux</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: 目標ホスト
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> AlmaLinux 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>「<i>新規 AlmaLinux</i>」クリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/almalinux
   en-US: https://hertzbeat.apache.org/docs/help/almalinux
