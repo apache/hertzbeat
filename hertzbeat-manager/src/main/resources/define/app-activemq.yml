@@ -110,7 +110,7 @@ metrics:
     i18n:
       zh-CN: 虚拟机基础信息
       en-US: JVM Basic
-      ja-JP: Java仮想マシン基本情報
+      ja-JP: Java仮想マシン基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -208,7 +208,7 @@ metrics:
         i18n:
           zh-CN: 内存使用率
           en-US: Memory Percent Usage
-          ja-JP: メモリ使用量
+          ja-JP: メモリ使用率
         type: 0
         unit: '%'
       - field: StorePercentUsage
@@ -317,7 +317,7 @@ metrics:
         i18n:
           zh-CN: 内存使用率
           en-US: Memory Percent Usage
-          ja-JP: メモリ使用量
+          ja-JP: メモリ使用率
       - field: ProducerCount
         type: 0
         i18n:
@@ -379,28 +379,28 @@ metrics:
         i18n:
           zh-CN: 平均入队时间
           en-US: Average Enqueue Time
-          ja-JP: 平均エンキュータイム
+          ja-JP: 平均エンキュー時間
       - field: MaxEnqueueTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 最大入队时间
           en-US: Max Enqueue Time
-          ja-JP: 最大エンキュータイム
+          ja-JP: 最大エンキュー時間
       - field: MinEnqueueTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 最小入队时间
           en-US: Min Enqueue Time
-          ja-JP: 最小エンキュータイム
+          ja-JP: 最小エンキュー時間
       - field: TotalBlockedTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 总阻塞时间
           en-US: Total Blocked Time
-          ja-JP: 合計ブロックタイム
+          ja-JP: 合計ブロック時間
       - field: AverageMessageSize
         type: 0
         unit: B
@@ -572,14 +572,14 @@ metrics:
         i18n:
           zh-CN: 线程占用的CPU时间(用户态)
           en-US: Current Thread User Time
-          ja-JP: 現在のスレッドユーザータイム
+          ja-JP: 現在のスレッドユーザー時間
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间
           en-US: Current Thread CPU Time
-          ja-JP: 現在のスレッドCPUタイム
+          ja-JP: 現在のスレッドシステム時間
     units:
       - CurrentThreadUserTime=NS->S
       - CurrentThreadCpuTime=NS->S
