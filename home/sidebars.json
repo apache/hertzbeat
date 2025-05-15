@@ -180,6 +180,7 @@
             "help/redhat",
             "help/rockylinux",
             "help/euleros",
+            "help/fedora",
             "help/linux_script",
             "help/windows_script"
           ]
