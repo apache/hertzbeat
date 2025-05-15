@@ -15,25 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
-import java.util.List;
-import org.apache.hertzbeat.common.entity.manager.MonitorBind;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * MonitorBind database operation
+ * eureka sd protocol
  */
-public interface MonitorBindDao extends JpaRepository<MonitorBind, Long>, JpaSpecificationExecutor<MonitorBind> {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class EurekaSdProtocol implements Protocol{
 
-    List<MonitorBind> findMonitorBindsByBizId(Long bizId);
-
-    void deleteByMonitorId(Long monitorId);
-    
-    @Modifying
-    @Transactional
-    void deleteMonitorBindByBizIdAndMonitorId(Long bizId, Long monitorId);
+    private String url;
 }

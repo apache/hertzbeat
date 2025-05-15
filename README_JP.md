@@ -6,10 +6,10 @@
 
 <p align="center">
 <b>Readme</b>:
-<b><a href="README.md">English</a></b> | <a href="README_CN.md">中文</a> | <a href="README_JP.md">日本語</a>
-</p>
+<a href="README.md">English</a> | <a href="README_CN.md">中文</a> | <b><a href="README_JP.md">日本語</a></b>
+</p>  
 
-> A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+> オープンソースのリアルタイム監視システム、エージェントレス、クラスタ対応、Prometheus互換、カスタムおよびステータスページ付き。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -20,27 +20,28 @@
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/apache/hertzbeat)
-
-**Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
-**Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe mailing lists**
 
 
-## 🎡 <font color="green">Introduction</font>
+**公式サイト: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
+**メール:**　メーリングリストに登録するために、<a href="mailto:dev-subscribe@hertzbeat.apache.org">dev-subscribe@hertzbeat.apache.org</a>にメールを送ってください。
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) (incubating) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
 
-### Features
+## 🎡 <font color="green">紹介</font>
 
-* Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, program, database, cache, os, webserver, middleware, bigdata, cloud-native, network, custom and more.
-* Easy to use and agentless, web-based and with one-click monitoring and alerting, zero learning curve.
-* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
-* Compatible with the `Prometheus` ecosystem and more, can monitoring what `Prometheus` can monitoring with few clicks on webui.
-* High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
-* Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
-* Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
+[Apache HertzBeat](https://github.com/apache/hertzbeat) （incubating）はオープンソースのリアルタイム監視システム、エージェントレス、クラスタ対応、Prometheus互換、カスタムおよびステータスページ付き。     
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
+### 特性
+
+- **モニター・アラーム・通知** を一体化し、Web、データベース、キャッシュ、OS、ミドルウェア、クラウドネイティブ、ネットワークなどをサポート。
+- 使いやすさを重視し、マウスのクリックだけで完全なWebベースの操作が可能。
+- `Http、Jmx、Ssh、Snmp、jdbc、Prometheus`などのプロトコルを設定可能にし、テンプレート`YML`ファイルをオンラインで設定するだけで、あらゆるメトリクスを収集できるようにします。HertzBeatでオンライン設定するだけで、`K8S`や`Docker`のような新しい監視タイプに素早く対応できることを想像してみてください。
+- `Prometheus`のエコシステム互換、Prometheusが監視できるものを、全てオンライン設定によって監視することができます。
+- 高性能で、コレクタークラスタ、マルチアイソレートネットワーク、クラウドエッジをサポート。
+- 柔軟なアラーム閾値ルールで、メール、discord、slack、telegramなどを通じてタイムリーに通知。
+- 強力なステータスページを簡単に構築し、リアルタイムのステータスをユーザーと共有。
+
+
+> `HertzBeat`の強力なカスタマイズ、多種類のサポート、高性能および容易な拡張性は、ユーザーが迅速に独自の監視システムを構築するのを支援することを目的としています。    
 
 ----
 
@@ -52,15 +53,14 @@
 
 ----
 
-## 🥐 Architecture   
+## 🥐 モジュール  
 
-![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
+![hertzBeat](home/static/img/docs/hertzbeat-arch.png)      
 
-## ⛄ Supported   
+## ⛄ 利用可能    
 
-> We define all monitoring collection types such as `mysql`, `jvm`, and `k8s` as `YML` monitoring templates, allowing users to import them to support corresponding types of monitoring.
-> Welcome everyone to contribute your customized general monitoring type YML template during use.
-
+> `mysql`、`Java仮想マシン`、`k8s` などのすべての監視コレクション タイプを `YML` 監視テンプレートとして定義し、ユーザーがそれらをインポートして対応するタイプの監視をサポートできるようにしています。 
+> カスタマイズされた一般的なモニターのテンプレートを提供することを歓迎します。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
@@ -98,94 +98,96 @@
 - [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-- And More Your Custom Template.
-- Notified Support `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
+- その他、カスタマイズされたモニターテンプレート。
+- 通知利用可能 `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`。
 
+## 🐕 クイックスタート  
 
-## 🐕 Quick Start   
+- HertzBeat をローカルに展開する場合は、以下のデプロイメントドキュメントを参照してください。
 
-- If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
+### 🍞 HertzBeatのインストール
+> HertzBeatは、ソースコードのインストールとブート、Dockerコンテナの実行とインストールパッケージによるインストールとデプロイをサポートし、CPUアーキテクチャはx86/arm64をサポートします。
 
-### 🍞 Install HertzBeat   
+##### 方式１：Docker
 
-> HertzBeat supports installation through source code, docker or package, cpu support x86/arm64.   
-
-##### 1：Install quickly via docker   
-
-1. Just one command to get started
+1. `docker` で以下の指令を実行します： 
 
    ```shell
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
-2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
+2. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
-3. Deploy collector clusters (Optional)
+3. コレクタークラスタのデプロイメント（オプション）
 
    ```shell
    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
-   - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-   - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
-   - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
-   - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
+   - `-e IDENTITY=custom-collector-name` ：コレクターのユニーク ID。
+    - `-e MODE=public` ：実行モード(パブリッククラスタまたはプライベートクラウドエッジ)。
+    - `-e MANAGER_HOST=127.0.0.1` ：メインhertzbeatサーバーのIP。
+    - `-e MANAGER_PORT=1158` ：メインhertzbeatサーバポート。
 
 
-Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache.org/docs/start/docker-deploy)   
+詳細ステップ [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
-##### 2：Install via package  
+##### 方式２：インストールパッケージ
 
-1. Download the release package `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
-2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)  
-3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`   
-4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
-5. Deploy collector clusters (Optional)
-    - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [Download](https://hertzbeat.apache.org/docs/download)
-    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
-      ```yaml
-      collector:
-        dispatch:
-          entrance:
-            netty:
-              enabled: true
-              identity: ${IDENTITY:}
-              mode: ${MODE:public}
-              manager-host: ${MANAGER_HOST:127.0.0.1}
-              manager-port: ${MANAGER_PORT:1158}
-      ```
-    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
-    - Access `http://localhost:1157` and you will see the registered new collector in dashboard 
+1. リリースパッケージをダウンロード `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+2. HertzBeatのymlファイルを設定 `hertzbeat/config/application.yml` （オプション）
+3. コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行
+4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`
+5. コレクタークラスタのデプロイメント（オプション）
+   - コレクターパッケージを別のホストにダウンロード `hertzbeat-collector-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+   - コレクターのymlファイルを設定 `hertzbeat-collector/config/application.yml`
+     ```yaml
+     collector:
+       dispatch:
+         entrance:
+           netty:
+             enabled: true
+             identity: ${IDENTITY:}
+             mode: ${MODE:public}
+             manager-host: ${MANAGER_HOST:127.0.0.1}
+             manager-port: ${MANAGER_PORT:1158}
+     ```
+     - `identity: ${IDENTITY:}`：コレクターのユニークID。
+     - `mode: ${MODE:public}`：実行モード(パブリッククラスタまたはプライベートクラウドエッジ)。
+     - `manager-host: ${MANAGER_HOST:127.0.0.1}`：メインhertzbeatサーバーのIP。
+     - `manager-port: ${MANAGER_PORT:1158}`：メインhertzbeatサーバポート。
+   - コマンド`$ ./bin/startup.sh`または`bin/startup.bat`を実行。
+   - `http://localhost:1157`にアクセスし、登録された新しいコレクターを見ることがでます。
 
-Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apache.org/docs/start/package-deploy)   
+詳細ステップ [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
 
-##### 3：Start via source code        
+##### 方式３：ローカルの実行
 
-1. Local source code debugging needs to start the back-end project `manager` and the front-end project `web-app`.  
-2. Backend：need `maven3+`, `java17`, `lombok`, add VM options in IDE: ` --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED `, then start the `manager` service. 
-3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.  
-4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`  
+1. ローカルの実行には、バックエンドのプロジェクト`manager`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
+2. バックエンド：`maven3+`、`java17`と`lombok`の環境は必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`manager` を起動します。
+3. フロントエンド：`nodejs npm angular-cli`の環境は必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `ng serve --open` というコマンドを実行します。
+4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
-Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)        
+詳細ステップ [貢献ガイド](CONTRIBUTING.md)
 
-##### 4：Install All(hertzbeat+postgresql+tsdb) via Docker-compose  
+##### 方式４：Docker-Compose
 
-Install the postgresql/mysql database, victoria-metrics/iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
+[Docker-Compose 部署脚本](script/docker-compose)でpostgresql/mysqlデータベース、victoria-metrics、iotdb、またはtdengine時系列データベースとHertzbeat一括デプロイ。
 
-Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
+詳細ステップ [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
 
-##### 5: Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
+##### 方式５：Kubernetes Helm Charts
 
-Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
+Helm ChartでHertzBeatクラスタコンポーネントをKubernetesクラスタに一括デプロイ。
 
-Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
+詳細ステップ [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 **HAVE FUN**
 
 ## ✨ Contributors
 
-Thanks to these wonderful people, welcome to join us:     
-[Contributor Guide](CONTRIBUTING.md)   
+Thanks these wonderful people, welcome to join us:   
+[貢献ガイド](CONTRIBUTING.md)    
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -532,19 +534,19 @@ Thanks to these wonderful people, welcome to join us:
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->  
 
-## 💬 Join discussion
+## 💬 コミュニティ交流
 
-##### Channel
+##### チャネル
 
-[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
+[メール](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : メーリングリストに登録するために、```dev-subscribe@hertzbeat.apache.org```にメールを送ってください。
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
-WeChat Group : Add friend `ahertzbeat` and invite to the group.
+WeChatグループ : `ahertzbeat` を検索.
 
-WeChat Public : Search ID `usthecom`.
+WeChat公式アカウント : `usthecom`を検索.
 
-[QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `630061200`
+[QQグループ](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : グループ番号　`630061200`
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
@@ -554,12 +556,14 @@ WeChat Public : Search ID `usthecom`.
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
+
 ##### Open-Source Project Build From Open-Source
 
 HertzBeat is built on so many great open source projects, thanks to them!
 
 - `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Protobuf HttpClient Guava SnakeYaml JsonPath ...`
 - `TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...`
+
 
 ## Landscape
 

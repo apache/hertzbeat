@@ -131,6 +131,18 @@ public interface DispatchConstants {
      * protocol nacos sd
      */
     String PROTOCOL_NACOS_SD = "nacos_sd";
+     * protocol dns sd
+     */
+    String PROTOCOL_DNS_SD = "dns_sd";
+    /**
+     * protocol eureka sd
+     */
+    String PROTOCOL_EUREKA_SD = "eureka_sd";
+
+    /**
+     * protocol consul sd
+     */
+    String PROTOCOL_CONSUL_SD = "consul_sd";
     /**
      * protocol redfish
      */

@@ -77,7 +77,7 @@ public class Monitor {
     @Size(max = 100)
     private String app;
     
-    @Schema(title = "Scrape type: static | http_sd", example = "static", accessMode = READ_WRITE)
+    @Schema(title = "Scrape type: static | http_sd | dns_sd", example = "static", accessMode = READ_WRITE)
     @Size(max = 100)
     private String scrape;
     
