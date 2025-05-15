@@ -218,8 +218,14 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.metrics' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-transfer [nzDataSource]="hierarchies" [nzRenderList]="[leftRenderList, null]" (nzChange)="transferChange($event)">
-            <ng-template #leftRenderList let-items let-onItemSelect="onItemSelect">
+          <nz-transfer
+            [nzDataSource]="hierarchies"
+            [nzRenderList]="[leftRenderList, null]"
+            (nzChange)="transferChange($event)"
+            (nzSelectChange)="onSelectChange($event)"
+          >
+            <ng-template #leftRenderList let-items let-onItemSelect="onItemSelect" let-stat="stat">
+              <div *ngIf="updateTransferStat(stat)"></div>
               <nz-tree
                 [nzData]="treeNodes"
                 nzExpandAll
