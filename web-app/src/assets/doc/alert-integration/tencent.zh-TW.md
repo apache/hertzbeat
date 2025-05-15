@@ -9,7 +9,7 @@
 4. 在新建通知模板頁面，填寫基礎信息
 5. 在 **接口回調** 模塊中，填寫 HertzBeat 提供的 Webhook 接口地址 URL：
    ```
-   http://{your_system_host}/api/alerts/tencent
+   http://{your_system_host}/api/alerts/report/tencent
    ```
 6. 保存通知模板
 

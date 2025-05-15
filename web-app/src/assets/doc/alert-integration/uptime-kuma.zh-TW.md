@@ -8,7 +8,7 @@
 3. 選擇 **Webhook** 通知類型
 4. 在 **Post URL** 中，填寫 HertzBeat 提供的 Webhook 接口地址 URL：
    ```
-   http://{your_system_host}/api/report/uptime-kuma
+   http://{your_system_host}/api/alerts/report/uptime-kuma
    ```
 5. 在 **請求體** 選擇 **預設-application/json**，其他請按需配置
 6. 保存設置通知
