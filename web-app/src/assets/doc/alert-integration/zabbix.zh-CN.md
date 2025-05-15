@@ -10,7 +10,7 @@
 
    | 名称 | 值 |
    |-----|-----|
-   | URL | http://your-hertzbeat-server:1157/api/report/zabbix |
+   | URL | http://your-hertzbeat-server:1157/api/alerts/report/zabbix |
    | AlertName | {TRIGGER.NAME} |
    | AlertId | {EVENT.ID} |
    | HostName | {HOST.NAME} |
