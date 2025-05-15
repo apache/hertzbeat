@@ -9,7 +9,7 @@
 4. On the new notification template page, fill in the basic information
 5. In the **API Callback** module, enter the HertzBeat Webhook API URL:
    ```
-   http://{your_system_host}/api/alerts/tencent
+   http://{your_system_host}/api/alerts/report/tencent
    ```
 6. Save the notification template
 
