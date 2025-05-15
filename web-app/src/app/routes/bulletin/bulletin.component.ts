@@ -79,7 +79,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
   filterLabels: Record<string, string> = {};
   filteredMonitors: Monitor[] = [];
   private filterSubject = new Subject<string>(); //filter logic debouncing
-  currentStat: TransferStat | null = null; //transfer组件状态
+  currentStat: TransferStat | null = null; //transfer component status
 
   ngOnInit() {
     this.loadTabs();
