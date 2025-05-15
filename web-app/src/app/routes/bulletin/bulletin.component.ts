@@ -23,7 +23,7 @@ import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
-import { TransferChange } from 'ng-zorro-antd/transfer';
+import { TransferChange, TransferSelectChange, TransferStat } from 'ng-zorro-antd/transfer';
 import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
 import { Subject } from 'rxjs';
 import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -76,6 +76,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
   filterLabels: Record<string, string> = {};
   filteredMonitors: Monitor[] = [];
   private filterSubject = new Subject<string>(); //filter logic debouncing
+  currentStat: TransferStat | null = null; //transfer component status
 
   ngOnInit() {
     this.loadTabs();
@@ -366,6 +367,42 @@ export class BulletinComponent implements OnInit, OnDestroy {
       }
     }
     return tree;
+  }
+
+  updateTransferStat(stat: TransferStat): boolean {
+    this.currentStat = stat;
+    // stat.shownCount = 33;
+    return true;
+  }
+
+  private collectLeafNodes(nodes: NzTreeNodeOptions[], results: NzTreeNodeOptions[]): void {
+    nodes.forEach(node => {
+      if (node.isLeaf && !node.disabled) {
+        results.push(node);
+      }
+      if (node.children) {
+        this.collectLeafNodes(node.children, results);
+      }
+    });
+  }
+
+  onSelectChange(event: TransferSelectChange): void {
+    if (event.direction === 'left' && event.checked && this.currentStat?.checkAll) {
+      const allLeafNodes: NzTreeNodeOptions[] = [];
+      this.collectLeafNodes(this.treeNodes, allLeafNodes);
+
+      allLeafNodes.forEach(node => {
+        const existing = this.checkedNodeList.find(n => n.origin.id === node.id);
+        if (!existing) {
+          const treeNode = new NzTreeNode(node);
+          treeNode.isChecked = true;
+          this.checkedNodeList.push(treeNode);
+        }
+      });
+    }
+    if (event.direction === 'left' && !event.checked && this.currentStat?.checkAll === false) {
+      this.checkedNodeList = [];
+    }
   }
 
   treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: NzTreeNodeOptions) => void): void {
