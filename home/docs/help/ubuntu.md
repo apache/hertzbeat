@@ -115,7 +115,7 @@ Statistics for the top 10 processes using memory. Statistics include: process ID
 | cpu_usage   | %           | CPU usage               |
 | command     | None        | Executed command        |
 
-#### Metric Set: Average CPU Temperature Across All Cores.
+#### Metric Set: Average CPU Temperature Across All Cores
 
 | Metric Name  | Metric Unit | Metric help description |
 |--------------|-------------|-------------------------|

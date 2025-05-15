@@ -112,4 +112,3 @@ keywords: [ 开源监控系统, 开源操作系统监控, EulerOS操作系统监
 | mem_usage | %    | 内存占用率  |
 | cpu_usage | %    | CPU占用率 |
 | command   | 无    | 执行命令   |
-
