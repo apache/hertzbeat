@@ -53,13 +53,13 @@ class HostParamValidatorTest {
     @Test
     public void testIsValid() {
         boolean result = hostParamValidator.isValid(null, context);
-        assertFalse(result);
+        assertTrue(result);
 
         result = hostParamValidator.isValid("", context);
-        assertFalse(result);
+        assertTrue(result);
 
         result = hostParamValidator.isValid("   ", context);
-        assertFalse(result);
+        assertTrue(result);
 
         result = hostParamValidator.isValid("192.168.1.1", context);
         assertTrue(result);

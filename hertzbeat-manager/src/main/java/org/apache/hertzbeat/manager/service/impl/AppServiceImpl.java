@@ -270,10 +270,6 @@ public class AppServiceImpl implements AppService, InitializingBean {
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
         for (var job : appDefines.values()) {
-            // TODO temporarily filter out push to solve the front-end problem, and open it after the subsequent design optimization
-            if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
-                continue;
-            }
             queryAppHierarchy(lang, hierarchies, job);
         }
         return hierarchies;
@@ -518,7 +514,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
      */
     private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
         if (objectStoreConfig == null) {
-            appDefineStore = new LocalFileAppDefineStoreImpl();
+            appDefineStore = new DatabaseAppDefineStoreImpl();
         } else {
             if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
                 appDefineStore = new ObjectStoreAppDefineStoreImpl();

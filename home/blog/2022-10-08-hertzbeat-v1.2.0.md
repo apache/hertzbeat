@@ -60,7 +60,7 @@ Have Fun!
 Need Convert `application.yml`.
 
 ```yaml
-spring.
+spring:
   resources: static-locations.
     static-locations.
       - classpath:/dist/
@@ -70,8 +70,8 @@ spring.
 To
 
 ```yaml
-spring.
-  web.
+spring:
+  web:
     resources: static-locations.
       static-locations.
         - classpath:/dist/

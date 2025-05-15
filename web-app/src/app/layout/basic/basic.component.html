@@ -1,0 +1,30 @@
+<div class="alain-default__content">
+  <router-outlet></router-outlet>
+</div>
+
+<div class="ai-chatbot-container">
+  <div class="ai-chatbot-button" (click)="toggleChatbot()">
+    <span *ngIf="!isChatbotOpen">AI</span>
+    <span *ngIf="isChatbotOpen">X</span>
+  </div>
+
+  <div class="ai-chatbot-window" *ngIf="isChatbotOpen">
+    <div class="chatbot-header">
+      <div class="chatbot-title">{{ 'ai.bot.title' | i18n }}</div>
+      <div class="chatbot-close" (click)="toggleChatbot()">X</div>
+    </div>
+    <div class="chatbot-messages">
+      <div *ngFor="let message of chatMessages" [class.user-message]="message.isUser" [class.bot-message]="!message.isUser" class="message">
+        <div class="message-content">{{ message.content }}</div>
+        <div class="message-time">{{ message.timestamp | date : 'HH:mm' }}</div>
+      </div>
+      <div *ngIf="isLoading" class="bot-message loading-message">
+        <nz-spin nzSimple></nz-spin>
+      </div>
+    </div>
+    <div class="chatbot-input">
+      <input nz-input placeholder="{{ 'ai.bot.input.placeholder' | i18n }}" [(ngModel)]="currentMessage" (keyup.enter)="sendMessage()" />
+      <button nz-button nzType="primary" [disabled]="!currentMessage.trim()" (click)="sendMessage()"> {{ 'ai.bot.send' | i18n }} </button>
+    </div>
+  </div>
+</div>

@@ -21,6 +21,7 @@ import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Victoriametrics configuration information
@@ -32,6 +33,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 		+ SignConstants.DOT
 		+ WarehouseConstants.HistoryName.VM_CLUSTER)
 public record VictoriaMetricsClusterProperties(
+		@DefaultValue("false") boolean enabled,
+		@DefaultValue("0") String accountID,
     VictoriaMetricsInsertProperties insert,
     VictoriaMetricsSelectProperties select
 ) {

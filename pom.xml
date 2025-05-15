@@ -88,9 +88,10 @@
         <module>hertzbeat-push</module>
         <module>hertzbeat-plugin</module>
         <module>hertzbeat-grafana</module>
-        <module>hertzbeat-log</module>
+        <module>hertzbeat-otel</module>
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
+        <module>hertzbeat-mcp</module>
     </modules>
 
     <properties>
@@ -128,7 +129,7 @@
         <snake.yaml.version>2.2</snake.yaml.version>
         <okhttp.version>4.12.0</okhttp.version>
         <kafka-clients.version>3.4.0</kafka-clients.version>
-        <netty.version>4.1.100.Final</netty.version>
+        <netty.version>4.1.117.Final</netty.version>
         <mysql.version>8.0.30</mysql.version>
         <mssql-jdbc.version>10.2.0.jre8</mssql-jdbc.version>
         <ojdbc8.version>21.5.0.0</ojdbc8.version>
@@ -174,7 +175,7 @@
         <arrow.version>18.1.0</arrow.version>
         <snappy-java.version>1.1.10.7</snappy-java.version>
         <sshd-sftp.version>2.13.1</sshd-sftp.version>
-        <opentelemetry-api.version>1.43.0</opentelemetry-api.version>
+        <opentelemetry-starter.version>2.15.0</opentelemetry-starter.version>
         <opentelemetry-logback.version>2.14.0-alpha</opentelemetry-logback.version>
     </properties>
 
@@ -237,7 +238,7 @@
             <!-- log -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
-                <artifactId>hertzbeat-log</artifactId>
+                <artifactId>hertzbeat-otel</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- collector-basic -->
@@ -477,31 +478,16 @@
             </dependency>
             <!-- OpenTelemetry -->
             <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-api</artifactId>
-                <version>${opentelemetry-api.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-sdk</artifactId>
-                <version>${opentelemetry-api.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-sdk-logs</artifactId>
-                <version>${opentelemetry-api.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-exporter-otlp</artifactId>
-                <version>${opentelemetry-api.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>io.opentelemetry.instrumentation</groupId>
                 <artifactId>opentelemetry-logback-appender-1.0</artifactId>
                 <version>${opentelemetry-logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.instrumentation</groupId>
+                <artifactId>opentelemetry-instrumentation-bom</artifactId>
+                <version>${opentelemetry-starter.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 ### Attention, Need Add ORACLE jdbc driver jar
 
-- Download the ORACLE jdbc driver jar package, such as [ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+- Download the ORACLE jdbc driver jar package, such as [ojdbc8.jar](https://repo1.maven.org/maven2/com/oracle/database/jdbc/ojdbc8/23.4.0.24.05/ojdbc8-23.4.0.24.05.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 - Restart the HertzBeat service.
 

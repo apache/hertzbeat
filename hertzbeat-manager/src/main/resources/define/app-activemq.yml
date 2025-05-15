@@ -21,11 +21,13 @@ app: activemq
 name:
   zh-CN: ActiveMQ消息系统
   en-US: ActiveMQ Message
+  ja-JP: ActiveMQメッセージングシステム
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMX 协议</a> 对 Apache ActiveMQ 消息中间件的运行状态，节点，Topic等相关指标（broker、topic、memory pool、class loading、thread）进行监测。<br><span class='help_module_span'>⚠️注意：您需要在 ActiveMQ 开启 JMX 服务。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/activemq'>点击查看开启步骤</a>。</span>
   en-US: "HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMX protocol</a> to monitor the running status, nodes, topics, and other metrics of Apache ActiveMQ message-oriented middleware. <br><span class='help_module_span'>⚠️Note: You should enable the JMX service in ActiveMQ. <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/activemq'>Click here to view the specific steps.</a></span>"
   zh-TW: HertzBeat使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMX 協定</a> 對 Apache ActiveMQ 消息中介軟體的運行狀態，節點，Topic 等相關名額（broker、topic、memory pool、class loading、thread）進行監測。<br><span class='help_module_span'> ⚠️注意：您需要在 ActiveMQ 開啟 JMX 服務。<a class='help_module_content' href=' https://hertzbeat.apache.org/zh-cn/docs/help/activemq'>點擊查看開啟步驟</a>。</span>
+  ja-JP: HertzBeatは <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMXプロトコルを介して</a> Apache ActiveMQメッセージングシステムのランタイムステータス、ノード、トピック、その他の関連指標を監視します。<br><span class='help_module_span'> ⚠️注意：ActiveMQ で JMX サービスを有効にする必要があります。<a class='help_module_content' href=' https://hertzbeat.apache.org/zh-cn/docs/help/activemq'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/activemq
   en-US: https://hertzbeat.apache.org/docs/help/activemq
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标 Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: JMX 端口
       en-US: JMX Port
+      ja-JP: JMXポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: JMX URL
       en-US: JMX URL
+      ja-JP: JMX URL
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -89,6 +95,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -103,6 +110,7 @@ metrics:
     i18n:
       zh-CN: 虚拟机基础信息
       en-US: JVM Basic
+      ja-JP: Java仮想マシン基本情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -114,22 +122,26 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Vm Name
+          ja-JP: 仮想マシン名
       - field: VmVendor
         type: 1
         i18n:
           zh-CN: 厂商
           en-US: Vm Vendor
+          ja-JP: 仮想マシンベンダー
       - field: VmVersion
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Vm Version
+          ja-JP: 仮想マシンバージョン
       - field: Uptime
         type: 0
         unit: ms
         i18n:
           zh-CN: 运行时长
           en-US: Up time
+          ja-JP: アップタイム
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is jmx
@@ -151,6 +163,7 @@ metrics:
     i18n:
       zh-CN: Broker 信息
       en-US: Broker Info
+      ja-JP: ブローカー情報
     priority: 1
     fields:
       - field: BrokerName
@@ -159,99 +172,118 @@ metrics:
         i18n:
           zh-CN: Broker 名称
           en-US: Broker Name
+          ja-JP: ブローカー名
       - field: BrokerVersion
         i18n:
           zh-CN: Broker 版本
           en-US: Broker Version
+          ja-JP: ブローカーバージョン
         type: 1
       - field: Uptime
         i18n:
           zh-CN: 启动时长
           en-US: Uptime
+          ja-JP: アップタイム
         type: 1
       - field: UptimeMillis
         i18n:
           zh-CN: 启动时长（毫秒）
           en-US: Uptime Millis
+          ja-JP: アップタイム（ｍｓ）
         type: 0
         unit: ms
       - field: Persistent
         i18n:
           zh-CN: 持久化
-          en-US: Persistent
+          en-US: Persistence
+          ja-JP: 永続性
         type: 1
       - field: DataDirectory
         i18n:
           zh-CN: 数据目录
           en-US: Data Directory
+          ja-JP: データディレクトリ
         type: 1
       - field: MemoryPercentUsage
         i18n:
           zh-CN: 内存使用率
           en-US: Memory Percent Usage
+          ja-JP: メモリ使用量
         type: 0
         unit: '%'
       - field: StorePercentUsage
         i18n:
           zh-CN: 存储使用率
           en-US: Store Percent Usage
+          ja-JP: ストレージ使用率
         type: 0
         unit: '%'
       - field: TempPercentUsage
         i18n:
           zh-CN: 临时使用率
           en-US: Temp Percent Usage
+          ja-JP: 一時使用率
         type: 0
         unit: '%'
       - field: CurrentConnectionsCount
         i18n:
           zh-CN: 当前连接数
           en-US: Current Connections Count
+          ja-JP: 現在接続数
         type: 0
       - field: TotalConnectionsCount
         i18n:
           zh-CN: 总连接数
           en-US: Total Connections Count
+          ja-JP: 合計接続数
         type: 0
       - field: TotalEnqueueCount
         i18n:
           zh-CN: 总入队数
           en-US: Total Enqueue Count
+          ja-JP: 合計エンキュー数
         type: 0
       - field: TotalDequeueCount
         i18n:
           zh-CN: 总出队数
           en-US: Total Dequeue Count
+          ja-JP: 合計デキュー数
         type: 0
       - field: TotalConsumerCount
         i18n:
           zh-CN: 消费者总数
           en-US: Total Consumer Count
+          ja-JP: 消費者総数
         type: 0
       - field: TotalProducerCount
         i18n:
           zh-CN: 生产者总数
           en-US: Total Producer Count
+          ja-JP: 生産者総数
         type: 0
       - field: TotalMessageCount
         i18n:
           zh-CN: 总消息数
           en-US: Total Message Count
+          ja-JP: メッセージ総数
         type: 0
       - field: AverageMessageSize
         i18n:
           zh-CN: 平均消息大小
           en-US: Average Message Size
+          ja-JP: 平均メッセージサイズ
         type: 0
       - field: MaxMessageSize
         i18n:
           zh-CN: 最大消息大小
           en-US: Max Message Size
+          ja-JP: 最大メッセージサイズ
         type: 0
       - field: MinMessageSize
         i18n:
           zh-CN: 最小消息大小
           en-US: Min Message Size
+          ja-JP: 最小メッセージサイズ
         type: 0
     protocol: jmx
     jmx:
@@ -271,106 +303,125 @@ metrics:
         i18n:
           zh-CN: Topic 名称
           en-US: Topic Name
+          ja-JP: トピック名
       - field: MemoryLimit
         type: 0
         unit: MB
         i18n:
           zh-CN: 内存限制
           en-US: Memory Limit
+          ja-JP: メモリ制限
       - field: MemoryPercentUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存使用率
           en-US: Memory Percent Usage
+          ja-JP: メモリ使用量
       - field: ProducerCount
         type: 0
         i18n:
           zh-CN: 生产者数量
           en-US: Producer Count
+          ja-JP: 生産者数
       - field: ConsumerCount
         type: 0
         i18n:
           zh-CN: 消费者数量
           en-US: Consumer Count
+          ja-JP: 消費者数
       - field: EnqueueCount
         type: 0
         i18n:
           zh-CN: 入队数量
           en-US: Enqueue Count
+          ja-JP: エンキュー数
       - field: DequeueCount
         type: 0
         i18n:
           zh-CN: 出队数量
           en-US: Dequeue Count
+          ja-JP: デキュー数
       - field: ForwardCount
         type: 0
         i18n:
           zh-CN: 转发数量
           en-US: Forward Count
+          ja-JP: フォワード数
       - field: InFlightCount
         type: 0
         i18n:
           zh-CN: 进行中数量
           en-US: In Flight Count
+          ja-JP: 処理数
       - field: DispatchCount
         type: 0
         i18n:
           zh-CN: 分发数量
           en-US: Dispatch Count
+          ja-JP: ディスパッチ数
       - field: ExpiredCount
         type: 0
         i18n:
           zh-CN: 过期数量
           en-US: Expired Count
+          ja-JP: 期限切れ数
       - field: StoreMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 存储消息大小
           en-US: Store Message Size
+          ja-JP: ストレージメッセージサイズ
       - field: AverageEnqueueTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 平均入队时间
           en-US: Average Enqueue Time
+          ja-JP: 平均エンキュータイム
       - field: MaxEnqueueTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 最大入队时间
           en-US: Max Enqueue Time
+          ja-JP: 最大エンキュータイム
       - field: MinEnqueueTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 最小入队时间
           en-US: Min Enqueue Time
+          ja-JP: 最小エンキュータイム
       - field: TotalBlockedTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 总阻塞时间
           en-US: Total Blocked Time
+          ja-JP: 合計ブロックタイム
       - field: AverageMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 平均消息大小
           en-US: Average Message Size
+          ja-JP: 平均メッセージサイズ
       - field: MaxMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 最大消息大小
           en-US: Max Message Size
+          ja-JP: 最大メッセージサイズ
       - field: MinMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 最小消息大小
           en-US: Min Message Size
+          ja-JP: 最小メッセージサイズ
     units:
       - MemoryLimit=B->MB
     protocol: jmx
@@ -386,6 +437,7 @@ metrics:
     i18n:
       zh-CN: 内存池
       en-US: Memory Pool
+      ja-JP: メモリプール
     priority: 2
     fields:
       - field: name
@@ -394,30 +446,35 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
+          ja-JP: 指標名
       - field: committed
         type: 0
         unit: MB
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
+          ja-JP: コミットメモリー
       - field: init
         type: 0
         unit: MB
         i18n:
           zh-CN: 初始化内存
           en-US: Init
+          ja-JP: イニシャルメモリ
       - field: max
         type: 0
         unit: MB
         i18n:
           zh-CN: 最大内存
           en-US: Max
+          ja-JP: 最大メモリ
       - field: used
         type: 0
         unit: MB
         i18n:
           zh-CN: 已使用内存
           en-US: Used
+          ja-JP: 使用済みメモリ
     units:
       - committed=B->MB
       - init=B->MB
@@ -448,6 +505,7 @@ metrics:
     i18n:
       zh-CN: 类加载信息
       en-US: Class Loading
+      ja-JP: クラスローディング情報
     priority: 2
     fields:
       - field: LoadedClassCount
@@ -455,16 +513,19 @@ metrics:
         i18n:
           zh-CN: 当前已加载类数量
           en-US: Loaded Class Count
+          ja-JP: ロードされたクラス数
       - field: TotalLoadedClassCount
         type: 0
         i18n:
           zh-CN: 已加载类总数量
           en-US: Total Loaded Class Count
+          ja-JP: ロードされたクラス総数
       - field: UnloadedClassCount
         type: 0
         i18n:
           zh-CN: 未加载类总数量
           en-US: Unloaded Class Count
+          ja-JP: アンロードされたクラス総数
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -478,6 +539,7 @@ metrics:
     i18n:
       zh-CN: 线程信息
       en-US: Thread
+      ja-JP: スレッド情報
     priority: 2
     fields:
       - field: TotalStartedThreadCount
@@ -485,33 +547,39 @@ metrics:
         i18n:
           zh-CN: 已启动线程总数
           en-US: Total Started Thread Count
+          ja-JP: スレッド総数
       - field: ThreadCount
         type: 0
         i18n:
           zh-CN: 活跃线程数
           en-US: Thread Count
+          ja-JP: 活躍スレッド数
       - field: PeakThreadCount
         type: 0
         i18n:
           zh-CN: 最大峰值线程数
           en-US: Peak Thread Count
+          ja-JP: 最大スレッド数
       - field: DaemonThreadCount
         type: 0
         i18n:
           zh-CN: 活跃守护线程数
           en-US: Daemon Thread Count
+          ja-JP: デーモンスレッド数
       - field: CurrentThreadUserTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间(用户态)
           en-US: Current Thread User Time
+          ja-JP: 現在のスレッドユーザータイム
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间
           en-US: Current Thread CPU Time
+          ja-JP: 現在のスレッドCPUタイム
     units:
       - CurrentThreadUserTime=NS->S
       - CurrentThreadCpuTime=NS->S

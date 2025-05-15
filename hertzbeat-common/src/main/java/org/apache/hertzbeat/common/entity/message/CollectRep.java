@@ -454,8 +454,9 @@ public final class CollectRep {
                         return new MetricsData(new ArrowTable(root));
                     } catch (Exception e1) {
                         log.error(e1.getMessage(), e1);
-                        root.close();
                         throw e1;
+                    } finally {
+                        root.close();
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

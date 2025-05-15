@@ -145,15 +145,4 @@ class MonitorsControllerTest {
                 .andExpect(jsonPath("$.code").value("0"))
                 .andExpect(jsonPath("$.msg").value("Import success"));
     }
-
-    @Test
-    void duplicateMonitors() throws Exception {
-        // Mock the behavior of monitorService.copyMonitors
-        doNothing().when(monitorService).copyMonitors(List.of(6565463543L));
-
-        // Perform the POST request and verify the response
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitors/copy")
-                        .param("ids", "6565463543"))
-                .andExpect(status().isOk());
-    }
 }

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 /**
  * Alarm template keyword matching replacement engine tool
@@ -38,11 +39,11 @@ public final class AlertTemplateUtil {
     private static final Pattern PATTERN = Pattern.compile("\\$\\{(\\w+)\\}");
 
     public static String render(String template, Map<String, Object> replaceData) {
-        if (template == null) {
-            return null;  
+        if (!StringUtils.hasText(template)) {
+            return template;  
         }
         if (replaceData == null) {
-            log.warn("The replaceData is null.");
+            log.warn("The render replace data is null.");
             return template;
         }
         try {
@@ -50,7 +51,7 @@ public final class AlertTemplateUtil {
             StringBuilder builder = new StringBuilder();
             while (matcher.find()) {
                 Object objectValue = replaceData.getOrDefault(matcher.group(1), "NullValue");
-                String value = objectValue.toString();
+                String value = objectValue != null ? objectValue.toString() : "NullValue";
                 matcher.appendReplacement(builder, Matcher.quoteReplacement(value));
             }
             matcher.appendTail(builder);
