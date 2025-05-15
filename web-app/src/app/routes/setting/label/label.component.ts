@@ -59,7 +59,7 @@ export class SettingLabelComponent implements OnInit {
 
   loadLabelTable() {
     this.tableLoading = true;
-    let labelsInit$ = this.labelService.loadLabels(this.search, 1, 0, 9999).subscribe(
+    let labelsInit$ = this.labelService.loadLabels(this.search, undefined, 0, 9999).subscribe(
       message => {
         this.tableLoading = false;
         if (message.code === 0) {

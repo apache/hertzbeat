@@ -33,6 +33,7 @@ import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
 import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
+import { LabelService } from '../../../service/label.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { generateReadableRandomString } from '../../../shared/utils/common-util';
 
@@ -56,6 +57,8 @@ export class MonitorNewComponent implements OnInit {
   // whether it is loading
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
+  labelKeys: string[] = [];
+  labelMap: { [key: string]: string[] } = {};
   constructor(
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
@@ -64,7 +67,8 @@ export class MonitorNewComponent implements OnInit {
     private notifySvc: NzNotificationService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private titleSvc: TitleService,
-    private collectorSvc: CollectorService
+    private collectorSvc: CollectorService,
+    private labelSvc: LabelService
   ) {
     this.monitor = new Monitor();
     this.grafanaDashboard = new GrafanaDashboard();
@@ -207,6 +211,7 @@ export class MonitorNewComponent implements OnInit {
           this.isSpinning = false;
         }
       );
+    this.loadLabels();
   }
 
   onScrapeChange(scrapeValue: string) {
@@ -321,5 +326,35 @@ export class MonitorNewComponent implements OnInit {
 
   onCancel() {
     this.router.navigateByUrl(`/monitors`);
+  }
+
+  loadLabels() {
+    let labelsInit$ = this.labelSvc.loadLabels(undefined, undefined, 0, 9999).subscribe(
+      message => {
+        if (message.code === 0) {
+          let page = message.data;
+          this.labelKeys = [...new Set(page.content.map(label => label.name))];
+
+          this.labelMap = {};
+
+          page.content.forEach(label => {
+            if (!this.labelMap[label.name]) {
+              this.labelMap[label.name] = [];
+            }
+
+            if (label.tagValue && !this.labelMap[label.name].includes(label.tagValue)) {
+              this.labelMap[label.name].push(label.tagValue);
+            }
+          });
+        } else {
+          console.warn(message.msg);
+        }
+        labelsInit$.unsubscribe();
+      },
+      error => {
+        labelsInit$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
   }
 }
