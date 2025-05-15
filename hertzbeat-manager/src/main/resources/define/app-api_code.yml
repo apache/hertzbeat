@@ -21,11 +21,13 @@ app: api_code
 name:
   zh-CN: API业务状态码
   en-US: API Code
+  ja-JP: APIコード
 # The description and help of this monitoring type
 help:
   zh-CN: 监控 HTTP API 接口，对 API 返回的业务自定义状态码(非 Http 状态码)进行监控。此需通过配置 JsonPath 来解析您 API 的业务状态码路径。<br>您可以点击 “<i>新建 API Code</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Monitor HTTP API to monitor business-defined status codes (non-HTTP status codes) returned by API. To do this, you need to configure JsonPath to resolve the business status code path of your API. <br>You could click the "<i>New API Codes</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: 監控 HTTP API 接口，對 API 返回的業務自定義狀態碼(非 Http 狀態碼)進行監控。此需通過配置 JsonPath 來解析您 API 的業務狀態碼路徑。<br>您可以點擊“<i>新建API Code</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: 目標ホスト
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/api_code
   en-US: https://hertzbeat.apache.org/docs/help/api_code
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 请求方式
       en-US: Method
+      ja-JP: リクエストメソッド
     # type-param field type(most mapping the html input type)
     type: radio
     # required-true or false
@@ -81,6 +86,7 @@ params:
     name:
       zh-CN: 相对路径
       en-US: URI
+      ja-JP: URI
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -95,6 +101,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -105,6 +112,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -117,6 +125,7 @@ params:
     name:
       zh-CN: JsonPath解析状态码路径
       en-US: JsonPath Parse Code
+      ja-JP: JsonPath 解析ステータスコード
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -131,6 +140,7 @@ params:
     name:
       zh-CN: 请求Headers
       en-US: Headers
+      ja-JP: ヘッダ
     # type-param field type(most mapping the html input type)
     type: key-value
     # required-true or false
@@ -146,6 +156,7 @@ params:
     name:
       zh-CN: 查询Params
       en-US: Params
+      ja-JP: パラメータ
     # type-param field type(most mapping the html input type)
     type: key-value
     # required-true or false
@@ -162,6 +173,7 @@ params:
     name:
       zh-CN: Content-Type
       en-US: Content-Type
+      ja-JP: コンテンツタイプ
     # type-param field type(most mapping the html input type)
     type: text
     # param field input placeholder
@@ -176,6 +188,7 @@ params:
     name:
       zh-CN: 请求BODY
       en-US: BODY
+      ja-JP: ボディ
     # type-param field type(most mapping the html input type)
     type: textarea
     # param field input placeholder
@@ -195,6 +208,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(most mapping the html input type)
     type: radio
     # required-true or false
@@ -215,6 +229,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -229,6 +244,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input type)
     type: password
     # required-true or false
@@ -241,6 +257,7 @@ params:
     name:
       zh-CN: 认证Token
       en-US: Access Token
+      ja-JP: アクセストークン
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -253,6 +270,7 @@ params:
     name:
       zh-CN: 计数关键字
       en-US: Keyword
+      ja-JP: キーワード
     # type-param field type(most mapping the html input type)
     type: text
     # param field input placeholder
@@ -268,6 +286,7 @@ metrics:
     i18n:
       zh-CN: 状态
       en-US: Status
+      ja-JP: ステータス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -279,11 +298,13 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: code
         type: 1
         i18n:
           zh-CN: 业务状态码
           en-US: Status Code
+          ja-JP: ステータスコード
     aliasFields:
       - ^_^jsonPath^_^
       - responseTime

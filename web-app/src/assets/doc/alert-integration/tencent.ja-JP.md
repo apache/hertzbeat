@@ -9,7 +9,7 @@
 4. 新しい通知テンプレートページで、基本情報を入力します。
 5. **インターフェースコールバック** モジュールで、HertzBeat が提供する Webhook インターフェースアドレス URL を入力します。
    ```
-   http://{your_system_host}/api/alerts/tencent
+   http://{your_system_host}/api/alerts/report/tencent
    ```
 6. 通知テンプレートを保存します。
 
