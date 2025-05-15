@@ -6,7 +6,6 @@ Thumbs.db
 build/
 out/
 micronaut-cli.yml
-.mvn/
 *.log
 package-lock.json
 *.zip
