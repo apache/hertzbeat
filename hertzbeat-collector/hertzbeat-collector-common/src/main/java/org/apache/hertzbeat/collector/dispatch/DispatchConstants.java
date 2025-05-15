@@ -128,9 +128,18 @@ public interface DispatchConstants {
      */
     String PROTOCOL_HTTP_SD = "http_sd";
     /**
+     * protocol dns sd
+     */
+    String PROTOCOL_DNS_SD = "dns_sd";
+    /**
      * protocol eureka sd
      */
     String PROTOCOL_EUREKA_SD = "eureka_sd";
+
+    /**
+     * protocol consul sd
+     */
+    String PROTOCOL_CONSUL_SD = "consul_sd";
     /**
      * protocol redfish
      */
