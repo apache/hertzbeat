@@ -59,7 +59,7 @@
 
 ## ⛄ 利用可能    
 
-> `mysql`、`jvm`、`k8s` などのすべての監視コレクション タイプを `YML` 監視テンプレートとして定義し、ユーザーがそれらをインポートして対応するタイプの監視をサポートできるようにしています。 
+> `mysql`、`Java仮想マシン`、`k8s` などのすべての監視コレクション タイプを `YML` 監視テンプレートとして定義し、ユーザーがそれらをインポートして対応するタイプの監視をサポートできるようにしています。 
 > カスタマイズされた一般的なモニターのテンプレートを提供することを歓迎します。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
@@ -110,7 +110,7 @@
 
 ##### 方式１：Docker
 
-1. `docker` で以下のコメントを実行します： 
+1. `docker` で以下の指令を実行します： 
 
    ```shell
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
@@ -164,7 +164,7 @@
 ##### 方式３：ローカルの実行
 
 1. ローカルの実行には、バックエンドのプロジェクト`manager`とフロントエンドのプロジェクト`web-app`を起動する必要があります。
-2. バックエンド：`maven3+`、`java17`と`lombok`の環境は必要です。`YML` 設定を修正し、JVM パラメータ `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`manager` を起動します。
+2. バックエンド：`maven3+`、`java17`と`lombok`の環境は必要です。`YML` 設定を修正し、Java仮想マシンパラメータに`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED` を追加し、`manager` を起動します。
 3. フロントエンド：`nodejs npm angular-cli`の環境は必要です。ローカルのバックエンドが立ち上がったら、`web-app` ディレクトリで `ng serve --open` というコマンドを実行します。
 4. スタート：`http://localhost:4200`にアクセスします。デフォルトのアカウントとパスワード：`admin/hertzbeat`。
 
