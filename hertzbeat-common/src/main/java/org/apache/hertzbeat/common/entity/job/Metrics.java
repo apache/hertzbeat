@@ -30,9 +30,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.DnsSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.EurekaSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ConsulSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ModbusProtocol;
@@ -265,7 +265,11 @@ public class Metrics {
     /**
      * http sd protocol
      */
-    private HttpSdProtocol http_sd;
+    private HttpProtocol http_sd;
+    /**
+     * dns sd protocol
+     */
+    private DnsSdProtocol dns_sd;
     /**
      * eureka sd protocol
      */

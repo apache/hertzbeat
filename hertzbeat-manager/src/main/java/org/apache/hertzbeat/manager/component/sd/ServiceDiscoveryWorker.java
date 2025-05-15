@@ -49,7 +49,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class ServiceDiscoveryWorker implements InitializingBean {
-    
+
     private static final String FILED_HOST = "host";
     private static final String FILED_PORT = "port";
     private final MonitorService monitorService;
@@ -97,6 +97,11 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             .stream().collect(Collectors.toMap(MonitorBind::getKeyStr, item -> item));
                     RowWrapper rowWrapper = metricsData.readRow();
                     Map<String, String> fieldsValue = Maps.newHashMapWithExpectedSize(8);
+                    String defaultPort = mainMonitorParams.stream()
+                            .filter(param -> FILED_PORT.equals(param.getField()))
+                            .findFirst()
+                            .map(Param::getParamValue)
+                            .orElse("");
                     while (rowWrapper.hasNextRow()) {
                         rowWrapper = rowWrapper.nextRow();
                         fieldsValue.clear();
@@ -105,7 +110,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             fieldsValue.put(cell.getField().getName(), value);
                         });
                         final String host = fieldsValue.get(FILED_HOST);
-                        final String port = fieldsValue.get(FILED_PORT);
+                        final String port = fieldsValue.getOrDefault(FILED_PORT, defaultPort);
                         final String keyStr = host + ":" + port;
                         if (subMonitorBindMap.containsKey(keyStr)) {
                             subMonitorBindMap.remove(keyStr);

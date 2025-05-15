@@ -762,6 +762,7 @@
   "monitor.sshPrivateKey.tip": "BEGIN RSA PRIVATE KEY",
   "monitor.scrape.type.static": "Static Scrape",
   "monitor.scrape.type.http_sd": "Http Service Discovery",
+  "monitor.scrape.type.dns_sd": "Dns Service Discovery",
   "monitor.scrape.type.eureka_sd": "Eureka Service Discovery",
   "monitor.scrape.type.consul_sd": "Consul Service Discovery",
   "placeholder.key": "Key",

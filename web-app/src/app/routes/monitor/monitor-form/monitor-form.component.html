@@ -31,6 +31,7 @@
           >
             <nz-option nzValue="static" [nzLabel]="'monitor.scrape.type.static' | i18n"></nz-option>
             <nz-option nzValue="http_sd" [nzLabel]="'monitor.scrape.type.http_sd' | i18n"></nz-option>
+            <nz-option nzValue="dns_sd" [nzLabel]="'monitor.scrape.type.dns_sd' | i18n"></nz-option>
             <nz-option nzValue="eureka_sd" [nzLabel]="'monitor.scrape.type.eureka_sd' | i18n"></nz-option>
             <nz-option nzValue="consul_sd" [nzLabel]="'monitor.scrape.type.consul_sd' | i18n"></nz-option>
           </nz-select>
@@ -177,7 +178,11 @@
           <app-form-field
             [item]="{
               field: 'labels',
-              type: 'labels'
+              type: 'label-selector'
+            }"
+            [extra]="{
+              labelKeys: labelKeys,
+              labelMap: labelMap
             }"
             [name]="'labels'"
             [(ngModel)]="monitor.labels"

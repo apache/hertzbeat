@@ -24,6 +24,7 @@ import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MonitorBind database operation
@@ -38,6 +39,7 @@ public interface MonitorBindDao extends JpaRepository<MonitorBind, Long>, JpaSpe
     void deleteByMonitorId(Long monitorId);
     
     @Modifying
+    @Transactional
     void deleteMonitorBindByBizIdAndMonitorId(Long bizId, Long monitorId);
 
     @Modifying

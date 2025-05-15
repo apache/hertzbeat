@@ -35,6 +35,7 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
+import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
@@ -52,6 +53,7 @@ import org.apache.hertzbeat.grafana.service.DashboardService;
 import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.LabelDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
@@ -60,6 +62,7 @@ import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.ImExportService;
+import org.apache.hertzbeat.manager.service.LabelService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -129,6 +132,10 @@ public class MonitorServiceImpl implements MonitorService {
     private DashboardService dashboardService;
     @Autowired
     private ManagerSseManager managerSseManager;
+    @Autowired
+    private LabelDao labelDao;
+    @Autowired
+    private LabelService labelService;
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
@@ -154,6 +161,12 @@ public class MonitorServiceImpl implements MonitorService {
             labels = new HashMap<>(8);
             monitor.setLabels(labels);
         }
+        List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
+
+        if (!addLabels.isEmpty()) {
+            labelDao.saveAll(addLabels);
+        }
+
         // Construct the collection task Job entity
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
         String app = isStatic ? monitor.getApp() : monitor.getScrape();
@@ -431,6 +444,13 @@ public class MonitorServiceImpl implements MonitorService {
             labels = new HashMap<>(8);
             monitor.setLabels(labels);
         }
+
+        List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
+
+        if (!addLabels.isEmpty()) {
+            labelDao.saveAll(addLabels);
+        }
+
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
