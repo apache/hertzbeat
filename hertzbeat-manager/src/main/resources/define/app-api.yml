@@ -21,11 +21,13 @@ app: api
 name:
   zh-CN: HTTP API
   en-US: HTTP API
+  ja-JP: HTTP API
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 将调用 HTTP API 接口，查看接口是否可用，并以 ms 为指标单位对其响应时间等指标进行监测。您可以先点击“新增 HTTP API”按钮并进行配置，或在“更多操作”中导入已有配置。
   en-US: The platform will invoke an HTTP API endpoint to verify its accessibility and monitor various metrics, including response time, measured in milliseconds (ms). <br>To set up this functionality, you could click the "Add HTTP API" button and proceed with the configuration or import an existing setup through the "More Actions" menu.
   zh-TW: Hertzbeat將調用HTTP API介面，查看介面是否可用，並以ms為名額組織對其回應時間等名額進行監測。 您可以先點擊“新增HTTP API”按鈕並進行配寘，或在“更多操作”中導入已有配寘。
+  ja-JP: Hertzbeatは、HTTP APIを呼び出して利用可能かどうかを確認し、応答時間(ms)などのメトリクスを監視します。「新規HTTP API」をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/api
   en-US: https://hertzbeat.apache.org/docs/help/api
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 请求方式
       en-US: Method
+      ja-JP: リクエストメソッド
     # type-param field type(most mapping the html input type)
     type: radio
     # required-true or false
@@ -81,6 +86,7 @@ params:
     name:
       zh-CN: 相对路径
       en-US: URI
+      ja-JP: URI
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -95,6 +101,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -105,6 +112,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -117,6 +125,7 @@ params:
     name:
       zh-CN: 请求Headers
       en-US: Headers
+      ja-JP: ヘッダ
     # type-param field type(most mapping the html input type)
     type: key-value
     # required-true or false
@@ -131,6 +140,7 @@ params:
     name:
       zh-CN: 查询Params
       en-US: Params
+      ja-JP: パラメータ
     # type-param field type(most mapping the html input type)
     type: key-value
     # required-true or false
@@ -145,6 +155,7 @@ params:
     name:
       zh-CN: Content-Type
       en-US: Content-Type
+      ja-JP: コンテンツタイプ
     # type-param field type(most mapping the html input type)
     type: text
     # param field input placeholder
@@ -179,6 +190,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(most mapping the html input type)
     type: radio
     # required-true or false
@@ -197,6 +209,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -211,6 +224,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input type)
     type: password
     # required-true or false
@@ -223,6 +237,7 @@ params:
     name:
       zh-CN: 计数关键字
       en-US: Keyword
+      ja-JP: キーワード
     # type-param field type(most mapping the html input type)
     type: text
     # param field input placeholder
@@ -237,6 +252,7 @@ params:
     name:
       zh-CN: 校验成功状态码
       en-US: Verify Success Code
+      ja-JP: 成功ステータスコードの検証
     # type-param field type(most mapping the html input type)
     type: array
     # param field input placeholder
@@ -252,6 +268,7 @@ params:
     name:
       zh-CN: 启用URL编码（UTF-8）
       en-US: Enable URL Encoding(UTF-8)
+      ja-JP: URL Encoding利用（UTF-8）
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -267,6 +284,7 @@ metrics:
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -279,11 +297,13 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: keyword
         type: 0
         i18n:
           zh-CN: 关键词数量
           en-US: Keyword
+          ja-JP: キーワード
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
@@ -329,6 +349,7 @@ metrics:
     i18n:
       zh-CN: 请求头
       en-US: Header
+      ja-JP: ヘッダ
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -340,11 +361,13 @@ metrics:
         i18n:
           zh-CN: Content Type
           en-US: Content Type
+          ja-JP: コンテンツタイプ
       - field: Content-Length
         type: 1
         i18n:
           zh-CN: 响应内容长度
           en-US: Content Length
+          ja-JP: コンテンツの長さ
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
