@@ -98,14 +98,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private static final int MAX_RETRIES = 3;
 
     private final VictoriaMetricsProperties victoriaMetricsProp;
-
     private final RestTemplate restTemplate;
+    private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
 
     private boolean isBatchImportEnabled = false;
-    private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
-
 
     public VictoriaMetricsDataStorage(VictoriaMetricsProperties victoriaMetricsProperties, RestTemplate restTemplate) {
         if (victoriaMetricsProperties == null) {
@@ -250,7 +248,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             doSaveData(contentList);
             return;
         }
-        offerToBufferQueue(contentList);
+        sendVictoriaMetrics(contentList);
     }
 
     @Override
@@ -548,7 +546,11 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         private Long[] timestamps;
     }
 
-    private void offerToBufferQueue(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList) {
+    /**
+     * add victoriaMetricsContent to buffer
+     * @param contentList victoriaMetricsContent List
+     */
+    private void sendVictoriaMetrics(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList) {
         for (VictoriaMetricsDataStorage.VictoriaMetricsContent content : contentList) {
             boolean offered = false;
             int retryCount = 0;
@@ -594,6 +596,9 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Regularly refresh the buffer queue to the vm
+     */
     private class MetricsFlushTask implements TimerTask {
         @Override
         public void run(Timeout timeout) {
@@ -604,7 +609,6 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                     doSaveData(batch);
                     log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
                 }
-                //cycle execute
                 if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
                     metricsFlushTimer.newTimeout(this, victoriaMetricsProp.insert().flushInterval(), TimeUnit.SECONDS);
                 }

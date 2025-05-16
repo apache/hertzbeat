@@ -102,16 +102,17 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private static final String MONITOR_METRIC_KEY = "__metric__";
     private static final long MAX_WAIT_MS = 500L;
     private static final int MAX_RETRIES = 3;
+
     private final VictoriaMetricsClusterProperties vmClusterProps;
     private final VictoriaMetricsInsertProperties vmInsertProps;
     private final VictoriaMetricsSelectProperties vmSelectProps;
-
     private final RestTemplate restTemplate;
-
-    private boolean isBatchImportEnabled = false;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
+
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
+    private boolean isBatchImportEnabled = false;
+
 
     public VictoriaMetricsClusterDataStorage(VictoriaMetricsClusterProperties vmClusterProps,
                                              RestTemplate restTemplate) {
@@ -264,7 +265,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 doSaveData(contentList);
                 return;
             }
-            offerToBufferQueue(contentList);
+            sendVictoriaMetrics(contentList);
         } catch (Exception e) {
             log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
         }
@@ -593,7 +594,11 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
     }
 
-    private void offerToBufferQueue(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList) {
+    /**
+     * add victoriaMetricsContent to buffer
+     * @param contentList victoriaMetricsContent List
+     */
+    private void sendVictoriaMetrics(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList) {
         for (VictoriaMetricsDataStorage.VictoriaMetricsContent content : contentList) {
             boolean offered = false;
             int retryCount = 0;
@@ -639,6 +644,9 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Regularly refresh the buffer queue to the vm
+     */
     private class MetricsFlushTask implements TimerTask {
         @Override
         public void run(Timeout timeout) {
@@ -649,7 +657,6 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                     doSaveData(batch);
                     log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
                 }
-                //cycle execute
                 if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
                     metricsFlushTimer.newTimeout(this, vmInsertProps.flushInterval(), TimeUnit.SECONDS);
                 }
