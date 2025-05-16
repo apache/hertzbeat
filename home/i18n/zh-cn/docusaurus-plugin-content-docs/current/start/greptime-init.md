@@ -1,19 +1,18 @@
 ---
 id: greptime-init  
-title: 依赖时序数据库服务 GreptimeDB 安装初始化（可选）
-sidebar_label: 指标数据存储 GreptimeDB
+title: 依赖时序数据库服务 Greptime 安装初始化 (推荐)
+sidebar_label: 指标数据存储 Greptime (推荐)
 ---
 
 Apache HertzBeat (incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
 
-> 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
+> 我们推荐使用并长期支持 Greptime 作为存储。
 
-[GreptimeDB](https://github.com/GreptimeTeam/greptimedb) is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.
-It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.
+[Greptime](https://github.com/GreptimeTeam/greptimedb) 是一个开源的云原生统一可观测性数据库，用于度量、日志和追踪，支持SQL/PromQL/流式处理。
 
 **⚠️ 若不配置时序数据库，则只会留最近一小时历史数据**
 
-### 通过Docker方式安装GreptimeDB
+### 通过Docker方式安装Greptime
 
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
@@ -24,7 +23,7 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
    Docker version 20.10.12, build e91ed57
    ```
 
-2. Docker安装GreptimeDB
+2. Docker安装Greptime
 
    ```shell
    $ docker run -d -p 127.0.0.1:4000-4003:4000-4003 \
@@ -70,6 +69,6 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
 
 ### 常见问题
 
-1. 时序数据库 GreptimeDB 或者 IoTDB 或者 TDengine 是否都需要配置，能不能都用
+1. 时序数据库是否都需要配置，能不能都用
 
    > 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。
