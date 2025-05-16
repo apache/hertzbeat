@@ -63,10 +63,11 @@ public class NacosSdCollectImpl extends AbstractCollect {
                 .port(metrics.getNacos_sd().getPort())
                 .discoveryClientTypeName("Nacos")
                 .build();
-                
+
+        DiscoveryClient discoveryClient = null;
         try {
             // Use the existing NacosDiscoveryClient through DiscoveryClientManagement
-            DiscoveryClient discoveryClient = discoveryClientManagement.getClient(registryProtocol);
+            discoveryClient = discoveryClientManagement.getClient(registryProtocol);
             if (discoveryClient == null) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("Failed to get Nacos discovery client");
@@ -88,14 +89,20 @@ public class NacosSdCollectImpl extends AbstractCollect {
                 valueRowBuilder.addColumn(service.getHealthStatus());
                 builder.addValueRow(valueRowBuilder.build());
             });
-            
-            // Close the client connection when done
-            discoveryClient.close();
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("Failed to fetch services from Nacos: {}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            // Close the discovery client to release resources
+            if (discoveryClient != null) {
+                try {
+                    discoveryClient.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close Nacos discovery client: {}", CommonUtil.getMessageFromThrowable(e));
+                }
+            }
         }
     }
     
