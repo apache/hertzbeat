@@ -19,12 +19,14 @@ package org.apache.hertzbeat.grafana.service;
 
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DATASOURCE_API;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_ACCESS;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_NAME;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_NAME; // e.g., "hertzbeat-"
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_TYPE;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.QUERY_DATASOURCE_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.QUERY_DATASOURCE_API; // e.g., "/api/datasources"
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
+import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -35,66 +37,102 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * Service for managing Grafana datasource.
- */
 @Service
 @Slf4j
 public class DatasourceService {
 
     private final GrafanaProperties grafanaProperties;
-    private final VictoriaMetricsProperties warehouseProperties;
     private final RestTemplate restTemplate;
+
+    private final String victoriaMetricsUrl;
+    private final boolean vmEnabled;
+    private final String greptimeUrl;
+    private final boolean greptimeEnabled;
 
     @Autowired
     public DatasourceService(
             GrafanaProperties grafanaProperties,
-            VictoriaMetricsProperties warehouseProperties,
+            VictoriaMetricsProperties victoriaMetricsProperties,
+            GreptimeProperties greptimeProperties,
             RestTemplate restTemplate
     ) {
         this.grafanaProperties = grafanaProperties;
-        this.warehouseProperties = warehouseProperties;
         this.restTemplate = restTemplate;
-    }
 
-    /**
-     * Create a new datasource in Grafana.
-     */
-    public void existOrCreateDatasource(String token) {
-        if (!warehouseProperties.enabled()) {
-            log.info("HertzBeat VictoriaMetrics config not enabled");
-            return;
+        // Initialize VictoriaMetrics settings
+        this.vmEnabled = victoriaMetricsProperties.enabled();
+        if (this.vmEnabled) {
+            this.victoriaMetricsUrl = victoriaMetricsProperties.url();
+        } else {
+            this.victoriaMetricsUrl = null;
         }
 
+        // Initialize GreptimeDB settings
+        this.greptimeEnabled = greptimeProperties.enabled();
+        if (this.greptimeEnabled) {
+            this.greptimeUrl = greptimeProperties.httpEndpoint();
+        } else {
+            this.greptimeUrl = null;
+        }
+    }
+
+    public void existOrCreateDatasource(String token) {
+        if (this.vmEnabled) {
+            if (this.victoriaMetricsUrl != null && !this.victoriaMetricsUrl.isEmpty()) {
+                createDatasource(token, "victoria-metrics", this.victoriaMetricsUrl);
+            } else {
+                log.warn("VictoriaMetrics is enabled but its URL is not configured. Skipping Grafana datasource creation.");
+            }
+        }
+        if (this.greptimeEnabled) {
+            if (this.greptimeUrl != null && !this.greptimeUrl.isEmpty()) {
+                createDatasource(token, "greptime", this.greptimeUrl);
+            } else {
+                log.warn("GreptimeDB is enabled but its URL is not configured. Skipping Grafana datasource creation.");
+            }
+        }
+        if (!this.vmEnabled && !this.greptimeEnabled) {
+            log.info("No supported TSDB config enabled for Grafana datasource creation.");
+        }
+    }
+
+    private void createDatasource(String token, String datasourceTypeSuffix, String specificWarehouseUrl) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
-        // query if exist this datasource
-        String queryUrl = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + QUERY_DATASOURCE_API;
+
+        String fullDatasourceName = DATASOURCE_NAME + datasourceTypeSuffix;
+
+        String queryByNameUrl = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + QUERY_DATASOURCE_API + "/name/" + fullDatasourceName;
         HttpEntity<Void> entity = new HttpEntity<>(headers);
+
         try {
-            ResponseEntity<String> response = restTemplate.exchange(queryUrl, HttpMethod.GET, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(queryByNameUrl, HttpMethod.GET, entity, String.class);
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("{} datasource exist", DATASOURCE_NAME);
+                log.info("Grafana datasource '{}' already exists.", fullDatasourceName);
             }
         } catch (HttpClientErrorException.NotFound notFound) {
+            log.info("Grafana datasource '{}' not found. Attempting to create...", fullDatasourceName);
             String createUrl = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + CREATE_DATASOURCE_API;
             String body = String.format(
-                    "{\"name\":\"%s\",\"type\":\"%s\",\"access\":\"%s\",\"url\":\"%s\",\"basicAuth\":%s}",
-                    DATASOURCE_NAME, DATASOURCE_TYPE, DATASOURCE_ACCESS, warehouseProperties.url(), false
+                    "{\"name\":\"%s\",\"type\":\"%s\",\"access\":\"%s\",\"url\":\"%s\",\"basicAuth\":%s,\"isDefault\":%s}",
+                    fullDatasourceName, DATASOURCE_TYPE, DATASOURCE_ACCESS, specificWarehouseUrl, false, false
             );
             HttpEntity<String> createEntity = new HttpEntity<>(body, headers);
             try {
                 ResponseEntity<String> createResponse = restTemplate.postForEntity(createUrl, createEntity, String.class);
                 if (createResponse.getStatusCode().is2xxSuccessful()) {
-                    log.info("Create datasource success");
+                    log.info("Grafana datasource '{}' created successfully.", fullDatasourceName);
+                } else {
+                    log.error("Failed to create Grafana datasource '{}'. Status: {}, Body: {}",
+                            fullDatasourceName, createResponse.getStatusCode(), createResponse.getBody());
                 }
             } catch (Exception e) {
-                log.error("Create datasource error", e);
+                log.error("Error creating Grafana datasource '{}' with URL '{}': {}",
+                        fullDatasourceName, specificWarehouseUrl, e.getMessage(), e);
             }
         } catch (Exception e) {
-            log.error("Query datasource error", e);
+            log.error("Error querying Grafana for datasource '{}': {}", fullDatasourceName, e.getMessage(), e);
         }
-        
     }
 }

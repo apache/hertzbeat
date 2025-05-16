@@ -36,7 +36,7 @@ public interface GrafanaConstants {
     
     String DELETE_DASHBOARD_API = "/api/dashboards/uid/%s";
     
-    String DATASOURCE_NAME = "hertzbeat-victoria-metrics";
+    String DATASOURCE_NAME = "hertzbeat-grafana-";
     
     String USE_DATASOURCE = "&var-ds=" + DATASOURCE_NAME;
     
