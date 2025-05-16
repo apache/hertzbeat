@@ -215,3 +215,14 @@
     [placeholder]="item.placeholder ? item.placeholder : ''"
   ></textarea>
 </nz-textarea-count>
+
+<ng-container *ngIf="item.type === 'label-selector'">
+  <app-label-selector
+    [(ngModel)]="value"
+    (ngModelChange)="onChange($event)"
+    [name]="item.field"
+    [id]="item.field"
+    [labelKeys]="extra.labelKeys"
+    [labelMap]="extra.labelMap"
+  />
+</ng-container>

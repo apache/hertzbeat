@@ -4,9 +4,10 @@
   </a>
 </p>
 
-<h4 align="center">
-<a href="README_CN.md">中文文档</a> | <a href="README.md">English Document</a>
-</h4>      
+<p align="center">
+<b>Readme</b>:
+<a href="README.md">English</a> | <b><a href="README_CN.md">中文</a></b> | <a href="README_JP.md">日本語</a>
+</p>
 
 > 实时监控系统，无需 Agent，性能集群，兼容 Prometheus，自定义监控和状态页构建能力。
 

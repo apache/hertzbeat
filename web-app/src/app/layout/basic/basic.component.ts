@@ -107,7 +107,7 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
                 d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5A2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5a2.5 2.5 0 0 0 2.5 2.5a2.5 2.5 0 0 0 2.5-2.5a2.5 2.5 0 0 0-2.5-2.5z"
               />
             </svg>
-            AI 助手
+            {{ 'ai.bot.title' | i18n }}
           </div>
           <div class="chatbot-controls">
             <span class="control-item" (click)="toggleMaximize()" title="{{ isChatbotMaximized ? '还原' : '最大化' }}">
@@ -137,8 +137,16 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
           </div>
         </div>
         <div class="chatbot-input">
-          <input nz-input placeholder="请输入问题..." [(ngModel)]="currentMessage" (keyup.enter)="sendMessage()" [disabled]="isLoading" />
-          <button nz-button nzType="primary" [disabled]="!currentMessage.trim() || isLoading" (click)="sendMessage()"> 发送 </button>
+          <input
+            nz-input
+            placeholder="{{ 'ai.bot.input.placeholder' | i18n }}"
+            [(ngModel)]="currentMessage"
+            (keyup.enter)="sendMessage()"
+            [disabled]="isLoading"
+          />
+          <button nz-button nzType="primary" [disabled]="!currentMessage.trim() || isLoading" (click)="sendMessage()">
+            {{ 'ai.bot.send' | i18n }}
+          </button>
         </div>
       </div>
     </div>
@@ -189,7 +197,7 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Initialize welcome message
     this.chatMessages.push({
-      content: '你好！我是AI助手，有什么可以帮助你的吗？',
+      content: this.i18nSvc.fanyi('ai.bot.greeting'),
       isUser: false,
       timestamp: new Date()
     });
@@ -273,7 +281,7 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
           console.error('AI response error:', error);
           // Add error message
           this.chatMessages.push({
-            content: '抱歉，连接AI助手时出现问题，请稍后再试。',
+            content: this.i18nSvc.fanyi('ai.bot.connect-fail'),
             isUser: false,
             timestamp: new Date()
           });

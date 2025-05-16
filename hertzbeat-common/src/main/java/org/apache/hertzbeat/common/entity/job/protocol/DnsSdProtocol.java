@@ -15,21 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.log.config;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Log auto configuration.
+ * Dns protocol
  */
-@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
-		+ SignConstants.DOT
-		+ ConfigConstants.FunctionModuleConstants.LOG
-)
-@EnableConfigurationProperties(GreptimeProperties.class)
-public class LogAutoConfiguration {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class DnsSdProtocol implements Protocol {
+    
+    private String host;
+
+    private String port;
+
+    private String recordType;
+
+    private String recordName;
 }

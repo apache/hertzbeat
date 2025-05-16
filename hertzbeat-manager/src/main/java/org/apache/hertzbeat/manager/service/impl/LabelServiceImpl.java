@@ -22,7 +22,11 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -116,5 +120,29 @@ public class LabelServiceImpl implements LabelService {
             return;
         }
         labelDao.deleteLabelsByIdIn(ids);
+    }
+
+    public List<Label> determineNewLabels(Set<Map.Entry<String, String>> originLabels){
+
+        if (originLabels == null || originLabels.isEmpty()) return List.of();
+
+        // Get all labels from the database
+        Set<Map.Entry<String, String>> allLabels = labelDao.findAll().stream()
+                .map(label -> Map.entry(label.getName(), label.getTagValue()))
+                .collect(Collectors.toSet());
+
+        // If the bound label (key:value) does not exist, then add it
+        Set<Map.Entry<String, String>> addLabelsKv = originLabels.stream()
+                .filter(label -> !allLabels.contains(label))
+                .collect(Collectors.toCollection(HashSet::new));
+
+        return addLabelsKv.stream().map(kv -> {
+            Label label = new Label();
+            label.setId(null);
+            label.setName(kv.getKey());
+            label.setTagValue(kv.getValue());
+            label.setType((byte) 0);
+            return label;
+        }).toList();
     }
 }
