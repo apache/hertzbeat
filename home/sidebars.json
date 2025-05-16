@@ -41,6 +41,7 @@
           "type": "category",
           "label": "change-db",
           "items": [
+            "start/greptime-init",
             "start/victoria-metrics-init",
             "start/iotdb-init",
             "start/influxdb-init",
