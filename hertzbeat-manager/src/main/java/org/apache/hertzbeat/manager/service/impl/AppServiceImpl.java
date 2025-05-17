@@ -679,18 +679,31 @@ public class AppServiceImpl implements AppService, InitializingBean {
 
         @Override
         public void delete(String app) {
+            validateAppName(app);
             var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
             var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
             var defineAppFile = new File(defineAppPath);
 
-            if (!defineAppFile.exists() && appDefines.containsKey(app.toLowerCase())){
-                throw new CommonException("the app define file is not in current file server provider");
+            if (!defineAppFile.exists() && appDefines.containsKey(app.toLowerCase())) {
+                throw new CommonException("The app define file is not in the current file server provider");
             }
 
             if (defineAppFile.exists() && defineAppFile.isFile()) {
                 defineAppFile.delete();
             }
             appDefines.remove(app.toLowerCase());
+        }
+
+        private void validateAppName(String app) {
+            if (app == null || app.isEmpty()) {
+                throw new IllegalArgumentException("App name cannot be null or empty");
+            }
+            if (app.contains("..") || app.contains("/") || app.contains("\\")) {
+                throw new IllegalArgumentException("Invalid app name: " + app);
+            }
+            if (!app.matches("^[a-zA-Z0-9_-]+$")) {
+                throw new IllegalArgumentException("App name contains invalid characters: " + app);
+            }
         }
     }
 
