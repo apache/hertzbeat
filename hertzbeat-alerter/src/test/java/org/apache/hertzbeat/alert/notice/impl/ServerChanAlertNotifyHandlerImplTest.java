@@ -49,71 +49,71 @@ import java.util.ResourceBundle;
  */
 @ExtendWith(MockitoExtension.class)
 class ServerChanAlertNotifyHandlerImplTest {
-
-        @Mock
-        private RestTemplate restTemplate;
-
-        @Mock
-        private AlerterProperties alerterProperties;
-
-        @Mock
-        private ResourceBundle bundle;
-
-        @InjectMocks
-        private ServerChanAlertNotifyHandlerImpl serverChanAlertNotifyHandler;
-
-        private NoticeReceiver receiver;
-        private GroupAlert groupAlert;
-        private NoticeTemplate template;
-
-        @BeforeEach
-        public void setUp() {
-                receiver = new NoticeReceiver();
-                receiver.setId(1L);
-                receiver.setName("test-receiver");
-                receiver.setAccessToken("test-token");
-                receiver.setServerChanToken("SCT193569TSNm6xIabdjqeZPtOGOWcvU1e");
-
-                groupAlert = new GroupAlert();
-                SingleAlert singleAlert = new SingleAlert();
-                singleAlert.setLabels(new HashMap<>());
-                singleAlert.getLabels().put("severity", "critical");
-                singleAlert.getLabels().put("alertname", "Test Alert");
-
-                List<SingleAlert> alerts = new ArrayList<>();
-                alerts.add(singleAlert);
-                groupAlert.setAlerts(alerts);
-
-                template = new NoticeTemplate();
-                template.setId(1L);
-                template.setName("test-template");
-                template.setContent("test content");
-
-                lenient().when(alerterProperties.getServerChanWebhookUrl())
-                                .thenReturn("https://api.serverchan.com/send/%s");
-                lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-        }
-
-        @Test
-        public void testNotifyAlertSuccess() {
-                CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
-                successResp.setErrCode(0);
-                successResp.setMsg("success");
-                ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
-
-                when(restTemplate.postForEntity(
-                                any(String.class),
-                                any(),
-                                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
-
-                serverChanAlertNotifyHandler.send(receiver, template, groupAlert);
-        }
-
-        @Test
-        public void testNotifyAlertWithInvalidUrl() {
-                when(alerterProperties.getServerChanWebhookUrl()).thenReturn("http://invalid-url.com/%s");
-
-                assertThrows(AlertNoticeException.class,
-                                () -> serverChanAlertNotifyHandler.send(receiver, template, groupAlert));
-        }
+    
+    @Mock
+    private RestTemplate restTemplate;
+    
+    @Mock
+    private AlerterProperties alerterProperties;
+    
+    @Mock
+    private ResourceBundle bundle;
+    
+    @InjectMocks
+    private ServerChanAlertNotifyHandlerImpl serverChanAlertNotifyHandler;
+    
+    private NoticeReceiver receiver;
+    private GroupAlert groupAlert;
+    private NoticeTemplate template;
+    
+    @BeforeEach
+    public void setUp() {
+        receiver = new NoticeReceiver();
+        receiver.setId(1L);
+        receiver.setName("test-receiver");
+        receiver.setAccessToken("test-token");
+        receiver.setServerChanToken("SCT193569TSNm6xIabdjqeZPtOGOWcvU1e");
+        
+        groupAlert = new GroupAlert();
+        SingleAlert singleAlert = new SingleAlert();
+        singleAlert.setLabels(new HashMap<>());
+        singleAlert.getLabels().put("severity", "critical");
+        singleAlert.getLabels().put("alertname", "Test Alert");
+        
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+        
+        template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("test-template");
+        template.setContent("test content");
+        
+        lenient().when(alerterProperties.getServerChanWebhookUrl())
+                .thenReturn("https://api.serverchan.com/send/%s");
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+    }
+    
+    @Test
+    public void testNotifyAlertSuccess() {
+        CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
+        successResp.setErrCode(0);
+        successResp.setMsg("success");
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
+        
+        serverChanAlertNotifyHandler.send(receiver, template, groupAlert);
+    }
+    
+    @Test
+    public void testNotifyAlertWithInvalidUrl() {
+        when(alerterProperties.getServerChanWebhookUrl()).thenReturn("http://invalid-url.com/%s");
+        
+        assertThrows(AlertNoticeException.class,
+                () -> serverChanAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
 }
