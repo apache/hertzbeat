@@ -42,9 +42,14 @@ import org.springframework.stereotype.Component;
 final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert)
+            throws AlertNoticeException {
         try {
-            String url = String.format(alerterProperties.getTelegramWebhookUrl(), receiver.getTgBotToken());
+            String token = receiver.getTgBotToken();
+            if (!isValidTelegramToken(token)) {
+                throw new AlertNoticeException("Invalid Telegram Bot Token");
+            }
+            String url = String.format(alerterProperties.getTelegramWebhookUrl(), token);
             TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
                     .chatId(receiver.getTgUserId())
                     .text(renderContent(noticeTemplate, alert))
@@ -54,7 +59,8 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<TelegramBotNotifyDTO> telegramEntity = new HttpEntity<>(notifyBody, headers);
-            ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, telegramEntity, TelegramBotNotifyResponse.class);
+            ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, telegramEntity,
+                    TelegramBotNotifyResponse.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 TelegramBotNotifyResponse body = entity.getBody();
                 if (body.ok) {
@@ -99,4 +105,10 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         private String description;
     }
 
+    private boolean isValidTelegramToken(String token) {
+        // Adjusted pattern to match real Telegram Bot tokens like
+        // 110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw
+        String tokenPattern = "^[0-9]+:[a-zA-Z0-9_-]+$";
+        return token != null && token.matches(tokenPattern);
+    }
 }

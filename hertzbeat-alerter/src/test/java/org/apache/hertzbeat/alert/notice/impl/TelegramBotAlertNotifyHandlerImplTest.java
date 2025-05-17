@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -51,10 +52,10 @@ class TelegramBotAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-    
+
     @Mock
     private AlerterProperties alerterProperties;
-    
+
     @Mock
     private ResourceBundle bundle;
 
@@ -70,58 +71,57 @@ class TelegramBotAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        receiver.setAccessToken("test-token");
+        receiver.setTgBotToken("123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11");
         receiver.setTgUserId("123456789"); // Telegram specific - chat ID
-        
+
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
         singleAlert.setLabels(new HashMap<>());
         singleAlert.getLabels().put("severity", "critical");
         singleAlert.getLabels().put("alertname", "Test Alert");
-        
+
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
-        
+
         template = new NoticeTemplate();
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
-        
-        when(alerterProperties.getTelegramWebhookUrl()).thenReturn("https://api.telegram.org/bot%s/sendMessage");
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+
+        lenient().when(alerterProperties.getTelegramWebhookUrl())
+                .thenReturn("https://api.telegram.org/bot%s/sendMessage");
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
     }
 
     @Test
     public void testNotifyAlertSuccess() {
-        TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse successResp = 
-            new TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse();
+        TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse successResp = new TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse();
         successResp.setOk(true);
         successResp.setDescription("Test Success");
-        
-        ResponseEntity<TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse> responseEntity = 
-            new ResponseEntity<>(successResp, HttpStatus.OK);
-        
-        when(restTemplate.postForEntity(any(String.class), any(), 
+
+        ResponseEntity<TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse> responseEntity = new ResponseEntity<>(
+                successResp, HttpStatus.OK);
+
+        when(restTemplate.postForEntity(any(String.class), any(),
                 eq(TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse.class))).thenReturn(responseEntity);
-        
+
         telegramBotAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
     public void testNotifyAlertFailure() {
-        TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse successResp =
-                new TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse();
-        successResp.setOk(false);
-        successResp.setDescription("Test failed");
+        TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse failureResp = new TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse();
+        failureResp.setOk(false);
+        failureResp.setDescription("Test failed");
 
-        ResponseEntity<TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse> responseEntity =
-                new ResponseEntity<>(successResp, HttpStatus.BAD_REQUEST);
+        ResponseEntity<TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse> responseEntity = new ResponseEntity<>(
+                failureResp, HttpStatus.OK);
 
         when(restTemplate.postForEntity(any(String.class), any(),
                 eq(TelegramBotAlertNotifyHandlerImpl.TelegramBotNotifyResponse.class))).thenReturn(responseEntity);
-        
-        assertThrows(AlertNoticeException.class, 
+
+        assertThrows(AlertNoticeException.class,
                 () -> telegramBotAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }
