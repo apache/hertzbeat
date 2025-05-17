@@ -44,7 +44,11 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {
         try {
-            String url = String.format(alerterProperties.getTelegramWebhookUrl(), receiver.getTgBotToken());
+            String token = receiver.getTgBotToken();
+            if (!isValidTelegramToken(token)) {
+                throw new AlertNoticeException("Invalid Telegram Bot Token");
+            }
+            String url = String.format(alerterProperties.getTelegramWebhookUrl(), token);
             TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
                     .chatId(receiver.getTgUserId())
                     .text(renderContent(noticeTemplate, alert))
@@ -99,4 +103,9 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         private String description;
     }
 
+    private boolean isValidTelegramToken(String token) {
+        // Example validation: Ensure the token matches the expected Telegram Bot API token format
+        String tokenPattern = "^[0-9]{9}:[a-zA-Z0-9_-]{35}$"; // Example regex for Telegram Bot tokens
+        return token != null && token.matches(tokenPattern);
+    }
 }
