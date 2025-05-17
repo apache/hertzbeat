@@ -210,6 +210,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     public byte type() {
         return 6;
     }
+    
     private boolean isValidBaseUrl(String baseUrl) {
         // Ensure the base URL is a trusted, fixed URL
         return baseUrl != null && baseUrl.startsWith("https://trusted-domain.com/");

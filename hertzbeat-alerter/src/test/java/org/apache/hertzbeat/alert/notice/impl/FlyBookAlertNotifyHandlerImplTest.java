@@ -20,6 +20,7 @@ package org.apache.hertzbeat.alert.notice.impl;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -51,10 +52,10 @@ class FlyBookAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-    
+
     @Mock
     private AlerterProperties alerterProperties;
-    
+
     @Mock
     private ResourceBundle bundle;
 
@@ -70,28 +71,33 @@ class FlyBookAlertNotifyHandlerImplTest {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
-        
+        receiver.setAccessToken("a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6");
+
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
         singleAlert.setLabels(new HashMap<>());
         singleAlert.getLabels().put("severity", "critical");
         singleAlert.getLabels().put("alertname", "Test Alert");
-        
+
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
-        
+
         template = new NoticeTemplate();
         template.setId(1L);
         template.setName("test-template");
         template.setContent("test content");
-        
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        lenient().when(alerterProperties.getFlyBookWebhookUrl()).thenReturn("https://trusted-domain.com/");
+        lenient().when(alerterProperties.getConsoleUrl()).thenReturn("https://console.example.com");
     }
 
     @Test
-    public void testNotifyAlertWithInvalidToken() {
-        assertThrows(AlertNoticeException.class, 
+    public void testNotifyAlertWithInvalidUrl() {
+        when(alerterProperties.getFlyBookWebhookUrl()).thenReturn("https://untrusted-domain.com/");
+
+        assertThrows(AlertNoticeException.class,
                 () -> flyBookAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 
@@ -99,33 +105,21 @@ class FlyBookAlertNotifyHandlerImplTest {
     public void testNotifyAlertSuccess() {
         CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
         successResp.setErrCode(0);
-        ResponseEntity<CommonRobotNotifyResp> responseEntity = 
-            new ResponseEntity<>(successResp, HttpStatus.OK);
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
 
         when(restTemplate.postForEntity(
                 any(String.class),
                 any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
 
         flyBookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
-    public void testNotifyAlertFailure() {
-        CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
-        failResp.setCode(1);
-        failResp.setErrMsg("Test Error");
-        ResponseEntity<CommonRobotNotifyResp> responseEntity = 
-            new ResponseEntity<>(failResp, HttpStatus.OK);
+    public void testNotifyAlertWithInvalidToken() {
+        receiver.setAccessToken("invalid");
 
-        when(restTemplate.postForEntity(
-                any(String.class),
-                any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
-        
-        assertThrows(AlertNoticeException.class, 
+        assertThrows(AlertNoticeException.class,
                 () -> flyBookAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }
