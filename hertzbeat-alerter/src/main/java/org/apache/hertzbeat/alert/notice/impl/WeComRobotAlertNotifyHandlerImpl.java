@@ -175,6 +175,7 @@ final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         }
 
     }
+    
     /**
      * Validate the WeChat ID to ensure it meets the expected format.
      *
