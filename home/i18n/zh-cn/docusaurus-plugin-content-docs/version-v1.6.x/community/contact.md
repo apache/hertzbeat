@@ -14,7 +14,7 @@ sidebar_label: 交流联系
 
 微信公众号 : 搜索 ID `usthecom`.
 
-[QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : 群号 `630061200`
+[QQ交流群](https://qm.qq.com/q/xxqecSC2cw) : 群号 `1035688434`
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 

@@ -546,7 +546,7 @@ WeChatグループ : `ahertzbeat` を検索.
 
 WeChat公式アカウント : `usthecom`を検索.
 
-[QQグループ](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : グループ番号　`630061200`
+[QQグループ](https://qm.qq.com/q/xxqecSC2cw) : グループ番号　`1035688434`
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
