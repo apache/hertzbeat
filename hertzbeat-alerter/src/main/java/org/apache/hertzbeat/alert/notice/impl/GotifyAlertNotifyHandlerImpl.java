@@ -32,6 +32,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * Gotify alert notify handler
  */
@@ -107,6 +109,7 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         }
 
     }
+    
     /**
      * Validate the webhook URL against a whitelist of allowed base URLs.
      *
