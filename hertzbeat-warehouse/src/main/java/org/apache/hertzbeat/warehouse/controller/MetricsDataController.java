@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.controller;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +30,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Indicator data query interface
@@ -99,17 +100,9 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
-        // Validate metrics and metric against a whitelist
-        if (!isValidMetric(metrics) || !isValidMetric(metric)) {
-            throw new IllegalArgumentException("Invalid metrics or metric value: " + metricFull);
-        }
+        
         MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, interval);
         return ResponseEntity.ok(Message.success(historyData));
     }
 
-    private boolean isValidMetric(String value) {
-        // Define a whitelist of allowed metric values
-        List<String> allowedMetrics = List.of("cpu", "memory", "disk", "network");
-        return allowedMetrics.contains(value);
-    }
 }
