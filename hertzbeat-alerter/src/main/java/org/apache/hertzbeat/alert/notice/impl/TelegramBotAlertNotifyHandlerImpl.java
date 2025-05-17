@@ -42,7 +42,8 @@ import org.springframework.stereotype.Component;
 final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
-    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {
+    public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert)
+            throws AlertNoticeException {
         try {
             String token = receiver.getTgBotToken();
             if (!isValidTelegramToken(token)) {
@@ -58,7 +59,8 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<TelegramBotNotifyDTO> telegramEntity = new HttpEntity<>(notifyBody, headers);
-            ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, telegramEntity, TelegramBotNotifyResponse.class);
+            ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, telegramEntity,
+                    TelegramBotNotifyResponse.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 TelegramBotNotifyResponse body = entity.getBody();
                 if (body.ok) {
@@ -104,8 +106,9 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     }
 
     private boolean isValidTelegramToken(String token) {
-        // Example validation: Ensure the token matches the expected Telegram Bot API token format
-        String tokenPattern = "^[0-9]{9}:[a-zA-Z0-9_-]{35}$"; // Example regex for Telegram Bot tokens
+        // Adjusted pattern to match real Telegram Bot tokens like
+        // 110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw
+        String tokenPattern = "^[0-9]+:[a-zA-Z0-9_-]+$";
         return token != null && token.matches(tokenPattern);
     }
 }
