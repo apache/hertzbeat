@@ -54,7 +54,15 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             String notificationContent = JsonUtil.toJson(renderContent(noticeTemplate, alert));
             // todo priority custom the color 
             String cardMessage = createLarkMessage(receiver.getUserId(), notificationContent, (byte) 1);
-            String webHookUrl = alerterProperties.getFlyBookWebhookUrl() + receiver.getAccessToken();
+            String baseUrl = alerterProperties.getFlyBookWebhookUrl();
+            if (!isValidBaseUrl(baseUrl)) {
+                throw new AlertNoticeException("Invalid base URL for FlyBook webhook.");
+            }
+            String accessToken = receiver.getAccessToken();
+            if (!isValidAccessToken(accessToken)) {
+                throw new AlertNoticeException("Invalid access token for FlyBook webhook.");
+            }
+            String webHookUrl = baseUrl + accessToken;
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> flyEntity = new HttpEntity<>(cardMessage, headers);
@@ -201,5 +209,14 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     @Override
     public byte type() {
         return 6;
+    }
+    private boolean isValidBaseUrl(String baseUrl) {
+        // Ensure the base URL is a trusted, fixed URL
+        return baseUrl != null && baseUrl.startsWith("https://trusted-domain.com/");
+    }
+
+    private boolean isValidAccessToken(String accessToken) {
+        // Validate the access token format (e.g., alphanumeric, specific length)
+        return accessToken != null && accessToken.matches("^[a-zA-Z0-9_-]{20,50}$");
     }
 }
