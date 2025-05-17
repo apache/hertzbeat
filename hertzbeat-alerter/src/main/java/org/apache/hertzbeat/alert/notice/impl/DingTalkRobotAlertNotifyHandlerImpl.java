@@ -54,7 +54,15 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<DingTalkWebHookDto> httpEntity = new HttpEntity<>(dingTalkWebHookDto, headers);
-            String webHookUrl = alerterProperties.getDingTalkWebhookUrl() + receiver.getAccessToken();
+            String baseUrl = alerterProperties.getDingTalkWebhookUrl();
+            String accessToken = receiver.getAccessToken();
+            if (StringUtils.isBlank(accessToken) || !accessToken.matches("^[a-zA-Z0-9_-]+$")) {
+                throw new AlertNoticeException("Invalid access token provided for DingTalk webhook.");
+            }
+            String webHookUrl = baseUrl + accessToken;
+            if (!webHookUrl.startsWith(baseUrl)) {
+                throw new AlertNoticeException("Constructed webhook URL does not match the trusted base URL.");
+            }
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
