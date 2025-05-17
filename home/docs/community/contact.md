@@ -14,7 +14,7 @@ WeChat Group : Add friend `ahertzbeat` and invite to the group.
 
 WeChat Public : Search  ID `usthecom`.
 
-[QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `630061200`
+[QQ Group](https://qm.qq.com/q/xxqecSC2cw) : Group num `1035688434`
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
