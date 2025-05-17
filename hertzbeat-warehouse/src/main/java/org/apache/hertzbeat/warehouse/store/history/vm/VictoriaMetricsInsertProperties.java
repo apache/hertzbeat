@@ -17,12 +17,16 @@
 
 package org.apache.hertzbeat.warehouse.store.history.vm;
 
+import org.springframework.boot.context.properties.bind.DefaultValue;
+
 /**
  * vminsert configuration information
  */
 public record VictoriaMetricsInsertProperties(
         String url,
         String username,
-        String password
+        String password,
+        @DefaultValue("1000") int bufferSize,
+        @DefaultValue("3") int flushInterval
 ) {
 }

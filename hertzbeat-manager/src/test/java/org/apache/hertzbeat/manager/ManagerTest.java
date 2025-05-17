@@ -37,7 +37,7 @@ import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.MetricsCollectorQueue;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
-import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatcher;
+import org.apache.hertzbeat.collector.timer.TimerDispatcher;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.DataSizeConvert;
 import org.apache.hertzbeat.common.config.CommonConfig;
 import org.apache.hertzbeat.common.config.CommonProperties;

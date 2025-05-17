@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch.timer;
+package org.apache.hertzbeat.common.timer;
 
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;

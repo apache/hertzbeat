@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch.timer;
+package org.apache.hertzbeat.common.timer;
 
 /**
  * Derived from Apache Dubbo org.apache.dubbo.common.timer.Timeout 

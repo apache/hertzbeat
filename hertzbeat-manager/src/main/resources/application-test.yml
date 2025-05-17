@@ -60,6 +60,9 @@ warehouse:
       url: http://localhost:8428
       username: root
       password: root
+      insert:
+        buffer-size: 1000
+        flush-interval: 3
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver

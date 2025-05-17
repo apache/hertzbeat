@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch.timer;
+package org.apache.hertzbeat.collector.timer;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -28,6 +28,8 @@ import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
+import org.apache.hertzbeat.common.timer.Timeout;
+import org.apache.hertzbeat.common.timer.TimerTask;
 import org.apache.hertzbeat.common.util.AesUtil;
 
 import java.util.ArrayList;
