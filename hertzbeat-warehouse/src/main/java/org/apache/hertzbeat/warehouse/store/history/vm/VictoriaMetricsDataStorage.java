@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
@@ -67,6 +69,9 @@ import org.springframework.web.util.UriComponentsBuilder;
  * VictoriaMetrics data storage
  */
 @Primary
+private static final Set<String> ALLOWED_METRICS = new HashSet<>(Arrays.asList(
+        "cpu", "memory", "disk", "network" // Add all allowed metric names here
+));
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.victoria-metrics", name = "enabled", havingValue = "true")
 @Slf4j
@@ -467,6 +472,11 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 }
             }
             // avg
+            // Validate the metrics parameter against the whitelist
+            if (!ALLOWED_METRICS.contains(metrics)) {
+                throw new IllegalArgumentException("Invalid metrics parameter: " + metrics);
+            }
+
             uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
