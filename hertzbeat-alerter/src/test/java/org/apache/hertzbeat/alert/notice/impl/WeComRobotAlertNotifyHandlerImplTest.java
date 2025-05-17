@@ -49,79 +49,76 @@ import java.util.ResourceBundle;
 @ExtendWith(MockitoExtension.class)
 class WeComRobotAlertNotifyHandlerImplTest {
 
-    @Mock
-    private RestTemplate restTemplate;
-    
-    @Mock
-    private AlerterProperties alerterProperties;
-    
-    @Mock
-    private ResourceBundle bundle;
+        @Mock
+        private RestTemplate restTemplate;
 
-    @InjectMocks
-    private WeComRobotAlertNotifyHandlerImpl weComRobotAlertNotifyHandler;
+        @Mock
+        private AlerterProperties alerterProperties;
 
-    private NoticeReceiver receiver;
-    private GroupAlert groupAlert;
-    private NoticeTemplate template;
+        @Mock
+        private ResourceBundle bundle;
 
-    @BeforeEach
-    public void setUp() {
-        receiver = new NoticeReceiver();
-        receiver.setId(1L);
-        receiver.setName("test-receiver");
-        receiver.setAccessToken("test-token");
-        
-        groupAlert = new GroupAlert();
-        SingleAlert singleAlert = new SingleAlert();
-        singleAlert.setLabels(new HashMap<>());
-        singleAlert.getLabels().put("severity", "critical");
-        singleAlert.getLabels().put("alertname", "Test Alert");
-        
-        List<SingleAlert> alerts = new ArrayList<>();
-        alerts.add(singleAlert);
-        groupAlert.setAlerts(alerts);
-        
-        template = new NoticeTemplate();
-        template.setId(1L);
-        template.setName("test-template");
-        template.setContent("test content");
-        
-        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-    }
-    
-    @Test
-    public void testNotifyAlertSuccess() {
-        CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
-        successResp.setErrCode(0);
-        ResponseEntity<CommonRobotNotifyResp> responseEntity =
-                new ResponseEntity<>(successResp, HttpStatus.OK);
+        @InjectMocks
+        private WeComRobotAlertNotifyHandlerImpl weComRobotAlertNotifyHandler;
 
-        when(restTemplate.postForEntity(
-                any(String.class),
-                any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
-        
-        weComRobotAlertNotifyHandler.send(receiver, template, groupAlert);
-    }
+        private NoticeReceiver receiver;
+        private GroupAlert groupAlert;
+        private NoticeTemplate template;
 
-    @Test
-    public void testNotifyAlertFailure() {
-        CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
-        failResp.setCode(1);
-        failResp.setErrMsg("Test Error");
-        ResponseEntity<CommonRobotNotifyResp> responseEntity =
-                new ResponseEntity<>(failResp, HttpStatus.OK);
+        @BeforeEach
+        public void setUp() {
+                receiver = new NoticeReceiver();
+                receiver.setId(1L);
+                receiver.setName("test-receiver");
+                receiver.setAccessToken("test-token");
+                receiver.setWechatId("test-wechat-id");
 
-        when(restTemplate.postForEntity(
-                any(String.class),
-                any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
-        
-        assertThrows(AlertNoticeException.class, 
-                () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
-    }
+                groupAlert = new GroupAlert();
+                SingleAlert singleAlert = new SingleAlert();
+                singleAlert.setLabels(new HashMap<>());
+                singleAlert.getLabels().put("severity", "critical");
+                singleAlert.getLabels().put("alertname", "Test Alert");
+
+                List<SingleAlert> alerts = new ArrayList<>();
+                alerts.add(singleAlert);
+                groupAlert.setAlerts(alerts);
+
+                template = new NoticeTemplate();
+                template.setId(1L);
+                template.setName("test-template");
+                template.setContent("test content");
+
+                when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
+                when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        }
+
+        @Test
+        public void testNotifyAlertSuccess() {
+                CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
+                successResp.setErrCode(0);
+                ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
+
+                when(restTemplate.postForEntity(
+                                any(String.class),
+                                any(),
+                                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
+
+                weComRobotAlertNotifyHandler.send(receiver, template, groupAlert);
+        }
+
+        @Test
+        public void testNotifyAlertFailure() {
+                CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
+                failResp.setCode(1);
+                failResp.setErrMsg("Test Error");
+                ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(failResp, HttpStatus.OK);
+
+                when(restTemplate.postForEntity(
+                                any(String.class),
+                                any(),
+                                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
+
+                assertThrows(AlertNoticeException.class,
+                                () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
+        }
 }
