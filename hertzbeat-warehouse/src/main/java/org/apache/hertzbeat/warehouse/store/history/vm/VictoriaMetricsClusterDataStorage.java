@@ -378,6 +378,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
+        // Validate the metrics input against a predefined whitelist
+        List<String> allowedMetrics = List.of("cpu", "memory", "disk", "network"); // Example whitelist
+        if (!allowedMetrics.contains(metrics)) {
+            throw new IllegalArgumentException("Invalid metrics value: " + metrics);
+        }
+
         String timeSeriesSelector = Stream.of(
                 LABEL_KEY_NAME + "=\"" + labelName + "\"",
                 LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"",
