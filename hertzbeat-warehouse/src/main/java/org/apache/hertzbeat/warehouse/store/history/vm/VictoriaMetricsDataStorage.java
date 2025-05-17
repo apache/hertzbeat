@@ -361,7 +361,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            // Ensure victoriaMetricsProp.url() is a trusted base URL
+            String baseUrl = victoriaMetricsProp.url();
+            if (!isTrustedBaseUrl(baseUrl)) {
+                throw new IllegalStateException("Untrusted base URL: " + baseUrl);
+            }
+            URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -531,5 +536,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
          * every timestamp is associated with the value at the corresponding position
          */
         private Long[] timestamps;
+    }
+
+    private boolean isTrustedBaseUrl(String url) {
+        // Define a trusted base URL
+        return url.equals("http://trusted-victoriametrics-server.com");
     }
 }

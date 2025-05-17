@@ -99,7 +99,17 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
+        // Validate metrics and metric against a whitelist
+        if (!isValidMetric(metrics) || !isValidMetric(metric)) {
+            throw new IllegalArgumentException("Invalid metrics or metric value: " + metricFull);
+        }
         MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, interval);
         return ResponseEntity.ok(Message.success(historyData));
+    }
+
+    private boolean isValidMetric(String value) {
+        // Define a whitelist of allowed metric values
+        List<String> allowedMetrics = List.of("cpu", "memory", "disk", "network");
+        return allowedMetrics.contains(value);
     }
 }
