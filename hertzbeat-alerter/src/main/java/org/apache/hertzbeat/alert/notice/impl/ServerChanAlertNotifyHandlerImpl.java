@@ -31,6 +31,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * Send alarm information through Server
  */
@@ -54,7 +56,16 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto> httpEntity = new HttpEntity<>(serverChanWebHookDto, headers);
-            String webHookUrl = String.format(alerterProperties.getServerChanWebhookUrl(), receiver.getServerChanToken());
+            String sanitizedToken = receiver.getServerChanToken().replaceAll("[^a-zA-Z0-9_-]", "");
+            String webHookUrl = String.format(alerterProperties.getServerChanWebhookUrl(), sanitizedToken);
+            
+            // Validate the constructed URL against a whitelist
+            List<String> allowedBaseUrls = List.of("https://api.serverchan.com", "https://serverchan.example.com");
+            boolean isValidUrl = allowedBaseUrls.stream().anyMatch(webHookUrl::startsWith);
+            if (!isValidUrl) {
+                throw new AlertNoticeException("Invalid webhook URL: " + webHookUrl);
+            }
+            
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
