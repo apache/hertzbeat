@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import java.net.URI;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
