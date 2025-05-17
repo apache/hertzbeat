@@ -99,6 +99,11 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
+        // Validate metrics against a whitelist
+        List<String> allowedMetrics = List.of("cpu", "memory", "disk", "network"); // Example whitelist
+        if (!allowedMetrics.contains(metrics)) {
+            throw new IllegalArgumentException("metrics name: " + metrics + " is not allowed.");
+        }
         MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, interval);
         return ResponseEntity.ok(Message.success(historyData));
     }
