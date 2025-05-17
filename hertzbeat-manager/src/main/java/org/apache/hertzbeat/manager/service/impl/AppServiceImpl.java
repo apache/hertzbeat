@@ -666,6 +666,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
 
         @Override
         public void save(String app, String ymlContent) {
+            validateAppName(app);
             var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
             var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
             var defineAppFile = new File(defineAppPath);
@@ -673,24 +674,34 @@ public class AppServiceImpl implements AppService, InitializingBean {
                 FileUtils.writeStringToFile(defineAppFile, ymlContent, StandardCharsets.UTF_8, false);
             } catch (Exception e) {
                 log.error(e.getMessage());
-                throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
+                throw new RuntimeException("Flush file " + defineAppPath + " error: " + e.getMessage());
             }
         }
 
         @Override
         public void delete(String app) {
+            validateAppName(app);
             var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
             var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
             var defineAppFile = new File(defineAppPath);
 
-            if (!defineAppFile.exists() && appDefines.containsKey(app.toLowerCase())){
-                throw new CommonException("the app define file is not in current file server provider");
+            if (!defineAppFile.exists() && appDefines.containsKey(app.toLowerCase())) {
+                throw new CommonException("The app define file is not in the current file server provider");
             }
 
             if (defineAppFile.exists() && defineAppFile.isFile()) {
                 defineAppFile.delete();
             }
             appDefines.remove(app.toLowerCase());
+        }
+    }
+
+    private void validateAppName(String app) {
+        if (app == null || app.isEmpty() || app.contains("..") || app.contains("/") || app.contains("\\")) {
+            throw new IllegalArgumentException("Invalid app name: " + app);
+        }
+        if (!app.matches("^[a-zA-Z0-9_-]+$")) {
+            throw new IllegalArgumentException("App name must only contain alphanumeric characters, dashes, or underscores: " + app);
         }
     }
 
