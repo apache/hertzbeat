@@ -287,7 +287,8 @@ public class PluginServiceImpl implements PluginService {
                 throw new CommonException("File is outside the allowed directory: " + canonicalPath);
             }
         } catch (IOException e) {
-            throw new CommonException("Error validating file path: " + file.getAbsolutePath(), e);
+            log.error("Error validating file path: {}", file.getAbsolutePath(), e);
+            throw new CommonException("Error validating file path: " + file.getAbsolutePath());
         }
     }
 
