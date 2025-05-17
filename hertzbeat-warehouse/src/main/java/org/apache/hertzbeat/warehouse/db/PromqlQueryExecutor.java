@@ -150,6 +150,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
+                validateDatasourceQuery(datasourceQuery);
                 uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_RANGE_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .queryParam(HTTP_START_PARAM, datasourceQuery.getStart())
@@ -157,12 +158,14 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
                         .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
                         .build().toUri();
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
+                validateDatasourceQuery(datasourceQuery);
                 uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .build().toUri();
             } else {
                 throw new IllegalArgumentException(String.format("no such time type for query id {}.", datasourceQuery.getRefId()));
             }
+            validateUri(uri);
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,
                     PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -214,4 +217,21 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
         return StringUtils.hasText(queryLanguage) && queryLanguage.equalsIgnoreCase(supportQueryLanguage);
     }
 
+    private void validateDatasourceQuery(DatasourceQuery datasourceQuery) {
+        if (!StringUtils.hasText(datasourceQuery.getExpr()) || datasourceQuery.getExpr().length() > 1000) {
+            throw new IllegalArgumentException("Invalid query expression");
+        }
+        if (datasourceQuery.getTimeType().equals(RANGE)) {
+            if (datasourceQuery.getStart() == null || datasourceQuery.getEnd() == null || datasourceQuery.getStep() == null) {
+                throw new IllegalArgumentException("Missing required parameters for range query");
+            }
+        }
+    }
+
+    private void validateUri(URI uri) {
+        String host = uri.getHost();
+        if (host == null || !host.equals(httpPromqlProperties.url().replace("http://", "").replace("https://", ""))) {
+            throw new IllegalArgumentException("Invalid URI host");
+        }
+    }
 }
