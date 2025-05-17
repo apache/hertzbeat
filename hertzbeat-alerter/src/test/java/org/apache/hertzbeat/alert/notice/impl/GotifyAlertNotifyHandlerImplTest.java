@@ -49,70 +49,70 @@ import java.util.ResourceBundle;
  */
 @ExtendWith(MockitoExtension.class)
 class GotifyAlertNotifyHandlerImplTest {
-
-        @Mock
-        private RestTemplate restTemplate;
-
-        @Mock
-        private AlerterProperties alerterProperties;
-
-        @Mock
-        private ResourceBundle bundle;
-
-        @InjectMocks
-        private GotifyAlertNotifyHandlerImpl gotifyAlertNotifyHandler;
-
-        private NoticeReceiver receiver;
-        private GroupAlert groupAlert;
-        private NoticeTemplate template;
-
-        @BeforeEach
-        public void setUp() {
-                receiver = new NoticeReceiver();
-                receiver.setId(1L);
-                receiver.setName("test-receiver");
-                receiver.setAccessToken("test-token");
-                receiver.setGotifyToken("A845h__ZMqDxZlO");
-
-                groupAlert = new GroupAlert();
-                SingleAlert singleAlert = new SingleAlert();
-                singleAlert.setLabels(new HashMap<>());
-                singleAlert.getLabels().put("severity", "critical");
-                singleAlert.getLabels().put("alertname", "Test Alert");
-
-                List<SingleAlert> alerts = new ArrayList<>();
-                alerts.add(singleAlert);
-                groupAlert.setAlerts(alerts);
-
-                template = new NoticeTemplate();
-                template.setId(1L);
-                template.setName("test-template");
-                template.setContent("test content");
-
-                lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
-                lenient().when(alerterProperties.getGotifyWebhookUrl())
-                                .thenReturn("https://trusted-gotify-server.com/%s");
-        }
-
-        @Test
-        public void testNotifyAlertSuccess() {
-                CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
-                successResp.setErrCode(0);
-                ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
-
-                when(restTemplate.postForEntity(
-                                any(String.class),
-                                any(),
-                                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
-
-                gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
-        }
-
-        @Test
-        public void testNotifyAlertWithInvalidUrl() {
-                when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://untrusted-server.com/%s");
-
-                assertThrows(AlertNoticeException.class,
-                                () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
-        }
+    
+    @Mock
+    private RestTemplate restTemplate;
+    
+    @Mock
+    private AlerterProperties alerterProperties;
+    
+    @Mock
+    private ResourceBundle bundle;
+    
+    @InjectMocks
+    private GotifyAlertNotifyHandlerImpl gotifyAlertNotifyHandler;
+    
+    private NoticeReceiver receiver;
+    private GroupAlert groupAlert;
+    private NoticeTemplate template;
+    
+    @BeforeEach
+    public void setUp() {
+        receiver = new NoticeReceiver();
+        receiver.setId(1L);
+        receiver.setName("test-receiver");
+        receiver.setAccessToken("test-token");
+        receiver.setGotifyToken("A845h__ZMqDxZlO");
+        
+        groupAlert = new GroupAlert();
+        SingleAlert singleAlert = new SingleAlert();
+        singleAlert.setLabels(new HashMap<>());
+        singleAlert.getLabels().put("severity", "critical");
+        singleAlert.getLabels().put("alertname", "Test Alert");
+        
+        List<SingleAlert> alerts = new ArrayList<>();
+        alerts.add(singleAlert);
+        groupAlert.setAlerts(alerts);
+        
+        template = new NoticeTemplate();
+        template.setId(1L);
+        template.setName("test-template");
+        template.setContent("test content");
+        
+        lenient().when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+        lenient().when(alerterProperties.getGotifyWebhookUrl())
+                .thenReturn("https://trusted-gotify-server.com/%s");
+    }
+    
+    @Test
+    public void testNotifyAlertSuccess() {
+        CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
+        successResp.setErrCode(0);
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
+        
+        when(restTemplate.postForEntity(
+                any(String.class),
+                any(),
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
+        
+        gotifyAlertNotifyHandler.send(receiver, template, groupAlert);
+    }
+    
+    @Test
+    public void testNotifyAlertWithInvalidUrl() {
+        when(alerterProperties.getGotifyWebhookUrl()).thenReturn("http://untrusted-server.com/%s");
+        
+        assertThrows(AlertNoticeException.class,
+                () -> gotifyAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
 }
