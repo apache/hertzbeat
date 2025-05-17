@@ -48,7 +48,7 @@ import java.util.ResourceBundle;
  */
 @ExtendWith(MockitoExtension.class)
 class WeComRobotAlertNotifyHandlerImplTest {
-
+    
     @Mock
     private RestTemplate restTemplate;
     
@@ -57,20 +57,21 @@ class WeComRobotAlertNotifyHandlerImplTest {
     
     @Mock
     private ResourceBundle bundle;
-
+    
     @InjectMocks
     private WeComRobotAlertNotifyHandlerImpl weComRobotAlertNotifyHandler;
-
+    
     private NoticeReceiver receiver;
     private GroupAlert groupAlert;
     private NoticeTemplate template;
-
+    
     @BeforeEach
     public void setUp() {
         receiver = new NoticeReceiver();
         receiver.setId(1L);
         receiver.setName("test-receiver");
         receiver.setAccessToken("test-token");
+        receiver.setWechatId("test-wechat-id");
         
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
@@ -95,33 +96,29 @@ class WeComRobotAlertNotifyHandlerImplTest {
     public void testNotifyAlertSuccess() {
         CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
         successResp.setErrCode(0);
-        ResponseEntity<CommonRobotNotifyResp> responseEntity =
-                new ResponseEntity<>(successResp, HttpStatus.OK);
-
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
+        
         when(restTemplate.postForEntity(
                 any(String.class),
                 any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
         
         weComRobotAlertNotifyHandler.send(receiver, template, groupAlert);
     }
-
+    
     @Test
     public void testNotifyAlertFailure() {
         CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
         failResp.setCode(1);
         failResp.setErrMsg("Test Error");
-        ResponseEntity<CommonRobotNotifyResp> responseEntity =
-                new ResponseEntity<>(failResp, HttpStatus.OK);
-
+        ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(failResp, HttpStatus.OK);
+        
         when(restTemplate.postForEntity(
                 any(String.class),
                 any(),
-                eq(CommonRobotNotifyResp.class)
-        )).thenReturn(responseEntity);
+                eq(CommonRobotNotifyResp.class))).thenReturn(responseEntity);
         
-        assertThrows(AlertNoticeException.class, 
+        assertThrows(AlertNoticeException.class,
                 () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }
