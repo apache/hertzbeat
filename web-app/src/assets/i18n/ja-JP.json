@@ -765,6 +765,7 @@
   "monitor.scrape.type.http_sd": "Http サービスディスカバリー",
   "monitor.scrape.type.eureka_sd": "Eurekaサービスディスカバリー",
   "monitor.scrape.type.consul_sd": "Consulサービスディスカバリー",
+  "monitor.scrape.type.zookeeper_sd": "Zookeeperサービスディスカバリー",
   "placeholder.key": "キー",
   "placeholder.value": "値",
   "plugin.delete": "プラグインを削除",
