@@ -63,6 +63,9 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<GotifyWebHookDto> httpEntity = new HttpEntity<>(gotifyWebHookDto, headers);
             String webHookUrl = String.format(alerterProperties.getGotifyWebhookUrl(), receiver.getGotifyToken());
+            if (!isValidWebhookUrl(webHookUrl)) {
+                throw new AlertNoticeException("Invalid Gotify webhook URL: " + webHookUrl);
+            }
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
@@ -103,5 +106,19 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             private String contentType;
         }
 
+    }
+    /**
+     * Validate the webhook URL against a whitelist of allowed base URLs.
+     *
+     * @param url the webhook URL to validate
+     * @return true if the URL is valid, false otherwise
+     */
+    private boolean isValidWebhookUrl(String url) {
+        // Define a whitelist of allowed base URLs
+        List<String> allowedBaseUrls = List.of(
+                "https://trusted-gotify-server.com",
+                "https://another-trusted-server.com"
+        );
+        return allowedBaseUrls.stream().anyMatch(url::startsWith);
     }
 }
