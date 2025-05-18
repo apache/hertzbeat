@@ -112,7 +112,6 @@ public class JmxCollectImpl extends AbstractCollect {
         // Only allow service:jmx:rmi protocol
         Assert.isTrue(url.startsWith("service:jmx:rmi:"), "Only service:jmx:rmi protocol is supported");
 
-        // Prevent JNDI references that could lead to remote class loading
         String[] disallowedPatterns = { "ldap:", "rmi:", "iiop:", "nis:", "dns:", "corbaname:", "http:", "https:" };
         for (String pattern : disallowedPatterns) {
             if (url.contains(pattern) && !pattern.equals("rmi:///jndi/rmi:")) {
