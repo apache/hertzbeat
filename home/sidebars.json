@@ -41,6 +41,7 @@
           "type": "category",
           "label": "change-db",
           "items": [
+            "start/greptime-init",
             "start/victoria-metrics-init",
             "start/iotdb-init",
             "start/influxdb-init",
@@ -180,6 +181,7 @@
             "help/redhat",
             "help/rockylinux",
             "help/euleros",
+            "help/fedora",
             "help/linux_script",
             "help/windows_script"
           ]

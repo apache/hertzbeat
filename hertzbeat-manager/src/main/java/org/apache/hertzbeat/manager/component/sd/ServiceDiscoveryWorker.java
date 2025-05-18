@@ -150,10 +150,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     // Thus, all monitors still in hostMonitorMap need to be cancelled.
                     final Set<Long> needCancelMonitorIdSet = subMonitorBindMap.values().stream()
                             .map(MonitorBind::getMonitorId).collect(Collectors.toSet());
-                    monitorService.cancelManageMonitors(needCancelMonitorIdSet);
-                    for (Long id : needCancelMonitorIdSet) {
-                        monitorBindDao.deleteMonitorBindByBizIdAndMonitorId(monitorId, id);
-                    }
+                    monitorService.deleteMonitors(needCancelMonitorIdSet);
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
                 }

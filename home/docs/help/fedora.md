@@ -1,11 +1,11 @@
 ---
-id: freebsd
-title: Monitoring FreeBSD Operating System
-sidebar_label: FreeBSD Operating System
-keywords: [ Open Source Monitoring System, Open Source Operating System Monitoring, FreeBSD Operating System Monitoring ]
+id: fedora
+title: Monitoring Fedora Operating System
+sidebar_label: Fedora OS Operating System
+keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Fedora OS Monitoring ]
 ---
 
-> Collect and monitor general performance metrics (system information, CPU, memory, disk, network cards, file systems, top resource processes, etc.) of the FreeBSD operating system.
+> Collect and monitor general performance metrics for Fedora operating systems (system information, CPU, memory, disk, network interface, file system, top resource processes, etc.).
 
 ### Configuration Parameters
 
@@ -31,9 +31,9 @@ keywords: [ Open Source Monitoring System, Open Source Operating System Monitori
 | Proxy Username        | The authentication password required to connect to the proxy server.                                                                                                                  |
 | Proxy PrivateKey      | The private key required to authenticate with the proxy server.                                                                                                                       |
 
-### Collection Metrics
+### Data Collection Metrics
 
-#### Metric Set: Basic Info
+#### Metric Set: Basic System Information
 
 | Metric Name | Metric Unit | Metric Help Description |
 |-------------|-------------|-------------------------|
@@ -41,52 +41,72 @@ keywords: [ Open Source Monitoring System, Open Source Operating System Monitori
 | version     | None        | System version          |
 | uptime      | None        | System Uptime           |
 
-#### Metric Set: CPU Info
+#### Metric Set: CPU Information
 
-|  Metric Name   | Metric Unit |           Metric help description            |
-|----------------|-------------|----------------------------------------------|
-| info           | None        | CPU model                                    |
-| cores          | None        | Number of CPU cores                          |
-| interrupt      | None        | Number of CPU interrupts                     |
-| load           | None        | Average CPU load for the last 1/5/15 minutes |
-| context_switch | None        | Current context switches                     |
-| usage          | %           | CPU usage                                    |
+| Metric Name    | Metric Unit | Metric Help Description           |
+|----------------|-------------|-----------------------------------|
+| info           | None        | CPU model                         |
+| cores          | None        | Number of CPU cores               |
+| interrupt      | None        | Number of CPU interrupts          |
+| load           | None        | Average CPU load (1/5/15 minutes) |
+| context_switch | None        | Number of context switches        |
+| usage          | %           | CPU usage                         |
 
-#### Metric Set: Memory Info
+#### Metric Set: Memory Information
 
-| Metric Name | Metric Unit | Metric help description |
+| Metric Name | Metric Unit |       Metric Help Description       |
+|-------------|-------------|-------------------------------------|
+| total       | Mb          | Total memory capacity               |
+| used        | Mb          | Memory used by user programs        |
+| free        | Mb          | Free memory capacity                |
+| buff_cache  | Mb          | Memory used for cache               |
+| available   | Mb          | Remaining available memory capacity |
+| usage       | %           | Memory usage rate                   |
+
+#### Metric Set: Disk Information
+
+| Metric Name   | Metric Unit | Metric Help Description                |
+|---------------|-------------|----------------------------------------|
+| disk_num      | None        | Total number of disks                  |
+| partition_num | None        | Total number of partitions             |
+| block_write   | None        | Total number of blocks written to disk |
+| block_read    | None        | Total number of blocks read from disk  |
+| write_rate    | iops        | Disk block write rate per second       |
+
+#### Metric Set: Network Card Information
+
+|  Metric Name   | Metric Unit |    Metric Help Description    |
+|----------------|-------------|-------------------------------|
+| interface_name | None        | Network card name             |
+| receive_bytes  | Byte        | Inbound data traffic (bytes)  |
+| transmit_bytes | Byte        | Outbound data traffic (bytes) |
+
+#### Metric Set: File System
+
+| Metric Name | Metric Unit | Metric Help Description |
 |-------------|-------------|-------------------------|
-| physmem     | Mb          | Physical memory         |
-| usermem     | Mb          | User program memory     |
-| realmem     | Mb          | Actual memory           |
-| availmem    | Mb          | Available memory        |
-
-#### Metric Set: Disk Free
-
-| Metric Name | Metric Unit | Metric help description |
-|-------------|-------------|-------------------------|
-| filesystem  | None        | File system name        |
-| used        | Mb          | Used disk space         |
-| available   | Mb          | Available disk space    |
-| usage       | %           | Usage percentage        |
+| filesystem  | None        | Name of the file system |
+| used        | Mb          | Used disk size          |
+| available   | Mb          | Available disk size     |
+| usage       | %           | Usage rate              |
 | mounted     | None        | Mount point directory   |
 
-#### Metric Set: Top10 CPU Process
+#### Metric Set: Top 10 CPU Processes
 
-Statistics of the top 10 processes using CPU. Statistics include: Process ID, CPU usage, memory usage, executed command.
+Statistics for the top 10 processes using the CPU. Statistics include: process ID, CPU usage, memory usage, and executed command.
 
-| Metric Name | Metric Unit | Metric help description |
+| Metric Name | Metric Unit | Metric Help Description |
 |-------------|-------------|-------------------------|
 | pid         | None        | Process ID              |
 | cpu_usage   | %           | CPU usage               |
 | mem_usage   | %           | Memory usage            |
 | command     | None        | Executed command        |
 
-#### Metric Set: Top10 Memory Process
+#### Metric Set: Top 10 Memory Processes
 
-Statistics of the top 10 processes using memory. Statistics include: Process ID, memory usage, CPU usage, executed command.
+Statistics for the top 10 processes using memory. Statistics include: process ID, memory usage, CPU usage, and executed command.
 
-| Metric Name | Metric Unit | Metric help description |
+| Metric Name | Metric Unit | Metric Help Description |
 |-------------|-------------|-------------------------|
 | pid         | None        | Process ID              |
 | mem_usage   | %           | Memory usage            |

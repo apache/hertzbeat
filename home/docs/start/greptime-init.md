@@ -1,20 +1,20 @@
 ---
 id: greptime-init  
-title: Use Time Series Database GreptimeDB to Store Metrics Data (Optional)       
-sidebar_label: Metrics Store GreptimeDB
+title: Use Time Series Database Greptime to Store Metrics Data (Recommended)
+sidebar_label: Metrics Store Greptime (Recommended)
 ---
 
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
 
-> It is recommended to use VictoriaMetrics as metrics storage.
+> It is recommended to use Greptime as metrics storage.
 
-[GreptimeDB](https://github.com/GreptimeTeam/greptimedb) is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.
+[Greptime](https://github.com/GreptimeTeam/greptimedb) is an Open-source, cloud-native, unified observability database for metrics, logs and traces, supporting SQL/PromQL/Streaming.
 
 It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.
 
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
-### Install GreptimeDB via Docker
+### Install GreptimeDvia Docker
 
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
@@ -25,7 +25,7 @@ After the installation you can check if the Docker version normally output at th
    Docker version 20.10.12, build e91ed57
    ```
 
-2. Install GreptimeDB with Docker
+2. Install Greptime with Docker
 
     ```shell
     $ docker run -d -p 127.0.0.1:4000-4003:4000-4003 \
@@ -38,7 +38,7 @@ After the installation you can check if the Docker version normally output at th
     --postgres-addr 0.0.0.0:4003
     ```
 
-`-v "$(pwd)/greptimedb:/tmp/greptimedb"` is local persistent mount of greptimedb data directory. `$(pwd)/greptimedb` should be replaced with the actual local directory, default is the `greptimedb` directory under the current directory.
+`-v "$(pwd)/greptimedb:/tmp/greptimedb"` is local persistent mount of greptime data directory. `$(pwd)/greptimedb` should be replaced with the actual local directory, default is the `greptimedb` directory under the current directory.
 use```$ docker ps``` to check if the database started successfully
 
 ### Configure the database connection in hertzbeat `application.yml` configuration file
@@ -69,6 +69,6 @@ use```$ docker ps``` to check if the database started successfully
 
 ### FAQ
 
-1. Do both the time series databases Greptime, IoTDB or TDengine need to be configured? Can they both be used?
+1. Do both the time series databases need to be configured? Can they both be used?
 
    > You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
