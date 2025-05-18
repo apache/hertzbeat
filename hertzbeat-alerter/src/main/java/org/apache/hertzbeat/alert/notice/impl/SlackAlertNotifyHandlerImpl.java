@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
+import java.net.URI;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
@@ -52,7 +53,12 @@ final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<SlackNotifyDTO> slackNotifyEntity = new HttpEntity<>(slackNotify, headers);
-            var entity = restTemplate.postForEntity(receiver.getSlackWebHookUrl(), slackNotifyEntity, String.class);
+            String slackWebHookUrl = receiver.getSlackWebHookUrl();
+            if (!isValidSlackWebHookUrl(slackWebHookUrl)) {
+                log.warn("Invalid Slack Webhook URL: {}", slackWebHookUrl);
+                throw new AlertNoticeException("Invalid Slack Webhook URL");
+            }
+            var entity = restTemplate.postForEntity(slackWebHookUrl, slackNotifyEntity, String.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 var body = entity.getBody();
                 if (Objects.equals(SUCCESS, body)) {
@@ -81,4 +87,21 @@ final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
         private String text;
     }
 
+
+    /**
+     * Validate if the Slack Webhook URL belongs to an allowed domain.
+     *
+     * @param url the Slack Webhook URL to validate
+     * @return true if the URL is valid, false otherwise
+     */
+    private boolean isValidSlackWebHookUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            String host = uri.getHost();
+            return "hooks.slack.com".equals(host);
+        } catch (Exception e) {
+            log.warn("Error validating Slack Webhook URL: {}", url, e);
+            return false;
+        }
+    }
 }
