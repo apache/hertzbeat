@@ -12,6 +12,9 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * zookeeper sd collector
+ */
 @Slf4j
 public class ZookeeperSdCollectImpl extends AbstractCollect {
 
@@ -22,7 +25,7 @@ public class ZookeeperSdCollectImpl extends AbstractCollect {
         ZookeeperSdProtocol zookeeperSdProtocol = metrics.getZookeeper_sd();
         String url = zookeeperSdProtocol.getUrl();
         String pathPrefix = zookeeperSdProtocol.getPathPrefix();
-        try(ZooKeeper zk = new ZooKeeper(url, TIMEOUT, event -> {})){
+        try (ZooKeeper zk = new ZooKeeper(url, TIMEOUT, event -> {})){
 
             List<String> children = zk.getChildren(pathPrefix, false);
             List<ConnectionConfig> connectionConfigs = children.stream().map(node -> {
@@ -37,7 +40,7 @@ public class ZookeeperSdCollectImpl extends AbstractCollect {
                         .build();
                 builder.addValueRow(valueRow);
             });
-        }catch (IOException e){
+        } catch (IOException e){
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error("Failed to connect to Zookeeper: {}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
