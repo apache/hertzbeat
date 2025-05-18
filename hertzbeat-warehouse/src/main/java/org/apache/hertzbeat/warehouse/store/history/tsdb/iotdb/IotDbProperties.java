@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.iotdb;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.iotdb;
 
 import java.time.ZoneId;
 import java.util.List;

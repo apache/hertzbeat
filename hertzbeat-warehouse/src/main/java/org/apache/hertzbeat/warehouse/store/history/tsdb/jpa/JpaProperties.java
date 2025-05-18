@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.tdengine;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.jpa;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
@@ -24,23 +24,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- *
- * @param enabled Whether the TdEngine data store is enabled
- * @param url TdEngine connect url
- * @param driverClassName tdengine driver, default restful driver
- * @param username tdengine username
- * @param password  tdengine password
- * @param tableStrColumnDefineMaxLength auto create table's string column define max length : NCHAR(200)
+ * JPA configuration information
+ * @param enabled use mysql/h2 jpa store metrics history data
+ * @param expireTime save data expire time(ms)
+ * @param maxHistoryRecordNum The maximum number of history records retained
  */
 
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
 		+ SignConstants.DOT
 		+ WarehouseConstants.STORE
 		+ SignConstants.DOT
-		+ WarehouseConstants.HistoryName.TD_ENGINE)
-public record TdEngineProperties(@DefaultValue("false") boolean enabled,
-                                 @DefaultValue("jdbc:TAOS-RS://localhost:6041/demo") String url,
-                                 @DefaultValue("com.taosdata.jdbc.rs.RestfulDriver") String driverClassName,
-                                 String username, String password,
-                                 @DefaultValue("200") int tableStrColumnDefineMaxLength) {
+		+ WarehouseConstants.HistoryName.JPA)
+public record JpaProperties(@DefaultValue("true") boolean enabled,
+                            @DefaultValue("1h") String expireTime,
+                            @DefaultValue("20000") Integer maxHistoryRecordNum) {
 }

@@ -15,14 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.vm;
+package org.apache.hertzbeat.warehouse.store.history.tsdb;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.DisposableBean;
 
 /**
- * vminsert configuration information
+ * data storage abstract class
  */
-public record VictoriaMetricsInsertProperties(
-        String url,
-        String username,
-        String password
-) {
+@Slf4j
+public abstract class AbstractHistoryDataStorage implements HistoryDataReader, HistoryDataWriter, DisposableBean {
+
+    protected boolean serverAvailable;
+
+    /**
+     * @return data storage available
+     */
+    @Override
+    public boolean isServerAvailable() {
+        return serverAvailable;
+    }
 }

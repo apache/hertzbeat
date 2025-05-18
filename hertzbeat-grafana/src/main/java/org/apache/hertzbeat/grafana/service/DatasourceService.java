@@ -25,8 +25,8 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.QUERY_DATASOU
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
-import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
-import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.VictoriaMetricsProperties;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;

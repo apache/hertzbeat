@@ -15,23 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history;
-
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
 /**
- * history data writer
+ * vmselect configuration information
  */
-public interface HistoryDataWriter {
-
-    /**
-     * @return data storage available
-     */
-    boolean isServerAvailable();
-
-    /**
-     * save metrics data
-     * @param metricsData metrics data
-     */
-    void saveData(CollectRep.MetricsData metricsData);
+public record VictoriaMetricsSelectProperties(
+        String url,
+        String username,
+        String password
+) {
 }

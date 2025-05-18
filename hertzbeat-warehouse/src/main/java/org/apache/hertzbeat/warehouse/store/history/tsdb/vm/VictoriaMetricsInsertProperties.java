@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.vm;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
 /**
- * vmselect configuration information
+ * vminsert configuration information
  */
-public record VictoriaMetricsSelectProperties(
+public record VictoriaMetricsInsertProperties(
         String url,
         String username,
         String password

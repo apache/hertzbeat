@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.vm;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.tdengine;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
@@ -24,18 +24,23 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Victoriametrics configuration information
+ *
+ * @param enabled Whether the TdEngine data store is enabled
+ * @param url TdEngine connect url
+ * @param driverClassName tdengine driver, default restful driver
+ * @param username tdengine username
+ * @param password  tdengine password
+ * @param tableStrColumnDefineMaxLength auto create table's string column define max length : NCHAR(200)
  */
 
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
 		+ SignConstants.DOT
 		+ WarehouseConstants.STORE
 		+ SignConstants.DOT
-		+ WarehouseConstants.HistoryName.VM_CLUSTER)
-public record VictoriaMetricsClusterProperties(
-		@DefaultValue("false") boolean enabled,
-		@DefaultValue("0") String accountID,
-    VictoriaMetricsInsertProperties insert,
-    VictoriaMetricsSelectProperties select
-) {
+		+ WarehouseConstants.HistoryName.TD_ENGINE)
+public record TdEngineProperties(@DefaultValue("false") boolean enabled,
+                                 @DefaultValue("jdbc:TAOS-RS://localhost:6041/demo") String url,
+                                 @DefaultValue("com.taosdata.jdbc.rs.RestfulDriver") String driverClassName,
+                                 String username, String password,
+                                 @DefaultValue("200") int tableStrColumnDefineMaxLength) {
 }
