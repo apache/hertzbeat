@@ -67,4 +67,4 @@ metrics:
     # the config content when protocol is zookeeper_sd
     zookeeper_sd:
       url: ^_^__sd_url__^_^
-      path_prefix: ^_^__sd_path_prefix__^_^
+      pathPrefix: ^_^__sd_path_prefix__^_^

@@ -12,7 +12,7 @@ import lombok.AllArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ZookeeperSdProtocol {
+public class ZookeeperSdProtocol implements Protocol{
     
     private String url;
 
