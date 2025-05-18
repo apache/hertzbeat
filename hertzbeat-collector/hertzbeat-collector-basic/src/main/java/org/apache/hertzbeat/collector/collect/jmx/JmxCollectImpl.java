@@ -103,7 +103,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     /**
-     * Validate JMX URL to prevent JNDI injection attacks
+     * Validate JMX URL 
      * 
      * @param url JMX URL to validate
      * @throws IllegalArgumentException if URL is potentially malicious
