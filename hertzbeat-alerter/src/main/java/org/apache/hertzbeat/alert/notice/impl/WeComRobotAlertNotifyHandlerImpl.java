@@ -57,7 +57,12 @@ final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<WeWorkWebHookDto> httpEntity = new HttpEntity<>(weWorkWebHookDTO, headers);
-            String webHookUrl = alerterProperties.getWeWorkWebhookUrl() + receiver.getWechatId();
+            String wechatId = receiver.getWechatId();
+            if (!isValidWechatId(wechatId)) {
+                log.warn("Invalid WeChat ID: {}", wechatId);
+                throw new AlertNoticeException("Invalid WeChat ID provided.");
+            }
+            String webHookUrl = alerterProperties.getWeWorkWebhookUrl() + wechatId;
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, httpEntity, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;
@@ -169,5 +174,16 @@ final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
             private List<String> mentionedMobileList;
         }
 
+    }
+    
+    /**
+     * Validate the WeChat ID to ensure it meets the expected format.
+     *
+     * @param wechatId the WeChat ID to validate
+     * @return true if valid, false otherwise
+     */
+    private boolean isValidWechatId(String wechatId) {
+        // Example validation: ensure the ID is alphanumeric and non-empty
+        return StringUtils.isNotBlank(wechatId) && wechatId.matches("^[a-zA-Z0-9_-]+$");
     }
 }
