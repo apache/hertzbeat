@@ -47,6 +47,7 @@ import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.apache.hertzbeat.manager.component.prometheus.PrometheusCollectorFactory;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -89,6 +90,9 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
 
     @Autowired
     private ParamDao paramDao;
+
+    @Autowired
+    private PrometheusCollectorFactory prometheusCollectorFactory;
 
     private ManageServer manageServer;
 

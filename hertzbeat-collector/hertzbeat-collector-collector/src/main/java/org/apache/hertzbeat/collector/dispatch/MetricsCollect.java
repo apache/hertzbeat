@@ -155,6 +155,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .setLabels(labels).setAnnotations(annotations).addMetadataAll(metadata);
         // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
+            PrometheusCollectorFactory
+                    .getCollector(metrics).collect(response, metrics);
             List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
                     .getInstance().collect(response, metrics);
             validateResponse(metricsData.stream().findFirst().orElse(null));
