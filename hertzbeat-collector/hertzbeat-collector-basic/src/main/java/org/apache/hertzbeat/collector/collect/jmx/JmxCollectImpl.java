@@ -127,7 +127,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     /**
-     * Validate hostname format to prevent injection attacks
+     * Validate hostname format 
      * 
      * @param hostname Hostname to validate
      * @return true if hostname is valid
