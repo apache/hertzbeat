@@ -71,6 +71,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.ZookeeperSdProtocol;
  * Details of the monitoring metrics collected
  * eg: cpu | memory | health
  */
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
