@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.jexl3.JexlExpression;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
+import org.apache.hertzbeat.collector.collect.prometheus.PrometheusProxyCollectImpl;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
@@ -115,6 +116,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * Whether it is a service discovery job, true is yes, false is no
      */
     protected boolean isSd;
+    /**
+     * Whether to use the Prometheus proxy
+     */
+    protected boolean prometheusProxyMode;
 
     protected List<UnitConvert> unitConvertList;
 
@@ -137,6 +142,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
         this.isSd = job.isSd();
+        this.prometheusProxyMode = job.isPrometheusProxyMode();
         this.unitConvertList = unitConvertList;
         // Temporary one-time tasks are executed with high priority
         if (isCyclic) {
@@ -153,13 +159,23 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
         response.setApp(app).setId(id).setTenantId(tenantId)
                 .setLabels(labels).setAnnotations(annotations).addMetadataAll(metadata);
-        // for prometheus auto
+        // for prometheus auto or proxy mode
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
-            PrometheusCollectorFactory
-                    .getCollector(metrics).collect(response, metrics);
-            List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
-                    .getInstance().collect(response, metrics);
-            validateResponse(metricsData.stream().findFirst().orElse(null));
+            List<CollectRep.MetricsData> metricsData;
+            if (prometheusProxyMode) {
+                List<CollectRep.MetricsData> proxyData = PrometheusProxyCollectImpl.getInstance().collect(response, metrics);
+                List<CollectRep.MetricsData> autoData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
+                metricsData = new LinkedList<>();
+                if (proxyData != null) {
+                    metricsData.addAll(proxyData);
+                }
+                if (autoData != null) {
+                    metricsData.addAll(autoData);
+                }
+            } else {
+                metricsData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
+            }
+            validateResponse(metricsData == null ? null : metricsData.stream().findFirst().orElse(null));
             collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
             return;
         }
