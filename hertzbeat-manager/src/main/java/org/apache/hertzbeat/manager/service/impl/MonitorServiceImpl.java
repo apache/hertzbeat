@@ -37,6 +37,7 @@ import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -86,6 +87,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -529,12 +531,16 @@ public class MonitorServiceImpl implements MonitorService {
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
-        List<Monitor> monitors = monitorDao.findMonitorsByIdIn(ids);
+        Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
+        Set<Long> allMonitorIds = new HashSet<>(ids);
+        allMonitorIds.addAll(subMonitorIds);
+        List<Monitor> monitors = monitorDao.findMonitorsByIdIn(allMonitorIds);
         if (!monitors.isEmpty()) {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
             Set<Long> monitorIds = monitors.stream().map(Monitor::getId).collect(Collectors.toSet());
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
+            monitorBindDao.deleteMonitorBindByBizIdIn(monitorIds);
             for (Monitor monitor : monitors) {
                 monitorBindDao.deleteByMonitorId(monitor.getId());
                 collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
@@ -650,6 +656,8 @@ public class MonitorServiceImpl implements MonitorService {
         }
         // Update monitoring status Delete corresponding monitoring periodic task
         // The jobId is not deleted, and the jobId is reused again after the management is started.
+        Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
+        ids.addAll(subMonitorIds);
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
@@ -666,6 +674,8 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void enableManageMonitors(Set<Long> ids) {
         // Update monitoring status Add corresponding monitoring periodic task
+        Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
+        ids.addAll(subMonitorIds);
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)

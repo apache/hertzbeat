@@ -66,7 +66,7 @@ public class JmxCollectImpl extends AbstractCollect {
     private static final String JMX_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://";
 
     private static final String JMX_URL_SUFFIX = "/jmxrmi";
-    
+
     private static final String IGNORED_STUB = "/stub/";
 
     private static final String SUB_ATTRIBUTE = "->";
@@ -75,7 +75,6 @@ public class JmxCollectImpl extends AbstractCollect {
 
     private final ClassLoader jmxClassLoader;
 
-    
     public JmxCollectImpl() {
         jmxClassLoader = new JmxClassLoader(ClassLoader.getSystemClassLoader());
     }
@@ -83,11 +82,64 @@ public class JmxCollectImpl extends AbstractCollect {
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         Assert.isTrue(metrics != null && metrics.getJmx() != null, "JMX collect must have JMX params");
+        JmxProtocol jmxProtocol = metrics.getJmx();
 
-        String url = metrics.getJmx().getUrl();
+        // Validate JMX URL if provided
+        String url = jmxProtocol.getUrl();
         if (StringUtils.hasText(url)) {
             Assert.doesNotContain(url, IGNORED_STUB, "JMX url prohibit contains stub, please check");
+
+            // Prevent JNDI injection by validating URL format
+            validateJmxUrl(url);
+        } else {
+            // Validate host and port inputs
+            String host = jmxProtocol.getHost();
+            int port = Integer.parseInt(jmxProtocol.getPort());
+
+            // Validate host format (only allow valid hostnames or IP addresses)
+            Assert.isTrue(isValidHostname(host), "Invalid hostname format");
+            Assert.isTrue(port > 0 && port <= 65535, "Port must be between 1 and 65535");
         }
+    }
+
+    /**
+     * Validate JMX URL 
+     * 
+     * @param url JMX URL to validate
+     * @throws IllegalArgumentException if URL is potentially malicious
+     */
+    private void validateJmxUrl(String url) throws IllegalArgumentException {
+        // Only allow service:jmx:rmi protocol
+        Assert.isTrue(url.startsWith("service:jmx:rmi:"), "Only service:jmx:rmi protocol is supported");
+
+        String[] disallowedPatterns = { "ldap:", "rmi:", "iiop:", "nis:", "dns:", "corbaname:", "http:", "https:" };
+        for (String pattern : disallowedPatterns) {
+            if (url.contains(pattern) && !pattern.equals("rmi:///jndi/rmi:")) {
+                throw new IllegalArgumentException("Potentially unsafe JNDI protocol detected in URL: " + pattern);
+            }
+        }
+
+        // Check for suspicious patterns
+        if (url.contains("${") || url.contains("$[") || url.contains(":#") || url.contains(":/")) {
+            throw new IllegalArgumentException("Potentially malicious pattern detected in JMX URL");
+        }
+    }
+
+    /**
+     * Validate hostname format 
+     * 
+     * @param hostname Hostname to validate
+     * @return true if hostname is valid
+     */
+    private boolean isValidHostname(String hostname) {
+        if (hostname == null || hostname.isEmpty()) {
+            return false;
+        }
+
+        // Simplified hostname/IP validation regex
+        // This regex accepts valid hostnames, IPv4 and IPv6 addresses
+        String hostnameRegex = "^([a-zA-Z0-9][-a-zA-Z0-9]*\\.)+[a-zA-Z0-9][-a-zA-Z0-9]*$|^(\\d{1,3}\\.){3}\\d{1,3}$|^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$";
+        return hostname.matches(hostnameRegex);
     }
 
     @Override
@@ -172,16 +224,18 @@ public class JmxCollectImpl extends AbstractCollect {
                 log.info("attribute {} value is null.", attribute.getName());
                 continue;
             }
-            if (value instanceof Number || value instanceof  String || value instanceof ObjectName
+            if (value instanceof Number || value instanceof String || value instanceof ObjectName
                     || value instanceof Boolean || value instanceof Date || value instanceof TimeUnit) {
                 attributeValueMap.put(attribute.getName(), value.toString());
-            } else if (value instanceof CompositeData compositeData) {
+            } else if (value instanceof CompositeData) {
+                CompositeData compositeData = (CompositeData) value;
                 CompositeType compositeType = compositeData.getCompositeType();
                 for (String typeKey : compositeType.keySet()) {
                     Object fieldValue = compositeData.get(typeKey);
                     attributeValueMap.put(attribute.getName() + SUB_ATTRIBUTE + typeKey, fieldValue.toString());
                 }
-            } else if (value instanceof String[] values) {
+            } else if (value instanceof String[]) {
+                String[] values = (String[]) value;
                 StringBuilder builder = new StringBuilder();
                 for (int index = 0; index < values.length; index++) {
                     builder.append(values[index]);
@@ -219,12 +273,33 @@ public class JmxCollectImpl extends AbstractCollect {
         String url;
         if (jmxProtocol.getUrl() != null) {
             url = jmxProtocol.getUrl();
+            // Double check URL format for security
+            if (!url.startsWith("service:jmx:rmi:")) {
+                throw new IOException("Unsupported JMX URL protocol. Only service:jmx:rmi: is allowed.");
+            }
         } else {
-            url = JMX_URL_PREFIX + jmxProtocol.getHost() + ":" + jmxProtocol.getPort() + JMX_URL_SUFFIX;
+            // More strict formatting with proper escaping
+            String host = jmxProtocol.getHost();
+            int port = Integer.parseInt(jmxProtocol.getPort());
+
+            // Additional validation at connection time
+            if (!isValidHostname(host)) {
+                throw new IOException("Invalid hostname format for JMX connection: " + host);
+            }
+            if (port <= 0 || port > 65535) {
+                throw new IOException("Invalid port for JMX connection: " + port);
+            }
+
+            url = JMX_URL_PREFIX + host + ":" + port + JMX_URL_SUFFIX;
         }
+
+        // Set security properties to prevent remote class loading
+        System.setProperty("com.sun.jndi.rmi.object.trustURLCodebase", "false");
+        System.setProperty("com.sun.jndi.cosnaming.object.trustURLCodebase", "false");
+
         Map<String, Object> environment = new HashMap<>(4);
         if (StringUtils.hasText(jmxProtocol.getUsername()) && StringUtils.hasText(jmxProtocol.getPassword())) {
-            String[] credential = new String[] {jmxProtocol.getUsername(), jmxProtocol.getPassword()};
+            String[] credential = new String[] { jmxProtocol.getUsername(), jmxProtocol.getPassword() };
             environment.put(javax.management.remote.JMXConnector.CREDENTIALS, credential);
         }
         if (Boolean.TRUE.toString().equals(jmxProtocol.getSsl())) {
@@ -233,10 +308,20 @@ public class JmxCollectImpl extends AbstractCollect {
             environment.put(RMIConnectorServer.RMI_CLIENT_SOCKET_FACTORY_ATTRIBUTE, clientSocketFactory);
             environment.put("com.sun.jndi.rmi.factory.socket", clientSocketFactory);
         }
-        JMXServiceURL jmxServiceUrl = new JMXServiceURL(url);
-        conn = JMXConnectorFactory.connect(jmxServiceUrl, environment);
-        connectionCommonCache.addCache(identifier, new JmxConnect(conn));
-        return conn;
+
+        // Limit JMX connection timeout
+        environment.put("jmx.remote.x.client.connection.timeout", 10000);
+        environment.put("jmx.remote.x.server.connection.timeout", 10000);
+
+        try {
+            JMXServiceURL jmxServiceUrl = new JMXServiceURL(url);
+            conn = JMXConnectorFactory.connect(jmxServiceUrl, environment);
+            connectionCommonCache.addCache(identifier, new JmxConnect(conn));
+            return conn;
+        } catch (Exception e) {
+            log.error("Failed to connect to JMX server: {}", e.getMessage());
+            throw new IOException("Failed to connect to JMX server: " + e.getMessage(), e);
+        }
     }
 
 }
