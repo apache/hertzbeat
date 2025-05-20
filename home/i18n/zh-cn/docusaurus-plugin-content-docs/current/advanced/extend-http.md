@@ -18,18 +18,18 @@ HTTP协议支持我们自定义HTTP请求路径，请求header，请求参数，
 
 ### 自定义步骤
 
-**HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
+**HertzBeat页面** -> **监控模板菜单** -> **新增监控类型** -> **配置自定义监控模板YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
 ![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
 -------
 
-下面详细介绍下监控模版YML的配置用法，请注意看使用注释。
+下面详细介绍下监控模板YML的配置用法，请注意看使用注释。
 
-### 监控模版YML
+### 监控模板YML
 
-> 监控模版YML用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。
-> 即我们通过自定义这个监控模版，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
+> 监控模板YML用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。
+> 即我们通过自定义这个监控模板，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
 样例：自定义一个名称为example_http的自定义监控类型，其使用HTTP协议采集指标数据。
 
@@ -44,9 +44,9 @@ name:
   en-US: EXAMPLE APP
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 支持自定义监控，您只需配置监控模版 YML 就能适配一款自定义的监控类型。<br>定义流程如下：HertzBeat 页面 -> 监控模版菜单 -> 新增监控类型 -> 配置自定义监控模版YML -> 点击保存应用 -> 使用新监控类型添加监控。
+  zh-CN: HertzBeat 支持自定义监控，您只需配置监控模板 YML 就能适配一款自定义的监控类型。<br>定义流程如下：HertzBeat 页面 -> 监控模板菜单 -> 新增监控类型 -> 配置自定义监控模板YML -> 点击保存应用 -> 使用新监控类型添加监控。
   en-US: "HertzBeat supports custom monitoring, and you only need to configure the monitoring template YML to adapt to a custom monitoring type. <br>Definition process as follow: HertzBeat Pages -> Main Menu -> Monitor Template -> edit and save -> apply this template."
-  zh-TW: HertzBeat支持自定義監控，您只需配寘監控模版YML就能適配一款自定義的監控類型。<br>定義流程如下：HertzBeat頁面->監控模版選單->新增監控類型->配寘自定義監控模版YML ->點擊保存應用->使用新監控類型添加監控。
+  zh-TW: HertzBeat支持自定義監控，您只需配寘監控模板YML就能適配一款自定義的監控類型。<br>定義流程如下：HertzBeat頁面->監控模板選單->新增監控類型->配寘自定義監控模板YML ->點擊保存應用->使用新監控類型添加監控。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/
   en-US: https://hertzbeat.apache.org/docs/advanced/extend-point/

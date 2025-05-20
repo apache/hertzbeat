@@ -57,13 +57,13 @@ sidebar_label: 教程案例
 
 **我们这次获取其app下的 `category`,`app`,`status`,`size`,`availableSize`等指标数据。**
 
-### 新增配置监控模版YML
+### 新增配置监控模板YML
 
-**HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML**
+**HertzBeat页面** -> **监控模板菜单** -> **新增监控类型** -> **配置自定义监控模板YML**
 
-定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 `api`监控模版 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。
+定义我们在页面上需要输入哪些参数，一般的HTTP协议参数主要有ip, port, headers, params, uri, 账户密码等，我们直接复用 `api`监控模板 里面的参数定义内容，删除其中的我们不需要输入的uri参数和keyword关键字等参数即可。
 
-定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 `api`监控模版 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
+定义采集类型是啥，需要用哪种协议采集方式，采集的指标是啥，协议的配置参数等。我们直接复用 `api`监控模板 里面的定义内容,修改为我们当前的监控类型`hertzbeat`配置参数即可，如下：注意⚠️我们这次获取接口响应数据中的`category`,`app`,`status`,`size`,`availableSize`等字段作为指标数据。
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

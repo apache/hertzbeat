@@ -1,7 +1,7 @@
 ---
 id: template  
-title: 监控模版中心     
-sidebar_label: 监控模版
+title: 监控模板中心     
+sidebar_label: 监控模板
 ---
 
 > Apache HertzBeat (incubating) 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
@@ -13,13 +13,13 @@ sidebar_label: 监控模版
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**我们将所有监控采集类型(mysql,website,jvm,k8s)都定义为yml模版，用户可以导入这些模版到hertzbeat系统中，使其支持对应类型的监控，非常方便！**
+**我们将所有监控采集类型(mysql,website,jvm,k8s)都定义为yml模板，用户可以导入这些模板到hertzbeat系统中，使其支持对应类型的监控，非常方便！**
 
 ![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
-**欢迎大家一起贡献你使用过程中自定义的通用监控类型YML模版，可用的模板如下:**
+**欢迎大家一起贡献你使用过程中自定义的通用监控类型YML模板，可用的模板如下:**
 
-### 应用服务监控模版
+### 应用服务监控模板
 
 &emsp;&#x1F449;&emsp;[Website monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml) <br />
 &emsp;&#x1F449;&emsp;[HTTP API](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml) <br />
@@ -32,7 +32,7 @@ sidebar_label: 监控模版
 &emsp;&#x1F449;&emsp;[SpringBoot3.0](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-springboot3.yml) <br />
 &emsp;&#x1F449;&emsp;[FTP Server](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ftp.yml) <br />
 
-### 数据库监控模版
+### 数据库监控模板
 
 &emsp;&#x1F449;&emsp;[MYSQL database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mysql.yml) <br />
 &emsp;&#x1F449;&emsp;[MariaDB database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mariadb.yml) <br />
@@ -49,7 +49,7 @@ sidebar_label: 监控模版
 &emsp;&#x1F449;&emsp;[Redis Sentinel database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_sentinel.yml) <br />
 &emsp;&#x1F449;&emsp;[Redis Cluster database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_cluster.yml) <br />
 
-### 操作系统监控模版
+### 操作系统监控模板
 
 &emsp;&#x1F449;&emsp;[Linux operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml) <br />
 &emsp;&#x1F449;&emsp;[Windows operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-windows.yml) <br />
@@ -64,7 +64,7 @@ sidebar_label: 监控模版
 &emsp;&#x1F449;&emsp;[AlmaLinux operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-almalinux.yml) <br />
 &emsp;&#x1F449;&emsp;[Debian operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-debian.yml) <br />
 
-### 中间件监控模版
+### 中间件监控模板
 
 &emsp;&#x1F449;&emsp;[Zookeeper](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-zookeeper.yml) <br />
 &emsp;&#x1F449;&emsp;[Kafka](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kafka.yml) <br />
@@ -77,12 +77,12 @@ sidebar_label: 监控模版
 &emsp;&#x1F449;&emsp;[Flink](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-flink.yml) <br />
 &emsp;&#x1F449;&emsp;[Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nacos.yml) <br />
 
-### 云原生监控模版
+### 云原生监控模板
 
 &emsp;&#x1F449;&emsp;[Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-docker.yml) <br />
 &emsp;&#x1F449;&emsp;[Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kubernetes.yml) <br />
 
-### 网络监控模版
+### 网络监控模板
 
 &emsp;&#x1F449;&emsp;[CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml) <br />
 &emsp;&#x1F449;&emsp;[HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml) <br />
