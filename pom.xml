@@ -164,6 +164,8 @@
         <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
         <huawei.obs.version>3.23.5</huawei.obs.version>
+        <commons-net>3.8.0</commons-net>
+        <zookeeper.version>3.9.3</zookeeper.version>
         
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <influxdb.version>2.23</influxdb.version>
