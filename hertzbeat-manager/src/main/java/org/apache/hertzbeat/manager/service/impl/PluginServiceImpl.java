@@ -224,7 +224,9 @@ public class PluginServiceImpl implements PluginService {
         List<PluginItem> pluginItems = new ArrayList<>();
         AtomicInteger pluginImplementationCount = new AtomicInteger(0);
         try {
+            validateFilePath(jarFile);
             URL jarUrl = new URL("file:" + jarFile.getAbsolutePath());
+            validateJarUrl(jarUrl);
             try (URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, this.getClass().getClassLoader());
                 JarFile jar = new JarFile(jarFile)) {
                 Enumeration<JarEntry> entries = jar.entries();
@@ -270,6 +272,35 @@ public class PluginServiceImpl implements PluginService {
         }
         metadata.setItems(pluginItems);
         return metadata;
+    }
+
+    /**
+     * Validate that the file resides within the expected directory.
+     *
+     * @param file the file to validate
+     */
+    private void validateFilePath(File file) {
+        try {
+            String canonicalPath = file.getCanonicalPath();
+            String expectedDir = new File("plugin-lib").getCanonicalPath();
+            if (!canonicalPath.startsWith(expectedDir)) {
+                throw new CommonException("File is outside the allowed directory: " + canonicalPath);
+            }
+        } catch (IOException e) {
+            log.error("Error validating file path: {}", file.getAbsolutePath(), e);
+            throw new CommonException("Error validating file path: " + file.getAbsolutePath());
+        }
+    }
+
+    /**
+     * Validate that the URL uses the 'file:' protocol and does not point to an external resource.
+     *
+     * @param url the URL to validate
+     */
+    private void validateJarUrl(URL url) {
+        if (!"file".equals(url.getProtocol())) {
+            throw new CommonException("Invalid URL protocol: " + url.getProtocol());
+        }
     }
 
     private void validateMetadata(PluginMetadata metadata) {
