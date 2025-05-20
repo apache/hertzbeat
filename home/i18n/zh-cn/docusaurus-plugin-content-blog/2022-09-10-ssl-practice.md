@@ -61,7 +61,7 @@ gitee: <https://gitee.com/hertzbeat/hertzbeat>
 
     ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8d6205172d43463aa34e534477f132f1~tplv-k3u1fbpfcp-zoom-1.image)
 
-    > 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模版信息等。
+    > 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模板信息等。
 
     ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/83d17b381d994f26a6240e01915b2001~tplv-k3u1fbpfcp-zoom-1.image)
 

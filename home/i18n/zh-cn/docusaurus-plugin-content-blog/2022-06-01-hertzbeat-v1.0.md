@@ -60,7 +60,7 @@ Online <https://console.tancloud.cn>.
 > 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登录即可免费开始](https://console.tancloud.cn)监控之旅。  
 > HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
 > HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。
-> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书等及时通知送达  
+> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模板，邮件钉钉微信飞书等及时通知送达  
 > 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。
 > 我们正在快速迭代中，欢迎参与加入共建项目开源生态。
 >
