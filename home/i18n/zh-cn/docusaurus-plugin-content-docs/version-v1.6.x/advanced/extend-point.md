@@ -4,12 +4,12 @@ title: 自定义监控
 sidebar_label: 自定义监控
 ---
 
-> HertzBeat拥有自定义监控能力，您只需配置监控模版YML就能适配一款自定义的监控类型。  
+> HertzBeat拥有自定义监控能力，您只需配置监控模板YML就能适配一款自定义的监控类型。  
 > 目前自定义监控支持[HTTP协议](extend-http)，[JDBC协议](extend-jdbc)，[SSH协议](extend-ssh)，[JMX协议](extend-jmx)，[SNMP协议](extend-snmp)，后续会支持更多通用协议。
 
 ### 自定义流程
 
-**HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
+**HertzBeat页面** -> **监控模板菜单** -> **新增监控类型** -> **配置自定义监控模板YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
 ![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
@@ -19,17 +19,17 @@ sidebar_label: 自定义监控
 
 -------
 
-### 监控模版YML
+### 监控模板YML
 
-**HertzBeat的设计是一个监控模版对应一个监控类型，所有监控类型都是由监控模版来定义的**。
+**HertzBeat的设计是一个监控模板对应一个监控类型，所有监控类型都是由监控模板来定义的**。
 
-> 监控模版YML定义了 *监控类型的名称(国际化), 配置参数映射, 采集指标信息, 采集协议配置* 等。
+> 监控模板YML定义了 *监控类型的名称(国际化), 配置参数映射, 采集指标信息, 采集协议配置* 等。
 
-下面使用样例详细介绍下这监控模版YML的配置用法。
+下面使用样例详细介绍下这监控模板YML的配置用法。
 
 样例：自定义一个 `app` 名称为 `example2` 的自定义监控类型，其使用HTTP协议采集指标数据。
 
-[监控模版] -> [新增监控类型] -> [右边配置如下监控模版YML] -> [保存并应用]
+[监控模板] -> [新增监控类型] -> [右边配置如下监控模板YML] -> [保存并应用]
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
@@ -45,9 +45,9 @@ name:
   en-US: EXAMPLE WEBSITE
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 支持自定义监控，您只需配置监控模版 YML 就能适配一款自定义的监控类型。<br>定义流程如下：HertzBeat 页面 -> 监控模版菜单 -> 新增监控类型 -> 配置自定义监控模版YML -> 点击保存应用 -> 使用新监控类型添加监控。
+  zh-CN: HertzBeat 支持自定义监控，您只需配置监控模板 YML 就能适配一款自定义的监控类型。<br>定义流程如下：HertzBeat 页面 -> 监控模板菜单 -> 新增监控类型 -> 配置自定义监控模板YML -> 点击保存应用 -> 使用新监控类型添加监控。
   en-US: "HertzBeat supports custom monitoring, and you only need to configure the monitoring template YML to adapt to a custom monitoring type. <br>Definition process as follow: HertzBeat Pages -> Main Menu -> Monitor Template -> edit and save -> apply this template."
-  zh-TW: HertzBeat支持自定義監控，您只需配寘監控模版YML就能適配一款自定義的監控類型。<br>定義流程如下：HertzBeat頁面->監控模版選單->新增監控類型->配寘自定義監控模版YML ->點擊保存應用->使用新監控類型添加監控。
+  zh-TW: HertzBeat支持自定義監控，您只需配寘監控模板YML就能適配一款自定義的監控類型。<br>定義流程如下：HertzBeat頁面->監控模板選單->新增監控類型->配寘自定義監控模板YML ->點擊保存應用->使用新監控類型添加監控。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/
   en-US: https://hertzbeat.apache.org/docs/advanced/extend-point/

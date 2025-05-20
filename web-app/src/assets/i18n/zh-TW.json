@@ -765,6 +765,7 @@
   "monitor.scrape.type.dns_sd": "Dns 服務發現",
   "monitor.scrape.type.eureka_sd": "Eureka 服務發現",
   "monitor.scrape.type.consul_sd": "Consul 服務發現",
+  "monitor.scrape.type.zookeeper_sd": "Zookeeper 服務發現",
   "placeholder.key": "鍵",
   "placeholder.value": "值",
   "plugin.delete": "刪除插件",

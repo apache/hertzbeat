@@ -104,7 +104,7 @@ sidebar_label: JsonPath解析方式
 
 此数据结构符合HertzBeat的数据格式规范，成功提取指标`type,num`值。
 
-**对应的监控模版YML可以配置为如下**
+**对应的监控模板YML可以配置为如下**
 
 ```yaml
 category: custom

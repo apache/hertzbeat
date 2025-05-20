@@ -19,7 +19,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 - **采集器集群的UI界面管理** @Ceilzcx @tomsun28
 - **功能页面帮助信息模块和阈值表达式增强** 开源之夏和GLCC课题 @YutingNie @mikezzb
 - **新的控制台登陆界面和欢迎页面**
-- **监控指标名称国际化** 用户可以看指标的中英文名称啦，欢迎一起完善监控模版里面的i18n国际化资源
+- **监控指标名称国际化** 用户可以看指标的中英文名称啦，欢迎一起完善监控模板里面的i18n国际化资源
 - **支持kubernetes helm charts一键部署** 见 <https://artifacthub.io/packages/search?repo=hertzbeat>
 
 **更多的特性和BUG修复，稳定性提示** 感谢 @zqr10159 @Carpe-Wang @luxx-lq @l646505418 @LINGLUOJUN @luelueking @qyaaaa @novohit @gcdd1993
@@ -54,7 +54,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 - 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
 - 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式消息及时送达。
 
@@ -94,8 +94,8 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ## ⛄ 已支持
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!
-> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
+> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模板，用户可以导入这些模板来支持对应类型的监控!
+> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模板。
 
 - Site Monitor, Port Availability, Http Api, Ping Connectivity, Jvm, SiteMap Full Site, Ssl Certificate, SpringBoot, FTP Server
 - Mysql, PostgreSQL, MariaDB, Redis, ElasticSearch, SqlServer, Oracle, MongoDB, Damon, OpenGauss, ClickHouse, IoTDB, Redis Cluster
@@ -105,7 +105,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 - Huawei Switch, HPE Switch, TP-LINK Switch, Cisco Switch
 - and more for your custom monitoring.
 - Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook`.
-- 和更多自定义监控模版。
+- 和更多自定义监控模板。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
 
 ---
