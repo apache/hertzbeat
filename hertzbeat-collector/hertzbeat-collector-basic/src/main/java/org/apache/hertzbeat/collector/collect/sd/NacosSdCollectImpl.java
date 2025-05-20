@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.collect.sd;
 import java.util.List;
 
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.registry.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClientManagement;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServiceInstance;
@@ -61,7 +62,7 @@ public class NacosSdCollectImpl extends AbstractCollect {
         RegistryProtocol registryProtocol = RegistryProtocol.builder()
                 .host(metrics.getNacos_sd().getHost())
                 .port(metrics.getNacos_sd().getPort())
-                .discoveryClientTypeName("Nacos")
+                .discoveryClientTypeName(DiscoveryClientInstance.NACOS.name())
                 .build();
 
         DiscoveryClient discoveryClient = null;
