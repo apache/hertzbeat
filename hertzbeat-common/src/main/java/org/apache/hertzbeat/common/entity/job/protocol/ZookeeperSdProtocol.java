@@ -15,23 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch.timer;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
-import java.util.concurrent.TimeUnit;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 /**
- * Derived from Apache Dubbo org.apache.dubbo.common.timer.TimerTask 
- * <a href="https://github.com/apache/dubbo/blob/3.2/dubbo-common/src/main/java/org/apache/dubbo/common/timer/TimerTask.java">TimerTask.java</a>
- * A task which is executed after the delay specified with
- * {@link Timer#newTimeout(TimerTask, long, TimeUnit)} (TimerTask, long, TimeUnit)}.
+ * Zookeeper service discovery protocol
  */
-public interface TimerTask {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ZookeeperSdProtocol implements Protocol{
+    
+    private String url;
 
-    /**
-     * Executed after the delay specified with
-     * {@link Timer#newTimeout(TimerTask, long, TimeUnit)}.
-     * @param timeout a handle which is associated with this task
-     * @throws Exception when error happen
-     */
-    void run(Timeout timeout) throws Exception;
+    private String pathPrefix;
 }

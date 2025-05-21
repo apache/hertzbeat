@@ -53,7 +53,7 @@ github: <https://github.com/apache/hertzbeat>
 4. 设置阈值(证书过期时触发)
 
     > 系统页面 -> 告警 -> 告警阈值 -> 新增阈值 -> 新增实时阈值规则  
-    > 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模版信息等。
+    > 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模板信息等。
 
     ![HertzBeat](/img/docs/start/ssl_5.png)
 

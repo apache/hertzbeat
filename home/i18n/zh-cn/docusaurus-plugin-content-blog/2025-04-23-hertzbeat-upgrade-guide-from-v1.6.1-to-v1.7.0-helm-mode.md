@@ -18,7 +18,7 @@
 
 3. 数据备份
 
-> 1. 若使用了自定义监控模版
+> 1. 若使用了自定义监控模板
 >
 >    - 需要备份 `kubectl cp hertzbeat/hertzbeat-978477f84-fr894:/opt/hertzbeat/define ./define` 当前运行 pod里面的 `/opt/hertzbeat/define` 目录到当前主机下,如果做了持久化 请拷贝持久化目录
 >    - `kubectl cp hertzbeat/hertzbeat-978477f84-fr894:/opt/hertzbeat/define ./define`

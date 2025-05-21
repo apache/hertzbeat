@@ -28,7 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
-import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingClient;

@@ -13,7 +13,7 @@ slug: /
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
-[![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
+[![QQ](https://img.shields.io/badge/QQ-1035688434-orange)](https://qm.qq.com/q/FltGGGIX2m)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
 ## 🎡 <font color="green">介绍</font>
@@ -24,7 +24,7 @@ slug: /
 
 - 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
 - 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
 - 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
@@ -34,22 +34,22 @@ slug: /
 
 ---
 
-### 强大的监控模版
+### 强大的监控模板
 
-> 开始我们就说 HertzBeat 的特点是自定义监控能力，无需 Agent。在讨论这两点之前，我们先介绍下 HertzBeat 的不一样的监控模版。而正是因为这样的监控模版设计，才会有了后面的高级特性。
+> 开始我们就说 HertzBeat 的特点是自定义监控能力，无需 Agent。在讨论这两点之前，我们先介绍下 HertzBeat 的不一样的监控模板。而正是因为这样的监控模板设计，才会有了后面的高级特性。
 
 HertzBeat 自身并没有去创造一种采集数据协议让监控对端来适配它。而是充分使用了现有的生态，`SNMP协议`采集网络交换机路由器信息，`JMX规范`采集JAVA应用信息，`JDBC规范`采集数据集信息，`SSH`直连执行脚本获取回显信息，`HTTP+(JsonPath | prometheus等)`解析API接口信息，`IPMI协议`采集服务器信息等等。
-HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可配置化，最后使其都可以通过编写YML格式监控模版的形式，来制定模版使用这些协议来采集任何想要的指标数据。
+HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可配置化，最后使其都可以通过编写YML格式监控模板的形式，来制定模板使用这些协议来采集任何想要的指标数据。
 
 ![HertzBeat](/img/blog/multi-protocol.png)
 
-你相信用户只需在UI页面编写一个监控模版，点击保存后，就能立刻适配一款`K8s`或`Docker`等新的监控类型吗？
+你相信用户只需在UI页面编写一个监控模板，点击保存后，就能立刻适配一款`K8s`或`Docker`等新的监控类型吗？
 
 ![HertzBeat](/img/home/9.png)
 
 ### 内置监控类型
 
-**官方内置了大量的监控模版类型，方便用户直接在页面添加使用，一款监控类型对应一个YML监控模版**
+**官方内置了大量的监控模板类型，方便用户直接在页面添加使用，一款监控类型对应一个YML监控模板**
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
@@ -87,14 +87,14 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 - [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-- 和更多自定义监控模版。
+- 和更多自定义监控模板。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
 
 ### 强大自定义功能
 
-> 由前面的**监控模版**介绍，大概清楚了 `HertzBeat` 拥有的强大自定义功能。
-> 我们将每个监控类型都视为一个监控模版，不管是官方内置的还是后期用户自定义新增的。用户都可以方便的通过修改监控模版来新增修改删除监控指标。
-> 模版里面包含各个协议的使用配置，环境变量，指标转换，指标计算，单位转换，指标采集等一系列功能，帮助用户能采集到自己想要的监控指标。
+> 由前面的**监控模板**介绍，大概清楚了 `HertzBeat` 拥有的强大自定义功能。
+> 我们将每个监控类型都视为一个监控模板，不管是官方内置的还是后期用户自定义新增的。用户都可以方便的通过修改监控模板来新增修改删除监控指标。
+> 模板里面包含各个协议的使用配置，环境变量，指标转换，指标计算，单位转换，指标采集等一系列功能，帮助用户能采集到自己想要的监控指标。
 
 ![HertzBeat](/img/docs/custom-arch.png)
 
@@ -134,9 +134,9 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 ### 易用友好
 
 - 集 **监控+告警+通知** All in one, 无需单独部署多个组件服务。
-- 全UI界面操作，不管是新增监控，修改监控模版，还是告警阈值通知，都可在WEB界面操作完成，无需要修改文件或脚本或重启。
+- 全UI界面操作，不管是新增监控，修改监控模板，还是告警阈值通知，都可在WEB界面操作完成，无需要修改文件或脚本或重启。
 - 无需 Agent, 监控对端我们只需在WEB界面填写所需IP端口账户密码等参数即可。
-- 自定义友好，只需一个监控模版YML，自动生成对应监控类型的监控管理页面，数据图表页面，阈值配置等。
+- 自定义友好，只需一个监控模板YML，自动生成对应监控类型的监控管理页面，数据图表页面，阈值配置等。
 - 阈值告警通知友好，基于表达式阈值配置，多种告警通知渠道，支持告警静默，时段标签告警级别过滤等。
 
 ### 完全开源
@@ -224,7 +224,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 ### 新增修改监控
 
 - 新增或修改指定监控类型的监控实例，配置对端监控的IP，端口等参数，设置采集周期，采集任务调度方式，支持提前探测可用性等。
-- 页面上配置的监控参数由对应监控类型的监控模版所定义，用户可以通过修改监控模版来修改页面配置参数。
+- 页面上配置的监控参数由对应监控类型的监控模板所定义，用户可以通过修改监控模板来修改页面配置参数。
 - 支持关联标签，用标签来管理监控分组，告警匹配等。
 
 ![HertzBeat](/img/home/10.png)
@@ -252,7 +252,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 - 对于监控的可用性状态设置阈值规则，特定指标的值超过我们预期范围时发出告警，这些都可以在阈值规则这里配置。
 - 告警级别分为三级：通知告警，严重告警，紧急告警。
 - 阈值规则支持可视化页面配置或表达式规则配置，灵活性更高。
-- 支持配置触发次数，告警级别，通知模版，关联指定监控等。
+- 支持配置触发次数，告警级别，通知模板，关联指定监控等。
 
 ![HertzBeat](/img/home/6.png)
 
@@ -283,7 +283,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 - 功能包含接收人信息管理和通知策略管理，接收人管理维护接收人信息以其通知方式信息，通知策略管理维护把哪些告警信息通知给哪些接收人的策略规则。
 - 通知方式支持 `邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式。
 - 通知策略支持标签匹配和告警级别匹配，方便的使不同标签的告警和告警级别分派给不同的接收处理人。
-- 支持通知模版，用户可以自定义通过模版内容格式来满足自己的个性化通知展示需求。
+- 支持通知模板，用户可以自定义通过模板内容格式来满足自己的个性化通知展示需求。
 
 ![HertzBeat](/img/home/16.png)
 
@@ -291,10 +291,10 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ![HertzBeat](/img/home/8.png)
 
-### 监控模版
+### 监控模板
 
-- HertzBeat 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
-- 同理我们内置的所有监控类型(mysql,website,jvm,k8s)也一一映射为对应的监控模版，用户可以新增修改监控模版来自定义监控功能。
+- HertzBeat 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- 同理我们内置的所有监控类型(mysql,website,jvm,k8s)也一一映射为对应的监控模板，用户可以新增修改监控模板来自定义监控功能。
 
 ![HertzBeat](/img/home/9.png)
 

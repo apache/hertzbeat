@@ -51,7 +51,7 @@ class SlackAlertNotifyHandlerImplTest {
 
     @Mock
     private RestTemplate restTemplate;
-    
+
     @Mock
     private ResourceBundle bundle;
 
@@ -68,18 +68,18 @@ class SlackAlertNotifyHandlerImplTest {
         receiver.setId(1L);
         receiver.setName("test-receiver");
         receiver.setAccessToken("test-token");
-        receiver.setSlackWebHookUrl("http://localhost:8080");
-        
+        receiver.setSlackWebHookUrl("https://hooks.slack.com/services/ABCDEF/GHIJKL/mnopqrstuvwxyz");
+
         groupAlert = new GroupAlert();
         SingleAlert singleAlert = new SingleAlert();
         singleAlert.setLabels(new HashMap<>());
         singleAlert.getLabels().put("severity", "critical");
         singleAlert.getLabels().put("alertname", "Test Alert");
-        
+
         List<SingleAlert> alerts = new ArrayList<>();
         alerts.add(singleAlert);
         groupAlert.setAlerts(alerts);
-        
+
         template = new NoticeTemplate();
         template.setId(1L);
         template.setName("test-template");
@@ -90,22 +90,18 @@ class SlackAlertNotifyHandlerImplTest {
 
     @Test
     public void testNotifyAlertSuccess() {
-        ResponseEntity<String> responseEntity = 
-            new ResponseEntity<>("ok", HttpStatus.OK);
-        
+        ResponseEntity<String> responseEntity = new ResponseEntity<>("ok", HttpStatus.OK);
+
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
-        
+
         slackAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test
-    public void testNotifyAlertFailure() {
-        ResponseEntity<String> responseEntity =
-                new ResponseEntity<>("invalid_payload", HttpStatus.BAD_REQUEST);
+    public void testNotifyAlertWithInvalidUrl() {
+        receiver.setSlackWebHookUrl("http://localhost:8080");
 
-        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
-        
-        assertThrows(AlertNoticeException.class, 
+        assertThrows(AlertNoticeException.class,
                 () -> slackAlertNotifyHandler.send(receiver, template, groupAlert));
     }
 }
