@@ -276,7 +276,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     private String getTableName(Long monitorId, String metrics) {
-        return "hzb"+ SPILT + monitorId + SPILT + metrics;
+        return "hzb" + SPILT + monitorId + SPILT + metrics;
     }
 
     @Override
