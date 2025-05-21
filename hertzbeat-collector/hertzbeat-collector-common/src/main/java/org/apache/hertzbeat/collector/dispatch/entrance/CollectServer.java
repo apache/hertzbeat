@@ -31,7 +31,7 @@ import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoCloseProcess
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOfflineProcessor;
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProcessor;
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
-import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;

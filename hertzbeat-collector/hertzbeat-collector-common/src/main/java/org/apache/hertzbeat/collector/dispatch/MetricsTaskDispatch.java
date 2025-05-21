@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
+import org.apache.hertzbeat.common.timer.Timeout;
 
 /**
  * Metrics collection task scheduler interface
