@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch.timer;
+package org.apache.hertzbeat.collector.timer;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +28,9 @@ import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponse
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.timer.HashedWheelTimer;
+import org.apache.hertzbeat.common.timer.Timeout;
+import org.apache.hertzbeat.common.timer.Timer;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
