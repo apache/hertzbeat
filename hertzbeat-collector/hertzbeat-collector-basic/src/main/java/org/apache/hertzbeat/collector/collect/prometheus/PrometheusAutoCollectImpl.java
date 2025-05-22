@@ -179,7 +179,7 @@ public class PrometheusAutoCollectImpl {
                             builder.addField(CollectRep.Field.newBuilder().setName(label.getName())
                                     .setType(CommonConstants.TYPE_STRING).setLabel(true).build());
                         });
-                        builder.addField(CollectRep.Field.newBuilder().setName("value")
+                        builder.addField(CollectRep.Field.newBuilder().setName("metric_value")
                                 .setType(CommonConstants.TYPE_NUMBER).setLabel(false).build());
                     }
                     Map<String, String> labelMap = metric.getLabels()
