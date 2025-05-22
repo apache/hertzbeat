@@ -32,7 +32,7 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
-import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;

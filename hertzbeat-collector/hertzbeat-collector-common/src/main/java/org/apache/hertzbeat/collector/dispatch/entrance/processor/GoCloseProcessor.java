@@ -20,7 +20,7 @@ package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
-import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
