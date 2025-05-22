@@ -33,6 +33,64 @@ params:
     type: text
     # required-true or false
     required: true
+  # field-param field key
+  - field: __sd_authType__
+    # name-param field display i18n name
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    # type-param field type(most mapping the html input type)
+    type: radio
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: Bearer Token
+        value: Bearer Token
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  # field-param field key
+  - field: __sd_token__
+    # name-param field display i18n name
+    name:
+      zh-CN: 认证Token
+      en-US: Access Token
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: __sd_username__
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: __sd_password__
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input type)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
 
 metrics:
   - name: target
@@ -59,4 +117,18 @@ metrics:
     protocol: http_sd
     # the config content when protocol is http_sd
     http_sd:
+      # http url
       url: ^_^__sd_url__^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^__sd_authType__^_^
+        bearerTokenToken: ^_^__sd_token__^_^
+        basicAuthUsername: ^_^__sd_username__^_^
+        basicAuthPassword: ^_^__sd_password__^_^
+        digestAuthUsername: ^_^__sd_username__^_^
+        digestAuthPassword: ^_^__sd_password__^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: default
