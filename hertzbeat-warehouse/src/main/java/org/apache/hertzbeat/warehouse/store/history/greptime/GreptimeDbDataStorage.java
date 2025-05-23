@@ -244,7 +244,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                log.debug("query metrics data from victoria-metrics success. {}", uri);
+                log.debug("query metrics data from greptime success. {}", uri);
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
                         && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();

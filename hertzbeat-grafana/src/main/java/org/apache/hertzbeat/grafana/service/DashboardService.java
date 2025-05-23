@@ -22,7 +22,6 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DASHBO
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.INSTANCE;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.KIOSK;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.REFRESH;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.USE_DATASOURCE;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +29,7 @@ import java.util.Objects;
 
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.grafana.common.GrafanaConstants;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.grafana.dao.DashboardDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +63,9 @@ public class DashboardService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private DatasourceService datasourceService;
+
     /**
      * Creates a new dashboard in Grafana.
      *
@@ -88,7 +91,9 @@ public class DashboardService {
         body.put("dashboard", JsonUtil.fromJson(dashboardJson, Object.class));
         body.put("overwrite", true);
 
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        String json = JsonUtil.toJson(body);
+        HttpEntity<String> requestEntity = new HttpEntity<>(json, headers);
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
@@ -97,9 +102,15 @@ public class DashboardService {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
+
+                    String currentDatasourceName = datasourceService.getCurrentDatasourceName();
+                    String useDatasource = currentDatasourceName != null ?
+                            GrafanaConstants.generateUseDatasource(currentDatasourceName) : "";
+
                     grafanaDashboard.setUrl(grafanaProperties.exposeUrl()
                             + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "")
-                            + KIOSK + REFRESH + INSTANCE + monitorId + USE_DATASOURCE);
+                            + KIOSK + REFRESH + INSTANCE + monitorId + useDatasource);
+
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
                     log.info("create dashboard success, token: {}", response.getBody());
@@ -120,7 +131,7 @@ public class DashboardService {
             throw new RuntimeException("create dashboard error", ex);
         }
     }
-    
+
     /**
      * Deletes a dashboard in Grafana by monitor ID.
      *
@@ -158,7 +169,7 @@ public class DashboardService {
             }
         }
     }
-    
+
     /**
      * Retrieves a dashboard by monitor ID.
      *
