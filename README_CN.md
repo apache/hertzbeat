@@ -34,7 +34,7 @@
 
 - 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
 - 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。    
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
 - 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
@@ -59,8 +59,8 @@
 
 ## ⛄ 已支持    
 
-> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 监控模版，用户可以导入这些模版来支持对应类型的监控!    
-> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
+> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 监控模板，用户可以导入这些模板来支持对应类型的监控!    
+> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模板。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
@@ -98,7 +98,7 @@
 - [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-- 和更多自定义监控模版。
+- 和更多自定义监控模板。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
 
 ## 🐕 快速开始  
@@ -542,7 +542,7 @@ Thanks these wonderful people, welcome to join us:
 
 微信公众号 : 搜索 ID `usthecom`.
 
-[QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : 群号 `630061200`
+[QQ交流群](https://qm.qq.com/q/xxqecSC2cw) : 群号 `1035688434`
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 

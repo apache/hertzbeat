@@ -58,8 +58,8 @@ ${FORMATTER [{ + | - }<DURATION> <TIME_UNIT>]}
 #### Usage Examples
 
 1. Simple expression
-   - `${now}` gets the current time and formats it as `yyyy-MM-dd HH:mm:ss`
-   - `${time+1h}` calculates the time one hour from now and formats it as `HH:mm:ss`
-   - `${time+1h+15s+30s}` calculates the time one hour, 15 minutes, and 30 seconds from now and formats it as `HH:mm:ss`
+   - `${@now}` gets the current time and formats it as `yyyy-MM-dd HH:mm:ss`
+   - `${@time+1H}` calculates the time one hour from now and formats it as `HH:mm:ss`
+   - `${@time+1H+15m+30s}` calculates the time one hour, 15 minutes, and 30 seconds from now and formats it as `HH:mm:ss`
 2. Complex expression template (if the built-in formatter does not meet your needs, you can combine multiple expressions)
    - `${@year}年${@month}月${@day}日` returns the current date formatted as yyyy年MM月dd日

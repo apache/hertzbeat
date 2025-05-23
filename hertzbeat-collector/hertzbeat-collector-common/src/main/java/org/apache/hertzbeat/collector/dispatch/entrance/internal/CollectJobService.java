@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
-import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
+import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;

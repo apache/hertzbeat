@@ -39,7 +39,7 @@ github：gcdd1993 (进击的阿晨)
 * 实现了对`Redis`数据库的指标监控
 * 优化`spring.factories` 配置项
 * 实现支持了 `Telegram`、`Discord`、`Slack` 的消息通知渠道
-* 使用 `Thymeleaf` 重构了告警文本，告警通知模版更规范化
+* 使用 `Thymeleaf` 重构了告警文本，告警通知模板更规范化
 
 ### 感谢社区小伙伴
 

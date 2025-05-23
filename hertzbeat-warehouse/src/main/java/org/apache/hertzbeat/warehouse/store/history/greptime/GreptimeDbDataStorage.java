@@ -126,7 +126,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         String monitorId = String.valueOf(metricsData.getId());
-        String tableName = getTableName(metricsData.getApp(), metricsData.getMetrics());
+        String tableName = getTableName(metricsData.getId(), metricsData.getMetrics());
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
 
         tableSchemaBuilder.addTag("instance", DataType.String)
@@ -194,7 +194,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
                                                          String label, String history) {
-        String name = getTableName(app, metrics);
+        String name = getTableName(monitorId, metrics);
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + name + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
@@ -227,6 +227,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 log.error("history time error: {}. use default: 6h", e.getMessage());
                 start = now.minus(6, ChronoUnit.HOURS).getEpochSecond();
             }
+
             long end = now.getEpochSecond();
             String step = "60s";
             if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
@@ -234,13 +235,15 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             } else if (end - start >= Duration.ofDays(7).getSeconds()) {
                 step = "4h";
             }
+
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(greptimeProperties.httpEndpoint() + QUERY_RANGE_PATH)
+            URI uri = UriComponentsBuilder.fromUriString(greptimeProperties.httpEndpoint() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("start", start)
                     .queryParam("end", end)
                     .queryParam("step", step)
                     .build(true).toUri();
+
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
@@ -258,7 +261,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                             for (Object[] valueArr : content.getValues()) {
                                 long timestamp = ((Double) valueArr[0]).longValue();
                                 String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-                                // read timestamp here is s unit
                                 valueList.add(new Value(value, timestamp * 1000));
                             }
                         }
@@ -273,8 +275,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return instanceValuesMap;
     }
 
-    private String getTableName(String app, String metrics) {
-        return app + SPILT + metrics;
+    private String getTableName(Long monitorId, String metrics) {
+        return "hzb" + SPILT + monitorId + SPILT + metrics;
     }
 
     @Override

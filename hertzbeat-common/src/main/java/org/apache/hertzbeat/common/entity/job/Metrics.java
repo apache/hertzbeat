@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.EurekaSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ConsulSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ModbusProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NacosSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
@@ -66,11 +67,12 @@ import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-
+import org.apache.hertzbeat.common.entity.job.protocol.ZookeeperSdProtocol;
 /**
  * Details of the monitoring metrics collected
  * eg: cpu | memory | health
  */
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -278,6 +280,14 @@ public class Metrics {
      * consul sd protocol
      */
     private ConsulSdProtocol consul_sd;
+    /**
+     * nacos sd protocol
+     */
+    private NacosSdProtocol nacos_sd;
+    /*
+     * zookeeper sd protocol
+     */
+    private ZookeeperSdProtocol zookeeper_sd;
     /**
      * Monitoring configuration information using the public plc protocol
      */

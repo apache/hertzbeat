@@ -51,8 +51,8 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ## ⛄ 已支持
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!
-> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
+> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模板，用户可以导入这些模板来支持对应类型的监控!
+> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模板。
 
 - Website, Port Telnet, Http Api, Ping Connect, Jvm, SiteMap, Ssl Certificate, SpringBoot2, FTP Server, SpringBoot3
 - Mysql, PostgreSQL, MariaDB, Redis, ElasticSearch, SqlServer, Oracle, MongoDB, DM, OpenGauss, ClickHouse, IoTDB, Redis Cluster, Redis Sentinel
@@ -60,7 +60,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 - Tomcat, Nacos, Zookeeper, RabbitMQ, Flink, Kafka, ShenYu, DynamicTp, Jetty, ActiveMQ
 - Kubernetes, Docker
 - CiscoSwitch, HpeSwitch, HuaweiSwitch, TpLinkSwitch, H3cSwitch
-- 和更多自定义监控模版。
+- 和更多自定义监控模板。
 - 通知支持 Discord Slack Telegram 邮件 钉钉 微信 飞书 短信 Webhook。
 
 ---
