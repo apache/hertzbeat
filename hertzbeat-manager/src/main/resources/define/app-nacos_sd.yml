@@ -13,43 +13,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# The monitoring type category: service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: __system__
 # Monitoring application type name (consistent with file name) eg: linux windows tomcat mysql aws...
-app: consul_sd
-# The app api i18n name
+app: nacos_sd
+# The monitoring i18n name
 name:
-  zh-CN: Consul Service Discovery
-  en-US: Consul Service Discovery
-  ja-JP: Consulサービスディスカバリー
+  zh-CN: Nacos 服务发现
+  en-US: Nacos Service Discovery
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
-  - field: __sd_host__
+  - field: __nacos_sd_host__
     # name-param field display i18n name
     name:
-      zh-CN: Consul Host
-      en-US: Consul Host
-      ja-JP: Consulホスト
+      zh-CN: Nacos 服务发现 Host
+      en-US: Nacos Service Discovery Host
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
     required: true
-  - field: __sd_port__
+  - field: __nacos_sd_port__
     name:
-      zh-CN: Consul 端口
-      en-US: Consul Port
-      ja-JP: Consulポート
+      zh-CN: Nacos 服务发现 Port
+      en-US: Nacos Service Discovery Port
     type: number
-    range: '[0,65535]'
     required: true
+#  - field: __nacos_namespace__
+#    name:
+#      zh-CN: Nacos 命名空间
+#      en-US: Nacos Namespace
+#    type: text
+#    required: false
+#  - field: __nacos_username__
+#    name:
+#      zh-CN: Nacos 用户名
+#      en-US: Nacos Username
+#    type: text
+#    required: false
+#  - field: __nacos_password__
+#    name:
+#      zh-CN: Nacos 密码
+#      en-US: Nacos Password
+#    type: password
+#    required: false
 
 metrics:
   - name: target
     i18n:
       zh-CN: 监控目标
       en-US: Monitor Target
-      ja-JP: 監視対象
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -61,16 +74,17 @@ metrics:
         i18n:
           zh-CN: Host
           en-US: Host
-          ja-JP: ホスト
       - field: port
         type: 1
         i18n:
           zh-CN: Port
           en-US: Port
-          ja-JP: ポート
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    protocol: consul_sd
-    # the config content when protocol is http_sd
-    consul_sd:
-      host: ^_^__sd_host__^_^
-      port: ^_^__sd_port__^_^
+    protocol: nacos_sd
+    # the config content when protocol is nacos_sd
+    nacos_sd:
+      host: ^_^__nacos_sd_host__^_^
+      port: ^_^__nacos_sd_port__^_^
+#      namespace: ^_^__nacos_namespace__^_^
+#      username: ^_^__nacos_username__^_^
+#      password: ^_^__nacos_password__^_^
