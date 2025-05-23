@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 将调用 HTTP API 接口，查看接口是否可用，并以 ms 为指标单位对其响应时间等指标进行监测。您可以先点击“新增 HTTP API”按钮并进行配置，或在“更多操作”中导入已有配置。
   en-US: The platform will invoke an HTTP API endpoint to verify its accessibility and monitor various metrics, including response time, measured in milliseconds (ms). <br>To set up this functionality, you could click the "Add HTTP API" button and proceed with the configuration or import an existing setup through the "More Actions" menu.
   zh-TW: Hertzbeat將調用HTTP API介面，查看介面是否可用，並以ms為名額組織對其回應時間等名額進行監測。 您可以先點擊“新增HTTP API”按鈕並進行配寘，或在“更多操作”中導入已有配寘。
-  ja-JP: Hertzbeatは、HTTP APIを呼び出して利用可能かどうかを確認し、応答時間(ms)などのメトリクスを監視します。「新規HTTP API」をクリックして設定しましょう。
+  ja-JP: Hertzbeatは、HTTP APIを呼び出して利用可能かどうかを確認し、応答時間(ms)などのメトリックを監視します。「新規HTTP API」をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/api
   en-US: https://hertzbeat.apache.org/docs/help/api
