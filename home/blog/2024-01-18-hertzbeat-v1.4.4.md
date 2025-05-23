@@ -118,7 +118,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * Update app-zookeeper.yml by @hurenjie1 in <https://github.com/apache/hertzbeat/pull/1458>
 * add hurenjie1 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1459>
 * update dashboard ui, remove ssh custom SignatureFactories, update app name by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1460>
-* [Task] Monitoring Template Yml Metrics I18n | 监控模版指标国际化任务认领 #1212 by @tslj1024 in <https://github.com/apache/hertzbeat/pull/1461>
+* [Task] Monitoring Template Yml Metrics I18n | 监控模板指标国际化任务认领 #1212 by @tslj1024 in <https://github.com/apache/hertzbeat/pull/1461>
 * add tslj1024 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1462>
 * Add alarm trigger time for alarm restore by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1464>
 * bugfix history range query not work when victoria-metrics store by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1463>

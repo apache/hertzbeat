@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.EurekaSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ConsulSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ModbusProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NacosSdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
@@ -280,6 +281,10 @@ public class Metrics {
      */
     private ConsulSdProtocol consul_sd;
     /**
+     * nacos sd protocol
+     */
+    private NacosSdProtocol nacos_sd;
+    /*
      * zookeeper sd protocol
      */
     private ZookeeperSdProtocol zookeeper_sd;
