@@ -21,7 +21,7 @@ keywords:
 
 本人从22年开始至今一直从事Java后端开发工作，目前在一家公司担任后端开发工程师并兼任运维工作。
 
-## 初始 Apache HertzBeat
+## 初识 Apache HertzBeat
 
 在去年的时候无意间接触到了 Apache HertzBeat 项目，在阅读了文档后发现这款监控使用简单、不需要 Agent、全 Web 页面操作，于是我在公司内部基于 Docker 快速搭建起并投入使用。
 
