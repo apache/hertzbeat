@@ -441,7 +441,6 @@ One item of the email content is `Vote thread`, and the link is obtained here: <
 Send a voting email in the incubator community requires at least three `+1` and no `-1`.
 
 > `Send to`: <general@incubator.apache.org> <br />
-> `cc`: <dev@hertzbeat.apache.org>、<private@hertzbeat.apache.org> <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
