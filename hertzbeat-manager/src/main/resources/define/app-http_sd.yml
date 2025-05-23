@@ -43,8 +43,6 @@ params:
     type: radio
     # required-true or false
     required: false
-    # hide param-true or false
-    hide: true
     # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
     options:
       - label: Bearer Token
@@ -61,6 +59,10 @@ params:
       en-US: Access Token
     # type-param field type(most mapping the html input type)
     type: text
+    # dependent parameter values list
+    depend:
+      __sd_authType__:
+        - Bearer Token
     # required-true or false
     required: false
     # hide param-true or false
@@ -75,6 +77,11 @@ params:
     type: text
     # when type is text, use limit to limit string length
     limit: 50
+    # dependent parameter values list
+    depend:
+      __sd_authType__:
+        - Basic Auth
+        - Digest Auth
     # required-true or false
     required: false
     # hide param-true or false
@@ -87,6 +94,11 @@ params:
       en-US: Password
     # type-param field type(most mapping the html input type)
     type: password
+    # dependent parameter values list
+    depend:
+      __sd_authType__:
+        - Basic Auth
+        - Digest Auth
     # required-true or false
     required: false
     # hide param-true or false
