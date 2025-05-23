@@ -521,6 +521,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/boyucjz"><img src="https://avatars.githubusercontent.com/u/18730041?v=4?s=100" width="100px;" alt="boyucjz"/><br /><sub><b>boyucjz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=boyucjz" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Cyanty"><img src="https://avatars.githubusercontent.com/u/153884653?v=4?s=100" width="100px;" alt="Cyanty"/><br /><sub><b>Cyanty</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Cyanty" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=Cyanty" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/KevinLLF"><img src="https://avatars.githubusercontent.com/u/85452733?v=4?s=100" width="100px;" alt="Jay丿167"/><br /><sub><b>Jay丿167</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=KevinLLF" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Duansg"><img src="https://avatars.githubusercontent.com/u/112607719?v=4?s=100" width="100px;" alt="Duansg"/><br /><sub><b>Duansg</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Duansg" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
