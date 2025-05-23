@@ -441,7 +441,6 @@ ChunJin Mu
 发送孵化社区投票邮件需要至少三个`+1`，且无`-1`。
 
 > `Send to`: <general@incubator.apache.org> <br />
-> `cc`: <dev@hertzbeat.apache.org>、<private@hertzbeat.apache.org> <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
