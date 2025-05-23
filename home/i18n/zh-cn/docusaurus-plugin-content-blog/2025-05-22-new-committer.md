@@ -35,5 +35,4 @@ keywords:
 
 ## 结语
 
-非常感谢 [@tomsun28](https://github.com/tomsun28) 邀请我成为该项目的 Committer，也感谢社区的其他成员帮助我 review 代码，给予了极大的帮助。 Apache HertzBeat 是一个非常活跃的社区，也希望能有更多的人加入到这个社区参与贡献，
-最后预祝 Apache HertzBeat 早日从孵化器顺利毕业！
+非常感谢 [@tomsun28](https://github.com/tomsun28) 邀请我成为该项目的 Committer，也感谢社区的其他成员帮助我 review 代码，给予了极大的帮助。 Apache HertzBeat 是一个非常活跃的社区，也希望能有更多的人加入到这个社区参与贡献，最后预祝 Apache HertzBeat 早日从孵化器顺利毕业！

@@ -35,5 +35,4 @@ In the following period, I continued to familiarize myself with the Apache Hertz
 
 ## Conclusion
 
-I'm deeply grateful to [@tomsun28](https://github.com/tomsun28) for inviting me to become a committer for this project. I also want to thank other members of the community for assisting me in reviewing code and providing invaluable help. Apache Hertzbeat boasts a highly active community, and I sincerely hope more people will join and contribute to it,
-Finally, I wish Apache HertzBeat can graduate from the incubator soon!
+I'm deeply grateful to [@tomsun28](https://github.com/tomsun28) for inviting me to become a committer for this project. I also want to thank other members of the community for assisting me in reviewing code and providing invaluable help. Apache Hertzbeat boasts a highly active community, and I sincerely hope more people will join and contribute to it, Finally, I wish Apache HertzBeat can graduate from the incubator soon!
