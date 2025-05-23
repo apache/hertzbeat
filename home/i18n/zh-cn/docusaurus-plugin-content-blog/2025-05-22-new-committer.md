@@ -23,7 +23,7 @@ keywords:
 
 ## 初始 Apache HertzBeat
 
-在去年的时候无意间接触到了 Apache HertzBeat 项目，在阅读了文档后发现这款监控使用简单、不需要 Agent、全 Web 页面操作，于是我在公司内部基于 Docker 搭建快速搭建起并投入使用。
+在去年的时候无意间接触到了 Apache HertzBeat 项目，在阅读了文档后发现这款监控使用简单、不需要 Agent、全 Web 页面操作，于是我在公司内部基于 Docker 快速搭建起并投入使用。
 
 由于 Apache HertzBeat `All in one` 的设计架构，极大减轻了我的心智负担，很快地便将公司内部各种服务接入监控。
 
