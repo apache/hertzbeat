@@ -241,6 +241,9 @@ export class MonitorEditComponent implements OnInit {
                 if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
                   define.placeholder = this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
                 }
+                if (define.hide) {
+                  param.display = false;
+                }
                 params.push(param);
                 paramDefines.push(define);
               });
@@ -302,6 +305,9 @@ export class MonitorEditComponent implements OnInit {
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.scrape}.param.${define.field}`);
               if (define.placeholder == null && this.i18nSvc.fanyi(`monitor.${define.field}.tip`) != `monitor.${define.field}.tip`) {
                 define.placeholder = this.i18nSvc.fanyi(`monitor.${define.field}.tip`);
+              }
+              if (define.hide) {
+                param.display = false;
               }
               params.push(param);
               paramDefines.push(define);
