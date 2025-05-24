@@ -21,10 +21,12 @@ app: dahua
 name:
   zh-CN: 大华
   en-US: Dahua
+  ja-JP: Dahua
 # The description and help of this monitoring type
 help:
   zh-CN: 通过http接口监控大华设备状态，获取设备健康数据。
   en-US: Monitor Dahua devices through http interface to collect health data.
+  ja-JP: Hertzbeat は HTTPインターフェースを呼び出してDahuaデバイスの健全データを収集します。
 
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -32,12 +34,14 @@ params:
     name:
       zh-CN: 主机Host
       en-US: Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -46,6 +50,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     type: number
     range: '[1000,60000]'
     required: true
@@ -54,18 +59,21 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     required: true
   - field: password
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: true
   - field: ssl
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
+      ja-JP: HTTPS利用
     type: boolean
     required: false
     defaultValue: false
@@ -76,6 +84,7 @@ metrics:
     i18n:
       zh-CN: 网络信息
       en-US: Network Info
+      ja-JP: ネットワーク情報
     priority: 0
     protocol: http
     http:
@@ -96,51 +105,61 @@ metrics:
         i18n:
           zh-CN: 默认网卡
           en-US: Default Interface
+          ja-JP: デフォルトのネットワークカード
       - field: domain_name
         type: 1
         i18n:
           zh-CN: 域名
           en-US: Domain Name
+          ja-JP: ドメイン名
       - field: hostname
         type: 1
         i18n:
           zh-CN: 主机名
           en-US: Hostname
+          ja-JP: ホスト名
       - field: eth0_ip_address
         type: 1
         i18n:
           zh-CN: 网卡 eth0 IP地址
           en-US: Interface eth0 IP Address
+          ja-JP: eth0ネットワークカードのIPアドレス
       - field: eth0_gateway
         type: 1
         i18n:
           zh-CN: 网卡 eth0 默认网关
           en-US: Interface eth0 Default Gateway
+          ja-JP: eth0ネットワークカードのデフォルトゲートウェイ
       - field: eth0_mac_address
         type: 1
         i18n:
           zh-CN: 网卡 eth0 物理地址
           en-US: Interface eth0 Physical Address
+          ja-JP: eth0ネットワークカードの物理アドレス
       - field: eth0_subnet_mask
         type: 1
         i18n:
           zh-CN: 网卡 eth0 子网掩码
           en-US: Interface eth0 Subnet Mask
+          ja-JP: eth0ネットワークカードのサブネットマスク
       - field: eth0_mtu
         type: 0
         i18n:
           zh-CN: 网卡 eth0 MTU
           en-US: Interface eth0 MTU
+          ja-JP: eth0ネットワークカードのMTU
       - field: eth0_dns1
         type: 1
         i18n:
           zh-CN: 网卡 eth0 DNS服务器1
           en-US: Interface eth0 DNS Server 1
+          ja-JP: eth0ネットワークカードのDNSサーバー 1
       - field: eth0_dns2
         type: 1
         i18n:
           zh-CN: 网卡 eth0 DNS服务器2
           en-US: Interface eth0 DNS Server 2
+          ja-JP: eth0ネットワークカードのDNSサーバー 2
     aliasFields:
       - table.Network.DefaultInterface
       - table.Network.Domain
@@ -167,6 +186,7 @@ metrics:
     i18n:
       zh-CN: 用户信息
       en-US: User Info
+      ja-JP: ユーザー情報
     priority: 0
     protocol: http
     http:
@@ -188,25 +208,30 @@ metrics:
         i18n:
           zh-CN: 客户端地址
           en-US: ClientAddress
+          ja-JP: ユーザーのアドレス
       - field: Name
         type: 1
         i18n:
           zh-CN: 客户端用户
           en-US: Name
+          ja-JP: ユーザー名
       - field: ClientType
         type: 1
         i18n:
           zh-CN: 客户端登录类型
           en-US: ClientType
+          ja-JP: ユーザータイプ
       - field: LoginTime
         type: 1
         i18n:
           zh-CN: 客户端登录时间
           en-US: LoginTime
+          ja-JP: ユーザーのログイン時間
   - name: ntp_info
     i18n:
       zh-CN: 校时信息
       en-US: Ntp Info
+      ja-JP: NTP情報
     priority: 0
     protocol: http
     http:
@@ -227,16 +252,19 @@ metrics:
         i18n:
           zh-CN: 校时服务器
           en-US: Ntp Address
+          ja-JP: NTPアドレス
       - field: ntp_port
         type: 1
         i18n:
           zh-CN: 校时端口
           en-US: Ntp Port
+          ja-JP: NTPポート
       - field: ntp_update_period
         type: 1
         i18n:
           zh-CN: 校时间隔
           en-US: Ntp Update Period
+          ja-JP: NTP更新期間
     aliasFields:
       - table.NTP.Address
       - table.NTP.Port
