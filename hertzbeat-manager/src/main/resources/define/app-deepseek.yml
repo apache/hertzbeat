@@ -22,11 +22,13 @@ app: deepseek
 name:
   zh-CN: Deepseek
   en-US: Deepseek
+  ja-JP: Deepseek
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Deepseek Api进行测量监控。<br>您可以点击 “<i>新建 Deepseek</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors Deepseek Api. You could click the "<i>New Deepseek</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat對Deepseek Api進行量測監控。<br>您可以點擊“<i>Deepseek</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat は Deepseek Apiを監視します。<br>「<i>新規 Deepseek</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/deepseek
   en-US: https://hertzbeat.apache.org/docs/help/deepseek
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 会话密钥
       en-US: Session Key
+      ja-JP: セッション鍵
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -50,6 +53,7 @@ metrics:
     i18n:
       zh-CN: 计费
       en-US: Billing
+      ja-JP: 料金
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -61,21 +65,25 @@ metrics:
         i18n:
           zh-CN: 货币
           en-US: Currency
+          ja-JP: 通貨
       - field: total_balance
         type: 0
         i18n:
           zh-CN: 可用余额
           en-US: Available Balance
+          ja-JP: 利用可能残高
       - field: granted_balance
         type: 0
         i18n:
           zh-CN: 未过期的赠金余额
           en-US: Unexpired Gift Balance
+          ja-JP: 有効期限内のギフト残高
       - field: topped_up_balance
         type: 0
         i18n:
           zh-CN: 充值的余额
           en-US: Topped Up Balance
+          ja-JP: 残高
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
