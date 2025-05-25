@@ -18,7 +18,7 @@ Support visual page configuration or more flexible expression rule configuration
 
 ### Creating Threshold Rules
 
-    > HertzBeat Page -> Alerting -> Threshold -> New Threshold -> ReadTime Threshold Rule
+> HertzBeat Page -> Alerting -> Threshold -> New Threshold -> ReadTime Threshold Rule
 
 Configure the threshold, for example: Select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
 
