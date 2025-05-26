@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.jexl3.JexlExpression;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
-import org.apache.hertzbeat.collector.collect.prometheus.PrometheusProxyCollectImpl;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.collector.timer.WheelTimerTask;
@@ -162,6 +161,12 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         // for prometheus auto or proxy mode
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
             List<CollectRep.MetricsData> metricsData;
+
+            // TODO: Refactor Prometheus metrics collection logic.
+            // The current implementation for proxy mode and auto mode needs review and potential simplification.
+            // Consider a more unified approach or clarify the conditions for each mode.
+            /*
+            // TODO USE PROXY MODE
             if (prometheusProxyMode) {
                 List<CollectRep.MetricsData> proxyData = PrometheusProxyCollectImpl.getInstance().collect(response, metrics);
                 List<CollectRep.MetricsData> autoData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
@@ -175,6 +180,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             } else {
                 metricsData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
             }
+            */
+            metricsData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
             validateResponse(metricsData == null ? null : metricsData.stream().findFirst().orElse(null));
             collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
             return;
