@@ -5,6 +5,9 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 import java.util.List;
 
+/**
+ * Prometheus metrics collector interface
+ */
 public interface PrometheusCollect {
 
     /**

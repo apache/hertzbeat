@@ -283,7 +283,7 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
                                                   .build();
             requestBuilder.setConfig(requestConfig);
         } else {
-             RequestConfig requestConfig = RequestConfig.custom()
+            RequestConfig requestConfig = RequestConfig.custom()
                                                   .setRedirectsEnabled(true)
                                                   .build();
             requestBuilder.setConfig(requestConfig);
