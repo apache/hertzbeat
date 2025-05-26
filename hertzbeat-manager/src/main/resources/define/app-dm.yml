@@ -21,11 +21,13 @@ app: dm
 name:
   zh-CN: 达梦数据库
   en-US: DM DB
+  ja-JP: DM データベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 DM达梦数据库 的通用性能指标(basic、status、thread)进行采集监控，支持版本为 DM8+。<br>您可以点击“<i>新建 达梦数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors DM database of basic performance metrics such as status and thread, the version we support is DM8+. You could click the "<i>New DM</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 對 DM達夢數據庫 的通用性能指標(basic、status、thread)進行采集監控，支持版本爲 DM8+。<br>您可以點擊“<i>新建 達夢數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は DM データベースの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 DM データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/dm
   en-US: https://hertzbeat.apache.org/docs/help/dm
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -63,6 +67,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -77,6 +82,7 @@ params:
     name:
       zh-CN: 用户密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -89,6 +95,7 @@ params:
     name:
       zh-CN: 超时时间
       en-US: Timeout
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -104,6 +111,7 @@ metrics:
     i18n:
       zh-CN: 基本信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -114,16 +122,19 @@ metrics:
         i18n:
           zh-CN: 端口号
           en-US: Port Number
+          ja-JP: ポート
         type: 1
       - field: CTL_PATH
         i18n:
           zh-CN: 控制路径
           en-US: Control Path
+          ja-JP: 制御パス
         type: 1
       - field: MAX_SESSIONS
         i18n:
           zh-CN: 最大会话数
           en-US: Max Sessions
+          ja-JP: 最大セッション数
         type: 0
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
@@ -158,12 +169,14 @@ metrics:
     i18n:
       zh-CN: 状态
       en-US: Status
+      ja-JP: ステータス
     priority: 1
     fields:
       - field: status
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
         type: 1
     protocol: jdbc
     jdbc:
@@ -184,22 +197,26 @@ metrics:
     i18n:
       zh-CN: 线程
       en-US: Thread
+      ja-JP: スレッド情報
     priority: 2
     fields:
       - field: dm_sql_thd
         i18n:
           zh-CN: SQL线程数
           en-US: SQL Thread
+          ja-JP: SQLスレッド数
         type: 0
       - field: dm_io_thd
         i18n:
           zh-CN: I/O线程数
           en-US: I/O Thread
+          ja-JP: I/Oスレッド数
         type: 0
       - field: dm_quit_thd
         i18n:
           zh-CN: 退出线程数
           en-US: Quit Thread
+          ja-JP: 終了したスレッド数
         type: 0
     aliasFields:
       - dm_sql_thd
