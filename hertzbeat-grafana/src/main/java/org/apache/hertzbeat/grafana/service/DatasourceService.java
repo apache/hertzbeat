@@ -23,7 +23,11 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_TY
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.QUERY_DATASOURCE_API;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.generateDatasourceName;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
 import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
@@ -108,32 +112,77 @@ public class DatasourceService {
         }
 
         // Create new datasource
-        createDatasource(token, datasourceName, datasourceUrl);
+        createDatasource(token, datasourceName, datasourceUrl, datasourceType);
     }
 
-    private void createDatasource(String token, String datasourceName, String datasourceUrl) {
+    public void createDatasource(String token, String datasourceName, String datasourceUrl, String datasourceType) {
         String createUrl = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + CREATE_DATASOURCE_API;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
 
-        String body = String.format(
-                "{\"name\":\"%s\",\"type\":\"%s\",\"access\":\"%s\",\"url\":\"%s\",\"basicAuth\":%s}",
-                datasourceName, DATASOURCE_TYPE, DATASOURCE_ACCESS, datasourceUrl, false
-        );
-
-        HttpEntity<String> createEntity = new HttpEntity<>(body, headers);
+        DatasourceRequest datasourceRequest;
+        if ("greptime".equals(datasourceType)) {
+            datasourceUrl += "/v1/prometheus";
+            Map<String, Object> jsonData = new HashMap<>();
+            Map<String, Object> secureJsonData = new HashMap<>();
+            jsonData.put("httpHeaderName1", "x-greptime-db-name");
+            secureJsonData.put("httpHeaderValue1", greptimeProperties.database());
+            datasourceRequest = new DatasourceRequest(
+                    datasourceName,
+                    DATASOURCE_TYPE,
+                    DATASOURCE_ACCESS,
+                    datasourceUrl,
+                    false,
+                    jsonData,
+                    secureJsonData
+            );
+        } else {
+            datasourceRequest = new DatasourceRequest(
+                    datasourceName,
+                    DATASOURCE_TYPE,
+                    DATASOURCE_ACCESS,
+                    datasourceUrl,
+                    false,
+                    null,
+                    null
+            );
+        }
 
         try {
+            String body = JsonUtil.toJson(datasourceRequest);
+            HttpEntity<String> createEntity = new HttpEntity<>(body, headers);
+
             ResponseEntity<String> createResponse = restTemplate.postForEntity(createUrl, createEntity, String.class);
             if (createResponse.getStatusCode().is2xxSuccessful()) {
-                log.info("Create datasource '{}' success", datasourceName);
+                log.info("Create datasource success");
             }
         } catch (HttpClientErrorException.Conflict conflict) {
-            log.info("Datasource '{}' already exists, skipping creation", datasourceName);
+            log.info("Datasource already exists");
         } catch (Exception e) {
-            log.error("Create datasource '{}' error", datasourceName, e);
+            log.error("Create datasource error", e);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class DatasourceRequest {
+        public String name;
+        public String type;
+        public String access;
+        public String url;
+        public boolean basicAuth;
+        public Map<String, Object> jsonData;
+        public Map<String, Object> secureJsonData;
+
+        public DatasourceRequest(String name, String type, String access, String url, boolean basicAuth, Map<String, Object> jsonData, Map<String, Object> secureJsonData) {
+            this.name = name;
+            this.type = type;
+            this.access = access;
+            this.url = url;
+            this.basicAuth = basicAuth;
+            this.jsonData = jsonData;
+            this.secureJsonData = secureJsonData;
         }
     }
 
