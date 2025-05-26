@@ -93,7 +93,7 @@ params:
     name:
       zh-CN: 使用代理
       en-US: Use Proxy Connection
-      ja-JP: プロキシ利用
+      ja-JP: プロキシコネクション利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
