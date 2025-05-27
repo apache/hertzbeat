@@ -21,11 +21,13 @@ app: dns
 name:
   zh-CN: DNS服务器监控
   en-US: DNS SERVER MONITORS
+  ja-JP: DNS サーバーモニター
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 DNS 服务相关指标进行监测。
   en-US: HertzBeat monitors related indicators of the DNS service.
   zh-TW: HertzBeat對DNS服務相關名額進行監測。
+  ja-JP: HertzBeatはDNSのメトリックを監視します。
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -34,6 +36,7 @@ params:
     name:
       zh-CN: DNS服务器IP
       en-US: DNS Server IP
+      ja-JP: DNS サーバーのIP
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -57,6 +61,7 @@ params:
     name:
       zh-CN: 域名解析的地址
       en-US: Address For DNS
+      ja-JP: アドレス
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -67,6 +72,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -80,6 +86,7 @@ params:
     name:
       zh-CN: 是否使用tcp协议
       en-US: Use TCP Protocol
+      ja-JP: TCP プロトコルを利用
     # type-param field type(boolean mapping the html switch tag)
     type: boolean
     # required-true or false
@@ -92,6 +99,7 @@ params:
     name:
       zh-CN: 查询类别
       en-US: Query Class
+      ja-JP: クエリクラス
     type: radio
     required: true
     options:
@@ -115,6 +123,7 @@ metrics:
     i18n:
       zh-CN: Header
       en-US: Header
+      ja-JP: ヘッダ
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -126,41 +135,49 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: opcode
         type: 1
         i18n:
           zh-CN: 操作码
           en-US: Opcode
+          ja-JP: 命令コード
       - field: status
         type: 1
         i18n:
           zh-CN: 响应状态
           en-US: Response Status
+          ja-JP: 応答ステータス
       - field: flags
         type: 1
         i18n:
           zh-CN: 响应标志
           en-US: Response Flags
+          ja-JP: 応答フラグ
       - field: questionRowCount
         type: 0
         i18n:
           zh-CN: 请求记录数
           en-US: Question Record Count
+          ja-JP: Questionレコード数
       - field: answerRowCount
         type: 0
         i18n:
           zh-CN: 响应记录数
           en-US: Answer Record Count
+          ja-JP: Answerレコード数
       - field: authorityRowCount
         type: 0
         i18n:
           zh-CN: 授权记录数
           en-US: Authority Record Count
+          ja-JP: Authorityレコード数
       - field: additionalRowCount
         type: 0
         i18n:
           zh-CN: 附加记录数
           en-US: Additional Record Count
+          ja-JP: Additionalレコード数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, dns
     protocol: dns
     # Specific collection configuration when protocol is telnet protocol
@@ -183,6 +200,7 @@ metrics:
     i18n:
       zh-CN: Question
       en-US: Question
+      ja-JP: Question
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -193,6 +211,7 @@ metrics:
         i18n:
           zh-CN: Section
           en-US: Section
+          ja-JP: Section
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, dns
     protocol: dns
     # Specific collection configuration when protocol is telnet protocol
@@ -215,6 +234,7 @@ metrics:
     i18n:
       zh-CN: Answer
       en-US: Answer
+      ja-JP: Answer
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -225,51 +245,61 @@ metrics:
         i18n:
           zh-CN: Section0
           en-US: Section0
+          ja-JP: Section0
       - field: section1
         type: 1
         i18n:
           zh-CN: Section1
           en-US: Section1
+          ja-JP: Section1
       - field: section2
         type: 1
         i18n:
           zh-CN: Section2
           en-US: Section2
+          ja-JP: Section2
       - field: section3
         type: 1
         i18n:
           zh-CN: Section3
           en-US: Section3
+          ja-JP: Section3
       - field: section4
         type: 1
         i18n:
           zh-CN: Section4
           en-US: Section4
+          ja-JP: Section4
       - field: section5
         type: 1
         i18n:
           zh-CN: Section5
           en-US: Section5
+          ja-JP: Section5
       - field: section6
         type: 1
         i18n:
           zh-CN: Section6
           en-US: Section6
+          ja-JP: Section6
       - field: section7
         type: 1
         i18n:
           zh-CN: Section7
           en-US: Section7
+          ja-JP: Section7
       - field: section8
         type: 1
         i18n:
           zh-CN: Section8
           en-US: Section8
+          ja-JP: Section8
       - field: section9
         type: 1
         i18n:
           zh-CN: Section9
           en-US: Section9
+          ja-JP: Section9
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, dns
     protocol: dns
     # Specific collection configuration when protocol is telnet protocol
@@ -292,6 +322,7 @@ metrics:
     i18n:
       zh-CN: Authority
       en-US: Authority
+      ja-JP: Authority
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 3
@@ -302,51 +333,61 @@ metrics:
         i18n:
           zh-CN: Section0
           en-US: Section0
+          ja-JP: Section0
       - field: section1
         type: 1
         i18n:
           zh-CN: Section1
           en-US: Section1
+          ja-JP: Section1
       - field: section2
         type: 1
         i18n:
           zh-CN: Section2
           en-US: Section2
+          ja-JP: Section2
       - field: section3
         type: 1
         i18n:
           zh-CN: Section3
           en-US: Section3
+          ja-JP: Section3
       - field: section4
         type: 1
         i18n:
           zh-CN: Section4
           en-US: Section4
+          ja-JP: Section4
       - field: section5
         type: 1
         i18n:
           zh-CN: Section5
           en-US: Section5
+          ja-JP: Section5
       - field: section6
         type: 1
         i18n:
           zh-CN: Section6
           en-US: Section6
+          ja-JP: Section6
       - field: section7
         type: 1
         i18n:
           zh-CN: Section7
           en-US: Section7
+          ja-JP: Section7
       - field: section8
         type: 1
         i18n:
           zh-CN: Section8
           en-US: Section8
+          ja-JP: Section8
       - field: section9
         type: 1
         i18n:
           zh-CN: Section9
           en-US: Section9
+          ja-JP: Section9
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, dns
     protocol: dns
     # Specific collection configuration when protocol is telnet protocol
@@ -369,6 +410,7 @@ metrics:
     i18n:
       zh-CN: Additional
       en-US: Additional
+      ja-JP: Additional
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 4
@@ -379,51 +421,61 @@ metrics:
         i18n:
           zh-CN: Section0
           en-US: Section0
+          ja-JP: Section0
       - field: section1
         type: 1
         i18n:
           zh-CN: Section1
           en-US: Section1
+          ja-JP: Section1
       - field: section2
         type: 1
         i18n:
           zh-CN: Section2
           en-US: Section2
+          ja-JP: Section2
       - field: section3
         type: 1
         i18n:
           zh-CN: Section3
           en-US: Section3
+          ja-JP: Section3
       - field: section4
         type: 1
         i18n:
           zh-CN: Section4
           en-US: Section4
+          ja-JP: Section4
       - field: section5
         type: 1
         i18n:
           zh-CN: Section5
           en-US: Section5
+          ja-JP: Section5
       - field: section6
         type: 1
         i18n:
           zh-CN: Section6
           en-US: Section6
+          ja-JP: Section6
       - field: section7
         type: 1
         i18n:
           zh-CN: Section7
           en-US: Section7
+          ja-JP: Section7
       - field: section8
         type: 1
         i18n:
           zh-CN: Section8
           en-US: Section8
+          ja-JP: Section8
       - field: section9
         type: 1
         i18n:
           zh-CN: Section9
           en-US: Section9
+          ja-JP: Section9
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, dns
     protocol: dns
     # Specific collection configuration when protocol is telnet protocol
