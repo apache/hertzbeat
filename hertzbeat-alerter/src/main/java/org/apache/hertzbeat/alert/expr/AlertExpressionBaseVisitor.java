@@ -48,11 +48,19 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
     @Override public T visitAndExpr(AlertExpressionParser.AndExprContext ctx) { return visitChildren(ctx); }
 
     /**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
+     * {@inheritDoc}
+     *
+     * <p>The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.</p>
+     */
+    @Override public T visitFunctionExpr(AlertExpressionParser.FunctionExprContext ctx) { return visitChildren(ctx); }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.</p>
+     */
     @Override public T visitQueryExpr(AlertExpressionParser.QueryExprContext ctx) { return visitChildren(ctx); }
 
     /**
@@ -88,7 +96,7 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
     @Override public T visitParenExpr(AlertExpressionParser.ParenExprContext ctx) { return visitChildren(ctx); }
 
     /**
-	 * {@inheritDoc}
+     * {@inheritDoc}
      *
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
@@ -101,7 +109,7 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitIdentifier(AlertExpressionParser.IdentifierContext ctx) { return visitChildren(ctx); }
+    @Override public T visitFunctionCall(AlertExpressionParser.FunctionCallContext ctx) { return visitChildren(ctx); }
 
     /**
      * {@inheritDoc}
@@ -110,4 +118,20 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * {@link #visitChildren} on {@code ctx}.</p>
      */
     @Override public T visitNumber(AlertExpressionParser.NumberContext ctx) { return visitChildren(ctx); }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.</p>
+     */
+    @Override public T visitFunctionName(AlertExpressionParser.FunctionNameContext ctx) { return visitChildren(ctx); }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.</p>
+     */
+    @Override public T visitIdentifier(AlertExpressionParser.IdentifierContext ctx) { return visitChildren(ctx); }
 }

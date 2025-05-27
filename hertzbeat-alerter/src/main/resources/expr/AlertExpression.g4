@@ -28,7 +28,24 @@ expr
     | left=expr 'unless' right=expr      # UnlessExpr
     | left=expr 'or' right=expr          # OrExpr
     | identifier                         # QueryExpr
+    | functionCall                       # FunctionExpr
     | number                             # LiteralExpr
+    ;
+
+functionCall
+    : functionName LPAREN STRING RPAREN
+    ;
+
+number
+    : NUMBER
+    ;
+
+functionName
+    : SCRIPT_FUNCTION
+    ;
+
+identifier
+    : IDENTIFIER
     ;
 
 // Lexer rules
@@ -43,15 +60,8 @@ EQ      : '==' ;
 NE      : '!=' ;
 LPAREN  : '(' ;
 RPAREN  : ')' ;
-
-identifier
-    : IDENTIFIER
-    ;
-
-number
-    : NUMBER
-    ;
-
+SCRIPT_FUNCTION : '__script__';
 IDENTIFIER : [a-zA-Z_] [a-zA-Z0-9_=～{}[\]".]*;
+STRING        : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
 NUMBER     : [0-9]+ ('.' [0-9]+)? ;
 WS         : [ \t\r\n]+ -> skip ;

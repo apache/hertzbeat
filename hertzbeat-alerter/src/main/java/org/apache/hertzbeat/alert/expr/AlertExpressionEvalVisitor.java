@@ -32,6 +32,7 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
 
     private static final String THRESHOLD = "__threshold__";
     private static final String VALUE = "__value__";
+    private static final String SCRIPT_FUNCTION = "__script__";
 
     private final QueryExecutor executor;
 
@@ -66,10 +67,11 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 }
                 // queryValues may be a list of values, or a single value
                 Object matchValue = evaluateCondition(queryValues, operator, threshold);
-                item.put(VALUE, matchValue);
+                HashMap<String, Object> resultMap = new HashMap<>(item);
+                resultMap.put(VALUE, matchValue);
                 // if matchValue is null, mean not match the threshold
                 // if not null, mean match the threshold
-                result.add(new HashMap<>(item));
+                result.add(resultMap);
             }
             return result;
         }
@@ -225,6 +227,18 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         valueMap.put(THRESHOLD, value);
         numAsList.add(valueMap);
         return numAsList;
+    }
+
+    @Override
+    public List<Map<String, Object>> visitFunctionExpr(AlertExpressionParser.FunctionExprContext ctx) {
+        String functionName = ctx.functionCall().functionName().getText();
+        if (SCRIPT_FUNCTION.equals(functionName)){
+            String script = ctx.functionCall().STRING().getText();
+            script = script.substring(1, script.length() - 1); // remove quotes
+            return executor.execute(script);
+        } else {
+            throw new IllegalArgumentException("Unsupported function: " + functionName);
+        }
     }
 
     private Object evaluateCondition(Object value, String operator, Double threshold) {
