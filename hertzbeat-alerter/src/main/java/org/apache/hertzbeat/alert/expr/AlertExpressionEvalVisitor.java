@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.expr;
 
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 
 import java.util.ArrayList;
@@ -34,9 +35,11 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     private static final String VALUE = "__value__";
 
     private final QueryExecutor executor;
+    private final CommonTokenStream tokens;
 
-    public AlertExpressionEvalVisitor(QueryExecutor executor) {
+    public AlertExpressionEvalVisitor(QueryExecutor executor, CommonTokenStream tokens) {
         this.executor = executor;
+        this.tokens = tokens;
     }
 
     @Override
@@ -224,14 +227,14 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
 
     @Override
     public List<Map<String, Object>> visitPromql(AlertExpressionParser.PromqlContext ctx) {
-        String promql = ctx.getText();
-        return executor.execute(promql);
+        String rawPromql = tokens.getText(ctx);
+        return executor.execute(rawPromql);
     }
 
     @Override
     public List<Map<String, Object>> visitSqlExpr(AlertExpressionParser.SqlExprContext ctx) {
-        String sql = ctx.getText();
-        return executor.execute(sql);
+        String rawSql = tokens.getText(ctx.selectSql());
+        return executor.execute(rawSql);
     }
 
     private Object evaluateCondition(Object value, String operator, Double threshold) {

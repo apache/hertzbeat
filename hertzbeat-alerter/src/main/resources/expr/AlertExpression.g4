@@ -279,6 +279,6 @@ STRING          : '"' (~["\r\n\\] | '\\' .)* '"'
 IDENTIFIER      : [a-zA-Z_] [a-zA-Z0-9_=～{}[\]".~-]* ;
 
 // Whitespace and comments
-WS              : [ \t\r\n]+ -> skip ;
+WS              : [ \t\r\n]+ -> channel(HIDDEN) ;
 LINE_COMMENT    : '//' ~[\r\n]* -> skip ;
 BLOCK_COMMENT   : '/*' .*? '*/' -> skip ;

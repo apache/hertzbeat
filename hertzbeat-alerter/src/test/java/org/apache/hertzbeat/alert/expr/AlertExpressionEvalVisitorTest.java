@@ -38,17 +38,17 @@ import static org.mockito.Mockito.when;
 class AlertExpressionEvalVisitorTest {
 
     private QueryExecutor mockExecutor;
-    private AlertExpressionEvalVisitor visitor;
 
     @BeforeEach
     void setUp() {
         mockExecutor = Mockito.mock(QueryExecutor.class);
-        visitor = new AlertExpressionEvalVisitor(mockExecutor);
     }
 
     @Test
     void testGreaterThan() {
         when(mockExecutor.execute("cpu")).thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+        when(mockExecutor.execute("select cpu from cpu_table where id = 1")).thenReturn(
+                List.of(new HashMap<>(Map.of("__value__", 80.0))));
         // promql
         List<Map<String, Object>> result = evaluate("cpu > 70");
         assertEquals(1, result.size());
@@ -180,7 +180,8 @@ class AlertExpressionEvalVisitorTest {
 
     private List<Map<String, Object>> evaluate(String expression) {
         AlertExpressionLexer lexer = new AlertExpressionLexer(CharStreams.fromString(expression));
-        AlertExpressionParser parser = new AlertExpressionParser(new CommonTokenStream(lexer));
-        return visitor.visit(parser.expression());
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        AlertExpressionParser parser = new AlertExpressionParser(tokens);
+        return new AlertExpressionEvalVisitor(mockExecutor, tokens).visit(parser.expression());
     }
 }
