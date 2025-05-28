@@ -41,6 +41,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Service for managing Grafana datasources.
+ * This service checks if a datasource exists and creates it if not.
+ */
 @Service
 @Slf4j
 public class DatasourceService {
@@ -165,6 +169,10 @@ public class DatasourceService {
         }
     }
 
+    /**
+     * Request object for creating a Grafana datasource.
+     * Fields are annotated with @JsonInclude to exclude null values from serialization.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class DatasourceRequest {
         public String name;

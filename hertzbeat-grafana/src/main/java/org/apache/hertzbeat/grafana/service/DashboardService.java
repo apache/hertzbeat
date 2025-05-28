@@ -124,15 +124,15 @@ public class DashboardService {
                     grafanaDashboard.setEnabled(true);
 
                     String currentDatasourceName = datasourceService.getCurrentDatasourceName();
-                    String useDatasource = currentDatasourceName != null ?
-                            GrafanaConstants.generateUseDatasource(currentDatasourceName) : "";
+                    String useDatasource = currentDatasourceName != null
+                            ? GrafanaConstants.generateUseDatasource(currentDatasourceName) : "";
 
                     String relativeDashboardUrl = grafanaDashboard.getUrl();
                     if (relativeDashboardUrl != null && grafanaProperties.getUrl() != null && relativeDashboardUrl.startsWith(grafanaProperties.getUrl())) {
                         relativeDashboardUrl = relativeDashboardUrl.substring(grafanaProperties.getUrl().length());
                     }
-                    String fullDashboardUrl = grafanaProperties.exposeUrl().replaceAll("/$", "") +
-                            (relativeDashboardUrl != null ? relativeDashboardUrl.replaceAll("^/", "") : "");
+                    String fullDashboardUrl = grafanaProperties.exposeUrl().replaceAll("/$", "")
+                            + (relativeDashboardUrl != null ? relativeDashboardUrl.replaceAll("^/", "") : "");
 
                     grafanaDashboard.setUrl(fullDashboardUrl + KIOSK + REFRESH + INSTANCE + monitorId + useDatasource);
 
