@@ -20,15 +20,16 @@
 package org.apache.hertzbeat.manager.config;
 
 import jakarta.annotation.PostConstruct;
-import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
-import org.apache.hertzbeat.collector.collect.prometheus.PrometheusCollect;
-import org.apache.hertzbeat.collector.collect.prometheus.PrometheusProxyCollectImpl;
-import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.VictoriaMetricsProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Configuration class for Prometheus Proxy.
+ * This class determines whether to use PrometheusProxyCollectImpl or PrometheusAutoCollectImpl
+ * based on the presence of GreptimeDB or VictoriaMetrics properties.
+ */
 @Component
 public class PrometheusProxyConfig {
     private static GreptimeProperties staticGreptimeProperties;
