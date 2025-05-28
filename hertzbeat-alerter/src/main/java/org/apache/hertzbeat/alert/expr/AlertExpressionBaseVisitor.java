@@ -77,6 +77,14 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
+    @Override public T visitSqlCallExpr(AlertExpressionParser.SqlCallExprContext ctx) { return visitChildren(ctx); }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.</p>
+     */
     @Override public T visitLiteralExpr(AlertExpressionParser.LiteralExprContext ctx) { return visitChildren(ctx); }
 
     /**
@@ -86,6 +94,14 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * {@link #visitChildren} on {@code ctx}.</p>
      */
     @Override public T visitParenExpr(AlertExpressionParser.ParenExprContext ctx) { return visitChildren(ctx); }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.</p>
+     */
+    @Override public T visitPromqlCallExpr(AlertExpressionParser.PromqlCallExprContext ctx) { return visitChildren(ctx); }
 
     /**
      * {@inheritDoc}
@@ -261,7 +277,7 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitConditionExpr(AlertExpressionParser.ConditionExprContext ctx) { return visitChildren(ctx); }
+    @Override public T visitConditionUnit(AlertExpressionParser.ConditionUnitContext ctx) { return visitChildren(ctx); }
 
     /**
      * {@inheritDoc}

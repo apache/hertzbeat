@@ -70,6 +70,14 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     T visitSqlExpr(AlertExpressionParser.SqlExprContext ctx);
 
     /**
+     * Visit a parse tree produced by the {@code SqlCallExpr}
+     * labeled alternative in {@link AlertExpressionParser#expr}.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitSqlCallExpr(AlertExpressionParser.SqlCallExprContext ctx);
+
+    /**
      * Visit a parse tree produced by the {@code LiteralExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
      * @param ctx the parse tree
@@ -84,6 +92,14 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitParenExpr(AlertExpressionParser.ParenExprContext ctx);
+
+    /**
+     * Visit a parse tree produced by the {@code PromqlCallExpr}
+     * labeled alternative in {@link AlertExpressionParser#expr}.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitPromqlCallExpr(AlertExpressionParser.PromqlCallExprContext ctx);
 
     /**
      * Visit a parse tree produced by the {@code PromqlExpr}
@@ -235,11 +251,11 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     T visitCondition(AlertExpressionParser.ConditionContext ctx);
 
     /**
-     * Visit a parse tree produced by {@link AlertExpressionParser#conditionExpr}.
+     * Visit a parse tree produced by {@link AlertExpressionParser#conditionUnit}.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    T visitConditionExpr(AlertExpressionParser.ConditionExprContext ctx);
+    T visitConditionUnit(AlertExpressionParser.ConditionUnitContext ctx);
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#promql}.

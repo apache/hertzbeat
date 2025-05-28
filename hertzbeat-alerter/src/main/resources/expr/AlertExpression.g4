@@ -30,6 +30,8 @@ expr
     | promql                                                      # PromqlExpr
     | selectSql                                                   # SqlExpr
     | number                                                      # LiteralExpr
+    | SQL_FUNCTION LPAREN string RPAREN                           # SqlCallExpr
+    | PROMQL_FUNCTION LPAREN string RPAREN                        # PromqlCallExpr
     ;
 
 functionCall
@@ -107,6 +109,7 @@ orderByList
 
 orderByField
     : IDENTIFIER (ASC | DESC)?
+    | functionCall (ASC | DESC)?
     ;
 
 limitClause
@@ -123,26 +126,30 @@ relation
     ;
 
 conditionList
-    : condition (AND condition)*
-    | condition (OR condition)*
+    : conditionList AND conditionList
+    | conditionList OR conditionList
+    | condition
+    | LPAREN conditionList RPAREN
     ;
 
 compOp
-    : EQ | LT | GT | LE | GE | NE | LIKE | NOT LIKE | IN | NOT IN | IS | NOT IS
+    : EQ | LT | GT | LE | GE | NE | LIKE | NOT LIKE | IN | NOT IN | IS | IS NOT
     ;
 
 condition
-    : conditionExpr compOp conditionExpr
+    : conditionUnit compOp conditionUnit
     | LPAREN condition RPAREN
-    | IDENTIFIER BETWEEN IDENTIFIER AND IDENTIFIER
+    | IDENTIFIER BETWEEN number AND number
     ;
 
-conditionExpr
+conditionUnit
     : number
     | string
     | IDENTIFIER
     | IDENTIFIER DOT IDENTIFIER
-    | selectSql
+    | NULL
+    | LPAREN selectSql RPAREN
+    | functionCall
     ;
 
 // PromQL query expressions
@@ -216,7 +223,6 @@ IS      : [Ii][Ss] ;
 NULL    : [Nn][Uu][Ll][Ll] ;
 LIKE    : [Ll][Ii][Kk][Ee] ;
 BETWEEN : [Bb][Ee][Tt][Ww][Ee][Ee][Nn] ;
-EXISTS  : [Ee][Xx][Ii][Ss][Tt][Ss] ;
 STAR    : '*' ;
 
 // Aggregate functions
@@ -242,6 +248,10 @@ GROUP_LEFT_FUNCTION: [Gg][Rr][Oo][Uu][Pp] '_' [Ll][Ee][Ff][Tt] ;
 GROUP_RIGHT_FUNCTION: [Gg][Rr][Oo][Uu][Pp] '_' [Rr][Ii][Gg][Hh][Tt] ;
 IGNORING_FUNCTION: [Ii][Gg][Nn][Oo][Rr][Ii][Nn][Gg] ;
 ON_FUNCTION: [Oo][Nn] ;
+
+// Other functions
+SQL_FUNCTION: [Ss][Qq][Ll] ;
+PROMQL_FUNCTION: [Pp][Rr][Oo][Mm][Qq][Ll] ;
 
 // Comparison operators
 GT      : '>' ;
