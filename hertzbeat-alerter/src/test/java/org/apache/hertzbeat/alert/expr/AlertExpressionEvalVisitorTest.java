@@ -49,7 +49,12 @@ class AlertExpressionEvalVisitorTest {
     @Test
     void testGreaterThan() {
         when(mockExecutor.execute("cpu")).thenReturn(List.of(new HashMap<>(Map.of("__value__", 80.0))));
+        // promql
         List<Map<String, Object>> result = evaluate("cpu > 70");
+        assertEquals(1, result.size());
+        assertEquals(80.0, result.get(0).get("__value__"));
+        //sql
+        result = evaluate("(select cpu from cpu_table where id = 1) > 70");
         assertEquals(1, result.size());
         assertEquals(80.0, result.get(0).get("__value__"));
     }

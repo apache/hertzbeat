@@ -66,10 +66,11 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 }
                 // queryValues may be a list of values, or a single value
                 Object matchValue = evaluateCondition(queryValues, operator, threshold);
-                item.put(VALUE, matchValue);
+                Map<String, Object> resultMap = new HashMap(item);
+                resultMap.put(VALUE, matchValue);
                 // if matchValue is null, mean not match the threshold
                 // if not null, mean match the threshold
-                result.add(new HashMap<>(item));
+                result.add(resultMap);
             }
             return result;
         }
@@ -212,12 +213,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     }
 
     @Override
-    public List<Map<String, Object>> visitQueryExpr(AlertExpressionParser.QueryExprContext ctx) {
-        String query = ctx.identifier().getText();
-        return executor.execute(query);
-    }
-
-    @Override
     public List<Map<String, Object>> visitLiteralExpr(AlertExpressionParser.LiteralExprContext ctx) {
         double value = Double.parseDouble(ctx.number().getText());
         List<Map<String, Object>> numAsList = new ArrayList<>();
@@ -225,6 +220,18 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         valueMap.put(THRESHOLD, value);
         numAsList.add(valueMap);
         return numAsList;
+    }
+
+    @Override
+    public List<Map<String, Object>> visitPromql(AlertExpressionParser.PromqlContext ctx) {
+        String promql = ctx.getText();
+        return executor.execute(promql);
+    }
+
+    @Override
+    public List<Map<String, Object>> visitSqlExpr(AlertExpressionParser.SqlExprContext ctx) {
+        String sql = ctx.getText();
+        return executor.execute(sql);
     }
 
     private Object evaluateCondition(Object value, String operator, Double threshold) {
