@@ -233,7 +233,9 @@ class AlertExpressionEvalVisitorTest {
         assertEquals(1, result.size());
         assertEquals(10.0, result.get(0).get("__value__"));
         // sql
-        result = evaluate("((select cpu from server_a where region = 'us-east') > 5) and ((select memory from server_b where region = 'us-west') > 15 or (select disk from server_c where region = 'eu-central') < 25)");
+        result = evaluate("((select cpu from server_a where region = 'us-east') > 5)"
+                + " and ((select memory from server_b where region = 'us-west') > 15"
+                + " or (select disk from server_c where region = 'eu-central') < 25)");
         assertEquals(1, result.size());
         assertEquals(10.0, result.get(0).get("__value__"));
     }
@@ -254,7 +256,9 @@ class AlertExpressionEvalVisitorTest {
         assertEquals(1, result.size());
         assertNull(result.get(0).get("__value__"));
         // sql
-        result = evaluate("(select cpu_usage from metrics where service = 'web') > 30 unless (select memory_usage from metrics where service = 'db') > 45 unless (select disk_usage from metrics where service = 'cache') < 70");
+        result = evaluate("(select cpu_usage from metrics where service = 'web') > 30"
+                + " unless (select memory_usage from metrics where service = 'db') > 45"
+                + " unless (select disk_usage from metrics where service = 'cache') < 70");
         assertEquals(1, result.size());
         assertNull(result.get(0).get("__value__"));
     }
@@ -276,7 +280,9 @@ class AlertExpressionEvalVisitorTest {
         assertEquals(1, result.size());
         assertEquals(75.0, result.get(0).get("__value__"));
         // sql
-        result = evaluate("((select cpu_temperature from hardware_metrics where component = 'cpu') > 70 and (select gpu_temperature from hardware_metrics where component = 'gpu') < 90) or (select fan_rpm from hardware_metrics where component = 'fan') > 1500");
+        result = evaluate("((select cpu_temperature from hardware_metrics where component = 'cpu') > 70"
+                + " and (select gpu_temperature from hardware_metrics where component = 'gpu') < 90)"
+                + " or (select fan_rpm from hardware_metrics where component = 'fan') > 1500");
         assertEquals(1, result.size());
         assertEquals(75.0, result.get(0).get("__value__"));
     }
@@ -398,9 +404,11 @@ class AlertExpressionEvalVisitorTest {
 
     @Test
     void testSqlComplexGroupByOrderBy() {
-        when(mockExecutor.execute("select service, avg(response_time) from api_metrics where timestamp > '2024-01-01' group by service order by avg(response_time) desc limit 5")).thenReturn(
+        when(mockExecutor.execute("select service, avg(response_time) from api_metrics where timestamp > '2024-01-01'"
+                + " group by service order by avg(response_time) desc limit 5")).thenReturn(
                 List.of(new HashMap<>(Map.of("__value__", 180.5))));
-        List<Map<String, Object>> result = evaluate("(select service, avg(response_time) from api_metrics where timestamp > '2024-01-01' group by service order by avg(response_time) desc limit 5) > 150");
+        List<Map<String, Object>> result = evaluate("(select service, avg(response_time) from api_metrics where timestamp > '2024-01-01'"
+                + " group by service order by avg(response_time) desc limit 5) > 150");
         assertEquals(1, result.size());
         assertEquals(180.5, result.get(0).get("__value__"));
     }
