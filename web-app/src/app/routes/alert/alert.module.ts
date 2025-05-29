@@ -46,6 +46,7 @@ import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
 import { AlertSilenceComponent } from './alert-silence/alert-silence.component';
+import {MarkdownComponent} from "ngx-markdown";
 
 const COMPONENTS: Array<Type<void>> = [
   AlertCenterComponent,
@@ -78,7 +79,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzUploadModule,
     QueryBuilderModule,
     NzPaginationModule,
-    NzEmptyModule
+    NzEmptyModule,
+    MarkdownComponent
   ],
   declarations: COMPONENTS
 })

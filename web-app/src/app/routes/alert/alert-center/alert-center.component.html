@@ -163,7 +163,9 @@
             <div class="alert-annotations">
               <div *ngFor="let anno of item.annotations | keyvalue" class="annotation-item">
                 <span class="annotation-key">{{ anno.key }}:</span>
-                <span class="annotation-value">{{ anno.value }}</span>
+                <span class="annotation-value">
+                   <markdown [data]="anno.value"></markdown>
+                </span>
               </div>
             </div>
           </div>
