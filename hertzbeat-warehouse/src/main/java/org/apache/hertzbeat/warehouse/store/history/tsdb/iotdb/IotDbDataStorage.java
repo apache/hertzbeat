@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.iotdb;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.iotdb;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,7 +33,7 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;

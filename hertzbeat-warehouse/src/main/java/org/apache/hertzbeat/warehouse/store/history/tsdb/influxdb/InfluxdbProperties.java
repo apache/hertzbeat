@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.influxdb;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.influxdb;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;

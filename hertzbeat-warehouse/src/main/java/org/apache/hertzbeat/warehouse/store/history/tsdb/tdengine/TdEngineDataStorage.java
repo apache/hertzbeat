@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.tdengine;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.tdengine;
 
 import com.google.common.collect.Maps;
 import com.taosdata.jdbc.TSDBDriver;
@@ -47,7 +47,7 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;

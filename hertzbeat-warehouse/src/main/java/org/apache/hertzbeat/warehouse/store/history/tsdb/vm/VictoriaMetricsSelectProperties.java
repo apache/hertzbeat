@@ -15,18 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.vm;
-
-import org.springframework.boot.context.properties.bind.DefaultValue;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
 /**
- * vminsert configuration information
+ * vmselect configuration information
  */
-public record VictoriaMetricsInsertProperties(
+public record VictoriaMetricsSelectProperties(
         String url,
         String username,
-        String password,
-        @DefaultValue("1000") int bufferSize,
-        @DefaultValue("3") int flushInterval
+        String password
 ) {
 }

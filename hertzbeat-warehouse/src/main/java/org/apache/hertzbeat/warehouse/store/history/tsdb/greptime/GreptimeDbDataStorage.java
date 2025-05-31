@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.greptime;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.greptime;
 
 import io.greptime.GreptimeDB;
 import io.greptime.models.AuthInfo;
@@ -55,8 +55,8 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -81,7 +81,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
-    private static final String SPILT = "_";
 
     private GreptimeDB greptimeDb;
 
@@ -126,7 +125,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         String monitorId = String.valueOf(metricsData.getId());
-        String tableName = getTableName(metricsData.getId(), metricsData.getMetrics());
+        String tableName = getTableName(metricsData.getMetrics());
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
 
         tableSchemaBuilder.addTag("instance", DataType.String)
@@ -194,7 +193,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
                                                          String label, String history) {
-        String name = getTableName(monitorId, metrics);
+        String name = getTableName(metrics);
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + name + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
@@ -242,12 +241,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .queryParam("start", start)
                     .queryParam("end", end)
                     .queryParam("step", step)
+                    .queryParam("db", greptimeProperties.database())
                     .build(true).toUri();
 
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                log.debug("query metrics data from victoria-metrics success. {}", uri);
+                log.debug("query metrics data from greptime success. {}", uri);
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
                         && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
@@ -275,8 +275,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return instanceValuesMap;
     }
 
-    private String getTableName(Long monitorId, String metrics) {
-        return "hzb" + SPILT + monitorId + SPILT + metrics;
+    private String getTableName(String metrics) {
+        return metrics;
     }
 
     @Override

@@ -30,7 +30,7 @@ import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.INSTANT;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.PROMQL;
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.RANGE;
-import org.apache.hertzbeat.warehouse.store.history.vm.PromQlQueryContent;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;

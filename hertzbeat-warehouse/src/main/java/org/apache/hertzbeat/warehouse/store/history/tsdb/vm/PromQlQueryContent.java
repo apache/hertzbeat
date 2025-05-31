@@ -34,7 +34,7 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.vm;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
 import java.util.List;
 import java.util.Map;

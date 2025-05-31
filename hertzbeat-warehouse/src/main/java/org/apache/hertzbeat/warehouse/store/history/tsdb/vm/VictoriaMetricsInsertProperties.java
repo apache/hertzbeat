@@ -15,23 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * history data writer
+ * vminsert configuration information
  */
-public interface HistoryDataWriter {
-
-    /**
-     * @return data storage available
-     */
-    boolean isServerAvailable();
-
-    /**
-     * save metrics data
-     * @param metricsData metrics data
-     */
-    void saveData(CollectRep.MetricsData metricsData);
+public record VictoriaMetricsInsertProperties(
+        String url,
+        String username,
+        String password,
+        @DefaultValue("1000") int bufferSize,
+        @DefaultValue("3") int flushInterval
+) {
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history;
+package org.apache.hertzbeat.warehouse.store.history.tsdb;
 
 import java.util.List;
 import java.util.Map;

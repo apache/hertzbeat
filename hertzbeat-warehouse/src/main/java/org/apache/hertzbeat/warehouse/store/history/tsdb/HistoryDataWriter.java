@@ -15,24 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history;
+package org.apache.hertzbeat.warehouse.store.history.tsdb;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * data storage abstract class
+ * history data writer
  */
-@Slf4j
-public abstract class AbstractHistoryDataStorage implements HistoryDataReader, HistoryDataWriter, DisposableBean {
-
-    protected boolean serverAvailable;
+public interface HistoryDataWriter {
 
     /**
      * @return data storage available
      */
-    @Override
-    public boolean isServerAvailable() {
-        return serverAvailable;
-    }
+    boolean isServerAvailable();
+
+    /**
+     * save metrics data
+     * @param metricsData metrics data
+     */
+    void saveData(CollectRep.MetricsData metricsData);
 }

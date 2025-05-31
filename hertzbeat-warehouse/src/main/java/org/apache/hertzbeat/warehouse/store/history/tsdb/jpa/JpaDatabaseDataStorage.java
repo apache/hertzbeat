@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.jpa;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.jpa;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -49,7 +49,7 @@ import org.apache.hertzbeat.common.entity.warehouse.History;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.dao.HistoryDao;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;

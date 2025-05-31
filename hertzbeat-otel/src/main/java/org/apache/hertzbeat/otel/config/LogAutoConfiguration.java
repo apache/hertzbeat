@@ -19,7 +19,7 @@ package org.apache.hertzbeat.otel.config;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
-import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 

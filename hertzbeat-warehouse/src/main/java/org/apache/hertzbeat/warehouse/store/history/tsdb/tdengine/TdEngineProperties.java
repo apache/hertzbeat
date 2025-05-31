@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.tdengine;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.tdengine;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;

@@ -139,6 +139,11 @@ public class Job {
     private boolean isSd = false;
 
     /**
+     * Whether to use the Prometheus proxy
+     */
+    private boolean prometheusProxyMode = false;
+
+    /**
      * the collect data response metrics as env configmap for other collect use. ^o^xxx^o^
      */
     @JsonIgnore
