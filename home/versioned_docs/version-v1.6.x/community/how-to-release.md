@@ -450,7 +450,7 @@ Hello Incubator Community:
 
 This is a call for a vote to release Apache HertzBeat (incubating) version 1.6.0-RC1.
 The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat (incubating) version 1.6.0-RC1.
-We now kindly request the Incubator PMC members review and vote on this incubator release.
+We now kindly request the Incubator PPMC members review and vote on this incubator release.
 Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 HertzBeat community vote thread:
