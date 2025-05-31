@@ -17,21 +17,40 @@ keywords: [Grafana, Historical Dashboard]
 `Grafana` can only show historical data for `Prometheus` type of monitoring, currently it does not support monitoring data defined by `yml` in `HertzBeat`.
 :::
 
-### enable Grafana embedded url
+### Enable Grafana embedded features and configure anonymous authentication with role-based permissions
 
-ref: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>
-In the `Grafana` configuration file `grafana.ini`, set the `allow_embedding = true`.
-In the `Grafana` configuration file `grafana.ini`, set the `[auth.anonymous]` option to `true`.
-Or run `Grafana` with the following command via `docker`:
+ref: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>.
+In the `Grafana` configuration file `grafana.ini`, set the configuration parameters.
+Or run `Grafana` via `Docker`.
 
-```bash
-docker run -itd --name grafana -p 3000:3000 -e "GF_AUTH_PROXY_ENABLED=true" -e "GF_AUTH_ANONYMOUS_ENABLED=true" -e "GF_SECURITY_ALLOW_EMBEDDING=true" grafana/grafana:latest
+Modify the following configuration parameters in the `Grafana` configuration file `grafana.ini`:
 
 ```ini
-allow_embedding = true
-[auth.anonymous]
-# enable anonymous access
+[auth.proxy]
 enabled = true
+
+[auth.anonymous]
+enabled = true
+org_role = Admin
+
+[users]
+viewers_can_edit = true
+
+[security]
+allow_embedding = true
+```
+
+Or run `Grafana` via `Docker` using the following command:
+
+```bash
+docker run -d -p 3000:3000 --name=grafana \
+  -v "$PWD/data:/var/lib/grafana" \
+  -e "GF_AUTH_PROXY_ENABLED=true" \
+  -e "GF_AUTH_ANONYMOUS_ENABLED=true" \
+  -e "GF_AUTH_ANONYMOUS_ORG_ROLE=Admin" \
+  -e "GF_USERS_VIEWERS_CAN_EDIT=true" \
+  -e "GF_SECURITY_ALLOW_EMBEDDING=true" \
+  grafana/grafana:latest
 ```
 
 ### Configuring Grafana in HertzBeat
