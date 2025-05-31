@@ -17,21 +17,40 @@ keywords: [Grafana, 历史图表]
 `Grafana`只能展示`Prometheus`类型监控的历史数据,目前并不支持`HertzBeat`中`yml`定义的监控数据。
 :::
 
-### 启用Grafana 可嵌入功能, 并开启匿名访问
+### 启用Grafana可嵌入功能, 并配置匿名访问及权限角色
 
-参考: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>
-修改配置文件`grafana.ini`中的`allow_embedding = true`
-修改配置文件`grafana.ini`中的`[auth.anonymous]` 为 `true`
-或者通过`docker`运行`Grafana`,使用以下命令:
+参考: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>,
+修改配置文件`grafana.ini`中的配置项参数,
+或者通过`docker`运行`Grafana`。
 
-```bash
-docker run -itd --name grafana -p 3000:3000 -e "GF_AUTH_PROXY_ENABLED=true" -e "GF_AUTH_ANONYMOUS_ENABLED=true" -e "GF_SECURITY_ALLOW_EMBEDDING=true" grafana/grafana:latest
+修改配置文件`grafana.ini`中的以下配置项参数:
 
 ```ini
-allow_embedding = true
-[auth.anonymous]
-# enable anonymous access
+[auth.proxy]
 enabled = true
+
+[auth.anonymous]
+enabled = true
+org_role = Admin
+
+[users]
+viewers_can_edit = true
+
+[security]
+allow_embedding = true
+```
+
+或者通过`docker`启动`Grafana`，使用以下命令:
+
+```bash
+docker run -d -p 3000:3000 --name=grafana \
+  -v "$PWD/data:/var/lib/grafana" \
+  -e "GF_AUTH_PROXY_ENABLED=true" \
+  -e "GF_AUTH_ANONYMOUS_ENABLED=true" \
+  -e "GF_AUTH_ANONYMOUS_ORG_ROLE=Admin" \
+  -e "GF_USERS_VIEWERS_CAN_EDIT=true" \
+  -e "GF_SECURITY_ALLOW_EMBEDDING=true" \
+  grafana/grafana:latest
 ```
 
 ### 在HertzBeat中配置Grafana
