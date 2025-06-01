@@ -20,11 +20,13 @@ app: doris_fe
 name:
   zh-CN: Apache Doris FE
   en-US: Apache Doris FE
+  ja-JP: Apache Doris FE
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Doris 数据库FE的通用指标（doris_fe connection total、doris_fe edit log clean、doris_fe image、doris_fe rps等）进行测量监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseFE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Doris DatabaseFE through general performance metric such as doris_fe connection total, doris_fe edit log clean, doris_fe image and doris_fe rps. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseFE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 Doris 資料庫FE的通用名額（doris_fe connection total、doris_fe edit log clean、doris_fe image、doris_fe rps等）進行量測監控，支持版本為DORIS2.0.0。<br>您可以點擊“<i>新建Doris DatabaseFE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat は DORIS 2.0.0のデータベースFEの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 Doris DatabaseFE</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/doris_fe/
   en-US: https://hertzbeat.apache.org/docs/help/doris_fe/
@@ -36,6 +38,7 @@ params:
     name:
       zh-CN: 目标 Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -55,6 +59,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     # hide param-true or false
@@ -65,6 +70,7 @@ metrics:
     i18n:
       zh-CN: 连接总数
       en-US: Connection Total
+      ja-JP: コネクション数
     priority: 0
     fields:
       - field: value
@@ -87,6 +93,7 @@ metrics:
     i18n:
       zh-CN: 编辑日志清理
       en-US: Edit Log Clean
+      ja-JP: 編集ログのクリーン
     priority: 1
     fields:
       - field: type
@@ -111,6 +118,7 @@ metrics:
     i18n:
       zh-CN: 编辑日志
       en-US: Edit Log
+      ja-JP: 編集ログ
     priority: 2
     fields:
       - field: type
@@ -135,6 +143,7 @@ metrics:
     i18n:
       zh-CN: 图片清理
       en-US: Image Clean
+      ja-JP: イメージのクリーン
     priority: 3
     fields:
       - field: type
@@ -159,6 +168,7 @@ metrics:
     i18n:
       zh-CN: 图片写入
       en-US: Image Write
+      ja-JP: イメージを書き込む
     priority: 4
     fields:
       - field: type
@@ -183,6 +193,7 @@ metrics:
     i18n:
       zh-CN: 查询错误
       en-US: Query Error
+      ja-JP: クエリエラー
     priority: 5
     fields:
       - field: value
@@ -205,6 +216,7 @@ metrics:
     i18n:
       zh-CN: 最大日志ID
       en-US: Max Journal ID
+      ja-JP: マックスジャーナルID
     priority: 6
     fields:
       - field: value
@@ -227,6 +239,7 @@ metrics:
     i18n:
       zh-CN: 最大Tablet压缩分数
       en-US: Max Tablet Compaction Score
+      ja-JP: Tablet最大圧縮スコア
     priority: 7
     fields:
       - field: value
@@ -249,6 +262,7 @@ metrics:
     i18n:
       zh-CN: 每秒查询率
       en-US: QPS
+      ja-JP: QPS
     priority: 8
     fields:
       - field: value
@@ -271,6 +285,7 @@ metrics:
     i18n:
       zh-CN: 查询错误率
       en-US: Query Error Rate
+      ja-JP: クエリエラー率
     priority: 9
     fields:
       - field: value
@@ -295,6 +310,7 @@ metrics:
     i18n:
       zh-CN: 报告队列大小
       en-US: Report Queue Size
+      ja-JP: レポートのキューサイズ
     priority: 10
     fields:
       - field: value
@@ -317,6 +333,7 @@ metrics:
     i18n:
       zh-CN: 每秒转数
       en-US: RPS
+      ja-JP: RPS
     priority: 11
     fields:
       - field: value
@@ -339,6 +356,7 @@ metrics:
     i18n:
       zh-CN: 调度 Tablet 数量
       en-US: Scheduled Tablet Num
+      ja-JP: Tablet予定数
     priority: 12
     fields:
       - field: value
@@ -361,6 +379,7 @@ metrics:
     i18n:
       zh-CN: 事务状态
       en-US: Transaction Status
+      ja-JP: トランザクション状態
     priority: 13
     fields:
       - field: type

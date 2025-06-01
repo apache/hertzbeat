@@ -208,7 +208,7 @@ metrics:
         i18n:
           zh-CN: 客户端地址
           en-US: ClientAddress
-          ja-JP: ユーザーのアドレス
+          ja-JP: クライアントのアドレス
       - field: Name
         type: 1
         i18n:
@@ -220,13 +220,13 @@ metrics:
         i18n:
           zh-CN: 客户端登录类型
           en-US: ClientType
-          ja-JP: ユーザータイプ
+          ja-JP: クライアントタイプ
       - field: LoginTime
         type: 1
         i18n:
           zh-CN: 客户端登录时间
           en-US: LoginTime
-          ja-JP: ユーザーのログイン時間
+          ja-JP: クライアントのログイン時間
   - name: ntp_info
     i18n:
       zh-CN: 校时信息
