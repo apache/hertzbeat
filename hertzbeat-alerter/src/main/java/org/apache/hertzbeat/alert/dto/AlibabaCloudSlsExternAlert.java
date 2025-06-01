@@ -7,7 +7,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -121,6 +123,9 @@ public class AlibabaCloudSlsExternAlert {
         return this.annotations.get(key);
     }
 
+    /**
+     * Severity
+     */
     public enum Severity {
 
         CRITICAL(10, "Critical"),

@@ -28,8 +28,11 @@ import java.util.Optional;
 @Service
 public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
 
-    @Autowired
-    private AlarmCommonReduce alarmCommonReduce;
+    private final AlarmCommonReduce alarmCommonReduce;
+
+    public AlibabaCloudSlsExternAlertService(AlarmCommonReduce alarmCommonReduce) {
+        this.alarmCommonReduce = alarmCommonReduce;
+    }
 
     @Override
     public void addExternAlert(String content) {
@@ -56,7 +59,7 @@ public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
          * convert
          *
          * @param externAlert alert content entity
-         * @return
+         * @return Single alert
          */
         public SingleAlert convert(AlibabaCloudSlsExternAlert externAlert) {
             return SingleAlert.builder()
@@ -74,8 +77,8 @@ public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
         /**
          * todo i18n
          *
-         * @param externAlert
-         * @return
+         * @param externAlert alert content entity
+         * @return content
          */
         private String formatContent(AlibabaCloudSlsExternAlert externAlert) {
             // convet severity
@@ -120,7 +123,7 @@ public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
             severity.ifPresent(value -> annotations.put("severity", value.getAlias()));
             // Notification templates for sls need to be configured.
             if (StringUtils.isNotBlank(externAlert.getSigninUrl()) && IpDomainUtil.isHasSchema(externAlert.getSigninUrl())) {
-                annotations.put("signinUrl", "<a target=\"_blank\" href=\""+ externAlert.getSigninUrl() +"\">View Details</a>");
+                annotations.put("signinUrl", "<a target=\"_blank\" href=\"" + externAlert.getSigninUrl() + "\">View Details</a>");
             }
             // Filling the annotations with the alibaba cloud sls.
             if (null != externAlert.getAnnotations() && !externAlert.getAnnotations().isEmpty()) {
