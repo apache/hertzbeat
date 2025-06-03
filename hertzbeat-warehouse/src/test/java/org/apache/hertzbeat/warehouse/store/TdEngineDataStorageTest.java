@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.warehouse.store.history.tdengine.TdEngineDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.tdengine.TdEngineDataStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

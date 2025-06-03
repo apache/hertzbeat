@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.vm;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
@@ -24,18 +24,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Victoriametrics configuration information
+ * Victoria metrics configuration information.
  */
 
-@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
-		+ SignConstants.DOT
-		+ WarehouseConstants.STORE
-		+ SignConstants.DOT
-		+ WarehouseConstants.HistoryName.VM_CLUSTER)
-public record VictoriaMetricsClusterProperties(
-		@DefaultValue("false") boolean enabled,
-		@DefaultValue("0") String accountID,
-    VictoriaMetricsInsertProperties insert,
-    VictoriaMetricsSelectProperties select
-) {
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE + SignConstants.DOT + WarehouseConstants.STORE + SignConstants.DOT + WarehouseConstants.HistoryName.VM)
+public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
+                                        @DefaultValue("http://localhost:8428") String url,
+                                        String username,
+                                        String password,
+                                        InsertConfig insert) {
+
+    record InsertConfig(@DefaultValue("1000") int bufferSize,
+                        @DefaultValue("3") int flushInterval) {
+
+    }
 }
