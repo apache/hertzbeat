@@ -35,6 +35,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzTransferModule } from 'ng-zorro-antd/transfer';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
+import { MarkdownComponent } from 'ngx-markdown';
 
 import { AlertCenterComponent } from './alert-center/alert-center.component';
 import { AlertGroupConvergeComponent } from './alert-group/alert-group-converge.component';
@@ -46,7 +47,6 @@ import { AlertNoticeComponent } from './alert-notice/alert-notice.component';
 import { AlertRoutingModule } from './alert-routing.module';
 import { AlertSettingComponent } from './alert-setting/alert-setting.component';
 import { AlertSilenceComponent } from './alert-silence/alert-silence.component';
-import {MarkdownComponent} from "ngx-markdown";
 
 const COMPONENTS: Array<Type<void>> = [
   AlertCenterComponent,
