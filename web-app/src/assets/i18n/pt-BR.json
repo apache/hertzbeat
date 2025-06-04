@@ -245,6 +245,7 @@
     "alert.integration.source.skywalking": "SkyWalking",
     "alert.integration.source.tencent": "Monitoramento de nuvem Tencent",
     "alert.integration.source.webhook": "PadrãoWebhook",
+    "alert.integration.source.alibabacloud-sls": "AlibabaCloud-SLS",
     "alert.integration.token.desc": "O token gerado pode ser usado para acessar a API HertzBeat",
     "alert.integration.token.new": "Clique para gerar token",
     "alert.integration.token.notice": "Este conteúdo será exibido apenas uma vez, por favor guarde seu token adequadamente e não o divulgue a terceiros.",
