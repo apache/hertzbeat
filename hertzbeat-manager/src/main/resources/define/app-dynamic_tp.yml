@@ -21,11 +21,13 @@ app: dynamic_tp
 name:
   zh-CN: DynamicTp 线程池
   en-US: DynamicTp Pool
+  ja-JP: DynamicTpスレッドプール
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 DynamicTp actuator 暴露的线程池性能指标（thread pool）进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要集成使用 DynamicTp，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/dynamic_tp'>点击查看集成步骤</a>。
   en-US: HertzBeat monitoring DynamicTp of the thread Pool Performance Metrics which exposed by DynamicTp actuator. <br><span class='help_module_span'>Note⚠️:You should integrate and use DynamicTp, <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/dynamic_tp'>Click here to view the specific steps.</a>"
   zh-TW: HertzBeat 對 DynamicTp actuator暴露的執行緒池性能指標（thread pool）進行採集監控。<br><span class='help_ module_ span'>注意⚠️：您需要集成使用DynamicTp，<a class='help_ module_ content' href='https://hertzbeat.apache.org/zh-cn/docs/help/dynamic_tp'>點擊查看集成步驟</a>。
+  ja-JP: HertzBeat は DynamicTpスレッドプールの一般的なパフォーマンスのメトリック監視します。<br><span class='help_module_span'>注意⚠️：DynamicTpの使用を統合する必要があり、<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/dynamic_tp'>クリックしてガイドを見ます</a>。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/dynamic_tp/
   en-US: https://hertzbeat.apache.org/docs/help/dynamic_tp/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -71,6 +76,7 @@ params:
     name:
       zh-CN: Base Path
       en-US: Base Path
+      ja-JP: Base Path
     # type-param field type(most mapping the html input type)
     type: text
     # default value
@@ -86,6 +92,7 @@ metrics:
     i18n:
       zh-CN: 线程池
       en-US: thread pool
+      ja-JP: スレッドプール
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -96,37 +103,44 @@ metrics:
         i18n:
           zh-CN: 池名称
           en-US: pool name
+          ja-JP: プール名
         type: 1
         label: true
       - field: queue_type
         i18n:
           zh-CN: 队列类型
           en-US: queue type
+          ja-JP: キュータイプ
         type: 1
       - field: core_pool_size
         i18n:
           zh-CN: 核心线程数
           en-US: core pool size
+          ja-JP: コアのスレッド数
         type: 0
       - field: maximum_pool_size
         i18n:
           zh-CN: 最大线程数
           en-US: maximum pool size
+          ja-JP: 最大スレッド数
         type: 0
       - field: fair
         i18n:
           zh-CN: 公平
           en-US: fair
+          ja-JP: 目標ホスト
         type: 1
       - field: reject_handler_name
         type: 1
         i18n:
           zh-CN: 拒绝策略
           en-US: reject handler name
+          ja-JP: 拒否戦略
       - field: dynamic
         i18n:
           zh-CN: 动态
           en-US: dynamic
+          ja-JP: dynamic
         type: 1
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
@@ -170,75 +184,89 @@ metrics:
     i18n:
       zh-CN: 运行中的线程池
       en-US: thread pool running
+      ja-JP: 実行中のスレッドプール
     priority: 1
     fields:
       - field: pool_name
         i18n:
           zh-CN: 池名称
           en-US: pool name
+          ja-JP: プール名
         type: 1
         label: true
       - field: queue_capacity
         i18n:
           zh-CN: 队列容量
           en-US: queue capacity
+          ja-JP: キュー容量
         type: 0
         unit: MB
       - field: queue_size
         i18n:
           zh-CN: 队列大小
           en-US: queue size
+          ja-JP: キューサイズ
         type: 0
       - field: queue_remaining_capacity
         i18n:
           zh-CN: 队列剩余容量
           en-US: queue remaining capacity
+          ja-JP: 使用可能なキュー容量
         type: 0
         unit: MB
       - field: active_count
         i18n:
           zh-CN: 活动线程数
           en-US: active count
+          ja-JP: 活動中のスレッド数
         type: 0
       - field: task_count
         i18n:
           zh-CN: 任务数
           en-US: task count
+          ja-JP: タスク数
         type: 0
       - field: completed_task_count
         i18n:
           zh-CN: 完成的任务数
           en-US: completed task count
+          ja-JP: 完了したタスク数
         type: 0
       - field: largest_pool_size
         i18n:
           zh-CN: 最大线程数
           en-US: largest pool size
+          ja-JP: 最大スレッド数
         type: 0
       - field: pool_size
         i18n:
           zh-CN: 线程池大小
           en-US: pool size
+          ja-JP: プールサイズ
         type: 0
       - field: wait_task_count
         i18n:
           zh-CN: 等待任务数
           en-US: wait task count
+          ja-JP: 待機中のタスク数
         type: 0
       - field: reject_count
         i18n:
           zh-CN: 拒绝数
           en-US: reject count
+          ja-JP: 拒否数
         type: 0
       - field: run_timeout_count
         i18n:
           zh-CN: 运行超时数
           en-US: run timeout count
+          ja-JP: 実行タイムアウト数
         type: 0
       - field: queue_timeout_count
         i18n:
           zh-CN: 队列超时数
           en-US: queue timeout count
+          ja-JP: キュータイムアウト数
         type: 0
     aliasFields:
       - poolName
