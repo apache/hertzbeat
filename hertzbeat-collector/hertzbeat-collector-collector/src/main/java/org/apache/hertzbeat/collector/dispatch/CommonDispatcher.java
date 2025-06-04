@@ -298,7 +298,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 }
             }
 
-            if ( metricsSet == null || job.isSd() ) {
+            if (metricsSet == null || job.isSd()) {
                 // The collection and execution of all metrics of this job are completed
                 // and the result listener is notified of the combination of all metrics data
                 timerDispatch.responseSyncJobData(job.getId(), job.getResponseDataTemp());
