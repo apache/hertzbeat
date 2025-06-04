@@ -21,11 +21,13 @@ app: elasticsearch
 name:
   zh-CN: ElasticSearch
   en-US: ElasticSearch
+  ja-JP: ElasticSearch
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 ElasticSearch 数据库监控通用指标进行测量监控。<br>您可以点击 “<i>新建 ElasticSearch</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring ElasticSearch through general performance metrics. You could click the "<i>New ElasticSearch</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 ElasticSearch 資料庫監控通用名額進行量測監控。<br>您可以點擊“<i>新建ElasticSearch</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: HertzBeat は ElasticSearch データベースの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 ElasticSearch</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/elasticsearch
   en-US: https://hertzbeat.apache.org/docs/help/elasticsearch
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
+      ja-JP: SSL利用
     # type-param field type(boolean mapping the html h tag)
     type: boolean
     # required-true or false
@@ -85,6 +91,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(most mapping the html input tag)
     type: radio
     # required-true or false
@@ -101,6 +108,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -113,6 +121,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -124,6 +133,7 @@ metrics:
     i18n:
       zh-CN: 集群健康状态
       en-US: Cluster Health Status
+      ja-JP: クラスタ健全状態
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -136,49 +146,57 @@ metrics:
         i18n:
           zh-CN: 集群名称
           en-US: Cluster Name
+          ja-JP: クラスタ名
       - field: status
         type: 1
         i18n:
           zh-CN: 集群状态
           en-US: status
+          ja-JP: 状態
       - field: nodes
         type: 0
         i18n:
           zh-CN: 集群节点数
           en-US: nodes
+          ja-JP: ノード数
       - field: data_nodes
         type: 0
         i18n:
           zh-CN: 数据节点数
           en-US: Data Nodes
+          ja-JP: データノード数
       - field: active_primary_shards
         type: 0
         i18n:
           zh-CN: 主节点活跃分片数
           en-US: Active Primary Shards
+          ja-JP: 主ノードの活動中シャーズ数
       - field: active_shards
         type: 0
         i18n:
           zh-CN: 活跃分片数
           en-US: Active Shards
+          ja-JP: 活動中シャーズ数
       - field: active_percentage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 分片健康度（%）
           en-US: Active Percentage
+          ja-JP: シャーズの健全率
       - field: initializing_shards
         type: 0
         i18n:
           zh-CN: 初始化分片数
           en-US: Initializing Shards
+          ja-JP: 初期化シャーズ数
       - field: unassigned_shards
         type: 0
         i18n:
           zh-CN: 未分配分片数
           en-US: Unassigned Shards
+          ja-JP: 未割り当てシャーズ数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
-    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
     aliasFields:
       - cluster_name
       - status
@@ -230,6 +248,7 @@ metrics:
     i18n:
       zh-CN: 集群节点信息
       en-US: Cluster Nodes
+      ja-JP: クラスタノード情報
     priority: 1
     fields:
       - field: total
@@ -237,16 +256,19 @@ metrics:
         i18n:
           zh-CN: 节点数
           en-US: total
+          ja-JP: ノード数
       - field: successful
         type: 0
         i18n:
           zh-CN: 在线节点数
           en-US: successful
+          ja-JP: オンラインノード数
       - field: failed
         type: 0
         i18n:
           zh-CN: 离线节点数
           en-US: failed
+          ja-JP: オフラインノード数
     protocol: http
     http:
       host: ^_^host^_^
@@ -269,6 +291,7 @@ metrics:
     i18n:
       zh-CN: 节点详细信息
       en-US: Node Detail
+      ja-JP: ノード情報
     priority: 2
     fields:
       - field: node_name
@@ -277,65 +300,73 @@ metrics:
         i18n:
           zh-CN: 节点名称
           en-US: Node Name
+          ja-JP: ノード名
       - field: ip
         type: 1
         i18n:
           zh-CN: IP地址
           en-US: IP Address
+          ja-JP: IP アドレス
       - field: cpu_load_average
         type: 0
         i18n:
           zh-CN: CPU平均负载
           en-US: Cpu Load Average
+          ja-JP: CPUロードアベレージ
       - field: cpu_percent
         type: 0
         unit: '%'
         i18n:
           zh-CN: CPU占用率
           en-US: Cpu Percent
+          ja-JP: CPU使用率
       - field: heap_used
         type: 0
         unit: MB
         i18n:
           zh-CN: 内存使用量（MB）
           en-US: Heap Used
+          ja-JP: メモリ使用量（MB）
       - field: heap_used_percent
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存使用率
           en-US: Heap Used Percent
+          ja-JP: メモリ使用率
       - field: heap_total
         type: 1
         unit: 'MB'
         i18n:
           zh-CN: 总内存（MB）
           en-US: Heap Total
+          ja-JP: メモリ容量（MB）
       - field: disk_free
         type: 0
         unit: 'GB'
         i18n:
           zh-CN: 磁盘剩余容量（GB）
           en-US: Disk Free
+          ja-JP: 利用可能なディスク容量
       - field: disk_total
         type: 1
         unit: 'GB'
         i18n:
           zh-CN: 磁盘总容量
           en-US: Disk Total
+          ja-JP: ディスク容量
       - field: disk_used_percent
         type: 0
         unit: '%'
         i18n:
           zh-CN: 磁盘使用率
           en-US: Disk Used Percent
+          ja-JP: ディスク使用率
     aliasFields:
       - $.name
       - $.ip
-      # $.os.cpu.load_average.1m 支持 5.x 及以上版本；$.os.load_average 支持 2.x 及以上版本
       - $.os.cpu.load_average.1m
       - $.os.load_average
-      # $.os.cpu.percent 支持 5.x 及以上版本；$.os.cpu_percent 支持 2.x 及以上版本
       - $.os.cpu_percent
       - $.os.cpu.percent
       - $.jvm.mem.heap_used_in_bytes
