@@ -178,6 +178,10 @@
 
 详细步骤参考 [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
+##### 方式五：云平台一键部署
+
+- [Rainbond Cloud](https://hub.grapps.cn/marketplace/apps/753)
+
 **HAVE FUN**
 
 ## ✨ Contributors
