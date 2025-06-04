@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.jpa;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.greptime;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
@@ -24,18 +24,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * JPA configuration information
- * @param enabled use mysql/h2 jpa store metrics history data
- * @param expireTime save data expire time(ms)
- * @param maxHistoryRecordNum The maximum number of history records retained
+ * GrepTimeDB configuration information
  */
-
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
 		+ SignConstants.DOT
 		+ WarehouseConstants.STORE
 		+ SignConstants.DOT
-		+ WarehouseConstants.HistoryName.JPA)
-public record JpaProperties(@DefaultValue("true") boolean enabled,
-                            @DefaultValue("1h") String expireTime,
-                            @DefaultValue("20000") Integer maxHistoryRecordNum) {
+		+ WarehouseConstants.HistoryName.GREPTIME)
+public record GreptimeProperties(@DefaultValue("false") boolean enabled,
+	@DefaultValue("127.0.0.1:4001") String grpcEndpoints, @DefaultValue("http://127.0.0.1:4000") String httpEndpoint,
+	@DefaultValue("public") String database, String username, String password) {
 }

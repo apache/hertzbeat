@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.expr;
 
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 
 import java.util.ArrayList;
@@ -34,9 +35,11 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     private static final String VALUE = "__value__";
 
     private final QueryExecutor executor;
+    private final CommonTokenStream tokens;
 
-    public AlertExpressionEvalVisitor(QueryExecutor executor) {
+    public AlertExpressionEvalVisitor(QueryExecutor executor, CommonTokenStream tokens) {
         this.executor = executor;
+        this.tokens = tokens;
     }
 
     @Override
@@ -66,10 +69,11 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 }
                 // queryValues may be a list of values, or a single value
                 Object matchValue = evaluateCondition(queryValues, operator, threshold);
-                item.put(VALUE, matchValue);
+                Map<String, Object> resultMap = new HashMap(item);
+                resultMap.put(VALUE, matchValue);
                 // if matchValue is null, mean not match the threshold
                 // if not null, mean match the threshold
-                result.add(new HashMap<>(item));
+                result.add(resultMap);
             }
             return result;
         }
@@ -212,12 +216,6 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     }
 
     @Override
-    public List<Map<String, Object>> visitQueryExpr(AlertExpressionParser.QueryExprContext ctx) {
-        String query = ctx.identifier().getText();
-        return executor.execute(query);
-    }
-
-    @Override
     public List<Map<String, Object>> visitLiteralExpr(AlertExpressionParser.LiteralExprContext ctx) {
         double value = Double.parseDouble(ctx.number().getText());
         List<Map<String, Object>> numAsList = new ArrayList<>();
@@ -225,6 +223,28 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         valueMap.put(THRESHOLD, value);
         numAsList.add(valueMap);
         return numAsList;
+    }
+
+    @Override
+    public List<Map<String, Object>> visitPromqlExpr(AlertExpressionParser.PromqlExprContext ctx) {
+        String rawPromql = tokens.getText(ctx.promql());
+        return executor.execute(rawPromql);
+    }
+
+    @Override
+    public List<Map<String, Object>> visitSqlExpr(AlertExpressionParser.SqlExprContext ctx) {
+        String rawSql = tokens.getText(ctx.selectSql());
+        return executor.execute(rawSql);
+    }
+
+    @Override
+    public List<Map<String, Object>> visitSqlCallExpr(AlertExpressionParser.SqlCallExprContext ctx) {
+        return callSqlOrPromql(tokens.getText(ctx.string()));
+    }
+
+    @Override
+    public List<Map<String, Object>> visitPromqlCallExpr(AlertExpressionParser.PromqlCallExprContext ctx) {
+        return callSqlOrPromql(tokens.getText(ctx.string()));
     }
 
     private Object evaluateCondition(Object value, String operator, Double threshold) {
@@ -301,5 +321,10 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
                 // unsupported operator todo add more operator
                 return null;
         }
+    }
+
+    private List<Map<String, Object>> callSqlOrPromql(String text){
+        String script = text.substring(1, text.length() - 1);
+        return executor.execute(script);
     }
 }
