@@ -31,7 +31,7 @@ import java.util.Optional;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.warehouse.service.impl.MetricsDataServiceImpl;
-import org.apache.hertzbeat.warehouse.store.history.HistoryDataReader;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

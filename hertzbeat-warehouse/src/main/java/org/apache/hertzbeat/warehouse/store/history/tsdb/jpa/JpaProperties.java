@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history.vm;
+package org.apache.hertzbeat.warehouse.store.history.tsdb.jpa;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
@@ -24,18 +24,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Victoria metrics configuration information.
+ * JPA configuration information
+ * @param enabled use mysql/h2 jpa store metrics history data
+ * @param expireTime save data expire time(ms)
+ * @param maxHistoryRecordNum The maximum number of history records retained
  */
 
-@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE + SignConstants.DOT + WarehouseConstants.STORE + SignConstants.DOT + WarehouseConstants.HistoryName.VM)
-public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
-                                        @DefaultValue("http://localhost:8428") String url,
-                                        String username,
-                                        String password,
-                                        InsertConfig insert) {
-
-    record InsertConfig(@DefaultValue("1000") int bufferSize,
-                        @DefaultValue("3") int flushInterval) {
-
-    }
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.STORE
+		+ SignConstants.DOT
+		+ WarehouseConstants.HistoryName.JPA)
+public record JpaProperties(@DefaultValue("true") boolean enabled,
+                            @DefaultValue("1h") String expireTime,
+                            @DefaultValue("20000") Integer maxHistoryRecordNum) {
 }
