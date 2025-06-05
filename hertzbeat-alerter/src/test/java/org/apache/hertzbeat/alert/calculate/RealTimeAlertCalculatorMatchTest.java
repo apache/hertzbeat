@@ -133,7 +133,12 @@ public class RealTimeAlertCalculatorMatchTest {
 
         AlertDefine matchDefine = new AlertDefine();
         matchDefine.setName("test");
-        matchDefine.setExpr("equals(__app__,\"prometheus\") && equals(__metrics__,\"canal_instance\") && (equals(__instance__, \"515224274242816\") or equals(__instance__, \"518789738974464\")) && metric_value > 0");
+        matchDefine.setExpr(
+            "equals(__app__,\"prometheus\") && "
+            + "equals(__metrics__,\"canal_instance\") && "
+            + "(equals(__instance__, \"515224274242816\") or equals(__instance__, \"518789738974464\")) && "
+            + "metric_value > 0"
+        );
         matchDefine.setTemplate("Canal instance val: ${value}%");
         matchDefine.setTimes(1);
 
