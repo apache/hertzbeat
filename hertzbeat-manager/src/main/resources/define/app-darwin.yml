@@ -1,0 +1,857 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: os
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: darwin
+# The monitoring i18n name
+name:
+  zh-CN: Darwin操作系统
+  en-US: Darwin Linux
+  ja-JP: Darwin Linux
+  zh-TW: Darwin操作系統
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 Darwin 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 Darwin</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH protocol</a> to monitors Darwin operating system's general performance metrics such as cpu, memory, disk, basic, interface, disk_free, top_process etc. <br>You can click the "<i>New Darwin</i>" and config host port and other related params to add, auth support password or secretKey. Or import an existing setup through the "<i>More Actions</i>" menu.
+#  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 對 Darwin 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Darwin</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
+#  ja-JP: HertzBeat は <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> Darwinシステムの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 Darwin Linux</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
+helpLink:
+  zh-CN: https://HertzBeat.apache.org/zh-cn/docs/help/Darwin/
+  en-US: https://HertzBeat.apache.org/docs/help/Darwin/
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+      zh-TW: 目標Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+      zh-TW: 端口
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 22
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
+      zh-TW: 超時時間（ｍｓ）
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[400,200000]'
+    # required-true or false
+    required: false
+    # default value
+    # 默认值
+    defaultValue: 6000
+  # field-param field key
+  - field: reuseConnection
+    # name-param field display i18n name
+    name:
+      zh-CN: 复用连接
+      en-US: Reuse Connection
+      ja-JP: コネクション再利用
+      zh-TW: 復用連接
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    defaultValue: true
+  # field-param field key
+  - field: useProxy
+    # name-param field display i18n name
+    name:
+      zh-CN: 使用代理
+      en-US: Use Proxy Connection
+      ja-JP: プロキシコネクション利用
+      zh-TW: 使用代理
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    defaultValue: false
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+      ja-JP: ユーザー名
+      zh-TW: 用戶名
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+      ja-JP: パスワード
+      zh-TW: 密碼
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: privateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 私钥
+      en-US: PrivateKey
+      ja-JP: 秘密鍵
+      zh-TW: 私鑰
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: privateKeyPassphrase
+    # name-param field display i18n name
+    name:
+      zh-CN: 密钥短语
+      en-US: PrivateKey PassPhrase
+      ja-JP: 秘密鍵フレーズ
+      zh-TW: 私鑰短語
+    # type-param field type(most mapping the html input type)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyHost
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机
+      en-US: Proxy Host
+      ja-JP: プロキシホスト
+      zh-TW: 代理主機
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  - field: proxyPort
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理端口
+      en-US: Proxy Port
+      ja-JP: プロキシポート
+      zh-TW: 代理端口
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 22
+  # field-param field key
+  - field: proxyUsername
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理用户名
+      en-US: Proxy Username
+      ja-JP: プロキシユーザー名
+      zh-TW: 代理用戶名
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPassword
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理密码
+      en-US: Proxy Password
+      ja-JP: プロキシパスワード
+      zh-TW: 代理密碼
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: proxyPrivateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 代理主机私钥
+      en-US: proxyPrivateKey
+      ja-JP: プロキシ秘密鍵
+      zh-TW: 代理主機私鑰
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+# collect metrics config list
+metrics:
+  # metrics - basic, inner monitoring metrics (responseTime - response time)
+  - name: basic
+    i18n:
+      zh-CN: 系统基本信息
+      en-US: Basic Info
+      ja-JP: システム基礎情報
+      zh-TW: 系統基本信息
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: hostname
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
+          ja-JP: ホスト名
+          zh-TW: 主機名稱
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 操作系统版本
+          en-US: System Version
+          ja-JP: システムバージョン
+          zh-TW: 操作系統版本
+      - field: uptime
+        type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Uptime
+          ja-JP: アップタイム
+          zh-TW: 啟動時間
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # the config content when protocol is ssh
+    ssh:
+      # ssh host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ssh port
+      port: ^_^port^_^
+      # ssh username
+      username: ^_^username^_^
+      # ssh password
+      password: ^_^password^_^
+      # ssh private key
+      privateKey: ^_^privateKey^_^
+      # ssh private key passphrase
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      # ssh run collect script
+      script: |
+        (
+            hostname | awk -F "," '{printf "%s\n", $1}'
+            sw_vers | awk '/:/ {printf "%s ", $2} END {print ""}'
+            sysctl -n kern.boottime | awk '{for(i=9;i<=NF;i++) printf "%s ", $i; print ""}'
+        )
+      # ssh response data parse type: oneRow, multiRow
+      parseType: oneRow
+
+  - name: cpu
+    i18n:
+      zh-CN: CPU 信息
+      en-US: CPU Info
+      ja-JP: CPU情報
+      zh-TW: CPU 信息
+    priority: 1
+    fields:
+      - field: info
+        type: 1
+        i18n:
+          zh-CN: 型号
+          en-US: Info
+          ja-JP: バージョン
+          zh-TW: 型號
+      - field: cores
+        type: 1
+        i18n:
+          zh-CN: 核数
+          en-US: Cores
+          ja-JP: コア数
+          zh-TW: 核數
+      - field: interrupt
+        type: 0
+        i18n:
+          zh-CN: 中断数
+          en-US: Interrupt
+          ja-JP: 割り込み数
+          zh-TW: 中斷數
+      - field: load
+        type: 1
+        i18n:
+          zh-CN: 负载
+          en-US: Load
+          ja-JP: ロード
+          zh-TW: 負載
+      - field: context_switch
+        type: 0
+        i18n:
+          zh-CN: 上下文切换
+          en-US: Context Switch
+          ja-JP: コンテキストスイッチ
+          zh-TW: 上下文切換
+      - field: usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+          ja-JP: 使用率
+          zh-TW: 使用率
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - info
+      - cores
+      - load
+      - interrupt
+      - context_switch
+      - idle
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - info=info
+      - cores=cores
+      - load=load
+      - interrupt=interrupt
+      - context_switch=context_switch
+      - usage=100 - idle
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      script: sysctl -n machdep.cpu.brand_string; sysctl -n hw.logicalcpu; sysctl -n vm.loadavg | awk '{print $2, $3, $4}'; idle=$(top -l 1 | grep "CPU usage" | awk '{print $7}' | tr -d '%') ; free_pages=$(vm_stat | awk '/free/ {gsub(/\./,"",$3); print $3}'); active_pages=$(vm_stat | awk '/active/ {gsub(/\./,"",$3); print $3}'); first_swapins=$(vm_stat | awk '/swapins/ {gsub(/\./,"",$2); print $2}'); sleep 1; second_swapins=$(vm_stat | awk '/swapins/ {gsub(/\./,"",$2); print $2}'); echo "$free_pages"; echo "$active_pages";  echo "$idle";
+      parseType: oneRow
+
+  - name: memory
+    i18n:
+      zh-CN: 内存信息
+      en-US: Memory Info
+      ja-JP: メモリ情報
+      zh-TW: 內存信息
+    priority: 2
+    fields:
+      - field: total
+        type: 1
+        unit: Mb
+        i18n:
+          zh-CN: 总内存容量
+          en-US: Total Memory
+          ja-JP: メモリ容量
+          zh-TW: 總內存容量
+      - field: used
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 用户程序内存量
+          en-US: User Program Memory
+          ja-JP: ユーザープログラムメモリ
+          zh-TW: 用戶程序內存量
+      - field: free
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 空闲内存容量
+          zh-TW: 空閒內存容量
+          en-US: Free Memory
+          ja-JP: 空きメモリ
+      - field: buff_cache
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 缓存占用内存
+          zh-TW: 緩存佔用內存
+          en-US: Buff Cache Memory
+          ja-JP: バッファメモリ
+      - field: available
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 剩余可用内存
+          zh-TW: 剩餘可用內存
+          en-US: Available Memory
+          ja-JP: 使用可能なメモリ
+      - field: usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存使用率
+          zh-TW: 內存使用率
+          en-US: Memory Usage
+          ja-JP: メモリ使用率
+    aliasFields:
+      - total
+      - used
+      - free
+      - buff_cache
+      - available
+    calculates:
+      - total=total
+      - used=used
+      - free=free
+      - buff_cache=buff_cache
+      - available=available
+      - usage=(used / total) * 100
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      script: |
+        sysctl -n hw.memsize | awk '{
+          t=$1/1048576;
+          cmd="vm_stat";
+          while (cmd | getline) {
+            if ($1=="Pages") {
+              if ($2=="free:") {f=$3}
+              else if ($2=="active:") {a=$3}
+              else if ($2=="inactive:") {i=$3}
+              else if ($2=="speculative:") {s=$3}
+              else if ($2~/wired/) {w=$NF}
+            };
+            gsub(/\.[ \t]*$/,"",f);
+            gsub(/\.[ \t]*$/,"",a);
+            gsub(/\.[ \t]*$/,"",i);
+            gsub(/\.[ \t]*$/,"",s);
+            gsub(/\.[ \t]*$/,"",w);
+          };
+          close(cmd);
+          fm=(f+s)/256;
+          um=(a+w)/256;
+          im=i/256;
+          bm=im;
+          am=fm+im;
+          print "total used free buff_cache available";
+          printf "%d %d %d %d %d\n", t, um, fm, bm, am
+        }'
+      parseType: multiRow
+
+#  - name: disk
+#    i18n:
+#      zh-CN: 磁盘信息
+#      zh-TW: 磁盤信息
+#      en-US: Disk Info
+#      ja-JP: ディスク情報
+#    priority: 3
+#    fields:
+#      - field: disk_num
+#        type: 1
+#        i18n:
+#          zh-CN: 磁盘总数
+#          zh-TW: 磁盤總數
+#          en-US: Disk Num
+#          ja-JP: ディスク番号
+#      - field: partition_num
+#        type: 1
+#        i18n:
+#          zh-CN: 分区总数
+#          zh-TW: 分區總數
+#          en-US: Partition Num
+#          ja-JP: パーティション
+#      - field: block_write
+#        type: 0
+#        i18n:
+#          zh-CN: 写磁盘块数
+#          zh-TW: 寫磁盤塊數
+#          en-US: Block Write
+#          ja-JP: 書き込みディスクブロック数
+#      - field: block_read
+#        type: 0
+#        i18n:
+#          zh-CN: 读磁盘块数
+#          zh-TW: 讀磁盤塊數
+#          en-US: Block Read
+#          ja-JP: 読み取りブロック数
+#      - field: write_rate
+#        type: 0
+#        unit: iops
+#        i18n:
+#          zh-CN: 磁盘写速率
+#          zh-TW: 磁盤寫速率
+#          en-US: Write Rate
+#          ja-JP: ディスク書き込み速度
+#    protocol: ssh
+#    ssh:
+#      host: ^_^host^_^
+#      port: ^_^port^_^
+#      username: ^_^username^_^
+#      password: ^_^password^_^
+#      privateKey: ^_^privateKey^_^
+#      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+#      timeout: ^_^timeout^_^
+#      reuseConnection: ^_^reuseConnection^_^
+#      # whether to use proxy server for ssh connection
+#      useProxy: ^_^useProxy^_^
+#      # ssh proxy host: ipv4 domain
+#      proxyHost: ^_^proxyHost^_^
+#      # ssh proxy port
+#      proxyPort: ^_^proxyPort^_^
+#      # ssh proxy username
+#      proxyUsername: ^_^proxyUsername^_^
+#      # ssh proxy password
+#      proxyPassword: ^_^proxyPassword^_^
+#      # ssh proxy private key
+#      proxyPrivateKey: ^_^proxyPrivateKey^_^
+#      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {gsub(":", "", $1); print $1,$2,$10}'
+#      parseType: oneRow
+
+  - name: interface
+    i18n:
+      zh-CN: 网卡信息
+      zh-TW: 網卡信息
+      en-US: Interface Info
+      ja-JP: ネットワークカード情報
+    priority: 4
+    fields:
+      - field: interface_name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 网卡名称
+          zh-TW: 網卡名稱
+          en-US: Interface Name
+          ja-JP: ネットワークカード名
+      - field: receive_bytes
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 入站数据流量
+          zh-TW: 入站數據流量
+          en-US: Receive Bytes
+          ja-JP: 受信バイト数
+      - field: transmit_bytes
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 出站数据流量
+          zh-TW: 出站數據流量
+          en-US: Transmit Bytes
+          ja-JP: 送信バイト数
+    units:
+      - receive_bytes=B->MB
+      - transmit_bytes=B->MB
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      script: netstat -i | grep -v "lo0" | awk 'BEGIN { print "interface_name receive_bytes transmit_bytes" } NR>1 && $1 !~ /^-/ { print $1, $5, $9 }'
+      parseType: multiRow
+
+  - name: disk_free
+    i18n:
+      zh-CN: 文件系统
+      zh-TW: 文件系統
+      en-US: Disk Free
+      ja-JP: ファイルシステム
+    priority: 5
+    fields:
+      - field: filesystem
+        type: 1
+        i18n:
+          zh-CN: 文件系统
+          zh-TW: 檔案系統
+          en-US: Filesystem
+          ja-JP: ファイルシステム
+      - field: used
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 已使用量
+          zh-TW: 已使用量
+          en-US: Used
+          ja-JP: 使用済み
+      - field: available
+        type: 0
+        unit: Mb
+        i18n:
+          zh-CN: 可用量
+          zh-TW: 可用量
+          en-US: Available
+          ja-JP: 使用可能
+      - field: usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          zh-TW: 使用率
+          en-US: Usage
+          ja-JP: 使用率
+      - field: mounted
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 挂载点
+          zh-TW: 掛載點
+          en-US: Mounted
+          ja-JP: マウント
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      script: df -mP | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
+      parseType: multiRow
+
+  - name: top_cpu_process
+    i18n:
+      zh-CN: Top10 CPU 进程
+      zh-TW: Top10 CPU 進程
+      en-US: Top10 CPU Process
+      ja-JP: トップ10 CPUプロセス
+    priority: 6
+    fields:
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          zh-TW: 進程ID
+          en-US: PID
+          ja-JP: プロセスID
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: CPU占用率
+          zh-TW: CPU佔用率
+          en-US: CPU Usage
+          ja-JP: CPU使用率
+      - field: mem_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存占用率
+          zh-TW: 內存佔用率
+          en-US: Memory Usage
+          ja-JP: メモリ使用率
+      - field: command
+        type: 1
+        i18n:
+          zh-CN: 执行命令
+          zh-TW: 執行指令
+          en-US: Command
+          ja-JP: 指令
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      script: ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11
+      parseType: multiRow
+
+  - name: top_mem_process
+    i18n:
+      zh-CN: Top10 内存进程
+      zh-TW: Top10 內存進程
+      en-US: Top10 Memory Process
+      ja-JP: トップ10 メモリプロセス
+    priority: 7
+    fields:
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          zh-TW: 進程ID
+          en-US: PID
+          ja-JP: プロセスID
+      - field: mem_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存占用率
+          zh-TW: 內存佔用率
+          en-US: Memory Usage
+          ja-JP: メモリ使用率
+      - field: cpu_usage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: CPU占用率
+          zh-TW: CPU佔用率
+          en-US: CPU Usage
+          ja-JP: CPU使用率
+      - field: command
+        type: 1
+        i18n:
+          zh-CN: 执行命令
+          zh-TW: 執行指令
+          en-US: Command
+          ja-JP: 指令
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      script: ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11
+      parseType: multiRow
