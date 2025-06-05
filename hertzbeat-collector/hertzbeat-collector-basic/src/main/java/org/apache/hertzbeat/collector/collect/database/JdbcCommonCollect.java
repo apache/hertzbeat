@@ -354,18 +354,39 @@ public class JdbcCommonCollect extends AbstractCollect {
             if (jdbcProtocol.getUrl().length() > 2048) {
                 throw new IllegalArgumentException("JDBC URL length exceeds maximum limit of 2048 characters");
             }
-            // remove special characters
-            String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F]", "");
+            String cleanedUrl = jdbcProtocol.getUrl();
+            // Decode and normalize the URL to handle escaped characters and potential obfuscation
+            try {
+                cleanedUrl = java.net.URLDecoder.decode(cleanedUrl, "UTF-8");
+            } catch (Exception e) {
+                // ignore decoding errors, use original url
+            }
+            // Remove special and invisible characters, including  
+            cleanedUrl = cleanedUrl.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", "");
             String url = cleanedUrl.toLowerCase();
             // backlist check
             for (String keyword : BLACK_LIST) {
-                if (url.contains(keyword)) {
+                if (url.contains(keyword.toLowerCase())) {
                     throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious parameter: " + keyword);
                 }
             }
-            // url format check
-            if (!url.matches("^jdbc:[a-zA-Z0-9]+://[^\\s]+$")) {
-                throw new IllegalArgumentException("Invalid JDBC URL format");
+            // url format check - potentially adjust regex based on H2 specifics if needed
+            if (jdbcProtocol.getPlatform() != null && jdbcProtocol.getPlatform().equalsIgnoreCase("h2")) {
+                String h2Url = url;
+                // Uniformly handle invisible characters (e.g., \u00A0), replacing them with spaces
+                h2Url = h2Url.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", " ");
+                // Convert to lowercase
+                h2Url = h2Url.toLowerCase();
+
+                // Check for the presence of double backslashes (\\), single slashes (/), backslashes (\), or escaped variants + init or runscript (case-insensitive, allowing invisible characters)
+                // Allow arbitrary whitespace characters (including invisible ones) and detect variations such as IN\IT, IN/IT, IN\\IT, IN\nIT, etc.
+                // Check for cases where the init keyword is split (e.g., in\it, in/it, in\\it, in\nit, etc.)
+                if (h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*init\\s*=.*") ||
+                        h2Url.matches(".*in\\s*([/\\\\]|\\\\n|/n|\\n)\\s*it\\s*=.*") ||
+                        h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*runscript\\s+from.*") ||
+                        h2Url.matches(".*ru\\s*([/\\\\]|\\\\n|/n|\\n)\\s*script\\s+from.*")) {
+                    throw new IllegalArgumentException("Invalid H2 JDBC URL: contains potentially malicious init or runscript bypass");
+                }
             }
             return cleanedUrl;
         }
