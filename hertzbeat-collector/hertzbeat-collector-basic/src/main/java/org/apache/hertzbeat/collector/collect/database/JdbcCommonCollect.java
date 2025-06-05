@@ -381,10 +381,10 @@ public class JdbcCommonCollect extends AbstractCollect {
                 // Check for the presence of double backslashes (\\), single slashes (/), backslashes (\), or escaped variants + init or runscript (case-insensitive, allowing invisible characters)
                 // Allow arbitrary whitespace characters (including invisible ones) and detect variations such as IN\IT, IN/IT, IN\\IT, IN\nIT, etc.
                 // Check for cases where the init keyword is split (e.g., in\it, in/it, in\\it, in\nit, etc.)
-                if (h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*init\\s*=.*") ||
-                        h2Url.matches(".*in\\s*([/\\\\]|\\\\n|/n|\\n)\\s*it\\s*=.*") ||
-                        h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*runscript\\s+from.*") ||
-                        h2Url.matches(".*ru\\s*([/\\\\]|\\\\n|/n|\\n)\\s*script\\s+from.*")) {
+                if (h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*init\\s*=.*")
+                        || h2Url.matches(".*in\\s*([/\\\\]|\\\\n|/n|\\n)\\s*it\\s*=.*")
+                        || h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*runscript\\s+from.*")
+                        || h2Url.matches(".*ru\\s*([/\\\\]|\\\\n|/n|\\n)\\s*script\\s+from.*")) {
                     throw new IllegalArgumentException("Invalid H2 JDBC URL: contains potentially malicious init or runscript bypass");
                 }
             }
