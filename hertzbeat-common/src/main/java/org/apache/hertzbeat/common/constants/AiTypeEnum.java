@@ -42,7 +42,12 @@ public enum AiTypeEnum {
     /**
      * Moonshot AI
      */
-    kimiAi;
+    kimiAi,
+
+    /**
+     * OpenRouter
+     */
+    openRouter;
 
 
     /**
