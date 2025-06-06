@@ -139,6 +139,9 @@ public class RealTimeAlertCalculator {
         String instanceHost = metricsData.getInstanceHost();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
+        if ((CommonConstants.PROMETHEUS_APP_PREFIX + instanceName).equals(metricsData.getApp())) {
+            app = CommonConstants.PROMETHEUS;
+        }
         int priority = metricsData.getPriority();
         int code = metricsData.getCode().getNumber();
         Map<String, String> labels = metricsData.getLabels();
