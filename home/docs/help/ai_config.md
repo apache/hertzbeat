@@ -59,3 +59,13 @@ QuickStart: <https://www.xfyun.cn/doc/platform/quickguide.html>
 | Spark Pro         | generalv3   |
 | Spark V2.0        | generalv2   |
 | Spark Lite(free)  | general     |
+
+#### OpenRouter
+
+QuickStart: <https://openrouter.ai/docs/quickstart>
+
+| Name of the parameter | Example                                        | Link                                    |
+|-----------------------|------------------------------------------------|-----------------------------------------|
+| type                  | OpenRouter (must be exactly the same as example) |                                         |
+| model                 | openai/gpt-4o, anthropic/claude-sonnet-4       | <https://openrouter.ai/models>                                      |
+| api-key               | xxxxxxxxxxx                                    | <https://openrouter.ai/settings/provisioning-keys> |
