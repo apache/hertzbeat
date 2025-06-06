@@ -64,7 +64,7 @@ keywords: [open source monitoring tool, open source os monitoring tool, monitori
 | usage       | %           | Memory usage rate                   |
 
 #### Metric Set: Disk Information  - to be finished
-
+- Disk information collection is not yet implemented, but will be added in future versions.
 
 #### Metric Set: Network Card Information
 
