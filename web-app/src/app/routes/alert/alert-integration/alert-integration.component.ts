@@ -82,6 +82,11 @@ export class AlertIntegrationComponent implements OnInit {
       id: 'tencent',
       name: this.i18nSvc.fanyi('alert.integration.source.tencent'),
       icon: 'assets/img/integration/tencent.svg'
+    },
+    {
+      id: 'alibabacloud-sls',
+      name: this.i18nSvc.fanyi('alert.integration.source.alibabacloud-sls'),
+      icon: 'assets/img/integration/alibabacloud.svg'
     }
   ];
 
