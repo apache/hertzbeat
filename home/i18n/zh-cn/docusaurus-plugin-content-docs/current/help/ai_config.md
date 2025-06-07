@@ -59,3 +59,13 @@ keywords: [人工智能 AI]
 | Spark Pro       | generalv3                     |
 | Spark V2.0      | generalv2                     |
 | Spark Lite(免费版) | general                       |
+
+#### Ollama AI
+
+快速入门: <https://github.com/ollama/ollama/tree/main/docs>
+
+| 参数名称 |                     示例                      |                 链接                  |
+|-----------------------|--------------------------------------------------|---------------------------------------|
+| type                  | ollama (必须和示例完全相同)  |                                       |
+| model                 | deepseek-r1:latest、qwen3:latest、llama4:16x17b | <https://ollama.com/search> |
+| api-url               | <http://127.0.0.1:11434/v1/chat/completions> |                                  |
