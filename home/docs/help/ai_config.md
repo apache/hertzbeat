@@ -59,3 +59,13 @@ QuickStart: <https://www.xfyun.cn/doc/platform/quickguide.html>
 | Spark Pro         | generalv3   |
 | Spark V2.0        | generalv2   |
 | Spark Lite(free)  | general     |
+
+#### Ollama AI
+
+QuickStart: <https://github.com/ollama/ollama/tree/main/docs>
+
+| Name of the parameter | Example                                         | Link                          |
+|-----------------------|-------------------------------------------------|-------------------------------|
+| type                  | ollama (must be exactly the same as example)    |                               |
+| model                 | deepseek-r1:latest、qwen3:latest、llama4:16x17b   | <https://ollama.com/search>   |
+| api-url               | <http://127.0.0.1:11434/v1/chat/completions>    |                               |
