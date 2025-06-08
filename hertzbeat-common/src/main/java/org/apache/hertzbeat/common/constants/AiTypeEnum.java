@@ -47,7 +47,7 @@ public enum AiTypeEnum {
     /**
      * Ollama AI
      */
-    ollama;
+    ollama,
 
     /**
      * OpenRouter
