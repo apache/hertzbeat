@@ -45,10 +45,14 @@ public enum AiTypeEnum {
     kimiAi,
 
     /**
+     * Ollama AI
+     */
+    ollama;
+
+    /**
      * OpenRouter
      */
     openRouter;
-
 
     /**
      * get type
