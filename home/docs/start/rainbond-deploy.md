@@ -36,10 +36,10 @@ After logging in Rainbond, click Market in the left menu, switch to open source 
 
 Fill in the following information, and click Confirm button to install.
 
-* Team: select a team or create a new team
-* Cluster: select a cluster
-* Application: select an application or create a new application
-* Version: select a version
+- Team: select a team or create a new team
+- Cluster: select a cluster
+- Application: select an application or create a new application
+- Version: select a version
 
 After installation, HertzBeat can be accessed via the Access button.
 
