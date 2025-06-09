@@ -173,10 +173,10 @@ public class VolcEngineExternAlert {
 
 
     public static final String ALERT_TYPE_METRIC = "Metric";
-    private static final String ALERT_TYPE_EVENT = "Event";
-    private static final String ALERT_TYPE_METRIC_RECOVERED = "MetricRecovered";
-    private static final String ALERT_TYPE_METRICS_NODATA = "MetricsNoData";
-    private static final String ALERT_TYPE_NO_DATA_RECOVERED = "NoDataRecovered";
+    public static final String ALERT_TYPE_EVENT = "Event";
+    public static final String ALERT_TYPE_METRIC_RECOVERED = "MetricRecovered";
+    public static final String ALERT_TYPE_METRICS_NODATA = "MetricsNoData";
+    public static final String ALERT_TYPE_NO_DATA_RECOVERED = "NoDataRecovered";
 
 }
 

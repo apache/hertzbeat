@@ -123,8 +123,8 @@ public class VolcEngineExternAlertService implements ExternAlertService {
                         .startAt(resource.getFirstAlertTime() * 1000)
                         .endAt(resource.getLastAlertTime() * 1000)
                         .labels(buildLabels(volcEngineExternAlert, resource))
-                        .activeAt(convertHappenAt(volcEngineExternAlert.getHappenedAt()));
-//                        .annotations(buildAnnotations())
+                        .activeAt(convertHappenAt(volcEngineExternAlert.getHappenedAt()))
+                        .annotations(buildAnnotations(volcEngineExternAlert, resource));
             }
 
             return null;
@@ -144,27 +144,18 @@ public class VolcEngineExternAlertService implements ExternAlertService {
             labels.put("alert_type", alert.getType());
             labels.put("resource_name", resource.getName());
             labels.put("resource_id", resource.getId());
+            labels.put("rule_name", alert.getRuleName());
+            labels.put("rule_id", alert.getRuleId());
+            labels.put("region", resource.getRegion());
             return labels;
         }
 
-        private void buildAnnotations(Map<String, String> annotations, TencentCloudExternAlert alert) {
-            TencentCloudExternAlert.AlarmPolicyInfo alarmPolicyInfo = alert.getAlarmPolicyInfo();
-            TencentCloudExternAlert.AlarmObjInfo alarmObjInfo = alert.getAlarmObjInfo();
-            TencentCloudExternAlert.Dimensions dimensions = alert.getAlarmObjInfo().getDimensions();
-
-            putIfNotNull(annotations, "policy_id", alarmPolicyInfo.getPolicyId());
-            putIfNotNull(annotations, "policy_type", alarmPolicyInfo.getPolicyType());
-            putIfNotNull(annotations, "policy_name", alarmPolicyInfo.getPolicyName());
-            putIfNotNull(annotations, "policy_type_cname", alarmPolicyInfo.getPolicyTypeCname());
-
-            putIfNotNull(annotations, "namespace", alarmObjInfo.getNamespace());
-            putIfNotNull(annotations, "region", alarmObjInfo.getRegion());
-            putIfNotNull(annotations, "app_id", alarmObjInfo.getAppId());
-            putIfNotNull(annotations, "uin", alarmObjInfo.getUin());
-
-            putIfNotNull(annotations, "instance_id", dimensions.getUnInstanceId());
-            putIfNotNull(annotations, "obj_id", dimensions.getObjId());
-
+        private Map<String, String> buildAnnotations(VolcEngineExternAlert alert, VolcEngineExternAlert.Resource resource) {
+            Map<String, String> annotations = new HashMap<>();
+            for (VolcEngineExternAlert.Metric metric : resource.getMetrics()) {
+                annotations.put(metric.getName(), metric.getCurrentValue() + metric.getUnit());
+            }
+            return annotations;
         }
 
         /**
@@ -189,11 +180,15 @@ public class VolcEngineExternAlertService implements ExternAlertService {
             return result;
         }
 
-        private String convertStatus(VolcEngineExternAlert alarm) {
-            if (CollectionUtils.isNotEmpty(alarm.getRecoveredResources()) || CollectionUtils.isNotEmpty(alarm.getNoDataRecoveredResources())) {
-                return CommonConstants.ALERT_STATUS_RESOLVED;
-            } else {
+        private String convertStatus(VolcEngineExternAlert alert) {
+            String type = alert.getType();
+            if (Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_METRIC)
+                    || Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_EVENT)
+                    || Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_METRICS_NODATA)) {
                 return CommonConstants.ALERT_STATUS_FIRING;
+            } else if (Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_METRIC_RECOVERED)
+                    || Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_NO_DATA_RECOVERED)) {
+                return CommonConstants.ALERT_STATUS_RESOLVED;
             }
         }
 
