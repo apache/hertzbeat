@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: sse-mcp-server
+
+  ai:
+    mcp:
+      server:
+        enabled: true
+        stdio: false
+        name: sse-mcp-server
+        version: 1.0.0
+        resource-change-notification: true
+        tool-change-notification: true
+        prompt-change-notification: true
+        sse-endpoint: /sse
+        sse-message-endpoint: /mcp/message
+        type: sync
+
+
+logging:
+  level:
+    io.modelcontextprotocol: TRACE
+    org.springframework.ai.mcp: TRACE
