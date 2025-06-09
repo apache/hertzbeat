@@ -273,7 +273,7 @@ grafana:
 
 # See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
 ai:
-  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk、ollama
+  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk、ollama、openRouter
   type:
   # Model name：glm-4、qwen-turboo、moonshot-v1-8k、generalv3.5
   model:
