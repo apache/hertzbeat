@@ -200,8 +200,6 @@ Special thanks to the following community members for their collaborative effort
 - @KevinLLF made their first contribution in #3248
 - @markguo123 made their first contribution in #3294
 
-**Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.7.0...v1.7.1
-
 ## Apache Hertzbeat
 
 **Repository URL:**
