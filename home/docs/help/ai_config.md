@@ -69,3 +69,13 @@ QuickStart: <https://github.com/ollama/ollama/tree/main/docs>
 | type                  | ollama (must be exactly the same as example)    |                               |
 | model                 | deepseek-r1:latest、qwen3:latest、llama4:16x17b   | <https://ollama.com/search>   |
 | api-url               | <http://127.0.0.1:11434/v1/chat/completions>    |                               |
+
+#### OpenRouter
+
+QuickStart: <https://openrouter.ai/docs/quickstart>
+
+| Name of the parameter | Example                                        | Link                                    |
+|-----------------------|------------------------------------------------|-----------------------------------------|
+| type                  | openRouter (must be exactly the same as example) |                                       |
+| model                 | openai/gpt-4o, anthropic/claude-sonnet-4       | <https://openrouter.ai/models>          |
+| api-key               | xxxxxxxxxxx                                    | <https://openrouter.ai/settings/provisioning-keys> |
