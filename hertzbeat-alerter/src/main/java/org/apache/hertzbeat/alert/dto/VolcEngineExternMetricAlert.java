@@ -33,7 +33,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VolcEngineExternAlert {
+public class VolcEngineExternMetricAlert {
 
     @JsonProperty("Type")
     private String type;
