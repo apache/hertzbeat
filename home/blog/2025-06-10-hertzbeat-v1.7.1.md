@@ -116,7 +116,7 @@ Special thanks to the following community members for their collaborative effort
 * [doc] archive version docs by @tomsun28 in https://github.com/apache/hertzbeat/pull/3207
 * [feature]Implementation of Hikvision camera monitoring and http monitoring xml parsing function by @zqr10159 in https://github.com/apache/hertzbeat/pull/3211
 * [test]add test for controller AlertInhibitController by @PengJingzhao in https://github.com/apache/hertzbeat/pull/3183
-* [test](hertzbeat-collector): add unit test for XML response parsing by @zqr10159 in https://github.com/apache/hertzbeat/pull/3212
+* [test] hertzbeat-collector: add unit test for XML response parsing by @zqr10159 in https://github.com/apache/hertzbeat/pull/3212
 * add a Pushgateway to push module by @leo-934 in https://github.com/apache/hertzbeat/pull/3204
 * [feature]add support for Dahua and Uniview devices by @zqr10159 in https://github.com/apache/hertzbeat/pull/3214
 * [Doc] Fix dead link by @zhangshenghang in https://github.com/apache/hertzbeat/pull/3227
