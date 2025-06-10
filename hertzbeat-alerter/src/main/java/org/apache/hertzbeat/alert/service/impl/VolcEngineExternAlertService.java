@@ -17,9 +17,9 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import io.netty.util.Constant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dto.TencentCloudExternAlert;
 import org.apache.hertzbeat.alert.dto.VolcEngineExternAlert;
@@ -34,6 +34,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,13 +52,17 @@ public class VolcEngineExternAlertService implements ExternAlertService {
 
     @Override
     public void addExternAlert(String content) {
+        
+
+
         VolcEngineExternAlert report = JsonUtil.fromJson(content, VolcEngineExternAlert.class);
         if (report == null) {
             log.warn("parse extern alert content failed! content: {}", content);
             return;
         }
-        SingleAlert alert = new VolcEngineAlertConverter().convert(report);
-        alarmCommonReduce.reduceAndSendAlarm(alert);
+        for (SingleAlert singleAlert : new VolcEngineAlertConverter().convert(report)) {
+            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
+        }
     }
 
     @Override
@@ -84,51 +89,53 @@ public class VolcEngineExternAlertService implements ExternAlertService {
         /**
          * Convert TencentCloud alert to SingleAlert
          */
-        public SingleAlert convert(VolcEngineExternAlert volcEngineExternAlert) {
-            // Building basic information
-//            SingleAlert.SingleAlertBuilder builder = SingleAlert.builder()
-//                    .status(convertStatus(volcEngineExternAlert))
-//                    .startAt(parseTime(volcEngineExternAlert.get)
-//                            .activeAt(parseTime(tencentAlert.getFirstOccurTime()))
-//                            .triggerTimes(1);
-//            // If it is a recovery state, set the end time.
-//            if ("0".equals(tencentAlert.getAlarmStatus())) {
-//                builder.endAt(parseTime(tencentAlert.getRecoverTime()));
-//            }
-//
-//            // Build labels
-//            Map<String, String> labels = new HashMap<>();
-//            buildLabels(labels, tencentAlert);
-//
-//            // Build annotations
-//            Map<String, String> annotations = new HashMap<>();
-//            buildAnnotations(annotations, tencentAlert);
-//
-//            // Build content
-//            String content = generateContent(tencentAlert);
-//
-//            return builder
-//                    .labels(labels)
-//                    .annotations(annotations)
-//                    .content(content)
-//                    .build();
-            return null;
+        public List<SingleAlert> convert(VolcEngineExternAlert alert) {
+            String status = convertStatus(alert);
+            String level = convertLevel(alert);
+            if (Objects.equals(alert.getType(), VolcEngineExternAlert.ALERT_TYPE_METRIC)) {
+                return convertMetricAlert(alert, status, level, alert.getResources());
+            }
+            if (Objects.equals(alert.getType(), VolcEngineExternAlert.ALERT_TYPE_EVENT)) {
+                //
+                return null;
+            }
+            if (Objects.equals(alert.getType(), VolcEngineExternAlert.ALERT_TYPE_METRICS_NODATA)) {
+                return convertMetricAlert(alert, status, level, alert.getNoDataResources());
+            }
+            if (Objects.equals(alert.getType(), VolcEngineExternAlert.ALERT_TYPE_NO_DATA_RECOVERED)) {
+                return convertMetricAlert(alert, status, level, alert.getNoDataRecoveredResources());
+            }
+            if (Objects.equals(alert.getType(), VolcEngineExternAlert.ALERT_TYPE_METRIC_RECOVERED)) {
+                return convertMetricAlert(alert, status, level, alert.getRecoveredResources());
+            }
+            return List.of();
         }
 
-        public List<SingleAlert> convertResourcesToAlert(VolcEngineExternAlert volcEngineExternAlert) {
-            String status = convertStatus(volcEngineExternAlert);
-            for (VolcEngineExternAlert.Resource resource : volcEngineExternAlert.getResources()) {
+        private String convertLevel(VolcEngineExternAlert volcEngineExternAlert) {
+            return switch (volcEngineExternAlert.getLevel()) {
+                case "critical" -> CommonConstants.ALERT_SEVERITY_CRITICAL;
+                case "warning" -> CommonConstants.ALERT_SEVERITY_WARNING;
+                default -> CommonConstants.ALERT_SEVERITY_INFO;
+            };
+        }
+
+        private List<SingleAlert> convertMetricAlert(VolcEngineExternAlert alert, String status, String severity,
+                                                     List<? extends VolcEngineExternAlert.Resource> resources) {
+            List<SingleAlert> result = new ArrayList<>();
+            for (VolcEngineExternAlert.Resource resource : resources) {
                 SingleAlert.SingleAlertBuilder builder = SingleAlert.builder()
                         .status(status)
                         .startAt(resource.getFirstAlertTime() * 1000)
                         .endAt(resource.getLastAlertTime() * 1000)
-                        .labels(buildLabels(volcEngineExternAlert, resource))
-                        .activeAt(convertHappenAt(volcEngineExternAlert.getHappenedAt()))
-                        .annotations(buildAnnotations(volcEngineExternAlert, resource));
+                        .labels(buildLabels(alert, resource, severity))
+                        .activeAt(convertHappenAt(alert.getHappenedAt()))
+                        .content(resource.getName() + alert.getRuleCondition())
+                        .annotations(buildAnnotations(resource));
+                result.add(builder.build());
             }
-
-            return null;
+            return result;
         }
+
 
         private Long convertHappenAt(String happenAt) {
             String cleanedStr = happenAt.replace("UTC", "").replace("(", "").replace(")", "");
@@ -137,21 +144,27 @@ public class VolcEngineExternAlertService implements ExternAlertService {
             return odt.toEpochSecond() * 1000;
         }
 
-
-        private Map<String, String> buildLabels(VolcEngineExternAlert alert, VolcEngineExternAlert.Resource resource) {
+        private Map<String, String> buildLabels(VolcEngineExternAlert alert, VolcEngineExternAlert.Resource resource, String severity) {
             Map<String, String> labels = new HashMap<>();
+            labels.put("severity", severity);
             labels.put("__source__", "volcengine");
             labels.put("alert_type", alert.getType());
             labels.put("resource_name", resource.getName());
             labels.put("resource_id", resource.getId());
             labels.put("rule_name", alert.getRuleName());
             labels.put("rule_id", alert.getRuleId());
+            labels.put("account_id", alert.getAccountId());
             labels.put("region", resource.getRegion());
             return labels;
         }
 
-        private Map<String, String> buildAnnotations(VolcEngineExternAlert alert, VolcEngineExternAlert.Resource resource) {
+        private Map<String, String> buildAnnotations(VolcEngineExternAlert.Resource resource) {
             Map<String, String> annotations = new HashMap<>();
+            if (resource instanceof VolcEngineExternAlert.NoDataResource noDataResource) {
+                for (VolcEngineExternAlert.Metric noDataMetric : noDataResource.getNoDataMetrics()) {
+                    annotations.put(noDataMetric.getName(), "N/A");
+                }
+            }
             for (VolcEngineExternAlert.Metric metric : resource.getMetrics()) {
                 annotations.put(metric.getName(), metric.getCurrentValue() + metric.getUnit());
             }
@@ -159,53 +172,19 @@ public class VolcEngineExternAlertService implements ExternAlertService {
         }
 
         /**
-         * Generate event alert content
+         * convert volcengine alert status to heartbeat alert status
+         *
+         * @param alert volcengine alert
+         * @return status
          */
-        private String generateEventContent(TencentCloudExternAlert alert) {
-            TencentCloudExternAlert.Conditions conditions = alert.getAlarmPolicyInfo().getConditions();
-            Map<String, String> params = new HashMap<>();
-            params.put("productShowName", conditions.getProductShowName());
-            params.put("eventShowName", conditions.getEventShowName());
-            return replacePlaceholders(eventTemplate, params);
-        }
-
-        /**
-         * Replace placeholders in template with actual values
-         */
-        private String replacePlaceholders(String template, Map<String, String> params) {
-            String result = template;
-            for (Map.Entry<String, String> entry : params.entrySet()) {
-                result = result.replace("{" + entry.getKey() + "}", Objects.toString(entry.getValue(), "NULL"));
-            }
-            return result;
-        }
-
         private String convertStatus(VolcEngineExternAlert alert) {
             String type = alert.getType();
             if (Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_METRIC)
                     || Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_EVENT)
                     || Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_METRICS_NODATA)) {
                 return CommonConstants.ALERT_STATUS_FIRING;
-            } else if (Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_METRIC_RECOVERED)
-                    || Objects.equals(type, VolcEngineExternAlert.ALERT_TYPE_NO_DATA_RECOVERED)) {
-                return CommonConstants.ALERT_STATUS_RESOLVED;
             }
-        }
-
-        private Long parseTime(String timeStr) {
-            try {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                return sdf.parse(timeStr).getTime();
-            } catch (ParseException e) {
-                log.error("Failed to parse time: {}", timeStr);
-                throw new IllegalArgumentException("Failed to parse time: " + timeStr, e);
-            }
-        }
-
-        private void putIfNotNull(Map<String, String> map, String key, String value) {
-            if (StringUtils.isNotEmpty(value)) {
-                map.put(key, value);
-            }
+            return CommonConstants.ALERT_STATUS_RESOLVED;
         }
     }
 }

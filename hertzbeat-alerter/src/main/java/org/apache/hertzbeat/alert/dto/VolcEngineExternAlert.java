@@ -74,6 +74,9 @@ public class VolcEngineExternAlert {
     @JsonProperty("NoDataRecoveredResources")
     private List<NoDataRecoveredResource> noDataRecoveredResources;
 
+    /**
+     * alert resource entity class
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -104,6 +107,9 @@ public class VolcEngineExternAlert {
         private List<Dimension> dimensions;
     }
 
+    /**
+     * alert no data resource entity class
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -113,6 +119,9 @@ public class VolcEngineExternAlert {
         private List<Metric> noDataMetrics;
     }
 
+    /**
+     * alert no data recovered resource entity class
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -122,6 +131,9 @@ public class VolcEngineExternAlert {
         private List<DroppedMetric> droppedMetrics;
     }
 
+    /**
+     * alert metric entity class
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -145,6 +157,9 @@ public class VolcEngineExternAlert {
         private Boolean warning;
     }
 
+    /**
+     * alert dropped metric entity class
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -154,6 +169,9 @@ public class VolcEngineExternAlert {
         private String reason;
     }
 
+    /**
+     * resource dimension entity class
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -162,7 +180,7 @@ public class VolcEngineExternAlert {
         private String name;
 
         @JsonProperty("NameCN")
-        private String nameCN;
+        private String nameCn;
 
         @JsonProperty("Value")
         private String value;
