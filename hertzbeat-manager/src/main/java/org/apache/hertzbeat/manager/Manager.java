@@ -36,10 +36,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableJpaAuditing
-@EnableJpaRepositories(basePackages = {"org.apache.hertzbeat"})
-@EntityScan(basePackages = {"org.apache.hertzbeat"})
-@ComponentScan(basePackages = {"org.apache.hertzbeat"})
-@ConfigurationPropertiesScan(basePackages = {"org.apache.hertzbeat"})
+@EnableJpaRepositories(basePackages = { "org.apache.hertzbeat" })
+@EntityScan(basePackages = { "org.apache.hertzbeat" })
+@ComponentScan(basePackages = { "org.apache.hertzbeat" })
+@ConfigurationPropertiesScan(basePackages = { "org.apache.hertzbeat" })
 @ImportRuntimeHints(HertzbeatRuntimeHintsRegistrar.class)
 @EnableAsync
 @EnableScheduling

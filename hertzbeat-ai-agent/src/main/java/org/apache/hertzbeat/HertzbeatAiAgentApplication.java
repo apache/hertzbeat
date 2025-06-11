@@ -1,25 +1,18 @@
 package org.apache.hertzbeat;
 
+import org.apache.hertzbeat.ai.agent.tools.MonitorService;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@SpringBootApplication
+@Configuration
 public class HertzbeatAiAgentApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(HertzbeatAiAgentApplication.class, args);
-	}
-
+	@Autowired
+	private MonitorService service;
 	@Bean
-	public ToolCallbackProvider mathTools() {
-		return MethodToolCallbackProvider.builder().toolObjects(new MathTools()).build();
-	}
-
-	@Bean
-	public ToolCallbackProvider dateTimeTools() {
-		return MethodToolCallbackProvider.builder().toolObjects(new DateTimeTools()).build();
+	public ToolCallbackProvider weatherTools() {
+		return MethodToolCallbackProvider.builder().toolObjects(service).build();
 	}
 }
