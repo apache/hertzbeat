@@ -21,11 +21,13 @@ app: flink_on_yarn
 name:
   zh-CN: Apache Flink On Yarn
   en-US: Apache Flink On Yarn
+  ja-JP: Apache Flink On Yarn
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Flink 流引擎 Yarn 模式的通用指标进行测量监控。<br>您可以点击 “<i>新建 Flink On Yarn</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Flink Stream through general performance metric. You could click the "<i>New Flink Stream</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 Flink 流引擎 Yarn 模式的通用指標進行測量監控。<br>您可以點擊 “<i>新建 Flink On Yarn</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: HertzBeat は Flink 「Yarn モード」の一般的なメトリック監視します。<br>「<i>新規 Flink</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/flink_on_yarn
   en-US: https://hertzbeat.apache.org/docs/help/flink_on_yarn
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: Yarn端口
       en-US: Yarn Port
+      ja-JP: Yarnポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 应用ID
       en-US: Application ID
+      ja-JP: 応用ID
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -71,6 +76,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL利用
     # type-param field type(boolean mapping the html switch tag)
     type: boolean
     # required-true or false
@@ -80,6 +86,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(most mapping the html input type)
     type: radio
     required: false
@@ -94,6 +101,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -102,6 +110,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
     hide: true
@@ -111,6 +120,7 @@ metrics:
     i18n:
       zh-CN: JobManager Metrics
       en-US: JobManager Metrics
+      ja-JP: JobManagerメトリック
     priority: 0
     fields:
       - field: id
@@ -119,11 +129,13 @@ metrics:
         i18n:
           zh-CN: 监控项
           en-US: key
+          ja-JP: キー
       - field: value
         type: 0
         i18n:
           zh-CN: 值
           en-US: value
+          ja-JP: 値
     protocol: http
     http:
       host: ^_^host^_^
@@ -143,6 +155,7 @@ metrics:
     i18n:
       zh-CN: JobManager Config
       en-US: JobManager Config
+      ja-JP: JobManager設定
     priority: 1
     fields:
       - field: key
@@ -150,11 +163,13 @@ metrics:
         i18n:
           zh-CN: 监控项
           en-US: key
+          ja-JP: キー
       - field: value
         type: 1
         i18n:
           zh-CN: 值
           en-US: value
+          ja-JP: 値
     protocol: http
     http:
       host: ^_^host^_^
@@ -175,6 +190,7 @@ metrics:
     i18n:
       zh-CN: TaskManager
       en-US: TaskManager
+      ja-JP: TaskManager
     priority: 2
     fields:
       - field: id
@@ -183,168 +199,198 @@ metrics:
         i18n:
           zh-CN: Container ID
           en-US: Container ID
+          ja-JP: コンテナID
       - field: path
         type: 1
         i18n:
           zh-CN: Path
           en-US: Path
+          ja-JP: パス
       - field: dataPort
         type: 1
         i18n:
           zh-CN: Data Port
           en-US: Data Port
+          ja-JP: データポート
       - field: jmxPort
         type: 1
         i18n:
           zh-CN: JMX Port
           en-US: JMX Port
+          ja-JP: JMXポート
       - field: timeSinceLastHeartbeat
         type: 0
         i18n:
           zh-CN: Last Heartbeat
           en-US: Last Heartbeat
+          ja-JP: 最後のハートビート
       - field: slotsNumber
         type: 0
         i18n:
           zh-CN: All Slots
           en-US: All Slots
+          ja-JP: スロット
       - field: freeSlots
         type: 0
         i18n:
           zh-CN: Free Slots
           en-US: Free Slots
+          ja-JP: 利用可能なスロット
       - field: totalResourceCpuCores
         type: 0
         i18n:
           zh-CN: totalResourceCpuCores
           en-US: totalResourceCpuCores
+          ja-JP: totalResourceCpuCores
       - field: totalResourceTaskHeapMemory
         type: 0
         i18n:
           zh-CN: totalResourceTaskHeapMemory
           en-US: totalResourceTaskHeapMemory
+          ja-JP: totalResourceTaskHeapMemory
         unit: MB
       - field: totalResourceManagedMemory
         type: 0
         i18n:
           zh-CN: totalResourceManagedMemory
           en-US: totalResourceManagedMemory
+          ja-JP: totalResourceManagedMemory
         unit: MB
       - field: totalResourceNetworkMemory
         type: 0
         i18n:
           zh-CN: totalResourceNetworkMemory
           en-US: totalResourceNetworkMemory
+          ja-JP: totalResourceNetworkMemory
         unit: MB
       - field: freeResourceCpuCores
         type: 0
         i18n:
           zh-CN: freeResourceCpuCores
           en-US: freeResourceCpuCores
+          ja-JP: freeResourceCpuCores
       - field: freeResourceTaskHeapMemory
         type: 0
         i18n:
           zh-CN: freeResourceTaskHeapMemory
           en-US: freeResourceTaskHeapMemory
+          ja-JP: freeResourceTaskHeapMemory
         unit: MB
       - field: freeResourceTaskOffHeapMemory
         type: 0
         i18n:
           zh-CN: freeResourceTaskOffHeapMemory
           en-US: freeResourceTaskOffHeapMemory
+          ja-JP: freeResourceTaskOffHeapMemory
         unit: MB
       - field: freeResourceManagedMemory
         type: 0
         i18n:
           zh-CN: freeResourceManagedMemory
           en-US: freeResourceManagedMemory
+          ja-JP: freeResourceManagedMemory
         unit: MB
       - field: freeResourceNetworkMemory
         type: 0
         i18n:
           zh-CN: freeResourceNetworkMemory
           en-US: freeResourceNetworkMemory
+          ja-JP: freeResourceNetworkMemory
         unit: MB
       - field: hardwareCpuCores
         type: 0
         i18n:
           zh-CN: CPU Cores
           en-US: CPU Cores
+          ja-JP: Cpuコア数
       - field: hardwarePhysicalMemory
         type: 0
         i18n:
           zh-CN: Physical MEM
           en-US: Physical MEM
+          ja-JP: 物理メモリ
         unit: GB
       - field: hardwareFreeMemory
         type: 0
         i18n:
           zh-CN: JVM Heap Size
           en-US: JVM Heap Size
+          ja-JP: Java仮想マシンのヒープサイズ
         unit: MB
       - field: hardwareManagedMemory
         type: 0
         i18n:
           zh-CN: Flink Managed MEM
           en-US: Flink Managed MEM
+          ja-JP: Flink管理メモリ
         unit: MB
       - field: memoryConfigurationFrameworkHeap
         type: 0
         i18n:
           zh-CN: Framework Heap
           en-US: Framework Heap
+          ja-JP: フレームワークのヒープ
         unit: MB
       - field: memoryConfigurationTaskHeap
         type: 0
         i18n:
           zh-CN: Task Heap
           en-US: Task Heap
+          ja-JP: タスクヒープ
         unit: MB
       - field: memoryConfigurationFrameworkOffHeap
         type: 0
         i18n:
           zh-CN: Framework Off-Heap
           en-US: Framework Off-Heap
+          ja-JP: フレームワークのオフヒープ
         unit: MB
       - field: memoryConfigurationTaskOffHeap
         type: 0
         i18n:
           zh-CN: Task Off-Heap
           en-US: Task Off-Heap
+          ja-JP: タスクオフヒープ
         unit: MB
       - field: memoryConfigurationNetworkMemory
         type: 0
         i18n:
           zh-CN: Network
           en-US: Network
+          ja-JP: ネットワーク
         unit: MB
       - field: memoryConfigurationManagedMemory
         type: 0
         i18n:
           zh-CN: Managed Memory
           en-US: Managed Memory
+          ja-JP: 管理メモリ
         unit: MB
       - field: memoryConfigurationJvmMetaspace
         type: 0
         i18n:
           zh-CN: JVM Metaspace
           en-US: JVM Metaspace
+          ja-JP: Java仮想マシンのメタスペース
         unit: MB
       - field: memoryConfigurationJvmOverhead
         type: 0
         i18n:
           zh-CN: JVM Overhead
           en-US: JVM Overhead
+          ja-JP: Java仮想マシンのオーバーヘッド
       - field: memoryConfigurationTotalFlinkMemory
         type: 0
         i18n:
           zh-CN: memoryConfigurationTotalFlinkMemory
           en-US: memoryConfigurationTotalFlinkMemory
+          ja-JP: memoryConfigurationTotalFlinkMemory
       - field: memoryConfigurationTotalProcessMemory
         type: 0
         i18n:
           zh-CN: memoryConfigurationTotalProcessMemory
           en-US: memoryConfigurationTotalProcessMemory
+          ja-JP: memoryConfigurationTotalProcessMemory
     aliasFields:
       - $.id
       - $.path
@@ -439,12 +485,14 @@ metrics:
     i18n:
       zh-CN: TaskManager Metrics
       en-US: TaskManager Metrics
+      ja-JP: TaskManagerメトリック
     priority: 3
     fields:
       - field: container_id
         i18n:
           zh-CN: Container ID
           en-US: Container ID
+          ja-JP: コンテナID
         type: 1
         label: true
       - field: id
@@ -452,12 +500,14 @@ metrics:
         i18n:
           zh-CN: 监控项
           en-US: key
+          ja-JP: キー
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 值
           en-US: value
+          ja-JP: 値
         unit: MB
     units:
       - value=B->MB
