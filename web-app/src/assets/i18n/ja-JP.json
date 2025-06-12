@@ -102,7 +102,7 @@
   "alert.integration.source.zabbix": "Zabbix",
   "alert.integration.source.alibabacloud-sls": "AlibabaCloud-SLS",
   "alert.integration.source.huaweicloud-ces": "Huawei Cloud Eye",
-  "alert.integration.source.volcengine":"Volcengine",
+  "alert.integration.source.volcengine":"火山エンジン監視",
   "alert.integration.token.desc": "HertzBeat APIにアクセスするために生成したトークン。",
   "alert.integration.token.new": "トークンを生成するにはクリック",
   "alert.integration.token.notice": "トークンは一度だけ表示されます。トークンを安全に保管し、他人と共有しないでください。",

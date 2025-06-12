@@ -247,7 +247,7 @@
     "alert.integration.source.webhook": "PadrãoWebhook",
     "alert.integration.source.alibabacloud-sls": "AlibabaCloud-SLS",
     "alert.integration.source.huaweicloud-ces": "Huawei Cloud Eye",
-    "alert.integration.source.volcengine":"Volcengine"
+    "alert.integration.source.volcengine": "Volcengine",
     "alert.integration.token.desc": "O token gerado pode ser usado para acessar a API HertzBeat",
     "alert.integration.token.new": "Clique para gerar token",
     "alert.integration.token.notice": "Este conteúdo será exibido apenas uma vez, por favor guarde seu token adequadamente e não o divulgue a terceiros.",
