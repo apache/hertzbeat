@@ -1,15 +1,15 @@
-package org.apache.hertzbeat.ai.agent.tools;
+package org.apache.hertzbeat.ai.agent.tools.impl;
 
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Service;
-import java.util.List;
+import org.apache.hertzbeat.ai.agent.tools.MonitorTools;
 import java.util.Map;
 
 /**
- * Weather Service
+ * Implementation of Monitoring Tools functionality
  */
 @Service
-public class MonitorService {
+public class MonitorToolsImpl implements MonitorTools {
 
     @Tool(name = "get_active_monitors", description = "Get all the active monitors")
     public Map<String, String> getMonitors() {
@@ -23,4 +23,5 @@ public class MonitorService {
     public String addMonitor(String name) {
         return "Monitor added: " + name;
     }
+
 }
