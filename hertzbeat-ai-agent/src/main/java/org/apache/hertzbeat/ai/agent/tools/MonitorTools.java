@@ -6,15 +6,19 @@ import java.util.Map;
  * Interface for Monitoring Tools
  */
 public interface MonitorTools {
-    //    get the list of all active monitors
-    Map<String, String> getMonitors();
-    
 
     /**
-     * Adds a new monitor with the given name.
+     * Retrieves all the active monitors.
      *
-     * @param name the name of the monitor to add
-     * @return a confirmation message for the added monitor
+     * @return a map containing monitor names as keys and their respective IDs as values.
+     */
+    Map<String, String> getMonitors();
+
+    /**
+     * Adds a new monitor.
+     *
+     * @param name the name of the monitor to be added.
+     * @return a confirmation message indicating the addition of the monitor.
      */
     String addMonitor(String name);
 }

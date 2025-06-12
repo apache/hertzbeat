@@ -11,6 +11,7 @@ import java.util.Map;
 @Service
 public class MonitorToolsImpl implements MonitorTools {
 
+    @Override
     @Tool(name = "get_active_monitors", description = "Get all the active monitors")
     public Map<String, String> getMonitors() {
         return Map.of(
@@ -19,9 +20,9 @@ public class MonitorToolsImpl implements MonitorTools {
                 "AWS", "3");
     }
 
+    @Override
     @Tool(name = "add_monitor", description = "Add a new monitor")
     public String addMonitor(String name) {
         return "Monitor added: " + name;
     }
-
 }

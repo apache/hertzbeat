@@ -13,11 +13,11 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AgentApplication {
-	@Autowired
-	private MonitorToolsImpl monitorTools;
+    @Autowired
+    private MonitorToolsImpl monitorTools;
 
-	@Bean
-	public ToolCallbackProvider monitorTools() {
-		return MethodToolCallbackProvider.builder().toolObjects(monitorTools).build();
-	}
+    @Bean
+    public ToolCallbackProvider monitorTools() {
+        return MethodToolCallbackProvider.builder().toolObjects(monitorTools).build();
+    }
 }
