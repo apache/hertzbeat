@@ -92,6 +92,11 @@ export class AlertIntegrationComponent implements OnInit {
       id: 'huaweicloud-ces',
       name: this.i18nSvc.fanyi('alert.integration.source.huaweicloud-ces'),
       icon: 'assets/img/integration/huaweicloud.svg'
+    },
+    {
+      id: 'volcengine',
+      name: this.i18nSvc.fanyi('alert.integration.source.volcengine'),
+      icon: 'assets/img/integration/volcengine.svg'
     }
   ];
 

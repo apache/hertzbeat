@@ -120,6 +120,9 @@ public class BulletinServiceImpl implements BulletinService {
         List<BulletinMetricsData.Data> dataList = new ArrayList<>();
         for (Long monitorId : bulletin.getMonitorIds()) {
             Monitor monitor = monitorService.getMonitor(monitorId);
+            if (null == monitor) {
+                continue;
+            }
             BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
                     .monitorId(monitorId)
                     .monitorName(monitor.getName())
