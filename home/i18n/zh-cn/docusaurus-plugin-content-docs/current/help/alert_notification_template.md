@@ -1,5 +1,5 @@
 ---
-id: alert_template
+id: alert_notification_template
 title: 通知模板
 sidebar_label: 通知模板
 keywords: [模板, 告警模板, 通知模板，消息通知, 告警 Webhook 回调通知]
@@ -11,7 +11,7 @@ keywords: [模板, 告警模板, 通知模板，消息通知, 告警 Webhook 回
 
 【消息通知】->【通知模板】->【模板配置】
 
-![模板管理](/img/docs/help/alert-template-1.png)
+![模板管理](/img/docs/help/alert-notification-template-1.png)
 
 ## 模板渲染
 

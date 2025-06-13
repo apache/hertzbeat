@@ -1,5 +1,5 @@
 ---
-id: alert_template
+id: alert_notification_template
 title: Notification Template
 sidebar_label: Notification Template
 keywords: [Template, Alert Template, Alarm Template, Notification Template, Message Notification, Alert Webhook Callback Notification]
@@ -11,7 +11,7 @@ keywords: [Template, Alert Template, Alarm Template, Notification Template, Mess
 
 【Notification】->【Notice Template】->【Template Configuration】
 
-![Template Configuration](/img/docs/help/alert-template-1-en.png)
+![Template Configuration](/img/docs/help/alert-notification-template-1-en.png)
 
 ## Template Rendering
 
