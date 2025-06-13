@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -58,4 +59,13 @@ class DateUtilTest {
         actualTimestamp = DateUtil.getTimeStampFromFormat(date, format);
         assertFalse(actualTimestamp.isPresent());
     }
+
+    @Test
+    void getZonedTimeStampFromFormat() {
+        String dataStr = "2025/06/02 22:56:15 GMT+08:00";
+        Long time = DateUtil.getZonedTimeStampFromFormat(dataStr, "yyyy/MM/dd HH:mm:ss 'GMT'XXX");
+        assertNotNull(time);
+        assertEquals(1748876175000L, time);
+    }
+
 }
