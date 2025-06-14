@@ -137,7 +137,13 @@
   <div class="monitor-list-header">
     <div class="monitor-header-actions">
       <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
-      <nz-pagination [(nzPageIndex)]="pageIndex" [nzPageSize]="pageSize" [nzTotal]="total" (nzPageIndexChange)="onPageIndexChange($event)" nzSimple></nz-pagination>
+      <nz-pagination
+        [(nzPageIndex)]="pageIndex"
+        [nzPageSize]="pageSize"
+        [nzTotal]="total"
+        (nzPageIndexChange)="onPageIndexChange($event)"
+        nzSimple
+      ></nz-pagination>
     </div>
   </div>
 
