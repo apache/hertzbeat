@@ -81,12 +81,12 @@ public class GroupAlert {
 
     @Schema(title = "Common Annotations", example = "{\"summary\": \"High CPU usage detected\", \"description\": \"CPU usage is back to normal for server1\"}")
     @Convert(converter = JsonMapAttributeConverter.class)
-    @Column(length = 4096)
+    @Column(columnDefinition = "TEXT")
     private Map<String, String> commonAnnotations;
     
     @Schema(title = "Alert Fingerprints", example = "[\"dxsdfdsf\"]")
     @Convert(converter = JsonStringListAttributeConverter.class)
-    @Column(length = 8192)
+    @Column(columnDefinition = "TEXT")
     private List<String> alertFingerprints;
 
     @Schema(title = "The creator of this record", example = "tom")
