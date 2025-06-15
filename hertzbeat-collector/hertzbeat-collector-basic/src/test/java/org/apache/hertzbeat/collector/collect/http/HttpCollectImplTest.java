@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.http;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
+import com.google.common.collect.Lists;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
@@ -71,6 +73,30 @@ class HttpCollectImplTest {
     void supportProtocol() {
         String protocol = httpCollectImpl.supportProtocol();
         assert "http".equals(protocol);
+    }
+
+    @Test
+    void parseResponseByWebsite() {
+        HttpProtocol http = HttpProtocol.builder().build();
+        http.setMethod("GET");
+        http.setHost("http://127.0.0.1");
+        http.setUrl("/");
+        http.setPort("8428");
+        http.setParseType("website");
+        http.setEnableUrlEncoding("true");
+        Metrics metrics = Metrics.builder()
+                .http(http)
+                .aliasFields(Lists.newArrayList("responseTime", "keyword", "statusCode"))
+                .build();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        httpCollectImpl.collect(builder, metrics);
+
+        assertNotNull(builder.getValuesList());
+        for (CollectRep.ValueRow row : builder.getValuesList()) {
+            assertNotNull(row.getColumns(0));
+            assertEquals(row.getColumns(1), "0");
+            assertEquals(row.getColumns(2), "200");
+        }
     }
 
     @Test

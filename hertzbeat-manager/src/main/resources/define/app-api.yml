@@ -304,6 +304,12 @@ metrics:
           zh-CN: 关键词数量
           en-US: Keyword
           ja-JP: キーワード
+      - field: statusCode
+        type: 0
+        i18n:
+          zh-CN: 状态码
+          en-US: Status Code
+          ja-JP: 状態コード
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http

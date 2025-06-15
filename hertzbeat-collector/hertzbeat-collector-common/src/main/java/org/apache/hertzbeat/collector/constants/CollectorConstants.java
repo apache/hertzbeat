@@ -47,6 +47,6 @@ public interface CollectorConstants extends NetworkConstants {
 
     String RESPONSE_TIME = "responseTime";
 
-    String STATUS_CODE = "StatusCode";
+    String STATUS_CODE = "statusCode";
 
 }

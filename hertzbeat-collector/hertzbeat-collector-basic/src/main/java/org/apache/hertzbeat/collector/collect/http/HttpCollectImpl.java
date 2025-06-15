@@ -166,7 +166,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     case DispatchConstants.PARSE_XML_PATH ->
                             parseResponseByXmlPath(resp, metrics, builder, responseTime);
                     case DispatchConstants.PARSE_WEBSITE ->
-                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime);
+                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, statusCode);
                     case DispatchConstants.PARSE_SITE_MAP ->
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_HEADER ->
@@ -237,11 +237,15 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private void parseResponseByWebsite(String resp, Metrics metrics, HttpProtocol http,
-                                        CollectRep.MetricsData.Builder builder, Long responseTime) {
+                                        CollectRep.MetricsData.Builder builder, Long responseTime, int statusCode) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : metrics.getAliasFields()) {
-            addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
+            if (CollectorConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
+                valueRowBuilder.addColumn(Integer.toString(statusCode));
+            } else {
+                addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
+            }
         }
         builder.addValueRow(valueRowBuilder.build());
     }
