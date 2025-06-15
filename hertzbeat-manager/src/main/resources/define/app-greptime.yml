@@ -14,13 +14,10 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws...
 app: greptime
 # The monitoring i18n name
-# 监控类型国际化名称
 name:
   zh-CN: GreptimeDB
   en-US: GreptimeDB
@@ -35,23 +32,18 @@ help:
 helpLink:
   zh-CN: https://hertzbeat.com/zh-cn/docs/help/greptimedb
   en-US: https://hertzbeat.com/docs/help/greptimedb
-# 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
-  # field-变量字段标识符
   - field: host
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 目标Host
       en-US: Target Host
       ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   - field: port
     name:
@@ -59,10 +51,8 @@ params:
       en-US: Port
       ja-JP: ポート
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # default value
     defaultValue: 4000
@@ -75,15 +65,12 @@ params:
     type: number
     required: false
     # hide param-true or false
-    # 是否隐藏字段 true or false
     hide: true
     defaultValue: 6000
 
 # collect metrics config list
-# 采集指标配置列表
 metrics:
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_app_version
     i18n:
       zh-CN: greptime 应用版本
@@ -108,7 +95,6 @@ metrics:
       parseType: prometheus
       
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_catalog_schema_count
     i18n:
       zh-CN: 目录 模式 数量
@@ -134,7 +120,6 @@ metrics:
       parseType: prometheus
       
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_meta_cache_container_cache_get
     i18n:
       zh-CN: 缓存容器缓存获取
@@ -165,7 +150,6 @@ metrics:
       parseType: prometheus
       
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_meta_cache_container_cache_miss
     i18n:
       zh-CN: 缓存容器缓存未命中
@@ -196,7 +180,6 @@ metrics:
       parseType: prometheus
       
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_mito_region_count
     i18n:
       zh-CN: mito 引擎区域数量
@@ -227,7 +210,6 @@ metrics:
       parseType: prometheus
       
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_mito_write_stall_total
     i18n:
       zh-CN: mito 引擎写入延迟总数
@@ -258,7 +240,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_meta_create_catalog_counter
     i18n:
       zh-CN: 创建目录计数器
@@ -282,7 +263,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_runtime_threads_alive
     i18n:
       zh-CN: 运行时线程存活
@@ -312,7 +292,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_runtime_threads_idle
     i18n:
       zh-CN: 运行时线程空闲
@@ -342,7 +321,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_servers_http_requests_total
     i18n:
       zh-CN: greptime 服务 HTTP 请求总数
@@ -384,7 +362,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_servers_mysql_connection_count
     i18n:
       zh-CN: greptime 服务 MySQL 连接数
@@ -408,7 +385,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: greptime_servers_postgres_connection_count
     i18n:
       zh-CN: greptime 服务 Postgres 连接数
@@ -432,7 +408,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: process_cpu_seconds_total
     i18n:
       zh-CN: 进程 CPU 时间总数
@@ -456,7 +431,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: process_max_fds
     i18n:
       zh-CN: 进程最大文件描述符
@@ -480,7 +454,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: process_open_fds
     i18n:
       zh-CN: 进程打开文件描述符
@@ -504,7 +477,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: process_resident_memory_bytes
     i18n:
       zh-CN: 进程常驻内存字节
@@ -528,7 +500,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: process_start_time_seconds
     i18n:
       zh-CN: 进程启动时间（秒）
@@ -552,7 +523,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: process_threads
     i18n:
       zh-CN: 进程线程
@@ -576,7 +546,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: process_virtual_memory_bytes
     i18n:
       zh-CN: 进程虚拟内存字节
@@ -600,7 +569,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: raft_engine_log_entry_count
     i18n:
       zh-CN: raft 引擎日志条目数量
@@ -630,7 +598,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: raft_engine_log_file_count
     i18n:
       zh-CN: raft 引擎日志文件数量
@@ -660,7 +627,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: raft_engine_memory_usage
     i18n:
       zh-CN: raft 引擎内存占用
@@ -684,7 +650,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: raft_engine_recycled_file_count
     i18n:
       zh-CN: raft 引擎回收文件数量
@@ -714,7 +679,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: sys_jemalloc_allocated
     i18n:
       zh-CN: jemalloc 分配
@@ -738,7 +702,6 @@ metrics:
       parseType: prometheus
 
   # metrics - cluster_node_status
-  # 监控指标 - cluster_node_status
   - name: sys_jemalloc_resident
     i18n:
       zh-CN: jemalloc 常驻
