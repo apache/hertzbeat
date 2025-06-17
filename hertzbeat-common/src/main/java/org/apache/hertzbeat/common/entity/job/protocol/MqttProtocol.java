@@ -32,50 +32,29 @@ import org.apache.commons.lang3.StringUtils;
 @NoArgsConstructor
 public class MqttProtocol implements CommonRequestProtocol, Protocol {
 
-    /**
-     * ip address or domain name of the peer host
-     */
-    private String host;
-
-    /**
-     * peer host port
-     */
-    private String port;
-
-    /**
-     * username
-     */
-    private String username;
-
-    /**
-     * password
-     */
-    private String password;
-
-    /**
-     * time out period
-     */
-    private String timeout;
-
-    /**
-     * client id
-     */
     private String clientId;
-
-    /**
-     * message used to test whether the mqtt connection can be pushed normally
-     */
-    private String testMessage;
-
-    /**
-     * protocol version of mqtt
-     */
-    private String protocolVersion;
-
-    /**
-     * monitor topic
-     */
+    private String username;
+    private String password;
+    private String host;
+    private String port;
+    private String protocol;
+    private String timeout;
+    private String keepalive;
     private String topic;
+    private String testMessage;
+    private String tlsVersion;
+    private String insecureSkipVerify;
+    private String caCert;
+    private String enableMutualAuth;
+    private String clientCert;
+    private String clientKey;
+
+
+
+
+
+
+
 
     /**
      * Determine whether authentication is required
@@ -85,11 +64,4 @@ public class MqttProtocol implements CommonRequestProtocol, Protocol {
         return StringUtils.isNotBlank(this.username) && StringUtils.isNotBlank(this.password);
     }
 
-    /**
-     * Determine whether you need to test whether messages can be pushed normally
-     * @return turn if it has test message
-     */
-    public boolean testPublish(){
-        return StringUtils.isNotBlank(this.testMessage);
-    }
 }
