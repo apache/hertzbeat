@@ -22,7 +22,6 @@ import java.util.Collection;
 public class MqttSSLFactory {
 
 
-    // 修改点1: 新增参数 insecureSkipVerify
     public static SSLSocketFactory getMSLSocketFactory(MqttProtocol mqttProtocol, boolean insecureSkipVerify) {
         try {
             Security.addProvider(new BouncyCastleProvider());
@@ -30,7 +29,7 @@ public class MqttSSLFactory {
             KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
             ks.load(null, null);
 
-            // 加载客户端证书链
+
             Certificate[] chain = null;
             if (mqttProtocol.getClientCert() != null && !mqttProtocol.getClientCert().isEmpty()) {
                 String formatClientCert = CertificateFormatter.formatCertificateChain(mqttProtocol.getClientCert());
@@ -41,7 +40,7 @@ public class MqttSSLFactory {
                 }
             }
 
-            // 加载私钥
+
             PrivateKey privateKey;
             if (mqttProtocol.getClientKey() != null && !mqttProtocol.getClientKey().isEmpty()) {
                 String formatClientKey = CertificateFormatter.formatPrivateKey(mqttProtocol.getClientKey());
@@ -54,14 +53,13 @@ public class MqttSSLFactory {
                     } else if (object instanceof PrivateKeyInfo) {
                         privateKey = converter.getPrivateKey((PrivateKeyInfo) object);
                     } else {
-                        throw new IllegalArgumentException("不支持的私钥格式");
+                        throw new IllegalArgumentException("Unsupported private key type");
                     }
 
                     ks.setKeyEntry("private-key", privateKey, "".toCharArray(), chain);
                 }
             }
 
-            // 关键修改: 根据insecureSkipVerify决定TrustManager
             TrustManager[] trustManagers;
             if (insecureSkipVerify) {
                 trustManagers = createInsecureTrustManager();
@@ -73,31 +71,30 @@ public class MqttSSLFactory {
                 trustManagers = tmf.getTrustManagers();
             }
 
-            // 初始化KeyManager
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             kmf.init(ks, "".toCharArray());
 
-            // 创建SSLContext
+
             SSLContext context = SSLContext.getInstance(mqttProtocol.getTlsVersion());
             context.init(kmf.getKeyManagers(), trustManagers, null);
 
             return context.getSocketFactory();
         } catch (Exception e) {
-            throw new RuntimeException("SSL初始化失败: " + e.getMessage(), e);
+            throw new RuntimeException("Fails to SSL initialize: " + e.getMessage(), e);
         }
     }
 
-    // 修改点2: 新增参数 insecureSkipVerify
+
     public static SSLSocketFactory getSSLSocketFactory(MqttProtocol mqttProtocol, boolean insecureSkipVerify) {
         try {
             Security.addProvider(new BouncyCastleProvider());
 
-            // 关键修改: 根据insecureSkipVerify决定TrustManager
+
             TrustManager[] trustManagers;
             if (insecureSkipVerify) {
                 trustManagers = createInsecureTrustManager();
             } else {
-                // 修正点: 使用正确的CA证书参数
+
                 String formatCaCert = CertificateFormatter.formatCertificateChain(mqttProtocol.getCaCert());
                 KeyStore trustStore = createMergedTrustStore(formatCaCert);
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -105,17 +102,15 @@ public class MqttSSLFactory {
                 trustManagers = tmf.getTrustManagers();
             }
 
-            // 创建SSLContext
             SSLContext sslContext = SSLContext.getInstance(mqttProtocol.getTlsVersion());
             sslContext.init(null, trustManagers, null);
 
             return sslContext.getSocketFactory();
         } catch (Exception e) {
-            throw new RuntimeException("SSL初始化失败: " + e.getMessage(), e);
+            throw new RuntimeException("Fails to SSL initialize: " + e.getMessage(), e);
         }
     }
 
-    // 新增方法: 创建信任所有证书的TrustManager
     private static TrustManager[] createInsecureTrustManager() {
         return new TrustManager[] {
                 new X509TrustManager() {
@@ -126,12 +121,11 @@ public class MqttSSLFactory {
         };
     }
 
-    // 创建信任库方法保持原样
     private static KeyStore createMergedTrustStore(String caCertPem) throws Exception {
         KeyStore mergedKs = KeyStore.getInstance(KeyStore.getDefaultType());
         mergedKs.load(null, null);
 
-        // 添加系统CA证书
+
         TrustManagerFactory systemTmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         systemTmf.init((KeyStore) null);
         X509TrustManager systemTm = (X509TrustManager) systemTmf.getTrustManagers()[0];
@@ -141,7 +135,7 @@ public class MqttSSLFactory {
             mergedKs.setCertificateEntry("system-ca-" + systemIndex++, cert);
         }
 
-        // 添加用户CA证书
+
         if (caCertPem != null && !caCertPem.isEmpty()) {
             try (InputStream caIn = new ByteArrayInputStream(caCertPem.getBytes())) {
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");

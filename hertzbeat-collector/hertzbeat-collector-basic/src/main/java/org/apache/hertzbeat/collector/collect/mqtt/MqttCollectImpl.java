@@ -72,14 +72,11 @@ public class MqttCollectImpl extends AbstractCollect {
     private MqttAsyncClient buildMqttClient(MqttProtocol protocol) throws Exception {
         String clientId = protocol.getClientId();
 
-        // 构造MQTT服务URI
-
         String serverUri = String.format("%s://%s:%s",
                 StringUtils.equals(protocol.getProtocol(), "MQTT") ? "tcp" : "ssl",
                 protocol.getHost(),
                 protocol.getPort());
 
-        // 使用内存持久化（无需磁盘存储）
         MqttClientPersistence persistence = new MemoryPersistence();
 
         return new MqttAsyncClient(serverUri, clientId, persistence);
@@ -88,18 +85,15 @@ public class MqttCollectImpl extends AbstractCollect {
     private long connectClient(MqttAsyncClient client, MqttProtocol protocol) throws Exception {
         MqttConnectOptions connOpts = new MqttConnectOptions();
 
-        // 设置认证信息
         if (protocol.hasAuth()) {
             connOpts.setUserName(protocol.getUsername());
             connOpts.setPassword(protocol.getPassword().toCharArray());
         }
 
-        // 设置心跳保活（秒）
         connOpts.setKeepAliveInterval(Integer.parseInt(protocol.getKeepalive()));
         connOpts.setConnectionTimeout(Integer.parseInt(protocol.getTimeout())/1000);
         connOpts.setCleanSession(true);
         connOpts.setAutomaticReconnect(false);
-        //  配置SSL/TLS
         if ("mqtts".equalsIgnoreCase(protocol.getProtocol())) {
             boolean insecureSkipVerify = Boolean.parseBoolean(protocol.getInsecureSkipVerify());
             if (insecureSkipVerify){
@@ -128,100 +122,97 @@ public class MqttCollectImpl extends AbstractCollect {
      */
     private void testSubscribeAndPublish(MqttAsyncClient client, MqttProtocol protocol, Map<Object, String> data){
 
-        // 1 测试订阅功能
+        // 1 test subscribe
         if (StringUtils.isNotBlank(protocol.getTopic())) {
             String subscribe = testSubscribe(client, protocol.getTopic());
             if (StringUtils.isBlank(subscribe)){
-                data.put("canSubscribe", "订阅成功");
+                data.put("canSubscribe", "Subscription successful");
             }else {
-                data.put("canSubscribe", String.format("订阅失败：{}", subscribe));
+                data.put("canSubscribe", String.format("Subscription failed: %s", subscribe));
             }
 
         } else {
-            data.put("canSubscribe", "没有Topic，不测试订阅");
+            data.put("canSubscribe", "No topic, subscription test skipped");
         }
 
 
-        // 2 测试发布功能
+        // 2 test publish
         if (StringUtils.isNotBlank(protocol.getTestMessage())) {
             String publish = testPublish(client, protocol.getTopic(), protocol.getTestMessage());
             if (StringUtils.isBlank(publish)){
-                data.put("canPublish", "发布成功");
+                data.put("canPublish", "Message published successfully");
 
-                // 3 获取数据
+                // 3 test receive message
                 String receivedData = getReceivedData(client, protocol.getTopic());
                 data.put("canReceive", receivedData);
             }else {
-                data.put("canPublish", String.format("发布失败：{}", publish));
-                data.put("canReceive", "发布失败，不测试接收数据");
+                data.put("canPublish", String.format("Message publishing failed: %s", publish));
+                data.put("canReceive", "Message reception skipped due to failed publish");
             }
         } else {
-            data.put("canPublish", "没有测试数据，不测试发布");
-            data.put("canReceive", "没有测试数据，不测试接收数据");
+            data.put("canPublish", "No test message, publish test skipped");
+            data.put("canReceive", "No test message, receive test skipped");
         }
 
 
 
-        // 4测试取消订阅
+        // 4 test unsubscribe
         if (StringUtils.isNotBlank(protocol.getTopic())) {
             String subscribe = testUnSubscribe(client, protocol.getTopic());
             if (StringUtils.isBlank(subscribe)){
-                data.put("canUnSubscribe", "取消成功");
+                data.put("canUnSubscribe", "Unsubscription successful");
             }else {
-                data.put("canUnSubscribe", String.format("取消失败：{}", subscribe));
+                data.put("canUnSubscribe", String.format("Unsubscription failed: %s", subscribe));
             }
         } else {
-            data.put("canUnSubscribe", "没有Topic，不测试取消订阅");
+            data.put("canUnSubscribe", "No topic, unsubscription test skipped");
         }
     }
 
     private String getReceivedData(MqttAsyncClient client, String topic) {
-        final CountDownLatch latch = new CountDownLatch(1); // 同步锁（计数1）
-        final StringBuilder messageHolder = new StringBuilder(); // 存储接收的消息
+        final CountDownLatch latch = new CountDownLatch(1);
+        final StringBuilder messageHolder = new StringBuilder();
 
-        // 设置临时消息回调
+
         client.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
-                latch.countDown(); // 连接丢失时释放锁
+                latch.countDown();
             }
 
             @Override
             public void messageArrived(String arrivedTopic, MqttMessage message) {
-                // 仅处理目标主题的消息
+
                 if (topic.equals(arrivedTopic)) {
                     messageHolder.append(new String(message.getPayload()));
-                    latch.countDown(); // 成功接收后释放锁
+                    latch.countDown();
                 }
             }
 
             @Override
             public void deliveryComplete(IMqttDeliveryToken token) {
-                // 发布完成，不处理
             }
         });
 
         try {
-            // 等待消息（最多5秒）
             boolean received = latch.await(5, TimeUnit.SECONDS);
             if (messageHolder.length() > 0) {
-                return messageHolder.toString(); // 返回消息内容
+                return messageHolder.toString();
             } else if (!received) {
-                return "等待接收消息超时5s"; // 超时提示
+                return "Message reception timed out after 5 seconds";
             } else {
-                return "未收到有效消息"; // 无消息提示
+                return "No valid message received";
             }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // 恢复中断状态
+            Thread.currentThread().interrupt();
             return e.getMessage();
         } finally {
-            client.setCallback(null); // 恢复原始回调
+            client.setCallback(null);
         }
     }
 
     private String testSubscribe(MqttAsyncClient client, String topic) {
         try {
-            // 订阅主题
             IMqttToken subToken = client.subscribe(topic, 1);
             subToken.waitForCompletion(5000);
             return "";
@@ -249,7 +240,6 @@ public class MqttCollectImpl extends AbstractCollect {
 
     private String testUnSubscribe(MqttAsyncClient client, String topic){
         try {
-            // 订阅主题
             IMqttToken unsubToken = client.unsubscribe(topic);
             unsubToken.waitForCompletion(5000);
             return "";
@@ -260,7 +250,9 @@ public class MqttCollectImpl extends AbstractCollect {
     }
 
 
-
+    /**
+     * Convert collected data to MetricsData
+     */
     private void convertToMetricsData(Builder builder, Metrics metrics, long responseTime, Map<Object, String> data) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String column : metrics.getAliasFields()) {

@@ -32,29 +32,74 @@ import org.apache.commons.lang3.StringUtils;
 @NoArgsConstructor
 public class MqttProtocol implements CommonRequestProtocol, Protocol {
 
+    /**
+     * mqtt client id
+     */
     private String clientId;
+    /**
+     * mqtt username
+     */
     private String username;
+    /**
+     * mqtt password
+     */
     private String password;
+    /**
+     * mqtt host
+     */
     private String host;
+    /**
+     * mqtt port
+     */
     private String port;
+    /**
+     * mqtt protocol version
+     * MQTT,MQTTS
+     */
     private String protocol;
+    /**
+     * mqtt connect timeout
+     * the maximum time to wait for a connection to be established
+     */
     private String timeout;
+    /**
+     * mqtt keepalive
+     * between ping requests to the broker to keep the connection alive
+     */
     private String keepalive;
+    /**
+     * mqtt topic name
+     */
     private String topic;
+    /**
+     * mqtt publish message
+     */
     private String testMessage;
+    /**
+     * mqtt tls version
+     * TLSv1.2, TLSv1.3
+     */
     private String tlsVersion;
+    /**
+     * mqtt tls insecure skip verify server certificate
+     */
     private String insecureSkipVerify;
+    /**
+     * mqtt tls ca cert
+     */
     private String caCert;
+    /**
+     * mqtt tls enable mutual auth
+     */
     private String enableMutualAuth;
+    /**
+     * mqtt tls client cert
+     */
     private String clientCert;
+    /**
+     * mqtt tls client key
+     */
     private String clientKey;
-
-
-
-
-
-
-
 
     /**
      * Determine whether authentication is required

@@ -139,18 +139,12 @@
             <version>${nacos-client.version}</version>
         </dependency>
         <!-- mqtt -->
-        <!--        <dependency>-->
-        <!--            <groupId>com.hivemq</groupId>-->
-        <!--            <artifactId>hivemq-mqtt-client</artifactId>-->
-        <!--            <version>${mqtt.version}</version>-->
-        <!--        </dependency>-->
-        <!--        使用 paho mqtt client sdk-->
         <dependency>
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
             <version>${mqtt.version}</version>
         </dependency>
-        <!--        证书 用来加密解密-->
+        <!--Bouncy Castle-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15on</artifactId>
