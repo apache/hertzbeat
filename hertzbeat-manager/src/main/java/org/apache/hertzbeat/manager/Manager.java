@@ -19,6 +19,8 @@ package org.apache.hertzbeat.manager;
 
 import javax.annotation.PostConstruct;
 import org.apache.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -48,8 +50,14 @@ public class Manager {
         SpringApplication.run(Manager.class, args);
     }
 
-    @PostConstruct
-    public void init() {
-        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
-    }
+//    @Autowired
+//    @Qualifier("monitorTools")
+//    private ToolCallbackProvider toolCallbackProvider;
+//
+//    @PostConstruct
+//    public void init() {
+//        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
+//        ToolCallback[] toolCallbacks = toolCallbackProvider.getToolCallbacks();
+//        System.out.println("Tool callbacks: " + toolCallbacks[1].getToolDefinition());
+//    }
 }

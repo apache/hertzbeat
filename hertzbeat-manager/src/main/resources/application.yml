@@ -31,12 +31,17 @@ spring:
         prompt-change-notification: true
         sse-endpoint: /api/sse
         sse-message-endpoint: /api/mcp/message
-        type: sync
+        type: async
         capabilities:
           tool: true
           resource: true
           prompt: true
           completion: true
+    openai:
+      api-key: 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
+      chat:
+        options:
+          model: gpt-4.1-nano-2025-04-14
 
   mvc:
     static-path-pattern: /**
@@ -56,6 +61,7 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+
 
 management:
   health:
