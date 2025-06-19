@@ -250,6 +250,7 @@ keywords: [开源监控系统, 开源数据库监控, Redis数据库监控]
 | client_name               | 无       | 客户端名称，如果通过CLIENT SETNAME命令设置（Redis 4.0或更高版本可用）                                        |
 
 > 注意：要配置Redis慢查询日志设置，请使用以下Redis命令：
+>
 > - `CONFIG SET slowlog-log-slower-than 10000` - 记录执行时间超过10,000微秒（10毫秒）的命令
 > - `CONFIG SET slowlog-max-len 128` - 保留最近128条慢查询日志条目
 > - 慢查询日志指标会实时显示并自动更新。

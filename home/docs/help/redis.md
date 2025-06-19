@@ -245,6 +245,7 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 | client_name               | none     | Client name if set via the CLIENT SETNAME command (available for Redis 4.0 or higher)                                             |
 
 > Note: To configure Redis slow log settings, use the following Redis commands:
+>
 > - `CONFIG SET slowlog-log-slower-than 10000` - Log commands that take longer than 10,000 microseconds (10ms)
 > - `CONFIG SET slowlog-max-len 128` - Keep the last 128 slow log entries
 > - The slow log metrics are displayed in real-time and updated automatically.
