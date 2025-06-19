@@ -1,24 +1,26 @@
 package org.apache.hertzbeat.ai.agent.tools;
 
-import java.util.Map;
-
 /**
  * Interface for Monitoring Tools
  */
 public interface MonitorTools {
 
-    /**
-     * Retrieves all the active monitors.
-     *
-     * @return a map containing monitor names as keys and their respective IDs as values.
-     */
-    Map<String, String> getMonitors();
+    String addMonitor(String name);
 
     /**
-     * Adds a new monitor.
-     *
-     * @param name the name of the monitor to be added.
-     * @return a confirmation message indicating the addition of the monitor.
+     * Query monitor information with flexible filtering and pagination.
+     * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
+     * pagination.
+     * Returns results as plain JSON.
      */
-    String addMonitor(String name);
+    String getMonitors(
+            java.util.List<Long> ids,
+            String app,
+            Byte status,
+            String search,
+            String labels,
+            String sort,
+            String order,
+            int pageIndex,
+            int pageSize);
 }
