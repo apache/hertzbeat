@@ -232,7 +232,7 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: state
-          ja-JP: ステート
+          ja-JP: 状態
         type: 1
       - field: status
         i18n:
