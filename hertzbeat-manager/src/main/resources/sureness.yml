@@ -78,6 +78,7 @@ excludedResource:
   - /api/push/**===*
   - /api/status/page/public/**===*
   - /api/manager/sse/**===*
+  - api/chat/*===*
   # web ui resource
   - /===get
   - /api/sse===get

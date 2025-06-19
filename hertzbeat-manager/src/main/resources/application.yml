@@ -37,6 +37,9 @@ spring:
           resource: true
           prompt: true
           completion: true
+    chat:
+      client:
+        enabled: false
     openai:
       api-key: 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
       chat:
