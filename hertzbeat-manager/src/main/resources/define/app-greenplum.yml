@@ -170,7 +170,7 @@ metrics:
     i18n:
       zh-CN: 状态信息
       en-US: State Info
-      ja-JP: ステート情報
+      ja-JP: 状態情報
     priority: 1
     fields:
       - field: db_name
@@ -367,7 +367,7 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: State
-          ja-JP: ステート
+          ja-JP: 状態
       - field: num
         type: 0
         i18n:

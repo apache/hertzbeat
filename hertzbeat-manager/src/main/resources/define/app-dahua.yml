@@ -73,7 +73,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
-      ja-JP: HTTPS利用
+      ja-JP: SSL利用
     type: boolean
     required: false
     defaultValue: false

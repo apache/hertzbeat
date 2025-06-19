@@ -453,7 +453,7 @@ metrics:
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
-          ja-JP: コミットメモリー
+          ja-JP: コミットメモリ
       - field: init
         type: 0
         unit: MB
