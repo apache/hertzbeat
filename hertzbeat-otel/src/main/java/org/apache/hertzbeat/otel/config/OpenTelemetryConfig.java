@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.warehouse.store.history.greptime.GreptimeProperties;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -98,29 +98,37 @@ public class OpenTelemetryConfig {
     }
 
     /**
-     * Provides an AutoConfigurationCustomizerProvider to tailor the auto-configured OpenTelemetry SDK.
-     * This includes setting up GrepTimeDB exporters for logs and traces, and customizing the resource.
-     * Active only if 'greptime.enabled' is true.
-     *
-     * @param greptimeProperties Configuration for GrepTimeDB.
-     * @return AutoConfigurationCustomizerProvider instance.
+     * Provides default OpenTelemetry configuration that always executes.
      */
     @Bean
-    @ConditionalOnProperty(name = "warehouse.store.greptime.enabled", havingValue = "true")
-    public AutoConfigurationCustomizerProvider greptimeOtelCustomizer(GreptimeProperties greptimeProperties) {
-        log.info("GreptimeDB is enabled. Applying OpenTelemetry SDK customizations.");
-
+    public AutoConfigurationCustomizerProvider defaultOtelCustomizer() {
+        log.info("Applying default OpenTelemetry SDK customizations.");
         return providerCustomizer -> providerCustomizer
                 .addPropertiesCustomizer(sdkConfigProperties -> {
                     Map<String, String> newProperties = new HashMap<>();
                     newProperties.put("otel.metrics.exporter", "none");
-                    newProperties.put("otel.traces.exporter", "otlp");
+                    newProperties.put("otel.traces.exporter", "none");
                     newProperties.put("otel.logs.exporter", "none");
                     return newProperties;
                 })
                 .addResourceCustomizer((resource, configProperties) -> {
                     log.info("Customizing auto-configured OpenTelemetry Resource with service name: {}.", HERTZBEAT_SERVICE_NAME);
                     return resource.merge(Resource.builder().put(SERVICE_NAME, HERTZBEAT_SERVICE_NAME).build());
+                });
+    }
+
+    /**
+     * Provides GrepTimeDB-specific OpenTelemetry configuration when enabled.
+     */
+    @Bean
+    @ConditionalOnProperty(name = "warehouse.store.greptime.enabled", havingValue = "true")
+    public AutoConfigurationCustomizerProvider greptimeOtelCustomizer(GreptimeProperties greptimeProperties) {
+        log.info("GreptimeDB is enabled. Applying additional OpenTelemetry SDK customizations for GrepTimeDB.");
+        return providerCustomizer -> providerCustomizer
+                .addPropertiesCustomizer(sdkConfigProperties -> {
+                    Map<String, String> newProperties = new HashMap<>();
+                    newProperties.put("otel.traces.exporter", "otlp");
+                    return newProperties;
                 })
                 .addSpanExporterCustomizer((originalSpanExporter, configProperties) -> {
                     String traceEndpoint = greptimeProperties.httpEndpoint() + "/v1/otlp/v1/traces";

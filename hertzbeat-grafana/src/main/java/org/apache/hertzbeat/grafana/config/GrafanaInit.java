@@ -45,10 +45,7 @@ public class GrafanaInit implements CommandLineRunner {
         if (grafanaProperties.enabled()) {
             log.info("grafana init start");
             try {
-                String token = serviceAccountService.getToken();
-                if (token == null) {
-                    token = serviceAccountService.applyForToken();
-                }
+                String token = serviceAccountService.applyForToken();
                 datasourceService.existOrCreateDatasource(token);   
             } catch (Exception e) {
                 log.error("grafana init error", e);

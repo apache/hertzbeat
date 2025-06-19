@@ -72,12 +72,13 @@ import org.springframework.util.StringUtils;
  * prometheus auto collect
  */
 @Slf4j
-public class PrometheusAutoCollectImpl {
+public class PrometheusAutoCollectImpl implements PrometheusCollect {
     
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
     
+    @Override
     public List<CollectRep.MetricsData> collect(CollectRep.MetricsData.Builder builder,
                                                 Metrics metrics) {
         try {
@@ -139,6 +140,7 @@ public class PrometheusAutoCollectImpl {
         return Collections.singletonList(builder.build());
     }
     
+    @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_PROMETHEUS;
     }

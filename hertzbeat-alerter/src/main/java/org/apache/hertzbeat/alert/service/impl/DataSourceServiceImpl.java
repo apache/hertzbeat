@@ -87,12 +87,10 @@ public class DataSourceServiceImpl implements DataSourceService {
     }
 
     private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor) {
-        ParseTree tree = expressionCache.get(expr, e -> {
-            CommonTokenStream tokens = tokenStreamCache.get(e, this::createTokenStream);
-            AlertExpressionParser parser = new AlertExpressionParser(tokens);
-            return parser.expr();
-        });
-        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor);
+        CommonTokenStream tokens = tokenStreamCache.get(expr, this::createTokenStream);
+        AlertExpressionParser parser = new AlertExpressionParser(tokens);
+        ParseTree tree = expressionCache.get(expr, e -> parser.expr());
+        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens);
         return visitor.visit(tree);
 
     }

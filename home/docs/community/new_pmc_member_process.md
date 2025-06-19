@@ -1,6 +1,6 @@
 ---
 id: 'new_pmc_ember_process'
-title: 'New PMC Member Process'
+title: 'New PPMC Member Process'
 sidebar_position: 5
 ---
 
@@ -23,7 +23,7 @@ limitations under the License.
 
 [Apache New Committer Guideline](https://community.apache.org/newcommitter.html#new-committer-process)
 
-## The process of new PMC member
+## The process of new PPMC member
 
 - Call a vote in mailing `private@hertzbeat.apache.org`
 
@@ -33,23 +33,23 @@ limitations under the License.
 
   see **Close Vote Template**
 
-- Board Approval of new PMC member
+- Board Approval of new PPMC member
 
-  see **Board Approval of new PMC member**
+  see **Board Approval of new PPMC member**
 
-- If the result is positive, invite the new PMC member
+- If the result is positive, invite the new PPMC member
 
   see **PMC member Invite Template**
 
-- If accept, then: Accept the PMC member
+- If accept, then: Accept the PPMC member
 
   see **PMC Member Accept Template**
 
-- Notify the PMC member of completion
+- Notify the PPMC member of completion
 
   see **PMC Member Done Template**
 
-- Announce the new PMC member
+- Announce the new PPMC member
 
   see **PMC Member Announce Template**
 
@@ -61,17 +61,17 @@ Note that, there are three placeholder in template should be replaced before usi
 - NEW_PMC_EMAIL
 - NEW_PMC_APACHE_NAME
 
-### PMC Member Vote Template
+### PPMC Member Vote Template
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [VOTE] New PMC member candidate: ${NEW_PMC_NAME}
+Subject: [VOTE] New PPMC member candidate: ${NEW_PMC_NAME}
 ```
 
 ```text
 Hi HertzBeat PPMC,
 
-This is a formal vote about inviting ${NEW_PMC_NAME} as our new PMC member.
+This is a formal vote about inviting ${NEW_PMC_NAME} as our new PPMC member.
 
 ${Work list}[1]
 
@@ -85,7 +85,7 @@ Note that, Voting ends one week from today, i.e. [midnight UTC on YYYY-MM-DD](ht
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [RESULT] [VOTE] New PMC member: ${NEW_PMC_NAME}
+Subject: [RESULT] [VOTE] New PPMC member: ${NEW_PMC_NAME}
 ```
 
 ```text
@@ -102,12 +102,12 @@ Binding Votes:
 The vote is ***successful/not successful***
 ```
 
-### Board Approval of new PMC member Template
+### Board Approval of new PPMC member Template
 
 ```text
 To: board@apache.org
 Cc: private@<project>.apache.org
-Subject: [NOTICE] ${NEW_PMC_NAME} for HertzBeat PMC member
+Subject: [NOTICE] ${NEW_PMC_NAME} for HertzBeat PPMC member
 ```
 
 ```text
@@ -118,12 +118,12 @@ The vote result is available here: https://lists.apache.org/...
 
 [Apache New Pmc Guide](https://www.apache.org/dev/pmc.html#newpmc)
 
-### PMC Member Invite Template
+### PPMC Member Invite Template
 
 ```text
 To: ${NEW_PMC_EMAIL}
 Cc: private@hertzbeat.apache.org
-Subject: Invitation to become HertzBeat PMC member: ${NEW_PMC_NAME}
+Subject: Invitation to become HertzBeat PPMC member: ${NEW_PMC_NAME}
 ```
 
 ```text
@@ -136,9 +136,9 @@ These privileges are offered on the understanding that
 you'll use them reasonably and with common sense.
 We like to work on trust rather than unnecessary constraints. 
 
-Being a PMC member enables you to guide the direction of the project.
+Being a PPMC member enables you to guide the direction of the project.
 
-Being a PMC member does not require you to 
+Being a PPMC member does not require you to 
 participate any more than you already do. It does 
 tend to make one even more committed.  You will 
 probably find that you spend more time here.
@@ -164,20 +164,20 @@ B. If you accept, the next step is to register an iCLA:
     unique Apache ID. Look to see if your preferred 
     ID is already taken at 
     https://people.apache.org/committer-index.html
-    This will allow the Secretary to notify the PMC 
+    This will allow the Secretary to notify the PPMC 
     when your iCLA has been recorded.
 
 When recording of your iCLA is noted, you will 
 receive a follow-up message with the next steps for 
-establishing you as a PMC member.
+establishing you as a PPMC member.
 ```
 
-### PMC Member Accept Template
+### PPMC Member Accept Template
 
 ```text
 To: ${NEW_PMC_EMAIL}
 Cc: private@hertzbeat.apache.org
-Subject: Re: invitation to become HertzBeat PMC member
+Subject: Re: invitation to become HertzBeat PPMC member
 ```
 
 ```text
@@ -214,7 +214,7 @@ in incubating projects:
   https://incubator.apache.org/guides/committer.html
   https://incubator.apache.org/guides/ppmc.html
 
-Just as before you became a PMC member, participation in any ASF community
+Just as before you became a PPMC member, participation in any ASF community
 requires adherence to the ASF Code of Conduct:
   https://www.apache.org/foundation/policies/conduct.html
 
@@ -222,7 +222,7 @@ Yours,
 The Apache HertzBeat PPMC
 ```
 
-### PMC Member Done Template
+### PPMC Member Done Template
 
 ```text
 To: private@hertzbeat.apache.org, ${NEW_PMC_EMAIL}
@@ -256,18 +256,18 @@ you can now help fix that.
 A PPMC member will announce your election to the dev list soon.
 ```
 
-### PMC Member Announce Template
+### PPMC Member Announce Template
 
 ```text
 To: dev@hertzbeat.apache.org
-[ANNONCE] New PMC member: ${NEW_PMC_NAME}
+[ANNONCE] New PPMC member: ${NEW_PMC_NAME}
 ```
 
 ```text
 Hi HertzBeat Community,
 
 The Podling Project Management Committee (PPMC) for Apache HertzBeat
-has invited ${NEW_PMC_NAME} to become our PMC member and
+has invited ${NEW_PMC_NAME} to become our PPMC member and
 we are pleased to announce that he has accepted.
 
 ### add specific details here ###

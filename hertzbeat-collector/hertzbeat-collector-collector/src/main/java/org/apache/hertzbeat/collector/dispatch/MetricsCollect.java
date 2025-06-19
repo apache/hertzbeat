@@ -115,6 +115,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * Whether it is a service discovery job, true is yes, false is no
      */
     protected boolean isSd;
+    /**
+     * Whether to use the Prometheus proxy
+     */
+    protected boolean prometheusProxyMode;
 
     protected List<UnitConvert> unitConvertList;
 
@@ -137,6 +141,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
         this.isSd = job.isSd();
+        this.prometheusProxyMode = job.isPrometheusProxyMode();
         this.unitConvertList = unitConvertList;
         // Temporary one-time tasks are executed with high priority
         if (isCyclic) {
@@ -153,11 +158,31 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
         response.setApp(app).setId(id).setTenantId(tenantId)
                 .setLabels(labels).setAnnotations(annotations).addMetadataAll(metadata);
-        // for prometheus auto
+        // for prometheus auto or proxy mode
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
-            List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
-                    .getInstance().collect(response, metrics);
-            validateResponse(metricsData.stream().findFirst().orElse(null));
+            List<CollectRep.MetricsData> metricsData;
+
+            // TODO: Refactor Prometheus metrics collection logic.
+            // The current implementation for proxy mode and auto mode needs review and potential simplification.
+            // Consider a more unified approach or clarify the conditions for each mode.
+            /*
+            // TODO USE PROXY MODE
+            if (prometheusProxyMode) {
+                List<CollectRep.MetricsData> proxyData = PrometheusProxyCollectImpl.getInstance().collect(response, metrics);
+                List<CollectRep.MetricsData> autoData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
+                metricsData = new LinkedList<>();
+                if (proxyData != null) {
+                    metricsData.addAll(proxyData);
+                }
+                if (autoData != null) {
+                    metricsData.addAll(autoData);
+                }
+            } else {
+                metricsData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
+            }
+            */
+            metricsData = PrometheusAutoCollectImpl.getInstance().collect(response, metrics);
+            validateResponse(metricsData == null ? null : metricsData.stream().findFirst().orElse(null));
             collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
             return;
         }

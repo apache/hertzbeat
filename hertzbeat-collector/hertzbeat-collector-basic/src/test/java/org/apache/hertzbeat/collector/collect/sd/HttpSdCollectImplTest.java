@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.sd;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -45,6 +46,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicStatusLine;
+import org.apache.http.protocol.HttpContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,7 +106,7 @@ class HttpSdCollectImplTest {
         try (MockedStatic<CommonHttpClient> mockedHttpClient = Mockito.mockStatic(CommonHttpClient.class)) {
             mockedHttpClient.when(CommonHttpClient::getHttpClient).thenReturn(httpClient);
 
-            when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
+            when(httpClient.execute(any(HttpUriRequest.class), nullable(HttpContext.class))).thenReturn(httpResponse);
 
             StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
             when(httpResponse.getStatusLine()).thenReturn(statusLine);
@@ -135,7 +137,7 @@ class HttpSdCollectImplTest {
         try (MockedStatic<CommonHttpClient> mockedHttpClient = Mockito.mockStatic(CommonHttpClient.class)) {
             mockedHttpClient.when(CommonHttpClient::getHttpClient).thenReturn(httpClient);
 
-            when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
+            when(httpClient.execute(any(HttpUriRequest.class), nullable(HttpContext.class))).thenReturn(httpResponse);
 
             StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 404, "Not Found");
             when(httpResponse.getStatusLine()).thenReturn(statusLine);
@@ -158,7 +160,7 @@ class HttpSdCollectImplTest {
 
             mockedHttpClient.when(CommonHttpClient::getHttpClient).thenReturn(httpClient);
 
-            when(httpClient.execute(any(HttpUriRequest.class))).thenThrow(testException);
+            when(httpClient.execute(any(HttpUriRequest.class), nullable(HttpContext.class))).thenThrow(testException);
             mockedCommonUtil.when(() -> CommonUtil.getMessageFromThrowable(any(Throwable.class)))
                     .thenReturn(exceptionMessage);
 
@@ -177,7 +179,7 @@ class HttpSdCollectImplTest {
         try (MockedStatic<CommonHttpClient> mockedHttpClient = Mockito.mockStatic(CommonHttpClient.class)) {
             mockedHttpClient.when(CommonHttpClient::getHttpClient).thenReturn(httpClient);
 
-            when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
+            when(httpClient.execute(any(HttpUriRequest.class), nullable(HttpContext.class))).thenReturn(httpResponse);
 
             StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK");
             when(httpResponse.getStatusLine()).thenReturn(statusLine);

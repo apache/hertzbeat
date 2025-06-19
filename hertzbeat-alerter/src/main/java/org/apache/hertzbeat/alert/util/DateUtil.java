@@ -19,6 +19,7 @@ package org.apache.hertzbeat.alert.util;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Optional;
@@ -78,6 +79,21 @@ public final class DateUtil {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * convert format data to timestamp
+     */
+    public static Long getZonedTimeStampFromFormat(String dateStr, String format) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+            // the parsed zoned date-time, not null
+            return ZonedDateTime.parse(dateStr, formatter).toInstant().toEpochMilli();
+        } catch (Exception e) {
+            log.error("Error parsing date '{}' with format '{}': {}",
+                    dateStr, format, e.getMessage());
+        }
+        return null;
     }
 
 }

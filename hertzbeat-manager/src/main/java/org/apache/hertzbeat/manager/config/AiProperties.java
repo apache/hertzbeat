@@ -52,4 +52,9 @@ public class AiProperties {
      */
     private String apiSecret;
 
+    /**
+     * API URL for the Ollama AI service.
+     */
+    private String apiUrl;
+
 }

@@ -20,11 +20,13 @@ app: doris_be
 name:
   zh-CN: Apache Doris BE
   en-US: Apache Doris BE
+  ja-JP: Apache Doris BE
 # The description and help of this monitoring type
 help:
-  zh-CN: Hertzbeat 对 DORIS 数据库FE的通用性能指标（load channel count、memtable flush total、process thread num、light work max threads等）进行采集监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseBE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  zh-CN: Hertzbeat 对 DORIS 数据库BE的通用性能指标（load channel count、memtable flush total、process thread num、light work max threads等）进行采集监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseBE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Doris DatabaseBE through general performance metric such as load channel count, memtable flush total, process thread num and light work max threads. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseBE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat 對 DORIS 資料庫FE的通用性能指標（load channel count、memtable flush total、process thread num、light work max threads等）進行採集監控，支持版本為DORIS2.0.0。<br>您可以點擊“<i>新建Doris DatabaseBE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-TW: Hertzbeat 對 DORIS 資料庫BE的通用性能指標（load channel count、memtable flush total、process thread num、light work max threads等）進行採集監控，支持版本為DORIS2.0.0。<br>您可以點擊“<i>新建Doris DatabaseBE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat は DORIS 2.0.0のデータベースBEの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 Doris DatabaseBE</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/doris_be/
   en-US: https://hertzbeat.apache.org/docs/help/doris_be/
@@ -36,6 +38,7 @@ params:
     name:
       zh-CN: 目标 Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -55,6 +59,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     # hide param-true or false
@@ -65,6 +70,7 @@ metrics:
     i18n:
       zh-CN: 加载通道数
       en-US: Load Channel Count
+      ja-JP: ロードチャンネル数
     priority: 0
     fields:
       - field: value
@@ -82,6 +88,7 @@ metrics:
     i18n:
       zh-CN: Memtable 刷新总数
       en-US: Memtable Flush Total
+      ja-JP: Memtableのリフレッシュ回数
     priority: 1
     fields:
       - field: value
@@ -99,6 +106,7 @@ metrics:
     i18n:
       zh-CN: Plan Fragment 数量
       en-US: Plan Fragment Count
+      ja-JP: Plan Fragment数
     priority: 2
     fields:
       - field: value
@@ -116,6 +124,7 @@ metrics:
     i18n:
       zh-CN: 进程线程数
       en-US: Process Thread Num
+      ja-JP: プロセススレッド数
     priority: 3
     fields:
       - field: value
@@ -133,6 +142,7 @@ metrics:
     i18n:
       zh-CN: 查询扫描行数
       en-US: Query Scan Rows
+      ja-JP: クエリのスキャン行数
     priority: 4
     fields:
       - field: value
@@ -150,6 +160,7 @@ metrics:
     i18n:
       zh-CN: 结果缓冲区块数
       en-US: Result Buffer Block Count
+      ja-JP: 結果バッファブロック数
     priority: 5
     fields:
       - field: value
@@ -167,6 +178,7 @@ metrics:
     i18n:
       zh-CN: 批量发送线程池队列大小
       en-US: Send Batch Thread Pool Queue Size
+      ja-JP: バッチ送信スレッドプールのキューサイズ
     priority: 6
     fields:
       - field: value
@@ -184,6 +196,7 @@ metrics:
     i18n:
       zh-CN: Tablet Base 最大压缩分数
       en-US: Tablet Base Max Compaction Score
+      ja-JP: Tablet Base最大圧縮スコア
     priority: 7
     fields:
       - field: value
@@ -201,6 +214,7 @@ metrics:
     i18n:
       zh-CN: 超时取消的 Fragment 数量
       en-US: Timeout Canceled Fragment Count
+      ja-JP: タイムアウトでキャンセルされたFragment数
     priority: 8
     fields:
       - field: value
@@ -218,6 +232,7 @@ metrics:
     i18n:
       zh-CN: 加载行数
       en-US: Load Rows
+      ja-JP: ロード行数
     priority: 9
     fields:
       - field: value
@@ -235,6 +250,7 @@ metrics:
     i18n:
       zh-CN: Rowset 总数
       en-US: All Rowsets Num
+      ja-JP: Rowset数
     priority: 10
     fields:
       - field: value
@@ -252,6 +268,7 @@ metrics:
     i18n:
       zh-CN: Segment 总数
       en-US: All Segments Num
+      ja-JP: Segment数
     priority: 11
     fields:
       - field: value
@@ -269,6 +286,7 @@ metrics:
     i18n:
       zh-CN: 繁重工作最大线程数
       en-US: Heavy Work Max Threads
+      ja-JP: 重作業用最大スレッド数
     priority: 12
     fields:
       - field: value
@@ -286,6 +304,7 @@ metrics:
     i18n:
       zh-CN: 轻量工作最大线程数
       en-US: Light Work Max Threads
+      ja-JP: 軽作業用最大スレッド数
     priority: 13
     fields:
       - field: value
@@ -303,6 +322,7 @@ metrics:
     i18n:
       zh-CN: 繁重工作池队列大小
       en-US: Heavy Work Pool Queue Size
+      ja-JP: 重作業用プールのキューサイズ
     priority: 14
     fields:
       - field: value
@@ -320,6 +340,7 @@ metrics:
     i18n:
       zh-CN: 轻量工作池队列大小
       en-US: Light Work Pool Queue Size
+      ja-JP: 軽作業用プールのキューサイズ
     priority: 15
     fields:
       - field: value
@@ -337,6 +358,7 @@ metrics:
     i18n:
       zh-CN: 繁重工作活跃线程数
       en-US: Heavy Work Active Threads
+      ja-JP: 活動中の重作業用スレッド数
     priority: 16
     fields:
       - field: value
@@ -354,6 +376,7 @@ metrics:
     i18n:
       zh-CN: 轻量工作活跃线程数
       en-US: Light Work Active Threads
+      ja-JP: 活動中の軽作業用スレッド数
     priority: 17
     fields:
       - field: value
@@ -371,6 +394,7 @@ metrics:
     i18n:
       zh-CN: 压缩字节总数
       en-US: Compaction Bytes Total
+      ja-JP: 圧縮バイト合計
     priority: 18
     fields:
       - field: type
@@ -391,6 +415,7 @@ metrics:
     i18n:
       zh-CN: 磁盘可用容量
       en-US: Disks Avail Capacity
+      ja-JP: 利用可能なディスク容量
     priority: 19
     fields:
       - field: path
@@ -411,6 +436,7 @@ metrics:
     i18n:
       zh-CN: 磁盘总容量
       en-US: Disks Total Capacity
+      ja-JP: ディスク容量
     priority: 20
     fields:
       - field: path
@@ -431,6 +457,7 @@ metrics:
     i18n:
       zh-CN: 本地读取字节总数
       en-US: Local Bytes Read Total
+      ja-JP: 読み取られたバイト数
     priority: 21
     fields:
       - field: value
@@ -449,6 +476,7 @@ metrics:
     i18n:
       zh-CN: 本地写入字节总数
       en-US: Local Bytes Written Total
+      ja-JP: 書き込まれたバイト数
     priority: 22
     fields:
       - field: value
@@ -467,6 +495,7 @@ metrics:
     i18n:
       zh-CN: 内存分配字节
       en-US: Memory Allocated Bytes
+      ja-JP: メモリ割り当てバイト
     priority: 23
     fields:
       - field: value

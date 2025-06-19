@@ -19,7 +19,7 @@ package org.apache.hertzbeat.warehouse.listener;
 
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

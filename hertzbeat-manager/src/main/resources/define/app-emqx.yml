@@ -21,11 +21,13 @@ app: emqx
 name:
   zh-CN: EMQX MQTT
   en-US: EMQX MQTT
+  ja-JP: EMQX MQTT
 # The description and help of this monitoring type
 help:
   zh-CN: EMQX 是一款开源的大规模分布式 MQTT 消息服务器。Hertzbeat对EMQX MQTT消息服务器 5.0+ 版本的通用指标进行测量监控，<br>您可以点击 “<i>新建 EMQX 消息服务器</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: EMQX is an open source large-scale distributed MQTT message server. Hertzbeat measures and monitors common metrics of the EMQX message server 5.0+ version.<br>You can click "<i>New EMQX message server</i>" and configure it, or select "<i>More operations</i>", Import existing configuration.
   zh-TW: EMQX 是一款開源的大規模分散式 MQTT 訊息伺服器。 Hertzbeat對EMQX MQTT訊息伺服器 5.0+ 版本的通用指標進行測量監控，<br>您可以點擊“<i>新建 EMQX 訊息伺服器</i>” 並進行配置，或者選擇“<i>更多操作</i>” ，導入已有配置。
+  ja-JP: EMQXは、オープンソースの大規模分散MQTTメッセージサーバーです。HertzbeatはEMQX MQTTメッセージサーバー（バージョン5.0+）の一般的なフォーマンスのメトリック監視します。<br>「<i>新規 EMQX</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/emqx
   en-US: https://hertzbeat.apache.org/docs/help/emqx
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -59,12 +63,14 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     type: boolean
     defaultValue: false
   - field: timeout
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     type: number
     required: false
     hide: true
@@ -72,6 +78,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     type: radio
     required: true
     options:
@@ -82,12 +89,14 @@ params:
     name:
       zh-CN: API Key
       en-US: API Key
+      ja-JP: API キー
     type: text
     required: true
   - field: secretkey
     name:
       zh-CN: Secret Key
       en-US: Secret Key
+      ja-JP: 鍵
     type: text
     required: true
 metrics:
@@ -97,6 +106,7 @@ metrics:
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -108,21 +118,25 @@ metrics:
         i18n:
           zh-CN: 系统版本
           en-US: Version
+          ja-JP: バージョン
       - field: node_name
         type: 1
         i18n:
           zh-CN: 节点名称
           en-US: Node Name
+          ja-JP: ノード名
       - field: broker_status
         type: 1
         i18n:
           zh-CN: Broker 状态
           en-US: Broker Status
+          ja-JP: ブローカーステータス
       - field: app_status
         type: 1
         i18n:
           zh-CN: 应用状态
           en-US: App Status
+          ja-JP: Appステータス
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - rel_vsn
@@ -165,6 +179,7 @@ metrics:
     i18n:
       zh-CN: 指标
       en-US: Metrics
+      ja-JP: メトリック
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -176,66 +191,79 @@ metrics:
         i18n:
           zh-CN: 客户端连接
           en-US: Client Connected
+          ja-JP: クライアント接続済み
       - field: client_disconnected
         type: 0
         i18n:
           zh-CN: 客户端断开
           en-US: Client Disconnected
+          ja-JP: クライアント切断
       - field: packets_sent
         type: 0
         i18n:
           zh-CN: 发送数据包
           en-US: Packets Sent
+          ja-JP: 送信パケット
       - field: packets_received
         type: 0
         i18n:
           zh-CN: 接收数据包
           en-US: Packets Received
+          ja-JP: 受信パケット
       - field: bytes_sent
         type: 0
         i18n:
           zh-CN: 发送字节
           en-US: Bytes Sent
+          ja-JP: 送信バイト数
       - field: bytes_received
         type: 0
         i18n:
           zh-CN: 接收字节
           en-US: Bytes Received
+          ja-JP: 受信バイト数
       - field: messages_sent
         type: 0
         i18n:
           zh-CN: 发送消息
           en-US: Messages Sent
+          ja-JP: 送信メッセージ
       - field: messages_acked
         type: 0
         i18n:
           zh-CN: 消息确认
           en-US: Messages Acked
+          ja-JP: 確認メッセージ
       - field: messages_delayed
         type: 0
         i18n:
           zh-CN: 延迟消息
           en-US: Messages Delayed
+          ja-JP: 遅延メッセージ
       - field: authorization_deny
         type: 0
         i18n:
           zh-CN: 授权拒绝
           en-US: Authorization Deny
+          ja-JP: 認証拒否
       - field: client_authorize
         type: 0
         i18n:
           zh-CN: 客户端授权
           en-US: Client Authorize
+          ja-JP: クライアント認証
       - field: session_created
         type: 0
         i18n:
           zh-CN: 会话创建
           en-US: Session Created
+          ja-JP: 目標ホスト
       - field: session_discarded
         type: 0
         i18n:
           zh-CN: 会话丢弃
           en-US: Session Discarded
+          ja-JP: 目標ホスト
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - client.connected
@@ -296,6 +324,7 @@ metrics:
     i18n:
       zh-CN: 统计
       en-US: Stats
+      ja-JP: スタッツ
     priority: 2
     fields:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
@@ -304,111 +333,133 @@ metrics:
         i18n:
           zh-CN: 通道数
           en-US: Channels Count
+          ja-JP: チャンネル数
       - field: channels_max
         type: 0
         i18n:
           zh-CN: 通道最大数
           en-US: Channels Max
+          ja-JP: 最大チャンネル数
       - field: connections_count
         type: 0
         i18n:
           zh-CN: 连接数
           en-US: Connections Count
+          ja-JP: 接続数
       - field: connections_max
         type: 0
         i18n:
           zh-CN: 最大连接数
           en-US: Connections Max
+          ja-JP: 最大接続数
       - field: delayed_count
         type: 0
         i18n:
           zh-CN: 延迟数
           en-US: Delayed Count
+          ja-JP: 遅延数
       - field: delayed_max
         type: 0
         i18n:
           zh-CN: 最大延迟数
           en-US: Delayed Max
+          ja-JP: 最大遅延数
       - field: live_connections_count
         type: 0
         i18n:
           zh-CN: 活动连接数
           en-US: Live Connections Count
+          ja-JP: ライブ接続数
       - field: live_connections_max
         type: 0
         i18n:
           zh-CN: 最大活动连接数
           en-US: Live Connections Max
+          ja-JP: 最大ライブ接続数
       - field: retained_count
         type: 0
         i18n:
           zh-CN: 保留数
           en-US: Retained Count
+          ja-JP: 保持数
       - field: retained_max
         type: 0
         i18n:
           zh-CN: 最大保留数
           en-US: Retained Max
+          ja-JP: 最大保持数
       - field: sessions_count
         type: 0
         i18n:
           zh-CN: 会话数
           en-US: Sessions Count
+          ja-JP: セッション数
       - field: sessions_max
         type: 0
         i18n:
           zh-CN: 最大会话数
           en-US: Sessions Max
+          ja-JP: 最大セッション数
       - field: suboptions_count
         type: 0
         i18n:
           zh-CN: 订阅选项数
           en-US: Suboptions Count
+          ja-JP: サブスクリプションのオプション数
       - field: suboptions_max
         type: 0
         i18n:
           zh-CN: 最大订阅选项数
           en-US: Suboptions Max
+          ja-JP: 最大サブスクリプションのオプション数
       - field: subscribers_count
         type: 0
         i18n:
           zh-CN: 订阅者数
           en-US: Subscribers Count
+          ja-JP: サブスクライバー数
       - field: subscribers_max
         type: 0
         i18n:
           zh-CN: 最大订阅者数
           en-US: Subscribers Max
+          ja-JP: 最大サブスクライバー数
       - field: subscriptions_count
         type: 0
         i18n:
           zh-CN: 订阅数
           en-US: Subscriptions Count
+          ja-JP: サブスクリプション数
       - field: subscriptions_max
         type: 0
         i18n:
           zh-CN: 最大订阅数
           en-US: Subscriptions Max
+          ja-JP: 最大サブスクリプション数
       - field: subscriptions_shared_count
         type: 0
         i18n:
           zh-CN: 共享订阅数
           en-US: Subscriptions Shared Count
+          ja-JP: 共有サブスクリプション数
       - field: subscriptions_shared_max
         type: 0
         i18n:
           zh-CN: 最大共享订阅数
           en-US: Subscriptions Shared Max
+          ja-JP: 最大共有サブスクリプション数
       - field: topics_count
         type: 0
         i18n:
           zh-CN: 主题数
           en-US: Topics Count
+          ja-JP: トピック数
       - field: topics_max
         type: 0
         i18n:
           zh-CN: 最大主题数
           en-US: Topics Max
+          ja-JP: 最大トピック数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - channels.count

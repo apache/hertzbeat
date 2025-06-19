@@ -17,22 +17,8 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Bulletin;
-import org.apache.hertzbeat.manager.pojo.dto.BulletinMetricsData;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
 import org.apache.hertzbeat.manager.service.impl.BulletinServiceImpl;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
@@ -45,6 +31,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link BulletinService}
@@ -145,14 +146,17 @@ public class BulletinServiceTest {
         fields.put("1", List.of("1", "2"));
         bulletin.setFields(fields);
 
-        BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder();
-
         Monitor monitor = new Monitor();
 
         when(bulletinDao.findById(any(Long.class))).thenReturn(java.util.Optional.of(bulletin));
         when(realTimeDataReader.getCurrentMetricsData(any(), any(String.class))).thenReturn(null);
-        when(monitorService.getMonitor(any(Long.class))).thenReturn(monitor);
-        assertNotNull(bulletinService.buildBulletinMetricsData(any(Long.class)));
+
+        when(monitorService.getMonitor(any(Long.class))).thenReturn(null);
+        assertTrue(bulletinService.buildBulletinMetricsData(any(Long.class)).getContent().isEmpty());
+
+        when(monitorService.getMonitor(1L)).thenReturn(monitor);
+        assertFalse(bulletinService.buildBulletinMetricsData(2L).getContent().isEmpty());
+
     }
 
     @Test

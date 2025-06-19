@@ -28,7 +28,7 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
-import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;

@@ -21,6 +21,7 @@ app: consul_sd
 name:
   zh-CN: Consul Service Discovery
   en-US: Consul Service Discovery
+  ja-JP: Consulサービスディスカバリー
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
@@ -29,6 +30,7 @@ params:
     name:
       zh-CN: Consul Host
       en-US: Consul Host
+      ja-JP: Consulホスト
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: Consul 端口
       en-US: Consul Port
+      ja-JP: Consulポート
     type: number
     range: '[0,65535]'
     required: true
@@ -46,6 +49,7 @@ metrics:
     i18n:
       zh-CN: 监控目标
       en-US: Monitor Target
+      ja-JP: 監視対象
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -57,11 +61,13 @@ metrics:
         i18n:
           zh-CN: Host
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 1
         i18n:
           zh-CN: Port
           en-US: Port
+          ja-JP: ポート
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: consul_sd
     # the config content when protocol is http_sd

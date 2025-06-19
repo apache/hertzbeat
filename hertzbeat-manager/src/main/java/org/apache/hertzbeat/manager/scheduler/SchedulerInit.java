@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.manager.config.PrometheusProxyConfig;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -73,6 +74,9 @@ public class SchedulerInit implements CommandLineRunner {
     
     @Autowired
     private CollectorMonitorBindDao collectorMonitorBindDao;
+
+    @Autowired
+    private PrometheusProxyConfig prometheusProxyConfig;
     
     @Override
     public void run(String... args) throws Exception {
@@ -99,6 +103,8 @@ public class SchedulerInit implements CommandLineRunner {
                 boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
                 String app = isStatic ? monitor.getApp() : monitor.getScrape();
                 Job appDefine = appService.getAppDefine(app);
+                // set Prometheus proxy mode
+                appDefine.setPrometheusProxyMode(prometheusProxyConfig.isPrometheusProxy());
                 if (!isStatic) {
                     appDefine.setSd(true);
                 }
