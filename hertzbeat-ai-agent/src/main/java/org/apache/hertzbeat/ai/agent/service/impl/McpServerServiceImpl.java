@@ -20,7 +20,7 @@ public class McpServerServiceImpl implements McpServerService {
     private MonitorToolsImpl monitorTools;
 
     @Bean
-    public ToolCallbackProvider monitorTools() {
+    public ToolCallbackProvider hertzbeatTools() {
         return MethodToolCallbackProvider.builder().toolObjects(monitorTools).build();
     }
 }

@@ -18,7 +18,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     private final ChatClient chatClient;
 
-    @Qualifier("monitorTools")
+    @Qualifier("hertzbeatTools")
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
 
