@@ -579,7 +579,6 @@ class AlertExpressionEvalVisitorTest {
         assertEquals(2, result.size());
         assertEquals(1307, result.get(0).get("__value__"));
         assertEquals(16, result.get(1).get("__value__"));
-        System.out.println();
     }
 
 
