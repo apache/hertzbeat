@@ -163,44 +163,25 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     public List<Map<String, Object>> visitUnlessExpr(AlertExpressionParser.UnlessExprContext ctx) {
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
-        Map<String, Object> leftMap = null;
-        boolean leftMatch = false;
-        Map<String, Object> rightMap = null;
-        boolean rightMatch = false;
-        for (Map<String, Object> item : leftOperand) {
-            if (leftMap == null) {
-                leftMap = item;
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        // build a hash set of the right-side tag collection
+        Set<String> rightLabelSet = rightOperand.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .map(this::labelKey)
+                .collect(Collectors.toSet());
+
+        // iterate over the left side, O(1) match
+        for (Map<String, Object> leftItem : leftOperand) {
+            Object leftVal = leftItem.get(VALUE);
+            if (leftVal == null) {
+                continue;
             }
-            if (item.get(VALUE) != null) {
-                leftMap = item;
-                leftMatch = true;
-                break;
-            }
-        }
-        for (Map<String, Object> item : rightOperand) {
-            if (rightMap == null) {
-                rightMap = item;
-            }
-            if (item.get(VALUE) != null) {
-                rightMap = item;
-                rightMatch = true;
-                break;
+            if (!rightLabelSet.contains(labelKey(leftItem))) {
+                results.add(new HashMap<>(leftItem));
             }
         }
-        if (leftMatch && !rightMatch) {
-            return new LinkedList<>(List.of(leftMap));
-        } else {
-            if (leftMap != null) {
-                leftMap.put(VALUE, null);
-                return new LinkedList<>(List.of(leftMap));
-            } else {
-                if (rightMap != null) {
-                    rightMap.put(VALUE, null);
-                    return new LinkedList<>(List.of(rightMap));
-                }
-            }
-        }
-        return new LinkedList<>();
+        return results;
     }
 
     @Override
