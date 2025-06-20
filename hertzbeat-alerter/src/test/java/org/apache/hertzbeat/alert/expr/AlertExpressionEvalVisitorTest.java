@@ -320,11 +320,11 @@ class AlertExpressionEvalVisitorTest {
                 List.of(new HashMap<>(Map.of("__value__", 250.0))));
         when(mockExecutor.execute("select min(response_time) from api_metrics where endpoint = '/api/users'")).thenReturn(
                 List.of(new HashMap<>(Map.of("__value__", 50.0))));
-        
+
         List<Map<String, Object>> result = evaluate("(select max(response_time) from api_metrics where endpoint = '/api/users') > 200");
         assertEquals(1, result.size());
         assertEquals(250.0, result.get(0).get("__value__"));
-        
+
         result = evaluate("(select min(response_time) from api_metrics where endpoint = '/api/users') < 100");
         assertEquals(1, result.size());
         assertEquals(50.0, result.get(0).get("__value__"));
@@ -472,6 +472,116 @@ class AlertExpressionEvalVisitorTest {
         assertEquals(1, result.size());
         assertEquals(80, result.get(0).get("__value__"));
     }
+
+    @Test
+    void testAndOpPromql() {
+        String promql = "http_server_requests_seconds_count > 10 and http_server_requests_seconds_max > 5";
+
+        Map<String, Object> countValue1 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 1307);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/actuator/prometheus");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        Map<String, Object> countValue2 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 16);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/**");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        Map<String, Object> countValue3 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 7);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/actuator/health");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        Map<String, Object> maxValue1 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 10.007799125);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_max");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/actuator/prometheus");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        Map<String, Object> maxValue2 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 10);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/**");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        Map<String, Object> maxValue3 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 0);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/actuator/health");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        when(mockExecutor.execute("http_server_requests_seconds_count")).thenReturn(List.of(countValue1, countValue2, countValue3));
+        when(mockExecutor.execute("http_server_requests_seconds_max")).thenReturn(List.of(maxValue1, maxValue2, maxValue3));
+        List<Map<String, Object>> result = evaluate(promql);
+        assertEquals(2, result.size());
+        assertEquals(1307, result.get(0).get("__value__"));
+        assertEquals(16, result.get(1).get("__value__"));
+        System.out.println();
+    }
+
 
     private List<Map<String, Object>> evaluate(String expression) {
         AlertExpressionLexer lexer = new AlertExpressionLexer(CharStreams.fromString(expression));
