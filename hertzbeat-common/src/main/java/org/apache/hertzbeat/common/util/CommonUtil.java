@@ -40,6 +40,8 @@ public final class CommonUtil {
     private static final Pattern PHONE_PATTERN = Pattern.compile("^(((13[0-9])|(14[0-9])|(15[0-9])|(16[0-9])|(19[0-9])|(18[0-9])|(17[0-9]))+\\d{8})?$");
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile("^[-+]?[0-9]*\\.?[0-9]+$");
+
+    private static final Pattern LONG_PATTERN = Pattern.compile("^[-+]?[0-9]+$");
     
     private static final int PHONE_LENGTH = 11;
 
@@ -94,6 +96,18 @@ public final class CommonUtil {
             return false;
         }
         return NUMBER_PATTERN.matcher(str).matches();
+    }
+
+    /**
+     * whether the string is Long
+     * @param str string
+     * @return boolean
+     */
+    public static boolean isLong(String str) {
+        if (StringUtils.isBlank(str)) {
+            return false;
+        }
+        return LONG_PATTERN.matcher(str).matches();
     }
 
     /**
