@@ -24,6 +24,8 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.Executor;
+
 import java.util.Collections;
 import java.util.List;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
@@ -64,6 +66,9 @@ class AlertNoticeDispatchTest {
     @Mock
     private AlertSseManager emitterManager;
 
+    @Mock
+    private Executor restTemplateThreadPool;
+
     private AlertNoticeDispatch alertNoticeDispatch;
 
     private static final int DISPATCH_THREADS = 3;
@@ -82,7 +87,8 @@ class AlertNoticeDispatchTest {
                 alertStoreHandler,
                 alertNotifyHandlerList,
                 pluginRunner,
-                emitterManager
+                emitterManager,
+                restTemplateThreadPool
         );
         
         receiver = NoticeReceiver.builder()

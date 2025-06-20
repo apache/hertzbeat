@@ -21,8 +21,11 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.apache.hertzbeat.alert.config.AlertSseManager;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -48,15 +51,20 @@ public class AlertNoticeDispatch {
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
     private final PluginRunner pluginRunner;
     private final AlertSseManager emitterManager;
+    private final Executor restTemplateThreadPool;
 
     public AlertNoticeDispatch(AlerterWorkerPool workerPool,
                                NoticeConfigService noticeConfigService,
                                AlertStoreHandler alertStoreHandler,
-                               List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner, AlertSseManager emitterManager) {
+                               List<AlertNotifyHandler> alertNotifyHandlerList, 
+                               PluginRunner pluginRunner, 
+                               AlertSseManager emitterManager,
+                               @Qualifier("restTemplateThreadPool") Executor restTemplateThreadPool) {
         this.workerPool = workerPool;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
         this.pluginRunner = pluginRunner;
+        this.restTemplateThreadPool = restTemplateThreadPool;
         alertNotifyHandlerMap = Maps.newHashMapWithExpectedSize(alertNotifyHandlerList.size());
         this.emitterManager = emitterManager;
         alertNotifyHandlerList.forEach(r -> alertNotifyHandlerMap.put(r.type(), r));
@@ -121,14 +129,31 @@ public class AlertNoticeDispatch {
     }
 
     private void sendNotify(GroupAlert alert) {
-        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> workerPool.executeNotify(() -> rule.getReceiverId()
-                .forEach(receiverId -> {
-                    try {
-                        sendNoticeMsg(getOneReceiverById(receiverId),
-                                getOneTemplateById(rule.getTemplateId()), alert);
-                    } catch (AlertNoticeException e) {
-                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                    }
-                }))));
+        matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> workerPool.executeNotify(() -> {
+            List<CompletableFuture<Void>> futures = rule.getReceiverId().stream()
+                    .map(receiverId -> sendNoticeAsync(getOneReceiverById(receiverId),
+                            getOneTemplateById(rule.getTemplateId()), alert))
+                    .toList();
+            
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .whenComplete((result, exception) -> {
+                        if (exception != null) {
+                            log.warn("Some async notifications failed", exception);
+                        } else {
+                            log.debug("All notifications completed for alert: {}", alert.getGroupLabels());
+                        }
+                    });
+        })));
+    }
+    
+    private CompletableFuture<Void> sendNoticeAsync(NoticeReceiver receiver, NoticeTemplate template, GroupAlert alert) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                sendNoticeMsg(receiver, template, alert);
+            } catch (AlertNoticeException e) {
+                log.warn("Async notification failed for receiver {}: {}", receiver.getName(), e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }, restTemplateThreadPool);
     }
 }
