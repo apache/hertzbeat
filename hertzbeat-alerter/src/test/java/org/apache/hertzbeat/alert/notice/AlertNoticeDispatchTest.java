@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.Executor;
-
 import java.util.Collections;
 import java.util.List;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
