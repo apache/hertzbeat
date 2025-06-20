@@ -136,6 +136,9 @@ public class RedisCommonCollectE2eTest extends AbstractCollectE2eTest {
             redisContainer.execInContainer("redis-cli", "CONFIG", "SET", "slowlog-log-slower-than", "0");
             redisContainer.execInContainer("redis-cli", "CONFIG", "SET", "slowlog-max-len", "128");
             
+            // Set client name for the connection to ensure client_name field is not empty
+            redisContainer.execInContainer("redis-cli", "CLIENT", "SETNAME", "test-client-name");
+            
             // Execute some commands that will be captured in the slow log
             redisContainer.execInContainer("redis-cli", "SET", "test_key", "test_value");
             redisContainer.execInContainer("redis-cli", "GET", "test_key");
@@ -144,6 +147,13 @@ public class RedisCommonCollectE2eTest extends AbstractCollectE2eTest {
             // Execute a Lua script that will definitely be slow
             String luaScript = "local i=0; while i<1000 do i=i+1 end; return i";
             redisContainer.execInContainer("redis-cli", "EVAL", luaScript, "0");
+            
+            // Execute more commands to ensure we have enough entries with client names
+            for (int i = 0; i < 5; i++) {
+                redisContainer.execInContainer("redis-cli", "--no-auth-warning", "CLIENT", "SETNAME", "test-client-" + i);
+                redisContainer.execInContainer("redis-cli", "--no-auth-warning", "SET", "key" + i, "value" + i);
+                redisContainer.execInContainer("redis-cli", "--no-auth-warning", "GET", "key" + i);
+            }
             
             // Verify that we have slow log entries
             log.info("Generated slow queries for testing");
