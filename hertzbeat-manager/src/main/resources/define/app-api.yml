@@ -170,6 +170,7 @@ params:
     name:
       zh-CN: 请求BODY
       en-US: BODY
+      ja-JP: ボディ
     # type-param field type(most mapping the html input type)
     type: textarea
     # 参数输入框提示信息
