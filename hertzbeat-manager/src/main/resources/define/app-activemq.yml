@@ -474,7 +474,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used
-          ja-JP: 使用済みメモリ
+          ja-JP: 使用済みのメモリ
     units:
       - committed=B->MB
       - init=B->MB
