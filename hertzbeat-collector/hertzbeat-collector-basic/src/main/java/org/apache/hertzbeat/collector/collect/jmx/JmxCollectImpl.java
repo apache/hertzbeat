@@ -54,6 +54,9 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.LogUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -74,6 +77,8 @@ public class JmxCollectImpl extends AbstractCollect {
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
     private final ClassLoader jmxClassLoader;
+
+    private static final Logger logger = LoggerFactory.getLogger(JmxCollectImpl.class);
 
     public JmxCollectImpl() {
         jmxClassLoader = new JmxClassLoader(ClassLoader.getSystemClassLoader());
@@ -195,12 +200,12 @@ public class JmxCollectImpl extends AbstractCollect {
             }
         } catch (IOException exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
-            log.error("JMX IOException :{}", errorMsg);
+            LogUtil.error(logger, "JMX IOException: {0}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
-            log.error("JMX Error :{}", errorMsg);
+            LogUtil.error(logger, "JMX Error: {0}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
         } finally {
@@ -221,7 +226,7 @@ public class JmxCollectImpl extends AbstractCollect {
         for (Attribute attribute : attributeList.asList()) {
             Object value = attribute.getValue();
             if (value == null) {
-                log.info("attribute {} value is null.", attribute.getName());
+                LogUtil.info(logger, "attribute {0} value is null.", attribute.getName());
                 continue;
             }
             if (value instanceof Number || value instanceof String || value instanceof ObjectName
@@ -245,7 +250,7 @@ public class JmxCollectImpl extends AbstractCollect {
                 }
                 attributeValueMap.put(attribute.getName(), builder.toString());
             } else {
-                log.warn("attribute value type {} not support.", value.getClass().getName());
+                LogUtil.warn(logger, "attribute value type {0} not support.", value.getClass().getName());
             }
         }
         return attributeValueMap;
@@ -319,7 +324,7 @@ public class JmxCollectImpl extends AbstractCollect {
             connectionCommonCache.addCache(identifier, new JmxConnect(conn));
             return conn;
         } catch (Exception e) {
-            log.error("Failed to connect to JMX server: {}", e.getMessage());
+            LogUtil.error(logger, "Failed to connect to JMX connection: {0}", e.getMessage());
             throw new IOException("Failed to connect to JMX server: " + e.getMessage(), e);
         }
     }

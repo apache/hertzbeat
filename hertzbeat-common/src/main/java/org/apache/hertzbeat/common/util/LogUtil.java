@@ -1,0 +1,128 @@
+package org.apache.hertzbeat.common.util;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+
+public class LogUtil {
+
+    /**
+     * Print debug level formatted log
+     * Example: LogUtil.debug(logger, "hello,{0},here has a {1} exception", "other information");
+     */
+    @SuppressWarnings("unused")
+    public static void debug(Logger logger, String msg, Object... params) {
+        if (logger.isDebugEnabled()) {
+
+            if (ArrayUtils.isEmpty(params)) {
+                logger.debug(LogUtil.buildLocationInfo() + msg);
+            } else {
+                logger.debug(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+            }
+        }
+    }
+
+
+    /**
+     * Print info level formatted log
+     * Example: LogUtil.info(logger, "hello,{0},{1} exception", "dear", "database operation");
+     */
+    public static void info(Logger logger, String msg, Object... params) {
+        if (logger.isInfoEnabled()) {
+            if (ArrayUtils.isEmpty(params)) {
+                logger.info(LogUtil.buildLocationInfo() + msg);
+            } else {
+                logger.info(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+            }
+        }
+    }
+
+    /**
+     * Print warn level formatted log
+     */
+    public static void warn(Logger logger, String msg, Object... params) {
+        if (logger.isWarnEnabled()) {
+            if (ArrayUtils.isEmpty(params)) {
+                logger.warn(LogUtil.buildLocationInfo() + msg);
+            } else {
+                logger.warn(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+            }
+        }
+    }
+
+    /**
+     * Print error level formatted log, use {0},{1},.. for parameter replacement
+     * Example: LogUtil.error(logger, "hello,{0}, a {1} exception occurred here", "dear", "database operation");
+     */
+    public static void error(Logger logger, String msg, Object... params) {
+        if (logger.isErrorEnabled()) {
+            if (ArrayUtils.isEmpty(params)) {
+                logger.error(LogUtil.buildLocationInfo() + msg);
+            } else {
+                logger.error(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+            }
+        }
+
+    }
+
+
+    /**
+     * Print warn level formatted log with exception, use {0},{1},.. for parameter replacement
+     * Example: LogUtil.warn(logger, e, "hello,{0}, a {1} exception occurred here", "dear", "database operation");
+     */
+    public static void warn(Logger logger, Throwable e, String msg, Object... params) {
+        if (logger.isWarnEnabled()) {
+            if (ArrayUtils.isEmpty(params)) {
+                logger.warn(LogUtil.buildLocationInfo() + msg, e);
+            } else {
+                logger.warn(LogUtil.buildLocationInfo() + StringUtil.format(msg, params), e);
+            }
+        }
+    }
+
+
+    /**
+     * Print error level formatted log with exception, use {0},{1},.. for parameter replacement
+     * Example: LogUtil.error(logger, e, "hello,{0}, a {1} exception occurred here", "dear", "database operation");
+     */
+    public static void error(Logger logger, Throwable e, String msg, Object... params) {
+        if (logger.isErrorEnabled()) {
+            if (ArrayUtils.isEmpty(params)) {
+                logger.error(LogUtil.buildLocationInfo() + msg, e);
+            } else {
+                logger.error(LogUtil.buildLocationInfo() + StringUtil.format(msg, params), e);
+            }
+        }
+
+    }
+
+
+    /**
+     * Get the class name, method and line number that calls LogUtil
+     *
+     * @return location information string
+     */
+    private static String buildLocationInfo() {
+        StringBuilder header = new StringBuilder();
+        // LOG4J2-1029 new Throwable().getStackTrace is faster than Thread.currentThread().getStackTrace().
+        final StackTraceElement[] stackTraceElements = new Throwable().getStackTrace();
+
+        for (int i = 0; i < stackTraceElements.length - 1; i++) {
+            StackTraceElement currentStackTrace = stackTraceElements[i];
+            StackTraceElement nextStackTrace = stackTraceElements[i + 1];
+
+            /**
+             * If current stack trace is in LogUtil
+             * and next stack trace is not in LogUtil
+             * then the next node is the caller of LogUtil
+             */
+            if (LogUtil.class.getName().equals(currentStackTrace.getClassName()) &&
+                    !LogUtil.class.getName().equals(nextStackTrace.getClassName())) {
+                String stackTrace = nextStackTrace.toString();
+                header.append(" ").append(StringUtils.removeStart(stackTrace, nextStackTrace.getClassName() + "."));
+                break;
+            }
+        }
+        return header.append(":").toString();
+    }
+}
