@@ -241,6 +241,76 @@ class AlertExpressionEvalVisitorTest {
     }
 
     @Test
+    void testUnlessOpPromql() {
+        String promql = "http_server_requests_seconds_count > 10 unless http_server_requests_seconds_max > 0";
+
+        Map<String, Object> countValue1 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 1307);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/actuator/prometheus");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        Map<String, Object> maxValue1 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 10.007799125);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_max");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/actuator/health");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        when(mockExecutor.execute("http_server_requests_seconds_count")).thenReturn(List.of(countValue1));
+        when(mockExecutor.execute("http_server_requests_seconds_max")).thenReturn(List.of(maxValue1));
+        List<Map<String, Object>> result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(1307, result.get(0).get("__value__"));
+
+        maxValue1.put("uri", "/actuator/prometheus");
+        result = evaluate(promql);
+        assertEquals(0, result.size());
+
+        Map<String, Object> sumValue1 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 20.018);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_sum");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/**");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+
+        maxValue1.put("uri", "/actuator/health");
+        when(mockExecutor.execute("http_server_requests_seconds_sum")).thenReturn(List.of(sumValue1));
+        promql = "(http_server_requests_seconds_count > 10 unless http_server_requests_seconds_max > 0) unless http_server_requests_seconds_sum > 10";
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(1307, result.get(0).get("__value__"));
+    }
+
+    @Test
     void testMultipleUnlessConditions() {
         when(mockExecutor.execute("metric1")).thenReturn(List.of(new HashMap<>(Map.of("__value__", 40.0))));
         when(mockExecutor.execute("metric2")).thenReturn(List.of(new HashMap<>(Map.of("__value__", 50.0))));
