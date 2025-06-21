@@ -1,0 +1,183 @@
+package org.apache.hertzbeat.collector.collect.mqtt;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class CertificateFormatter {
+
+    /**
+     * Formats the private key and certificate, supporting concatenation of multiple certificates in PEM format.
+     */
+    public static String formatCertificateChain(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return input;
+        }
+
+        // 标准化输入格式
+        String normalized = normalizeInput(input);
+
+        // 提取所有证书块
+        List<String> certificates = extractCertificates(normalized);
+
+        // 如果没有找到证书块，尝试作为纯内容处理
+        if (certificates.isEmpty()) {
+            return formatAsSingleCertificate(normalized);
+        }
+
+        // 格式化每个证书块
+        StringBuilder formattedChain = new StringBuilder();
+        for (String cert : certificates) {
+            // 防止空证书块
+            if (cert.trim().isEmpty()) continue;
+
+            String formatted = formatPEMBlock(cert);
+            formattedChain.append(formatted).append("\n");
+        }
+
+        return formattedChain.toString().trim();
+    }
+
+    private static String normalizeInput(String input) {
+        return input
+                .replace("\r\n", "\n")
+                .replace("\r", "\n")
+                .replaceAll("\\s*\\\\n\\s*", "\n")
+                .replaceAll("(?m)^\\s+|\\s+$", "")
+                .trim();
+    }
+
+    private static List<String> extractCertificates(String input) {
+        List<String> certificates = new ArrayList<>();
+        String regex = "(-----BEGIN\\s+[\\w\\s]+?-----)[\\s\\S]*?(-----END\\s+[\\w\\s]+?-----)";
+
+
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(input);
+
+        int lastEnd = 0;
+        while (matcher.find()) {
+
+            if (matcher.start() > lastEnd) {
+                String gap = input.substring(lastEnd, matcher.start());
+                if (!gap.trim().isEmpty()) {
+                    certificates.add(gap);
+                }
+            }
+
+            certificates.add(matcher.group());
+            lastEnd = matcher.end();
+        }
+
+
+        if (lastEnd < input.length()) {
+            certificates.add(input.substring(lastEnd));
+        }
+
+        return certificates;
+    }
+
+    private static String formatPEMBlock(String block) {
+        try {
+            Pattern pattern = Pattern.compile(
+                    "(-----BEGIN\\s+[\\w\\s]+?-----)(.*?)(-----END\\s+[\\w\\s]+?-----)",
+                    Pattern.DOTALL | Pattern.CASE_INSENSITIVE
+            );
+
+            Matcher matcher = pattern.matcher(block);
+            if (matcher.find()) {
+                String header = matcher.group(1).trim();
+                String body = matcher.group(2);
+                String footer = matcher.group(3).trim();
+
+
+                if (body == null) body = "";
+
+                String cleanBody = body
+                        .replaceAll("\\s", "")
+                        .replaceAll("\"", "")
+                        .trim();
+
+
+                if (cleanBody.isEmpty() && body != null && !body.trim().isEmpty()) {
+
+                    cleanBody = body.replaceAll("[^a-zA-Z0-9+/=]", "").trim();
+                }
+
+                String formattedBody = formatBase64Body(cleanBody);
+
+                return header + "\n" + formattedBody + "\n" + footer;
+            } else {
+
+                return formatAsCertificate(block);
+            }
+        } catch (Exception e) {
+
+            return block;
+        }
+    }
+
+    private static String formatAsCertificate(String content) {
+
+        String cleanContent = content.replaceAll("[^a-zA-Z0-9+/=]", "").trim();
+
+        if (cleanContent.isEmpty()) {
+            return content;
+        }
+
+
+        String formattedBody = formatBase64Body(cleanContent);
+
+
+        if (cleanContent.toLowerCase().contains("private")) {
+            if (cleanContent.startsWith("MII") || cleanContent.length() > 1000) {
+                return "-----BEGIN PRIVATE KEY-----\n" + formattedBody + "\n-----END PRIVATE KEY-----";
+            } else {
+                return "-----BEGIN RSA PRIVATE KEY-----\n" + formattedBody + "\n-----END RSA PRIVATE KEY-----";
+            }
+        } else {
+            return "-----BEGIN CERTIFICATE-----\n" + formattedBody + "\n-----END CERTIFICATE-----";
+        }
+    }
+
+    private static String formatAsSingleCertificate(String input) {
+        String cleanContent = input.replaceAll("[^a-zA-Z0-9+/=]", "").trim();
+        return formatAsCertificate(cleanContent);
+    }
+
+    private static String formatBase64Body(String body) {
+
+        StringBuilder formatted = new StringBuilder();
+        int index = 0;
+        while (index < body.length()) {
+            int end = Math.min(index + 64, body.length());
+            formatted.append(body.substring(index, end));
+            if (end < body.length()) {
+                formatted.append("\n");
+            }
+            index = end;
+        }
+        return formatted.toString().trim();
+    }
+
+    public static String formatPrivateKey(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return input;
+        }
+
+
+        String normalized = normalizeInput(input);
+
+
+        if (isPEMEncapsulated(normalized)) {
+            return formatPEMBlock(normalized);
+        }
+
+        return formatAsCertificate(normalized);
+    }
+
+    private static boolean isPEMEncapsulated(String block) {
+        return block.contains("-----BEGIN") && block.contains("-----END");
+    }
+}

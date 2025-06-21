@@ -33,49 +33,73 @@ import org.apache.commons.lang3.StringUtils;
 public class MqttProtocol implements CommonRequestProtocol, Protocol {
 
     /**
-     * ip address or domain name of the peer host
-     */
-    private String host;
-
-    /**
-     * peer host port
-     */
-    private String port;
-
-    /**
-     * username
-     */
-    private String username;
-
-    /**
-     * password
-     */
-    private String password;
-
-    /**
-     * time out period
-     */
-    private String timeout;
-
-    /**
-     * client id
+     * mqtt client id
      */
     private String clientId;
-
     /**
-     * message used to test whether the mqtt connection can be pushed normally
+     * mqtt username
      */
-    private String testMessage;
-
+    private String username;
     /**
-     * protocol version of mqtt
+     * mqtt password
      */
-    private String protocolVersion;
-
+    private String password;
     /**
-     * monitor topic
+     * mqtt host
+     */
+    private String host;
+    /**
+     * mqtt port
+     */
+    private String port;
+    /**
+     * mqtt protocol version
+     * MQTT,MQTTS
+     */
+    private String protocol;
+    /**
+     * mqtt connect timeout
+     * the maximum time to wait for a connection to be established
+     */
+    private String timeout;
+    /**
+     * mqtt keepalive
+     * between ping requests to the broker to keep the connection alive
+     */
+    private String keepalive;
+    /**
+     * mqtt topic name
      */
     private String topic;
+    /**
+     * mqtt publish message
+     */
+    private String testMessage;
+    /**
+     * mqtt tls version
+     * TLSv1.2, TLSv1.3
+     */
+    private String tlsVersion;
+    /**
+     * mqtt tls insecure skip verify server certificate
+     */
+    private String insecureSkipVerify;
+    /**
+     * mqtt tls ca cert
+     */
+    private String caCert;
+    /**
+     * mqtt tls enable mutual auth
+     */
+    private String enableMutualAuth;
+    /**
+     * mqtt tls client cert
+     */
+    private String clientCert;
+    /**
+     * mqtt tls client key
+     */
+    private String clientKey;
 
     /**
      * Determine whether authentication is required
@@ -85,11 +109,4 @@ public class MqttProtocol implements CommonRequestProtocol, Protocol {
         return StringUtils.isNotBlank(this.username) && StringUtils.isNotBlank(this.password);
     }
 
-    /**
-     * Determine whether you need to test whether messages can be pushed normally
-     * @return turn if it has test message
-     */
-    public boolean testPublish(){
-        return StringUtils.isNotBlank(this.testMessage);
-    }
 }
