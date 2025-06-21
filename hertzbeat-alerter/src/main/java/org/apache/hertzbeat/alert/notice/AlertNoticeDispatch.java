@@ -21,7 +21,6 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
@@ -130,30 +129,15 @@ public class AlertNoticeDispatch {
 
     private void sendNotify(GroupAlert alert) {
         matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> workerPool.executeNotify(() -> {
-            List<CompletableFuture<Void>> futures = rule.getReceiverId().stream()
-                    .map(receiverId -> sendNoticeAsync(getOneReceiverById(receiverId),
-                            getOneTemplateById(rule.getTemplateId()), alert))
-                    .toList();
-            
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .whenComplete((result, exception) -> {
-                        if (exception != null) {
-                            log.warn("Some async notifications failed", exception);
-                        } else {
-                            log.debug("All notifications completed for alert: {}", alert.getGroupLabels());
-                        }
-                    });
+            rule.getReceiverId().forEach(receiverId -> {
+                restTemplateThreadPool.execute(() -> {
+                    try {
+                        sendNoticeMsg(getOneReceiverById(receiverId), getOneTemplateById(rule.getTemplateId()), alert);
+                    } catch (Exception e) {
+                        log.warn("Async notification failed for receiver {}: {}", receiverId, e.getMessage());
+                    }
+                });
+            });
         })));
-    }
-    
-    private CompletableFuture<Void> sendNoticeAsync(NoticeReceiver receiver, NoticeTemplate template, GroupAlert alert) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                sendNoticeMsg(receiver, template, alert);
-            } catch (AlertNoticeException e) {
-                log.warn("Async notification failed for receiver {}: {}", receiver.getName(), e.getMessage());
-                throw new RuntimeException(e);
-            }
-        }, restTemplateThreadPool);
     }
 }

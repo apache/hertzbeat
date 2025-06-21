@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -53,10 +52,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
     protected RestTemplate restTemplate;
     @Autowired
     protected AlerterProperties alerterProperties;
-    @Autowired
-    @Qualifier("restTemplateThreadPool")
-    protected Executor restTemplateThreadPool;
-
 
     protected String renderContent(NoticeTemplate noticeTemplate, GroupAlert alert) throws TemplateException, IOException {
         StringTemplateLoader stringLoader = new StringTemplateLoader();
@@ -117,19 +112,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
             }
         }
         return sb.toString();
-    }
-
-    protected CompletableFuture<Void> sendAsync(org.apache.hertzbeat.common.entity.alerter.NoticeReceiver receiver, 
-                                                 org.apache.hertzbeat.common.entity.alerter.NoticeTemplate noticeTemplate, 
-                                                 GroupAlert alert) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                send(receiver, noticeTemplate, alert);
-            } catch (Exception e) {
-                log.error("Async alert notification failed", e);
-                throw new RuntimeException(e);
-            }
-        }, restTemplateThreadPool);
     }
 
     @EventListener(SystemConfigChangeEvent.class)
