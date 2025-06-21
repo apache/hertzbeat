@@ -392,8 +392,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 or node_cpu_seconds_total{mode=\"idle\"} < 20");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -414,8 +413,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 or node_cpu_seconds_total{mode=\"idle\"} < 320");
-        assertEquals(1, result.size());
-        assertNotNull(result.get(0).get("__value__"));
+        assertEquals(4, result.size());
     }
 
     @Test
@@ -436,8 +434,8 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 unless node_cpu_seconds_total{mode=\"idle\"} < 320");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(2, result.size());
+        assertEquals(100.0, result.get(0).get("__value__"));
     }
 
     @Test
@@ -458,8 +456,8 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 unless node_cpu_seconds_total{mode=\"idle\"} < 20");
-        assertEquals(1, result.size());
-        assertNotNull(result.get(0).get("__value__"));
+        assertEquals(2, result.size());
+        assertEquals(100.0, result.get(0).get("__value__"));
     }
 
     @Test
@@ -480,8 +478,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 unless node_cpu_seconds_total{mode=\"idle\"} < 20");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(0, result.size());
     }
 
     @Test
