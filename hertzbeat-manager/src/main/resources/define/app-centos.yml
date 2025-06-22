@@ -73,7 +73,6 @@ params:
     # required-true or false
     required: false
     # default value
-    # 默认值
     defaultValue: 6000
   # field-param field key
   - field: reuseConnection
