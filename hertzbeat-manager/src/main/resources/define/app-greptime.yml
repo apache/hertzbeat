@@ -161,7 +161,7 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: name
-          ja-JP: キー
+          ja-JP: 名前
         type: 1
         label: true
       - field: value
