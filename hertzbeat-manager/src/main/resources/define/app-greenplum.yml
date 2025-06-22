@@ -108,7 +108,7 @@ metrics:
     i18n:
       zh-CN: 基本信息
       en-US: Basic Info
-      ja-JP: 基本情報
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -170,7 +170,7 @@ metrics:
     i18n:
       zh-CN: 状态信息
       en-US: State Info
-      ja-JP: ステート情報
+      ja-JP: 状態情報
     priority: 1
     fields:
       - field: db_name
@@ -367,7 +367,7 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: State
-          ja-JP: ステート
+          ja-JP: 状態
       - field: num
         type: 0
         i18n:
