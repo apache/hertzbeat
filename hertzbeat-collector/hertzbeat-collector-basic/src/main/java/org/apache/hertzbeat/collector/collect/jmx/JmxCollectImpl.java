@@ -63,7 +63,6 @@ import org.springframework.util.StringUtils;
 /**
  * jmx protocol acquisition implementation
  */
-@Slf4j
 public class JmxCollectImpl extends AbstractCollect {
 
     private static final String JMX_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://";

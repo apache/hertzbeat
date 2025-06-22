@@ -2,9 +2,15 @@ package org.apache.hertzbeat.common.util;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 
+import java.text.MessageFormat;
+
 public class LogUtil {
+
+    private static final String TEMPLATE_REGEX = "\\{\\d}";
 
     /**
      * Print debug level formatted log
@@ -17,7 +23,7 @@ public class LogUtil {
             if (ArrayUtils.isEmpty(params)) {
                 logger.debug(LogUtil.buildLocationInfo() + msg);
             } else {
-                logger.debug(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+                logger.debug(LogUtil.buildLocationInfo() + format(msg, params));
             }
         }
     }
@@ -32,7 +38,7 @@ public class LogUtil {
             if (ArrayUtils.isEmpty(params)) {
                 logger.info(LogUtil.buildLocationInfo() + msg);
             } else {
-                logger.info(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+                logger.info(LogUtil.buildLocationInfo() + format(msg, params));
             }
         }
     }
@@ -45,7 +51,7 @@ public class LogUtil {
             if (ArrayUtils.isEmpty(params)) {
                 logger.warn(LogUtil.buildLocationInfo() + msg);
             } else {
-                logger.warn(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+                logger.warn(LogUtil.buildLocationInfo() + format(msg, params));
             }
         }
     }
@@ -59,7 +65,7 @@ public class LogUtil {
             if (ArrayUtils.isEmpty(params)) {
                 logger.error(LogUtil.buildLocationInfo() + msg);
             } else {
-                logger.error(LogUtil.buildLocationInfo() + StringUtil.format(msg, params));
+                logger.error(LogUtil.buildLocationInfo() + format(msg, params));
             }
         }
 
@@ -75,7 +81,7 @@ public class LogUtil {
             if (ArrayUtils.isEmpty(params)) {
                 logger.warn(LogUtil.buildLocationInfo() + msg, e);
             } else {
-                logger.warn(LogUtil.buildLocationInfo() + StringUtil.format(msg, params), e);
+                logger.warn(LogUtil.buildLocationInfo() + format(msg, params), e);
             }
         }
     }
@@ -90,7 +96,7 @@ public class LogUtil {
             if (ArrayUtils.isEmpty(params)) {
                 logger.error(LogUtil.buildLocationInfo() + msg, e);
             } else {
-                logger.error(LogUtil.buildLocationInfo() + StringUtil.format(msg, params), e);
+                logger.error(LogUtil.buildLocationInfo() + format(msg, params), e);
             }
         }
 
@@ -124,5 +130,19 @@ public class LogUtil {
             }
         }
         return header.append(":").toString();
+    }
+
+    private static String format(String msg, Object... params) {
+        if (StringUtils.isEmpty(msg)) {
+            return StringUtils.EMPTY;
+        }
+        if (params != null && params.length > 0) {
+            msg = MessageFormat.format(msg, params);
+        }
+        return msg.replaceAll(TEMPLATE_REGEX, StringUtils.EMPTY);
+    }
+
+    private static String toString(Object object) {
+        return ToStringBuilder.reflectionToString(object, ToStringStyle.SHORT_PREFIX_STYLE);
     }
 }
