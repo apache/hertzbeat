@@ -409,7 +409,7 @@ metrics:
         i18n:
           zh-CN: 可用内存
           en-US: Available Memory
-          ja-JP: 使用可能なメモリ
+          ja-JP: 使用可能のメモリ
       - field: usage
         type: 0
         unit: '%'
