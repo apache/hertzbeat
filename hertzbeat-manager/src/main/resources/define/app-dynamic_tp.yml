@@ -211,7 +211,7 @@ metrics:
         i18n:
           zh-CN: 队列剩余容量
           en-US: queue remaining capacity
-          ja-JP: 使用可能なキュー容量
+          ja-JP: 使用可能のキュー容量
         type: 0
         unit: MB
       - field: active_count
