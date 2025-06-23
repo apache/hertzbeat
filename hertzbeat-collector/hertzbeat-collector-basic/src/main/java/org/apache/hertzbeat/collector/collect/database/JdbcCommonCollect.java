@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.database;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -74,6 +75,7 @@ public class JdbcCommonCollect extends AbstractCollect {
             // code execution related - may result in remote code execution
             "init=", "javaobjectserializer=", "runscript", "serverstatusdiffinterceptor",
             "queryinterceptors=", "statementinterceptors=", "exceptioninterceptors=",
+            "xp_cmdshell", "create function", "dbms_java", "sp_sysexecute", "load_file",
 
             // multiple statement execution - may lead to SQL injection
             "allowmultiqueries",
@@ -81,6 +83,96 @@ public class JdbcCommonCollect extends AbstractCollect {
             // deserialization related - may result in remote code execution
             "autodeserialize", "detectcustomcollations",
     };
+
+    // universal bypass detection mode - applicable to all databases for dangerous command bypass detection
+    private static final String[] UNIVERSAL_BYPASS_PATTERNS = {
+            ".*create\\s*([/\\\\]|\\\\n|/n|\\n)\\s*trigger.*",
+            ".*create\\s*([/\\\\]|\\\\n|/n|\\n)\\s*function.*",
+            ".*drop\\s*([/\\\\]|\\\\n|/n|\\n)\\s*table.*",
+            ".*drop\\s*([/\\\\]|\\\\n|/n|\\n)\\s*database.*",
+            ".*run\\s*([/\\\\]|\\\\n|/n|\\n)\\s*script.*",
+            ".*alter\\s*([/\\\\]|\\\\n|/n|\\n)\\s*system.*",
+            ".*grant\\s*([/\\\\]|\\\\n|/n|\\n)\\s*all.*",
+            ".*revoke\\s*([/\\\\]|\\\\n|/n|\\n)\\s*all.*",
+            ".*xp\\s*([/\\\\]|\\\\n|/n|\\n)\\s*cmdshell.*",
+            ".*load\\s*([/\\\\]|\\\\n|/n|\\n)\\s*file.*"
+    };
+
+    // database platform specific bypass detection mode
+    private static final HashMap<String, String[]> PLATFORM_BYPASS_PATTERNS = new HashMap<>();
+
+    static {
+        // H2 database special character bypass mode
+        PLATFORM_BYPASS_PATTERNS.put("h2", new String[]{
+                ".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*init\\s*=.*",
+                ".*in\\s*([/\\\\]|\\\\n|/n|\\n)\\s*it\\s*=.*",
+                ".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*runscript\\s+from.*",
+                ".*ru\\s*([/\\\\]|\\\\n|/n|\\n)\\s*script\\s+from.*"
+        });
+
+        // MySQL/MariaDB bypass mode
+        String[] mysqlPatterns = {
+                ".*allow\\s*([/\\\\]|\\\\n|/n|\\n)\\s*load\\s*([/\\\\]|\\\\n|/n|\\n)\\s*local\\s*([/\\\\]|\\\\n|/n|\\n)\\s*infile.*",
+                ".*allow\\s*([/\\\\]|\\\\n|/n|\\n)\\s*multi\\s*([/\\\\]|\\\\n|/n|\\n)\\s*queries.*",
+                ".*query\\s*([/\\\\]|\\\\n|/n|\\n)\\s*interceptors.*",
+                ".*statement\\s*([/\\\\]|\\\\n|/n|\\n)\\s*interceptors.*",
+                ".*exception\\s*([/\\\\]|\\\\n|/n|\\n)\\s*interceptors.*",
+                ".*auto\\s*([/\\\\]|\\\\n|/n|\\n)\\s*deserialize.*"
+        };
+        PLATFORM_BYPASS_PATTERNS.put("mysql", mysqlPatterns);
+        PLATFORM_BYPASS_PATTERNS.put("mariadb", mysqlPatterns);
+
+        // PostgreSQL bypass mode
+        PLATFORM_BYPASS_PATTERNS.put("postgresql", new String[]{
+                ".*socket\\s*([/\\\\]|\\\\n|/n|\\n)\\s*factory.*",
+                ".*logger\\s*([/\\\\]|\\\\n|/n|\\n)\\s*file.*",
+                ".*ssl\\s*([/\\\\]|\\\\n|/n|\\n)\\s*mode.*",
+                ".*logger\\s*([/\\\\]|\\\\n|/n|\\n)\\s*level.*"
+        });
+
+        // SQL Server bypass mode
+        PLATFORM_BYPASS_PATTERNS.put("sqlserver", new String[]{
+                ".*integrated\\s*([/\\\\]|\\\\n|/n|\\n)\\s*security.*",
+                ".*authentication\\s*([/\\\\]|\\\\n|/n|\\n)\\s*scheme.*",
+                ".*select\\s*([/\\\\]|\\\\n|/n|\\n)\\s*method.*",
+                ".*send\\s*([/\\\\]|\\\\n|/n|\\n)\\s*string\\s*([/\\\\]|\\\\n|/n|\\n)\\s*parameters\\s*([/\\\\]|\\\\n|/n|\\n)\\s*as\\s*([/\\\\]|\\\\n|/n|\\n)\\s*unicode.*",
+                ".*x\\s*([/\\\\]|\\\\n|/n|\\n)\\s*open\\s*([/\\\\]|\\\\n|/n|\\n)\\s*state.*",
+                ".*application\\s*([/\\\\]|\\\\n|/n|\\n)\\s*intent.*"
+        });
+
+        // ClickHouse bypass mode
+        PLATFORM_BYPASS_PATTERNS.put("clickhouse", new String[]{
+                ".*custom\\s*([/\\\\]|\\\\n|/n|\\n)\\s*http\\s*([/\\\\]|\\\\n|/n|\\n)\\s*params.*",
+                ".*http\\s*([/\\\\]|\\\\n|/n|\\n)\\s*connection\\s*([/\\\\]|\\\\n|/n|\\n)\\s*provider.*",
+                ".*check\\s*([/\\\\]|\\\\n|/n|\\n)\\s*all\\s*([/\\\\]|\\\\n|/n|\\n)\\s*nodes.*",
+                ".*fail\\s*([/\\\\]|\\\\n|/n|\\n)\\s*over.*",
+                ".*use\\s*([/\\\\]|\\\\n|/n|\\n)\\s*objects\\s*([/\\\\]|\\\\n|/n|\\n)\\s*in\\s*([/\\\\]|\\\\n|/n|\\n)\\s*arrays.*"
+        });
+
+        // Oracle bypass mode
+        PLATFORM_BYPASS_PATTERNS.put("oracle", new String[]{
+                ".*oracle\\s*([/\\\\]|\\\\n|/n|\\n)\\s*jdbc.*",
+                ".*oracle\\s*([/\\\\]|\\\\n|/n|\\n)\\s*net.*",
+                ".*oracle\\.jdbc\\.timezoneinfotable\\s*=.*",
+                ".*oracle\\.net\\.wallet_location\\s*=.*",
+                ".*oracle\\.net\\.ssl_server_dn_match\\s*=\\s*false.*",
+                ".*oracle\\.jdbc\\.enablesqlinjectionattack\\s*=\\s*true.*",
+                ".*oracle\\.jdbc\\.implicitstatementcachesize\\s*=\\s*0.*",
+                ".*oracle\\.jdbc\\.timezoneinfotable\\s*=.*",
+                ".*oracle\\.net\\.wallet_location\\s*=.*",
+                ".*oracle\\.net\\.ssl_server_dn_match\\s*=\\s*false.*",
+                ".*oracle\\.jdbc\\.enablesqlinjectionattack\\s*=\\s*true.*",
+                ".*oracle\\.jdbc\\.implicitstatementcachesize\\s*=\\s*0.*"
+        });
+
+        // DM bypass mode
+        PLATFORM_BYPASS_PATTERNS.put("dm", new String[]{
+                ".*login\\s*([/\\\\]|\\\\n|/n|\\n)\\s*mode.*",
+                ".*compatible\\s*([/\\\\]|\\\\n|/n|\\n)\\s*mode.*",
+                ".*en\\s*([/\\\\]|\\\\n|/n|\\n)\\s*crypt.*",
+                ".*ci\\s*([/\\\\]|\\\\n|/n|\\n)\\s*pher.*"
+        });
+    }
 
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
 
@@ -355,13 +447,13 @@ public class JdbcCommonCollect extends AbstractCollect {
                 throw new IllegalArgumentException("JDBC URL length exceeds maximum limit of 2048 characters");
             }
             String cleanedUrl = jdbcProtocol.getUrl();
-            // Decode and normalize the URL to handle escaped characters and potential obfuscation
+            // decode and normalize the URL to handle escaped characters and potential obfuscation
             try {
-                cleanedUrl = java.net.URLDecoder.decode(cleanedUrl, "UTF-8");
+                cleanedUrl = java.net.URLDecoder.decode(cleanedUrl, StandardCharsets.UTF_8);
             } catch (Exception e) {
                 // ignore decoding errors, use original url
             }
-            // Remove special and invisible characters, including  
+            // remove special and invisible characters, including  
             cleanedUrl = cleanedUrl.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", "");
             String url = cleanedUrl.toLowerCase();
             // backlist check
@@ -370,26 +462,40 @@ public class JdbcCommonCollect extends AbstractCollect {
                     throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious parameter: " + keyword);
                 }
             }
-            // url format check - potentially adjust regex based on H2 specifics if needed
-            if (jdbcProtocol.getPlatform() != null && jdbcProtocol.getPlatform().equalsIgnoreCase("h2")) {
-                String h2Url = url;
-                // Uniformly handle invisible characters (e.g., \u00A0), replacing them with spaces
-                h2Url = h2Url.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", " ");
-                // Convert to lowercase
-                h2Url = h2Url.toLowerCase();
-
-                // Check for the presence of double backslashes (\\), single slashes (/), backslashes (\), or escaped variants + init or runscript (case-insensitive, allowing invisible characters)
-                // Allow arbitrary whitespace characters (including invisible ones) and detect variations such as IN\IT, IN/IT, IN\\IT, IN\nIT, etc.
-                // Check for cases where the init keyword is split (e.g., in\it, in/it, in\\it, in\nit, etc.)
-                if (h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*init\\s*=.*")
-                        || h2Url.matches(".*in\\s*([/\\\\]|\\\\n|/n|\\n)\\s*it\\s*=.*")
-                        || h2Url.matches(".*(\\\\\\\\|/|\\\\|\\\\n|/n|\\n)\\s*runscript\\s+from.*")
-                        || h2Url.matches(".*ru\\s*([/\\\\]|\\\\n|/n|\\n)\\s*script\\s+from.*")) {
-                    throw new IllegalArgumentException("Invalid H2 JDBC URL: contains potentially malicious init or runscript bypass");
+            // universal detection
+            String normalizedUrl = url.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", " ").toLowerCase();
+            // universal detection of JDBC injection and deserialization attacks
+            if (normalizedUrl.matches(".*jndi\\s*[:=].*")
+                    || normalizedUrl.matches(".*ldap\\s*[:=].*")
+                    || normalizedUrl.matches(".*rmi\\s*[:=].*")
+                    || normalizedUrl.matches(".*java\\s*[:=].*")
+                    || normalizedUrl.matches(".*serialization\\s*[:=].*")
+                    || normalizedUrl.matches(".*deserializ.*\\s*[:=].*")
+                    || normalizedUrl.matches(".*objectinputstream\\s*[:=].*")
+                    || normalizedUrl.matches(".*readobject\\s*[:=].*")) {
+                throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious JNDI or deserialization parameter");
+            }
+            // universal detection of bypass
+            for (String pattern : UNIVERSAL_BYPASS_PATTERNS) {
+                if (normalizedUrl.matches(pattern)) {
+                    throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious bypass pattern");
                 }
             }
-            return cleanedUrl;
+            // database platform specific bypass detection
+            if (jdbcProtocol.getPlatform() != null) {
+                String platform = jdbcProtocol.getPlatform().toLowerCase();
+                // check for specific bypass modes on the platform
+                String[] platformPatterns = PLATFORM_BYPASS_PATTERNS.get(platform);
+                if (platformPatterns != null) {
+                    for (String pattern : platformPatterns) {
+                        if (normalizedUrl.matches(pattern)) {
+                            throw new IllegalArgumentException("Invalid " + platform.toUpperCase() + " JDBC URL: contains potentially malicious bypass pattern");
+                        }
+                    }
+                }
+            }
         }
+        assert jdbcProtocol.getPlatform() != null;
         return switch (jdbcProtocol.getPlatform()) {
             case "mysql", "mariadb" -> "jdbc:mysql://" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
