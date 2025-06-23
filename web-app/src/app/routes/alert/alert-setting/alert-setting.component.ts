@@ -1411,13 +1411,13 @@ export class AlertSettingComponent implements OnInit {
   }
 
   get monitorDataByLabel(): any[] {
-    return this.transferData.filter(item => 
-      item.labels.some((label: string) => this.selectedLabels.has(label))
-    ).map(item => ({
-      key: item.key,
-      title: item.title,
-      description: item.description,
-      labels: item.labels
-    }));
+    return this.transferData
+      .filter(item => item.labels.some((label: string) => this.selectedLabels.has(label)))
+      .map(item => ({
+        key: item.key,
+        title: item.title,
+        description: item.description,
+        labels: item.labels
+      }));
   }
 }
