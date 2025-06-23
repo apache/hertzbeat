@@ -27,8 +27,8 @@ name:
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 Darwin 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 Darwin</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH protocol</a> to monitors Darwin operating system's general performance metrics such as cpu, memory, disk, basic, interface, disk_free, top_process etc. <br>You can click the "<i>New Darwin</i>" and config host port and other related params to add, auth support password or secretKey. Or import an existing setup through the "<i>More Actions</i>" menu.
-#  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 對 Darwin 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Darwin</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
-#  ja-JP: HertzBeat は <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> Darwinシステムの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 Darwin Linux</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 對 Darwin 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Darwin</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: HertzBeat は <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> Darwinシステムの一般的なパフォーマンスのメトリックを監視します。<br>「<i>新規 Darwin Linux</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
 helpLink:
   zh-CN: https://HertzBeat.apache.org/zh-cn/docs/help/Darwin/
   en-US: https://HertzBeat.apache.org/docs/help/Darwin/
@@ -77,7 +77,6 @@ params:
     # required-true or false
     required: false
     # default value
-    # 默认值
     defaultValue: 6000
   # field-param field key
   - field: reuseConnection
@@ -264,7 +263,7 @@ metrics:
         i18n:
           zh-CN: 操作系统版本
           en-US: System Version
-          ja-JP: システムバージョン
+          ja-JP: オーエスバージョン
           zh-TW: 操作系統版本
       - field: uptime
         type: 1
@@ -742,7 +741,7 @@ metrics:
           zh-CN: 进程ID
           zh-TW: 進程ID
           en-US: PID
-          ja-JP: プロセスID
+          ja-JP: PID
       - field: cpu_usage
         type: 0
         unit: '%'
@@ -806,7 +805,7 @@ metrics:
           zh-CN: 进程ID
           zh-TW: 進程ID
           en-US: PID
-          ja-JP: プロセスID
+          ja-JP: PID
       - field: mem_usage
         type: 0
         unit: '%'

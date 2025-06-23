@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 HDFS NameNode 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache HDFS NameNode</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the HDFS NameNode metrics. <br>You can click "<i>New Apache HDFS NameNode</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 HDFS NameNode 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache HDFS NameNode</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は HDFS NameNodeの一般的なメトリック監視します。<br>「<i>新規 Apache HDFS NameNode</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は HDFS NameNodeの一般的なメトリックを監視します。<br>「<i>新規 Apache HDFS NameNode</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hdfs_namenode/
