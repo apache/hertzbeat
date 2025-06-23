@@ -183,8 +183,9 @@ public class JdbcCommonCollect extends AbstractCollect {
             throw new IllegalArgumentException("Database collect must has jdbc params");
         }
         if (StringUtils.hasText(metrics.getJdbc().getUrl())) {
+            String url = metrics.getJdbc().getUrl().toLowerCase();
             for (String keyword : VULNERABLE_KEYWORDS) {
-                if (metrics.getJdbc().getUrl().contains(keyword)) {
+                if (url.contains(keyword)) {
                     throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + keyword);
                 }
             }
@@ -456,6 +457,10 @@ public class JdbcCommonCollect extends AbstractCollect {
             // remove special and invisible characters, including  
             cleanedUrl = cleanedUrl.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", "");
             String url = cleanedUrl.toLowerCase();
+            // url format check
+            if (!url.matches("^jdbc:[a-zA-Z0-9]+:([^\\s;]+)(;[^\\s;]+)*$")) {
+                throw new IllegalArgumentException("Invalid JDBC URL format");
+            }
             // backlist check
             for (String keyword : BLACK_LIST) {
                 if (url.contains(keyword.toLowerCase())) {
@@ -494,6 +499,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                     }
                 }
             }
+            return normalizedUrl;
         }
         assert jdbcProtocol.getPlatform() != null;
         return switch (jdbcProtocol.getPlatform()) {
