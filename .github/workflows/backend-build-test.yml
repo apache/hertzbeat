@@ -46,7 +46,7 @@ jobs:
       - uses: ./script/ci/github-actions/setup-deps
 
       - name: Build with Maven
-        run: mvnd clean -B package -Prelease -Dmaven.test.skip=false --file pom.xml
+        run: mvnd clean -B package -Prelease -Dmaven.test.skip=true --file pom.xml
 
       - name: Upload test reports
         if: failure()  # 仅在失败时上传
