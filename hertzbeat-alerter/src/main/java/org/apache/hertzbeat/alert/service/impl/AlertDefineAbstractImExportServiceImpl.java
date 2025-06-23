@@ -52,7 +52,7 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
                 .stream()
                 .map(this::convert)
                 .toList();
-        LogUtil.info(logger , "Importing alert defines from {0}", formList);
+        LogUtil.info(logger, "Importing alert defines from {0}", formList);
         if (!CollectionUtils.isEmpty(formList)) {
             formList.forEach(alertDefine -> {
                 alertDefineService.validate(alertDefine, false);

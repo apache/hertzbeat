@@ -25,6 +25,10 @@ import org.slf4j.Logger;
 
 import java.text.MessageFormat;
 
+/**
+ * Log utility class that provides formatted logging methods with location information.
+ * This class enhances standard SLF4J logging by automatically adding caller location details.
+ */
 public class LogUtil {
 
     private static final String TEMPLATE_REGEX = "\\{\\d}";
@@ -134,13 +138,11 @@ public class LogUtil {
             StackTraceElement currentStackTrace = stackTraceElements[i];
             StackTraceElement nextStackTrace = stackTraceElements[i + 1];
 
-            /**
-             * If current stack trace is in LogUtil
-             * and next stack trace is not in LogUtil
-             * then the next node is the caller of LogUtil
-             */
-            if (LogUtil.class.getName().equals(currentStackTrace.getClassName()) &&
-                    !LogUtil.class.getName().equals(nextStackTrace.getClassName())) {
+            // If current stack trace is in LogUtil
+            // and next stack trace is not in LogUtil
+            // then the next node is the caller of LogUtil
+            if (LogUtil.class.getName().equals(currentStackTrace.getClassName())
+                    && !LogUtil.class.getName().equals(nextStackTrace.getClassName())) {
                 String stackTrace = nextStackTrace.toString();
                 header.append(" ").append(StringUtils.removeStart(stackTrace, nextStackTrace.getClassName() + "."));
                 break;
