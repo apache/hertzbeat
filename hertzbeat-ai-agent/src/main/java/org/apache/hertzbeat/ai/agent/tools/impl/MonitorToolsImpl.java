@@ -3,7 +3,6 @@ package org.apache.hertzbeat.ai.agent.tools.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.agent.tools.MonitorTools;
@@ -27,51 +26,38 @@ public class MonitorToolsImpl implements MonitorTools {
      * Tool to query monitor information with flexible filtering and pagination.
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
      * pagination.
-     * Returns results as plain JSON.
+     * Returns monitor names as string.
+     * method yet to complete
      */
     @Override
-    @Tool(name = "get_monitors", description = """
-
+    @Tool(name = "list_monitors", returnDirect = true, description = """
             Query monitor information with flexible filtering and pagination.
             Supports filtering by monitor IDs, type, status, host, labels, sorting, and pagination.
-            Returns results as plain JSON.
-
-            Parameters:
-            - ids: List of monitor IDs to filter (optional)
-            - app: Monitor type, e.g., 'linux' (optional)
-            - status: Monitor status (0: no monitor, 1: usable, 2: disabled, 9: all) (optional)
-            - search: Fuzzy search for host or name (optional)
-            - labels: Monitor labels, e.g., 'env:prod,instance:22' (optional)
-            - sort: Sort field, e.g., 'name' (default: gmtCreate)
-            - order: Sort order, 'asc' or 'desc' (default: desc)
-            - pageIndex: Page index (default: 0)
-            - pageSize: Page size (default: 8)
+            Returns results as String. When no parameters are available, pass the default value as mentioned below. If the user doesn't provide any specific parameter, the default value will be used.
             """)
-
-    public String getMonitors(
-
-            @ToolParam(description = "List of monitor IDs to filter (optional)") List<Long> ids,
-            @ToolParam(description = "Monitor type, e.g., 'linux' (optional)") String app,
-            @ToolParam(description = "Monitor status (0: no monitor, 1: usable, 2: disabled, 9: all) (optional)") Byte status,
-            @ToolParam(description = "Fuzzy search for host or name (optional)") String search,
-            @ToolParam(description = "Monitor labels, e.g., 'env:prod,instance:22' (optional)") String labels,
-            @ToolParam(description = "Sort field, e.g., 'name' (default: gmtCreate)") String sort,
-            @ToolParam(description = "Sort order, 'asc' or 'desc' (default: desc)") String order,
-            @ToolParam(description = "Page index (default: 0)") int pageIndex,
-            @ToolParam(description = "Page size (default: 8)") int pageSize) {
+    public String listMonitors(
+            @ToolParam(description = "List of monitor IDs to filter (default: empty list)", required = false) List<Long> ids,
+            @ToolParam(description = "Monitor type, e.g., 'linux' (default: null)", required = false) String app,
+            @ToolParam(description = "Monitor status (0: no monitor, 1: usable, 2: disabled, 9: all) (default: null)", required = false) Byte status,
+            @ToolParam(description = "Fuzzy search for host or name (default: null)", required = false) String search,
+            @ToolParam(description = "Monitor labels, e.g., 'env:prod,instance:22' (default: null)", required = false) String labels,
+            @ToolParam(description = "Sort field, e.g., 'name' (default: gmtCreate)", required = false) String sort,
+            @ToolParam(description = "Sort order, 'asc' or 'desc' (default: desc)", required = false) String order,
+            @ToolParam(description = "Page index (default: 0)", required = false) int pageIndex,
+            @ToolParam(description = "Page size (default: 8)", required = false) int pageSize) {
         try {
-            Page<Monitor> result = monitorServiceAdapter.getMonitors(ids, app, search, status, sort, order, pageIndex,
-                    pageSize, labels);
+            Page<Monitor> result = monitorServiceAdapter.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
             log.info("MonitorServiceAdapter.getMonitors result: {}", result);
-            return result.toString();
+            return result.getContent().stream().map(Monitor::getName).toList().toString();
         } catch (Exception e) {
-            return "Failed to query monitors: " + e.getMessage();
+            return "error is" + e.getMessage();
         }
     }
 
     @Override
     @Tool(name = "add_monitor", description = "Add a new monitor")
-    public String addMonitor(String name) {
+    public String addMonitor(@ToolParam(description = "Name of the monitor") String name) {
         return "Monitor added: " + name;
     }
+
 }

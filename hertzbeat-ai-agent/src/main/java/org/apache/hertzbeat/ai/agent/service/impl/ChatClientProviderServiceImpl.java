@@ -1,5 +1,6 @@
 package org.apache.hertzbeat.ai.agent.service.impl;
 
+import org.apache.hertzbeat.ai.agent.config.PromptProvider;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
@@ -7,6 +8,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.Arrays;
 
 /**
  * Implementation of the {@link ChatClientProviderService}.
@@ -37,10 +39,15 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     @Override
     public String streamChat(ChatRequestContext context) {
-        return this.chatClient.prompt()
-                .user(context.getMessage())
-                .toolCallbacks(toolCallbackProvider)
-                .call()
-                .content();
+        try {
+            return this.chatClient.prompt(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
+                    .user(context.getMessage())
+                    .toolCallbacks(toolCallbackProvider)
+                    .call()
+                    .content();
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+
     }
 }

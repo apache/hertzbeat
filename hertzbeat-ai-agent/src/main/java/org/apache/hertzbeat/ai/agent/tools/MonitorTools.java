@@ -1,5 +1,7 @@
 package org.apache.hertzbeat.ai.agent.tools;
 
+import java.util.List;
+
 /**
  * Interface for Monitoring Tools
  */
@@ -13,8 +15,8 @@ public interface MonitorTools {
      * pagination.
      * Returns results as plain JSON.
      */
-    String getMonitors(
-            java.util.List<Long> ids,
+    String listMonitors(
+            List<Long> ids,
             String app,
             Byte status,
             String search,
