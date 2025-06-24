@@ -435,6 +435,9 @@ public class JdbcCommonCollect extends AbstractCollect {
 
     /**
      * Recursively decode the URL to prevent multiple encoding bypasses.
+     *
+     * @param url jdbc url
+     * @return decoded decoded jdbc url
      */
     private String recursiveDecode(String url) {
         String prev;
@@ -443,7 +446,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         do {
             prev = decoded;
             try {
-                decoded = java.net.URLDecoder.decode(prev, "UTF-8");
+                decoded = java.net.URLDecoder.decode(prev, StandardCharsets.UTF_8);
             } catch (Exception e) {
                 break;
             }
