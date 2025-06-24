@@ -341,6 +341,24 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     /**
+     * Recursively decode the URL to prevent multiple encoding bypasses.
+     */
+    private String recursiveDecode(String url) {
+        String prev;
+        String decoded = url;
+        int max = 5; // Decode it at most 5 times to prevent infinite loops.
+        do {
+            prev = decoded;
+            try {
+                decoded = java.net.URLDecoder.decode(prev, "UTF-8");
+            } catch (Exception e) {
+                break;
+            }
+        } while (!prev.equals(decoded) && --max > 0);
+        return decoded;
+    }
+
+    /**
      * construct jdbc url due the jdbc protocol
      *
      * @param jdbcProtocol jdbc
@@ -356,7 +374,8 @@ public class JdbcCommonCollect extends AbstractCollect {
             }
             // remove special characters
             String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F]", "");
-            String url = cleanedUrl.toLowerCase();
+            String url = recursiveDecode(cleanedUrl);
+            url = url.toLowerCase();
             // backlist check
             for (String keyword : BLACK_LIST) {
                 if (url.contains(keyword)) {
