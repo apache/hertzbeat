@@ -23,6 +23,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { Rule, RuleSet, QueryBuilderConfig, QueryBuilderClassNames } from '@kerwin612/ngx-query-builder';
 import { NzCascaderFilter } from 'ng-zorro-antd/cascader';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -52,7 +53,8 @@ export class AlertSettingComponent implements OnInit {
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private message: NzMessageService
   ) {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
     this.qbFormCtrl.valueChanges.subscribe(() => {
@@ -124,6 +126,10 @@ export class AlertSettingComponent implements OnInit {
   ];
 
   isSelectTypeModalVisible = false;
+
+  previewData: any[] = [];
+  previewColumns: Array<{ title: string; key: string; width?: string }> = [];
+  previewTableLoading = false;
 
   ngOnInit(): void {
     this.loadAlertDefineTable();
@@ -1419,5 +1425,64 @@ export class AlertSettingComponent implements OnInit {
         description: item.description,
         labels: item.labels
       }));
+  }
+
+  onPreviewExpr(): void {
+    if (!this.define.expr) {
+      this.clearPreview();
+      this.previewTableLoading = false;
+      return;
+    }
+    this.previewTableLoading = true;
+    this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.expr).subscribe({
+      next: res => {
+        if (res.code === 15) {
+          this.message.error(res.msg || 'Expression parsing exception');
+          this.clearPreview();
+          this.previewTableLoading = false;
+          return;
+        }
+        if (res.code === 0 && Array.isArray(res.data)) {
+          const tableData = res.data.map(this.filterEmptyFields).filter(row => row.__value__ != null);
+          this.previewData = tableData;
+
+          const allKeys = new Set<string>();
+          tableData.forEach(data => Object.keys(data).forEach(key => allKeys.add(key)));
+          const sortedKeys = Array.from(allKeys).sort((a, b) => {
+            if (a === '__value__') return 1;
+            if (b === '__value__') return -1;
+            return 0;
+          });
+
+          this.previewColumns = sortedKeys.map(key => ({
+            title: key,
+            key: key,
+            width: '150px'
+          }));
+        } else {
+          this.clearPreview();
+        }
+        this.previewTableLoading = false;
+      },
+      error: err => {
+        this.clearPreview();
+        this.previewTableLoading = false;
+        this.message.error('Failed to get preview data.');
+      }
+    });
+  }
+
+  private filterEmptyFields(mapData: Record<string, any>): Record<string, any> {
+    return Object.entries(mapData).reduce<Record<string, any>>((acc, [key, value]) => {
+      if (value == null) return acc;
+      if (typeof value === 'string' && value.trim() === '') return acc;
+      acc[key] = value;
+      return acc;
+    }, {});
+  }
+
+  private clearPreview(): void {
+    this.previewData = [];
+    this.previewColumns = [];
   }
 }

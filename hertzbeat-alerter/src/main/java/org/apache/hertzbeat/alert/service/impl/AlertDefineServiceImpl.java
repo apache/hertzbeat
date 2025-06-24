@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +28,7 @@ import org.apache.hertzbeat.alert.calculate.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
@@ -58,6 +58,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
+
 /**
  * Alarm definition management interface implementation
  */
@@ -72,12 +75,15 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Autowired
     private PeriodicAlertRuleScheduler periodicAlertRuleScheduler;
 
+    private final DataSourceService dataSourceService;
+
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
 
     private static final String CONTENT_TYPE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
 
-    public AlertDefineServiceImpl(List<AlertDefineImExportService> alertDefineImExportServiceList) {
+    public AlertDefineServiceImpl(List<AlertDefineImExportService> alertDefineImExportServiceList, DataSourceService dataSourceService) {
         alertDefineImExportServiceList.forEach(it -> alertDefineImExportServiceMap.put(it.type(), it));
+        this.dataSourceService = dataSourceService;
     }
 
     @Override
@@ -217,5 +223,19 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             CacheFactory.setAlertDefineCache(alertDefines);
         }
         return alertDefines;
+    }
+
+    @Override
+    public List<Map<String, Object>> getDefinePreview(String datasource, String type, String expr) {
+        if (!StringUtils.hasText(expr) || !StringUtils.hasText(datasource) || !StringUtils.hasText(type)) {
+            return Collections.emptyList();
+        }
+        switch (type) {
+            case ALERT_THRESHOLD_TYPE_PERIODIC:
+                return dataSourceService.calculate(datasource, expr);
+            default:
+                log.error("Get define preview unsupported type: {}", type);
+                return Collections.emptyList();
+        }
     }
 }

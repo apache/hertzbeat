@@ -67,6 +67,13 @@ export class AlertDefineService {
     return this.http.delete<Message<any>>(alert_defines_uri, options);
   }
 
+  public getMonitorsDefinePreview(datasource: string, type: string, expr: string): Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    if (type != null) httpParams = httpParams.set('type', type);
+    if (expr != null) httpParams = httpParams.set('expr', expr);
+    return this.http.get<Message<any>>(`${alert_define_uri}/preview/${datasource}`, { params: httpParams });
+  }
+
   public getAlertDefines(search: string[] | undefined, pageIndex: number, pageSize: number): Observable<Message<Page<AlertDefine>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
