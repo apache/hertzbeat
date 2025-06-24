@@ -185,7 +185,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (StringUtils.hasText(metrics.getJdbc().getUrl())) {
             String url = metrics.getJdbc().getUrl().toLowerCase();
             for (String keyword : VULNERABLE_KEYWORDS) {
-                if (url.contains(keyword)) {
+                if (url.contains(keyword.toLowerCase())) {
                     throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + keyword);
                 }
             }
