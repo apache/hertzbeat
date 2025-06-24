@@ -232,7 +232,7 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: state
-          ja-JP: ステート
+          ja-JP: 状態
         type: 1
       - field: status
         i18n:
@@ -289,14 +289,14 @@ metrics:
         i18n:
           zh-CN: 可用内存
           en-US: available memory
-          ja-JP: 使用可能なメモリ
+          ja-JP: 使用可能のメモリ
         type: 0
         unit: MB
       - field: used_memory
         i18n:
           zh-CN: 已用内存
           en-US: used memory
-          ja-JP: 使用済みメモリ
+          ja-JP: 使用済みのメモリ
         type: 0
         unit: MB
       - field: memory_usage
@@ -316,7 +316,7 @@ metrics:
         i18n:
           zh-CN: 可使用CPU数
           en-US: cpus number
-          ja-JP: 使用可能なCPUコア数
+          ja-JP: 使用可能のCPUコア数
         type: 0
       - field: cpu_usage
         i18n:

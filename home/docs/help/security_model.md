@@ -30,6 +30,10 @@ Apache HertzBeat supports users to upload custom code plugins to run in the life
 
 Apache HertzBeat supports users to customize collectors to personalize the collection of monitoring indicators, and users need to ensure the security of the custom collectors themselves.
 
+## Custom URL and Other Parameter Security
+
+Apache HertzBeat provides the ability to configure custom parameters. All users authorized to configure URLs and other parameters are considered highly trusted and are expected to trigger certain behaviors.
+
 ## Security Constraints in Other Customizations
 
 Apache HertzBeat provides a variety of system extension methods and custom capabilities. Users need to pay attention to the security of customizations during use. Of course, all extension capabilities need to be within the scope of authenticated users.

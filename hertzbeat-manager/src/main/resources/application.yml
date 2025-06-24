@@ -90,14 +90,6 @@ sureness:
              8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
 
-otel:
-  traces:
-    exporter: none
-  metrics:
-    exporter: none
-  logs:
-    exporter: none
-
 ---
 spring:
   config:
@@ -301,7 +293,7 @@ grafana:
 
 # See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
 ai:
-  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk、ollama
+  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk、ollama、openRouter
   type:
   # Model name：glm-4、qwen-turboo、moonshot-v1-8k、generalv3.5
   model:
