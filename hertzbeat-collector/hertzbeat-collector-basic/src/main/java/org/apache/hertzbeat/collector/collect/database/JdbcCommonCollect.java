@@ -434,6 +434,24 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     /**
+     * Recursively decode the URL to prevent multiple encoding bypasses.
+     */
+    private String recursiveDecode(String url) {
+        String prev;
+        String decoded = url;
+        int max = 5; // Decode it at most 5 times to prevent infinite loops.
+        do {
+            prev = decoded;
+            try {
+                decoded = java.net.URLDecoder.decode(prev, "UTF-8");
+            } catch (Exception e) {
+                break;
+            }
+        } while (!prev.equals(decoded) && --max > 0);
+        return decoded;
+    }
+
+    /**
      * construct jdbc url due the jdbc protocol
      *
      * @param jdbcProtocol jdbc
@@ -447,16 +465,10 @@ public class JdbcCommonCollect extends AbstractCollect {
             if (jdbcProtocol.getUrl().length() > 2048) {
                 throw new IllegalArgumentException("JDBC URL length exceeds maximum limit of 2048 characters");
             }
-            String cleanedUrl = jdbcProtocol.getUrl();
-            // decode and normalize the URL to handle escaped characters and potential obfuscation
-            try {
-                cleanedUrl = java.net.URLDecoder.decode(cleanedUrl, StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                // ignore decoding errors, use original url
-            }
-            // remove special and invisible characters, including  
-            cleanedUrl = cleanedUrl.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", "");
-            String url = cleanedUrl.toLowerCase();
+            // remove special characters
+            String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F\\xA0]", "");
+            String url = recursiveDecode(cleanedUrl);
+            url = url.toLowerCase();
             // url format check
             if (!url.matches("^jdbc:[a-zA-Z0-9]+:([^\\s;]+)(;[^\\s;]+)*$")) {
                 throw new IllegalArgumentException("Invalid JDBC URL format");
