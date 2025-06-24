@@ -156,7 +156,6 @@ conditionUnit
 promql
     : metricSelector instantVectorOp?
     | aggregationOperator LPAREN promql (BY labelList)? RPAREN
-    | promql binaryOperator promql
     | functionCall
     | promql LBRACKET duration RBRACKET
     | promql LBRACKET duration COLON duration RBRACKET
