@@ -41,7 +41,7 @@ spring:
       client:
         enabled: false
     openai:
-      api-key:
+      api-key: OPENAI_API_KEY
       chat:
         options:
           model: gpt-4.1-nano-2025-04-14
