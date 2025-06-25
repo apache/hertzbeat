@@ -110,7 +110,9 @@ public abstract class AbstractCollectE2eTest {
                 String.format("%s metrics values should not be empty, detail: %s", metricName, metricsData.getMsg()));
 
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+            log.info("valueRow: {}", valueRow);
             for (int i = 0; i < valueRow.getColumnsCount(); i++) {
+                log.info("valueRow.getColumns(i): {}", valueRow.getColumns(i));
                 Assertions.assertFalse(valueRow.getColumns(i).isEmpty(),
                         String.format("%s metric column %d should not be empty", metricName, i));
                 if (!allowEmpty) {
