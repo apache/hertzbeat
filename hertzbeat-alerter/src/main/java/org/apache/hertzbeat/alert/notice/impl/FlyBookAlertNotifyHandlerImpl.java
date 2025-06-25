@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.alert.notice.impl;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,10 +27,13 @@ import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Send alert information through FeiShu
@@ -47,19 +48,18 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
      */
     private static final String[] TITLE_COLOR = {"red", "yellow", "orange"};
 
-
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         try {
             String notificationContent = JsonUtil.toJson(renderContent(noticeTemplate, alert));
-            // todo priority custom the color 
+            // todo priority custom the color
             String cardMessage = createLarkMessage(receiver.getUserId(), notificationContent, (byte) 1);
             String webHookUrl = alerterProperties.getFlyBookWebhookUrl() + receiver.getAccessToken();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> flyEntity = new HttpEntity<>(cardMessage, headers);
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl,
-                flyEntity, CommonRobotNotifyResp.class);
+                    flyEntity, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;
                 if (entity.getBody().getCode() == null || entity.getBody().getCode() == 0) {
@@ -87,115 +87,120 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
      */
     private String createLarkMessage(String userId, String notificationContent, byte priority) {
         String larkCardMessage = """
-            {
-                "msg_type": "interactive",
-                "card": {
-                    "config": {
-                        "update_multi": true
-                    },
-                    "i18n_elements": {
-                        "zh_cn": [
-                            {
-                                "tag": "column_set",
-                                "flex_mode": "none",
-                                "horizontal_spacing": "default",
-                                "background_style": "default",
-                                "columns": [
-                                    {
-                                        "tag": "column",
-                                        "elements": [
-                                            {
-                                                "tag": "div",
-                                                "text": {
-                                                    "tag": "plain_text",
-                                                    "content": "",
-                                                    "text_size": "normal",
-                                                    "text_align": "left",
-                                                    "text_color": "default"
-                                                }
-                                            }
-                                        ],
-                                        "width": "weighted",
-                                        "weight": 1
-                                    }
-                                ]
-                            },
-                            {
-                                "tag": "column_set",
-                                "flex_mode": "none",
-                                "horizontal_spacing": "default",
-                                "background_style": "default",
-                                "columns": [
-                                    {
-                                        "tag": "column",
-                                        "elements": [
-                                            {
-                                                "tag": "div",
-                                                "text": {
-                                                    "tag": "plain_text",
-                                                    "content": %s,
-                                                    "text_size": "normal",
-                                                    "text_align": "left",
-                                                    "text_color": "default"
-                                                }
-                                            }
-                                        ],
-                                        "width": "weighted",
-                                        "weight": 1
-                                    }
-                                ]
-                            },
-                            %s
-                            {
-                                "tag": "action",
-                                "actions": [
-                                    {
-                                        "tag": "button",
-                                        "text": {
-                                            "tag": "plain_text",
-                                            "content": "登入控制台"
-                                        },
-                                        "type": "default",
-                                        "complex_interaction": true,
-                                        "width": "default",
-                                        "size": "medium",
-                                        "multi_url": {
-                                            "url": "%s"
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    "i18n_header": {
-                        "zh_cn": {
-                            "title": {
-                                "tag": "plain_text",
-                                "content": "HertzBeat 告警"
-                            },
-                            "template": "%s"
-                        }
-                    }
+                 {
+                 "msg_type": "interactive",
+                 "card":  {
+                      "schema": "2.0",
+                      "config": {
+                          "update_multi": true,
+                          "locales": [
+                              "en_us",
+                              "zh_cn"
+                          ],
+                          "style": {
+                              "text_size": {
+                                  "normal_v2": {
+                                      "default": "normal",
+                                      "pc": "normal",
+                                      "mobile": "heading"
+                                  }
+                              }
+                          }
+                      },
+                      "body": {
+                          "direction": "vertical",
+                          "padding": "12px 12px 12px 12px",
+                          "elements": [
+                              {
+                                  "tag": "markdown",
+                                  "content": "%s",
+                                  "i18n_content": {
+                                      "en_us": ""
+                                  },
+                                  "text_align": "left",
+                                  "text_size": "normal_v2",
+                                  "margin": "0px 0px 0px 0px"
+                              },
+                              {
+                                  "tag": "hr",
+                                  "margin": "0px 0px 0px 0px"
+                              },
+                              {
+                                  "tag": "column_set",
+                                  "horizontal_align": "left",
+                                  "columns": [
+                                      {
+                                          "tag": "column",
+                                          "width": "weighted",
+                                          "elements": [
+                                              {
+                                                  "tag": "button",
+                                                  "text": {
+                                                      "tag": "plain_text",
+                                                      "content": "登入控制台",
+                                                      "i18n_content": {
+                                                          "en_us": "Login In"
+                                                      }
+                                                  },
+                                                  "type": "default",
+                                                  "width": "default",
+                                                  "size": "medium",
+                                                  "behaviors": [
+                                                      {
+                                                          "type": "open_url",
+                                                          "default_url": "%s",
+                                                          "pc_url": "",
+                                                          "ios_url": "",
+                                                          "android_url": ""
+                                                      }
+                                                  ]
+                                              }
+                                          ],
+                                          "direction": "horizontal",
+                                          "vertical_spacing": "8px",
+                                          "horizontal_align": "left",
+                                          "vertical_align": "top",
+                                          "weight": 1
+                                      }
+                                  ],
+                                  "margin": "0px 0px 0px 0px"
+                              }
+                          ]
+                      },
+                      "header": {
+                          "title": {
+                              "tag": "plain_text",
+                              "content": "HertzBeat 告警",
+                              "i18n_content": {
+                                  "en_us": "HertzBeat Alarm"
+                              }
+                          },
+                          "subtitle": {
+                              "tag": "plain_text",
+                              "content": ""
+                          },
+                          "template": "%s",
+                          "padding": "12px 12px 12px 12px"
+                      }
+                  }
                 }
-            }
-            """;
+                """;
 
         String atUserElement = "";
         if (StringUtils.isNotBlank(userId)) {
-            String atUserId = Arrays.stream(userId.split(","))
-                .map(id -> "<at id=" + id + "></at>")
-                .collect(Collectors.joining(" "));
-            atUserElement = String.format("""
-                {
-                    "tag": "div",
-                    "text": {
-                        "content": "%s",
-                        "tag": "lark_md"
-                    }
-                },
-                """, atUserId);
+            atUserElement = "\\n" + Arrays.stream(userId.split(","))
+                    .map(id -> "<at id=" + id + "></at>")
+                    .collect(Collectors.joining(" "));
         }
-        return String.format(larkCardMessage, notificationContent, atUserElement, alerterProperties.getConsoleUrl(), TITLE_COLOR[priority]);
+
+        if (notificationContent.startsWith("\"") && notificationContent.endsWith("\"")) {
+            notificationContent = StringUtils.removeStart(notificationContent, "\"");
+            notificationContent = StringUtils.removeEnd(notificationContent, "\"");
+        }
+
+        return String.format(larkCardMessage,
+                notificationContent.replace("\"", "\\\"") + atUserElement,
+                alerterProperties.getConsoleUrl(), TITLE_COLOR[priority]);
     }
 
     @Override
