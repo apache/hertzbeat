@@ -17,11 +17,6 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import java.util.HashMap;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -29,17 +24,24 @@ import org.apache.hertzbeat.alert.service.impl.DataSourceServiceImpl;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.mockito.Mockito;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * test case for {@link DataSourceService}
  */
 class DataSourceServiceTest {
-    
+
     private DataSourceServiceImpl dataSourceService;
-    
+
     @BeforeEach
     void setUp() {
         dataSourceService = new DataSourceServiceImpl();
@@ -51,12 +53,12 @@ class DataSourceServiceTest {
                 new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
                 new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
         );
-        
+
         QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         Mockito.when(mockExecutor.support("promql")).thenReturn(true);
         Mockito.when(mockExecutor.execute(Mockito.anyString())).thenReturn(prometheusData);
         dataSourceService.setExecutors(List.of(mockExecutor));
-        
+
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total > 150");
         assertEquals(2, result.size());
         assertNull(result.get(0).get("__value__"));
@@ -296,45 +298,36 @@ class DataSourceServiceTest {
     @Test
     void calculate15() {
         List<Map<String, Object>> prometheusData1 = List.of(
-                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
-                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+                new HashMap<>(Map.of("__value__", 1))
         );
-        List<Map<String, Object>> prometheusData2 = List.of(
-                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
-                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
-        );
-
         QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         Mockito.when(mockExecutor.support("promql")).thenReturn(true);
-        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
-        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        Mockito.when(mockExecutor.execute("count(node_cpu_seconds_total{mode=\"user\"} > 250)")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("count(node_cpu_seconds_total{mode=\"idle\"} < 220 )")).thenReturn(new ArrayList<>());
         dataSourceService.setExecutors(List.of(mockExecutor));
 
-        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 and node_cpu_seconds_total{mode=\"idle\"} < 220");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "count(node_cpu_seconds_total{mode=\"user\"} > 250) > 0 and count(node_cpu_seconds_total{mode=\"idle\"} < 220 ) > 0");
+        assertEquals(0, result.size());
     }
 
     @Test
     void calculate16() {
         List<Map<String, Object>> prometheusData1 = List.of(
-                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
-                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+                new HashMap<>(Map.of("__value__", 1))
         );
         List<Map<String, Object>> prometheusData2 = List.of(
-                new HashMap<>(Map.of("__value__", 100.0, "timestamp", 1343554, "instance", "node1")),
-                new HashMap<>(Map.of("__value__", 200.0, "timestamp", 1343555, "instance", "node2"))
+                new HashMap<>(Map.of("__value__", 1))
         );
 
         QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
         Mockito.when(mockExecutor.support("promql")).thenReturn(true);
-        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"user\"}")).thenReturn(prometheusData1);
-        Mockito.when(mockExecutor.execute("node_cpu_seconds_total{mode=\"idle\"}")).thenReturn(prometheusData2);
+        Mockito.when(mockExecutor.execute("count(node_cpu_seconds_total{mode=\"user\"} > 250)")).thenReturn(prometheusData1);
+        Mockito.when(mockExecutor.execute("count(node_cpu_seconds_total{mode=\"idle\"} < 220 )")).thenReturn(prometheusData2);
         dataSourceService.setExecutors(List.of(mockExecutor));
 
-        List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 and node_cpu_seconds_total{mode=\"idle\"} < 20");
+        List<Map<String, Object>> result = dataSourceService.calculate("promql", "count(node_cpu_seconds_total{mode=\"user\"} > 250) > 0 and count(node_cpu_seconds_total{mode=\"idle\"} < 220 ) > 0");
         assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertNotNull(result.get(0).get("__value__"));
     }
 
     @Test
@@ -399,8 +392,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 or node_cpu_seconds_total{mode=\"idle\"} < 20");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -421,8 +413,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 or node_cpu_seconds_total{mode=\"idle\"} < 320");
-        assertEquals(1, result.size());
-        assertNotNull(result.get(0).get("__value__"));
+        assertEquals(4, result.size());
     }
 
     @Test
@@ -443,8 +434,8 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 unless node_cpu_seconds_total{mode=\"idle\"} < 320");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(2, result.size());
+        assertEquals(100.0, result.get(0).get("__value__"));
     }
 
     @Test
@@ -465,8 +456,8 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 50 unless node_cpu_seconds_total{mode=\"idle\"} < 20");
-        assertEquals(1, result.size());
-        assertNotNull(result.get(0).get("__value__"));
+        assertEquals(2, result.size());
+        assertEquals(100.0, result.get(0).get("__value__"));
     }
 
     @Test
@@ -487,8 +478,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
 
         List<Map<String, Object>> result = dataSourceService.calculate("promql", "node_cpu_seconds_total{mode=\"user\"} > 250 unless node_cpu_seconds_total{mode=\"idle\"} < 20");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(0, result.size());
     }
 
     @Test

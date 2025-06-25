@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Alert expression visitor implement
@@ -32,7 +34,9 @@ import java.util.Map;
 public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<Map<String, Object>>> {
 
     private static final String THRESHOLD = "__threshold__";
+    private static final String NAME = "__name__";
     private static final String VALUE = "__value__";
+    private static final String TIMESTAMP = "__timestamp__";
 
     private final QueryExecutor executor;
     private final CommonTokenStream tokens;
@@ -84,42 +88,26 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     public List<Map<String, Object>> visitAndExpr(AlertExpressionParser.AndExprContext ctx) {
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
+        List<Map<String, Object>> results = new ArrayList<>();
 
-        Map<String, Object> leftMap = null;
-        boolean leftMatch = false;
-        Map<String, Object> rightMap = null;
-        boolean rightMatch = false;
-        for (Map<String, Object> item : leftOperand) {
-            if (leftMap == null) {
-                leftMap = item;
+        // build a hash set of the right-side tag collection
+        Set<String> rightLabelsSet = rightOperand.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .map(this::labelKey)
+                .collect(Collectors.toSet());
+
+        // iterate over the left side, O(1) match
+        for (Map<String, Object> leftItem : leftOperand) {
+            Object leftVal = leftItem.get(VALUE);
+            if (leftVal == null) {
+                continue;
             }
-            if (item.get(VALUE) != null) {
-                leftMap = item;
-                leftMatch = true;
-                break;
-            }
-        }
-        for (Map<String, Object> item : rightOperand) {
-            if (rightMap == null) {
-                rightMap = item;
-            }
-            if (item.get(VALUE) != null) {
-                rightMap = item;
-                rightMatch = true;
-                break;
+            String labelKey = labelKey(leftItem);
+            if (rightLabelsSet.contains(labelKey)) {
+                results.add(new HashMap<>(leftItem));
             }
         }
-        if (leftMatch && rightMatch) {
-            rightMap.putAll(leftMap);
-            return new LinkedList<>(List.of(rightMap));
-        } else if (leftMap != null) {
-            leftMap.put(VALUE, null);
-            return new LinkedList<>(List.of(leftMap));
-        } else if (rightMap != null) {
-            rightMap.put(VALUE, null);
-            return new LinkedList<>(List.of(rightMap));
-        }
-        return new LinkedList<>();
+        return results;
     }
 
     @Override
@@ -127,92 +115,51 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
 
-        Map<String, Object> leftMap = null;
-        boolean leftMatch = false;
-        Map<String, Object> rightMap = null;
-        boolean rightMatch = false;
-        for (Map<String, Object> item : leftOperand) {
-            if (leftMap == null) {
-                leftMap = item;
+        // build a hashMap of the left-hand label collection
+        Map<String, Map<String, Object>> leftLabelMap = leftOperand.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .collect(Collectors.toMap(this::labelKey, HashMap::new, (k1, k2) -> k1));
+
+        // first add all the non-empty items on the left side
+        List<Map<String, Object>> results = new ArrayList<>(leftLabelMap.values());
+
+        // add the term that has a value on the right side and not on the left side
+        for (Map<String, Object> rightItem : rightOperand) {
+            Object rightVal = rightItem.get(VALUE);
+            if (rightVal == null) {
+                continue;
             }
-            if (item.get(VALUE) != null) {
-                leftMap = item;
-                leftMatch = true;
-                break;
-            }
-        }
-        for (Map<String, Object> item : rightOperand) {
-            if (rightMap == null) {
-                rightMap = item;
-            }
-            if (item.get(VALUE) != null) {
-                rightMap = item;
-                rightMatch = true;
-                break;
+            String key = labelKey(rightItem);
+            if (!leftLabelMap.containsKey(key)) {
+                results.add(new HashMap<>(rightItem));
             }
         }
-        if (leftMatch && rightMatch) {
-            rightMap.putAll(leftMap);
-            return new LinkedList<>(List.of(rightMap));
-        } else if (leftMatch) {
-            return new LinkedList<>(List.of(leftMap));
-        } else if (rightMatch) {
-            return new LinkedList<>(List.of(rightMap));
-        } else {
-            if (leftMap != null && rightMap != null) {
-                rightMap.putAll(leftMap);
-                return new LinkedList<>(List.of(rightMap));
-            } else if (leftMap != null) {
-                return new LinkedList<>(List.of(leftMap));
-            } else if (rightMap != null) {
-                return new LinkedList<>(List.of(rightMap));
-            }
-        }
-        return new LinkedList<>();
+        return results;
     }
 
     @Override
     public List<Map<String, Object>> visitUnlessExpr(AlertExpressionParser.UnlessExprContext ctx) {
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
-        Map<String, Object> leftMap = null;
-        boolean leftMatch = false;
-        Map<String, Object> rightMap = null;
-        boolean rightMatch = false;
-        for (Map<String, Object> item : leftOperand) {
-            if (leftMap == null) {
-                leftMap = item;
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        // build a hash set of the right-side tag collection
+        Set<String> rightLabelSet = rightOperand.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .map(this::labelKey)
+                .collect(Collectors.toSet());
+
+        // iterate over the left side, O(1) match
+        for (Map<String, Object> leftItem : leftOperand) {
+            Object leftVal = leftItem.get(VALUE);
+            if (leftVal == null) {
+                continue;
             }
-            if (item.get(VALUE) != null) {
-                leftMap = item;
-                leftMatch = true;
-                break;
-            }
-        }
-        for (Map<String, Object> item : rightOperand) {
-            if (rightMap == null) {
-                rightMap = item;
-            }
-            if (item.get(VALUE) != null) {
-                rightMap = item;
-                rightMatch = true;
-                break;
+            if (!rightLabelSet.contains(labelKey(leftItem))) {
+                results.add(new HashMap<>(leftItem));
             }
         }
-        if (leftMatch && !rightMatch) {
-            return new LinkedList<>(List.of(leftMap));
-        } else {
-            if (leftMap != null) {
-                leftMap.put(VALUE, null);
-                return new LinkedList<>(List.of(leftMap));
-            } else {
-                if (rightMap != null) {
-                    rightMap.put(VALUE, null);
-                    return new LinkedList<>(List.of(rightMap));
-                }
-            }
-        }
-        return new LinkedList<>();
+        return results;
     }
 
     @Override
@@ -327,4 +274,20 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         String script = text.substring(1, text.length() - 1);
         return executor.execute(script);
     }
+
+    /**
+     * Generate tag key (excluding `__name__` and `__value__` and `__timestamp__`)
+     */
+    private String labelKey(Map<String, Object> labelsMap) {
+        if (null == labelsMap || labelsMap.isEmpty()) {
+            return "-";
+        }
+        String key = labelsMap.entrySet().stream()
+                .filter(e -> !e.getKey().equals(VALUE) && !e.getKey().equals(NAME) && !e.getKey().equals(TIMESTAMP))
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + "=" + (e.getValue() == null ? "" : e.getValue()))
+                .collect(Collectors.joining(","));
+        return key.isEmpty() ? "-" : key;
+    }
+
 }
