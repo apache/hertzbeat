@@ -21,6 +21,7 @@ app: http_sd
 name:
   zh-CN: Http Service Discovery
   en-US: Http Service Discovery
+  ja-JP: Httpサービスディスカバリー
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
@@ -29,6 +30,7 @@ params:
     name:
       zh-CN: 服务发现地址
       en-US: Service Discovery Url
+      ja-JP: サービスディスカバリー Url
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -39,6 +41,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(most mapping the html input type)
     type: radio
     # required-true or false
@@ -57,6 +60,7 @@ params:
     name:
       zh-CN: 认证Token
       en-US: Access Token
+      ja-JP: アクセストークン
     # type-param field type(most mapping the html input type)
     type: text
     # dependent parameter values list
@@ -73,6 +77,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -92,6 +97,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input type)
     type: password
     # dependent parameter values list
@@ -109,6 +115,7 @@ metrics:
     i18n:
       zh-CN: 监控目标
       en-US: Monitor Target
+      ja-JP: 監視対象
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -120,11 +127,13 @@ metrics:
         i18n:
           zh-CN: Host
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 1
         i18n:
           zh-CN: Port
           en-US: Port
+          ja-JP: ポート
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http_sd
     # the config content when protocol is http_sd
