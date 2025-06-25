@@ -18,5 +18,5 @@
  */
 
 export const CONSTANTS = {
-  VERSION: 'v1.7.1'
+  VERSION: 'v1.7.2'
 };
