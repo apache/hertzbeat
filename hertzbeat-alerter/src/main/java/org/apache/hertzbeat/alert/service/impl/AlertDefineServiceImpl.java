@@ -30,6 +30,7 @@ import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -57,9 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
-import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC;
-import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
 
 /**
  * Alarm definition management interface implementation
@@ -89,7 +87,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
         if (StringUtils.hasText(alertDefine.getExpr())) {
-            if (ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
+            if (CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
                 try {
                     JexlExpressionRunner.compile(alertDefine.getExpr());
                 } catch (Exception e) {
@@ -219,7 +217,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     public List<AlertDefine> getRealTimeAlertDefines() {
         List<AlertDefine> alertDefines = CacheFactory.getAlertDefineCache();
         if (alertDefines == null) {
-            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(ALERT_THRESHOLD_TYPE_REALTIME);
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME);
             CacheFactory.setAlertDefineCache(alertDefines);
         }
         return alertDefines;
@@ -231,7 +229,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             return Collections.emptyList();
         }
         switch (type) {
-            case ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC:
                 return dataSourceService.calculate(datasource, expr);
             default:
                 log.error("Get define preview unsupported type: {}", type);
