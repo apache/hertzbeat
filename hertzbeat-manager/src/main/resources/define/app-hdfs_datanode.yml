@@ -91,7 +91,7 @@ metrics:
         i18n:
           zh-CN: DataNode HDFS使用量
           en-US: DfsUsed
-          ja-JP: 使用済みのHDFS容量
+          ja-JP: 使用したHDFS容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: Remaining
         type: 0
@@ -142,7 +142,7 @@ metrics:
         i18n:
           zh-CN: JVM 当前已经使用的 NonHeapMemory 的大小
           en-US: MemNonHeapUsedM
-          ja-JP: 使用済みのノンヒープメモリサイズ
+          ja-JP: 使用したノンヒープメモリサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemNonHeapCommittedM
         type: 0
@@ -156,7 +156,7 @@ metrics:
         i18n:
           zh-CN: JVM 当前已经使用的 HeapMemory 的大小
           en-US: MemHeapUsedM
-          ja-JP: 使用済みのヒープメモリサイズ
+          ja-JP: 使用したヒープメモリサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapCommittedM
         type: 0

@@ -323,7 +323,7 @@ metrics:
     i18n:
       zh-CN: 内存使用
       en-US: Memory Used
-      ja-JP: 使用済みのメモリ
+      ja-JP: 使用したメモリ
     priority: 5
     fields:
       - field: space
@@ -338,7 +338,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used Memory
-          ja-JP: 使用済みのメモリ
+          ja-JP: 使用したメモリ
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
