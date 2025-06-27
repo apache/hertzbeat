@@ -914,5 +914,6 @@
   "ai.bot.greeting": "你好！我是AI助手，有什么可以帮助你的吗？",
   "ai.bot.input.placeholder": "请输入问题...",
   "ai.bot.send": "发送",
-  "ai.bot.connect-fail": "抱歉，连接AI助手时出现问题，请稍后再试。"
+  "ai.bot.connect-fail": "抱歉，连接AI助手时出现问题，请稍后再试。",
+  "monitor.help": "监控管理页面，您可以在此查看指标数据并管理监控任务。正常服务的状态为"
 }
