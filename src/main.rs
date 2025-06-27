@@ -67,9 +67,7 @@ async fn log_request(request: Request<Body>, next: Next) -> Response {
     let request_info = if content_type.contains("application/x-www-form-urlencoded")
         || content_type.contains("application/json")
     {
-        format!(
-            "{method} {uri} {version:?}{header_log}\nContent-Type: {content_type}"
-        )
+        format!("{method} {uri} {version:?}{header_log}\nContent-Type: {content_type}")
     } else {
         format!("{method} {uri} {version:?}{header_log}")
     };
@@ -97,11 +95,19 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // Read environment mode from config file, default to "production"
+    let config = config::Config::read_config("config.toml".to_string())?;
+    let env_mode = config
+        .settings
+        .env
+        .clone()
+        .unwrap_or_else(|| "production".to_string());
+    let is_dev = env_mode == "development";
+
     // Create the OAuth store
     let oauth_store = Arc::new(McpOAuthStore::new());
 
-    let config = config::Config::read_config("config.toml".to_string())?;
-    let host = config.settings.host;
+    let host = config.settings.host.clone();
     let port = config.settings.port;
     let bind_address = format!("{host}:{port}");
 
@@ -117,11 +123,15 @@ async fn main() -> Result<()> {
 
     let server_router = Router::new().nest_service("/mcp", service);
 
-    // Create protected server routes (require authorization)
-    let protected_server_router = server_router.layer(middleware::from_fn_with_state(
-        oauth_store.clone(),
-        validate_token_middleware,
-    ));
+    // Add OAuth authentication middleware only if not in development mode
+    let protected_server_router = if is_dev {
+        server_router
+    } else {
+        server_router.layer(middleware::from_fn_with_state(
+            oauth_store.clone(),
+            validate_token_middleware,
+        ))
+    };
 
     // Create CORS layer for the oauth authorization server endpoint
     let cors_layer = CorsLayer::new()

@@ -1,3 +1,4 @@
+use rmcp::model::Content;
 use rmcp::{
     RoleServer, ServerHandler, handler::server::tool::IntoCallToolResult, model::*, schemars,
     serde_json::Value, service::RequestContext, tool,
@@ -274,7 +275,7 @@ impl BashServer {
     }
 
     #[tool(description = "Get system information using bash commands")]
-    async fn get_system_info_via_bash(&self) -> Result<CallToolResult, ErrorData> {
+    async fn get_system_info_via_default_shell(&self) -> Result<CallToolResult, ErrorData> {
         let command = r#"
 echo "=== System Information ==="
 echo "Hostname: $(hostname)"
@@ -302,21 +303,93 @@ df -h / 2>/dev/null || echo "df command not available"
 
     #[tool(description = "Get the available shell in unix-like os")]
     async fn get_unix_available_shell(&self) -> Result<CallToolResult, ErrorData> {
-        let shells = [
-            "/bin/bash",
-            "/bin/sh",
-            "/bin/zsh",
-            "/usr/bin/fish",
-            "/usr/bin/tcsh",
-            "/usr/bin/dash",
-        ];
         let mut available_shell = vec![];
-        for shell in shells {
-            if fs::metadata(shell).map(|m| m.is_file()).unwrap_or(false) {
-                available_shell.push(Content::text(shell));
+        let shells_file = "/etc/shells";
+        match fs::read_to_string(shells_file) {
+            Ok(content) => {
+                for line in content.lines() {
+                    let line = line.trim();
+                    if line.is_empty() || line.starts_with('#') {
+                        continue;
+                    }
+                    // Return the available shells
+                    if fs::metadata(line).map(|m| m.is_file()).unwrap_or(false) {
+                        available_shell.push(Content::text(line));
+                    }
+                }
+            }
+            Err(e) => {
+                return Err(ErrorData {
+                    code: ErrorCode::INTERNAL_ERROR,
+                    message: Cow::Owned(format!("Failed to read {shells_file}: {e}")),
+                    data: None,
+                });
             }
         }
         let result = CallToolResult::success(available_shell);
+        Ok(result)
+    }
+
+    #[tool(description = "Get the nic info through the default shell")]
+    async fn preset_get_nic_info_via_default_shell(&self) -> Result<CallToolResult, ErrorData> {
+        let command = r#"cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'"#;
+        let result = self
+            .execute_via_default_shell(DefaultExecuteRequest {
+                command: command.to_string(),
+                working_dir: None,
+                env_vars: None,
+                timeout_seconds: Some(5),
+            })
+            .await?;
+
+        Ok(result)
+    }
+
+    #[tool(description = "Get the disk free info through the default shell")]
+    async fn preset_get_disk_free_info_via_default_shell(
+        &self,
+    ) -> Result<CallToolResult, ErrorData> {
+        let command = r#"df -mP | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'"#;
+        let result = self
+            .execute_via_default_shell(DefaultExecuteRequest {
+                command: command.to_string(),
+                working_dir: None,
+                env_vars: None,
+                timeout_seconds: Some(5),
+            })
+            .await?;
+        Ok(result)
+    }
+
+    #[tool(description = "Get the top 10 cpu processes through the default shell")]
+    async fn preset_get_top10_cpu_processes_via_default_shell(
+        &self,
+    ) -> Result<CallToolResult, ErrorData> {
+        let command = r#"ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
+        let result = self
+            .execute_via_default_shell(DefaultExecuteRequest {
+                command: command.to_string(),
+                working_dir: None,
+                env_vars: None,
+                timeout_seconds: Some(5),
+            })
+            .await?;
+        Ok(result)
+    }
+
+    #[tool(description = "Get the top 10 mem processes through the default shell")]
+    async fn preset_get_top10_mem_processes_via_default_shell(
+        &self,
+    ) -> Result<CallToolResult, ErrorData> {
+        let command = r#"ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
+        let result = self
+            .execute_via_default_shell(DefaultExecuteRequest {
+                command: command.to_string(),
+                working_dir: None,
+                env_vars: None,
+                timeout_seconds: Some(5),
+            })
+            .await?;
         Ok(result)
     }
 }
@@ -333,8 +406,8 @@ impl ServerHandler for BashServer {
                 .enable_logging()
                 .build(),
             instructions: Some(
-                r#"A Model Context Protocol server that can execute shell commands and scripts in the machine server deployed at. 
-                 Use the `execute_via_default_shell` tool to run any shell command. 
+                r#"A Model Context Protocol server that can execute shell commands and scripts in the machine server deployed at.
+                 Use the `execute_via_default_shell` tool to run any shell command.
                  Use `execute_unix_script` to run any scripts in unix-like os.
                  Use `execute_python` to run any python scripts.
                  Use `get_system_info` to get basic system information."#

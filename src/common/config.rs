@@ -11,6 +11,7 @@ pub struct Config {
 pub struct Settings {
     pub port: u16,
     pub host: String,
+    pub env: Option<String>, // "development" or "production"
 }
 
 impl Config {
