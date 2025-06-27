@@ -510,7 +510,7 @@ pub async fn oauth_authorization_server(bind_address: &str) -> impl IntoResponse
         token_endpoint: format!("http://{}/token", bind_address),
         scopes_supported: Some(vec!["profile".to_string(), "email".to_string()]),
         registration_endpoint: format!("http://{}/register", bind_address),
-        issuer: Some(format!("http://{}", bind_address.to_string())),
+        issuer: Some(format!("http://{}", bind_address)),
         jwks_uri: Some(format!("http://{}/jwks", bind_address)),
         additional_fields,
     };

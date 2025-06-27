@@ -1,0 +1,5 @@
+# This is the configuration file for mcp-bash-server
+
+[settings]
+port = 4000
+host = "0.0.0.0"

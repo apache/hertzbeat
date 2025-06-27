@@ -20,6 +20,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 // Import modules
 mod common;
 use common::bash_server::BashServer;
+use common::config;
 use common::oauth::{
     McpOAuthStore, oauth_approve, oauth_authorization_server, oauth_authorize, oauth_register,
     oauth_token, validate_token_middleware,
@@ -100,10 +101,13 @@ async fn main() -> Result<()> {
     // Create the OAuth store
     let oauth_store = Arc::new(McpOAuthStore::new());
 
-    BIND_ADDRESS.get_or_init(|| {
-        std::env::var("BIND_ADDRESS").unwrap_or_else(|_| "127.0.0.1:4000".to_string())
-    });
-    let addr = BIND_ADDRESS.get().unwrap().parse::<SocketAddr>()?;
+    let config = config::Config::read_config("config.toml".to_string())?;
+    let host = config.settings.host;
+    let port = config.settings.port;
+    let bind_address = format!("{}:{}", host, port);
+
+    let addr = bind_address.parse::<SocketAddr>()?;
+    let _ = BIND_ADDRESS.set(bind_address);
 
     // Create StreamableHttpServer
     let service = StreamableHttpService::new(
