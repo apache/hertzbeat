@@ -365,7 +365,7 @@ metrics:
     i18n:
       zh-CN: greptime 服务 MySQL 连接数
       en-US: greptime_servers_mysql_connection_count
-      ja-JP: MySQLのコネクション数
+      ja-JP: MySQLの接続数
     priority: 10
     fields:
       - field: value
@@ -388,7 +388,7 @@ metrics:
     i18n:
       zh-CN: greptime 服务 Postgres 连接数
       en-US: greptime_servers_postgres_connection_count
-      ja-JP: Postgresのコネクション数
+      ja-JP: Postgresの接続数
     priority: 11
     fields:
       - field: value
