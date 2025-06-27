@@ -277,7 +277,7 @@ pub async fn oauth_approve(
 
     // user approved the authorization request, generate authorization code
     let session_id = Uuid::new_v4().to_string();
-    let auth_code = format!("mcp-code-{}", session_id);
+    let auth_code = format!("mcp-code-{session_id}");
 
     // create new session record authorization information
     let session_id = state
@@ -506,12 +506,12 @@ pub async fn oauth_authorization_server(bind_address: &str) -> impl IntoResponse
         Value::Array(vec![Value::String("S256".into())]),
     );
     let metadata = AuthorizationMetadata {
-        authorization_endpoint: format!("http://{}/authorize", bind_address),
-        token_endpoint: format!("http://{}/token", bind_address),
+        authorization_endpoint: format!("http://{bind_address}/authorize"),
+        token_endpoint: format!("http://{bind_address}/token"),
         scopes_supported: Some(vec!["profile".to_string(), "email".to_string()]),
-        registration_endpoint: format!("http://{}/register", bind_address),
-        issuer: Some(format!("http://{}", bind_address)),
-        jwks_uri: Some(format!("http://{}/jwks", bind_address)),
+        registration_endpoint: format!("http://{bind_address}/register"),
+        issuer: Some(format!("http://{bind_address}")),
+        jwks_uri: Some(format!("http://{bind_address}/jwks")),
         additional_fields,
     };
     debug!("metadata: {:?}", metadata);

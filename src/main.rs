@@ -55,7 +55,7 @@ async fn log_request(request: Request<Body>, next: Next) -> Response {
     let mut header_log = String::new();
     for (key, value) in headers.iter() {
         let value_str = value.to_str().unwrap_or("<binary>");
-        header_log.push_str(&format!("\n  {}: {}", key, value_str));
+        header_log.push_str(&format!("\n  {key}: {value_str}"));
     }
 
     // Try to get request body for form submissions
@@ -68,11 +68,10 @@ async fn log_request(request: Request<Body>, next: Next) -> Response {
         || content_type.contains("application/json")
     {
         format!(
-            "{} {} {:?}{}\nContent-Type: {}",
-            method, uri, version, header_log, content_type
+            "{method} {uri} {version:?}{header_log}\nContent-Type: {content_type}"
         )
     } else {
-        format!("{} {} {:?}{}", method, uri, version, header_log)
+        format!("{method} {uri} {version:?}{header_log}")
     };
 
     info!("REQUEST: {}", request_info);
@@ -104,7 +103,7 @@ async fn main() -> Result<()> {
     let config = config::Config::read_config("config.toml".to_string())?;
     let host = config.settings.host;
     let port = config.settings.port;
-    let bind_address = format!("{}:{}", host, port);
+    let bind_address = format!("{host}:{port}");
 
     let addr = bind_address.parse::<SocketAddr>()?;
     let _ = BIND_ADDRESS.set(bind_address);

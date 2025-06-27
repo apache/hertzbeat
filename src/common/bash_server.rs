@@ -109,12 +109,12 @@ impl BashServer {
         })?
         .map_err(|e| ErrorData {
             code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Failed to spawn command: {}", e)),
+            message: Cow::Owned(format!("Failed to spawn command: {e}")),
             data: None,
         })?
         .map_err(|e| ErrorData {
             code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Command execution failed: {}", e)),
+            message: Cow::Owned(format!("Command execution failed: {e}")),
             data: None,
         })?;
 
@@ -179,12 +179,12 @@ impl BashServer {
         })?
         .map_err(|e| ErrorData {
             code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Failed to spawn python execution: {}", e)),
+            message: Cow::Owned(format!("Failed to spawn python execution: {e}")),
             data: None,
         })?
         .map_err(|e| ErrorData {
             code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Python execution failed: {}", e)),
+            message: Cow::Owned(format!("Python execution failed: {e}")),
             data: None,
         })?;
 
@@ -250,12 +250,12 @@ impl BashServer {
         })?
         .map_err(|e| ErrorData {
             code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Failed to spawn unix script execution: {}", e)),
+            message: Cow::Owned(format!("Failed to spawn unix script execution: {e}")),
             data: None,
         })?
         .map_err(|e| ErrorData {
             code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Unix script execution failed: {}", e)),
+            message: Cow::Owned(format!("Unix script execution failed: {e}")),
             data: None,
         })?;
 
@@ -352,7 +352,7 @@ impl ServerHandler for BashServer {
         let params = LoggingMessageNotificationParam {
             level,
             logger: Some("Server".to_string()),
-            data: Value::String(format!("logging level is {:?}", level)),
+            data: Value::String(format!("logging level is {level:?}")),
         };
         context
             .peer
@@ -360,7 +360,7 @@ impl ServerHandler for BashServer {
             .await
             .map_err(|e| ErrorData {
                 code: ErrorCode::INTERNAL_ERROR,
-                message: Cow::Owned(format!("error message: {:?}", e)),
+                message: Cow::Owned(format!("error message: {e:?}")),
                 data: None,
             })
     }
