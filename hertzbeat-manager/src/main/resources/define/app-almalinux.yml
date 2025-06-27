@@ -80,7 +80,7 @@ params:
     name:
       zh-CN: 复用连接
       en-US: Reuse Connection
-      ja-JP: コネクション再利用
+      ja-JP: 接続再利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -92,7 +92,7 @@ params:
     name:
       zh-CN: 使用代理
       en-US: Use Proxy Connection
-      ja-JP: プロキシコネクション利用
+      ja-JP: プロキシ接続利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
