@@ -483,6 +483,7 @@ export class AlertSettingComponent implements OnInit {
           getDefine$.unsubscribe();
           this.isLoadingEdit = -1;
           this.isManageModalVisible = true;
+          this.clearPreview();
         })
       )
       .subscribe(
@@ -1434,31 +1435,47 @@ export class AlertSettingComponent implements OnInit {
       return;
     }
     this.previewTableLoading = true;
+    const COLUMNS = [{ title: 'metric', key: 'metric_data' } as any, { title: 'value', key: '__value__', width: '120px' } as any];
     this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.expr).subscribe({
       next: res => {
-        if (res.code === 15) {
+        if (res.code === 15 || res.code === 1 || res.code === 4) {
           this.message.error(res.msg || 'Expression parsing exception');
           this.clearPreview();
           this.previewTableLoading = false;
           return;
         }
         if (res.code === 0 && Array.isArray(res.data)) {
-          const tableData = res.data.map(this.filterEmptyFields).filter(row => row.__value__ != null);
-          this.previewData = tableData;
+          this.previewColumns = COLUMNS;
+          this.previewData = res.data.reduce((acc, item) => {
+            const processedItem = this.filterEmptyFields(item);
 
-          const allKeys = new Set<string>();
-          tableData.forEach(data => Object.keys(data).forEach(key => allKeys.add(key)));
-          const sortedKeys = Array.from(allKeys).sort((a, b) => {
-            if (a === '__value__') return 1;
-            if (b === '__value__') return -1;
-            return 0;
-          });
+            if (processedItem.__value__ == null) return acc;
 
-          this.previewColumns = sortedKeys.map(key => ({
-            title: key,
-            key: key,
-            width: '150px'
-          }));
+            const labels: string[] = [];
+            let metricName = '';
+
+            for (const [key, value] of Object.entries(processedItem)) {
+              if (key === '__value__') continue;
+              if (key === '__name__') {
+                metricName = String(value);
+              } else {
+                labels.push(`${key}="${value}"`);
+              }
+            }
+
+            const metric = metricName ? (labels.length > 0 ? `${metricName}{${labels.join(', ')}}` : metricName) : `{${labels.join(', ')}}`;
+
+            acc.push({
+              metric_data: metric,
+              __value__: processedItem.__value__
+            });
+
+            return acc;
+          }, [] as any[]);
+
+          if (this.previewData.length === 0) {
+            this.previewData = [];
+          }
         } else {
           this.clearPreview();
         }
