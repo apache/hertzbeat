@@ -679,7 +679,7 @@ metrics:
         i18n:
           zh-CN: 执行命令
           en-US: Command
-          ja-JP: 指令
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^
@@ -738,7 +738,7 @@ metrics:
         i18n:
           zh-CN: 执行命令
           en-US: Command
-          ja-JP: 指令
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^

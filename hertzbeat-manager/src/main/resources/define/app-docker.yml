@@ -226,7 +226,7 @@ metrics:
         i18n:
           zh-CN: 命令行
           en-US: command
-          ja-JP: 指令
+          ja-JP: コマンド
         type: 1
       - field: state
         i18n:

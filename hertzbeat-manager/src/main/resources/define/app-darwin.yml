@@ -765,7 +765,7 @@ metrics:
           zh-CN: 执行命令
           zh-TW: 執行指令
           en-US: Command
-          ja-JP: 指令
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^
@@ -829,7 +829,7 @@ metrics:
           zh-CN: 执行命令
           zh-TW: 執行指令
           en-US: Command
-          ja-JP: 指令
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^
