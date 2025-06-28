@@ -3,5 +3,5 @@
 [settings]
 port = 4000
 host = "127.0.0.1"
-# Set env to "development" or "production"
+# Set env to "development" or "production", production use oauth.
 env = "development"

@@ -1,4 +1,5 @@
 use rmcp::model::Content;
+use rmcp::serde_json;
 use rmcp::{
     RoleServer, ServerHandler, handler::server::tool::IntoCallToolResult, model::*, schemars,
     serde_json::Value, service::RequestContext, tool,
@@ -25,12 +26,13 @@ pub struct DefaultExecuteRequest {
     pub timeout_seconds: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultExecuteResponse {
     pub stdout: String,
     pub stderr: String,
     pub exit_code: i32,
     pub success: bool,
+    pub parsed_data: serde_json::Value,
 }
 
 impl IntoCallToolResult for DefaultExecuteResponse {
@@ -64,7 +66,7 @@ impl BashServer {
     }
 
     #[tool(description = "Execute commands using default shell")]
-    async fn execute_via_default_shell(
+    async fn all_execute_via_default_shell(
         &self,
         #[tool(aggr)] request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
@@ -129,12 +131,13 @@ impl BashServer {
             stderr,
             exit_code,
             success,
+            parsed_data: Value::Null,
         };
         Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
     #[tool(description = "Execute a python script")]
-    async fn execute_python(
+    async fn unix_execute_python(
         &self,
         #[tool(aggr)] request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
@@ -199,12 +202,13 @@ impl BashServer {
             stderr,
             exit_code,
             success,
+            parsed_data: Value::Null,
         };
         Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
     #[tool(description = "Execute a unix script")]
-    async fn execute_unix_script(
+    async fn unix_execute_script(
         &self,
         #[tool(aggr)] request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
@@ -270,12 +274,13 @@ impl BashServer {
             stderr,
             exit_code,
             success,
+            parsed_data: Value::Null,
         };
         Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
     #[tool(description = "Get system information using bash commands")]
-    async fn get_system_info_via_default_shell(&self) -> Result<CallToolResult, ErrorData> {
+    async fn unix_get_system_info_via_default_shell(&self) -> Result<CallToolResult, ErrorData> {
         let command = r#"
 echo "=== System Information ==="
 echo "Hostname: $(hostname)"
@@ -292,7 +297,22 @@ echo "Disk Usage:"
 df -h / 2>/dev/null || echo "df command not available"
         "#;
 
-        self.execute_via_default_shell(DefaultExecuteRequest {
+        self.all_execute_via_default_shell(DefaultExecuteRequest {
+            command: command.to_string(),
+            working_dir: None,
+            env_vars: None,
+            timeout_seconds: Some(10),
+        })
+        .await
+    }
+
+    #[tool(description = "Get system information using bash commands")]
+    async fn unix_preset_get_system_info_via_default_shell(
+        &self,
+    ) -> Result<CallToolResult, ErrorData> {
+        let command = r#"(uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'"#;
+
+        self.all_execute_via_default_shell(DefaultExecuteRequest {
             command: command.to_string(),
             working_dir: None,
             env_vars: None,
@@ -302,7 +322,7 @@ df -h / 2>/dev/null || echo "df command not available"
     }
 
     #[tool(description = "Get the available shell in unix-like os")]
-    async fn get_unix_available_shell(&self) -> Result<CallToolResult, ErrorData> {
+    async fn unix_get_available_shell(&self) -> Result<CallToolResult, ErrorData> {
         let mut available_shell = vec![];
         let shells_file = "/etc/shells";
         match fs::read_to_string(shells_file) {
@@ -331,10 +351,12 @@ df -h / 2>/dev/null || echo "df command not available"
     }
 
     #[tool(description = "Get the nic info through the default shell")]
-    async fn preset_get_nic_info_via_default_shell(&self) -> Result<CallToolResult, ErrorData> {
+    async fn unix_preset_get_nic_info_via_default_shell(
+        &self,
+    ) -> Result<CallToolResult, ErrorData> {
         let command = r#"cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'"#;
         let result = self
-            .execute_via_default_shell(DefaultExecuteRequest {
+            .all_execute_via_default_shell(DefaultExecuteRequest {
                 command: command.to_string(),
                 working_dir: None,
                 env_vars: None,
@@ -345,13 +367,72 @@ df -h / 2>/dev/null || echo "df command not available"
         Ok(result)
     }
 
+    #[tool(description = "Get the cpu info through the default shell")]
+    async fn unix_preset_get_cpu_info_via_default_shell(
+        &self,
+    ) -> Result<CallToolResult, ErrorData> {
+        let command = r#"LANG=C lscpu | awk -F: '$1=="Model name" {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"#;
+        let mut result = self
+            .all_execute_via_default_shell(DefaultExecuteRequest {
+                command: command.to_string(),
+                working_dir: None,
+                env_vars: None,
+                timeout_seconds: Some(5),
+            })
+            .await?;
+        let raw_content = &mut result.content.get_mut(0).unwrap().raw;
+        if let RawContent::Text(RawTextContent { text }) = raw_content {
+            if let Ok(mut response) = serde_json::from_str::<DefaultExecuteResponse>(&text.clone())
+            {
+                // parse response.stdout
+                // output e.g.:
+                //                               Intel(R) Core(TM) i7-10875H CPU @ 2.30GHz
+                // 16
+                // 1.05 0.74 0.72
+                // 1261
+                // 5
+                // 92
+                let lines: Vec<&str> = response
+                    .stdout
+                    .lines()
+                    .map(|l| l.trim())
+                    .filter(|l| !l.is_empty())
+                    .collect();
+                if lines.len() >= 6 {
+                    let cpu_model = lines[0];
+                    let core_count = lines[1].parse::<u32>().unwrap_or(0);
+                    let load: Vec<f32> = lines[2]
+                        .split_whitespace()
+                        .filter_map(|s| s.parse::<f32>().ok())
+                        .collect();
+                    let interrupt = lines[3].parse::<u64>().unwrap_or(0);
+                    let context_switch = lines[4].parse::<u64>().unwrap_or(0);
+                    let idle = lines[5].parse::<u64>().unwrap_or(0);
+
+                    let parsed = serde_json::json!({
+                        "cpu_model": cpu_model,
+                        "core_count": core_count,
+                        "load": load,
+                        "interrupt": interrupt,
+                        "context_switch": context_switch,
+                        "idle": idle
+                    });
+                    response.parsed_data = parsed;
+                    *text = serde_json::to_string(&response).unwrap();
+                }
+            }
+        }
+
+        Ok(result)
+    }
+
     #[tool(description = "Get the disk free info through the default shell")]
-    async fn preset_get_disk_free_info_via_default_shell(
+    async fn unix_preset_get_disk_free_info_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"df -mP | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'"#;
         let result = self
-            .execute_via_default_shell(DefaultExecuteRequest {
+            .all_execute_via_default_shell(DefaultExecuteRequest {
                 command: command.to_string(),
                 working_dir: None,
                 env_vars: None,
@@ -362,12 +443,12 @@ df -h / 2>/dev/null || echo "df command not available"
     }
 
     #[tool(description = "Get the top 10 cpu processes through the default shell")]
-    async fn preset_get_top10_cpu_processes_via_default_shell(
+    async fn unix_preset_get_top10_cpu_processes_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
         let result = self
-            .execute_via_default_shell(DefaultExecuteRequest {
+            .all_execute_via_default_shell(DefaultExecuteRequest {
                 command: command.to_string(),
                 working_dir: None,
                 env_vars: None,
@@ -378,12 +459,12 @@ df -h / 2>/dev/null || echo "df command not available"
     }
 
     #[tool(description = "Get the top 10 mem processes through the default shell")]
-    async fn preset_get_top10_mem_processes_via_default_shell(
+    async fn unix_preset_get_top10_mem_processes_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
         let result = self
-            .execute_via_default_shell(DefaultExecuteRequest {
+            .all_execute_via_default_shell(DefaultExecuteRequest {
                 command: command.to_string(),
                 working_dir: None,
                 env_vars: None,
