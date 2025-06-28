@@ -99,12 +99,11 @@ public class DataSourceServiceImpl implements DataSourceService {
         CommonTokenStream tokens = tokenStreamCache.get(expr, this::createTokenStream);
         AlertExpressionParser parser = new AlertExpressionParser(tokens);
         ParseTree tree = expressionCache.get(expr, e -> parser.expr());
-        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens);
-        List<Map<String, Object>> visit = visitor.visit(tree);
         if (null != tokens && tokens.LA(1) != Token.EOF) {
             throw new AlertExpressionException(bundle.getString("alerter.calculate.parse.error"));
         }
-        return visit;
+        AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens);
+        return visitor.visit(tree);
     }
 
     private CommonTokenStream createTokenStream(String expr) {
