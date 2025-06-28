@@ -158,7 +158,7 @@ metrics:
         i18n:
           zh-CN: 已用插槽数
           en-US: Slots Used
-          ja-JP: 使用済みのスロット数
+          ja-JP: 使用したスロット数
       - field: task_total        # task count
         type: 0
         i18n:

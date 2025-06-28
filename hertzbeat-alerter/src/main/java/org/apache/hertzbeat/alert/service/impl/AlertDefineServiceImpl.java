@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +28,9 @@ import org.apache.hertzbeat.alert.calculate.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -72,18 +73,21 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Autowired
     private PeriodicAlertRuleScheduler periodicAlertRuleScheduler;
 
+    private final DataSourceService dataSourceService;
+
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
 
     private static final String CONTENT_TYPE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
 
-    public AlertDefineServiceImpl(List<AlertDefineImExportService> alertDefineImExportServiceList) {
+    public AlertDefineServiceImpl(List<AlertDefineImExportService> alertDefineImExportServiceList, DataSourceService dataSourceService) {
         alertDefineImExportServiceList.forEach(it -> alertDefineImExportServiceMap.put(it.type(), it));
+        this.dataSourceService = dataSourceService;
     }
 
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
         if (StringUtils.hasText(alertDefine.getExpr())) {
-            if (ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
+            if (CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
                 try {
                     JexlExpressionRunner.compile(alertDefine.getExpr());
                 } catch (Exception e) {
@@ -213,9 +217,23 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     public List<AlertDefine> getRealTimeAlertDefines() {
         List<AlertDefine> alertDefines = CacheFactory.getAlertDefineCache();
         if (alertDefines == null) {
-            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(ALERT_THRESHOLD_TYPE_REALTIME);
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME);
             CacheFactory.setAlertDefineCache(alertDefines);
         }
         return alertDefines;
+    }
+
+    @Override
+    public List<Map<String, Object>> getDefinePreview(String datasource, String type, String expr) {
+        if (!StringUtils.hasText(expr) || !StringUtils.hasText(datasource) || !StringUtils.hasText(type)) {
+            return Collections.emptyList();
+        }
+        switch (type) {
+            case CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC:
+                return dataSourceService.calculate(datasource, expr);
+            default:
+                log.error("Get define preview unsupported type: {}", type);
+                return Collections.emptyList();
+        }
     }
 }
