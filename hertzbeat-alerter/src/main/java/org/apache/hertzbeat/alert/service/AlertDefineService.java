@@ -18,11 +18,14 @@
 package org.apache.hertzbeat.alert.service;
 
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Alarm define manager service
@@ -107,5 +110,11 @@ public interface AlertDefineService {
      * @return Real-time alarm definition list
      */
     List<AlertDefine> getRealTimeAlertDefines();
-    
+
+    /**
+     * Get define preview
+     * @return Data queried based on expressions
+     * @throws AlertExpressionException expression error
+     */
+    List<Map<String, Object>> getDefinePreview(String datasource, String type, String expr);
 }
