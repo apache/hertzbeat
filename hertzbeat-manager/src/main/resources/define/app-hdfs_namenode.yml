@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 HDFS NameNode 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache HDFS NameNode</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the HDFS NameNode metrics. <br>You can click "<i>New Apache HDFS NameNode</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 HDFS NameNode 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache HDFS NameNode</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は HDFS NameNodeの一般的なメトリック監視します。<br>「<i>新規 Apache HDFS NameNode</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は HDFS NameNodeの一般的なメトリクス監視します。<br>「<i>新規 Apache HDFS NameNode</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hdfs_namenode/
@@ -369,7 +369,6 @@ metrics:
       ssl: ^_^ssl^_^
       parseType: jsonPath
       parseScript: '$.beans[?(@.name =~ /Hadoop:service=NameNode,name=RpcActivityForPort80\d+/)]'
-#      parseScript: '$.beans[?(@.name == "Hadoop:service=NameNode,name=RpcActivityForPort8020")]'
   - name: runtime
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
@@ -382,7 +381,7 @@ metrics:
         i18n:
           zh-CN: 启动时间
           en-US: StartTime
-          ja-JP: 目標ホスト
+          ja-JP: 起動時間
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.beans[?(@.name == "java.lang:type=Runtime")].StartTime
@@ -494,28 +493,28 @@ metrics:
         i18n:
           zh-CN: 处于 RUNNABLE 状态的线程数量
           en-US: ThreadsRunnable
-          ja-JP: RUNNABLE スレッド数
+          ja-JP: 実行中のスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsBlocked
         type: 0
         i18n:
           zh-CN: 处于 BLOCKED 状态的线程数量
           en-US: ThreadsBlocked
-          ja-JP: BLOCKED スレッド数
+          ja-JP: ブロックされたスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsWaiting
         type: 0
         i18n:
           zh-CN: 处于 WAITING 状态的线程数量
           en-US: ThreadsWaiting
-          ja-JP: WAITING スレッド数
+          ja-JP: 待機中のスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsTimedWaiting
         type: 0
         i18n:
           zh-CN: 处于 TIMED WAITING 状态的线程数量
           en-US: ThreadsTimedWaiting
-          ja-JP: TIMED WAITING スレッド数
+          ja-JP: 時間指定の待機中のスレッド数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.MemNonHeapUsedM
