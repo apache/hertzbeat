@@ -17,15 +17,22 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.apache.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,6 +105,37 @@ class AlertDefineControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
+    }
+
+    @Test
+    void testGetDefinePreview() throws Exception {
+        List<Map<String, Object>> previewData = new ArrayList<>();
+        Map<String, Object> row = new HashMap<>();
+        row.put("__value__", 123);
+        row.put("job", "spring-boot");
+        previewData.add(row);
+
+        Mockito.when(alertDefineService.getDefinePreview(anyString(), anyString(), anyString()))
+                .thenReturn(previewData);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alert/define/preview/{datasource}", "promql")
+                        .param("type", "periodic")
+                        .param("expr", "up == 1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data[0].__value__").value(123))
+                .andExpect(jsonPath("$.data[0].job").value("spring-boot"));
+
+        Mockito.when(alertDefineService.getDefinePreview(anyString(), anyString(), anyString()))
+                .thenThrow(new AlertExpressionException("Expression error"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/alert/define/preview/{datasource}", "promql")
+                        .param("type", "periodic")
+                        .param("expr", "http_server_requests_seconds_count{!@~!!#$%^&}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").exists())
+                .andExpect(jsonPath("$.msg").value("Expression error"));
+
     }
 
     @Test
