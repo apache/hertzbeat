@@ -279,7 +279,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + EXPORT_PATH)
+            URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + EXPORT_PATH)
                     .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
                     .queryParam("end", "now")
@@ -374,7 +374,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -410,7 +410,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
             // max
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -445,7 +445,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 }
             }
             // min
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -480,7 +480,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 }
             }
             // avg
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
