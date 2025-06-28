@@ -469,6 +469,7 @@
   "common.name": "メトリック名",
   "common.new-time": "作成時間",
   "common.no": "いいえ",
+  "common.preview.button": "プレビュー",
   "common.notice": "通知",
   "common.notify.apply-fail": "適用に失敗しました！",
   "common.notify.apply-success": "適用に成功しました！",
