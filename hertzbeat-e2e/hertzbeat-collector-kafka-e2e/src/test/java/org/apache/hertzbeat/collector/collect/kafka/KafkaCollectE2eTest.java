@@ -79,7 +79,7 @@ public class KafkaCollectE2eTest {
                 .withNetwork(network)
                 .withNetworkAliases(ZOOKEEPER_NAME)
                 .waitingFor(Wait.forListeningPort())
-                .withStartupTimeout(Duration.ofSeconds(30));
+                .withStartupTimeout(Duration.ofSeconds(120));
         zookeeperContainer.setPortBindings(Collections.singletonList(ZOOKEEPER_PORT + ":" + ZOOKEEPER_PORT));
 
         Startables.deepStart(Stream.of(zookeeperContainer)).join();
@@ -90,7 +90,8 @@ public class KafkaCollectE2eTest {
                 .withNetworkAliases(KAFKA_NAME)
                 .withLogConsumer(
                         new Slf4jLogConsumer(
-                                DockerLoggerFactory.getLogger(KAFKA_IMAGE_NAME)));
+                                DockerLoggerFactory.getLogger(KAFKA_IMAGE_NAME)))
+                .withStartupTimeout(Duration.ofSeconds(120));
         Startables.deepStart(Stream.of(kafkaContainer)).join();
     }
 
@@ -113,11 +114,12 @@ public class KafkaCollectE2eTest {
         // Create Topic
         Properties properties = new Properties();
         properties.put("bootstrap.servers", bootstrapServers);
-        AdminClient adminClient = KafkaAdminClient.create(properties);
         int numPartitions = 1;
         short replicationFactor = 1;
-        NewTopic newTopic = new NewTopic(topicName, numPartitions, replicationFactor);
-        adminClient.createTopics(Collections.singletonList(newTopic)).all().get(60, TimeUnit.SECONDS);
+        try (AdminClient adminClient = KafkaAdminClient.create(properties)) {
+            NewTopic newTopic = new NewTopic(topicName, numPartitions, replicationFactor);
+            adminClient.createTopics(Collections.singletonList(newTopic)).all().get(60, TimeUnit.SECONDS);
+        }
 
         // Verify the information of topic list monitoring
         builder = CollectRep.MetricsData.newBuilder();

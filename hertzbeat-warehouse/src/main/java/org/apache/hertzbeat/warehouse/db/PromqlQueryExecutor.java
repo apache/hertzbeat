@@ -98,7 +98,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
-            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url + QUERY_PATH);
+            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(httpPromqlProperties.url + QUERY_PATH);
             uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
             URI uri = uriComponentsBuilder.build().toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
@@ -150,18 +150,18 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
-                uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_RANGE_PATH)
+                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_RANGE_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .queryParam(HTTP_START_PARAM, datasourceQuery.getStart())
                         .queryParam(HTTP_END_PARAM, datasourceQuery.getEnd())
                         .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
                         .build().toUri();
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
-                uri = UriComponentsBuilder.fromHttpUrl(httpPromqlProperties.url() + QUERY_PATH)
+                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_PATH)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .build().toUri();
             } else {
-                throw new IllegalArgumentException(String.format("no such time type for query id {}.", datasourceQuery.getRefId()));
+                throw new IllegalArgumentException(String.format("no such time type for query id %s.", datasourceQuery.getRefId()));
             }
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,
                     PromQlQueryContent.class);
