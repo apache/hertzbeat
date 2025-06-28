@@ -306,7 +306,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             Duration duration = Duration.ofHours(Long.parseLong(history.replace("h", "")));
             Instant start = end.minus(duration);
             String exportUrl =  vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), EXPORT_PATH);
-            URI uri = UriComponentsBuilder.fromHttpUrl(exportUrl)
+            URI uri = UriComponentsBuilder.fromUriString(exportUrl)
                     .queryParam("match", URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("start", String.valueOf(start.getEpochSecond()))
                     .queryParam("end", String.valueOf(end.getEpochSecond()))
@@ -404,7 +404,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             String rangeUrl = VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), QUERY_RANGE_PATH);
-            URI uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+            URI uri = UriComponentsBuilder.fromUriString(rangeUrl)
                     .queryParam("query", URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -444,7 +444,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
             // max
-            uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+            uri = UriComponentsBuilder.fromUriString(rangeUrl)
                     .queryParam("query", URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -482,7 +482,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 }
             }
             // min
-            uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+            uri = UriComponentsBuilder.fromUriString(rangeUrl)
                     .queryParam("query", URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -520,7 +520,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 }
             }
             // avg
-            uri = UriComponentsBuilder.fromHttpUrl(rangeUrl)
+            uri = UriComponentsBuilder.fromUriString(rangeUrl)
                     .queryParam("query", URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
