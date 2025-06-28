@@ -369,7 +369,6 @@ metrics:
       ssl: ^_^ssl^_^
       parseType: jsonPath
       parseScript: '$.beans[?(@.name =~ /Hadoop:service=NameNode,name=RpcActivityForPort80\d+/)]'
-#      parseScript: '$.beans[?(@.name == "Hadoop:service=NameNode,name=RpcActivityForPort8020")]'
   - name: runtime
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
@@ -382,7 +381,7 @@ metrics:
         i18n:
           zh-CN: 启动时间
           en-US: StartTime
-          ja-JP: 目標ホスト
+          ja-JP: 起動時間
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.beans[?(@.name == "java.lang:type=Runtime")].StartTime
@@ -494,14 +493,14 @@ metrics:
         i18n:
           zh-CN: 处于 RUNNABLE 状态的线程数量
           en-US: ThreadsRunnable
-          ja-JP: RUNNABLE スレッド数
+          ja-JP: 実行中のスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsBlocked
         type: 0
         i18n:
           zh-CN: 处于 BLOCKED 状态的线程数量
           en-US: ThreadsBlocked
-          ja-JP: BLOCKED スレッド数
+          ja-JP: ブロックされたスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsWaiting
         type: 0

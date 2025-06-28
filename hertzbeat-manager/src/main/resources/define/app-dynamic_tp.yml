@@ -128,7 +128,7 @@ metrics:
         i18n:
           zh-CN: 公平
           en-US: fair
-          ja-JP: 目標ホスト
+          ja-JP: 公平
         type: 1
       - field: reject_handler_name
         type: 1
