@@ -257,13 +257,13 @@ metrics:
         i18n:
           zh-CN: 会话创建
           en-US: Session Created
-          ja-JP: 目標ホスト
+          ja-JP: 作成されたセッション
       - field: session_discarded
         type: 0
         i18n:
           zh-CN: 会话丢弃
           en-US: Session Discarded
-          ja-JP: 目標ホスト
+          ja-JP: 廃棄されたセッション
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - client.connected
