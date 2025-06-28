@@ -105,7 +105,7 @@ metrics:
         i18n:
           zh-CN: 集群存储已使用容量
           en-US: CapacityUsed
-          ja-JP: 使用済みの容量
+          ja-JP: 使用した容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: CapacityUsedGB
         type: 0
@@ -113,7 +113,7 @@ metrics:
           zh-CN: 集群存储已使用容量
           unit: 'GB'
           en-US: CapacityUsedGB
-          ja-JP: 使用済みの容量（ＧＢ）
+          ja-JP: 使用した容量（ＧＢ）
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: CapacityRemaining
         type: 0
@@ -135,14 +135,14 @@ metrics:
         i18n:
           zh-CN: 集群非 HDFS 使用容量
           en-US: CapacityUsedNonDFS
-          ja-JP: 使用済みのノンHDFS容量
+          ja-JP: 使用したノンHDFS容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: TotalLoad
         type: 0
         i18n:
           zh-CN: 整个集群的客户端连接数
           en-US: TotalLoad
-          ja-JP: クライアントとのコネクション総数
+          ja-JP: クライアントとの接続総数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: FilesTotal
         type: 0
@@ -336,14 +336,14 @@ metrics:
         i18n:
           zh-CN: 接收数据速率
           en-US: ReceivedBytes
-          ja-JP: 受信バイト
+          ja-JP: 受信されたバイト
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: SentBytes
         type: 0
         i18n:
           zh-CN: 发送数据速率
           en-US: SentBytes
-          ja-JP: 送信バイト
+          ja-JP: 転送されたバイト
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: RpcQueueTimeNumOps
         type: 0
@@ -410,7 +410,7 @@ metrics:
         i18n:
           zh-CN: JVM 当前已经使用的 NonHeapMemory 的大小
           en-US: MemNonHeapUsedM
-          ja-JP: 使用済みのノンヒープメモリサイズ
+          ja-JP: 使用したノンヒープメモリサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemNonHeapCommittedM
         type: 0
@@ -424,7 +424,7 @@ metrics:
         i18n:
           zh-CN: JVM 当前已经使用的 HeapMemory 的大小
           en-US: MemHeapUsedM
-          ja-JP: 使用済みのヒープメモリサイズ
+          ja-JP: 使用したヒープメモリサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapCommittedM
         type: 0
