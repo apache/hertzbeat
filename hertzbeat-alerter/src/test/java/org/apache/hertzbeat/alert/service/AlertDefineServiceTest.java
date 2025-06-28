@@ -17,19 +17,7 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anySet;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import com.google.common.collect.Lists;
 import org.apache.hertzbeat.alert.calculate.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
@@ -44,6 +32,27 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link AlertDefineService}
@@ -61,6 +70,9 @@ class AlertDefineServiceTest {
 
     @Mock
     private List<AlertDefineImExportService> alertDefineImExportServiceList;
+
+    @Mock
+    private DataSourceService dataSourceService;
 
     @InjectMocks
     private AlertDefineServiceImpl alertDefineService;
@@ -131,4 +143,36 @@ class AlertDefineServiceTest {
         assertNotNull(alertDefineService.getAlertDefines(null, null, "id", "desc", 1, 10));
         verify(alertDefineDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
     }
+
+    @Test
+    void getDefinePreview() {
+        String expr = "http_server_requests_seconds_count > 10";
+
+        Map<String, Object> countValue1 = new HashMap<>() {
+            {
+                put("exception", "none");
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 1307);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("error", "none");
+                put("job", "spring-boot-app");
+                put("uri", "/actuator/prometheus");
+                put("outcome", "SUCCESS");
+                put("status", "200");
+            }
+        };
+        when(dataSourceService.calculate(eq("promql"), eq(expr))).thenReturn(Lists.newArrayList(countValue1));
+        List<Map<String, Object>> result = alertDefineService.getDefinePreview("promql", ALERT_THRESHOLD_TYPE_PERIODIC, expr);
+        assertNotNull(result);
+        assertEquals(1307, result.get(0).get("__value__"));
+
+        result = alertDefineService.getDefinePreview("promql", ALERT_THRESHOLD_TYPE_PERIODIC, null);
+        assertEquals(0, result.size());
+
+        result = alertDefineService.getDefinePreview("promql", ALERT_THRESHOLD_TYPE_REALTIME, null);
+        assertEquals(0, result.size());
+    }
+
 }
