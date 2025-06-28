@@ -80,6 +80,7 @@ public class KafkaCollectE2eTest {
                 .withNetworkAliases(ZOOKEEPER_NAME)
                 .waitingFor(Wait.forListeningPort())
                 .withStartupTimeout(Duration.ofSeconds(120));
+        zookeeperContainer.setPortBindings(Collections.singletonList(ZOOKEEPER_PORT + ":" + ZOOKEEPER_PORT));
 
         Startables.deepStart(Stream.of(zookeeperContainer)).join();
 
