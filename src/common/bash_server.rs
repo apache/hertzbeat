@@ -5,6 +5,8 @@ use rmcp::{
     serde_json::Value, service::RequestContext, tool,
 };
 use serde::{Deserialize, Serialize};
+use std::ffi::OsStr;
+use std::process::Output;
 use std::{
     borrow::Cow,
     env,
@@ -13,6 +15,12 @@ use std::{
     os::unix::fs::PermissionsExt,
     process::Command,
 };
+use tracing::error;
+use tracing::info;
+use uuid::Uuid;
+
+use crate::common::config::Config;
+use crate::common::validator::Validator;
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct DefaultExecuteRequest {
@@ -57,18 +65,82 @@ impl IntoCallToolResult for DefaultExecuteResponse {
 }
 
 #[derive(Debug, Clone)]
-pub struct BashServer;
+pub struct BashServer {
+    validator: Option<Validator>,
+}
+
+pub trait CommandRunner {
+    fn stringify_command(cmd: &Command) -> String {
+        let program = cmd.get_program().to_string_lossy();
+        let args = cmd
+            .get_args()
+            .map(|arg| {
+                let s = arg.to_string_lossy();
+                if s.contains(' ') || s.contains('"') {
+                    format!("{s:?}")
+                } else {
+                    s.to_string()
+                }
+            })
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        format!("{program} {args}")
+    }
+
+    async fn execute_command_with_timeout(
+        timeout: std::time::Duration,
+        mut cmd: Command,
+    ) -> Result<Output, ErrorData> {
+        let cmd_str = Self::stringify_command(&cmd);
+        // Execute command with timeout
+        let output = tokio::time::timeout(timeout, async {
+            tokio::task::spawn_blocking(move || cmd.output()).await
+        })
+        .await
+        .map_err(|_| ErrorData {
+            code: ErrorCode::INTERNAL_ERROR,
+            message: Cow::Owned("Command execution timed out".to_string()),
+            data: None,
+        })?
+        .map_err(|e| ErrorData {
+            code: ErrorCode::INTERNAL_ERROR,
+            message: Cow::Owned(format!("Failed to spawn command: {e}")),
+            data: None,
+        })?
+        .map_err(|e| ErrorData {
+            code: ErrorCode::INTERNAL_ERROR,
+            message: Cow::Owned(format!("Command execution failed: {e}")),
+            data: None,
+        })?;
+
+        // log execution of command
+        info!("Execute command: {cmd_str}");
+        Ok(output)
+    }
+}
+
+impl CommandRunner for BashServer {}
 
 #[tool(tool_box)]
 impl BashServer {
     pub fn new() -> Self {
-        BashServer
+        if let Ok(config) = Config::read_config("config.toml")
+            .inspect_err(|e| eprintln!("read config.toml fail, error: {e}"))
+        {
+            let blacklist = config.blacklist;
+            BashServer {
+                validator: Some(Validator::new(blacklist)),
+            }
+        } else {
+            Self { validator: None }
+        }
     }
 
-    #[tool(description = "Execute commands using default shell")]
-    async fn all_execute_via_default_shell(
+    async fn _all_execute_via_default_shell(
         &self,
-        #[tool(aggr)] request: DefaultExecuteRequest,
+        need_validate: bool,
+        request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
         let timeout_duration =
             std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
@@ -100,26 +172,18 @@ impl BashServer {
             }
         }
 
-        // Execute command with timeout
-        let output = tokio::time::timeout(timeout_duration, async {
-            tokio::task::spawn_blocking(move || cmd.output()).await
-        })
-        .await
-        .map_err(|_| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned("Command execution timed out".to_string()),
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Failed to spawn command: {e}")),
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Command execution failed: {e}")),
-            data: None,
-        })?;
+        // Validate the commands
+        if let Some(validator) = &self.validator
+            && need_validate
+        {
+            let program = cmd.get_program();
+            let mut full_args: Vec<&OsStr> = vec![program];
+            let args: Vec<&OsStr> = cmd.get_args().collect();
+            full_args.extend(args);
+            validator.is_unsafe_command(full_args)?;
+        }
+
+        let output: Output = Self::execute_command_with_timeout(timeout_duration, cmd).await?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -134,6 +198,14 @@ impl BashServer {
             parsed_data: Value::Null,
         };
         Ok(CallToolResult::success(vec![Content::json(response)?]))
+    }
+
+    #[tool(description = "Execute commands using default shell in all kinds of os")]
+    async fn all_execute_via_default_shell(
+        &self,
+        #[tool(aggr)] request: DefaultExecuteRequest,
+    ) -> Result<CallToolResult, ErrorData> {
+        self._all_execute_via_default_shell(true, request).await
     }
 
     #[tool(description = "Execute a python script")]
@@ -171,26 +243,10 @@ impl BashServer {
             }
         }
 
-        // Execute command with timeout
-        let output = tokio::time::timeout(timeout_duration, async {
-            tokio::task::spawn_blocking(move || cmd.output()).await
-        })
-        .await
-        .map_err(|_| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned("Python execution timed out".to_string()),
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Failed to spawn python execution: {e}")),
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Python execution failed: {e}")),
-            data: None,
-        })?;
+        let output: Output = Self::execute_command_with_timeout(timeout_duration, cmd).await?;
+
+        // log the execution of python
+        info!("Execute python script: {}", &request.command);
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -217,7 +273,9 @@ impl BashServer {
 
         // Write the string to a temporary file
         let tmp_dir = env::temp_dir();
-        let script_path = tmp_dir.join("temp_script.sh");
+        // Generate a random script name
+        let tmp_name = Uuid::new_v4().to_string();
+        let script_path = tmp_dir.join(format!("{tmp_name}.sh"));
         {
             let mut file =
                 File::create(&script_path).expect("Can not create temporary script file");
@@ -243,27 +301,8 @@ impl BashServer {
             }
         }
 
-        // Execute command with timeout
-        let output = tokio::time::timeout(timeout_duration, async {
-            tokio::task::spawn_blocking(move || cmd.output()).await
-        })
-        .await
-        .map_err(|_| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned("Unix script execution timed out".to_string()),
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Failed to spawn unix script execution: {e}")),
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Unix script execution failed: {e}")),
-            data: None,
-        })?;
-
+        let output: Output = Self::execute_command_with_timeout(timeout_duration, cmd).await?;
+        info!("Execute script:\n{}", request.command);
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         let exit_code = output.status.code().unwrap_or(-1);
@@ -297,12 +336,15 @@ echo "Disk Usage:"
 df -h / 2>/dev/null || echo "df command not available"
         "#;
 
-        self.all_execute_via_default_shell(DefaultExecuteRequest {
-            command: command.to_string(),
-            working_dir: None,
-            env_vars: None,
-            timeout_seconds: Some(10),
-        })
+        self._all_execute_via_default_shell(
+            false,
+            DefaultExecuteRequest {
+                command: command.to_string(),
+                working_dir: None,
+                env_vars: None,
+                timeout_seconds: Some(10),
+            },
+        )
         .await
     }
 
@@ -312,12 +354,15 @@ df -h / 2>/dev/null || echo "df command not available"
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"(uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'"#;
 
-        self.all_execute_via_default_shell(DefaultExecuteRequest {
-            command: command.to_string(),
-            working_dir: None,
-            env_vars: None,
-            timeout_seconds: Some(10),
-        })
+        self._all_execute_via_default_shell(
+            false,
+            DefaultExecuteRequest {
+                command: command.to_string(),
+                working_dir: None,
+                env_vars: None,
+                timeout_seconds: Some(10),
+            },
+        )
         .await
     }
 
@@ -337,8 +382,10 @@ df -h / 2>/dev/null || echo "df command not available"
                         available_shell.push(Content::text(line));
                     }
                 }
+                info!("Read file /etc/shells");
             }
             Err(e) => {
+                error!("Failed to read {shells_file}: {e}");
                 return Err(ErrorData {
                     code: ErrorCode::INTERNAL_ERROR,
                     message: Cow::Owned(format!("Failed to read {shells_file}: {e}")),
@@ -356,12 +403,15 @@ df -h / 2>/dev/null || echo "df command not available"
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'"#;
         let result = self
-            .all_execute_via_default_shell(DefaultExecuteRequest {
-                command: command.to_string(),
-                working_dir: None,
-                env_vars: None,
-                timeout_seconds: Some(5),
-            })
+            ._all_execute_via_default_shell(
+                false,
+                DefaultExecuteRequest {
+                    command: command.to_string(),
+                    working_dir: None,
+                    env_vars: None,
+                    timeout_seconds: Some(5),
+                },
+            )
             .await?;
 
         Ok(result)
@@ -373,12 +423,15 @@ df -h / 2>/dev/null || echo "df command not available"
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"LANG=C lscpu | awk -F: '$1=="Model name" {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"#;
         let mut result = self
-            .all_execute_via_default_shell(DefaultExecuteRequest {
-                command: command.to_string(),
-                working_dir: None,
-                env_vars: None,
-                timeout_seconds: Some(5),
-            })
+            ._all_execute_via_default_shell(
+                false,
+                DefaultExecuteRequest {
+                    command: command.to_string(),
+                    working_dir: None,
+                    env_vars: None,
+                    timeout_seconds: Some(5),
+                },
+            )
             .await?;
         let raw_content = &mut result.content.get_mut(0).unwrap().raw;
         if let RawContent::Text(RawTextContent { text }) = raw_content {
@@ -432,12 +485,15 @@ df -h / 2>/dev/null || echo "df command not available"
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"df -mP | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'"#;
         let result = self
-            .all_execute_via_default_shell(DefaultExecuteRequest {
-                command: command.to_string(),
-                working_dir: None,
-                env_vars: None,
-                timeout_seconds: Some(5),
-            })
+            ._all_execute_via_default_shell(
+                false,
+                DefaultExecuteRequest {
+                    command: command.to_string(),
+                    working_dir: None,
+                    env_vars: None,
+                    timeout_seconds: Some(5),
+                },
+            )
             .await?;
         Ok(result)
     }
@@ -448,12 +504,15 @@ df -h / 2>/dev/null || echo "df command not available"
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
         let result = self
-            .all_execute_via_default_shell(DefaultExecuteRequest {
-                command: command.to_string(),
-                working_dir: None,
-                env_vars: None,
-                timeout_seconds: Some(5),
-            })
+            ._all_execute_via_default_shell(
+                false,
+                DefaultExecuteRequest {
+                    command: command.to_string(),
+                    working_dir: None,
+                    env_vars: None,
+                    timeout_seconds: Some(5),
+                },
+            )
             .await?;
         Ok(result)
     }
@@ -464,12 +523,15 @@ df -h / 2>/dev/null || echo "df command not available"
     ) -> Result<CallToolResult, ErrorData> {
         let command = r#"ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
         let result = self
-            .all_execute_via_default_shell(DefaultExecuteRequest {
-                command: command.to_string(),
-                working_dir: None,
-                env_vars: None,
-                timeout_seconds: Some(5),
-            })
+            ._all_execute_via_default_shell(
+                false,
+                DefaultExecuteRequest {
+                    command: command.to_string(),
+                    working_dir: None,
+                    env_vars: None,
+                    timeout_seconds: Some(5),
+                },
+            )
             .await?;
         Ok(result)
     }

@@ -5,3 +5,38 @@ port = 4000
 host = "127.0.0.1"
 # Set env to "development" or "production", production use oauth.
 env = "development"
+
+[blacklist]
+commands = [
+    "rm",
+    "dd",
+    "mkfs",
+    "shutdown",
+    "reboot",
+    "init",
+    "halt",
+    "userdel",
+    "passwd",
+    "chown",
+    "chmod",
+    "kill",
+    "killall",
+    "eval",
+    "exec",
+    "curl",
+    "wget",
+    "nc",
+    "ncat",
+    ":(){",
+    "fork",
+]
+operations = [
+    "|",
+    "&",
+    ";",
+    "`",
+    "$(",
+    ">",
+    "<"
+]
+

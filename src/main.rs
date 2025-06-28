@@ -96,7 +96,7 @@ async fn main() -> Result<()> {
         .init();
 
     // Read environment mode from config file, default to "production"
-    let config = config::Config::read_config("config.toml".to_string())?;
+    let config = config::Config::read_config("config.toml")?;
     let env_mode = config
         .settings
         .env
