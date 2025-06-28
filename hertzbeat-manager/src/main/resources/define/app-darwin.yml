@@ -617,7 +617,7 @@ metrics:
           zh-CN: 入站数据流量
           zh-TW: 入站數據流量
           en-US: Receive Bytes
-          ja-JP: 受信バイト数
+          ja-JP: 受信されたバイト数
       - field: transmit_bytes
         type: 0
         unit: Mb
@@ -625,7 +625,7 @@ metrics:
           zh-CN: 出站数据流量
           zh-TW: 出站數據流量
           en-US: Transmit Bytes
-          ja-JP: 送信バイト数
+          ja-JP: 転送されたバイト数
     units:
       - receive_bytes=B->MB
       - transmit_bytes=B->MB

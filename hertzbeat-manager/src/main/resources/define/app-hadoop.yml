@@ -196,7 +196,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used
-          ja-JP: 使用済みのメモリ
+          ja-JP: 使用したメモリ
     units:
       - committed=B->MB
       - init=B->MB
@@ -258,7 +258,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used
-          ja-JP: 使用済みのメモリ
+          ja-JP: 使用したメモリ
     aliasFields:
       - Usage->committed
       - Usage->init

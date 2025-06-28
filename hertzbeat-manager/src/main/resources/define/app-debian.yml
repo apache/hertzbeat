@@ -543,14 +543,14 @@ metrics:
         i18n:
           zh-CN: 入站数据流量
           en-US: Receive Bytes
-          ja-JP: 受信バイト数
+          ja-JP: 受信されたバイト数
       - field: transmit_bytes
         type: 0
         unit: Mb
         i18n:
           zh-CN: 出站数据流量
           en-US: Transmit Bytes
-          ja-JP: 送信バイト数
+          ja-JP: 転送されたバイト数
     units:
       - receive_bytes=B->MB
       - transmit_bytes=B->MB

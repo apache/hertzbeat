@@ -196,7 +196,7 @@ metrics:
         i18n:
           zh-CN: 持久化
           en-US: Persistence
-          ja-JP: 永続性
+          ja-JP: 永続化
         type: 1
       - field: DataDirectory
         i18n:
@@ -474,7 +474,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used
-          ja-JP: 使用済みのメモリ
+          ja-JP: 使用したメモリ
     units:
       - committed=B->MB
       - init=B->MB
