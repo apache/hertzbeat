@@ -243,14 +243,14 @@ metrics:
         i18n:
           zh-CN: 集群接收数据量(MB)
           en-US: receivedBytes
-          ja-JP: 受信バイト
+          ja-JP: 受信されたバイト
       - field: sentBytes
         type: 0
         unit: 'MB'
         i18n:
           zh-CN: 集群发送数据量(MB)
           en-US: sentBytes
-          ja-JP: 送信バイト
+          ja-JP: 転送されたバイト
       - field: clusterRequests
         type: 0
         i18n:

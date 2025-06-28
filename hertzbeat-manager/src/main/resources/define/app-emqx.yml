@@ -203,31 +203,31 @@ metrics:
         i18n:
           zh-CN: 发送数据包
           en-US: Packets Sent
-          ja-JP: 送信パケット
+          ja-JP: 転送されたパケット
       - field: packets_received
         type: 0
         i18n:
           zh-CN: 接收数据包
           en-US: Packets Received
-          ja-JP: 受信パケット
+          ja-JP: 受信されたパケット
       - field: bytes_sent
         type: 0
         i18n:
           zh-CN: 发送字节
           en-US: Bytes Sent
-          ja-JP: 送信バイト数
+          ja-JP: 転送されたバイト数
       - field: bytes_received
         type: 0
         i18n:
           zh-CN: 接收字节
           en-US: Bytes Received
-          ja-JP: 受信バイト数
+          ja-JP: 受信されたバイト数
       - field: messages_sent
         type: 0
         i18n:
           zh-CN: 发送消息
           en-US: Messages Sent
-          ja-JP: 送信メッセージ
+          ja-JP: 転送されたメッセージ
       - field: messages_acked
         type: 0
         i18n:
@@ -324,7 +324,7 @@ metrics:
     i18n:
       zh-CN: 统计
       en-US: Stats
-      ja-JP: スタッツ
+      ja-JP: 統計
     priority: 2
     fields:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')

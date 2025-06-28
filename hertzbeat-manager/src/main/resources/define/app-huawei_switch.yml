@@ -360,13 +360,13 @@ metrics:
         i18n:
           zh-CN: 入流量
           en-US: In Octets
-          ja-JP: 受信バイト数
+          ja-JP: 受信されたバイト数
       - field: in_discards
         type: 0
         i18n:
           zh-CN: 入丢包数
           en-US: In Discards
-          ja-JP: 受信パケットロス数
+          ja-JP: 受信されたパケットのロス数
       - field: in_errors
         type: 0
         i18n:
@@ -379,19 +379,19 @@ metrics:
         i18n:
           zh-CN: 出流量
           en-US: Out Octets
-          ja-JP: 送信バイト数
+          ja-JP: 転送されたバイト数
       - field: out_discards
         type: 0
         i18n:
           zh-CN: 出丢包数
           en-US: Out Discards
-          ja-JP: 送信パケットロス数
+          ja-JP: 転送されたパケットのロス数
       - field: out_errors
         type: 0
         i18n:
           zh-CN: 出错包数
           en-US: Out Errors
-          ja-JP: 送信異常パケット数
+          ja-JP: 転送異常パケット数
       - field: admin_status
         type: 1
         i18n:

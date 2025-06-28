@@ -178,7 +178,7 @@ metrics:
     i18n:
       zh-CN: 批量发送线程池队列大小
       en-US: Send Batch Thread Pool Queue Size
-      ja-JP: バッチ送信スレッドプールのキューサイズ
+      ja-JP: バッチ転送されたスレッドプールのキューサイズ
     priority: 6
     fields:
       - field: value
