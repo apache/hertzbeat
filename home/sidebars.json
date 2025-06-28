@@ -101,7 +101,8 @@
             "help/alert_feishu",
             "help/alert_console",
             "help/alert_enterprise_wechat_app",
-            "help/alert_smn"
+            "help/alert_smn",
+            "help/alert_notification_template"
           ]
         },
         {

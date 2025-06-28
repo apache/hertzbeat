@@ -27,7 +27,7 @@ help:
   zh-CN: 监控 HTTP API 接口，对 API 返回的业务自定义状态码(非 Http 状态码)进行监控。此需通过配置 JsonPath 来解析您 API 的业务状态码路径。<br>您可以点击 “<i>新建 API Code</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Monitor HTTP API to monitor business-defined status codes (non-HTTP status codes) returned by API. To do this, you need to configure JsonPath to resolve the business status code path of your API. <br>You could click the "<i>New API Codes</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: 監控 HTTP API 接口，對 API 返回的業務自定義狀態碼(非 Http 狀態碼)進行監控。此需通過配置 JsonPath 來解析您 API 的業務狀態碼路徑。<br>您可以點擊“<i>新建API Code</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: Hertzbeatは、HTTP APIを呼び出して利用可能かどうかを確認し、ビジネスステータスコード（HTTPステータスコードではない）のメトリックを監視します。これには、API のビジネスステータスコードのパスを解析するように JsonPath を構成する必要があります。「新規API Code」をクリックして設定しましょう。
+  ja-JP: Hertzbeatは、HTTP APIを呼び出して利用可能かどうかを確認し、ビジネスステータスコード（HTTPステータスコードではない）のメトリクスを監視します。これには、API のビジネスステータスコードのパスを解析するように JsonPath を構成する必要があります。「新規API Code」をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/api_code
   en-US: https://hertzbeat.apache.org/docs/help/api_code

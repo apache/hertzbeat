@@ -21,11 +21,13 @@ app: fullsite
 name:
   zh-CN: SiteMap全站
   en-US: SITE MAP
+  ja-JP: SITE MAP
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对网站全部页面的 URL 路径、HTTP 状态码、响应时间及请求反馈进行监测。由于一个网站可能有多个不同服务提供的页面，系统将采集网站暴露的<a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>网站地图(SiteMap)</a>来监控全站。<span class='help_module_span'><br>⚠️注意：此功能需要您的网站支持 XML 和 TXT 格式的 SiteMap。</span>
   en-US: HertzBeat monitoring all pages of website by URL path, HTTP status code, response times and request feedback. Due to the possibility that a website may have multiple pages provided by different services, Hertzbeat will collect <a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>SiteMap</a> which exposed by the website to monitor the entire site. <span class='help_module_span'><br>⚠️Note:HertzBeat support SiteMap in XML or TXT format.</span>
   zh-TW: HertzBeat對網站全部頁面的URL路徑、HTTP狀態碼、回應時間及請求迴響進行監測。 由於一個網站可能有多個不同服務提供的頁面，系統將採集網站暴露的<a class='help_ module_ content' href='https://en.wikipedia.org/wiki/Site_map'>網站地圖（SiteMap）</a>來監控全站。<span class='help_ module_ span'> <br>⚠️注意：此功能需要您的網站支持XML和TXT格式的SiteMap。</span>
+  ja-JP: HertzBeat はウェブサイトの全てのURL、HTTPステータスコード、応答時間などのメトリクス監視します。ウェブサイトには、異なるサービスによって提供される複数のページが存在する可能性があるため、システムはウェブサイトによって公開される<a class='help_ module_ content' href='https://en.wikipedia.org/wiki/Site_map'>SiteMap</a>を収集して監視します。<span class='help_ module_ span'> <br>⚠️注意：この機能を使用するには、ウェブサイトがXMLおよびTXT形式のSiteMapをサポートしている必要があります。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/guide/
   en-US: https://hertzbeat.apache.org/docs/help/guide/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -58,6 +62,7 @@ params:
     name:
       zh-CN: 网站地图
       en-US: Site Map
+      ja-JP: Site Map
     type: text
     limit: 200
     required: true
@@ -66,6 +71,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS利用
     # type-param field type(boolean mapping the html switch tag)
     type: boolean
     required: true
@@ -77,6 +83,7 @@ metrics:
     i18n:
       zh-CN: 概要信息
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -89,22 +96,26 @@ metrics:
         i18n:
           zh-CN: URL
           en-US: URL
+          ja-JP: URL
       - field: statusCode
         type: 1
         i18n:
           zh-CN: 响应状态码
           en-US: Status Code
+          ja-JP: ステータスコード
       - field: responseTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: errorMsg
         type: 1
         i18n:
           zh-CN: 错误信息
           en-US: Error Msg
+          ja-JP: エラーメッセージ
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
