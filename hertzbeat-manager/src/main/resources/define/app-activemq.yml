@@ -446,7 +446,7 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
-          ja-JP: 指標名
+          ja-JP: メトリック名
       - field: committed
         type: 0
         unit: MB
