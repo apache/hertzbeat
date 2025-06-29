@@ -173,7 +173,6 @@ params:
       ja-JP: ボディ
     # type-param field type(most mapping the html input type)
     type: textarea
-    # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Available When POST PUT'
     # dependent parameter values list
