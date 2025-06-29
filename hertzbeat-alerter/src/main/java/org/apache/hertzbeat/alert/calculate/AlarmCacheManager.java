@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
+import com.google.common.collect.Table;
+import com.google.common.collect.Tables;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -33,49 +35,71 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class AlarmCacheManager {
 
+    private static final String HISTORICAL_FIRING_ROW_KEY = "HISTORICAL_";
+
     /**
      * The alarm in the process is triggered
      * key - labels fingerprint
      */
-    private final Map<String, SingleAlert> pendingAlertMap;
+    private final Table<String, String, SingleAlert> pendingAlertMap;
+
     /**
      * The not recover alert
      * key - labels fingerprint
      */
-    private final Map<String, SingleAlert> firingAlertMap;
+    private final Table<String, String, SingleAlert> firingAlertMap;
 
     public AlarmCacheManager(SingleAlertDao singleAlertDao) {
-        this.pendingAlertMap = new ConcurrentHashMap<>(8);
-        this.firingAlertMap = new ConcurrentHashMap<>(8);
+        this.pendingAlertMap = Tables.newCustomTable(new ConcurrentHashMap<>(8), ConcurrentHashMap::new);
+        this.firingAlertMap = Tables.newCustomTable(new ConcurrentHashMap<>(8), ConcurrentHashMap::new);
         List<SingleAlert> singleAlerts = singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING);
         for (SingleAlert singleAlert : singleAlerts) {
             String fingerprint = AlertUtil.calculateFingerprint(singleAlert.getLabels());
+            String rowKey = singleAlert.getDefineId() == null
+                    ? getHistoricalKey(fingerprint) : String.valueOf(singleAlert.getDefineId());
             singleAlert.setId(null);
-            this.firingAlertMap.put(fingerprint, singleAlert);
+            this.firingAlertMap.put(rowKey, fingerprint, singleAlert);
         }
     }
 
-    public void putPending(String fingerPrint, SingleAlert alert) {
-        this.pendingAlertMap.put(fingerPrint, alert);
+    public void putPending(Long defineId, String fingerPrint, SingleAlert alert) {
+        this.pendingAlertMap.put(String.valueOf(defineId), fingerPrint, alert);
     }
 
-    public SingleAlert getPending(String fingerPrint) {
-        return this.pendingAlertMap.get(fingerPrint);
+    public SingleAlert getPending(Long defineId, String fingerPrint) {
+        return this.pendingAlertMap.get(String.valueOf(defineId), fingerPrint);
     }
 
-    public SingleAlert removePending(String fingerPrint) {
-        return this.pendingAlertMap.remove(fingerPrint);
+    public void removePending(Long defineId, String fingerPrint) {
+        this.pendingAlertMap.remove(String.valueOf(defineId), fingerPrint);
     }
 
-    public void putFiring(String fingerPrint, SingleAlert alert) {
-        this.firingAlertMap.put(fingerPrint, alert);
+    public void putFiring(Long defineId, String fingerPrint, SingleAlert alert) {
+        this.firingAlertMap.put(String.valueOf(defineId), fingerPrint, alert);
     }
 
-    public SingleAlert getFiring(String fingerPrint) {
-        return this.firingAlertMap.get(fingerPrint);
+    public SingleAlert getFiring(Long defineId, String fingerPrint) {
+        SingleAlert singleAlert = this.firingAlertMap.get(String.valueOf(defineId), fingerPrint);
+        if (null != singleAlert) {
+            return singleAlert;
+        }
+        String historicalKey = getHistoricalKey(fingerPrint);
+        return this.firingAlertMap.get(historicalKey, fingerPrint);
     }
 
-    public SingleAlert removeFiring(String fingerPrint) {
-        return this.firingAlertMap.remove(fingerPrint);
+    public SingleAlert removeFiring(Long defineId, String fingerPrint) {
+        SingleAlert singleAlert = this.firingAlertMap.remove(String.valueOf(defineId), fingerPrint);
+        if (null == singleAlert) {
+            String historicalKey = getHistoricalKey(fingerPrint);
+            SingleAlert historicalAlert = this.firingAlertMap.get(historicalKey, fingerPrint);
+            if (null != historicalAlert) {
+                return this.firingAlertMap.remove(historicalKey, fingerPrint);
+            }
+        }
+        return singleAlert;
+    }
+
+    private String getHistoricalKey(String fingerPrint) {
+        return HISTORICAL_FIRING_ROW_KEY + fingerPrint;
     }
 }
