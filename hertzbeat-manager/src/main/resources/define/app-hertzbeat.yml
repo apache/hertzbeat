@@ -26,7 +26,7 @@ help:
   zh-CN: Hertzbeat 对 Hertzbeat 监控系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控系统</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors HertzBeat Monitor through general performance metric. You could click the "<i>New HertzBeat Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat對Hertzbeat監控系統的通用指標進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: Hertzbeat は Hertzbeatの一般的なメトリック監視します。<br>「<i>新規 Apache Hertzbeat</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は Hertzbeatの一般的なメトリクスを監視します。<br>「<i>新規 Apache Hertzbeat</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat
   en-US: https://hertzbeat.apache.org/docs/help/hertzbeat

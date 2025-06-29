@@ -80,7 +80,7 @@ params:
 
 # collect metrics config list
 metrics:
-  - name: network_info # 指标集合名称
+  - name: network_info
     i18n:
       zh-CN: 网络信息
       en-US: Network Info

@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 FTP 服务器的通用指标进行测量监控。<br>您可以点击 “<i>新建 FTP服务器</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring FTP server through general performance metric. You could click the "<i>New FTP server</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 FTP 伺服器的通用名額進行量測監控。<br>您可以點擊“<i>新建FTP伺服器</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: Hertzbeat は FTPサーバーの一般的なメトリック監視します。<br>「<i>新規 FTPサーバー</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は FTPサーバーの一般的なメトリクスを監視します。<br>「<i>新規 FTPサーバー</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ftp
   en-US: https://hertzbeat.apache.org/docs/help/ftp

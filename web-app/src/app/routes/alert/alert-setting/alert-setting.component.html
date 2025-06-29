@@ -448,6 +448,35 @@
             >
             </textarea>
           </nz-textarea-count>
+          <button nz-button nzType="primary" style="width: 100%; margin-bottom: 10px" (click)="onPreviewExpr()">
+            <i nz-icon nzType="eye" nzTheme="outline"></i>
+            {{ 'common.preview.button' | i18n }}
+          </button>
+          <div *ngIf="previewData && previewColumns.length > 0" class="preview-table-container">
+            <nz-table
+              #previewTable
+              [nzData]="previewData"
+              [nzSize]="'small'"
+              [nzLoading]="previewTableLoading"
+              [nzScroll]="previewData.length > 3 ? { x: '1240px', y: '180px' } : { x: '1240px' }"
+              [nzShowPagination]="false"
+            >
+              <thead>
+                <tr>
+                  <th *ngFor="let column of previewColumns" [nzWidth]="column.width || 'auto'">
+                    {{ column.title }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let data of previewTable.data">
+                  <td *ngFor="let column of previewColumns">
+                    {{ data[column.key] }}
+                  </td>
+                </tr>
+              </tbody>
+            </nz-table>
+          </div>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="define.type === 'periodic'">

@@ -27,7 +27,7 @@ help:
   zh-CN: HertzBeat 对 Docker 容器的通用性能指标（system、containers、stats）进行采集监控。<br><span class='help_module_span'>注意⚠️：为了监控 Docker 中的容器信息，您需要打开端口，让采集请求获取到对应的信息, <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/docker'>点击查看开启步骤</a>。</span>
   en-US: HertzBeat monitoring Docker of general performance metrics such as containers, status etc. <br><span class='help_module_span'>Note⚠️:In order to monitoring metrics of Docker, you need to enable the data export port so that the collector can collect data from here，<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/docker'>Click here to view the steps</a>.</span>
   zh-TW: HertzBeat 對 Docker 容器的通用性能指標（system、containers、stats）進行采集監控。<br><span class='help_module_span'>注意⚠️：爲了監控 Docker 中的容器信息，您需要打開端口，讓采集請求獲取到對應的信息, <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/docker'>點擊查看開啓步驟</a>。</span>
-  ja-JP: HertzBeat は Dockerコンテナの一般的なパフォーマンスのメトリック監視します。<br><span class='help_module_span'>注意⚠️：Dockerコンテナの情報を監視するために、ポートを有効にする必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/docker'>クリックしてガイドを見ます</a>。</span>
+  ja-JP: HertzBeat は Dockerコンテナの一般的なパフォーマンスのメトリクスを監視します。<br><span class='help_module_span'>注意⚠️：Dockerコンテナの情報を監視するために、ポートを有効にする必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/docker'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/docker/
   en-US: https://hertzbeat.apache.org/docs/help/docker/
@@ -226,7 +226,7 @@ metrics:
         i18n:
           zh-CN: 命令行
           en-US: command
-          ja-JP: 指令
+          ja-JP: コマンド
         type: 1
       - field: state
         i18n:
