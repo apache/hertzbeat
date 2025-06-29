@@ -20,8 +20,8 @@ app: darwin
 # The monitoring i18n name
 name:
   zh-CN: Darwin操作系统
-  en-US: Darwin Linux
-  ja-JP: Darwin Linux
+  en-US: OS Darwin
+  ja-JP: Darwinオーエス
   zh-TW: Darwin操作系統
 # The description and help of this monitoring type
 help:
@@ -30,8 +30,8 @@ help:
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 對 Darwin 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Darwin</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
   ja-JP: HertzBeat は <a class='help_module_content' href='https://HertzBeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> Darwinシステムの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Darwin Linux</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
 helpLink:
-  zh-CN: https://HertzBeat.apache.org/zh-cn/docs/help/Darwin/
-  en-US: https://HertzBeat.apache.org/docs/help/Darwin/
+  zh-CN: https://HertzBeat.apache.org/zh-cn/docs/help/darwin/
+  en-US: https://HertzBeat.apache.org/docs/help/darwin/
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -525,74 +525,75 @@ metrics:
         }'
       parseType: multiRow
 
-#  - name: disk
-#    i18n:
-#      zh-CN: 磁盘信息
-#      zh-TW: 磁盤信息
-#      en-US: Disk Info
-#      ja-JP: ディスク情報
-#    priority: 3
-#    fields:
-#      - field: disk_num
-#        type: 1
-#        i18n:
-#          zh-CN: 磁盘总数
-#          zh-TW: 磁盤總數
-#          en-US: Disk Num
-#          ja-JP: ディスク番号
-#      - field: partition_num
-#        type: 1
-#        i18n:
-#          zh-CN: 分区总数
-#          zh-TW: 分區總數
-#          en-US: Partition Num
-#          ja-JP: パーティション
-#      - field: block_write
-#        type: 0
-#        i18n:
-#          zh-CN: 写磁盘块数
-#          zh-TW: 寫磁盤塊數
-#          en-US: Block Write
-#          ja-JP: 書き込みディスクブロック数
-#      - field: block_read
-#        type: 0
-#        i18n:
-#          zh-CN: 读磁盘块数
-#          zh-TW: 讀磁盤塊數
-#          en-US: Block Read
-#          ja-JP: 読み取りブロック数
-#      - field: write_rate
-#        type: 0
-#        unit: iops
-#        i18n:
-#          zh-CN: 磁盘写速率
-#          zh-TW: 磁盤寫速率
-#          en-US: Write Rate
-#          ja-JP: ディスク書き込み速度
-#    protocol: ssh
-#    ssh:
-#      host: ^_^host^_^
-#      port: ^_^port^_^
-#      username: ^_^username^_^
-#      password: ^_^password^_^
-#      privateKey: ^_^privateKey^_^
-#      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
-#      timeout: ^_^timeout^_^
-#      reuseConnection: ^_^reuseConnection^_^
-#      # whether to use proxy server for ssh connection
-#      useProxy: ^_^useProxy^_^
-#      # ssh proxy host: ipv4 domain
-#      proxyHost: ^_^proxyHost^_^
-#      # ssh proxy port
-#      proxyPort: ^_^proxyPort^_^
-#      # ssh proxy username
-#      proxyUsername: ^_^proxyUsername^_^
-#      # ssh proxy password
-#      proxyPassword: ^_^proxyPassword^_^
-#      # ssh proxy private key
-#      proxyPrivateKey: ^_^proxyPrivateKey^_^
-#      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {gsub(":", "", $1); print $1,$2,$10}'
-#      parseType: oneRow
+  - name: disk
+    i18n:
+      zh-CN: 磁盘信息
+      zh-TW: 磁盤信息
+      en-US: Disk Info
+      ja-JP: ディスク情報
+    priority: 3
+    fields:
+      - field: disk_num
+        type: 1
+        i18n:
+          zh-CN: 磁盘总数
+          zh-TW: 磁盤總數
+          en-US: Disk Num
+          ja-JP: ディスク番号
+      - field: partition_num
+        type: 1
+        i18n:
+          zh-CN: 分区总数
+          zh-TW: 分區總數
+          en-US: Partition Num
+          ja-JP: パーティション
+    #      - field: block_write
+    #        type: 0
+    #        i18n:
+    #          zh-CN: 写磁盘块数
+    #          zh-TW: 寫磁盤塊數
+    #          en-US: Block Write
+    #          ja-JP: 書き込みディスクブロック数
+    #      - field: block_read
+    #        type: 0
+    #        i18n:
+    #          zh-CN: 读磁盘块数
+    #          zh-TW: 讀磁盤塊數
+    #          en-US: Block Read
+    #          ja-JP: 読み取りブロック数
+    #      - field: write_rate
+    #        type: 0
+    #        unit: iops
+    #        i18n:
+    #          zh-CN: 磁盘写速率
+    #          zh-TW: 磁盤寫速率
+    #          en-US: Write Rate
+    #          ja-JP: ディスク書き込み速度
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+      #      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {gsub(":", "", $1); print $1,$2,$10}'
+      script: diskutil list | grep '^/dev/' | wc -l; diskutil list | grep -E 'Apple_HFS|Apple_APFS|Microsoft Basic Data|Linux Filesystem' | wc -l;
+      parseType: oneRow
 
   - name: interface
     i18n:
