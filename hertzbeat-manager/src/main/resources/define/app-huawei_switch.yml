@@ -403,7 +403,7 @@ metrics:
         i18n:
           zh-CN: 当前状态
           en-US: Current Status
-          ja-JP: ステータス
+          ja-JP: 現在のステータス
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - ifIndex
