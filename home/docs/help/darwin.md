@@ -65,7 +65,10 @@ keywords: [open source monitoring tool, open source os monitoring tool, monitori
 
 #### Metric Set: Disk Information  - to be finished
 
-- Disk information collection is not yet implemented, but will be added in future versions.
+| Metric Name   | Metric Unit | Metric Help Description                |
+|---------------|-------------|----------------------------------------|
+| disk_num      | None        | Total number of disks                  |
+| partition_num | None        | Total number of partitions             |
 
 #### Metric Set: Network Card Information
 
