@@ -271,19 +271,19 @@ metrics:
         i18n:
           zh-CN: 平均消息大小
           en-US: Average Message Size
-          ja-JP: 平均メッセージサイズ
+          ja-JP: メッセージの平均サイズ
         type: 0
       - field: MaxMessageSize
         i18n:
           zh-CN: 最大消息大小
           en-US: Max Message Size
-          ja-JP: 最大メッセージサイズ
+          ja-JP: メッセージの最大サイズ
         type: 0
       - field: MinMessageSize
         i18n:
           zh-CN: 最小消息大小
           en-US: Min Message Size
-          ja-JP: 最小メッセージサイズ
+          ja-JP: メッセージの最小サイズ
         type: 0
     protocol: jmx
     jmx:
@@ -372,7 +372,7 @@ metrics:
         i18n:
           zh-CN: 存储消息大小
           en-US: Store Message Size
-          ja-JP: ストレージメッセージサイズ
+          ja-JP: ストレージメッセージのサイズ
       - field: AverageEnqueueTime
         type: 0
         unit: ms
@@ -407,21 +407,21 @@ metrics:
         i18n:
           zh-CN: 平均消息大小
           en-US: Average Message Size
-          ja-JP: 平均メッセージサイズ
+          ja-JP: メッセージの平均サイズ
       - field: MaxMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 最大消息大小
           en-US: Max Message Size
-          ja-JP: 最大メッセージサイズ
+          ja-JP: メッセージの最大サイズ
       - field: MinMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 最小消息大小
           en-US: Min Message Size
-          ja-JP: 最小メッセージサイズ
+          ja-JP: メッセージの最小サイズ
     units:
       - MemoryLimit=B->MB
     protocol: jmx
@@ -453,7 +453,7 @@ metrics:
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
-          ja-JP: コミットメモリ
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         unit: MB
