@@ -536,7 +536,7 @@
   "define.delete.confirm": "{{app}}監視タイプを削除してもよろしいですか？削除後、このタイプの監視を追加できなくなります。",
   "define.disable": "{{app}}を無効化",
   "define.enable": "{{app}}を有効化",
-  "define.help": "モニターテンプレートは、各監視タイプ、パラメータ変数、メトリクス情報、収集プロトコルなどを定義します。ドロップダウンメニューから既存の監視テンプレートを選択し、必要に応じて変更できます。左下エリアは比較エリア、右下エリアは編集エリアです。<br>\"新規モニタータイプ\"をクリックして新しいタイプをカスタム定義することもできます。現在サポートされているプロトコルには、<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-http'>HTTP</a>、<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jdbc'>JDBC</a>、<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-ssh'>SSH</a>、<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX</a>、<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-snmp'>SNMP</a>などがあります。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/template'>モニターテンプレート</a>。",
+  "define.help": "モニターテンプレートは、各監視タイプ、パラメータ変数、メトリクス情報、収集プロトコルなどを定義します。ドロップダウンメニューから既存の監視テンプレートを選択し、必要に応じて変更できます。左下エリアは比較エリア、右下エリアは編集エリアです。<br>\"新規モニタータイプ\"をクリックして新しいタイプをカスタム定義することもできます。現在サポートされているプロトコルには、<a href='https://hertzbeat.apache.org/docs/advanced/extend-http'>HTTP</a>、<a href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'>JDBC</a>、<a href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH</a>、<a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'>JMX</a>、<a href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'>SNMP</a>などがあります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/template'>モニターテンプレート</a>。",
   "define.help.link": "https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/",
   "define.hide-false.confirm": "このメニューを非表示にしてもよろしいですか？",
   "define.hide-false.tip": "メインメニューに既に表示されています。非表示にしますか",
