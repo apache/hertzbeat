@@ -810,9 +810,9 @@ metrics:
       - field: processors
         type: 0
         i18n:
-          zh-CN: processors
+          zh-CN: 处理器数
           en-US: processors
-          ja-JP: プロセッサ
+          ja-JP: プロセッサ数
       - field: uptime
         type: 0
         i18n:
@@ -830,7 +830,7 @@ metrics:
         i18n:
           zh-CN: heap_committed
           en-US: heap_committed
-          ja-JP: ヒープのコミットメモリ
+          ja-JP: ヒープのコミットされたメモリ
       - field: heap_init
         type: 0
         i18n:
@@ -854,7 +854,7 @@ metrics:
         i18n:
           zh-CN: nonheap_committed
           en-US: nonheap_committed
-          ja-JP: ノンヒープのコミットメモリ
+          ja-JP: ノンヒープのコミットされたメモリ
       - field: nonheap_init
         type: 0
         i18n:
@@ -902,13 +902,13 @@ metrics:
         i18n:
           zh-CN: garbage_collector_g1_young_generation_count
           en-US: garbage_collector_g1_young_generation_count
-          ja-JP: garbage_collector_g1新領域GC回数
+          ja-JP: garbage_collector_g1若い領域GC回数
       - field: garbage_collector_g1_young_generation_time
         type: 0
         i18n:
           zh-CN: garbage_collector_g1_young_generation_time
           en-US: garbage_collector_g1_young_generation_time
-          ja-JP: garbage_collector_g1新領域GC時間
+          ja-JP: garbage_collector_g1若い領域GC時間
       - field: garbage_collector_g1_old_generation_count
         type: 0
         i18n:
