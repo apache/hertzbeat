@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertCollectorDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.util.AlertUtil;
-import org.apache.hertzbeat.common.constants.AlarmDefineCommonEnum;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.manager.Collector;
@@ -77,7 +76,7 @@ public class CollectorAlertHandler {
         fingerPrints.put(KEY_COLLECTOR_VERSION, collector.getVersion());
         fingerPrints.put(KEY_COLLECTOR_HOST, collector.getIp());
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
-        SingleAlert firingAlert = alarmCacheManager.getFiring(AlarmDefineCommonEnum.COLLECTOR.getId(), fingerprint);
+        SingleAlert firingAlert = alarmCacheManager.getFiring(fingerprint);
         if (firingAlert != null) {
             firingAlert.setTriggerTimes(1);
             firingAlert.setEndAt(System.currentTimeMillis());
@@ -103,10 +102,9 @@ public class CollectorAlertHandler {
         fingerPrints.put(KEY_COLLECTOR_VERSION, collector.getVersion());
         fingerPrints.put(KEY_COLLECTOR_HOST, collector.getIp());
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
-        SingleAlert existingAlert = alarmCacheManager.getFiring(AlarmDefineCommonEnum.COLLECTOR.getId(), fingerprint);
+        SingleAlert existingAlert = alarmCacheManager.getFiring(fingerprint);
         if (existingAlert == null) {
             SingleAlert newAlert = SingleAlert.builder()
-                    .defineId(AlarmDefineCommonEnum.COLLECTOR.getId())
                     .labels(fingerPrints)
                     .annotations(fingerPrints)
                     .content(this.bundle.getString("alerter.availability.collector.offline"))
@@ -115,7 +113,7 @@ public class CollectorAlertHandler {
                     .startAt(currentTimeMill)
                     .activeAt(currentTimeMill)
                     .build();
-            alarmCacheManager.putFiring(AlarmDefineCommonEnum.COLLECTOR.getId(), fingerprint, newAlert);
+            alarmCacheManager.putFiring(fingerprint, newAlert);
             alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
         }
 

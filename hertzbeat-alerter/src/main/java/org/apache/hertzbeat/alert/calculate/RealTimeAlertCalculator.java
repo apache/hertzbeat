@@ -187,6 +187,7 @@ public class RealTimeAlertCalculator {
             Map<String, String> commonFingerPrints = new HashMap<>(8);
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
             // here use the alert name as finger, not care the alert name may be changed
+            commonFingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
             commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_NAME, instanceName);
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_HOST, instanceHost);
@@ -371,7 +372,6 @@ public class RealTimeAlertCalculator {
                 entry.setValue(AlertTemplateUtil.render(entry.getValue(), fieldValueMap));
             }
             SingleAlert newAlert = SingleAlert.builder()
-                    .defineId(defineId)
                     .labels(alertLabels)
                     .annotations(alertAnnotations)
                     // render var content in content

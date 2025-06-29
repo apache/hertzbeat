@@ -78,6 +78,7 @@ public class PeriodicAlertCalculator {
                 for (Map<String, Object> result : results) {
                     Map<String, String> fingerPrints = new HashMap<>(8);
                     // here use the alert name as finger, not care the alert name may be changed
+                    fingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
                     fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
                     fingerPrints.putAll(define.getLabels());
                     for (Map.Entry<String, Object> entry : result.entrySet()) {
@@ -122,7 +123,6 @@ public class PeriodicAlertCalculator {
         if (existingAlert == null) {
             // First time triggering alert, create new alert and set to pending status
             SingleAlert newAlert = SingleAlert.builder()
-                    .defineId(defineId)
                     .labels(labels)
                     // todo render var content in annotations
                     .annotations(define.getAnnotations())

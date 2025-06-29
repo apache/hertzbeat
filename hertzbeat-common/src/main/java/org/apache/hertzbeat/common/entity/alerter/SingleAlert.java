@@ -60,10 +60,6 @@ public class SingleAlert {
     @Schema(title = "Threshold Id", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "Alarm define ID", example = "87432674384")
-    @Column(name = "define_id")
-    private Long defineId;
-
     @Schema(title = "Fingerprint", example = "alertname:demo")
     @Column(length = 2048)
     private String fingerprint;

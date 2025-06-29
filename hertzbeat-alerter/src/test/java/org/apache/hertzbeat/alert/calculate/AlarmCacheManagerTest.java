@@ -18,14 +18,12 @@
 package org.apache.hertzbeat.alert.calculate;
 
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
-import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -33,13 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -55,17 +49,23 @@ public class AlarmCacheManagerTest {
 
     @BeforeEach
     public void setUp() {
+        Map<String, String> labels = new HashMap<>();
+        labels.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL);
+        labels.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(1L));
         SingleAlert alert = new SingleAlert();
-        alert.setDefineId(1L);
         alert.setContent("Alert cache manager test");
-        alert.setLabels(Collections.singletonMap(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL));
+        alert.setLabels(labels);
         when(singleAlertDao.querySingleAlertsByStatus(CommonConstants.ALERT_STATUS_FIRING)).thenReturn(Collections.singletonList(alert));
         alarmCacheManager = new AlarmCacheManager(singleAlertDao);
     }
 
     @Test
     void testInit() {
-        String fingerprint = AlertUtil.calculateFingerprint(Collections.singletonMap(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL));
+        Map<String, String> labels = new HashMap<>();
+        labels.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL);
+        labels.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(1L));
+
+        String fingerprint = AlertUtil.calculateFingerprint(labels);
         SingleAlert firingSingleAlert = alarmCacheManager.getFiring(1L, fingerprint);
         assertNotNull(firingSingleAlert);
         assertEquals("Alert cache manager test", firingSingleAlert.getContent());
@@ -79,19 +79,19 @@ public class AlarmCacheManagerTest {
         Map<String, String> labels = new HashMap<>();
         labels.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL);
         labels.put(CommonConstants.ALERT_SEVERITY_INFO, CommonConstants.ALERT_STATUS_PENDING);
+        labels.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(2L));
 
         SingleAlert alert = new SingleAlert();
-        alert.setDefineId(2L);
         alert.setContent("Alert cache manager test");
         alert.setLabels(labels);
 
         String fingerprint = AlertUtil.calculateFingerprint(alert.getLabels());
-        alarmCacheManager.putPending(alert.getDefineId(), fingerprint, alert);
+        alarmCacheManager.putPending(2L, fingerprint, alert);
 
-        SingleAlert pendingSingleAlert = alarmCacheManager.getPending(alert.getDefineId(), fingerprint);
+        SingleAlert pendingSingleAlert = alarmCacheManager.getPending(2L, fingerprint);
         assertNotNull(pendingSingleAlert);
-        alarmCacheManager.removePending(alert.getDefineId(), fingerprint);
-        pendingSingleAlert = alarmCacheManager.getPending(alert.getDefineId(), fingerprint);
+        alarmCacheManager.removePending(2L, fingerprint);
+        pendingSingleAlert = alarmCacheManager.getPending(2L, fingerprint);
         assertNull(pendingSingleAlert);
     }
 
@@ -100,19 +100,19 @@ public class AlarmCacheManagerTest {
         Map<String, String> labels = new HashMap<>();
         labels.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL);
         labels.put(CommonConstants.ALERT_SEVERITY_INFO, CommonConstants.ALERT_STATUS_PENDING);
+        labels.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(3L));
 
         SingleAlert alert = new SingleAlert();
-        alert.setDefineId(3L);
         alert.setContent("Alert cache manager test");
         alert.setLabels(labels);
 
         String fingerprint = AlertUtil.calculateFingerprint(alert.getLabels());
-        alarmCacheManager.putFiring(alert.getDefineId(), fingerprint, alert);
+        alarmCacheManager.putFiring(3L, fingerprint, alert);
 
-        SingleAlert firingSingleAlert = alarmCacheManager.getFiring(alert.getDefineId(), fingerprint);
+        SingleAlert firingSingleAlert = alarmCacheManager.getFiring(3L, fingerprint);
         assertNotNull(firingSingleAlert);
-        alarmCacheManager.removeFiring(alert.getDefineId(), fingerprint);
-        firingSingleAlert = alarmCacheManager.getFiring(alert.getDefineId(), fingerprint);
+        alarmCacheManager.removeFiring(3L, fingerprint);
+        firingSingleAlert = alarmCacheManager.getFiring(3L, fingerprint);
         assertNull(firingSingleAlert);
     }
 
