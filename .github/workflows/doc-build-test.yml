@@ -50,7 +50,8 @@ jobs:
         run: |
           sudo npm install -g markdown-link-check@3.8.7
           find ./home -name "*.md" > all_md_files.txt
-          xargs -P 8 -a all_md_files.txt -I{} markdown-link-check -c ./script/ci/link_check.json -q "{}"
+          grep -vFf ./script/ci/exclude_files.txt all_md_files.txt > to_check.txt
+          xargs -P 8 -a to_check.txt -I{} markdown-link-check -c ./script/ci/link_check.json -q "{}"
 
       - name: NPM INSTALL
         working-directory: home
