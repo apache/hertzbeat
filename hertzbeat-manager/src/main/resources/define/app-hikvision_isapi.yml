@@ -21,10 +21,12 @@ app: hikvision_isapi
 name:
   zh-CN: 海康威视 ISAPI
   en-US: Hikvision ISAPI
+  ja-JP: Hikvision ISAPI
 # The description and help of this monitoring type
 help:
   zh-CN: 通过ISAPI接口监控海康威视设备状态，获取设备健康数据。
   en-US: Monitor Hikvision devices through ISAPI interface to collect health data.
+  ja-JP: ISAPIを呼び出して健康データを収集し、Hikvisionデバイスを監視します。
 
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -32,12 +34,14 @@ params:
     name:
       zh-CN: 主机Host
       en-US: Host
+      ja-JP: ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -46,6 +50,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     type: number
     range: '[1000,60000]'
     required: true
@@ -54,18 +59,21 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     required: true
   - field: password
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: true
   - field: ssl
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
+      ja-JP: SSL利用
     type: boolean
     required: false
     defaultValue: false
@@ -76,6 +84,7 @@ metrics:
     i18n:
       zh-CN: 系统信息
       en-US: System Info
+      ja-JP: システム情報
     priority: 0
     protocol: http
     http:
@@ -97,30 +106,36 @@ metrics:
         i18n:
           zh-CN: 设备名称
           en-US: Device Name
+          ja-JP: デバイス名
       - field: deviceID
         type: 1
         i18n:
           zh-CN: 设备ID
           en-US: Device ID
+          ja-JP: デバイスID
       - field: firmwareVersion
         type: 1
         i18n:
           zh-CN: 固件版本
           en-US: Firmware Version
+          ja-JP: ファームウェアバージョン
       - field: model
         type: 1
         i18n:
           zh-CN: 设备型号
           en-US: Device Model
+          ja-JP: デバイスモデル
       - field: macAddress
         type: 1
         i18n:
           zh-CN: mac地址
           en-US: Mac Address
+          ja-JP: Macアドレス
   - name: status
     i18n:
       zh-CN: 设备状态
       en-US: Status
+      ja-JP: 状態
     priority: 0
     protocol: http
     http:
@@ -141,91 +156,107 @@ metrics:
         i18n:
           zh-CN: CPU 利用率
           en-US: CPU Utilization
+          ja-JP: CPU使用率
         type: 0
         unit: '%'
       - field: memory_usage
         i18n:
           zh-CN: 内存使用量
           en-US: Memory Usage
+          ja-JP: メモリ使用量
         type: 0
         unit: MB
       - field: memory_available
         i18n:
           zh-CN: 可用内存
           en-US: Memory Available
+          ja-JP: 使用可能のメモリ
         type: 0
         unit: MB
       - field: cache_size
         i18n:
           zh-CN: 缓存大小
           en-US: Cache Size
+          ja-JP: キャッシュサイズ
         type: 0
         unit: MB
       - field: net_port_1_speed
         i18n:
           zh-CN: 网口1速度
           en-US: Net Port 1 Speed
+          ja-JP: ネットポート1速度
         type: 0
         unit: Mbps
       - field: net_port_2_speed
         i18n:
           zh-CN: 网口2速度
           en-US: Net Port 2 Speed
+          ja-JP: ネットポート2速度
         type: 0
         unit: Mbps
       - field: boot_time
         i18n:
           zh-CN: 启动时间
           en-US: Boot Time
+          ja-JP: 起動時間
         type: 1
       - field: device_uptime
         i18n:
           zh-CN: 运行时长
           en-US: Device Uptime
+          ja-JP: デバイスアップタイム
         type: 1
       - field: last_calibration_time
         i18n:
           zh-CN: 上次校时时间
           en-US: Last Calibration Time
+          ja-JP: 最終校正時刻
         type: 1
       - field: last_calibration_time_diff
         i18n:
           zh-CN: 上次校时时间差
           en-US: Last Calibration Time Diff
+          ja-JP: 最終校正時間差
         type: 0
         unit: s
       - field: avg_upload_time
         i18n:
           zh-CN: 平均上传耗时
           en-US: Avg Upload Time
+          ja-JP: 平均アップロード時間
         type: 0
         unit: ms
       - field: max_upload_time
         i18n:
           zh-CN: 最大上传耗时
           en-US: Max Upload Time
+          ja-JP: 最大アップロード時間
         type: 0
         unit: ms
       - field: min_upload_time
         i18n:
           zh-CN: 最小上传耗时
           en-US: Min Upload Time
+          ja-JP: 最小アップロード時間
         type: 0
         unit: ms
       - field: last_calibration_mode
         i18n:
           zh-CN: 上次校时模式
           en-US: Last Calibration Mode
+          ja-JP: 最終校正モード
         type: 1
       - field: last_calibration_address
         i18n:
           zh-CN: 上次校时地址
           en-US: Last Calibration Address
+          ja-JP: 最終校正アドレス
         type: 1
       - field: response_time
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
         type: 0
         unit: ms
     aliasFields:

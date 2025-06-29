@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 HDFS NameNode 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache HDFS NameNode</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the HDFS NameNode metrics. <br>You can click "<i>New Apache HDFS NameNode</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 HDFS NameNode 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache HDFS NameNode</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は HDFS NameNodeの一般的なメトリクス監視します。<br>「<i>新規 Apache HDFS NameNode</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は HDFS NameNodeの一般的なメトリクスを監視します。<br>「<i>新規 Apache HDFS NameNode</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hdfs_namenode/
@@ -409,56 +409,56 @@ metrics:
         i18n:
           zh-CN: JVM 当前已经使用的 NonHeapMemory 的大小
           en-US: MemNonHeapUsedM
-          ja-JP: 使用したノンヒープメモリサイズ
+          ja-JP: 使用したノンヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemNonHeapCommittedM
         type: 0
         i18n:
           zh-CN: JVM 配置的 NonHeapCommittedM 的大小
           en-US: MemNonHeapCommittedM
-          ja-JP: コミットのノンヒープメモリサイズ
+          ja-JP: コミットされたノンヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapUsedM
         type: 0
         i18n:
           zh-CN: JVM 当前已经使用的 HeapMemory 的大小
           en-US: MemHeapUsedM
-          ja-JP: 使用したヒープメモリサイズ
+          ja-JP: 使用したヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapCommittedM
         type: 0
         i18n:
           zh-CN: JVM HeapMemory 提交大小
           en-US: MemHeapCommittedM
-          ja-JP: コミットのヒープメモリサイズ
+          ja-JP: コミットされたヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapMaxM
         type: 0
         i18n:
           zh-CN: JVM 配置的 HeapMemory 的大小
           en-US: MemHeapMaxM
-          ja-JP: 配置のヒープメモリサイズ
+          ja-JP: 配置のヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemMaxM
         type: 0
         i18n:
           zh-CN: JVM 运行时可以使用的最大内存大小
           en-US: MemMaxM
-          ja-JP: 最大のヒープメモリサイズ
+          ja-JP: 最大のヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: GcCountParNew
         type: 0
         i18n:
           zh-CN: 新生代GC次数
           en-US: GcCountParNew
-          ja-JP: 新領域GC回数
+          ja-JP: 若い領域GC回数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: GcTimeMillisParNew
         type: 0
         i18n:
           zh-CN: 新生代GC消耗时间
           en-US: GcTimeMillisParNew
-          ja-JP: 新領域GC時間
+          ja-JP: 若い領域GC時間
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: GcCountConcurrentMarkSweep
         type: 0
