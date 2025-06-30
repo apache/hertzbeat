@@ -27,13 +27,20 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
-import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StopWatch;
 
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -48,17 +55,18 @@ public class MqttCollectImpl extends AbstractCollect {
     }
 
     private static final Logger logger = LoggerFactory.getLogger(MqttCollectImpl.class);
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_MQTT;
     }
+
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         MqttProtocol mqttProtocol = metrics.getMqtt();
         Assert.hasText(mqttProtocol.getHost(), "MQTT protocol host is required");
         Assert.hasText(mqttProtocol.getPort(), "MQTT protocol port is required");
 
-        // 校验SSL相关参数
         if ("mqtts".equalsIgnoreCase(mqttProtocol.getProtocol())) {
             if (Boolean.parseBoolean(mqttProtocol.getEnableMutualAuth())) {
                 Assert.hasText(mqttProtocol.getCaCert(), "CA certificate is required for mutual auth");
@@ -108,21 +116,20 @@ public class MqttCollectImpl extends AbstractCollect {
         }
 
         connOpts.setKeepAliveInterval(Integer.parseInt(protocol.getKeepalive()));
-        connOpts.setConnectionTimeout(Integer.parseInt(protocol.getTimeout())/1000);
+        connOpts.setConnectionTimeout(Integer.parseInt(protocol.getTimeout()) / 1000);
         connOpts.setCleanSession(true);
         connOpts.setAutomaticReconnect(false);
         if ("mqtts".equalsIgnoreCase(protocol.getProtocol())) {
             boolean insecureSkipVerify = Boolean.parseBoolean(protocol.getInsecureSkipVerify());
-            if (insecureSkipVerify){
+            if (insecureSkipVerify) {
                 connOpts.setHttpsHostnameVerificationEnabled(false);
             }
-            if (Boolean.parseBoolean(protocol.getEnableMutualAuth())){
-                connOpts.setSocketFactory(MqttSSLFactory.getMSLSocketFactory(protocol,insecureSkipVerify));
-            }else {
-                connOpts.setSocketFactory(MqttSSLFactory.getSSLSocketFactory(protocol,insecureSkipVerify));
+            if (Boolean.parseBoolean(protocol.getEnableMutualAuth())) {
+                connOpts.setSocketFactory(MqttSslFactory.getMslSocketFactory(protocol, insecureSkipVerify));
+            } else {
+                connOpts.setSocketFactory(MqttSslFactory.getSslSocketFactory(protocol, insecureSkipVerify));
             }
         }
-
 
 
         StopWatch connectWatch = new StopWatch();
@@ -137,14 +144,14 @@ public class MqttCollectImpl extends AbstractCollect {
     /**
      * Test MQTT subscribe and publish capabilities
      */
-    private void testSubscribeAndPublish(MqttAsyncClient client, MqttProtocol protocol, Map<Object, String> data){
+    private void testSubscribeAndPublish(MqttAsyncClient client, MqttProtocol protocol, Map<Object, String> data) {
 
         // 1 test subscribe
         if (StringUtils.isNotBlank(protocol.getTopic())) {
             String subscribe = testSubscribe(client, protocol.getTopic());
-            if (StringUtils.isBlank(subscribe)){
+            if (StringUtils.isBlank(subscribe)) {
                 data.put("canSubscribe", "Subscription successful");
-            }else {
+            } else {
                 data.put("canSubscribe", String.format("Subscription failed: %s", subscribe));
             }
 
@@ -156,13 +163,13 @@ public class MqttCollectImpl extends AbstractCollect {
         // 2 test publish
         if (StringUtils.isNotBlank(protocol.getTestMessage())) {
             String publish = testPublish(client, protocol.getTopic(), protocol.getTestMessage());
-            if (StringUtils.isBlank(publish)){
+            if (StringUtils.isBlank(publish)) {
                 data.put("canPublish", "Message published successfully");
 
                 // 3 test receive message
                 String receivedData = getReceivedData(client, protocol.getTopic());
                 data.put("canReceive", receivedData);
-            }else {
+            } else {
                 data.put("canPublish", String.format("Message publishing failed: %s", publish));
                 data.put("canReceive", "Message reception skipped due to failed publish");
             }
@@ -172,13 +179,12 @@ public class MqttCollectImpl extends AbstractCollect {
         }
 
 
-
         // 4 test unsubscribe
         if (StringUtils.isNotBlank(protocol.getTopic())) {
             String subscribe = testUnSubscribe(client, protocol.getTopic());
-            if (StringUtils.isBlank(subscribe)){
+            if (StringUtils.isBlank(subscribe)) {
                 data.put("canUnSubscribe", "Unsubscription successful");
-            }else {
+            } else {
                 data.put("canUnSubscribe", String.format("Unsubscription failed: %s", subscribe));
             }
         } else {
@@ -239,7 +245,7 @@ public class MqttCollectImpl extends AbstractCollect {
         }
     }
 
-    private String testPublish(MqttAsyncClient client, String topic, String message){
+    private String testPublish(MqttAsyncClient client, String topic, String message) {
         try {
             MqttMessage mqttMessage = new MqttMessage(message.getBytes());
             mqttMessage.setQos(1);
@@ -254,8 +260,7 @@ public class MqttCollectImpl extends AbstractCollect {
         }
     }
 
-
-    private String testUnSubscribe(MqttAsyncClient client, String topic){
+    private String testUnSubscribe(MqttAsyncClient client, String topic) {
         try {
             IMqttToken unsubToken = client.unsubscribe(topic);
             unsubToken.waitForCompletion(5000);
@@ -265,7 +270,6 @@ public class MqttCollectImpl extends AbstractCollect {
             return e.getMessage();
         }
     }
-
 
     /**
      * Convert collected data to MetricsData
