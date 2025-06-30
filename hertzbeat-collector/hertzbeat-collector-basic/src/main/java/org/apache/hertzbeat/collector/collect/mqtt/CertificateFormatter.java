@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.hertzbeat.collector.collect.mqtt;
 
 import java.util.ArrayList;
@@ -21,34 +22,29 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Formats the private key and certificate, supporting concatenation of multiple certificates in PEM format.
+ */
 public class CertificateFormatter {
 
-    /**
-     * Formats the private key and certificate, supporting concatenation of multiple certificates in PEM format.
-     */
     public static String formatCertificateChain(String input) {
         if (input == null || input.trim().isEmpty()) {
             return input;
         }
 
-        // 标准化输入格式
         String normalized = normalizeInput(input);
 
-        // 提取所有证书块
         List<String> certificates = extractCertificates(normalized);
 
-        // 如果没有找到证书块，尝试作为纯内容处理
         if (certificates.isEmpty()) {
             return formatAsSingleCertificate(normalized);
         }
 
-        // 格式化每个证书块
         StringBuilder formattedChain = new StringBuilder();
         for (String cert : certificates) {
-            // 防止空证书块
             if (cert.trim().isEmpty()) continue;
 
-            String formatted = formatPEMBlock(cert);
+            String formatted = formatPemBlock(cert);
             formattedChain.append(formatted).append("\n");
         }
 
@@ -94,7 +90,7 @@ public class CertificateFormatter {
         return certificates;
     }
 
-    private static String formatPEMBlock(String block) {
+    private static String formatPemBlock(String block) {
         try {
             Pattern pattern = Pattern.compile(
                     "(-----BEGIN\\s+[\\w\\s]+?-----)(.*?)(-----END\\s+[\\w\\s]+?-----)",
@@ -186,14 +182,14 @@ public class CertificateFormatter {
         String normalized = normalizeInput(input);
 
 
-        if (isPEMEncapsulated(normalized)) {
-            return formatPEMBlock(normalized);
+        if (isPemEncapsulated(normalized)) {
+            return formatPemBlock(normalized);
         }
 
         return formatAsCertificate(normalized);
     }
 
-    private static boolean isPEMEncapsulated(String block) {
+    private static boolean isPemEncapsulated(String block) {
         return block.contains("-----BEGIN") && block.contains("-----END");
     }
 }
