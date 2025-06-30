@@ -181,7 +181,7 @@ alerter:
 
 3. 选择要用于 AWS 终端用户消息传递服务的特定区域
    - 选择支持 AWS 终端用户消息传递（SMS 服务）的区域。
-   - 您可以在 这里 查看支持的区域[here](https://docs.aws.amazon.com/sms-voice/latest/userguide/phone-numbers-sms-by-country.html).
+   - 您可以在 这里 查看支持的区域[guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/phone-numbers-sms-by-country.html).
 
 4. 将 AWS SMS 从沙盒模式移动到生产模式
    - 默认情况下，AWS SMS 以沙盒模式运行，在该模式下，短信仅能发送到已验证的电话号码。

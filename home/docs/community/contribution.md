@@ -141,7 +141,7 @@ git pull upstream master
 
 ### HertzBeat Improvement Proposal (HIP)
 
-If you have major new features(e.g., support metrics push gateway, support logs monitoring), you need to write a design document known as a HertzBeat Improvement Proposal (HIP). Before starting to write a HIP, make sure you follow the process [here](https://github.com/apache/hertzbeat/tree/master/hip).
+If you have major new features(e.g., support metrics push gateway, support logs monitoring), you need to write a design document known as a HertzBeat Improvement Proposal (HIP). Before starting to write a HIP, make sure you follow the process [guide](https://github.com/apache/hertzbeat/tree/master/hip).
 
 ### How to become a Committer?
 
