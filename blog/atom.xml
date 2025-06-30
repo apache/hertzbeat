@@ -2,12 +2,26 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://hertzbeat.apache.org/blog</id>
     <title>Apache HertzBeat Blog</title>
-    <updated>2025-06-10T00:00:00.000Z</updated>
+    <updated>2025-06-29T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://hertzbeat.apache.org/blog"/>
     <subtitle>Apache HertzBeat Blog</subtitle>
     <icon>https://hertzbeat.apache.org/img/hertzbeat-logo.svg</icon>
     <rights>Copyright © 2025 Apache HertzBeat.</rights>
+    <entry>
+        <title type="html"><![CDATA[Welcome HertzBeat's New Community Committer!]]></title>
+        <id>https://hertzbeat.apache.org/blog/2025/06/29/new-committer</id>
+        <link href="https://hertzbeat.apache.org/blog/2025/06/29/new-committer"/>
+        <updated>2025-06-29T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Hello everyone, it's a great honor to be invited by the community to become Apache HertzBeat Committer.]]></summary>
+        <content type="html"><![CDATA[<blockquote><p>Hello everyone, it's a great honor to be invited by the community to become Apache HertzBeat Committer.</p></blockquote><h2 class="anchor anchorWithStickyNavbar_LWe7" id="self-introduction">Self-Introduction<a href="#self-introduction" class="hash-link" aria-label="Direct link to heading" title="Direct link to heading">​</a></h2><p>I've been working in development since 2019, engaging in various fields such as blockchain, cybersecurity, big data, new energy, and video technology. I'm a jack-of-all-trades engineer who dabbles in a bit of everything.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="my-journey-with-hertzbeat">My Journey with HertzBeat<a href="#my-journey-with-hertzbeat" class="hash-link" aria-label="Direct link to heading" title="Direct link to heading">​</a></h2><p>Initially, while setting up several services for myself, I needed a way to visualize metrics but didn't want to introduce overly complex monitoring systems. I hoped to find an out-of-the-box monitoring tool that was comprehensive and easy to extend – that’s when I discovered HertzBeat.</p><p>As I used it more deeply, I began exploring its source code and developed a desire to contribute to the community. I still vividly remember the anticipation during my first pull request (PR), going through multiple rounds of debugging and verification, eagerly hoping it would be accepted into the main branch. With increased involvement, tracking community updates has gradually become a daily habit.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="welcoming-community-atmosphere">Welcoming Community Atmosphere<a href="#welcoming-community-atmosphere" class="hash-link" aria-label="Direct link to heading" title="Direct link to heading">​</a></h2><p>The community thrives with activity, as code submissions and reviews pour in even during late-night hours. It embraces newcomers with open arms, ensuring that whether you're filing an ISSUE to report a bug or submitting a PR to contribute code, your efforts will spark thoughtful discussions and elicit detailed, actionable feedback.</p><p>Currently, HertzBeat is in a phase of rapid development, with capabilities such as metrics, logs, and tracing requiring continuous enhancement and refinement. If you're interested in contributing to open-source, this is an excellent opportunity to get involved.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="about-open-source">About Open Source<a href="#about-open-source" class="hash-link" aria-label="Direct link to heading" title="Direct link to heading">​</a></h2><p>For me, open source is a vessel for technical passion; growing alongside the community makes for a profoundly meaningful journey.</p><h2 class="anchor anchorWithStickyNavbar_LWe7" id="conclusion">Conclusion<a href="#conclusion" class="hash-link" aria-label="Direct link to heading" title="Direct link to heading">​</a></h2><p>A heartfelt thank you to <a href="https://github.com/tomsun28" target="_blank" rel="noopener noreferrer">@tomsun28</a> for the nomination and guidance. I hope this encouragement drives me to make even more valuable contributions to the community. Finally, wishing Apache HertzBeat a smooth graduation from the Apache Incubator and may the community continue to grow and thrive!</p>]]></content>
+        <author>
+            <name>MasamiYui</name>
+            <uri>https://github.com/MasamiYui</uri>
+        </author>
+        <category label="opensource" term="opensource"/>
+        <category label="practice" term="practice"/>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Announcement of Apache Hertzbeat 1.7.1 Release]]></title>
         <id>https://hertzbeat.apache.org/blog/2025/06/10/hertzbeat-v1.7.1</id>
