@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.mqtt;
 
-import com.hivemq.client.mqtt.MqttVersion;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
@@ -79,7 +78,6 @@ public class MqttCollectTest {
             mqtt.setHost("example.com");
             mqtt.setPort("1883");
             metrics.setMqtt(mqtt);
-            mqtt.setProtocolVersion("3.1.1");
             mqttCollect.preCheck(metrics);
         });
     }
@@ -98,22 +96,6 @@ public class MqttCollectTest {
             mqtt.setPort("1883");
             mqtt.setClientId("clientid");
             mqtt.setTimeout("1");
-            mqtt.setProtocolVersion(MqttVersion.MQTT_3_1_1.name());
-
-            metrics.setMqtt(mqtt);
-            metrics.setAliasFields(new ArrayList<>());
-
-            mqttCollect.collect(builder, metrics);
-        });
-
-        
-        assertDoesNotThrow(() -> {
-            MqttProtocol mqtt = MqttProtocol.builder().build();
-            mqtt.setHost("example.com");
-            mqtt.setPort("1883");
-            mqtt.setClientId("clientid");
-            mqtt.setTimeout("1");
-            mqtt.setProtocolVersion(MqttVersion.MQTT_5_0.name());
 
             metrics.setMqtt(mqtt);
             metrics.setAliasFields(new ArrayList<>());
