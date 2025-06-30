@@ -745,6 +745,33 @@ class MonitorServiceTest {
         when(monitorDao.findById(1L)).thenReturn(Optional.of(monitor));
         when(paramDao.findParamsByMonitorId(1L)).thenReturn(params);
         assertDoesNotThrow(() -> monitorService.copyMonitor(1L));
+    }
 
+    @Test
+    void exportAll() throws Exception {
+        // Create some test monitors
+        Monitor monitor1 = Monitor.builder().id(1L).name("test1").app("app1").build();
+        Monitor monitor2 = Monitor.builder().id(2L).name("test2").app("app2").build();
+        List<Monitor> allMonitors = List.of(monitor1, monitor2);
+        
+        // Mock the behavior of monitorDao.findAll
+        when(monitorDao.findAll()).thenReturn(allMonitors);
+        
+        // Create a mock HttpServletResponse
+        jakarta.servlet.http.HttpServletResponse mockResponse = org.mockito.Mockito.mock(jakarta.servlet.http.HttpServletResponse.class);
+        
+        // Mock the ImExportService
+        org.apache.hertzbeat.manager.service.ImExportService mockImExportService = org.mockito.Mockito.mock(org.apache.hertzbeat.manager.service.ImExportService.class);
+        // Mock the getFileName method
+        when(mockImExportService.getFileName()).thenReturn("test.json");
+        // Set the field using reflection
+        java.lang.reflect.Field field = MonitorServiceImpl.class.getDeclaredField("imExportServiceMap");
+        field.setAccessible(true);
+        java.util.Map<String, org.apache.hertzbeat.manager.service.ImExportService> imExportServiceMap = new java.util.HashMap<>();
+        imExportServiceMap.put("JSON", mockImExportService);
+        field.set(monitorService, imExportServiceMap);
+        
+        // Test the exportAll method
+        assertDoesNotThrow(() -> monitorService.exportAll("JSON", mockResponse));
     }
 }
