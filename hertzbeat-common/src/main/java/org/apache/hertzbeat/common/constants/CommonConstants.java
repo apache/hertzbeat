@@ -88,6 +88,11 @@ public interface CommonConstants {
     String LABEL_INSTANCE = "instance";
 
     /**
+     * label key: defineid
+     */
+    String LABEL_DEFINE_ID = "defineid";
+
+    /**
      * label key: alert name
      */
     String LABEL_ALERT_NAME = "alertname";
