@@ -24,7 +24,12 @@ import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -36,16 +41,20 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 
-public class MqttSSLFactory {
+/**
+ * Support MQTT SSL Factory
+ */
+public class MqttSslFactory {
 
-
-    public static SSLSocketFactory getMSLSocketFactory(MqttProtocol mqttProtocol, boolean insecureSkipVerify) {
+    /**
+     * Get MSL Socket Factory
+     */
+    public static SSLSocketFactory getMslSocketFactory(MqttProtocol mqttProtocol, boolean insecureSkipVerify) {
         try {
             Security.addProvider(new BouncyCastleProvider());
 
             KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
             ks.load(null, null);
-
 
             Certificate[] chain = null;
             if (mqttProtocol.getClientCert() != null && !mqttProtocol.getClientCert().isEmpty()) {
@@ -56,7 +65,6 @@ public class MqttSSLFactory {
                     chain = certs.toArray(new Certificate[0]);
                 }
             }
-
 
             PrivateKey privateKey;
             if (mqttProtocol.getClientKey() != null && !mqttProtocol.getClientKey().isEmpty()) {
@@ -101,8 +109,10 @@ public class MqttSSLFactory {
         }
     }
 
-
-    public static SSLSocketFactory getSSLSocketFactory(MqttProtocol mqttProtocol, boolean insecureSkipVerify) {
+    /**
+     * Get SSL Socket Factory
+     */
+    public static SSLSocketFactory getSslSocketFactory(MqttProtocol mqttProtocol, boolean insecureSkipVerify) {
         try {
             Security.addProvider(new BouncyCastleProvider());
 
@@ -129,11 +139,17 @@ public class MqttSSLFactory {
     }
 
     private static TrustManager[] createInsecureTrustManager() {
-        return new TrustManager[] {
+        return new TrustManager[]{
                 new X509TrustManager() {
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-                    public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                    public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                    }
+
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
                 }
         };
     }
