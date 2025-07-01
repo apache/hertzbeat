@@ -31,7 +31,6 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mysql.version>8.0.30</mysql.version>
         <postgresql.version>42.5.5</postgresql.version>
     </properties>
 
@@ -82,9 +81,8 @@
 
         <!-- JDBC Drivers -->
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${mysql.version}</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>test</scope>
             <optional>true</optional>
         </dependency>
