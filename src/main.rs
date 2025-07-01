@@ -87,12 +87,16 @@ async fn log_request(request: Request<Body>, next: Next) -> Response {
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging
+    let logs = tracing_appender::rolling::daily("logs", "mcp.log");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(logs);
+    let log_setting = tracing_subscriber::fmt::layer().with_writer(non_blocking);
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "debug".to_string().into()),
         )
         .with(tracing_subscriber::fmt::layer())
+        .with(log_setting)
         .init();
 
     // Read environment mode from config file, default to "production"

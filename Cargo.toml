@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+tracing-appender = "0.2"
 anyhow = "1.0.98"
 # rmcp = { path = "/home/yyx/rust-sdk-main/crates/rmcp", features = ["server", "transport-sse-server", "transport-io", "transport-streamable-http-server", "auth"] }
 rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["server", "transport-sse-server", "transport-io", "transport-streamable-http-server", "auth"]}
