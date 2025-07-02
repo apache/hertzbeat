@@ -63,7 +63,7 @@ public class LogIngestionController {
             protocol = DEFAULT_PROTOCOL; // Default to OTLP if no protocol specified
         }
         for (LogProtocolAdapter adapter : protocolAdapters) {
-            if (adapter.supportSource().equalsIgnoreCase(protocol)) {
+            if (adapter.supportProtocol().equalsIgnoreCase(protocol)) {
                 try {
                     adapter.ingest(content);
                     return ResponseEntity.ok(Message.success("Add extern log success"));
@@ -81,13 +81,13 @@ public class LogIngestionController {
 
     /**
      * Receive default log payload (when protocol is not specified).
-     * It will look for a service whose supportSource() returns "otlp".
+     * It will look for a service whose supportProtocol() returns "otlp".
      */
     @PostMapping("/api/logs/ingest")
     public ResponseEntity<Message<Void>> ingestDefaultExternLog(@RequestBody String content) {
         log.info("Receive default extern log content, length: {}", content == null ? 0 : content.length());
         LogProtocolAdapter adapter = protocolAdapters.stream()
-                .filter(item -> DEFAULT_PROTOCOL.equalsIgnoreCase(item.supportSource()))
+                .filter(item -> DEFAULT_PROTOCOL.equalsIgnoreCase(item.supportProtocol()))
                 .findFirst()
                 .orElse(null);
         if (adapter != null) {

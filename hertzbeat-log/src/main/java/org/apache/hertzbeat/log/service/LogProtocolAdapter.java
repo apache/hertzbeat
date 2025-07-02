@@ -37,5 +37,5 @@ public interface LogProtocolAdapter {
     /**
      * Identifier of the protocol this adapter supports ("otlp", "vector", etc.)
      */
-    String supportSource();
+    String supportProtocol();
 } 

@@ -42,7 +42,7 @@ import java.util.Map;
 @Service
 public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
 
-    private static final String SOURCE_NAME = "otlp";
+    private static final String PROTOCOL_NAME = "otlp";
 
     @Override
     public void ingest(String content) {
@@ -213,7 +213,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     }
 
     @Override
-    public String supportSource() {
-        return SOURCE_NAME;
+    public String supportProtocol() {
+        return PROTOCOL_NAME;
     }
 } 
