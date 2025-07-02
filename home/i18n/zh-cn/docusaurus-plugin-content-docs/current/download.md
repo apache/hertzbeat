@@ -5,7 +5,7 @@ sidebar_label: Download
 ---
 
 > **这里是 Apache HertzBeat (incubating) 官方下载页面。**
-> **请再下方表中选择版本下载，推荐使用最新版本。**
+> **请在下方表中选择版本下载，推荐使用最新版本。**
 
 :::tip
 
@@ -33,4 +33,4 @@ sidebar_label: Download
 
 ## 归档版本
 
-在这里查看所有归档版本：[archive](https://archive.apache.org/dist/incubator/hertzbeat/).
+在这里查看所有历史已归档版本：[archive](https://archive.apache.org/dist/incubator/hertzbeat/).
