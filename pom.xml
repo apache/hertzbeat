@@ -92,6 +92,7 @@
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
         <module>hertzbeat-mcp</module>
+        <module>hertzbeat-log</module>
     </modules>
 
     <properties>
@@ -177,6 +178,8 @@
         <sshd-sftp.version>2.13.1</sshd-sftp.version>
         <opentelemetry-starter.version>2.15.0</opentelemetry-starter.version>
         <opentelemetry-logback.version>2.14.0-alpha</opentelemetry-logback.version>
+
+        <opentelemetry-proto.version>1.3.1-alpha</opentelemetry-proto.version>
     </properties>
 
     <dependencyManagement>
@@ -235,10 +238,16 @@
                 <artifactId>hertzbeat-grafana</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
-            <!-- log -->
+            <!-- log otel -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-otel</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- log -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-log</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- collector-basic -->
@@ -427,6 +436,10 @@
                         <groupId>com.google.guava</groupId>
                         <artifactId>guava</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <!-- okhttp -->
@@ -488,6 +501,17 @@
                 <version>${opentelemetry-starter.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.proto</groupId>
+                <artifactId>opentelemetry-proto</artifactId>
+                <version>${opentelemetry-proto.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
