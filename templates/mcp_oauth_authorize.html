@@ -90,7 +90,7 @@
             <p>requested scopes: {{ scopes }}</p>
         </div>
         
-        <form action="/oauth/approve" method="post">
+        <form action="/approve" method="post">
             <input type="hidden" name="client_id" value="{{ client_id }}">
             <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
             <input type="hidden" name="scope" value="{{ scope }}">

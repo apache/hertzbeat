@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Result;
 use axum::{
@@ -9,12 +9,11 @@ use axum::{
     response::{Html, IntoResponse, Response},
     routing::{get, post},
 };
-use rmcp::transport::streamable_http_server::axum::{
-    StreamableHttpServer, StreamableHttpServerConfig,
+use rmcp::transport::streamable_http_server::{
+    StreamableHttpService, session::local::LocalSessionManager,
 };
-use tokio_util::sync::CancellationToken;
 use tower_http::cors::{Any, CorsLayer};
-use tracing::{error, info};
+use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 // Import modules
@@ -25,7 +24,7 @@ use common::oauth::{
     oauth_token, validate_token_middleware,
 };
 
-const BIND_ADDRESS: &str = "127.0.0.1:3000";
+const BIND_ADDRESS: &str = "127.0.0.1:4000";
 const INDEX_HTML: &str = include_str!("html/mcp_oauth_index.html");
 
 // Root path handler
@@ -98,16 +97,14 @@ async fn main() -> Result<()> {
     // Set up port
     let addr = BIND_ADDRESS.parse::<SocketAddr>()?;
 
-    // Create StreamableHttpServer configuration for MCP
-    let server_config = StreamableHttpServerConfig {
-        bind: addr,
-        path: "/mcp".to_string(),
-        ct: CancellationToken::new(),
-        sse_keep_alive: Some(Duration::from_secs(15)),
-    };
-
     // Create StreamableHttpServer
-    let (streamable_server, server_router) = StreamableHttpServer::new(server_config);
+    let service = StreamableHttpService::new(
+        BashServer::new,
+        LocalSessionManager::default().into(),
+        Default::default(),
+    );
+
+    let server_router = Router::new().nest_service("/mcp", service);
 
     // Create protected server routes (require authorization)
     let protected_server_router = server_router.layer(middleware::from_fn_with_state(
@@ -127,53 +124,27 @@ async fn main() -> Result<()> {
             "/.well-known/oauth-authorization-server",
             get(oauth_authorization_server_handler).options(oauth_authorization_server_handler),
         )
-        .route("/oauth/token", post(oauth_token).options(oauth_token))
-        .route(
-            "/oauth/register",
-            post(oauth_register).options(oauth_register),
-        )
+        .route("/token", post(oauth_token).options(oauth_token))
+        .route("/register", post(oauth_register).options(oauth_register))
         .layer(cors_layer)
         .with_state(oauth_store.clone());
 
     // Create HTTP router with request logging middleware
     let app = Router::new()
         .route("/", get(index))
-        .route("/oauth/authorize", get(oauth_authorize))
-        .route("/oauth/approve", post(oauth_approve))
+        .route("/authorize", get(oauth_authorize))
+        .route("/approve", post(oauth_approve))
         .merge(oauth_server_router) // Merge the CORS-enabled oauth server router
-        // .merge(protected_server_router)
+        .merge(protected_server_router)
         .with_state(oauth_store.clone())
         .layer(middleware::from_fn(log_request));
-
-    let app = app.merge(protected_server_router);
-    // Register token validation middleware for StreamableHttpServer
-    let cancel_token = streamable_server.config.ct.clone();
-    // Handle Ctrl+C
-    let cancel_token2 = streamable_server.config.ct.clone();
-    // Start StreamableHttpServer with Counter service
-    streamable_server.with_service(BashServer::new);
 
     // Start HTTP server
     info!("MCP OAuth Server started on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    let server = axum::serve(listener, app).with_graceful_shutdown(async move {
-        cancel_token.cancelled().await;
-        info!("Server is shutting down");
-    });
-
-    tokio::spawn(async move {
-        match tokio::signal::ctrl_c().await {
-            Ok(()) => {
-                info!("Received Ctrl+C, shutting down");
-                cancel_token2.cancel();
-            }
-            Err(e) => error!("Failed to listen for Ctrl+C: {}", e),
-        }
-    });
-
-    if let Err(e) = server.await {
-        error!("Server error: {}", e);
-    }
+    let _ = axum::serve(listener, app)
+        .with_graceful_shutdown(async { tokio::signal::ctrl_c().await.unwrap() })
+        .await;
 
     Ok(())
 }

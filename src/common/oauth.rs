@@ -10,17 +10,16 @@ use axum::{
     response::{Html, IntoResponse, Redirect, Response},
 };
 use chrono;
-use oauth2::{AccessToken, RefreshToken, StandardTokenResponse, EmptyExtraTokenFields};
+use oauth2::{AccessToken, EmptyExtraTokenFields, RefreshToken, StandardTokenResponse};
+use rand::{Rng, distributions::Alphanumeric};
+use rmcp::serde_json::{self, Value};
 use rmcp::transport::auth::{
-    AuthorizationMetadata, ClientRegistrationRequest, ClientRegistrationResponse,
-    OAuthClientConfig,
+    AuthorizationMetadata, ClientRegistrationRequest, ClientRegistrationResponse, OAuthClientConfig,
 };
 use serde::{Deserialize, Serialize};
-use rmcp::serde_json::{self, Value};
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use rand::{Rng, distributions::Alphanumeric};
 
 // Type alias for OAuth2 standard token response
 pub type AuthToken = StandardTokenResponse<EmptyExtraTokenFields, oauth2::basic::BasicTokenType>;
@@ -109,10 +108,10 @@ impl McpOAuthStore {
             if let Some(auth_token) = &session.auth_token {
                 let access_token = format!("mcp-token-{}", Uuid::new_v4());
                 let refresh_token = format!("mcp-refresh-{}", Uuid::new_v4());
-                
+
                 let token = McpAccessToken {
                     access_token: access_token.clone(),
-                    token_type: "Bearer".to_string(),
+                    token_type: "Bearer".to_string().to_lowercase(),
                     expires_in: Some(3600),
                     refresh_token: Some(refresh_token),
                     scope: session.scope.clone(),
@@ -294,12 +293,9 @@ pub async fn oauth_approve(
     let access_token = AccessToken::new(format!("tp-token-{}", Uuid::new_v4()));
     let refresh_token = RefreshToken::new(format!("tp-refresh-{}", Uuid::new_v4()));
     let token_type = oauth2::basic::BasicTokenType::Bearer;
-    
-    let mut created_token = StandardTokenResponse::new(
-        access_token,
-        token_type,
-        EmptyExtraTokenFields {},
-    );
+
+    let mut created_token =
+        StandardTokenResponse::new(access_token, token_type, EmptyExtraTokenFields {});
     created_token.set_expires_in(Some(&std::time::Duration::from_secs(3600)));
     created_token.set_refresh_token(Some(refresh_token));
     created_token.set_scopes(Some(vec![oauth2::Scope::new(form.scope.clone())]));
@@ -468,7 +464,7 @@ pub async fn oauth_token(
     }
 }
 
-// Auth middleware for SSE connections
+// Auth middleware for StreamableHttp connections
 pub async fn validate_token_middleware(
     State(token_store): State<Arc<McpOAuthStore>>,
     request: Request<axum::body::Body>,
@@ -510,12 +506,12 @@ pub async fn oauth_authorization_server(bind_address: &str) -> impl IntoResponse
         Value::Array(vec![Value::String("S256".into())]),
     );
     let metadata = AuthorizationMetadata {
-        authorization_endpoint: format!("http://{}/oauth/authorize", bind_address),
-        token_endpoint: format!("http://{}/oauth/token", bind_address),
+        authorization_endpoint: format!("http://{}/authorize", bind_address),
+        token_endpoint: format!("http://{}/token", bind_address),
         scopes_supported: Some(vec!["profile".to_string(), "email".to_string()]),
-        registration_endpoint: format!("http://{}/oauth/register", bind_address),
-        issuer: Some(bind_address.to_string()),
-        jwks_uri: Some(format!("http://{}/oauth/jwks", bind_address)),
+        registration_endpoint: format!("http://{}/register", bind_address),
+        issuer: Some(format!("http://{}", bind_address.to_string())),
+        jwks_uri: Some(format!("http://{}/jwks", bind_address)),
         additional_fields,
     };
     debug!("metadata: {:?}", metadata);

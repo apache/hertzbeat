@@ -18,7 +18,7 @@
     
     <div class="endpoint">
         <h3>Authorization Endpoint</h3>
-        <p><code>GET /oauth/authorize</code></p>
+        <p><code>GET /authorize</code></p>
         <p>Parameters:</p>
         <ul>
             <li><code>response_type</code> - Must be "code"</li>
@@ -31,7 +31,7 @@
     
     <div class="endpoint">
         <h3>Token Endpoint</h3>
-        <p><code>POST /oauth/token</code></p>
+        <p><code>POST /token</code></p>
         <p>Parameters:</p>
         <ul>
             <li><code>grant_type</code> - Must be "authorization_code"</li>
@@ -43,9 +43,8 @@
     </div>
     
     <div class="endpoint">
-        <h3>MCP SSE Endpoints</h3>
-        <p><code>/mcp/sse</code> - SSE connection endpoint (requires OAuth token)</p>
-        <p><code>/mcp/message</code> - Message endpoint (requires OAuth token)</p>
+        <h3>MCP streamablehttp Endpoints</h3>
+        <p><code>/mcp</code> - Streamablehttp connection endpoint (requires OAuth token)</p>
     </div>
     
     <div class="flow">
