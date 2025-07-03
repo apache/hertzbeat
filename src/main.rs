@@ -1,3 +1,4 @@
+use std::sync::OnceLock;
 use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Result;
@@ -24,8 +25,10 @@ use common::oauth::{
     oauth_token, validate_token_middleware,
 };
 
-const BIND_ADDRESS: &str = "172.22.145.208:4000";
 const INDEX_HTML: &str = include_str!("html/mcp_oauth_index.html");
+
+// Init once from environment variable BIND_ADDRESS
+pub static BIND_ADDRESS: OnceLock<String> = OnceLock::new();
 
 // Root path handler
 async fn index() -> Html<&'static str> {
@@ -34,7 +37,10 @@ async fn index() -> Html<&'static str> {
 
 // Wrapper function for oauth_authorization_server to handle BIND_ADDRESS
 async fn oauth_authorization_server_handler() -> impl IntoResponse {
-    oauth_authorization_server(BIND_ADDRESS).await
+    let bind_address = BIND_ADDRESS
+        .get()
+        .expect("BIND_ADDRESS must be initialized in main()");
+    oauth_authorization_server(bind_address).await
 }
 
 // Log all HTTP requests
@@ -94,8 +100,10 @@ async fn main() -> Result<()> {
     // Create the OAuth store
     let oauth_store = Arc::new(McpOAuthStore::new());
 
-    // Set up port
-    let addr = BIND_ADDRESS.parse::<SocketAddr>()?;
+    BIND_ADDRESS.get_or_init(|| {
+        std::env::var("BIND_ADDRESS").unwrap_or_else(|_| "127.0.0.1:4000".to_string())
+    });
+    let addr = BIND_ADDRESS.get().unwrap().parse::<SocketAddr>()?;
 
     // Create StreamableHttpServer
     let service = StreamableHttpService::new(
