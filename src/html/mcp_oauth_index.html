@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MCP OAuth Server</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px auto; max-width: 800px; line-height: 1.6; }
+        h1, h2 { color: #333; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+        .endpoint { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
+        .flow { background: #e8f5e9; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <h1>MCP OAuth Server</h1>
+    <p>This is an MCP server with OAuth 2.0 integration to a third-party authorization server.</p>
+    
+    <h2>Available Endpoints:</h2>
+    
+    <div class="endpoint">
+        <h3>Authorization Endpoint</h3>
+        <p><code>GET /oauth/authorize</code></p>
+        <p>Parameters:</p>
+        <ul>
+            <li><code>response_type</code> - Must be "code"</li>
+            <li><code>client_id</code> - Client identifier (e.g., "mcp-client")</li>
+            <li><code>redirect_uri</code> - URI to redirect after authorization</li>
+            <li><code>scope</code> - Optional requested scope</li>
+            <li><code>state</code> - Optional state value for CSRF prevention</li>
+        </ul>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Token Endpoint</h3>
+        <p><code>POST /oauth/token</code></p>
+        <p>Parameters:</p>
+        <ul>
+            <li><code>grant_type</code> - Must be "authorization_code"</li>
+            <li><code>code</code> - The authorization code</li>
+            <li><code>client_id</code> - Client identifier</li>
+            <li><code>client_secret</code> - Client secret</li>
+            <li><code>redirect_uri</code> - Redirect URI used in authorization request</li>
+        </ul>
+    </div>
+    
+    <div class="endpoint">
+        <h3>MCP SSE Endpoints</h3>
+        <p><code>/mcp/sse</code> - SSE connection endpoint (requires OAuth token)</p>
+        <p><code>/mcp/message</code> - Message endpoint (requires OAuth token)</p>
+    </div>
+    
+    <div class="flow">
+        <h2>OAuth Flow:</h2>
+        <ol>
+            <li>MCP Client initiates OAuth flow with this MCP Server</li>
+            <li>MCP Server redirects to Third-Party OAuth Server</li>
+            <li>User authenticates with Third-Party Server</li>
+            <li>Third-Party Server redirects back to MCP Server with auth code</li>
+            <li>MCP Server exchanges the code for a third-party access token</li>
+            <li>MCP Server generates its own token bound to the third-party session</li>
+            <li>MCP Server completes the OAuth flow with the MCP Client</li>
+        </ol>
+    </div>
+</body>
+</html>

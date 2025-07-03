@@ -9,12 +9,21 @@ rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "mai
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["net"] }
+tokio-util = { version = "0.7.15", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = [
     "env-filter",
     "std",
     "fmt",
 ] }
+axum = { version = "0.8", features = ["macros"] }
+chrono = "0.4"
+tower-http = { version = "0.6", features = ["cors"] }
+askama = { version = "0.14"}
+rand = { version = "0.8", features = ["std"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+serde_urlencoded = "0.7"
+oauth2 = "5.0"
 
 [[bin]]
 name = "mcp-bash-server"

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RMCP Authorized SSE Server</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1 { color: #333; }
+        .endpoint { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+        pre { background: #eee; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>RMCP Authorized SSE Server</h1>
+    <p>This is a Server-Sent Events server example that requires OAuth authorization.</p>
+    
+    <h2>Available Endpoints:</h2>
+    <ul>
+        <li class="endpoint"><code>/api/health</code> - Health check</li>
+        <li class="endpoint"><code>/api/token/{token_id}</code> - Get test token (available: demo, test)</li>
+        <li class="endpoint"><code>/sse</code> - SSE connection endpoint (requires authorization)</li>
+        <li class="endpoint"><code>/message</code> - Message sending endpoint (requires authorization)</li>
+    </ul>
+    
+    <h2>Usage:</h2>
+    <pre>
+        # Get a token
+        curl http://127.0.0.1:8000/api/token/demo
+
+        # Connect to SSE using the token
+        curl -H "Authorization: Bearer demo-token" http://127.0.0.1:8000/sse
+    </pre>
+</body>
+</html>

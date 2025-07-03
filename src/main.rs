@@ -1,184 +1,89 @@
-use rmcp::{
-    handler::server::tool::IntoCallToolResult, 
-    model::*, 
-    schemars, 
-    tool, 
-    ServerHandler,
-    transport::streamable_http_server::axum::StreamableHttpServer
+use std::{net::SocketAddr, sync::Arc, time::Duration};
+
+use anyhow::Result;
+use axum::{
+    Router,
+    body::Body,
+    http::Request,
+    middleware::{self, Next},
+    response::{Html, IntoResponse, Response},
+    routing::{get, post},
 };
-use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, process::Command};
-use tracing_subscriber::{
-    layer::SubscriberExt,
-    util::SubscriberInitExt,
-    {self},
+use rmcp::transport::streamable_http_server::axum::{
+    StreamableHttpServer, StreamableHttpServerConfig,
+};
+use tokio_util::sync::CancellationToken;
+use tower_http::cors::{Any, CorsLayer};
+use tracing::{error, info};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+// Import modules
+mod common;
+use common::bash_server::BashServer;
+use common::oauth::{
+    McpOAuthStore, oauth_approve, oauth_authorization_server, oauth_authorize, oauth_register,
+    oauth_token, validate_token_middleware,
 };
 
-#[derive(Debug, Deserialize, schemars::JsonSchema)]
-pub struct BashExecuteRequest {
-    #[schemars(description = "The bash command or script to execute")]
-    pub command: String,
-    #[schemars(description = "Working directory for the command (optional)")]
-    pub working_dir: Option<String>,
-    #[schemars(description = "Environment variables (optional)")]
-    pub env_vars: Option<std::collections::HashMap<String, String>>,
-    #[schemars(description = "Timeout in seconds (default: 30)")]
-    pub timeout_seconds: Option<u64>,
+const BIND_ADDRESS: &str = "127.0.0.1:3000";
+const INDEX_HTML: &str = include_str!("html/mcp_oauth_index.html");
+
+// Root path handler
+async fn index() -> Html<&'static str> {
+    Html(INDEX_HTML)
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct BashExecuteResponse {
-    pub stdout: String,
-    pub stderr: String,
-    pub exit_code: i32,
-    pub success: bool,
+// Wrapper function for oauth_authorization_server to handle BIND_ADDRESS
+async fn oauth_authorization_server_handler() -> impl IntoResponse {
+    oauth_authorization_server(BIND_ADDRESS).await
 }
 
-impl IntoCallToolResult for BashExecuteResponse {
-    fn into_call_tool_result(self) -> Result<CallToolResult, ErrorData> {
-        let content = if self.success {
-            format!(
-                "Command executed successfully (exit code: {})\n\nSTDOUT:\n{}\n\nSTDERR:\n{}",
-                self.exit_code, self.stdout, self.stderr
-            )
-        } else {
-            format!(
-                "Command failed (exit code: {})\n\nSTDOUT:\n{}\n\nSTDERR:\n{}",
-                self.exit_code, self.stdout, self.stderr
-            )
-        };
+// Log all HTTP requests
+async fn log_request(request: Request<Body>, next: Next) -> Response {
+    let method = request.method().clone();
+    let uri = request.uri().clone();
+    let version = request.version();
 
-        Ok(CallToolResult {
-            content: vec![Content::text(content)],
-            is_error: Some(!self.success),
-        })
+    // Log headers
+    let headers = request.headers().clone();
+    let mut header_log = String::new();
+    for (key, value) in headers.iter() {
+        let value_str = value.to_str().unwrap_or("<binary>");
+        header_log.push_str(&format!("\n  {}: {}", key, value_str));
     }
+
+    // Try to get request body for form submissions
+    let content_type = headers
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let request_info = if content_type.contains("application/x-www-form-urlencoded")
+        || content_type.contains("application/json")
+    {
+        format!(
+            "{} {} {:?}{}\nContent-Type: {}",
+            method, uri, version, header_log, content_type
+        )
+    } else {
+        format!("{} {} {:?}{}", method, uri, version, header_log)
+    };
+
+    info!("REQUEST: {}", request_info);
+
+    // Call the actual handler
+    let response = next.run(request).await;
+
+    // Log response status
+    let status = response.status();
+    info!("RESPONSE: {} for {} {}", status, method, uri);
+
+    response
 }
-
-#[derive(Debug, Clone)]
-pub struct BashServer;
-
-#[tool(tool_box)]
-impl BashServer {
-    fn new() -> Self {
-        BashServer
-    }
-
-    #[tool(description = "Execute a bash command or script")]
-    async fn execute_bash(
-        &self,
-        #[tool(aggr)] request: BashExecuteRequest,
-    ) -> Result<CallToolResult, ErrorData> {
-        let timeout_duration = std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
-
-        let mut cmd = Command::new("bash");
-        cmd.arg("-c").arg(&request.command);
-
-        // Set working directory if provided
-        if let Some(working_dir) = &request.working_dir {
-            cmd.current_dir(working_dir);
-        }
-
-        // Set environment variables if provided
-        if let Some(env_vars) = &request.env_vars {
-            for (key, value) in env_vars {
-                cmd.env(key, value);
-            }
-        }
-
-        // Execute command with timeout
-        let output = tokio::time::timeout(timeout_duration, async {
-            tokio::task::spawn_blocking(move || cmd.output()).await
-        })
-        .await
-        .map_err(|_| ErrorData{
-            code: ErrorCode::INTERNAL_ERROR, 
-            message: Cow::Owned("Command execution timed out".to_string()), 
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Failed to spawn command: {}", e)),
-            data: None,
-        })?
-        .map_err(|e| ErrorData {
-            code: ErrorCode::INTERNAL_ERROR,
-            message: Cow::Owned(format!("Command execution failed: {}", e)),
-            data: None,
-        })?;
-
-        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        let exit_code = output.status.code().unwrap_or(-1);
-        let success = output.status.success();
-
-        let response = BashExecuteResponse {
-            stdout,
-            stderr,
-            exit_code,
-            success,
-        };
-        Ok(CallToolResult::success(vec![
-            Content::json(response)?
-        ]))
-    }
-
-    #[tool(description = "Get system information using bash commands")]
-    async fn get_system_info(&self) -> Result<CallToolResult, ErrorData> {
-        let command = r#"
-echo "=== System Information ==="
-echo "Hostname: $(hostname)"
-echo "OS: $(uname -s)"
-echo "Kernel: $(uname -r)"
-echo "Architecture: $(uname -m)"
-echo "Uptime: $(uptime)"
-echo "Current User: $(whoami)"
-echo "Current Directory: $(pwd)"
-echo "Date: $(date)"
-echo "Memory Usage:"
-free -h 2>/dev/null || echo "free command not available"
-echo "Disk Usage:"
-df -h / 2>/dev/null || echo "df command not available"
-        "#;
-
-        self.execute_bash(BashExecuteRequest {
-            command: command.to_string(),
-            working_dir: None,
-            env_vars: None,
-            timeout_seconds: Some(10),
-        })
-        .await
-    }
-}
-
-#[tool(tool_box)]
-impl ServerHandler for BashServer {
-    fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            protocol_version: ProtocolVersion::LATEST,
-            capabilities: ServerCapabilities::builder()
-                .enable_prompts()
-                .enable_tools()
-                .enable_resources()
-                .enable_logging()
-                .build(),
-            instructions: Some(
-                "A Model Context Protocol server that can execute bash commands and scripts. \
-                 Use the execute_bash tool to run any bash command or script. \
-                 Use get_system_info to get basic system information."
-                    .to_string(),
-            ),
-            ..Default::default()
-        }
-    }
-}
-
-const BIND_ADDRESS: &str = "0.0.0.0:8002";
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    
-    // Initialized the tracing
+async fn main() -> Result<()> {
+    // Initialize logging
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -187,22 +92,88 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // Bind
-    let listener = StreamableHttpServer::serve(BIND_ADDRESS.parse()?)
-        .await?
-        .with_service(BashServer::new);
-    
-    println!("🚀 MCP Bash Server starting...");
-    println!("📡 Listening on: {}", BIND_ADDRESS);
-    println!("🔗 Connect using: http://{}", BIND_ADDRESS);
-    println!("📋 Available tools:");
-    println!("   • execute_bash - Execute bash commands or scripts");
-    println!("   • get_system_info - Get system information");
-    println!("⚠️  Security Warning: This server can execute arbitrary bash commands!");
-    println!("🔒 Only use in trusted environments");
-    println!();
+    // Create the OAuth store
+    let oauth_store = Arc::new(McpOAuthStore::new());
 
-    tokio::signal::ctrl_c().await?;
-    listener.cancel();
+    // Set up port
+    let addr = BIND_ADDRESS.parse::<SocketAddr>()?;
+
+    // Create StreamableHttpServer configuration for MCP
+    let server_config = StreamableHttpServerConfig {
+        bind: addr,
+        path: "/mcp".to_string(),
+        ct: CancellationToken::new(),
+        sse_keep_alive: Some(Duration::from_secs(15)),
+    };
+
+    // Create StreamableHttpServer
+    let (streamable_server, server_router) = StreamableHttpServer::new(server_config);
+
+    // Create protected server routes (require authorization)
+    let protected_server_router = server_router.layer(middleware::from_fn_with_state(
+        oauth_store.clone(),
+        validate_token_middleware,
+    ));
+
+    // Create CORS layer for the oauth authorization server endpoint
+    let cors_layer = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    // Create a sub-router for the oauth authorization server endpoint with CORS
+    let oauth_server_router = Router::new()
+        .route(
+            "/.well-known/oauth-authorization-server",
+            get(oauth_authorization_server_handler).options(oauth_authorization_server_handler),
+        )
+        .route("/oauth/token", post(oauth_token).options(oauth_token))
+        .route(
+            "/oauth/register",
+            post(oauth_register).options(oauth_register),
+        )
+        .layer(cors_layer)
+        .with_state(oauth_store.clone());
+
+    // Create HTTP router with request logging middleware
+    let app = Router::new()
+        .route("/", get(index))
+        .route("/oauth/authorize", get(oauth_authorize))
+        .route("/oauth/approve", post(oauth_approve))
+        .merge(oauth_server_router) // Merge the CORS-enabled oauth server router
+        // .merge(protected_server_router)
+        .with_state(oauth_store.clone())
+        .layer(middleware::from_fn(log_request));
+
+    let app = app.merge(protected_server_router);
+    // Register token validation middleware for StreamableHttpServer
+    let cancel_token = streamable_server.config.ct.clone();
+    // Handle Ctrl+C
+    let cancel_token2 = streamable_server.config.ct.clone();
+    // Start StreamableHttpServer with Counter service
+    streamable_server.with_service(BashServer::new);
+
+    // Start HTTP server
+    info!("MCP OAuth Server started on {}", addr);
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    let server = axum::serve(listener, app).with_graceful_shutdown(async move {
+        cancel_token.cancelled().await;
+        info!("Server is shutting down");
+    });
+
+    tokio::spawn(async move {
+        match tokio::signal::ctrl_c().await {
+            Ok(()) => {
+                info!("Received Ctrl+C, shutting down");
+                cancel_token2.cancel();
+            }
+            Err(e) => error!("Failed to listen for Ctrl+C: {}", e),
+        }
+    });
+
+    if let Err(e) = server.await {
+        error!("Server error: {}", e);
+    }
+
     Ok(())
 }
