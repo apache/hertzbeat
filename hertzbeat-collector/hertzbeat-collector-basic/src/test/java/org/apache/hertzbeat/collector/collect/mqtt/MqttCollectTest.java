@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.collector.collect.mqtt;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test case for {@link MqttCollectImpl}
@@ -63,8 +66,8 @@ class MqttCollectTest {
     }
 
     @Test
-        // Verify preCheck throws exception when MQTTs mutual auth is enabled but CA cert is missing
-    void preCheckShouldThrowWhenMQTTsMutualAuthMissingCerts() {
+        // Verify preCheck throws exception when MQTTS mutual auth is enabled but CA cert is missing
+    void preCheckShouldThrowWhenMqttsMutualAuthMissingCerts() {
         metrics.setMqtt(mqttBuilder
                 .protocol("mqtts")
                 .enableMutualAuth("true")
@@ -77,14 +80,14 @@ class MqttCollectTest {
 
     @Test
         // Verify preCheck succeeds with valid standard MQTT parameters
-    void preCheckShouldSucceedWithValidMQTTParams() {
+    void preCheckShouldSucceedWithValidMqttParams() {
         metrics.setMqtt(mqttBuilder.build());
         assertDoesNotThrow(() -> mqttCollect.preCheck(metrics));
     }
 
     @Test
-        // Verify preCheck succeeds with valid MQTTs parameters including mutual authentication
-    void preCheckShouldSucceedWithValidMQTTsMutualAuth() {
+        // Verify preCheck succeeds with valid MQTTS parameters including mutual authentication
+    void preCheckShouldSucceedWithValidMqttsMutualAuth() {
         metrics.setMqtt(mqttBuilder
                 .protocol("mqtts")
                 .enableMutualAuth("true")
@@ -98,7 +101,7 @@ class MqttCollectTest {
 
     @Test
         // Verify supportProtocol method returns correct MQTT constant
-    void supportProtocolShouldReturnMQTTConstant() {
+    void supportProtocolShouldReturnMqttConstant() {
         assertEquals(DispatchConstants.PROTOCOL_MQTT, mqttCollect.supportProtocol());
     }
 }
