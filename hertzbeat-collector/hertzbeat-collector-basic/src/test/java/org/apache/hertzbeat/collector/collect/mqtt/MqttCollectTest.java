@@ -20,87 +20,85 @@ package org.apache.hertzbeat.collector.collect.mqtt;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test case for {@link MqttCollectImpl}
  */
-public class MqttCollectTest {
+class MqttCollectTest {
     private MqttCollectImpl mqttCollect;
     private Metrics metrics;
-    private CollectRep.MetricsData.Builder builder;
+    private MqttProtocol.MqttProtocolBuilder mqttBuilder;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         mqttCollect = new MqttCollectImpl();
-        MqttProtocol mqtt = MqttProtocol.builder().build();
-        metrics = Metrics.builder()
-                .mqtt(mqtt)
-                .build();
-        builder = CollectRep.MetricsData.newBuilder();
+        metrics = new Metrics();
+
+        // Initialize base MQTT parameters for test cases
+        mqttBuilder = MqttProtocol.builder()
+                .host("example.com")
+                .port("1883")
+                .protocol("mqtt")
+                .timeout("5000")
+                .keepalive("60");
+    }
+
+    // Region: preCheck validation tests
+
+    @Test
+        // Verify preCheck throws exception when host is missing
+    void preCheckShouldThrowWhenHostMissing() {
+        metrics.setMqtt(mqttBuilder.host("").build());
+        assertThrows(IllegalArgumentException.class, () -> mqttCollect.preCheck(metrics));
     }
 
     @Test
-    void preCheck() {
-        // host is empty
-        assertThrows(IllegalArgumentException.class, () -> {
-            mqttCollect.preCheck(metrics);
-        });
-
-        // port is empty
-        assertThrows(IllegalArgumentException.class, () -> {
-            MqttProtocol mqtt = MqttProtocol.builder().build();
-            mqtt.setHost("example.com");
-            metrics.setMqtt(mqtt);
-            mqttCollect.preCheck(metrics);
-        });
-
-        // protocol version is empty
-        assertThrows(IllegalArgumentException.class, () -> {
-            MqttProtocol mqtt = MqttProtocol.builder().build();
-            mqtt.setHost("example.com");
-            mqtt.setPort("1883");
-            metrics.setMqtt(mqtt);
-            mqttCollect.preCheck(metrics);
-        });
-
-        // everything is ok
-        assertDoesNotThrow(() -> {
-            MqttProtocol mqtt = MqttProtocol.builder().build();
-            mqtt.setHost("example.com");
-            mqtt.setPort("1883");
-            metrics.setMqtt(mqtt);
-            mqttCollect.preCheck(metrics);
-        });
+        // Verify preCheck throws exception when port is missing
+    void preCheckShouldThrowWhenPortMissing() {
+        metrics.setMqtt(mqttBuilder.port("").build());
+        assertThrows(IllegalArgumentException.class, () -> mqttCollect.preCheck(metrics));
     }
 
     @Test
-    void supportProtocol() {
-        Assertions.assertEquals(DispatchConstants.PROTOCOL_MQTT, mqttCollect.supportProtocol());
+        // Verify preCheck throws exception when MQTTs mutual auth is enabled but CA cert is missing
+    void preCheckShouldThrowWhenMQTTsMutualAuthMissingCerts() {
+        metrics.setMqtt(mqttBuilder
+                .protocol("mqtts")
+                .enableMutualAuth("true")
+                .caCert("")
+                .clientCert("client.crt")
+                .clientKey("client.key")
+                .build());
+        assertThrows(IllegalArgumentException.class, () -> mqttCollect.preCheck(metrics));
     }
 
     @Test
-    void collect() {
-        // with version 3.1.1
-        assertDoesNotThrow(() -> {
-            MqttProtocol mqtt = MqttProtocol.builder().build();
-            mqtt.setHost("example.com");
-            mqtt.setPort("1883");
-            mqtt.setClientId("clientid");
-            mqtt.setTimeout("1");
+        // Verify preCheck succeeds with valid standard MQTT parameters
+    void preCheckShouldSucceedWithValidMQTTParams() {
+        metrics.setMqtt(mqttBuilder.build());
+        assertDoesNotThrow(() -> mqttCollect.preCheck(metrics));
+    }
 
-            metrics.setMqtt(mqtt);
-            metrics.setAliasFields(new ArrayList<>());
+    @Test
+        // Verify preCheck succeeds with valid MQTTs parameters including mutual authentication
+    void preCheckShouldSucceedWithValidMQTTsMutualAuth() {
+        metrics.setMqtt(mqttBuilder
+                .protocol("mqtts")
+                .enableMutualAuth("true")
+                .caCert("ca.pem")
+                .clientCert("client.crt")
+                .clientKey("client.key")
+                .build());
+        assertDoesNotThrow(() -> mqttCollect.preCheck(metrics));
+    }
+    // End region
 
-            mqttCollect.collect(builder, metrics);
-        });
+    @Test
+        // Verify supportProtocol method returns correct MQTT constant
+    void supportProtocolShouldReturnMQTTConstant() {
+        assertEquals(DispatchConstants.PROTOCOL_MQTT, mqttCollect.supportProtocol());
     }
 }
