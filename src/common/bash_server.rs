@@ -62,8 +62,8 @@ impl BashServer {
         BashServer
     }
 
-    #[tool(description = "Execute a bash command or script")]
-    async fn execute_bash(
+    #[tool(description = "Execute commands using default shell")]
+    async fn execute_via_default_shell(
         &self,
         #[tool(aggr)] request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
@@ -291,7 +291,7 @@ echo "Disk Usage:"
 df -h / 2>/dev/null || echo "df command not available"
         "#;
 
-        self.execute_bash(DefaultExecuteRequest {
+        self.execute_via_default_shell(DefaultExecuteRequest {
             command: command.to_string(),
             working_dir: None,
             env_vars: None,
@@ -333,9 +333,11 @@ impl ServerHandler for BashServer {
                 .enable_logging()
                 .build(),
             instructions: Some(
-                "A Model Context Protocol server that can execute bash commands and scripts. \
-                 Use the execute_bash tool to run any bash command or script. \
-                 Use get_system_info to get basic system information."
+                r#"A Model Context Protocol server that can execute shell commands and scripts in the machine server deployed at. 
+                 Use the `execute_via_default_shell` tool to run any shell command. 
+                 Use `execute_unix_script` to run any scripts in unix-like os.
+                 Use `execute_python` to run any python scripts.
+                 Use `get_system_info` to get basic system information."#
                     .to_string(),
             ),
             ..Default::default()
