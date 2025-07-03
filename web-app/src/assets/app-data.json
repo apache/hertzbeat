@@ -187,6 +187,20 @@
       ]
     },
     {
+      "text": "Log",
+      "i18n": "menu.log",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "Integration",
+          "i18n": "menu.log.integration",
+          "icon": "anticon-api",
+          "link": "/log/integration/otlp"
+        }
+      ]
+    },
+    {
       "text": "Advanced",
       "i18n": "menu.advanced",
       "group": true,
