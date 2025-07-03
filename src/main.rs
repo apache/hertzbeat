@@ -24,7 +24,7 @@ use common::oauth::{
     oauth_token, validate_token_middleware,
 };
 
-const BIND_ADDRESS: &str = "127.0.0.1:4000";
+const BIND_ADDRESS: &str = "172.22.145.208:4000";
 const INDEX_HTML: &str = include_str!("html/mcp_oauth_index.html");
 
 // Root path handler
