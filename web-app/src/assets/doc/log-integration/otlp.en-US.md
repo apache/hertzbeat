@@ -75,16 +75,9 @@ Supports standard OTLP JSON format log data:
 ```yaml
 exporters:
   otlphttp:
-    endpoint: "http://{hertzbeat_host}:1157/api/logs/ingest/otlp"
-    headers:
-      authorization: "Bearer {token}"
-
-service:
-  pipelines:
-    logs:
-      receivers: [filelog]
-      processors: [batch]
-      exporters: [otlphttp]
+    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/ingest/otlp
+    compression: none
+    encoding: json
 ```
 
 ### Configuration Verification
