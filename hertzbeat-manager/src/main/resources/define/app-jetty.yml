@@ -21,11 +21,13 @@ app: jetty
 name:
   zh-CN: Jetty应用服务器
   en-US: Jetty AppServer
+  ja-JP: Jetty応用サーバー
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX 协议</a> 对 Jetty 应用服务器的通用性能指标（内存信息，类加载，线程状态，JVM等）进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要在 Jetty 应用开启 JMX 服务, <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>点击查看开启步骤</a>。</span>
-  en-US: HertzBeat monitoring general performance metrics(memory pool, class loading, thread, jvm etc) of Jetty application server through <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX protocol</a>. <br><span class='help_module_span'>Note⚠️:You should enable the JMX service in Jetty application. <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>Click here to view the specific steps.</a></span>
+  en-US: HertzBeat monitoring general performance metrics(memory pool, class loading, thread, jvm etc) of Jetty application server through <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'>JMX protocol</a>. <br><span class='help_module_span'>Note⚠️:You should enable the JMX service in Jetty application. <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>Click here to view the specific steps.</a></span>
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX 協議</a> 對 Jetty 應用服務器的通用性能指標（內存信息，類加載，線程狀態，JVM等）進行采集監控。<br><span class='help_module_span'>注意⚠️：您需要在 Jetty 應用開啓 JMX 服務, <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>點擊查看開啓步驟</a>。</span>
+  ja-JP: HertzBeatは <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMXプロトコルを介して</a> Jetty応用サーバーの一般的なパフォーマンスのメトリクスを監視します。<br><span class='help_module_span'> ⚠️注意：Jetty応用 で JMX サービスを有効にする必要があります。<a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/jetty/
   en-US: https://hertzbeat.apache.org/docs/help/jetty/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: JMX端口
       en-US: JMX Port
+      ja-JP: JMXポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: JMX URL
       en-US: JMX URL
+      ja-JP: JMX URL
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -89,6 +95,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input type)
     type: password
     # required-true or false
@@ -102,6 +109,7 @@ metrics:
     i18n:
       zh-CN: 虚拟机基础信息
       en-US: JVM Basic
+      ja-JP: Java仮想マシン基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -113,22 +121,26 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Vm Name
+          ja-JP: 仮想マシン名
       - field: VmVendor
         type: 1
         i18n:
           zh-CN: 厂商
           en-US: Vm Vendor
+          ja-JP: 仮想マシンベンダー
       - field: VmVersion
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Vm Version
+          ja-JP: 仮想マシンバージョン
       - field: Uptime
         type: 0
         unit: ms
         i18n:
           zh-CN: 运行时长
           en-US: Up time
+          ja-JP: アップタイム
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is http
@@ -147,6 +159,7 @@ metrics:
     i18n:
       zh-CN: Jetty Server
       en-US: Jetty Server
+      ja-JP: Jetty サーバー
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -158,16 +171,19 @@ metrics:
         i18n:
           zh-CN: 版本
           en-US: Vm Version
+          ja-JP: 仮想マシンバージョン
       - field: state
         type: 1
         i18n:
           zh-CN: 运行状态
           en-US: Run State
+          ja-JP: 実行状態
       - field: startupTime
         type: 0
         i18n:
           zh-CN: 启动时间
           en-US: Startup Time
+          ja-JP: 起動時間
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is http
@@ -186,6 +202,7 @@ metrics:
     i18n:
       zh-CN: 内存池
       en-US: Memory Pool
+      ja-JP: メモリプール
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -198,26 +215,31 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
+          ja-JP: メトリクス名
       - field: committed
         type: 0
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         i18n:
           zh-CN: 初始化内存
           en-US: Init
+          ja-JP: イニシャルメモリ
       - field: max
         type: 0
         i18n:
           zh-CN: 最大内存
           en-US: Max
+          ja-JP: 最大メモリ
       - field: used
         type: 0
         i18n:
           zh-CN: 已使用内存
           en-US: Used
+          ja-JP: 使用したメモリ
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - Name
@@ -250,6 +272,7 @@ metrics:
     i18n:
       zh-CN: 类加载信息
       en-US: Class Loading
+      ja-JP: クラスローディング情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 3
@@ -261,16 +284,19 @@ metrics:
         i18n:
           zh-CN: 已加载类总数
           en-US: Loaded Class Count
+          ja-JP: ロードされたクラス数
       - field: TotalLoadedClassCount
         type: 0
         i18n:
           zh-CN: 总加载类总数
           en-US: Total Loaded Class Count
+          ja-JP: ロードされたクラス総数
       - field: UnloadedClassCount
         type: 0
         i18n:
           zh-CN: 未加载类总数
           en-US: Unloaded Class Count
+          ja-JP: アンロードされたクラス総数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is http
@@ -288,6 +314,7 @@ metrics:
     i18n:
       zh-CN: 线程信息
       en-US: Thread
+      ja-JP: スレッド情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 4
@@ -299,33 +326,39 @@ metrics:
         i18n:
           zh-CN: 已启动线程总数
           en-US: Total Started Thread Count
+          ja-JP: スレッド総数
       - field: ThreadCount
         type: 0
         i18n:
           zh-CN: 活跃线程数
           en-US: Thread Count
+          ja-JP: 活躍スレッド数
       - field: PeakThreadCount
         type: 0
         i18n:
           zh-CN: 最大峰值线程数
           en-US: Peak Thread Count
+          ja-JP: 最大スレッド数
       - field: DaemonThreadCount
         type: 0
         i18n:
           zh-CN: 活跃守护线程数
           en-US: Daemon Thread Count
+          ja-JP: デーモンスレッド数
       - field: CurrentThreadUserTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间(用户态)
           en-US: Current Thread User Time
+          ja-JP: 現在のスレッドユーザー時間
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间
           en-US: Current Thread CPU Time
+          ja-JP: 現在のスレッドシステム時間
     units:
       - CurrentThreadUserTime=NS->S
       - CurrentThreadCpuTime=NS->S
@@ -346,6 +379,7 @@ metrics:
     i18n:
       zh-CN: Web应用
       en-US: Webapp
+      ja-JP: Web応用
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 5
@@ -358,26 +392,31 @@ metrics:
         i18n:
           zh-CN: 应用名称
           en-US: App Name
+          ja-JP: 応用名
       - field: contextPath
         type: 1
         i18n:
           zh-CN: 上下文路径
           en-US: Context Path
+          ja-JP: コンテキストパス
       - field: state
         type: 1
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
       - field: resourceBase
         type: 1
         i18n:
           zh-CN: 资源
           en-US: Resource Base
+          ja-JP: リソース
       - field: shutdown
         type : 1
         i18n:
           zh-CN: 是否关闭
           en-US: Shutdown
+          ja-JP: シャットダウン
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is http
