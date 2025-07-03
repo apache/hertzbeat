@@ -52,21 +52,21 @@ class MqttCollectTest {
     // Region: preCheck validation tests
 
     @Test
-        // Verify preCheck throws exception when host is missing
+    // Verify preCheck throws exception when host is missing
     void preCheckShouldThrowWhenHostMissing() {
         metrics.setMqtt(mqttBuilder.host("").build());
         assertThrows(IllegalArgumentException.class, () -> mqttCollect.preCheck(metrics));
     }
 
     @Test
-        // Verify preCheck throws exception when port is missing
+    // Verify preCheck throws exception when port is missing
     void preCheckShouldThrowWhenPortMissing() {
         metrics.setMqtt(mqttBuilder.port("").build());
         assertThrows(IllegalArgumentException.class, () -> mqttCollect.preCheck(metrics));
     }
 
     @Test
-        // Verify preCheck throws exception when MQTTS mutual auth is enabled but CA cert is missing
+    // Verify preCheck throws exception when MQTTS mutual auth is enabled but CA cert is missing
     void preCheckShouldThrowWhenMqttsMutualAuthMissingCerts() {
         metrics.setMqtt(mqttBuilder
                 .protocol("mqtts")
@@ -79,14 +79,14 @@ class MqttCollectTest {
     }
 
     @Test
-        // Verify preCheck succeeds with valid standard MQTT parameters
+    // Verify preCheck succeeds with valid standard MQTT parameters
     void preCheckShouldSucceedWithValidMqttParams() {
         metrics.setMqtt(mqttBuilder.build());
         assertDoesNotThrow(() -> mqttCollect.preCheck(metrics));
     }
 
     @Test
-        // Verify preCheck succeeds with valid MQTTS parameters including mutual authentication
+    // Verify preCheck succeeds with valid MQTTS parameters including mutual authentication
     void preCheckShouldSucceedWithValidMqttsMutualAuth() {
         metrics.setMqtt(mqttBuilder
                 .protocol("mqtts")
@@ -100,7 +100,7 @@ class MqttCollectTest {
     // End region
 
     @Test
-        // Verify supportProtocol method returns correct MQTT constant
+    // Verify supportProtocol method returns correct MQTT constant
     void supportProtocolShouldReturnMqttConstant() {
         assertEquals(DispatchConstants.PROTOCOL_MQTT, mqttCollect.supportProtocol());
     }
