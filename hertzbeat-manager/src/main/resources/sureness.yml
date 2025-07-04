@@ -66,7 +66,6 @@ resourceRole:
   - /api/bulletin/**===post===[admin,user]
   - /api/bulletin/**===put===[admin,user]
   - /api/bulletin/**===delete===[admin]
-
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
@@ -79,8 +78,12 @@ excludedResource:
   - /api/push/**===*
   - /api/status/page/public/**===*
   - /api/manager/sse/**===*
+  - api/chat/*===*
   # web ui resource
   - /===get
+  - /api/sse===get
+  - /api/sse===post
+  - /api/mcp/message===post
   - /assets/**===get
   - /dashboard/**===get
   - /monitors/**===get
