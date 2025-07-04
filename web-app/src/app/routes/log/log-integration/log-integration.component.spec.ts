@@ -9,9 +9,8 @@ describe('LogIntegrationComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LogIntegrationComponent]
-    })
-    .compileComponents();
-    
+    }).compileComponents();
+
     fixture = TestBed.createComponent(LogIntegrationComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();

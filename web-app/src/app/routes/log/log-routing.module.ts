@@ -19,6 +19,7 @@
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+
 import { LogIntegrationComponent } from './log-integration/log-integration.component';
 
 const routes: Routes = [

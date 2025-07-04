@@ -19,17 +19,17 @@
 
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzPaginationModule } from 'ng-zorro-antd/pagination';
-import { NzEmptyModule } from 'ng-zorro-antd/empty';
-import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
+
 import { LogIntegrationComponent } from './log-integration/log-integration.component';
 import { LogRoutingModule } from './log-routing.module';
 
-const COMPONENTS: Array<Type<void>> = [
-];
+const COMPONENTS: Array<Type<void>> = [];
 
 @NgModule({
   imports: [
