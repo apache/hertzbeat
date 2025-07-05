@@ -21,11 +21,13 @@ app: kafka
 name:
   zh-CN: Kafka消息系统
   en-US: Kafka Message
+  ja-JP: Kafkaメッセージングシステム
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">JMX 协议</a> 对 Kafka 的通用性能指标 (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc) 进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要在 Kafka 开启 JMX 服务，应用启动时添加 JMX 参数，暴露端口，对外IP。下方配置的端口即为JMX暴露的端口，而非Kafka的server端口。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kafka'>点击查看开启步骤</a>。</span>
   en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'>JMX Protocol</a> to monitoring kafka general performance metrics (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc). <br><span class='help_module_span'>Note⚠️:You need to enable JMX service in Kafka, export JMX port and config params.The port configured below is the JMX exposed port, not the Kafka server port. <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/kafka'>Click here to view the specific steps.</a></span>
   zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">JMX 協議</a> 對 Kafka 的通用性能指標 (server info、code cache、active controller count、broker partition count、broker leader count、broker handler avg percent etc) 進行采集監控。<br><span class='help_module_span'>注意⚠️：您需要在 Kafka 開啓 JMX 服務，應用啓動時添加 JMX 參數，暴露端口，對外IP。下方配置的端口即為 JMX 暴露的端口，而非 Kafka 的伺服器端口。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kafka'>點擊查看開啓步驟</a>。</span>
+  ja-JP: HertzBeat は <a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMXプロトコルを介して</a> Kafkaの一般的なパフォーマンスのメトリクスを監視します。<br><span class='help_module_span'>⚠️注意：Kafka で JMX サービスを有効にする必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/kafka'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kafka
   en-US: https://hertzbeat.apache.org/docs/help/kafka
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -45,6 +48,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     # when type is number, range is required
     range: '[0,65535]'
@@ -54,6 +58,7 @@ params:
     name:
       zh-CN: JMX URL
       en-US: JMX URL
+      ja-JP: JMX URL
     type: text
     required: false
     hide: true
@@ -62,6 +67,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -70,6 +76,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
     hide: true
@@ -80,6 +87,7 @@ metrics:
     i18n:
       zh-CN: 服务器信息
       en-US: Server Info
+      ja-JP: サーバー情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -91,16 +99,19 @@ metrics:
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: StartTimeMs
         type: 1
         i18n:
           zh-CN: 启动时间
           en-US: Start Time
+          ja-JP: 起動時間
       - field: CommitId
         type: 1
         i18n:
           zh-CN: CommitId
           en-US: CommitId
+          ja-JP: CommitId
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is jmx
@@ -118,6 +129,7 @@ metrics:
     i18n:
       zh-CN: 虚拟机基础信息
       en-US: JVM Basic
+      ja-JP: Java仮想マシン基礎情報
     priority: 1
     fields:
       - field: VmName
@@ -125,22 +137,26 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Vm Name
+          ja-JP: 仮想マシン名
       - field: VmVendor
         type: 1
         i18n:
           zh-CN: 厂商
           en-US: Vm Vendor
+          ja-JP: 仮想マシンベンダー
       - field: VmVersion
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Vm Version
+          ja-JP: 仮想マシンバージョン
       - field: Uptime
         type: 0
         unit: ms
         i18n:
           zh-CN: 运行时长
           en-US: Up time
+          ja-JP: アップタイム
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -155,6 +171,7 @@ metrics:
     i18n:
       zh-CN: 内存池
       en-US: Memory Pool
+      ja-JP: メモリプール
     priority: 2
     fields:
       - field: name
@@ -163,26 +180,31 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
+          ja-JP: メトリクス名
       - field: committed
         type: 0
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         i18n:
           zh-CN: 初始化内存
           en-US: Init
+          ja-JP: イニシャルメモリ
       - field: max
         type: 0
         i18n:
           zh-CN: 最大内存
           en-US: Max
+          ja-JP: 最大メモリ
       - field: used
         type: 0
         i18n:
           zh-CN: 已使用内存
           en-US: Used
+          ja-JP: 使用したメモリ
     aliasFields:
       - Name
       - Usage->committed
@@ -208,6 +230,7 @@ metrics:
     i18n:
       zh-CN: Kafka控制器指标
       en-US: Kafka Controller Metrics
+      ja-JP: Kafkaコントローラーのメトリクス
     priority: 3
     fields:
       - field: ActiveBrokerCount
@@ -215,66 +238,79 @@ metrics:
         i18n:
           zh-CN: 活跃代理数量
           en-US: Active Broker Count
+          ja-JP: 活動中のブローカー数
       - field: ActiveControllerCount
         type: 0
         i18n:
           zh-CN: 活跃控制器数量
           en-US: Active Controller Count
+          ja-JP: 活動中のコントローラー数
       - field: ControllerState
         type: 0
         i18n:
           zh-CN: 控制器状态
           en-US: Controller State
+          ja-JP: コントローラー状態
       - field: FencedBrokerCount
         type: 0
         i18n:
           zh-CN: 被隔离代理数量
           en-US: Fenced Broker Count
+          ja-JP: フェンスのブローカー数
       - field: GlobalPartitionCount
         type: 0
         i18n:
           zh-CN: 全局分区数量
           en-US: Global Partition Count
+          ja-JP: パーティション数
       - field: GlobalTopicCount
         type: 0
         i18n:
           zh-CN: 全局主题数量
           en-US: Global Topic Count
+          ja-JP: トピック数
       - field: OfflinePartitionsCount
         type: 0
         i18n:
           zh-CN: 离线分区数量
           en-US: Offline Partitions Count
+          ja-JP: オフラインのパーティション数
       - field: PreferredReplicaImbalanceCount
         type: 0
         i18n:
           zh-CN: 首选副本不平衡数量
           en-US: Preferred Replica Imbalance Count
+          ja-JP: 優先レプリカ不均衡数
       - field: ReplicasIneligibleToDeleteCount
         type: 0
         i18n:
           zh-CN: 不能删除的副本数量
           en-US: Replicas Ineligible To Delete Count
+          ja-JP: 削除できないレプリカ数
       - field: ReplicasToDeleteCount
         type: 0
         i18n:
           zh-CN: 待删除副本数量
           en-US: Replicas To Delete Count
+          ja-JP: 削除待ちのレプリカ数
       - field: TopicsIneligibleToDeleteCount
         type: 0
         i18n:
           zh-CN: 不能删除的主题数量
           en-US: Topics Ineligible To Delete Count
+          ja-JP: 削除できないトピック数
       - field: TopicsToDeleteCount
         type: 0
         i18n:
           zh-CN: 待删除主题数量
           en-US: Topics To Delete Count
+          ja-JP: 削除待ちのトピック数
       - field: ZkMigrationState
         type: 0
         i18n:
           zh-CN: ZooKeeper迁移状态
           en-US: Zk Migration State
+          ja-JP: ZooKeeperマイグレーション状態
     aliasFields:
       - Value->ActiveBrokerCount
       - Value->ActiveControllerCount
@@ -318,6 +354,7 @@ metrics:
     i18n:
       zh-CN: Broker处理器平均百分比
       en-US: Broker Handler Avg Percent
+      ja-JP: ブローカーハンドラの平均パーセント
     priority: 6
     fields:
       - field: EventType
@@ -325,36 +362,43 @@ metrics:
         i18n:
           zh-CN: 事件类型
           en-US: Event Type
+          ja-JP: イベントタイプ
       - field: RateUnit
         type: 1
         i18n:
           zh-CN: 速率单位
           en-US: Rate Unit
+          ja-JP: レート単位
       - field: Count
         type: 0
         i18n:
           zh-CN: 计数
           en-US: Count
+          ja-JP: カウント
       - field: MeanRate
         type: 0
         i18n:
           zh-CN: 平均速率
           en-US: Mean Rate
+          ja-JP: 平均レート
       - field: OneMinuteRate
         type: 0
         i18n:
           zh-CN: 一分钟速率
           en-US: One Minute Rate
+          ja-JP: 1分間のレート
       - field: FiveMinuteRate
         type: 0
         i18n:
           zh-CN: 五分钟速率
           en-US: Five Minute Rate
+          ja-JP: 5分間のレート
       - field: FifteenMinuteRate
         type: 0
         i18n:
           zh-CN: 十五分钟速率
           en-US: Fifteen Minute Rate
+          ja-JP: 15分間のレート
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -369,6 +413,7 @@ metrics:
     i18n:
       zh-CN: Kafka副本管理器指标
       en-US: Kafka Replica Manager Metrics
+      ja-JP: Kafkaレプリカマネジャーのメトリクス
     priority: 6
     fields:
       - field: AtMinIsrPartitionCount
@@ -376,61 +421,73 @@ metrics:
         i18n:
           zh-CN: 达到最小ISR的分区数
           en-US: At Min ISR Partition Count
+          ja-JP: 最小ISRパーティション数
       - field: FailedIsrUpdatesPerSec
         type: 0
         i18n:
           zh-CN: 每秒失败ISR更新数
           en-US: Failed ISR Updates Per Sec
+          ja-JP: 1秒あたりのISR更新失敗数
       - field: IsrExpandsPerSec
         type: 0
         i18n:
           zh-CN: 每秒ISR扩展数
           en-US: ISR Expands Per Sec
+          ja-JP: 1秒あたりのISR拡張数
       - field: IsrShrinksPerSec
         type: 0
         i18n:
           zh-CN: 每秒ISR收缩数
           en-US: ISR Shrinks Per Sec
+          ja-JP: 1秒あたりのISR収縮数
       - field: LeaderCount
         type: 0
         i18n:
           zh-CN: 领导者数量
           en-US: Leader Count
+          ja-JP: リーダー数
       - field: OfflineReplicaCount
         type: 0
         i18n:
           zh-CN: 离线副本数量
           en-US: Offline Replica Count
+          ja-JP: オフラインのレプリカ数
       - field: PartitionCount
         type: 0
         i18n:
           zh-CN: 分区总数
           en-US: Partition Count
+          ja-JP: パーティション数
       - field: PartitionsWithLateTransactionsCount
         type: 0
         i18n:
           zh-CN: 含有延迟交易的分区数
           en-US: Partitions With Late Transactions Count
+          ja-JP: 遅いトランザクションのあるパーティション数
       - field: ProducerIdCount
         type: 0
         i18n:
           zh-CN: 生产者ID数量
           en-US: Producer ID Count
+          ja-JP: 生産者ID数
       - field: ReassigningPartitions
         type: 0
         i18n:
           zh-CN: 正在重新分配的分区数
           en-US: Reassigning Partitions
+          ja-JP: 再割り当てのパーティション数
       - field: UnderMinIsrPartitionCount
         type: 0
         i18n:
           zh-CN: 低于最小ISR的分区数
           en-US: Under Min ISR Partition Count
+          ja-JP: 最小ISR未満のパーティション数
       - field: UnderReplicatedPartitions
         type: 0
         i18n:
           zh-CN: 副本数低于预期的分区数量
           en-US: Under Replicated Partitions
+          ja-JP: レプリカ未満のパーティション数
     aliasFields:
       - Value->LeaderCount
       - Value->AtMinIsrPartitionCount
@@ -472,6 +529,7 @@ metrics:
     i18n:
       zh-CN: 每秒主题流入字节
       en-US: Total Bytes In Per Second
+      ja-JP: 1秒あたりのトピック合計受信されたバイト
     priority: 7
     fields:
       - field: EventType
@@ -479,36 +537,43 @@ metrics:
         i18n:
           zh-CN: 事件类型
           en-US: Event Type
+          ja-JP: イベントタイプ
       - field: RateUnit
         type: 1
         i18n:
           zh-CN: 速率单位
           en-US: Rate Unit
+          ja-JP: レート単位
       - field: MeanRate
         type: 0
         i18n:
           zh-CN: 平均速率
           en-US: Mean Rate
+          ja-JP: 平均レート
       - field: OneMinuteRate
         type: 0
         i18n:
           zh-CN: 一分钟速率
           en-US: One Minute Rate
+          ja-JP: 1分間のレート
       - field: FiveMinuteRate
         type: 0
         i18n:
           zh-CN: 五分钟速率
           en-US: Five Minute Rate
+          ja-JP: 5分間のレート
       - field: FifteenMinuteRate
         type: 0
         i18n:
           zh-CN: 十五分钟速率
           en-US: Fifteen Minute Rate
+          ja-JP: 15分間のレート
       - field: Count
         type: 0
         i18n:
           zh-CN: 计数
           en-US: Count
+          ja-JP: カウント
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -523,6 +588,7 @@ metrics:
     i18n:
       zh-CN: 各主题每秒流入字节
       en-US: Bytes In Per Topic Per Second
+      ja-JP: 各トピックの1秒あたりの受信されたバイト
     priority: 7
     fields:
       - field: topic
@@ -530,41 +596,49 @@ metrics:
         i18n:
           zh-CN: 主题名称
           en-US: Topic Name
+          ja-JP: トピック名
       - field: EventType
         type: 1
         i18n:
           zh-CN: 事件类型
           en-US: Event Type
+          ja-JP: イベントタイプ
       - field: RateUnit
         type: 1
         i18n:
           zh-CN: 速率单位
           en-US: Rate Unit
+          ja-JP: レート単位
       - field: MeanRate
         type: 0
         i18n:
           zh-CN: 平均速率
           en-US: Mean Rate
+          ja-JP: 平均レート
       - field: OneMinuteRate
         type: 0
         i18n:
           zh-CN: 一分钟速率
           en-US: One Minute Rate
+          ja-JP: 1分間のレート
       - field: FiveMinuteRate
         type: 0
         i18n:
           zh-CN: 五分钟速率
           en-US: Five Minute Rate
+          ja-JP: 5分間のレート
       - field: FifteenMinuteRate
         type: 0
         i18n:
           zh-CN: 十五分钟速率
           en-US: Fifteen Minute Rate
+          ja-JP: 15分間のレート
       - field: Count
         type: 0
         i18n:
           zh-CN: 计数
           en-US: Count
+          ja-JP: カウント
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -579,6 +653,7 @@ metrics:
     i18n:
       zh-CN: 主题每秒流出字节
       en-US: Total Bytes Out Per Second
+      ja-JP: 1秒あたりのトピック合計転送されたバイト
     priority: 8
     fields:
       - field: EventType
@@ -586,36 +661,43 @@ metrics:
         i18n:
           zh-CN: 事件类型
           en-US: Event Type
+          ja-JP: イベントタイプ
       - field: RateUnit
         type: 1
         i18n:
           zh-CN: 速率单位
           en-US: Rate Unit
+          ja-JP: レート単位
       - field: MeanRate
         type: 0
         i18n:
           zh-CN: 平均速率
           en-US: Mean Rate
+          ja-JP: 平均レート
       - field: OneMinuteRate
         type: 0
         i18n:
           zh-CN: 一分钟速率
           en-US: One Minute Rate
+          ja-JP: 1分間のレート
       - field: FiveMinuteRate
         type: 0
         i18n:
           zh-CN: 五分钟速率
           en-US: Five Minute Rate
+          ja-JP: 5分間のレート
       - field: FifteenMinuteRate
         type: 0
         i18n:
           zh-CN: 十五分钟速率
           en-US: Fifteen Minute Rate
+          ja-JP: 15分間のレート
       - field: Count
         type: 0
         i18n:
           zh-CN: 计数
           en-US: Count
+          ja-JP: カウント
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -630,6 +712,7 @@ metrics:
     i18n:
       zh-CN: 各主题每秒流出字节
       en-US: Bytes Out Per Topic Per Second
+      ja-JP: 各トピックの1秒あたりの転送されたバイト
     priority: 9
     fields:
       - field: topic
@@ -637,41 +720,49 @@ metrics:
         i18n:
           zh-CN: 主题名称
           en-US: Topic Name
+          ja-JP: トピック名
       - field: EventType
         type: 1
         i18n:
           zh-CN: 事件类型
           en-US: Event Type
+          ja-JP: イベントタイプ
       - field: RateUnit
         type: 1
         i18n:
           zh-CN: 速率单位
           en-US: Rate Unit
+          ja-JP: レート単位
       - field: MeanRate
         type: 0
         i18n:
           zh-CN: 平均速率
           en-US: Mean Rate
+          ja-JP: 平均レート
       - field: OneMinuteRate
         type: 0
         i18n:
           zh-CN: 一分钟速率
           en-US: One Minute Rate
+          ja-JP: 1分間のレート
       - field: FiveMinuteRate
         type: 0
         i18n:
           zh-CN: 五分钟速率
           en-US: Five Minute Rate
+          ja-JP: 5分間のレート
       - field: FifteenMinuteRate
         type: 0
         i18n:
           zh-CN: 十五分钟速率
           en-US: Fifteen Minute Rate
+          ja-JP: 15分間のレート
       - field: Count
         type: 0
         i18n:
           zh-CN: 计数
           en-US: Count
+          ja-JP: カウント
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -686,6 +777,7 @@ metrics:
     i18n:
       zh-CN: 每秒生产消息转换
       en-US: Produce Message Conversions PerSec
+      ja-JP: 1秒あたりのメッセージ変換数
     priority: 9
     fields:
       - field: EventType
@@ -693,36 +785,43 @@ metrics:
         i18n:
           zh-CN: 事件类型
           en-US: Event Type
+          ja-JP: イベントタイプ
       - field: RateUnit
         type: 1
         i18n:
           zh-CN: 速率单位
           en-US: Rate Unit
+          ja-JP: レート単位
       - field: MeanRate
         type: 0
         i18n:
           zh-CN: 平均速率
           en-US: Mean Rate
+          ja-JP: 平均レート
       - field: OneMinuteRate
         type: 0
         i18n:
           zh-CN: 一分钟速率
           en-US: One Minute Rate
+          ja-JP: 1分間のレート
       - field: FiveMinuteRate
         type: 0
         i18n:
           zh-CN: 五分钟速率
           en-US: Five Minute Rate
+          ja-JP: 5分間のレート
       - field: FifteenMinuteRate
         type: 0
         i18n:
           zh-CN: 十五分钟速率
           en-US: Fifteen Minute Rate
+          ja-JP: 15分間のレート
       - field: Count
         type: 0
         i18n:
           zh-CN: 计数
           en-US: Count
+          ja-JP: カウント
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -737,6 +836,7 @@ metrics:
     i18n:
       zh-CN: 每秒生产总请求数
       en-US: Produce Total Requests PerSec
+      ja-JP: 1秒あたりの合計リクエスト数
     priority: 10
     fields:
       - field: EventType
@@ -744,36 +844,43 @@ metrics:
         i18n:
           zh-CN: 事件类型
           en-US: Event Type
+          ja-JP: イベントタイプ
       - field: RateUnit
         type: 1
         i18n:
           zh-CN: 速率单位
           en-US: Rate Unit
+          ja-JP: レート単位
       - field: MeanRate
         type: 0
         i18n:
           zh-CN: 平均速率
           en-US: Mean Rate
+          ja-JP: 平均レート
       - field: OneMinuteRate
         type: 0
         i18n:
           zh-CN: 一分钟速率
           en-US: One Minute Rate
+          ja-JP: 1分間のレート
       - field: FiveMinuteRate
         type: 0
         i18n:
           zh-CN: 五分钟速率
           en-US: Five Minute Rate
+          ja-JP: 5分間のレート
       - field: FifteenMinuteRate
         type: 0
         i18n:
           zh-CN: 十五分钟速率
           en-US: Fifteen Minute Rate
+          ja-JP: 15分間のレート
       - field: Count
         type: 0
         i18n:
           zh-CN: 计数
           en-US: Count
+          ja-JP: カウント
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -788,6 +895,7 @@ metrics:
     i18n:
       zh-CN: Kafka消费者组指标
       en-US: Kafka Group Metrics
+      ja-JP: Kafka消費者グループメトリクス
     priority: 11
     fields:
       - field: NumGroups
@@ -795,36 +903,43 @@ metrics:
         i18n:
           zh-CN: 群组数量
           en-US: Num Groups
+          ja-JP: 消費者グループ総数
       - field: NumGroupsCompletingRebalance
         type: 0
         i18n:
           zh-CN: 正在完成重新平衡的群组数量
           en-US: Num Groups Completing Rebalance
+          ja-JP: リバランス中の消費者グループ数
       - field: NumGroupsDead
         type: 0
         i18n:
           zh-CN: 死亡群组数量
           en-US: Num Groups Dead
+          ja-JP: デッドの消費者グループ数
       - field: NumGroupsEmpty
         type: 0
         i18n:
           zh-CN: 空群组数量
           en-US: Num Groups Empty
+          ja-JP: 空の消費者グループ数
       - field: NumGroupsPreparingRebalance
         type: 0
         i18n:
           zh-CN: 正在准备重新平衡的群组数量
           en-US: Num Groups Preparing Rebalance
+          ja-JP: リバランス準備中の消費者グループ数
       - field: NumGroupsStable
         type: 0
         i18n:
           zh-CN: 稳定群组数量
           en-US: Num Groups Stable
+          ja-JP: 安定した消費者グループ数
       - field: NumOffsets
         type: 0
         i18n:
           zh-CN: 偏移量数量
           en-US: Num Offsets
+          ja-JP: オフセット数
     aliasFields:
       - Value->NumGroups
       - Value->NumGroupsCompletingRebalance
