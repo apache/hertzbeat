@@ -132,6 +132,7 @@ public class RealTimeAlertCalculatorMatchTest {
 
 
         AlertDefine matchDefine = new AlertDefine();
+        matchDefine.setId(1L);
         matchDefine.setName("test");
         matchDefine.setExpr(
             "equals(__app__,\"prometheus\") && "
@@ -151,8 +152,8 @@ public class RealTimeAlertCalculatorMatchTest {
 
         Thread.sleep(3000);
 
-        verify(alarmCacheManager, times(1)).getPending(any());
-        verify(alarmCacheManager, times(1)).putFiring(any(), any());
+        verify(alarmCacheManager, times(1)).getPending(any(), any());
+        verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
     }
 
@@ -180,6 +181,7 @@ public class RealTimeAlertCalculatorMatchTest {
         CollectRep.MetricsData metricsData = builder.build();
 
         AlertDefine matchDefine = new AlertDefine();
+        matchDefine.setId(1L);
         matchDefine.setName("test");
         matchDefine.setExpr("equals(__app__,\"prometheus\") && equals(__metrics__,\"canal_instance\") && metric_value > 0");
         matchDefine.setTemplate("Canal instance val: ${value}%");
@@ -194,8 +196,8 @@ public class RealTimeAlertCalculatorMatchTest {
 
         Thread.sleep(3000);
 
-        verify(alarmCacheManager, times(1)).getPending(any());
-        verify(alarmCacheManager, times(1)).putFiring(any(), any());
+        verify(alarmCacheManager, times(1)).getPending(any(), any());
+        verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
     }
 
@@ -229,6 +231,7 @@ public class RealTimeAlertCalculatorMatchTest {
         CollectRep.MetricsData metricsData = builder.build();
 
         AlertDefine matchDefine = new AlertDefine();
+        matchDefine.setId(1L);
         matchDefine.setName("test");
         matchDefine.setExpr("equals(__app__,\"springboot3\") && equals(__metrics__,\"available\") && equals(__instance__, \"518679137103104\") && responseTime > 0");
         matchDefine.setTemplate("Canal instance val: ${value}%");
@@ -243,8 +246,8 @@ public class RealTimeAlertCalculatorMatchTest {
 
         Thread.sleep(3000);
 
-        verify(alarmCacheManager, times(1)).getPending(any());
-        verify(alarmCacheManager, times(1)).putFiring(any(), any());
+        verify(alarmCacheManager, times(1)).getPending(any(), any());
+        verify(alarmCacheManager, times(1)).putFiring(any(), any(), any());
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
     }
 
