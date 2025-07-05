@@ -27,6 +27,7 @@ import io.opentelemetry.proto.logs.v1.ResourceLogs;
 import io.opentelemetry.proto.logs.v1.ScopeLogs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.log.service.LogProtocolAdapter;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,12 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
 
     private static final String PROTOCOL_NAME = "otlp";
 
+    private final CommonDataQueue commonDataQueue;
+
+    public OtlpLogProtocolAdapter(CommonDataQueue commonDataQueue) {
+        this.commonDataQueue = commonDataQueue;
+    }
+
     @Override
     public void ingest(String content) {
         if (content == null || content.isEmpty()) {
@@ -59,9 +66,14 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             List<LogEntry> logEntries = extractLogEntries(request);
             log.info("Successfully extracted {} log entries from OTLP payload", logEntries.size());
             
-            // TODO: Persist / forward processed logs to data warehouse / queue
-            // For now, just log the entries for debugging
-            logEntries.forEach(entry -> log.info("Extracted log entry: {}", entry));
+            logEntries.forEach(entry -> {
+                try {
+                    commonDataQueue.sendLogEntry(entry);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.error("Failed to send log entry to queue: {}", e.getMessage());
+                }
+            });
             
         } catch (InvalidProtocolBufferException e) {
             log.error("Failed to parse OTLP log payload: {}", e.getMessage());
