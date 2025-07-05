@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
@@ -71,6 +72,8 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     private static final String UNIQUE_IDENTITY = "identity";
 
+    private static final String SLOW_LOG = "slowlog";
+
     private final ClientResources defaultClientResources;
     private final GlobalConnectionCache connectionCache = GlobalConnectionCache.getInstance();
     
@@ -90,7 +93,15 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         try {
-            if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
+            if (Objects.equals(metrics.getName(), SLOW_LOG)) {
+                if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
+                    List<Map<String, String>> redisSlowLogList = getClusterRedisSlowLog(metrics);
+                    doMetricsDataList(builder, redisSlowLogList, metrics);
+                } else {
+                    List<Map<String, String>> redisSlowLog = getSingleRedisSlowLog(metrics);
+                    doMetricsDataList(builder, redisSlowLog, metrics);
+                }
+            } else if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
                 doMetricsDataList(builder, redisInfoList, metrics);
             } else {
@@ -369,6 +380,95 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_REDIS;
+    }
+
+    /**
+     * Get slow log data from a single Redis instance
+     * @param metrics metrics config
+     * @return data
+     */
+    private List<Map<String, String>> getSingleRedisSlowLog(Metrics metrics) throws GeneralSecurityException, IOException {
+        StatefulRedisConnection<String, String> connection = getSingleConnection(metrics.getRedis());
+        // Get the last 100 slow logs by default
+        List<Object> slowLogs = connection.sync().slowlogGet(100);
+        
+        return parseSlowLogs(slowLogs);
+    }
+    
+    /**
+     * Get slow log data from Redis cluster nodes
+     * @param metrics metrics config
+     * @return data
+     */
+    private List<Map<String, String>> getClusterRedisSlowLog(Metrics metrics) throws GeneralSecurityException, IOException {
+        Map<String, StatefulRedisClusterConnection<String, String>> connectionMap = getConnectionList(metrics.getRedis());
+        List<Map<String, String>> allSlowLogs = new ArrayList<>();
+        
+        connectionMap.forEach((identity, connection) -> {
+            // Get the last 100 slow logs by default
+            List<Object> slowLogs = connection.sync().slowlogGet(100);
+            List<Map<String, String>> parsedLogs = parseSlowLogs(slowLogs);
+            
+            // Add node identity to each log entry
+            parsedLogs.forEach(log -> log.put(UNIQUE_IDENTITY, identity));
+            
+            allSlowLogs.addAll(parsedLogs);
+        });
+        
+        return allSlowLogs;
+    }
+    
+    /**
+     * Parse Redis slow log response into a list of maps
+     * @param slowLogs raw slow log data from Redis
+     * @return parsed slow logs
+     */
+    private List<Map<String, String>> parseSlowLogs(List<Object> slowLogs) {
+        List<Map<String, String>> result = new ArrayList<>();
+        
+        if (Objects.isNull(slowLogs) || slowLogs.isEmpty()) {
+            return result;
+        }
+        
+        for (Object entry : slowLogs) {
+            if (entry instanceof List) {
+                List<?> logEntry = (List<?>) entry;
+                if (logEntry.size() >= 4) {
+                    Map<String, String> logMap = new HashMap<>();
+                    
+                    // ID
+                    logMap.put("id", String.valueOf(logEntry.get(0)));
+                    
+                    // Timestamp
+                    logMap.put("timestamp", String.valueOf(logEntry.get(1)));
+                    
+                    // Execution time in microseconds
+                    logMap.put("execution_time", String.valueOf(logEntry.get(2)));
+                    
+                    // Command and arguments
+                    if (logEntry.get(3) instanceof List) {
+                        List<?> cmdArgs = (List<?>) logEntry.get(3);
+                        String command = cmdArgs.stream()
+                                .map(String::valueOf)
+                                .collect(Collectors.joining(" "));
+                        logMap.put("command", command);
+                    }
+                    
+                    // Client IP and name (if available)
+                    if (logEntry.size() > 4 && logEntry.get(4) instanceof String) {
+                        logMap.put("client_ip", String.valueOf(logEntry.get(4)));
+                    }
+                    
+                    if (logEntry.size() > 5 && logEntry.get(5) instanceof String) {
+                        logMap.put("client_name", String.valueOf(logEntry.get(5)));
+                    }
+                    
+                    result.add(logMap);
+                }
+            }
+        }
+        
+        return result;
     }
 
 }
