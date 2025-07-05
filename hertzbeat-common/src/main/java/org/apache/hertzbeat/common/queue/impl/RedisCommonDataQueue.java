@@ -24,8 +24,10 @@ import io.lettuce.core.api.sync.RedisCommands;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.serialize.RedisLogEntryCodec;
 import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -46,9 +48,12 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final RedisClient redisClient;
     private final StatefulRedisConnection<String, CollectRep.MetricsData> connection;
     private final RedisCommands<String, CollectRep.MetricsData> syncCommands;
+    private final StatefulRedisConnection<String, LogEntry> logEntryConnection;
+    private final RedisCommands<String, LogEntry> logEntrySyncCommands;
     private final String metricsDataQueueNameToStorage;
     private final String metricsDataQueueNameForServiceDiscovery;
     private final String metricsDataQueueNameToAlerter;
+    private final String logEntryQueueName;
     private final CommonProperties.RedisProperties redisProperties;
 
     public RedisCommonDataQueue(CommonProperties properties) {
@@ -69,9 +74,13 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         RedisMetricsDataCodec codec = new RedisMetricsDataCodec();
         this.connection = redisClient.connect(codec);
         this.syncCommands = connection.sync();
+        RedisLogEntryCodec logCodec = new RedisLogEntryCodec();
+        this.logEntryConnection = redisClient.connect(logCodec);
+        this.logEntrySyncCommands = logEntryConnection.sync();
         this.metricsDataQueueNameToStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
         this.metricsDataQueueNameForServiceDiscovery = redisProperties.getMetricsDataQueueNameForServiceDiscovery();
         this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
+        this.logEntryQueueName = redisProperties.getLogEntryQueueName();
     }
 
     @Override
@@ -132,8 +141,29 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
+    public void sendLogEntry(LogEntry logEntry) throws InterruptedException {
+        try {
+            logEntrySyncCommands.lpush(logEntryQueueName, logEntry);
+        } catch (Exception e) {
+            log.error("Failed to send LogEntry to Redis: {}", e.getMessage());
+            throw new InterruptedException("Failed to send LogEntry to Redis");
+        }
+    }
+
+    @Override
+    public LogEntry pollLogEntry() throws InterruptedException {
+        try {
+            return logEntrySyncCommands.rpop(logEntryQueueName);
+        } catch (Exception e) {
+            log.error("Failed to poll LogEntry from Redis: {}", e.getMessage());
+            throw new InterruptedException("Failed to poll LogEntry from Redis");
+        }
+    }
+
+    @Override
     public void destroy() {
         connection.close();
+        logEntryConnection.close();
         redisClient.shutdown();
     }
 

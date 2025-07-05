@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.dispatch.export;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -86,5 +87,15 @@ public class NettyDataQueue implements CommonDataQueue {
     @Override
     public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
         collectJobService.sendAsyncServiceDiscoveryData(metricsData);
+    }
+
+    @Override
+    public void sendLogEntry(LogEntry logEntry) throws InterruptedException {
+
+    }
+
+    @Override
+    public LogEntry pollLogEntry() throws InterruptedException {
+        return null;
     }
 }

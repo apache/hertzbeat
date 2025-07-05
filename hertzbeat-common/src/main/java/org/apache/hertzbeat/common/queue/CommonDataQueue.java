@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.queue;
 
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
@@ -62,4 +63,18 @@ public interface CommonDataQueue {
      * @param metricsData service discovery data
      */
     void sendServiceDiscoveryData(CollectRep.MetricsData metricsData);
+    
+    /**
+     * send log entry to queue
+     * @param logEntry log entry data based on OpenTelemetry log data model
+     * @throws InterruptedException when sending is interrupted
+     */
+    void sendLogEntry(LogEntry logEntry) throws InterruptedException;
+
+    /**
+     * poll log entry from queue
+     * @return log entry data
+     * @throws InterruptedException when poll timeout
+     */
+    LogEntry pollLogEntry() throws InterruptedException;
 }

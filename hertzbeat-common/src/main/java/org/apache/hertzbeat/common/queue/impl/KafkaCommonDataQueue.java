@@ -26,8 +26,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.serialize.KafkaLogEntryDeserializer;
+import org.apache.hertzbeat.common.serialize.KafkaLogEntrySerializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataDeserializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -59,14 +62,18 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final ReentrantLock metricDataToAlertLock = new ReentrantLock();
     private final ReentrantLock metricDataToStorageLock = new ReentrantLock();
     private final ReentrantLock serviceDiscoveryDataLock = new ReentrantLock();
+    private final ReentrantLock logEntryLock = new ReentrantLock();
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
+    private final LinkedBlockingQueue<LogEntry> logEntryQueue;
     private final CommonProperties.KafkaProperties kafka;
     private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
+    private KafkaProducer<Long, LogEntry> logEntryProducer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToStorageConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> serviceDiscoveryDataConsumer;
+    private KafkaConsumer<Long, LogEntry> logEntryConsumer;
 
     public KafkaCommonDataQueue(CommonProperties properties) {
         if (properties == null || properties.getQueue() == null || properties.getQueue().getKafka() == null) {
@@ -77,6 +84,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToStorageQueue = new LinkedBlockingQueue<>();
         serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
+        logEntryQueue = new LinkedBlockingQueue<>();
         initDataQueue();
     }
 
@@ -87,6 +95,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
             producerConfig.put(ProducerConfig.RETRIES_CONFIG, 3);
             metricsDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new KafkaMetricsDataSerializer());
+            logEntryProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new KafkaLogEntrySerializer());
 
             Map<String, Object> consumerConfig = new HashMap<>(4);
             consumerConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
@@ -111,6 +120,11 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             serviceDiscoveryDataConsumer = new KafkaConsumer<>(serviceDiscoveryDataConsumerConfig, new LongDeserializer(),
                     new KafkaMetricsDataDeserializer());
             serviceDiscoveryDataConsumer.subscribe(Collections.singletonList(kafka.getServiceDiscoveryDataTopic()));
+
+            Map<String, Object> logEntryConsumerConfig = new HashMap<>(consumerConfig);
+            logEntryConsumerConfig.put("group.id", "log-entry-consumer");
+            logEntryConsumer = new KafkaConsumer<>(logEntryConsumerConfig, new LongDeserializer(), new KafkaLogEntryDeserializer());
+            logEntryConsumer.subscribe(Collections.singletonList(kafka.getLogEntryDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);
             throw e;
@@ -193,6 +207,28 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
+    public void sendLogEntry(LogEntry logEntry) throws InterruptedException {
+        if (logEntryProducer != null) {
+            try {
+                ProducerRecord<Long, LogEntry> record = new ProducerRecord<>(kafka.getLogEntryDataTopic(), logEntry);
+                logEntryProducer.send(record);
+            } catch (Exception e) {
+                log.error("Failed to send LogEntry to Kafka: {}", e.getMessage());
+                // Fallback to memory queue if Kafka fails
+                logEntryQueue.put(logEntry);
+            }
+        } else {
+            log.warn("logEntryProducer is not enabled, using memory queue");
+            logEntryQueue.put(logEntry);
+        }
+    }
+
+    @Override
+    public LogEntry pollLogEntry() throws InterruptedException {
+        return genericPollDataFunction(logEntryQueue, logEntryConsumer, logEntryLock);
+    }
+
+    @Override
     public void destroy() throws Exception {
         if (metricsDataProducer != null) {
             metricsDataProducer.close();
@@ -205,6 +241,12 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         }
         if (serviceDiscoveryDataConsumer != null) {
             serviceDiscoveryDataConsumer.close();
+        }
+        if (logEntryProducer != null) {
+            logEntryProducer.close();
+        }
+        if (logEntryConsumer != null) {
+            logEntryConsumer.close();
         }
     }
 }

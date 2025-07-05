@@ -115,6 +115,11 @@ public class CommonProperties {
          */
         private String alertsDataQueueName;
 
+        /**
+         * Queue name for log entry data
+         */
+        private String logEntryQueueName;
+
     }
 
     /**
@@ -140,5 +145,9 @@ public class CommonProperties {
          * alerts data topic
          */
         private String alertsDataTopic;
+        /**
+         * log entry data topic
+         */
+        private String logEntryDataTopic;
     }
 }
