@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkhertzbeat=self.webpackChunkhertzbeat||[]).push([[13668],{52168:(e,t,l)=>{l.r(t),l.d(t,{default:()=>a});var n=l(96540),r=l(20053);function a(e){let{title:t,description:l}=e;return n.createElement("div",{className:(0,r.A)("col col--4")},n.createElement("h3",{style:{textAlign:"center",fontSize:"x-large"}},t),n.createElement("p",null,l))}}}]);
