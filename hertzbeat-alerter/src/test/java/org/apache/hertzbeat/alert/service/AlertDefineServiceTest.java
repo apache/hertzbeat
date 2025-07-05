@@ -39,8 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC;
-import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME;
+import static org.apache.hertzbeat.common.constants.CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_PERIODIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_REALTIME;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -164,14 +164,14 @@ class AlertDefineServiceTest {
             }
         };
         when(dataSourceService.calculate(eq("promql"), eq(expr))).thenReturn(Lists.newArrayList(countValue1));
-        List<Map<String, Object>> result = alertDefineService.getDefinePreview("promql", ALERT_THRESHOLD_TYPE_PERIODIC, expr);
+        List<Map<String, Object>> result = alertDefineService.getDefinePreview("promql", METRICS_ALERT_THRESHOLD_TYPE_PERIODIC, expr);
         assertNotNull(result);
         assertEquals(1307, result.get(0).get("__value__"));
 
-        result = alertDefineService.getDefinePreview("promql", ALERT_THRESHOLD_TYPE_PERIODIC, null);
+        result = alertDefineService.getDefinePreview("promql", METRICS_ALERT_THRESHOLD_TYPE_PERIODIC, null);
         assertEquals(0, result.size());
 
-        result = alertDefineService.getDefinePreview("promql", ALERT_THRESHOLD_TYPE_REALTIME, null);
+        result = alertDefineService.getDefinePreview("promql", METRICS_ALERT_THRESHOLD_TYPE_REALTIME, null);
         assertEquals(0, result.size());
     }
 

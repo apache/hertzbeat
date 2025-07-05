@@ -144,7 +144,7 @@ public class RealTimeAlertCalculatorMatchTest {
 
         List<AlertDefine> allDefines = Collections.singletonList(matchDefine);
 
-        when(alertDefineService.getRealTimeAlertDefines()).thenReturn(allDefines);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(allDefines);
         when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
 
         realTimeAlertCalculator.startCalculate();
@@ -187,7 +187,7 @@ public class RealTimeAlertCalculatorMatchTest {
 
         List<AlertDefine> allDefines = Collections.singletonList(matchDefine);
 
-        when(alertDefineService.getRealTimeAlertDefines()).thenReturn(allDefines);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(allDefines);
         when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
 
         realTimeAlertCalculator.startCalculate();
@@ -236,7 +236,7 @@ public class RealTimeAlertCalculatorMatchTest {
 
         List<AlertDefine> allDefines = Collections.singletonList(matchDefine);
 
-        when(alertDefineService.getRealTimeAlertDefines()).thenReturn(allDefines);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(allDefines);
         when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
 
         realTimeAlertCalculator.startCalculate();

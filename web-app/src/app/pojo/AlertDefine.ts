@@ -20,8 +20,8 @@
 export class AlertDefine {
   id!: number;
   name!: string;
-  // realtime, periodic
-  type: string = 'realtime';
+  // metrics_realtime, metrics_periodic, log_realtime, log_periodic
+  type: string = 'metrics_realtime';
   // datasource when type is periodic, promql | sql
   datasource: string = 'promql';
   expr!: string;

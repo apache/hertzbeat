@@ -253,8 +253,8 @@ export class AlertSettingComponent implements OnInit {
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     this.selectedLabels = new Set<string>();
-    // Set default period for periodic alert
-    if (type === 'periodic') {
+    // Set default period for metrics_periodic alert
+    if (type === 'metrics_periodic') {
       this.define.period = 300;
     }
     this.resetQbDataDefault();
@@ -493,15 +493,15 @@ export class AlertSettingComponent implements OnInit {
             if (this.define.labels && this.define.labels['severity']) {
               this.severity = this.define.labels['severity'];
             }
-            // Set default period for periodic alert if not set
-            if (this.define.type === 'periodic' && !this.define.period) {
+            // Set default period for metrics_periodic alert if not set
+            if (this.define.type === 'metrics_periodic' && !this.define.period) {
               this.define.period = 300;
             }
-            // Set default type as realtime if not set
+            // Set default type as metrics_realtime if not set
             if (!this.define.type) {
-              this.define.type = 'realtime';
+              this.define.type = 'metrics_realtime';
             }
-            if (this.define.type == 'realtime') {
+            if (this.define.type == 'metrics_realtime') {
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);

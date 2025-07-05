@@ -109,7 +109,7 @@ public interface AlertDefineService {
      * Get the real-time alarm definition list
      * @return Real-time alarm definition list
      */
-    List<AlertDefine> getRealTimeAlertDefines();
+    List<AlertDefine> getMetricsRealTimeAlertDefines();
 
     /**
      * Get define preview
