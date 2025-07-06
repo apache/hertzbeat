@@ -30,6 +30,7 @@ const monitors_uri = '/monitors';
 const detect_monitor_uri = '/monitor/detect';
 const manage_monitors_uri = '/monitors/manage';
 const export_monitors_uri = '/monitors/export';
+const export_all_monitors_uri = '/monitors/export/all';
 const summary_uri = '/summary';
 const warehouse_storage_status_uri = '/warehouse/storage/status';
 const grafana_dashboard_uri = '/grafana/dashboard';
@@ -68,6 +69,16 @@ export class MonitorService {
     });
     httpParams = httpParams.append('type', type);
     return this.http.get(export_monitors_uri, {
+      params: httpParams,
+      observe: 'response',
+      responseType: 'blob'
+    });
+  }
+
+  public exportAllMonitors(type: string): Observable<HttpResponse<Blob>> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.append('type', type);
+    return this.http.get(export_all_monitors_uri, {
       params: httpParams,
       observe: 'response',
       responseType: 'blob'
