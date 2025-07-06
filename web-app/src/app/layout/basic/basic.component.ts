@@ -13,52 +13,107 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
   selector: 'layout-basic',
   template: `
     <layout-default [options]="options" [nav]="navTpl" [content]="contentTpl" [customError]="null">
+      <!-- 左侧菜单项 - GitHub链接 -->
       <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//github.com/apache/hertzbeat" target="_blank">
-          <i nz-icon nzType="github"></i>
+        <a
+          layout-default-header-item-trigger
+          href="//github.com/apache/hertzbeat"
+          target="_blank"
+          class="modern-header-item github-link"
+        >
+          <div class="icon-wrapper">
+            <i nz-icon nzType="github" class="header-icon"></i>
+          </div>
+          <span class="item-tooltip">GitHub</span>
         </a>
       </layout-default-header-item>
 
+      <!-- 移动端搜索按钮 -->
       <layout-default-header-item direction="left" hidden="pc">
-        <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
-          <i nz-icon nzType="search"></i>
+        <div
+          layout-default-header-item-trigger
+          (click)="searchToggleStatus = !searchToggleStatus"
+          class="modern-header-item search-toggle"
+        >
+          <div class="icon-wrapper">
+            <i nz-icon nzType="search" class="header-icon"></i>
+          </div>
         </div>
       </layout-default-header-item>
+      
+      <!-- 中间搜索栏 -->
       <layout-default-header-item direction="middle">
-        <header-search class="alain-default__search" [toggleChange]="searchToggleStatus"></header-search>
+        <header-search class="alain-default__search modern-search" [toggleChange]="searchToggleStatus"></header-search>
       </layout-default-header-item>
+      
+      <!-- 右侧通知 -->
       <layout-default-header-item direction="right" hidden="mobile">
-        <header-notify></header-notify>
+        <header-notify class="modern-header-item notification-item">
+        </header-notify>
       </layout-default-header-item>
+      
+      <!-- 锁定按钮 -->
       <layout-default-header-item direction="right" hidden="mobile">
-        <a layout-default-header-item-trigger routerLink="/passport/lock">
-          <i nz-icon nzType="lock"></i>
+        <a
+          layout-default-header-item-trigger
+          routerLink="/passport/lock"
+          class="modern-header-item lock-item"
+        >
+          <div class="icon-wrapper">
+            <i nz-icon nzType="lock" class="header-icon"></i>
+          </div>
+          <span class="item-tooltip">{{ 'menu.lock' | i18n }}</span>
         </a>
       </layout-default-header-item>
+      
+      <!-- 设置下拉菜单 -->
       <layout-default-header-item direction="right" hidden="mobile">
-        <div layout-default-header-item-trigger nz-dropdown [nzDropdownMenu]="settingsMenu" nzTrigger="click" nzPlacement="bottomRight">
-          <i nz-icon nzType="setting"></i>
+        <div
+          layout-default-header-item-trigger
+          nz-dropdown
+          [nzDropdownMenu]="settingsMenu"
+          nzTrigger="click"
+          nzPlacement="bottomRight"
+          class="modern-header-item settings-item"
+        >
+          <div class="icon-wrapper">
+            <i nz-icon nzType="setting" class="header-icon spinning-on-hover"></i>
+          </div>
+          <span class="item-tooltip">{{ 'menu.settings' | i18n }}</span>
         </div>
         <nz-dropdown-menu #settingsMenu="nzDropdownMenu">
-          <div nz-menu style="width: 200px;">
-            <div nz-menu-item>
-              <header-fullscreen></header-fullscreen>
+          <div nz-menu class="modern-dropdown-menu">
+            <div nz-menu-item class="modern-menu-item">
+              <div class="menu-item-content">
+                <i nz-icon nzType="fullscreen" class="menu-icon"></i>
+                <header-fullscreen></header-fullscreen>
+              </div>
             </div>
-            <div nz-menu-item routerLink="/setting/labels">
-              <i nz-icon nzType="tag" class="mr-sm"></i>
-              <span style="margin-left: 4px">{{ 'menu.advanced.labels' | i18n }}</span>
+            <li nz-menu-divider class="modern-divider"></li>
+            <div nz-menu-item routerLink="/setting/labels" class="modern-menu-item">
+              <div class="menu-item-content">
+                <i nz-icon nzType="tag" class="menu-icon"></i>
+                <span class="menu-text">{{ 'menu.advanced.labels' | i18n }}</span>
+              </div>
             </div>
-            <div nz-menu-item>
-              <header-i18n></header-i18n>
+            <li nz-menu-divider class="modern-divider"></li>
+            <div nz-menu-item class="modern-menu-item">
+              <div class="menu-item-content">
+                <i nz-icon nzType="global" class="menu-icon"></i>
+                <header-i18n></header-i18n>
+              </div>
             </div>
           </div>
         </nz-dropdown-menu>
       </layout-default-header-item>
+      
+      <!-- 用户菜单 -->
       <layout-default-header-item direction="right">
-        <header-user></header-user>
+        <header-user class="modern-header-item user-item">
+        </header-user>
       </layout-default-header-item>
       <ng-template #navTpl>
-        <layout-default-nav class="d-block py-lg" openStrictly="true"></layout-default-nav>
+        <layout-default-nav class="d-block py-lg modern-nav" openStrictly="true"></layout-default-nav>
       </ng-template>
       <ng-template #contentTpl>
         <router-outlet></router-outlet>
