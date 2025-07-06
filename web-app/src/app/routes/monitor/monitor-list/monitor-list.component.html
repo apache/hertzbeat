@@ -78,6 +78,12 @@
           </button>
         </li>
         <li nz-menu-item>
+          <button nz-button (click)="onExportAllMonitors()">
+            <i nz-icon nzType="export" nzTheme="outline"></i>
+            {{ 'monitor.export-all' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
           <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
             <button nz-button>
               <i nz-icon nzType="import" nzTheme="outline"></i>
@@ -287,7 +293,12 @@
 >
   <ng-container *nzModalContent>
     <div class="export-type-container">
-      <div class="export-type-card" (click)="exportMonitors('JSON')" [class.loading]="exportJsonButtonLoading">
+      <div
+        class="export-type-card"
+        (click)="exportMonitors('JSON')"
+        [class.loading]="exportJsonButtonLoading"
+        *ngIf="checkedMonitorIds.size > 0"
+      >
         <div class="export-type-icon">
           <i nz-icon nzType="code" nzTheme="outline"></i>
         </div>
@@ -296,13 +307,46 @@
           <p>{{ 'monitor.export.use-type' | i18n : { type: 'JSON' } }}</p>
         </div>
       </div>
-      <div class="export-type-card" (click)="exportMonitors('EXCEL')" [class.loading]="exportExcelButtonLoading">
+      <div
+        class="export-type-card"
+        (click)="exportMonitors('EXCEL')"
+        [class.loading]="exportExcelButtonLoading"
+        *ngIf="checkedMonitorIds.size > 0"
+      >
         <div class="export-type-icon">
           <i nz-icon nzType="file-excel" nzTheme="outline"></i>
         </div>
         <div class="export-type-info">
           <h3>EXCEL</h3>
           <p>{{ 'monitor.export.use-type' | i18n : { type: 'EXCEL' } }}</p>
+        </div>
+      </div>
+      <div
+        class="export-type-card"
+        (click)="exportAllMonitors('JSON')"
+        [class.loading]="exportJsonButtonLoading"
+        *ngIf="checkedMonitorIds.size === 0"
+      >
+        <div class="export-type-icon">
+          <i nz-icon nzType="code" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>JSON</h3>
+          <p>{{ 'monitor.export-all.use-type' | i18n : { type: 'JSON' } }}</p>
+        </div>
+      </div>
+      <div
+        class="export-type-card"
+        (click)="exportAllMonitors('EXCEL')"
+        [class.loading]="exportExcelButtonLoading"
+        *ngIf="checkedMonitorIds.size === 0"
+      >
+        <div class="export-type-icon">
+          <i nz-icon nzType="file-excel" nzTheme="outline"></i>
+        </div>
+        <div class="export-type-info">
+          <h3>EXCEL</h3>
+          <p>{{ 'monitor.export-all.use-type' | i18n : { type: 'EXCEL' } }}</p>
         </div>
       </div>
     </div>

@@ -264,6 +264,10 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     this.isSwitchExportTypeModalVisible = true;
   }
 
+  onExportAllMonitors() {
+    this.isSwitchExportTypeModalVisible = true;
+  }
+
   onImportMonitors(info: NzUploadChangeParam): void {
     console.log(info.type);
     if (info.type === 'start') {
@@ -338,6 +342,46 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.exportExcelButtonLoading = false;
           this.exportJsonButtonLoading = false;
           exportMonitors$.unsubscribe();
+        })
+      )
+      .subscribe(
+        response => {
+          const message = response.body!;
+          if (message.type == 'application/json') {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
+          } else {
+            const blob = new Blob([message], { type: response.headers.get('Content-Type')! });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
+            a.href = url;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            this.isSwitchExportTypeModalVisible = false;
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
+        }
+      );
+  }
+
+  exportAllMonitors(type: string) {
+    switch (type) {
+      case 'JSON':
+        this.exportJsonButtonLoading = true;
+        break;
+      case 'EXCEL':
+        this.exportExcelButtonLoading = true;
+        break;
+    }
+    const exportAllMonitors$ = this.monitorSvc
+      .exportAllMonitors(type)
+      .pipe(
+        finalize(() => {
+          this.exportExcelButtonLoading = false;
+          this.exportJsonButtonLoading = false;
+          exportAllMonitors$.unsubscribe();
         })
       )
       .subscribe(
