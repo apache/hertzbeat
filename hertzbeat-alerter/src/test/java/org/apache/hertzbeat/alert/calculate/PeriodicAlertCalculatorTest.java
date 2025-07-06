@@ -42,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -92,12 +93,12 @@ class PeriodicAlertCalculatorTest {
         result.put("__value__", 95.0); // Non-null, matched with threshold
         result.put("__timestamp__", System.currentTimeMillis());
         when(dataSourceService.calculate(anyString(), anyString())).thenReturn(List.of(result));
-        when(alarmCacheManager.getPending(anyString())).thenReturn(null);
+        when(alarmCacheManager.getPending(eq(rule.getId()), anyString())).thenReturn(null);
         periodicAlertCalculator.calculate(rule);
         // Verify that putFiring is called
         ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
-        verify(alarmCacheManager).putFiring(idCaptor.capture(), alertCaptor.capture());
+        verify(alarmCacheManager).putFiring(eq(rule.getId()), idCaptor.capture(), alertCaptor.capture());
         // Assertion alarm status and content
         SingleAlert alert = alertCaptor.getValue();
         assertAll(() -> assertEquals(CommonConstants.ALERT_STATUS_FIRING, alert.getStatus()),
@@ -112,7 +113,7 @@ class PeriodicAlertCalculatorTest {
         result.put("__timestamp__", System.currentTimeMillis());
         when(dataSourceService.calculate(anyString(), anyString())).thenReturn(List.of(result));
         periodicAlertCalculator.calculate(rule);
-        verify(alarmCacheManager, times(0)).putFiring(any(), any());
+        verify(alarmCacheManager, times(0)).putFiring(any(), any(), any());
     }
 
     @Test
@@ -126,7 +127,7 @@ class PeriodicAlertCalculatorTest {
                 .triggerTimes(2).startAt(System.currentTimeMillis() - 60000)
                 .activeAt(System.currentTimeMillis() - 30000)
                 .build();
-        when(alarmCacheManager.removeFiring(anyString())).thenReturn(pendingAlert);
+        when(alarmCacheManager.removeFiring(eq(rule.getId()), anyString())).thenReturn(pendingAlert);
         when(dataSourceService.calculate(anyString(), anyString())).thenReturn(List.of(result));
         periodicAlertCalculator.calculate(rule);
         ArgumentCaptor<SingleAlert> resolvedCaptor = ArgumentCaptor.forClass(SingleAlert.class);
