@@ -211,7 +211,7 @@ alerter:
 
 3. Select a Specific AWS Region for SMS Messaging
    - Choose a region that supports AWS End User Messaging (SMS Service).
-   - You can check the supported regions [here](https://docs.aws.amazon.com/sms-voice/latest/userguide/phone-numbers-sms-by-country.html).
+   - You can check the supported regions [guide](https://docs.aws.amazon.com/sms-voice/latest/userguide/phone-numbers-sms-by-country.html).
 
 4. Move from the AWS SMS Sandbox to Production
    - By default, AWS SMS operates in sandbox mode, which restricts SMS delivery to verified phone numbers.

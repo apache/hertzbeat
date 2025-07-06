@@ -236,6 +236,18 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
+    public void exportAll(String type, HttpServletResponse res) throws Exception {
+        // Get all monitor IDs from the database
+        List<Long> allMonitorIds = monitorDao.findAll()
+                .stream()
+                .map(Monitor::getId)
+                .collect(Collectors.toList());
+        
+        // Use the existing export method to export all monitors
+        export(allMonitorIds, type, res);
+    }
+
+    @Override
     public void importConfig(MultipartFile file) throws Exception {
         var fileName = FileUtil.getFileName(file);
         var type = FileUtil.getFileType(file);
