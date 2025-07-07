@@ -65,7 +65,7 @@ We are thrilled to announce the official release of Apache Hertzbeat version 1.7
 
 Special thanks to the following community members for their collaborative efforts:
 
-> @pruidong @MasamiYui @tomsun28 @Aias00 @zhangshenghang @zqr10159 @LiuTianyou @LL-LIN @lx1229 @xiaomizhou2 @pwallk 
+> @pruidong @MasamiYui @tomsun28 @Aias00 @zhangshenghang @zqr10159 @LiuTianyou @LL-LIN @lx1229 @xiaomizhou2 @pwallk
 > @bigcyy @yuluo-yx @TJxiaobao @RainBondsongyg @Duansg @Calvin979 @Cyanty
 
 ## What's Changed
@@ -167,9 +167,10 @@ Special thanks to the following community members for their collaborative effort
 ```
 
 ## New Contributors
-- @Duansg made their first contribution in https://github.com/apache/hertzbeat/pull/3380
-- @lx1229 made their first contribution in https://github.com/apache/hertzbeat/pull/3431
-- @RainBondsongyg made their first contribution in https://github.com/apache/hertzbeat/pull/3440
+
+- @Duansg made their first contribution in <https://github.com/apache/hertzbeat/pull/3380>
+- @lx1229 made their first contribution in <https://github.com/apache/hertzbeat/pull/3431>
+- @RainBondsongyg made their first contribution in <https://github.com/apache/hertzbeat/pull/3440>
 
 ## Apache Hertzbeat
 
