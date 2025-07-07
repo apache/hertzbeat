@@ -49,7 +49,7 @@ Have Fun!
 > [HertzBeat](https://github.com/apache/hertzbeat) is an opensource monitoring and alarm project incubated by [Dromara](https://dromara.org) and open sourced by [TanCloud](https://tancloud.cn), which supports Website, API, PING, Port, Database, OS Monitor etc.
 > We also provide **[Monitoring Cloud For Saas](https://console.tancloud.cn)**, people no longer need to deploy a cumbersome monitoring tool in order to monitor their website resources. **[Sign in to get started for free](https://console.tancloud.cn)**.
 > HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, email, DingDing, WeChat FeiShu and WebHook.
-> Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by configuring the YML file, we can customize the monitoring types and metrics what we need.
+> Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.apache.org/docs/advanced/extend-point), just by configuring the YML file, we can customize the monitoring types and metrics what we need.
 > HertzBeat is modular, `manager, collector, scheduler, warehouse, alerter` modules are decoupled for easy understanding and custom development.  
 > Welcome to HertzBeat's [Cloud Environment TanCloud](https://console.tancloud.cn) to try and discover more.
 > Welcome to join us to build hertzbeat together.

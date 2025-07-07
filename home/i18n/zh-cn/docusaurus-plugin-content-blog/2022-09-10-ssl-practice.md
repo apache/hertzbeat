@@ -87,7 +87,7 @@ gitee: <https://gitee.com/hertzbeat/hertzbeat>
 
     钉钉微信飞书等token配置可以参考帮助文档
 
-    <https://hertzbeat.com/docs/help/alert_dingtalk>  
+    <https://hertzbeat.apache.org/docs/help/alert_dingtalk>  
     <https://tancloud.cn/docs/help/alert_dingtalk>
 
     > 告警通知 -> 新增告警通知策略 -> 将刚才配置的接收人启用通知

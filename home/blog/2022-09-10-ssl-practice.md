@@ -87,7 +87,7 @@ gitee: <https://gitee.com/hertzbeat/hertzbeat>
 
       You can refer to the help file for the token configuration of Nail WeChat Flying Book, etc.
 
-      <https://hertzbeat.com/docs/help/alert_dingtalk>
+      <https://hertzbeat.apache.org/docs/help/alert_dingtalk>
    <https://tancloud.cn/docs/help/alert_dingtalk>
 
    > Alert Notification -> Add new alert notification policy -> Enable notification for the recipients you just configured
