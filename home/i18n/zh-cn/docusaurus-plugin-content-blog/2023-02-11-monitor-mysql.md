@@ -27,7 +27,7 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 #### 操作前提，您已拥有 Mysql 环境和 HertzBeat 环境
 
 - Mysql [安装部署文档](https://www.runoob.com/mysql/mysql-install.html)
-- HertzBeat [安装部署文档](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [安装部署文档](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### 在开源监控系统 HertzBeat 监控页面添加对 Mysql 数据库监控
 
@@ -40,7 +40,7 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 2. 配置新增监控 Mysql 数据库所需参数
 
     在监控页面填写 Mysql **服务IP**，**监控端口**(默认3306)，**账户密码等**，最后点击确定添加即可。
-    其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/mysql/) <https://hertzbeat.com/docs/help/mysql/>
+    其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.apache.org/docs/help/mysql/) <https://hertzbeat.apache.org/docs/help/mysql/>
 
     ![HertzBeat](/img/blog/monitor-mysql-2.png)
 
@@ -88,7 +88,7 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 
     消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。
 
-   - 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
+   - 参照此[帮助文档](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
    - 在 HertzBeat 配置接收人参数如下。
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】

@@ -28,7 +28,7 @@ Github: <https://github.com/apache/hertzbeat>
 
 #### Prerequisite, you already have SpringBoot2 application environment and HertzBeat environment
 
-- HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [Installation and deployment documentation](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### 1. The `actuator` metric endpoint is exposed on the SpringBoot2 application side, which will provide metrics endpoints data
 
@@ -94,7 +94,7 @@ Github: <https://github.com/apache/hertzbeat>
 2. Configure the parameters required for new monitoring SpringBoot2
 
     Fill in the SpringBoot2 application **peer IP**, **service port** (default 8080), **account password, etc.** on the monitoring page, and finally click OK to add.
-    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.com/docs/help/>
+    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.apache.org/docs/help/>
 
     ![HertzBeat](/img/blog/monitor-springboot2-2.png)
 
@@ -142,7 +142,7 @@ Of course, it is impossible to manually check the metrics in real time. Monitori
 
     Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-    - Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+    - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
     - Configure the receiver parameters in HertzBeat as follows.
 
     【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】

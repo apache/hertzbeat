@@ -29,8 +29,8 @@ help:
   zh-TW: HertzBeat 對 InfluxDB 時序資料庫進行監控。<br><span class='help_module_span'><a class='help_module_content' href='https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/measurements-internal'>點擊查看開啓步驟</a>。</span>
   ja-JP: HertzBeat は InfluxDB 時系列データベースを監視します。<br><span class='help_module_span'><a class='help_module_content' href='https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/measurements-internal'>クリックしてガイドを見ます</a>。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/influxdb/
-  en-US: https://hertzbeat.com/docs/help/influxdb/
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/influxdb/
+  en-US: https://hertzbeat.apache.org/docs/help/influxdb/
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
