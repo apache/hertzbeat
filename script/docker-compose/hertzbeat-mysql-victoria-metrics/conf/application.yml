@@ -125,6 +125,9 @@ warehouse:
       url: http://victoria-metrics:8428      
       username: root
       password: root
+      insert:
+        buffer-size: 100
+        flush-interval: 3
   # store real-time metrics data, enable only one below
   real-time:
     memory:

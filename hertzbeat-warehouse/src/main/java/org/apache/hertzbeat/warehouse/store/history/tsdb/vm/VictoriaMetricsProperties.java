@@ -34,7 +34,7 @@ public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
                                         String password,
                                         InsertConfig insert) {
 
-    record InsertConfig(@DefaultValue("1000") int bufferSize,
+    record InsertConfig(@DefaultValue("100") int bufferSize,
                         @DefaultValue("3") int flushInterval) {
 
     }

@@ -174,6 +174,15 @@ public interface MonitorService {
     void export(List<Long> ids, String type, HttpServletResponse res) throws Exception;
 
     /**
+     * Export All Monitoring Configuration
+     *
+     * @param type file type
+     * @param res  response
+     * @throws Exception This exception will be thrown if the export fails
+     */
+    void exportAll(String type, HttpServletResponse res) throws Exception;
+
+    /**
      * Import Monitoring Configuration
      *
      * @param file configuration file
