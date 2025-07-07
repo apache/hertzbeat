@@ -374,7 +374,7 @@ keywords: [open source, monitoring, alerting]
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-详细参考 HertzBeat 官网文档 <https://hertzbeat.com/docs>
+详细参考 HertzBeat 官网文档 <https://hertzbeat.apache.org/docs>
 
 ---
 **Github: <https://github.com/apache/hertzbeat>**
