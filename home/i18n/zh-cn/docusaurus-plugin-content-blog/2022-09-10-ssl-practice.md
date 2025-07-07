@@ -17,7 +17,7 @@ tags: [opensource, practice]
 
 HertzBeat 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
 
-**官网: <https://hertzbeat.com> | <https://tancloud.cn>**
+**官网: <https://hertzbeat.apache.org> | <https://tancloud.cn>**
 
 github: <https://github.com/apache/hertzbeat>
 gitee: <https://gitee.com/hertzbeat/hertzbeat>

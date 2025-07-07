@@ -9,7 +9,7 @@ tags: [opensource]
 
 > Friendly Cloud Monitoring Tool.
 
-**Home: [hertzbeat.com](https://hertzbeat.com)**
+**Home: [hertzbeat.com](https://hertzbeat.apache.org)**
 
 Hi guys! HertzBeat v1.1.1 is coming. This version brings custom monitoring enhancements, and the collected metric data can be assigned as a variable to the next collection. Fixed several bugs and improved the overall stable usability.
 
