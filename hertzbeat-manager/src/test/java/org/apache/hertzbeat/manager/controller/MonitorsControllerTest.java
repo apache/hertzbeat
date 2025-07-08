@@ -145,4 +145,18 @@ class MonitorsControllerTest {
                 .andExpect(jsonPath("$.code").value("0"))
                 .andExpect(jsonPath("$.msg").value("Import success"));
     }
+
+    @Test
+    void exportAll() throws Exception {
+        String type = "JSON";
+        
+        // Mock the behavior of monitorService.exportAll
+        doNothing().when(monitorService).exportAll(Mockito.anyString(), Mockito.any());
+        
+        // Perform the request and verify the response
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/export/all")
+                        .param("type", type))
+                .andExpect(status().isOk())
+                .andReturn();
+    }
 }

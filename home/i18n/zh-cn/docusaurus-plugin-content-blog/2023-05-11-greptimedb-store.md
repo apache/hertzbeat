@@ -58,7 +58,7 @@ Cloud: **[TanCloud](https://console.tancloud.cn/)**
 
 #### 安装部署 HertzBeat
 
-具体可以参考 [官方文档](https://hertzbeat.com/zh-cn/docs/start/docker-deploy)
+具体可以参考 [官方文档](https://hertzbeat.apache.org/zh-cn/docs/start/docker-deploy)
 
 1. Docker 安装 HertzBeat
 

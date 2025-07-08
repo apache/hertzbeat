@@ -30,10 +30,10 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 ### 特点
 
 - 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
-- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
+- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，无需学习成本。
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需简单配置即可快速适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
+- 灵活的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
@@ -65,7 +65,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
    - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
    - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
 
-更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
+更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 ---
 
