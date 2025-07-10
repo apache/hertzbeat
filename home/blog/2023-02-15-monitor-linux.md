@@ -24,7 +24,7 @@ Github: <https://github.com/apache/hertzbeat>
 
 #### Prerequisites, you already have a Linux environment and a HertzBeat environment
 
-- HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [Installation and deployment documentation](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### Add monitoring of the Linux operating system to the monitoring page of the open source monitoring tool HertzBeat
 
@@ -37,7 +37,7 @@ Github: <https://github.com/apache/hertzbeat>
 2. Configure the parameters required for new monitoring Linux
 
     Fill in the Linux **peer IP**, **SSH port** (default 22), **account password, etc.** on the monitoring page, and finally click OK to add.
-    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.com/docs/help/mysql/>
+    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.apache.org/docs/help/mysql/>
 
     ![HertzBeat](/img/blog/monitor-linux-2.png)
 
@@ -89,7 +89,7 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
     Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-    - Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+    - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
     - Configure the receiver parameters in HertzBeat as follows.
 
     【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
