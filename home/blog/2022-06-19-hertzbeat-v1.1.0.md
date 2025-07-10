@@ -9,7 +9,7 @@ tags: [opensource]
 
 [HertzBeat](https://github.com/apache/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project that supports various monitoring types such as websites, APIs, PING, ports, databases, entire sites, operating systems, middleware, etc. It features threshold alarms, notification alerts (email, webhook, DingTalk, WeChat Work, Lark robots), and a user-friendly visual interface.
 
-**Official Website: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
+**Official Website: [hertzbeat.com](https://hertzbeat.apache.org) | [tancloud.cn](https://tancloud.cn)**
 
 Hello everyone, HertzBeat v1.1.0 is released! In this version, we've added support for the SNMP protocol and implemented application monitoring for Windows operating systems using SNMP.
 Another significant change is our default switch to using the H2 database instead of MYSQL for storage, making it easier for users to install and deploy. Now, you can install and experience HertzBeat with just a single Docker command: `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`

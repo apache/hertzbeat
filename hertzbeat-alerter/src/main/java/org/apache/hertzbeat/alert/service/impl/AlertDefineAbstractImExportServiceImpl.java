@@ -28,6 +28,9 @@ import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.util.LogUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
@@ -41,12 +44,15 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
     @Lazy
     private AlertDefineService alertDefineService;
 
+    private static final Logger logger = LoggerFactory.getLogger(AlertDefineAbstractImExportServiceImpl.class);
+
     @Override
     public void importConfig(InputStream is) {
         var formList = parseImport(is)
                 .stream()
                 .map(this::convert)
                 .toList();
+        LogUtil.info(logger, "Importing alert defines from {0}", formList);
         if (!CollectionUtils.isEmpty(formList)) {
             formList.forEach(alertDefine -> {
                 alertDefineService.validate(alertDefine, false);
