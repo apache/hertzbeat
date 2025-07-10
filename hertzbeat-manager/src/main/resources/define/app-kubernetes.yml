@@ -21,11 +21,13 @@ app: kubernetes
 name:
   zh-CN: Kubernetes
   en-US: Kubernetes
+  ja-JP: Kubernetes
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 通过查询 Kubernetes ApiServer api 来对 kubernetes 的通用性能指标（nodes、namespaces、pods、services）进行采集监控。<br><span class='help_module_span'>注意⚠️：为了监控 Kubernetes 中的信息，则需要获取到可访问 Api Server 的授权 TOKEN，让采集请求获取到对应的信息，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kubernetes'>点击查看获取步骤</a>。</span>
   en-US: HertzBeat monitoring Kubernetes general metrics such as nodes, namespaces and pods through querying data from Kubernetes ApiServer api. <br><span class='help_module_span'>Note⚠️:In order to monitor the information of Kubernetes, Hertzbeat need to obtain the authorized TOKEN that can access Api Server. <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/kubernetes'>Click here to view the specific steps.</a></span>
   zh-TW: HertzBeat 通過查詢 Kubernetes ApiServer api 來對 kubernetes 的通用性能指標（nodes、namespaces、pods、services）進行采集監控。<br><span class='help_module_span'>注意⚠️：爲了監控 Kubernetes 中的信息，則需要獲取到可訪問 Api Server 的授權 TOKEN，讓采集請求獲取到對應的信息，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kubernetes'>點擊查看獲取步驟</a>。</span>
+  ja-JP: HertzBeat は Kubernetes ApiServer api を呼び出し、kubernetes の一般的なパフォーマンスのメトリクスを収集して監視します。<br><span class='help_module_span'>注意⚠️：Kubernetesでメトリクスを監視するためには、Api Serverにアクセスするための認可されたTOKENを取得する必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/kubernetes'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kubernetes
   en-US: https://hertzbeat.apache.org/docs/help/kubernetes
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: ApiServer端口
       en-US: ApiServer Port
+      ja-JP: ApiServerポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -74,6 +79,7 @@ params:
     name:
       zh-CN: 认证Token
       en-US: Access Token
+      ja-JP: アクセストークン
     type: text
     required: true
 # collect metrics config list
@@ -91,38 +97,45 @@ metrics:
         i18n:
           zh-CN: 节点名称
           en-US: Node Name
+          ja-JP: ノード名
       - field: is_ready
         type: 1
         i18n:
           zh-CN: 节点就绪状态
           en-US: Node Ready Status
+          ja-JP: ノード準備完了
       - field: capacity_cpu
         type: 0
         i18n:
           zh-CN: CPU 容量
           en-US: CPU Capacity
+          ja-JP: CPU 容量
       - field: allocatable_cpu
         type: 0
         i18n:
           zh-CN: 可分配 CPU
           en-US: Allocatable CPU
+          ja-JP: 割り当て可能CPU
       - field: capacity_memory
         type: 0
         unit: Mi
         i18n:
           zh-CN: 内存容量
           en-US: Memory Capacity
+          ja-JP: メモリ容量
       - field: allocatable_memory
         type: 0
         unit: Mi
         i18n:
           zh-CN: 可分配内存
           en-US: Allocatable Memory
+          ja-JP: 割り当て可能CPUメモリ
       - field: creation_time
         type: 1
         i18n:
           zh-CN: 创建时间
           en-US: Creation Time
+          ja-JP: 作成時間
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.metadata.name
@@ -167,16 +180,19 @@ metrics:
         i18n:
           zh-CN: 命名空间
           en-US: Namespace
+          ja-JP: 名前空間
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
       - field: creation_time
         type: 1
         i18n:
           zh-CN: 创建时间
           en-US: Creation Time
+          ja-JP: 作成時間
     aliasFields:
       - $.metadata.name
       - $.status.phase
@@ -206,41 +222,49 @@ metrics:
         i18n:
           zh-CN: Pod名称
           en-US: Pod Name
+          ja-JP: ポッド名
       - field: namespace
         type: 1
         i18n:
           zh-CN: 命名空间
           en-US: Namespace
+          ja-JP: 名前空間
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
       - field: restart
         type: 1
         i18n:
           zh-CN: 重启次数
           en-US: Restart Count
+          ja-JP: リスタート回数
       - field: host_ip
         type: 1
         i18n:
           zh-CN: 主机IP
           en-US: Host IP
+          ja-JP: ホストIP
       - field: pod_ip
         type: 1
         i18n:
           zh-CN: Pod IP
           en-US: Pod IP
+          ja-JP: ポッドIP
       - field: creation_time
         type: 1
         i18n:
           zh-CN: 创建时间
           en-US: Creation Time
+          ja-JP: 作成時間
       - field: start_time
         type: 1
         i18n:
           zh-CN: 启动时间
           en-US: Start Time
+          ja-JP: 起動時間
     aliasFields:
       - $.metadata.name
       - $.metadata.namespace
@@ -280,31 +304,37 @@ metrics:
         i18n:
           zh-CN: 服务
           en-US: Service
+          ja-JP: サービス
       - field: namespace
         type: 1
         i18n:
           zh-CN: 命名空间
           en-US: Namespace
+          ja-JP: 名前空間
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: cluster_ip
         type: 1
         i18n:
           zh-CN: 集群IP
           en-US: Cluster IP
+          ja-JP: クラスタIP
       - field: selector
         type: 1
         i18n:
           zh-CN: 选择器
           en-US: Selector
+          ja-JP: セレクター
       - field: creation_time
         type: 1
         i18n:
           zh-CN: 创建时间
           en-US: Creation Time
+          ja-JP: 作成時間
     aliasFields:
       - $.metadata.name
       - $.metadata.namespace
