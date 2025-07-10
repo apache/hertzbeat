@@ -58,7 +58,7 @@ You can refer to the [official documentation](https://docs.greptime.com/getting-
 
 #### Installing and Deploying HertzBeat
 
-See the [official documentation](https://hertzbeat.com/zh-cn/docs/start/docker-deploy) for details.
+See the [official documentation](https://hertzbeat.apache.org/zh-cn/docs/start/docker-deploy) for details.
 
 1. Docker installs HertzBeat.
 
