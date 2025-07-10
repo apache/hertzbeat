@@ -20,11 +20,13 @@ app: kafka_promql
 name:
   zh-CN: Kafka-PromQL
   en-US: Kafka-PromQL
+  ja-JP: Kafka-PromQL
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 Kafka 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 Kafka，需要从 Prometheus 服务器抓取 Kafka 的监控数据。<br>您可以点击 “<i>新建 Kafka-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses Prometheus PromQL query metrics data from Prometheus Server to monitoring Kafka. This solution is suitable for Prometheus to monitor Kafka, and it need to capture Kafka monitoring data from the Prometheus server. <br>You could click the "<i>New Kafka-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 使用 Prometheus PromQL 從 Prometheus 服務器中查詢到 Kafka 的通用指標數據來進行監控。此方案適用于 Prometheus 已監控 Kafka，需要從 Prometheus 服務器抓取 Kafka 的監控數據。<br>您可以點擊 “<i>新建 Kafka-PromQL</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は Prometheus PromQL を介して Prometheus サーバーに Kafka の一般的なパフォーマンスのメトリクスをクエリして監視します。このシナリオは、PrometheusがすでにKafkaを監視しており、PrometheusサーバーからKafkaの監視データを取得する必要がある場合に適用されます。。<br>「<i>新規 Kafka-PromQL</i>」をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kafka_promql
   en-US: https://hertzbeat.apache.org/docs/help/kafka_promql
@@ -33,12 +35,14 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -47,6 +51,7 @@ params:
     name:
       zh-CN: 请求方式
       en-US: Method
+      ja-JP: リクエストメソッド
     type: radio
     required: true
     options:
@@ -63,6 +68,7 @@ params:
     name:
       zh-CN: 相对路径
       en-US: URI
+      ja-JP: URI
     type: text
     limit: 200
     required: true
@@ -72,12 +78,14 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL
     type: boolean
     required: false
   - field: headers
     name:
       zh-CN: 请求Headers
       en-US: Headers
+      ja-JP: ヘッダ
     type: key-value
     required: false
     keyAlias: Header Name
@@ -86,6 +94,7 @@ params:
     name:
       zh-CN: 查询Params
       en-US: Params
+      ja-JP: パラメータ
     type: key-value
     required: false
     keyAlias: Param Key
@@ -94,6 +103,7 @@ params:
     name:
       zh-CN: Content-Type
       en-US: Content-Type
+      ja-JP: コンテンツタイプ
     type: text
     placeholder: '请求BODY资源类型'
     required: false
@@ -102,6 +112,7 @@ params:
     name:
       zh-CN: 请求BODY
       en-US: BODY
+      ja-JP: ボディ
     type: textarea
     placeholder: 'POST PUT请求时有效'
     required: false
@@ -110,6 +121,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     type: radio
     required: false
     hide: true
@@ -122,6 +134,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -130,6 +143,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
     hide: true
@@ -139,6 +153,7 @@ metrics:
     i18n:
       zh-CN: Kafka Broker 数量
       en-US: Kafka Broker Count
+      ja-JP: Kafkaブローカー数量
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -150,21 +165,25 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: instance
         type: 1
         i18n:
           zh-CN: 实例
           en-US: Instance
+          ja-JP: インスタンス
       - field: timestamp
         type: 1
         i18n:
           zh-CN: 时间戳
           en-US: Timestamp
+          ja-JP: タイムスタンプ
       - field: value
         type: 1
         i18n:
           zh-CN: 数值
           en-US: Value
+          ja-JP: 値
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # The config content when protocol is http
@@ -201,6 +220,7 @@ metrics:
     i18n:
       zh-CN: Kafka Topic 分区数量
       en-US: Kafka Topic Partitions
+      ja-JP: Kafkaトピックのパーティション数量
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -212,21 +232,25 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: topic
         type: 1
         i18n:
           zh-CN: 主题
           en-US: Topic
+          ja-JP: トピック
       - field: timestamp
         type: 1
         i18n:
           zh-CN: 时间戳
           en-US: Timestamp
+          ja-JP: タイムスタンプ
       - field: value
         type: 1
         i18n:
           zh-CN: 数值
           en-US: Value
+          ja-JP: 値
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # The config content when protocol is http
@@ -264,6 +288,7 @@ metrics:
     i18n:
       zh-CN: Kafka Server Broker Topic 每秒字节入
       en-US: Kafka Server Broker Topic Bytes In Per Second
+      ja-JP: Kafkaサーバーブローカーの1秒あたりのトピック合計受信されたバイト
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -275,26 +300,31 @@ metrics:
         i18n:
           zh-CN: 实例
           en-US: Instance
+          ja-JP: インスタンス
       - field: job
         type: 1
         i18n:
           zh-CN: 任务
           en-US: Job
+          ja-JP: タスク
       - field: topic
         type: 1
         i18n:
           zh-CN: 主题
           en-US: Topic
+          ja-JP: トピック
       - field: timestamp
         type: 1
         i18n:
           zh-CN: 时间戳
           en-US: Timestamp
+          ja-JP: タイムスタンプ
       - field: value
         type: 1
         i18n:
           zh-CN: 数值
           en-US: Value
+          ja-JP: 値
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # The specific collection configuration when the protocol is http

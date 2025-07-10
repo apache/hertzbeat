@@ -93,7 +93,7 @@ As for open source commercialization, the premise of open source commercializati
    * `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
    * `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
-Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
+Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 ---
 

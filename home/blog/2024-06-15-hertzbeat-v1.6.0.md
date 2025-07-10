@@ -374,7 +374,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-Detailed refer to HertzBeat Document <https://hertzbeat.com/docs>
+Detailed refer to HertzBeat Document <https://hertzbeat.apache.org/docs>
 
 ---
 **Github: <https://github.com/apache/hertzbeat>**

@@ -29,8 +29,8 @@ help:
   zh-TW: HertzBeat 對 GreptimeDB 時序資料庫進行監控。<br><span class='help_module_span'><a class='help_module_content' https://docs.greptime.com/user-guide/operations/monitoring'>點擊查看開啓步驟</a>。</span>
   ja-JP: HertzBeat は GreptimeDB 時系列データベースを監視します。<br><span class='help_module_span'><a class='help_module_content' https://docs.greptime.com/user-guide/operations/monitoring'>クリックしてガイドを見ます</a>。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/greptimedb
-  en-US: https://hertzbeat.com/docs/help/greptimedb
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/greptimedb
+  en-US: https://hertzbeat.apache.org/docs/help/greptimedb
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
