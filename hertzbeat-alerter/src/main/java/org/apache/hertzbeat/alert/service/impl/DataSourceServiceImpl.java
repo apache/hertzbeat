@@ -75,7 +75,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             throw new IllegalArgumentException("Empty expression");
         }
         if (executors == null || executors.isEmpty()) {
-            throw new IllegalArgumentException("No query executor found");
+            throw new IllegalArgumentException(bundle.getString("alerter.datasource.executor.not.found"));
         }
         QueryExecutor executor = executors.stream().filter(e -> e.support(datasource)).findFirst().orElse(null);
 
