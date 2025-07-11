@@ -33,7 +33,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mqtt.version>1.3.3</mqtt.version>
+        <mqtt.version>1.2.5</mqtt.version>
     </properties>
 
     <dependencies>
@@ -140,10 +140,19 @@
         </dependency>
         <!-- mqtt -->
         <dependency>
-            <groupId>com.hivemq</groupId>
-            <artifactId>hivemq-mqtt-client</artifactId>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
             <version>${mqtt.version}</version>
         </dependency>
+        <!--Bouncy Castle-->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.68</version>
+        </dependency>
+
+
+
         <!--plc-->
         <dependency>
             <groupId>org.apache.plc4x</groupId>
