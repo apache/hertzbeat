@@ -19,7 +19,9 @@ keywords:
 
 ## 我的开源初探
 
-早在本科时期，我就接触过开源，那时曾基于开源的 [Mirai](https://github.com/mamoe/mirai) 框架开发了一个[疫情防控 QQ 机器人](https://github.com/bigcyy/GroupNotifier)。然而，那更多是停留在使用层面。大三时，我尝试独立开源了名为 [customized_chat](https://github.com/bigcyy/customized-chat) 的 AI 项目，这算是我迈出的“开源”第一步。但这些经历都是独自摸索，我深感这并非真正的开源，因为它未能建立起一个完整的社区生态。
+早在本科时期，我就接触过开源，那时曾基于开源的 [Mirai](https://github.com/mamoe/mirai) 框架开发了一个[疫情防控 QQ 机器人](https://github.com/bigcyy/GroupNotifier)。然而，那更多是停留在使用层面。
+大三时，我尝试独立开源了名为 [customized_chat](https://github.com/bigcyy/customized-chat) 的 AI 项目，这算是我迈出的“开源”第一步。
+但这些经历都是独自摸索，我深感这并非真正的开源，因为它未能建立起一个完整的社区生态。
 
 ## 结缘 HertzBeat：真正意义的开源实践
 
@@ -30,6 +32,7 @@ keywords:
 ## 开源带来的成长与收获
 
 参与开源，确实让我的能力得到了显著提升。通过阅读 HertzBeat 的架构设计并积极参与社区讨论，我积累了许多宝贵的经验，例如：
+
 - 前沿技术： 我深入了解了监控系统的设计与实现，并在项目中实践了并发编程、分布式等核心技术。
 - 实战能力： 通过解决实际问题和参与代码贡献，我成功地将理论知识转化为了实际操作能力。
 - 社区文化体验： 我亲身感受了“Apache Way”的独特魅力，并与来自世界各地的开发者们进行了深入交流与学习。
