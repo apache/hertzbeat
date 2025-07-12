@@ -182,8 +182,12 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                                 .str(formatStrValue(columnValue));
                 case CommonConstants.TYPE_TIME -> historyBuilder.metricType(CommonConstants.TYPE_TIME)
                         .int32(Integer.parseInt(columnValue));
-                default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                        .dou(Double.parseDouble(columnValue));
+                default -> {
+                    Double v = Double.parseDouble(columnValue);
+                    v = v.isNaN() ? null : v;
+                    historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                            .dou(v);
+                }
             }
 
             if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
