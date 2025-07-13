@@ -21,11 +21,13 @@ package org.apache.hertzbeat.otel.config;
 import static io.opentelemetry.semconv.ServiceAttributes.SERVICE_NAME;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
+import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.exporter.otlp.http.logs.OtlpHttpLogRecordExporter;
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter;
 import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporterBuilder;
 import io.opentelemetry.sdk.autoconfigure.spi.AutoConfigurationCustomizerProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogRecordProcessor;
+import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.resources.Resource;
 
 import java.util.Base64;
@@ -158,5 +160,44 @@ public class OpenTelemetryConfig {
 
                     return sdkLoggerProviderBuilder.addLogRecordProcessor(batchLogProcessor);
                 });
+    }
+
+    /**
+     * Configures the SdkMeterProvider for Prometheus scraping.
+     * This bean is conditionally created if the otel.exporter.prometheus.enabled property is true.
+     *
+     * @return SdkMeterProvider
+     */
+    @Bean
+    @ConditionalOnProperty(name = "otel.exporter.prometheus.enabled", havingValue = "true")
+    public SdkMeterProvider sdkMeterProvider() {
+        return SdkMeterProvider.builder()
+                .setResource(Resource.create(io.opentelemetry.api.common.Attributes.of(SERVICE_NAME, HERTZBEAT_SERVICE_NAME)))
+                .build();
+    }
+
+    /**
+     * Creates a PrometheusCollector bean that registers with the SdkMeterProvider.
+     * This collector is then used by the PrometheusMetricsController to scrape metrics.
+     *
+     * @param sdkMeterProvider the SdkMeterProvider
+     * @return a PrometheusCollector
+     */
+    @Bean
+    @ConditionalOnProperty(name = "otel.exporter.prometheus.enabled", havingValue = "true")
+    public PrometheusCollector prometheusCollector(SdkMeterProvider sdkMeterProvider) {
+        return PrometheusCollector.builder().setSdkMeterProvider(sdkMeterProvider).build();
+    }
+
+    /**
+     * Provides a Meter bean for dependency injection across the application (e.g., in MetricsService).
+     *
+     * @param sdkMeterProvider The SdkMeterProvider bean.
+     * @return Meter
+     */
+    @Bean
+    @ConditionalOnProperty(name = "otel.exporter.prometheus.enabled", havingValue = "true")
+    public Meter meter(SdkMeterProvider sdkMeterProvider) {
+        return sdkMeterProvider.get(HERTZBEAT_SERVICE_NAME);
     }
 }
