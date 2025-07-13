@@ -27,8 +27,8 @@ const routes: Routes = [
         loadChildren: () => import('./monitor/monitor.module').then(m => m.MonitorModule),
         data: { titleI18n: 'menu.monitor.center' }
       },
-      { path: 'alert', loadChildren: () => import('./alert/alert.module').then(m => m.AlertModule) },
       { path: 'log', loadChildren: () => import('./log/log.module').then(m => m.LogModule) },
+      { path: 'alert', loadChildren: () => import('./alert/alert.module').then(m => m.AlertModule) },
       { path: 'setting', loadChildren: () => import('./setting/setting.module').then(m => m.SettingModule) }
     ]
   },
