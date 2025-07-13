@@ -23,7 +23,7 @@ import javax.annotation.Resource;
 import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
-import org.apache.hertzbeat.alert.calculate.RealTimeAlertCalculator;
+import org.apache.hertzbeat.alert.calculate.MetricsRealTimeAlertCalculator;
 import org.apache.hertzbeat.alert.controller.AlertDefineController;
 import org.apache.hertzbeat.alert.controller.AlertDefinesController;
 import org.apache.hertzbeat.alert.controller.AlertsController;
@@ -72,7 +72,7 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(AlertDefineController.class));
         assertNotNull(ctx.getBean(AlerterWorkerPool.class));
         assertNotNull(ctx.getBean(AlerterProperties.class));
-        assertNotNull(ctx.getBean(RealTimeAlertCalculator.class));
+        assertNotNull(ctx.getBean(MetricsRealTimeAlertCalculator.class));
         assertNotNull(ctx.getBean(AlertsController.class));
         assertNotNull(ctx.getBean(AlertDefinesController.class));
 

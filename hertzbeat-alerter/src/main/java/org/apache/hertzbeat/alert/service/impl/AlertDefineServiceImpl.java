@@ -216,10 +216,20 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public List<AlertDefine> getMetricsRealTimeAlertDefines() {
-        List<AlertDefine> alertDefines = CacheFactory.getAlertDefineCache();
+        List<AlertDefine> alertDefines = CacheFactory.getMetricsAlertDefineCache();
         if (alertDefines == null) {
             alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_REALTIME);
-            CacheFactory.setAlertDefineCache(alertDefines);
+            CacheFactory.setMetricsAlertDefineCache(alertDefines);
+        }
+        return alertDefines;
+    }
+
+    @Override
+    public List<AlertDefine> getLogRealTimeAlertDefines() {
+        List<AlertDefine> alertDefines = CacheFactory.getLogAlertDefineCache();
+        if (alertDefines == null) {
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME);
+            CacheFactory.setLogAlertDefineCache(alertDefines);
         }
         return alertDefines;
     }
@@ -236,5 +246,26 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                 log.error("Get define preview unsupported type: {}", type);
                 return Collections.emptyList();
         }
+    }
+
+    @Override
+    public List<AlertDefine> getAlertDefinesByType(String type) {
+        if (!StringUtils.hasText(type)) {
+            throw new IllegalArgumentException("Alert definition type cannot be null or empty");
+        }
+        
+        switch (type) {
+            case CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_REALTIME:
+            case CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME:
+            case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
+                // Valid type, proceed with query
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported alert definition type: " + type);
+        }
+        
+        // Query enabled alert definitions by type
+        return alertDefineDao.findAlertDefinesByTypeAndEnableTrue(type);
     }
 }

@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 /**
  *
  */
-public class RealTimeAlertCalculatorMatchTest {
+public class MetricsRealTimeAlertCalculatorMatchTest {
 
     private final AlerterWorkerPool workerPool = new AlerterWorkerPool();
 
@@ -67,13 +67,13 @@ public class RealTimeAlertCalculatorMatchTest {
     @Mock
     private AlarmCacheManager alarmCacheManager;
 
-    private RealTimeAlertCalculator realTimeAlertCalculator;
+    private MetricsRealTimeAlertCalculator metricsRealTimeAlertCalculator;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         when(singleAlertDao.querySingleAlertsByStatus(any())).thenReturn(new ArrayList<>());
-        realTimeAlertCalculator = new RealTimeAlertCalculator(
+        metricsRealTimeAlertCalculator = new MetricsRealTimeAlertCalculator(
                 workerPool,
                 dataQueue,
                 alertDefineService,
@@ -99,7 +99,7 @@ public class RealTimeAlertCalculatorMatchTest {
 
         List<AlertDefine> allDefines = Collections.singletonList(matchDefine);
 
-        List<AlertDefine> filtered = realTimeAlertCalculator.filterThresholdsByAppAndMetrics(allDefines, app, "", Map.of(), instanceId, priority);
+        List<AlertDefine> filtered = metricsRealTimeAlertCalculator.filterThresholdsByAppAndMetrics(allDefines, app, "", Map.of(), instanceId, priority);
 
         // It should filter out 999999999.
         assertEquals(1, filtered.size());
@@ -147,7 +147,7 @@ public class RealTimeAlertCalculatorMatchTest {
         when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(allDefines);
         when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
 
-        realTimeAlertCalculator.startCalculate();
+        metricsRealTimeAlertCalculator.startCalculate();
 
         Thread.sleep(3000);
 
@@ -190,7 +190,7 @@ public class RealTimeAlertCalculatorMatchTest {
         when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(allDefines);
         when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
 
-        realTimeAlertCalculator.startCalculate();
+        metricsRealTimeAlertCalculator.startCalculate();
 
         Thread.sleep(3000);
 
@@ -239,7 +239,7 @@ public class RealTimeAlertCalculatorMatchTest {
         when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(allDefines);
         when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
 
-        realTimeAlertCalculator.startCalculate();
+        metricsRealTimeAlertCalculator.startCalculate();
 
         Thread.sleep(3000);
 

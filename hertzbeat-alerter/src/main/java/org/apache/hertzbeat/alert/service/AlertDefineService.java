@@ -22,6 +22,7 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 
 import java.util.List;
 import java.util.Map;
@@ -106,10 +107,23 @@ public interface AlertDefineService {
     void importConfig(MultipartFile file) throws Exception;
 
     /**
-     * Get the real-time alarm definition list
-     * @return Real-time alarm definition list
+     * Get the real-time metrics alarm definition list
+     * @return Real-time metrics alarm definition list
      */
     List<AlertDefine> getMetricsRealTimeAlertDefines();
+
+    /**
+     * Get the real-time log alarm definition list
+     * @return Real-time log alarm definition list
+     */
+    List<AlertDefine> getLogRealTimeAlertDefines();
+
+    /**
+     * Get the alarm definition list by type
+     * @param type Alarm definition type, must be one of the constants defined in {@link CommonConstants}
+     * @return List of enabled alarm definitions matching the specified type, empty list if none found
+     */
+    List<AlertDefine> getAlertDefinesByType(String type);
 
     /**
      * Get define preview

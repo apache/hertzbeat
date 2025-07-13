@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,22 +27,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.jexl3.JexlException;
-import org.apache.commons.jexl3.JexlExpression;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
-import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
-import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -53,9 +46,7 @@ import org.springframework.util.CollectionUtils;
  */
 @Component
 @Slf4j
-public class RealTimeAlertCalculator {
-    
-    private static final int CALCULATE_THREADS = 3;
+public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<CollectRep.MetricsData> {
     
     private static final String KEY_INSTANCE = "__instance__";
     private static final String KEY_INSTANCE_NAME = "__instancename__";
@@ -76,63 +67,43 @@ public class RealTimeAlertCalculator {
     private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\\s*\"(\\d+)\"\\)");
     private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
-    private final AlerterWorkerPool workerPool;
-    private final CommonDataQueue dataQueue;
-    private final AlertDefineService alertDefineService;
-    private final AlarmCommonReduce alarmCommonReduce;
-    private final AlarmCacheManager alarmCacheManager;
-
     @Autowired
-    public RealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
-                                   AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
-        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, true);
+    public MetricsRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
+                                          AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                          AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
+        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager);
     }
 
     /**
-     * Constructor for RealTimeAlertCalculator with a toggle to control whether to start alert calculation threads.
+     * Constructor for MetricsRealTimeAlertCalculator with a toggle to control whether to start alert calculation threads.
      *
      * @param workerPool          The worker pool used for concurrent alert calculation.
      * @param dataQueue           The queue from which metric data is pulled and pushed.
      * @param alertDefineService  The service providing alert definition rules.
      * @param singleAlertDao      The DAO for fetching persisted alert states from storage.
      * @param alarmCommonReduce   The component responsible for reducing and sending alerts.
+     * @param alarmCacheManager   The cache manager for managing alert states.
      * @param start               If true, the alert calculation threads will start automatically;
      *                            set to false to disable thread start (useful for unit testing).
      */
-    public RealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
-                                   AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager, boolean start) {
-        this.workerPool = workerPool;
-        this.dataQueue = dataQueue;
-        this.alarmCommonReduce = alarmCommonReduce;
-        this.alertDefineService = alertDefineService;
-        this.alarmCacheManager = alarmCacheManager;
-        if (start) {
-            startCalculate();
-        }
+    public MetricsRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
+                                          AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                          AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager, boolean start) {
+        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, start);
     }
 
-    public void startCalculate() {
-        Runnable runnable = () -> {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    CollectRep.MetricsData metricsData = dataQueue.pollMetricsDataToAlerter();
-                    calculate(metricsData);
-                    dataQueue.sendMetricsDataToStorage(metricsData);
-                } catch (InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                } catch (Exception e) {
-                    log.error("calculate alarm error: {}.", e.getMessage(), e);
-                }
-            }
-        };
-        for (int i = 0; i < CALCULATE_THREADS; i++) {
-            workerPool.executeJob(runnable);
-        }
+    @Override
+    protected CollectRep.MetricsData pollData() throws InterruptedException {
+        return dataQueue.pollMetricsDataToAlerter();
     }
 
-    private void calculate(CollectRep.MetricsData metricsData) {
+    @Override
+    protected void processDataAfterCalculation(CollectRep.MetricsData metricsData) {
+        dataQueue.sendMetricsDataToStorage(metricsData);
+    }
+
+    @Override
+    protected void calculate(CollectRep.MetricsData metricsData) {
         long currentTimeMilli = System.currentTimeMillis();
         String instance = String.valueOf(metricsData.getId());
         String instanceName = metricsData.getInstanceName();
@@ -272,8 +243,9 @@ public class RealTimeAlertCalculator {
      * @param thresholds Alert definitions to filter
      * @param app        Current app name
      * @param metrics    Current metrics name
+     * @param labels     Current labels
      * @param instance   Current instance id
-     * @param priority  Current priority
+     * @param priority   Current priority
      * @return Filtered alert definitions
      */
     public List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
@@ -332,105 +304,6 @@ public class RealTimeAlertCalculator {
                     return false;
                 })
                 .collect(Collectors.toList());
-    }
-
-    private void handleRecoveredAlert(Map<String, String> fingerprints) {
-        String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
-        SingleAlert firingAlert = alarmCacheManager.removeFiring(fingerprint);
-        if (firingAlert != null) {
-            // todo consider multi times to tig for resolved alert
-            firingAlert.setTriggerTimes(1);
-            firingAlert.setEndAt(System.currentTimeMillis());
-            firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
-            alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
-        }
-        alarmCacheManager.removePending(fingerprint);
-    }
-
-    private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
-                                         Map<String, Object> fieldValueMap, AlertDefine define, Map<String, String> annotations) {
-        String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
-        SingleAlert existingAlert = alarmCacheManager.getPending(fingerprint);
-        fieldValueMap.putAll(define.getLabels());
-        int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
-        if (existingAlert == null) {
-            // First time triggering alert, create new alert and set to pending status
-            Map<String, String> alertLabels = new HashMap<>(8);
-            alertLabels.putAll(fingerPrints);
-            Map<String, String> alertAnnotations = new HashMap<>(8);
-            if (annotations != null) {
-                alertAnnotations.putAll(annotations);
-            }
-            if (define.getAnnotations() != null) {
-                alertAnnotations.putAll(define.getAnnotations());
-            }
-            // render var content in annotations
-            for (Map.Entry<String, String> entry : alertAnnotations.entrySet()) {
-                entry.setValue(AlertTemplateUtil.render(entry.getValue(), fieldValueMap));
-            }
-            SingleAlert newAlert = SingleAlert.builder()
-                    .labels(alertLabels)
-                    .annotations(alertAnnotations)
-                    // render var content in content
-                    .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
-                    .status(CommonConstants.ALERT_STATUS_PENDING)
-                    .triggerTimes(1) 
-                    .startAt(currentTimeMilli)
-                    .activeAt(currentTimeMilli)
-                    .build();
-                    
-            // If required trigger times is 1, set to firing status directly
-            if (requiredTimes <= 1) {
-                newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                alarmCacheManager.putFiring(fingerprint, newAlert);
-                alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
-            } else {
-                // Otherwise put into pending queue first
-                alarmCacheManager.putPending(fingerprint, newAlert);
-            }
-        } else {
-            // Update existing alert
-            existingAlert.setTriggerTimes(existingAlert.getTriggerTimes() + 1);
-            existingAlert.setActiveAt(currentTimeMilli);
-            
-            // Check if required trigger times reached
-            if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
-                // Reached trigger times threshold, change to firing status
-                alarmCacheManager.removePending(fingerprint);
-                existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                alarmCacheManager.putFiring(fingerprint, existingAlert);
-                alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
-            }
-        }
-    }
-
-    private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr, boolean ignoreJexlException) {
-        Boolean match;
-        JexlExpression expression;
-        try {
-            expression = JexlExpressionRunner.compile(expr);
-        } catch (JexlException jexlException) {
-            log.warn("Alarm Rule: {} Compile Error: {}.", expr, jexlException.getMessage());
-            throw jexlException;
-        } catch (Exception e) {
-            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
-            throw e;
-        }
-
-        try {
-            match = (Boolean) JexlExpressionRunner.evaluate(expression, fieldValueMap);
-        } catch (JexlException jexlException) {
-            if (ignoreJexlException) {
-                log.debug("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
-            } else {
-                log.error("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());   
-            }
-            throw jexlException;
-        } catch (Exception e) {
-            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
-            throw e;
-        }
-        return match != null && match;
     }
 
     private Set<String> kvLabelsToKvStringSet(Map<String, String> labels) {

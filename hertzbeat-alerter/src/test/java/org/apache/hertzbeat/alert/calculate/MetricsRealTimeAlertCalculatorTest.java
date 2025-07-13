@@ -35,9 +35,9 @@ import java.util.List;
 import java.util.Map;
 
 
-class RealTimeAlertCalculatorTest {
+class MetricsRealTimeAlertCalculatorTest {
 
-    private RealTimeAlertCalculator calculator;
+    private MetricsRealTimeAlertCalculator calculator;
 
     @BeforeEach
     void setUp() {
@@ -51,7 +51,7 @@ class RealTimeAlertCalculatorTest {
         Mockito.when(mockDao.querySingleAlertsByStatus(Mockito.anyString()))
                 .thenReturn(Collections.emptyList());
 
-        calculator = new RealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService, mockDao, mockReduce, alarmCacheManager, false);
+        calculator = new MetricsRealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService, mockDao, mockReduce, alarmCacheManager, false);
     }
 
     @Test

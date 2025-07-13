@@ -22,6 +22,7 @@ import com.google.protobuf.util.JsonFormat;
 import io.opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest;
 import io.opentelemetry.proto.common.v1.AnyValue;
 import io.opentelemetry.proto.common.v1.KeyValue;
+import io.opentelemetry.proto.common.v1.KeyValueList;
 import io.opentelemetry.proto.logs.v1.LogRecord;
 import io.opentelemetry.proto.logs.v1.ResourceLogs;
 import io.opentelemetry.proto.logs.v1.ScopeLogs;
@@ -64,11 +65,12 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             
             // Extract LogEntry instances from the request
             List<LogEntry> logEntries = extractLogEntries(request);
-            log.info("Successfully extracted {} log entries from OTLP payload", logEntries.size());
+            log.debug("Successfully extracted {} log entries from OTLP payload {}", logEntries.size(), content);
             
             logEntries.forEach(entry -> {
                 try {
                     commonDataQueue.sendLogEntry(entry);
+                    log.debug("Log entry sent to queue: {}", entry);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.error("Failed to send log entry to queue: {}", e.getMessage());
@@ -159,11 +161,27 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
      * Extract attributes from a list of KeyValue pairs.
      */
     private Map<String, Object> extractAttributes(List<KeyValue> keyValueList) {
-        Map<String, Object> attributes = new HashMap<>();
-        for (KeyValue kv : keyValueList) {
-            attributes.put(kv.getKey(), extractAnyValue(kv.getValue()));
+        if (keyValueList == null || keyValueList.isEmpty()) {
+            return new HashMap<>();
         }
-        return attributes;
+
+        AnyValue anyValue = AnyValue.newBuilder()
+                .setKvlistValue(KeyValueList.newBuilder()
+                        .addAllValues(keyValueList)
+                        .build())
+                .build();
+        Object extractedAnyValue = extractAnyValue(anyValue);
+        if (extractedAnyValue instanceof Map<?, ?> genericMap) {
+            Map<String, Object> resultMap = new HashMap<>();
+            for (Map.Entry<?, ?> entry : genericMap.entrySet()) {
+                if (entry.getKey() instanceof String) {
+                    resultMap.put((String) entry.getKey(), entry.getValue());
+                }
+            }
+            return resultMap;
+        } else {
+            return new HashMap<>();
+        }
     }
 
     /**
@@ -195,7 +213,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             case KVLIST_VALUE:
                 Map<String, Object> kvMap = new HashMap<>();
                 for (KeyValue kv : anyValue.getKvlistValue().getValuesList()) {
-                    kvMap.put(kv.getKey(), extractAnyValue(kv.getValue()));
+                    kvMap.put(normalizeKey(kv.getKey()), extractAnyValue(kv.getValue()));
                 }
                 return kvMap;
             case BYTES_VALUE:
@@ -204,6 +222,19 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             default:
                 return null;
         }
+    }
+
+    /**
+     * Normalize key by replacing dots and spaces with underscores.
+     * 
+     * @param key the original key
+     * @return normalized key with dots and spaces replaced by underscores
+     */
+    private String normalizeKey(String key) {
+        if (key == null) {
+            return null;
+        }
+        return key.replace(".", "_").replace(" ", "_");
     }
 
     /**

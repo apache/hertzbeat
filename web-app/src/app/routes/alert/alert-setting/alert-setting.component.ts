@@ -59,7 +59,11 @@ export class AlertSettingComponent implements OnInit {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
     this.qbFormCtrl.valueChanges.subscribe(() => {
       this.userExpr = this.ruleset2expr(this.qbFormCtrl.value);
-      this.updateFinalExpr();
+      if (this.define.type === 'log_realtime') {
+        this.updateLogFinalExpr();
+      } else {
+        this.updateFinalExpr();
+      }
     });
   }
   @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
@@ -131,7 +135,77 @@ export class AlertSettingComponent implements OnInit {
   previewColumns: Array<{ title: string; key: string; width?: string }> = [];
   previewTableLoading = false;
 
+  /**
+   * Initialize log fields(todo: from backend api)
+   */
+  initLogFields() {
+    this.logFields = [
+      // Basic log fields
+      { value: 'log.timeUnixNano', label: 'Time (Unix Nano)', type: 0, unit: 'ns' },
+      { value: 'log.observedTimeUnixNano', label: 'Observed Time (Unix Nano)', type: 0, unit: 'ns' },
+      { value: 'log.severityNumber', label: 'Severity Number', type: 0 },
+      { value: 'log.severityText', label: 'Severity Text', type: 1 },
+      { value: 'log.body', label: 'Body', type: 1 },
+      { value: 'log.droppedAttributesCount', label: 'Dropped Attributes Count', type: 0 },
+      { value: 'log.traceId', label: 'Trace ID', type: 1 },
+      { value: 'log.spanId', label: 'Span ID', type: 1 },
+      { value: 'log.traceFlags', label: 'Trace Flags', type: 0 },
+      // Object fields - will be handled dynamically
+      { value: 'log.attributes', label: 'Attributes', type: 2, isObject: true },
+      { value: 'log.resource', label: 'Resource', type: 2, isObject: true },
+      { value: 'log.instrumentationScope.name', label: 'Instrumentation Scope Name', type: 1 },
+      { value: 'log.instrumentationScope.version', label: 'Instrumentation Scope Version', type: 1 },
+      { value: 'log.instrumentationScope.attributes', label: 'Instrumentation Scope Attributes', type: 2, isObject: true },
+      { value: 'log.instrumentationScope.droppedAttributesCount', label: 'Instrumentation Scope Dropped Attributes Count', type: 0 }
+    ];
+  }
+
+  updateLogQbConfig() {
+    if (this.define.type === 'log_realtime') {
+      let fields: any = {};
+      this.logFields.forEach(item => {
+        fields[item.value] = {
+          name: item.label,
+          type: item.type,
+          unit: item.unit,
+          operators: this.getOperatorsByType(item.type)
+        };
+      });
+      this.qbConfig = { ...this.qbConfig, fields };
+    }
+  }
+
+  updateLogFinalExpr(): void {
+    if (this.define.type === 'log_realtime') {
+      this.define.expr = this.userExpr;
+    }
+  }
+
+  onLogFieldChange(fieldValue: string, rule: any, onChange: any): void {
+    rule.field = fieldValue;
+    // Clear object attribute when field changes
+    rule.objectAttribute = '';
+    onChange(fieldValue, rule);
+  }
+
+  onMetricsFieldChange(fieldValue: string, rule: any, onChange: any): void {
+    rule.field = fieldValue;
+    onChange(fieldValue, rule);
+  }
+
+  isObjectField(fieldValue: string): boolean {
+    if (!fieldValue) return false;
+    const field = this.logFields.find(f => f.value === fieldValue);
+    return !!(field && field.isObject);
+  }
+
+  onObjectAttributeChange(attributeValue: string, rule: any, onChange: any): void {
+    rule.objectAttribute = attributeValue;
+    onChange(rule.field, rule);
+  }
+
   ngOnInit(): void {
+    this.initLogFields();
     this.loadAlertDefineTable();
     // query monitoring hierarchy
     const getHierarchy$ = this.appDefineSvc
@@ -256,6 +330,10 @@ export class AlertSettingComponent implements OnInit {
     // Set default period for metrics_periodic alert
     if (type === 'metrics_periodic') {
       this.define.period = 300;
+    }
+    // Initialize log fields for log_realtime alert
+    if (type === 'log_realtime') {
+      this.updateLogQbConfig();
     }
     this.resetQbDataDefault();
     this.isManageModalAdd = true;
@@ -469,6 +547,7 @@ export class AlertSettingComponent implements OnInit {
   isExpr = false;
   userExpr!: string;
   severity!: string;
+  logFields: any[] = [];
 
   editAlertDefine(alertDefineId: number) {
     if (this.isLoadingEdit !== -1) return;
@@ -516,6 +595,12 @@ export class AlertSettingComponent implements OnInit {
                   this.tryParseThresholdExpr(this.userExpr);
                 }
               });
+            } else if (this.define.type == 'log_realtime') {
+              // Initialize log fields and parse expression
+              this.updateLogQbConfig();
+              this.userExpr = this.define.expr || '';
+              // Try to parse expression as visual rules
+              this.tryParseLogThresholdExpr(this.userExpr);
             }
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.query-fail'), message.msg);
@@ -528,10 +613,19 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private getOperatorsByType(type: number): string[] {
+    let numericOperators = ['>', '<', '==', '!=', '<=', '>=', 'exists', '!exists'];
+    let stringOperators = ['equals', '!equals', 'contains', '!contains', 'matches', '!matches', 'exists', '!exists'];
+    let objectOperators = [...numericOperators, ...stringOperators];
+
     if (type === 0 || type === 3) {
-      return ['>', '<', '==', '!=', '<=', '>=', 'exists', '!exists'];
+      // Numeric and time types
+      return numericOperators;
     } else if (type === 1) {
-      return ['equals', '!equals', 'contains', '!contains', 'matches', '!matches', 'exists', '!exists'];
+      // String types
+      return stringOperators;
+    } else if (type === 2) {
+      // Object types (for log attributes, resource, etc.)
+      return objectOperators;
     }
     return [];
   }
@@ -539,10 +633,16 @@ export class AlertSettingComponent implements OnInit {
   private rule2expr(rule: Rule): string {
     if (!rule.field) return '';
 
+    // Get the effective field name (including object attributes for log fields)
+    let effectiveField = rule.field;
+    if (this.define.type === 'log_realtime' && (rule as any).objectAttribute) {
+      effectiveField = `${rule.field}.${(rule as any).objectAttribute}`;
+    }
+
     switch (rule.operator) {
       case 'exists':
       case '!exists':
-        return `${rule.operator}(${rule.field})`;
+        return `${rule.operator}(${effectiveField})`;
 
       case 'equals':
       case '!equals':
@@ -550,7 +650,7 @@ export class AlertSettingComponent implements OnInit {
       case '!contains':
       case 'matches':
       case '!matches':
-        return `${rule.operator}(${rule.field}, "${rule.value}")`;
+        return `${rule.operator}(${effectiveField}, "${rule.value}")`;
 
       case '>':
       case '>=':
@@ -559,10 +659,10 @@ export class AlertSettingComponent implements OnInit {
       case '==':
       case '!=':
         // 如果字段包含方法调用
-        if (rule.field.includes('.') && rule.field.includes('()')) {
-          return `${rule.field} ${rule.operator} ${rule.value}`;
+        if (effectiveField.includes('.') && effectiveField.includes('()')) {
+          return `${effectiveField} ${rule.operator} ${rule.value}`;
         }
-        return `${rule.field} ${rule.operator} ${rule.value}`;
+        return `${effectiveField} ${rule.operator} ${rule.value}`;
 
       default:
         return '';
@@ -734,10 +834,12 @@ export class AlertSettingComponent implements OnInit {
       const existsMatch = expr.match(/^(!)?exists\(([^)]+)\)$/);
       if (existsMatch) {
         const [_, not, field] = existsMatch;
+        const parsedRule = this.parseLogFieldAndAttribute(field);
         return {
-          field,
-          operator: not ? '!exists' : 'exists'
-        };
+          field: parsedRule.field,
+          operator: not ? '!exists' : 'exists',
+          ...(parsedRule.objectAttribute && { objectAttribute: parsedRule.objectAttribute })
+        } as any;
       }
 
       // Parse string functions (equals, contains, matches)
@@ -745,22 +847,26 @@ export class AlertSettingComponent implements OnInit {
       if (funcMatch) {
         const [_, not, field, value] = funcMatch;
         const func = expr.match(/equals|contains|matches/)?.[0] || '';
+        const parsedRule = this.parseLogFieldAndAttribute(field);
         return {
-          field,
+          field: parsedRule.field,
           operator: not ? `!${func}` : func,
-          value
-        };
+          value,
+          ...(parsedRule.objectAttribute && { objectAttribute: parsedRule.objectAttribute })
+        } as any;
       }
 
       // Parse numeric comparisons
-      const compareMatch = expr.match(/^(\w+(?:\.\w+)*)\s*([><=!]+)\s*(-?\d+(?:\.\d+)?)$/);
+      const compareMatch = expr.match(/^([\w.]+)\s*([><=!]+)\s*(-?\d+(?:\.\d+)?)$/);
       if (compareMatch) {
         const [_, field, operator, value] = compareMatch;
+        const parsedRule = this.parseLogFieldAndAttribute(field);
         return {
-          field,
+          field: parsedRule.field,
           operator,
-          value: Number(value)
-        };
+          value: Number(value),
+          ...(parsedRule.objectAttribute && { objectAttribute: parsedRule.objectAttribute })
+        } as any;
       }
 
       return null;
@@ -768,6 +874,24 @@ export class AlertSettingComponent implements OnInit {
       console.error('Failed to parse rule:', e);
       return null;
     }
+  }
+
+  private parseLogFieldAndAttribute(fullField: string): { field: string; objectAttribute?: string } {
+    if (this.define.type !== 'log_realtime') {
+      return { field: fullField };
+    }
+
+    // Check if this is an object field with attribute
+    const objectFields = ['log.attributes', 'log.resource', 'log.instrumentationScope.attributes'];
+
+    for (const objField of objectFields) {
+      if (fullField.startsWith(`${objField}.`)) {
+        const attribute = fullField.substring(objField.length + 1);
+        return { field: objField, objectAttribute: attribute };
+      }
+    }
+
+    return { field: fullField };
   }
 
   getOperatorLabelByType = (operator: string) => {
@@ -1210,6 +1334,30 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
+  private tryParseLogThresholdExpr(expr: string | undefined): void {
+    if (!expr || !expr.trim()) {
+      this.resetQbDataDefault();
+      this.isExpr = false;
+      return;
+    }
+
+    try {
+      // First try to parse as visual rules for log expressions
+      const ruleset = this.expr2ruleset(expr);
+      if (ruleset && ruleset.rules && ruleset.rules.length > 0) {
+        this.resetQbData(ruleset);
+        this.isExpr = false;
+        return;
+      }
+
+      // If cannot parse as visual rules, switch to expression mode
+      this.isExpr = true;
+    } catch (e) {
+      console.warn('Failed to parse log threshold expr:', e);
+      this.isExpr = true;
+    }
+  }
+
   public updateFinalExpr(): void {
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
     const monitorBindExpr = this.generateMonitorBindExpr();
@@ -1501,5 +1649,46 @@ export class AlertSettingComponent implements OnInit {
   private clearPreview(): void {
     this.previewData = [];
     this.previewColumns = [];
+  }
+
+  /**
+   * Get the edit tooltip title i18n key based on the data type.
+   */
+  getEditTooltipTitle(data: any): string {
+    if (data.type === 'metrics_realtime') {
+      return 'alert.setting.edit.metrics.realtime';
+    } else if (data.type === 'log_realtime') {
+      return 'alert.setting.edit.log.realtime';
+    } else {
+      return 'alert.setting.edit.metrics.periodic';
+    }
+  }
+
+  /**
+   * Get the modal title i18n key based on the add/edit mode and data type.
+   * Similar to a computed property in Vue.
+   */
+  getModalTitle(): string {
+    if (this.isManageModalAdd) {
+      if (this.define.type === 'metrics_periodic') {
+        return 'alert.setting.new.metrics.periodic';
+      } else if (this.define.type === 'log_periodic') {
+        return 'alert.setting.new.log.periodic';
+      } else if (this.define.type === 'metrics_realtime') {
+        return 'alert.setting.new.metrics.realtime';
+      } else {
+        return 'alert.setting.new.log.realtime';
+      }
+    } else {
+      if (this.define.type === 'metrics_periodic') {
+        return 'alert.setting.edit.metrics.periodic';
+      } else if (this.define.type === 'log_periodic') {
+        return 'alert.setting.edit.log.periodic';
+      } else if (this.define.type === 'metrics_realtime') {
+        return 'alert.setting.edit.metrics.realtime';
+      } else {
+        return 'alert.setting.edit.log.realtime';
+      }
+    }
   }
 }

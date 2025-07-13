@@ -82,26 +82,58 @@ public final class CacheFactory {
     }
 
     /**
-     * get alert define cache
+     * get metrics alert define cache
      * @return caffeine cache
      */
     @SuppressWarnings("unchecked")
-    public static List<AlertDefine> getAlertDefineCache() {
-        return (List<AlertDefine>) COMMON_CACHE.get(CommonConstants.CACHE_ALERT_DEFINE);
+    public static List<AlertDefine> getMetricsAlertDefineCache() {
+        return (List<AlertDefine>) COMMON_CACHE.get(CommonConstants.METRICS_CACHE_ALERT_DEFINE);
     }
 
     /**
-     * set alert define cache
+     * set metrics alert define cache
      * @param alertDefines alert defines
      */
-    public static void setAlertDefineCache(List<AlertDefine> alertDefines) {
-        COMMON_CACHE.put(CommonConstants.CACHE_ALERT_DEFINE, alertDefines);
+    public static void setMetricsAlertDefineCache(List<AlertDefine> alertDefines) {
+        COMMON_CACHE.put(CommonConstants.METRICS_CACHE_ALERT_DEFINE, alertDefines);
     }
     
+    /**
+     * clear metrics alert define cache
+     */
+    public static void clearMetricsAlertDefineCache() {
+        COMMON_CACHE.remove(CommonConstants.METRICS_CACHE_ALERT_DEFINE);
+    }
+
+    /**
+     * get log alert define cache
+     * @return caffeine cache
+     */
+    @SuppressWarnings("unchecked")
+    public static List<AlertDefine> getLogAlertDefineCache() {
+        return (List<AlertDefine>) COMMON_CACHE.get(CommonConstants.LOG_CACHE_ALERT_DEFINE);
+    }
+
+    /**
+     * set log alert define cache
+     * @param alertDefines alert defines
+     */
+    public static void setLogAlertDefineCache(List<AlertDefine> alertDefines) {
+        COMMON_CACHE.put(CommonConstants.LOG_CACHE_ALERT_DEFINE, alertDefines);
+    }
+
+    /**
+     * clear log alert define cache
+     */
+    public static void clearLogAlertDefineCache() {
+        COMMON_CACHE.remove(CommonConstants.LOG_CACHE_ALERT_DEFINE);
+    }
+
     /**
      * clear alert define cache
      */
     public static void clearAlertDefineCache() {
-        COMMON_CACHE.remove(CommonConstants.CACHE_ALERT_DEFINE);
+        clearLogAlertDefineCache();
+        clearMetricsAlertDefineCache();
     }
 }

@@ -114,10 +114,16 @@
       </td>
       <td nzAlign="center">
         <nz-tag *ngIf="data.type == 'metrics_realtime' || data.type == undefined">
-          <span>{{ 'alert.setting.type.realtime' | i18n }}</span>
+          <span>{{ 'alert.setting.type.metrics.realtime' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.type == 'metrics_periodic'">
-          <span>{{ 'alert.setting.type.periodic' | i18n }}</span>
+          <span>{{ 'alert.setting.type.metrics.periodic' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 'log_realtime'" nzColor="orange">
+          <span>{{ 'alert.setting.type.log.realtime' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 'log_periodic'">
+          <span>{{ 'alert.setting.type.log.periodic' | i18n }}</span>
         </nz-tag>
       </td>
       <td nzAlign="center" nzEllipsis nz-tooltip [nzTooltipTitle]="data.expr">
@@ -141,9 +147,7 @@
             nz-tooltip
             nzType="primary"
             [nzLoading]="isLoadingEdit === data.id"
-            [nzTooltipTitle]="
-              data.type == 'metrics_realtime' ? ('alert.setting.edit.realtime' | i18n) : ('alert.setting.edit.periodic' | i18n)
-            "
+            [nzTooltipTitle]="getEditTooltipTitle(data) | i18n"
           >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
@@ -176,15 +180,7 @@
 <!-- new or update alert definition pop-up box -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="
-    isManageModalAdd
-      ? define.type == 'metrics_periodic'
-        ? ('alert.setting.new.periodic' | i18n)
-        : ('alert.setting.new.realtime' | i18n)
-      : define.type == 'metrics_periodic'
-      ? ('alert.setting.edit.periodic' | i18n)
-      : ('alert.setting.edit.realtime' | i18n)
-  "
+  [nzTitle]="getModalTitle() | i18n"
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
@@ -333,7 +329,7 @@
             <ng-container *queryField="let rule; let getFields = getFields; let onChange = onChange">
               <nz-select
                 [(ngModel)]="rule.field"
-                (ngModelChange)="onChange($event, rule)"
+                (ngModelChange)="onMetricsFieldChange($event, rule, onChange)"
                 [ngModelOptions]="{ standalone: true }"
                 [nzDropdownMatchSelectWidth]="false"
                 [nzPlaceHolder]="'alert.setting.rule.metric.place-holder' | i18n"
@@ -413,6 +409,214 @@
       </nz-form-item>
       <nz-form-item *ngIf="define.type == 'metrics_realtime'">
         <nz-form-label [nzSpan]="7" nzFor="previewExpr">
+          {{ 'alert.setting.preview.expr' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-card [nzBordered]="false" class="preview-expr-card">
+            <pre>{{ define.expr }}</pre>
+          </nz-card>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'log_realtime'" [ngStyle]="{ marginBottom: '5px' }">
+        <nz-form-label [nzSpan]="7" nzFor="logIsExpr" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
+          {{ 'alert.setting.rule' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-radio-group
+            [(ngModel)]="isExpr"
+            (ngModelChange)="switchAlertRuleShow()"
+            nzButtonStyle="solid"
+            [required]="'true'"
+            name="logIsExpr"
+            id="logIsExpr"
+          >
+            <label nz-radio-button [nzValue]="false">
+              {{ 'alert.setting.rule.switch-expr.0' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="true">
+              {{ 'alert.setting.rule.switch-expr.1' | i18n }}
+            </label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'log_realtime' && isExpr">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="logExpr"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <div class="template-input-wrapper">
+            <a nz-dropdown [nzDropdownMenu]="logExprMenu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
+              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.log.expr.tip' | i18n">
+                <i nz-icon nzType="snippets" nzTheme="outline"></i>
+              </button>
+            </a>
+            <nz-dropdown-menu #logExprMenu="nzDropdownMenu">
+              <ul nz-menu class="env-vars-menu">
+                <li nz-menu-item *ngFor="let item of logFields" (click)="onExprVarClick(item)">
+                  <span class="env-var-name">{{ item.value }}</span>
+                  <span class="env-var-desc">{{ item.label }}</span>
+                  <nz-tag class="env-var-type" [nzColor]="item.type === 0 ? 'success' : item.type === 1 ? 'processing' : 'orange'">
+                    {{
+                      item.type === 0
+                        ? ('alert.setting.number' | i18n)
+                        : item.type === 1
+                        ? ('alert.setting.string' | i18n)
+                        : ('alert.setting.object' | i18n)
+                    }}
+                  </nz-tag>
+                </li>
+                <nz-divider></nz-divider>
+                <li nz-menu-item *ngFor="let op of commonOperators" (click)="onExprVarClick(op)">
+                  <span class="env-var-name">{{ op.value }}</span>
+                  <span class="env-var-desc">{{ op.description | i18n }}</span>
+                </li>
+              </ul>
+            </nz-dropdown-menu>
+
+            <nz-textarea-count [nzMaxCharacterCount]="200">
+              <textarea
+                [(ngModel)]="userExpr"
+                (ngModelChange)="updateLogFinalExpr()"
+                required
+                rows="3"
+                nz-input
+                name="logExpr"
+                id="logExpr"
+                [placeholder]="'alert.setting.log.expr.example' | i18n"
+              >
+              </textarea>
+            </nz-textarea-count>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'log_realtime' && !isExpr">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
+          <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl" [ngStyle]="{ borderRadius: '4px' }">
+            <ng-container *querySwitchGroup="let rule; let onChange = onChange">
+              <nz-radio-group
+                style="white-space: nowrap"
+                [(ngModel)]="rule.condition"
+                (ngModelChange)="onChange(rule.condition)"
+                nzButtonStyle="solid"
+                [required]="true"
+                [ngModelOptions]="{ standalone: true }"
+              >
+                <label nz-radio-button [nzValue]="'and'">AND</label>
+                <label nz-radio-button [nzValue]="'or'">OR</label>
+              </nz-radio-group>
+            </ng-container>
+            <ng-container *queryRulesetAddRuleButton="let rule; let addRule = addRule">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRule()">
+                <i nz-icon nzType="plus"></i>
+                {{ 'Rule' }}
+              </button>
+            </ng-container>
+            <ng-container *queryRulesetAddRulesetButton="let rule; let addRuleSet = addRuleSet">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRuleSet()">
+                <i nz-icon nzType="plus"></i>
+                {{ 'Ruleset' }}
+              </button>
+            </ng-container>
+            <ng-container *queryRulesetRemoveButton="let rule; let removeRuleSet = removeRuleSet">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button nzDanger (click)="removeRuleSet(rule)">
+                <i nz-icon nzType="minus"></i>
+              </button>
+            </ng-container>
+            <ng-container *queryRuleRemoveButton="let rule; let removeRule = removeRule">
+              <button style="flex-shrink: 0" nz-button nzDanger (click)="removeRule(rule)">
+                <i nz-icon nzType="minus"></i>
+              </button>
+            </ng-container>
+            <ng-container *queryField="let rule; let getFields = getFields; let onChange = onChange">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <nz-select
+                  [(ngModel)]="rule.field"
+                  (ngModelChange)="onLogFieldChange($event, rule, onChange)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [nzDropdownMatchSelectWidth]="false"
+                  [nzPlaceHolder]="'alert.setting.log.field.place-holder' | i18n"
+                  style="width: auto; min-width: 180px"
+                >
+                  <nz-option
+                    *ngFor="let field of getFields(rule.entity || '')"
+                    [nzValue]="field.value"
+                    [nzLabel]="field.name ? field.name : field.value"
+                    nzCustomContent
+                  >
+                    {{ field.name ? field.name : field.value }}
+                    <nz-tag [nzColor]="field.type === 0 ? 'success' : field.type === 1 ? 'processing' : 'orange'">
+                      {{
+                        field.type === 0
+                          ? ('alert.setting.number' | i18n)
+                          : field.type === 1
+                          ? ('alert.setting.string' | i18n)
+                          : field.type === 2
+                          ? ('alert.setting.object' | i18n)
+                          : field.type === 3
+                          ? ('alert.setting.time' | i18n)
+                          : ('alert.setting.object' | i18n)
+                      }}
+                    </nz-tag>
+                    <nz-tag *ngIf="field.unit">
+                      {{ field.unit }}
+                    </nz-tag>
+                  </nz-option>
+                </nz-select>
+
+                <!-- Object attribute input for log.attributes, log.resource, etc. -->
+                <div *ngIf="isObjectField(rule.field)" style="display: flex; align-items: center; gap: 4px">
+                  <span style="color: #666">.</span>
+                  <input
+                    nz-input
+                    [(ngModel)]="rule.objectAttribute"
+                    (ngModelChange)="onObjectAttributeChange($event, rule, onChange)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [placeholder]="'alert.setting.rule.object.attribute.placeholder' | i18n"
+                    style="width: 120px"
+                  />
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *queryOperator="let rule; let operators = operators; let onChange = onChange">
+              <nz-select
+                [(ngModel)]="rule.operator"
+                (ngModelChange)="onChange(rule)"
+                [ngModelOptions]="{ standalone: true }"
+                [nzShowArrow]="false"
+                [nzDropdownMatchSelectWidth]="false"
+                style="text-align: center; font-weight: bolder; width: auto"
+                [nzDropdownStyle]="{ 'text-align': 'center', 'font-weight': 'bolder', 'font-size': 'larger' }"
+                [nzPlaceHolder]="'alert.setting.rule.operator' | i18n"
+              >
+                <nz-option
+                  *ngFor="let operator of operators"
+                  [nzValue]="operator"
+                  [nzLabel]="getOperatorLabelByType(operator) | i18n"
+                ></nz-option>
+              </nz-select>
+            </ng-container>
+            <ng-container *queryInput="let rule; let field = field; let onChange = onChange; type: 'custom'">
+              <input
+                nz-input
+                [disabled]="rule.operator == 'exists' || rule.operator == '!exists'"
+                [type]="field.type === 0 ? 'number' : 'text'"
+                [(ngModel)]="rule.value"
+                (ngModelChange)="onChange($event)"
+                [ngModelOptions]="{ standalone: true }"
+                [placeholder]="
+                  rule.operator == 'exists' || rule.operator == '!exists'
+                    ? ''
+                    : field.type === 0
+                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
+                    : ('alert.setting.rule.string-value.place-holder' | i18n)
+                "
+                style="flex: 1"
+              />
+            </ng-container>
+          </ngx-query-builder>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'log_realtime'">
+        <nz-form-label [nzSpan]="7" nzFor="logPreviewExpr">
           {{ 'alert.setting.preview.expr' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12">
@@ -533,18 +737,29 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
-            <div *ngIf="define.type === 'metrics_realtime'" class="draggable-vars-container">
-              <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
-                <div class="key-value-block">
-                  <span class="var-key">{{ env.name }}</span>
-                  <span class="var-value">{{ env.description | i18n }}</span>
+            <div *ngIf="define.type === 'metrics_realtime' || define.type === 'log_realtime'" class="draggable-vars-container">
+              {{ define.type }}
+              <div *ngIf="define.type === 'metrics_realtime'">
+                <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
+                  <div class="key-value-block">
+                    <span class="var-key">{{ env.name }}</span>
+                    <span class="var-value">{{ env.description | i18n }}</span>
+                  </div>
+                </div>
+
+                <div *ngFor="let metric of currentMetrics" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, metric)">
+                  <div class="key-value-block">
+                    <span class="var-key">{{ '${' + metric.value + '}' }}</span>
+                    <span class="var-value">{{ metric.label }}</span>
+                  </div>
                 </div>
               </div>
-
-              <div *ngFor="let metric of currentMetrics" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, metric)">
-                <div class="key-value-block">
-                  <span class="var-key">{{ '${' + metric.value + '}' }}</span>
-                  <span class="var-value">{{ metric.label }}</span>
+              <div *ngIf="define.type === 'log_realtime'">
+                <div *ngFor="let field of logFields" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, field)">
+                  <div class="key-value-block">
+                    <span class="var-key">{{ '${' + field.value + '}' }}</span>
+                    <span class="var-value">{{ field.label }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -607,7 +822,6 @@
 </nz-modal>
 
 <!-- associate alert definition and monitoring pop-up box -->
-
 <nz-modal
   [(nzVisible)]="isConnectModalVisible"
   [nzTitle]="'alert.setting.connect' | i18n"
@@ -762,19 +976,24 @@
   [nzTitle]="'alert.setting.new' | i18n"
   (nzOnCancel)="onSelectTypeModalCancel()"
   [nzFooter]="null"
-  nzWidth="460px"
+  nzWidth="500px"
 >
   <div *nzModalContent>
     <div class="alert-type-options">
       <nz-card (click)="onSelectAlertType('metrics_realtime')" class="alert-type-card" [nzHoverable]="true">
         <i nz-icon nzType="thunderbolt" nzTheme="outline"></i>
-        <h3>{{ 'alert.setting.type.realtime' | i18n }}</h3>
-        <p>{{ 'alert.setting.type.realtime.desc' | i18n }}</p>
+        <h3>{{ 'alert.setting.type.metrics.realtime' | i18n }}</h3>
+        <p>{{ 'alert.setting.type.metrics.realtime.desc' | i18n }}</p>
       </nz-card>
       <nz-card (click)="onSelectAlertType('metrics_periodic')" class="alert-type-card" [nzHoverable]="true">
         <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
-        <h3>{{ 'alert.setting.type.periodic' | i18n }}</h3>
-        <p>{{ 'alert.setting.type.periodic.desc' | i18n }}</p>
+        <h3>{{ 'alert.setting.type.metrics.periodic' | i18n }}</h3>
+        <p>{{ 'alert.setting.type.metrics.periodic.desc' | i18n }}</p>
+      </nz-card>
+      <nz-card (click)="onSelectAlertType('log_realtime')" class="alert-type-card" [nzHoverable]="true">
+        <i nz-icon nzType="file-search" nzTheme="outline"></i>
+        <h3>{{ 'alert.setting.type.log.realtime' | i18n }}</h3>
+        <p>{{ 'alert.setting.type.log.realtime.desc' | i18n }}</p>
       </nz-card>
     </div>
   </div>
