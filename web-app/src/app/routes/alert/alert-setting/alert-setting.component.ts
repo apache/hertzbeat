@@ -59,7 +59,7 @@ export class AlertSettingComponent implements OnInit {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
     this.qbFormCtrl.valueChanges.subscribe(() => {
       this.userExpr = this.ruleset2expr(this.qbFormCtrl.value);
-      if (this.define.type === 'log_realtime') {
+      if (this.define.type === 'realtime_log') {
         this.updateLogFinalExpr();
       } else {
         this.updateFinalExpr();
@@ -161,7 +161,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   updateLogQbConfig() {
-    if (this.define.type === 'log_realtime') {
+    if (this.define.type === 'realtime_log') {
       let fields: any = {};
       this.logFields.forEach(item => {
         fields[item.value] = {
@@ -176,7 +176,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   updateLogFinalExpr(): void {
-    if (this.define.type === 'log_realtime') {
+    if (this.define.type === 'realtime_log') {
       this.define.expr = this.userExpr;
     }
   }
@@ -327,12 +327,12 @@ export class AlertSettingComponent implements OnInit {
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     this.selectedLabels = new Set<string>();
-    // Set default period for metrics_periodic alert
-    if (type === 'metrics_periodic') {
+    // Set default period for periodic_metrics alert
+    if (type === 'periodic_metrics') {
       this.define.period = 300;
     }
-    // Initialize log fields for log_realtime alert
-    if (type === 'log_realtime') {
+    // Initialize log fields for realtime_log alert
+    if (type === 'realtime_log') {
       this.updateLogQbConfig();
     }
     this.resetQbDataDefault();
@@ -572,15 +572,15 @@ export class AlertSettingComponent implements OnInit {
             if (this.define.labels && this.define.labels['severity']) {
               this.severity = this.define.labels['severity'];
             }
-            // Set default period for metrics_periodic alert if not set
-            if (this.define.type === 'metrics_periodic' && !this.define.period) {
+            // Set default period for periodic_metrics alert if not set
+            if (this.define.type === 'periodic_metrics' && !this.define.period) {
               this.define.period = 300;
             }
-            // Set default type as metrics_realtime if not set
+            // Set default type as realtime_metrics if not set
             if (!this.define.type) {
-              this.define.type = 'metrics_realtime';
+              this.define.type = 'realtime_metrics';
             }
-            if (this.define.type == 'metrics_realtime') {
+            if (this.define.type == 'realtime_metrics') {
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);
@@ -595,7 +595,7 @@ export class AlertSettingComponent implements OnInit {
                   this.tryParseThresholdExpr(this.userExpr);
                 }
               });
-            } else if (this.define.type == 'log_realtime') {
+            } else if (this.define.type == 'realtime_log') {
               // Initialize log fields and parse expression
               this.updateLogQbConfig();
               this.userExpr = this.define.expr || '';
@@ -635,7 +635,7 @@ export class AlertSettingComponent implements OnInit {
 
     // Get the effective field name (including object attributes for log fields)
     let effectiveField = rule.field;
-    if (this.define.type === 'log_realtime' && (rule as any).objectAttribute) {
+    if (this.define.type === 'realtime_log' && (rule as any).objectAttribute) {
       effectiveField = `${rule.field}.${(rule as any).objectAttribute}`;
     }
 
@@ -877,7 +877,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private parseLogFieldAndAttribute(fullField: string): { field: string; objectAttribute?: string } {
-    if (this.define.type !== 'log_realtime') {
+    if (this.define.type !== 'realtime_log') {
       return { field: fullField };
     }
 
@@ -1655,9 +1655,9 @@ export class AlertSettingComponent implements OnInit {
    * Get the edit tooltip title i18n key based on the data type.
    */
   getEditTooltipTitle(data: any): string {
-    if (data.type === 'metrics_realtime') {
+    if (data.type === 'realtime_metrics') {
       return 'alert.setting.edit.metrics.realtime';
-    } else if (data.type === 'log_realtime') {
+    } else if (data.type === 'realtime_log') {
       return 'alert.setting.edit.log.realtime';
     } else {
       return 'alert.setting.edit.metrics.periodic';
@@ -1670,21 +1670,21 @@ export class AlertSettingComponent implements OnInit {
    */
   getModalTitle(): string {
     if (this.isManageModalAdd) {
-      if (this.define.type === 'metrics_periodic') {
+      if (this.define.type === 'periodic_metrics') {
         return 'alert.setting.new.metrics.periodic';
-      } else if (this.define.type === 'log_periodic') {
+      } else if (this.define.type === 'periodic_log') {
         return 'alert.setting.new.log.periodic';
-      } else if (this.define.type === 'metrics_realtime') {
+      } else if (this.define.type === 'realtime_metrics') {
         return 'alert.setting.new.metrics.realtime';
       } else {
         return 'alert.setting.new.log.realtime';
       }
     } else {
-      if (this.define.type === 'metrics_periodic') {
+      if (this.define.type === 'periodic_metrics') {
         return 'alert.setting.edit.metrics.periodic';
-      } else if (this.define.type === 'log_periodic') {
+      } else if (this.define.type === 'periodic_log') {
         return 'alert.setting.edit.log.periodic';
-      } else if (this.define.type === 'metrics_realtime') {
+      } else if (this.define.type === 'realtime_metrics') {
         return 'alert.setting.edit.metrics.realtime';
       } else {
         return 'alert.setting.edit.log.realtime';

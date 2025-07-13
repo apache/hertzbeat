@@ -150,22 +150,22 @@ public interface CommonConstants {
     /**
      * metrics alert threshold type: realtime
      */
-    String METRICS_ALERT_THRESHOLD_TYPE_REALTIME = "metrics_realtime";
+    String METRICS_ALERT_THRESHOLD_TYPE_REALTIME = "realtime_metrics";
 
     /**
      * metrics alert threshold type: periodic
      */
-    String METRICS_ALERT_THRESHOLD_TYPE_PERIODIC = "metrics_periodic";
+    String METRICS_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_metrics";
 
     /**
      * log alert threshold type: realtime
      */
-    String LOG_ALERT_THRESHOLD_TYPE_REALTIME = "log_realtime";
+    String LOG_ALERT_THRESHOLD_TYPE_REALTIME = "realtime_log";
 
     /**
      * log alert threshold type: periodic
      */
-    String LOG_ALERT_THRESHOLD_TYPE_PERIODIC = "log_periodic";
+    String LOG_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_log";
 
     /**
      * Field parameter type: number

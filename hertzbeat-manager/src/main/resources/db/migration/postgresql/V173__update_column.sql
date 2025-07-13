@@ -19,14 +19,14 @@
 
 -- Update hzb_alert_define table type column to support log monitoring
 
--- Update type from 'realtime' to 'metrics_realtime'
+-- Update type from 'realtime' to 'realtime_metrics'
 UPDATE HZB_ALERT_DEFINE 
-SET type = 'metrics_realtime' 
+SET type = 'realtime_metrics' 
 WHERE type = 'realtime';
 
--- Update type from 'periodic' to 'metrics_periodic'
+-- Update type from 'periodic' to 'periodic_metrics'
 UPDATE HZB_ALERT_DEFINE 
-SET type = 'metrics_periodic' 
+SET type = 'periodic_metrics' 
 WHERE type = 'periodic';
 
 commit;

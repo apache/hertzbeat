@@ -65,7 +65,7 @@ public class AlertDefine {
     @NotNull
     private String name;
 
-    @Schema(title = "Rule Type: metrics_realtime, metrics_periodic, log_realtime, log_periodic", example = "metrics_realtime")
+    @Schema(title = "Rule Type: realtime_metrics, periodic_metrics, realtime_log, periodic_log", example = "realtime_metrics")
     private String type;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
