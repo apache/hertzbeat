@@ -23,15 +23,14 @@ name:
   en-US: GreptimeDB
   ja-JP: GreptimeDB
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对 GreptimeDB 时序数据库进行监控。<br><span class='help_module_span'><a class='help_module_content' https://docs.greptime.com/user-guide/operations/monitoring'>点击查看开启步骤</a>。</span>
   en-US: HertzBeat monitors the GreptimeDB time series database. <br><span class='help_module_span'><a class='help_module_content' https://docs.greptime.com/user-guide/operations/monitoring'>Click to view the activation steps</a>. </span>
   zh-TW: HertzBeat 對 GreptimeDB 時序資料庫進行監控。<br><span class='help_module_span'><a class='help_module_content' https://docs.greptime.com/user-guide/operations/monitoring'>點擊查看開啓步驟</a>。</span>
   ja-JP: HertzBeat は GreptimeDB 時系列データベースを監視します。<br><span class='help_module_span'><a class='help_module_content' https://docs.greptime.com/user-guide/operations/monitoring'>クリックしてガイドを見ます</a>。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/greptimedb
-  en-US: https://hertzbeat.com/docs/help/greptimedb
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/greptimedb
+  en-US: https://hertzbeat.apache.org/docs/help/greptimedb
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -366,7 +365,7 @@ metrics:
     i18n:
       zh-CN: greptime 服务 MySQL 连接数
       en-US: greptime_servers_mysql_connection_count
-      ja-JP: MySQLのコネクション数
+      ja-JP: MySQLの接続数
     priority: 10
     fields:
       - field: value
@@ -389,7 +388,7 @@ metrics:
     i18n:
       zh-CN: greptime 服务 Postgres 连接数
       en-US: greptime_servers_postgres_connection_count
-      ja-JP: Postgresのコネクション数
+      ja-JP: Postgresの接続数
     priority: 11
     fields:
       - field: value

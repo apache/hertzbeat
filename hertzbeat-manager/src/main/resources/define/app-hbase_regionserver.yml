@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 Hbase 数据库 RegionServer 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache Hbase RegionServer</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the RegionServer node monitoring indicators of the Hbase database. <br>You can click "<i>New Apache Hbase RegionServer</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 Hbase 數據庫 RegionServer 节點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache Hbase RegionServer</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は HbaseデータベースのRegionServerノードの一般的なメトリック監視します。<br>「<i>新規 Apache Hbase RegionServer</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は HbaseデータベースのRegionServerノードの一般的なメトリクスを監視します。<br>「<i>新規 Apache Hbase RegionServer</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hbase_regionserver/
@@ -530,7 +530,7 @@ metrics:
           i18n:
             zh-CN: 进程使用的非堆内存大小
             en-US: MemNonHeapUsedM
-            ja-JP: 使用済みのノンヒープメモリサイズ
+            ja-JP: 使用したノンヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemNonHeapCommittedM
           type: 0
@@ -538,7 +538,7 @@ metrics:
           i18n:
             zh-CN: 进程 commit 的非堆内存大小
             en-US: MemNonHeapCommittedM
-            ja-JP: コミットのノンヒープメモリサイズ
+            ja-JP: コミットされたノンヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemHeapUsedM
           type: 0
@@ -546,7 +546,7 @@ metrics:
           i18n:
             zh-CN: 进程使用的堆内存大小
             en-US: MemHeapUsedM
-            ja-JP: 使用済みのヒープメモリサイズ
+            ja-JP: 使用したヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemHeapCommittedM
           type: 0
@@ -554,7 +554,7 @@ metrics:
           i18n:
             zh-CN: 进程 commit 的堆内存大小
             en-US: MemHeapCommittedM
-            ja-JP: コミットのヒープメモリサイズ
+            ja-JP: コミットされたヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemHeapMaxM
           type: 0
@@ -562,7 +562,7 @@ metrics:
           i18n:
             zh-CN: 进程最大的堆内存大小
             en-US: MemHeapMaxM
-            ja-JP: 最大のヒープメモリサイズ
+            ja-JP: ヒープメモリサイズの最大値
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemMaxM
           type: 0
@@ -570,7 +570,7 @@ metrics:
           i18n:
             zh-CN: 进程最大内存大小
             en-US: MemMaxM
-            ja-JP: 最大のメモリサイズ
+            ja-JP: メモリサイズの最大値
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: GcCount
           type: 0

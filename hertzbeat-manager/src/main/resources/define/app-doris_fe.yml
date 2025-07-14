@@ -26,7 +26,7 @@ help:
   zh-CN: Hertzbeat 对 Doris 数据库FE的通用指标（doris_fe connection total、doris_fe edit log clean、doris_fe image、doris_fe rps等）进行测量监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseFE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Doris DatabaseFE through general performance metric such as doris_fe connection total, doris_fe edit log clean, doris_fe image and doris_fe rps. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseFE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 Doris 資料庫FE的通用名額（doris_fe connection total、doris_fe edit log clean、doris_fe image、doris_fe rps等）進行量測監控，支持版本為DORIS2.0.0。<br>您可以點擊“<i>新建Doris DatabaseFE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: Hertzbeat は DORIS 2.0.0のデータベースFEの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 Doris DatabaseFE</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は DORIS 2.0.0のデータベースFEの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Doris DatabaseFE</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/doris_fe/
   en-US: https://hertzbeat.apache.org/docs/help/doris_fe/
@@ -70,7 +70,7 @@ metrics:
     i18n:
       zh-CN: 连接总数
       en-US: Connection Total
-      ja-JP: コネクション数
+      ja-JP: 接続総数
     priority: 0
     fields:
       - field: value

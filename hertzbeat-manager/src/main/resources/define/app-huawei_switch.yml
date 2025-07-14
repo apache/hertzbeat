@@ -21,11 +21,13 @@ app: huawei_switch
 name:
   zh-CN: 华为通用交换机
   en-US: Huawei Switch
+  ja-JP: Huaweiスイッチングハブ
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 华为交换机 的通用指标(可用性，系统信息，端口流量等)进行采集监控。<br>您可以点击 “<i>新建 华为通用交换机</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring Huawei Switch general performance metrics. <br>You can click the "<i>New Huawei Switch</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 協議</a> 對 华为交換機 的通用指標(可用性，系統信息，端口流量等)進行采集監控。<br>您可以點擊 “<i>新建 华为通用交換機</i>” 並進行配置SNMP相關參數添加，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP プロトコルを介して</a> Huaweiスイッチングハブの一般的なメトリクスを監視します。<br>「<i>新規 Huaweiスイッチングハブ</i>」をクリックしてSNMPなどのパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/huawei_switch
   en-US: https://hertzbeat.apache.org/docs/help/huawei_switch
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: SNMP 版本
       en-US: SNMP Version
+      ja-JP: SNMPバージョン
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -79,6 +84,7 @@ params:
     name:
       zh-CN: SNMP 团体字
       en-US: SNMP Community
+      ja-JP: SNMPコミュニティ
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -98,6 +104,7 @@ params:
     name:
       zh-CN: SNMP username
       en-US: SNMP username
+      ja-JP: SNMPユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -116,6 +123,7 @@ params:
     name:
       zh-CN: SNMP contextName
       en-US: SNMP contextName
+      ja-JP: SNMPコンテキスト名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -134,6 +142,7 @@ params:
     name:
       zh-CN: SNMP authPassword
       en-US: SNMP authPassword
+      ja-JP: SNMP認証パスワード
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -152,6 +161,7 @@ params:
     name:
       zh-CN: authPassword 加密方式
       en-US: authPassword Encryption
+      ja-JP: 認証暗号
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -172,6 +182,7 @@ params:
     name:
       zh-CN: SNMP privPassphrase
       en-US: SNMP privPassphrase
+      ja-JP: SNMPパスワードフレーズ
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -190,6 +201,7 @@ params:
     name:
       zh-CN: privPassword 加密方式
       en-US: privPassword Encryption
+      ja-JP: パスワードの暗号
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -210,6 +222,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -227,6 +240,7 @@ metrics:
     i18n:
       zh-CN: 系统信息
       en-US: System Info
+      ja-JP: システム情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -238,32 +252,38 @@ metrics:
         i18n:
           zh-CN: 主机名称
           en-US: Host Name
+          ja-JP: ホスト名
       - field: descr
         type: 1
         i18n:
           zh-CN: 描述信息
           en-US: Description
+          ja-JP: 説明
       - field: uptime
         type: 1
         i18n:
           zh-CN: 运行时长
           en-US: Uptime
+          ja-JP: アップタイム
       - field: location
         type: 1
         i18n:
           zh-CN: 位置
           en-US: Location
+          ja-JP: 位置
       - field: contact
         type: 1
         i18n:
           zh-CN: 联系人
           en-US: Contact
+          ja-JP: 連絡先
       - field: responseTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: snmp
     # the config content when protocol is snmp
@@ -304,6 +324,7 @@ metrics:
     i18n:
       zh-CN: 接口详情
       en-US: Interfaces Detail
+      ja-JP: ネットワークカード詳細
     priority: 1
     fields:
       - field: index
@@ -311,66 +332,78 @@ metrics:
         i18n:
           zh-CN: 编号
           en-US: Index
+          ja-JP: 番号
       - field: descr
         type: 1
         label: true
         i18n:
           zh-CN: 接口名称
           en-US: Interface Name
+          ja-JP: ネットワークカード名
       - field: mtu
         type: 0
         unit: 'byte'
         i18n:
           zh-CN: MTU
           en-US: MTU
+          ja-JP: MTU
       - field: speed
         type: 0
         unit: 'MB/s'
         i18n:
           zh-CN: 接口速率
           en-US: Interface Speed
+          ja-JP: ネットワークカード速度
       - field: in_octets
         type: 0
         unit: 'MByte'
         i18n:
           zh-CN: 入流量
           en-US: In Octets
+          ja-JP: 受信されたバイト数
       - field: in_discards
         type: 0
         i18n:
           zh-CN: 入丢包数
           en-US: In Discards
+          ja-JP: 受信されたパケットのロス数
       - field: in_errors
         type: 0
         i18n:
           zh-CN: 入错包数
           en-US: In Errors
+          ja-JP: 受信異常パケット数
       - field: out_octets
         type: 0
         unit: 'MByte'
         i18n:
           zh-CN: 出流量
           en-US: Out Octets
+          ja-JP: 転送されたバイト数
       - field: out_discards
         type: 0
         i18n:
           zh-CN: 出丢包数
           en-US: Out Discards
+          ja-JP: 転送されたパケットのロス数
       - field: out_errors
         type: 0
         i18n:
           zh-CN: 出错包数
           en-US: Out Errors
+          ja-JP: 転送異常パケット数
       - field: admin_status
         type: 1
         i18n:
           zh-CN: 配置状态
           en-US: Config Status
+          ja-JP: 設定ステータス
       - field: oper_status
         type: 1
         i18n:
           zh-CN: 当前状态
           en-US: Current Status
+          ja-JP: 現在のステータス
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - ifIndex

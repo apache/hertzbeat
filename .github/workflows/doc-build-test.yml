@@ -49,11 +49,9 @@ jobs:
       - name: Dead Link Check
         run: |
           sudo npm install -g markdown-link-check@3.8.7
-          for file in $(find ./home -name "*.md"); do
-            if ! grep -Fxq "$file" ./script/ci/exclude_files.txt; then
-              markdown-link-check -c ./script/ci/link_check.json -q "$file"
-            fi
-          done
+          find ./home -name "*.md" > all_md_files.txt
+          grep -vFf ./script/ci/exclude_files.txt all_md_files.txt > to_check.txt
+          xargs -P 8 -a to_check.txt -I{} markdown-link-check -c ./script/ci/link_check.json -q "{}"
 
       - name: NPM INSTALL
         working-directory: home

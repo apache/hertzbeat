@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 Hbase 数据库 Master 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache Hbase Master</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the Master node monitoring indicators of the Hbase database. <br>You can click "<i>New Apache Hbase Master</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 Hbase 數據庫 Master 节點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache Hbase Master</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は HbaseデータベースのMasterノードの一般的なメトリック監視します。<br>「<i>新規 Apache Hbase Master</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は HbaseデータベースのMasterノードの一般的なメトリクスを監視します。<br>「<i>新規 Apache Hbase Master</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hbase_master/
   en-US: https://hertzbeat.apache.org/docs/help/hbase_master/
@@ -92,7 +92,7 @@ metrics:
     i18n:
       zh-CN: Master服务信息
       en-US: Master Service Info
-      ja-JP: Masterサービス情報
+      ja-JP: マスターサービス情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -224,7 +224,7 @@ metrics:
         i18n:
           zh-CN: Master节点
           en-US: masterHostName
-          ja-JP: Masterホスト名
+          ja-JP: マスターホスト名
       - field: BalancerCluster_num_ops
         type: 0
         i18n:
@@ -243,14 +243,14 @@ metrics:
         i18n:
           zh-CN: 集群接收数据量(MB)
           en-US: receivedBytes
-          ja-JP: 受信バイト
+          ja-JP: 受信されたバイト
       - field: sentBytes
         type: 0
         unit: 'MB'
         i18n:
           zh-CN: 集群发送数据量(MB)
           en-US: sentBytes
-          ja-JP: 送信バイト
+          ja-JP: 転送されたバイト
       - field: clusterRequests
         type: 0
         i18n:

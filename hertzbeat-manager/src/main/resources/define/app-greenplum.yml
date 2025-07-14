@@ -27,7 +27,7 @@ help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 GreenPlum 数据库的通用性能指标 (basic、state、activity etc) 进行采集监控，支持版本为 GreenPlum 6.23.0+。<br>您可以点击“<i>新建 GreenPlum 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of GreenPlum database  (basic、state、activity etc). Supported version is GreenPlum 6.23.0+. <br>You can click "<i>New GreenPlum Database</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 GreenPlum 數據庫的通用性能指標 (basic、state、activity etc)進行采集監控，支持版本爲 GreenPlum 6.23.0+。<br>您可以點擊“<i>新建 GreenPlum 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBCプロトコルを介して</a> GreenPlum データベース（6.23.0+）の一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 GreenPlum データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBCプロトコルを介して</a> GreenPlum データベース（6.23.0+）の一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 GreenPlum データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/greenplum
   en-US: https://hertzbeat.apache.org/docs/help/greenplum
@@ -145,7 +145,7 @@ metrics:
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
-          ja-JP: 最大コネクション数
+          ja-JP: 最大接続数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jdbc
     # the config content when protocol is jdbc
@@ -221,7 +221,7 @@ metrics:
         i18n:
           zh-CN: 写入时间
           en-US: Write Time
-          ja-JP: 書き込まれタイム
+          ja-JP: 書き込まれ時間
       - field: stats_reset
         type: 1
         i18n:
@@ -300,7 +300,7 @@ metrics:
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
-          ja-JP: 最大コネクション数
+          ja-JP: 最大接続数
       - field: effective_cache_size
         type: 0
         unit: MB
@@ -332,7 +332,7 @@ metrics:
     i18n:
       zh-CN: 连接信息
       en-US: Connection Info
-      ja-JP: コネクション情報
+      ja-JP: 接続情報
     priority: 4
     fields:
       - field: active
@@ -340,7 +340,7 @@ metrics:
         i18n:
           zh-CN: 活动连接
           en-US: Active Connection
-          ja-JP: 活躍的なコネクション
+          ja-JP: 活躍的な接続
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -358,7 +358,7 @@ metrics:
     i18n:
       zh-CN: 连接状态
       en-US: Connection State
-      ja-JP: コネクションステート
+      ja-JP: 接続状態
     priority: 5
     fields:
       - field: state
@@ -391,7 +391,7 @@ metrics:
     i18n:
       zh-CN: 连接数据库
       en-US: Connection Db
-      ja-JP: コネクションデータベース
+      ja-JP: 接続データベース
     priority: 6
     fields:
       - field: db_name
@@ -406,7 +406,7 @@ metrics:
         i18n:
           zh-CN: 活动连接
           en-US: Active Connection
-          ja-JP: 活躍的なコネクション
+          ja-JP: 活躍的な接続
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -555,7 +555,7 @@ metrics:
     i18n:
       zh-CN: 慢查询
       en-US: Slow Sql
-      ja-JP: スロークエリ
+      ja-JP: スローSQL
     priority: 10
     fields:
       - field: sql_text
@@ -564,7 +564,7 @@ metrics:
         i18n:
           zh-CN: SQL语句
           en-US: SQL Text
-          ja-JP: SQL
+          ja-JP: SQL文のテキスト
       - field: calls
         type: 0
         i18n:

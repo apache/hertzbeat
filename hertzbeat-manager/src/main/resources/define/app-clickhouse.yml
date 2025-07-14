@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 ClickHouse 数据库监控通用指标进行测量监控。<br>您可以点击 “<i>新建 ClickHouse 数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the status codes which returned by the API. You could click the "<i>New ClickHouse Database</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 ClickHouse 資料庫監控通用名額進行量測監控。<br>您可以點擊 “<i>新建ClickHouse資料庫</i>” 並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: Hertzbeat は ClickHouse データベースの一般的なメトリック監視します。<br>「<i>新規 ClickHouse データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は ClickHouse データベースの一般的なメトリクスを監視します。<br>「<i>新規 ClickHouse データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/clickhouse
   en-US: https://hertzbeat.apache.org/docs/help/clickhouse
@@ -161,19 +161,19 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: metric
-          ja-JP: メトリック名
+          ja-JP: メトリクス名
       - field: value
         type: 0
         i18n:
           zh-CN: 指标值
           en-US: value
-          ja-JP: メトリック値
+          ja-JP: メトリクス値
       - field: description
         type: 1
         i18n:
           zh-CN: 说明
           en-US: description
-          ja-JP: メトリック説明
+          ja-JP: メトリクス説明
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -236,19 +236,19 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: metric
-          ja-JP: メトリック名
+          ja-JP: メトリクス名
       - field: value
         type: 0
         i18n:
           zh-CN: 指标值
           en-US: value
-          ja-JP: メトリック値
+          ja-JP: メトリクス値
       - field: description
         type: 1
         i18n:
           zh-CN: 说明
           en-US: description
-          ja-JP: メトリック説明
+          ja-JP: メトリクス説明
     protocol: jdbc
     jdbc:
       host: ^_^host^_^

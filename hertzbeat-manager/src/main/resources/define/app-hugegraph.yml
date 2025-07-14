@@ -21,11 +21,13 @@ app: hugegraph
 name:
   zh-CN: HugeGraph
   en-US: HugeGraph
+  ja-JP: HugeGraph
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 HugeGraph 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache HugeGraph</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the HugeGraph metrics. <br>You can click "<i>New Apache HugeGraph</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 HugeGraph 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache HugeGraph</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は HugeGraphノードの一般的なメトリクスを監視します。<br>「<i>新規 Apache HugeGraph</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hugegraph
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +51,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +66,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL
     # When the type is boolean, the frontend will display a switch for it.
     type: boolean
     # required-true or false
@@ -72,6 +77,7 @@ params:
     name:
       zh-CN: Base Path
       en-US: Base Path
+      ja-JP: Base Path
     # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
     type: text
     # default value
@@ -94,336 +100,392 @@ metrics:
         i18n:
           zh-CN: edge-hugegraph-capacity
           en-US: edge-hugegraph-capacity
+          ja-JP: edge-hugegraph容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: edge-hugegraph-expire
         type: 0
         i18n:
           zh-CN: edge-hugegraph-expire
           en-US: edge-hugegraph-expire
+          ja-JP: edge-hugegraph期限切れ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: edge-hugegraph-hits
         type: 0
         i18n:
           zh-CN: edge-hugegraph-hits
           en-US: edge-hugegraph-hits
+          ja-JP: edge-hugegraphヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: edge-hugegraph-miss
         type: 0
         i18n:
           zh-CN: edge-hugegraph-miss
           en-US: edge-hugegraph-miss
+          ja-JP: edge-hugegraphミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: edge-hugegraph-size
         type: 0
         i18n:
           zh-CN: edge-hugegraph-size
           en-US: edge-hugegraph-size
+          ja-JP: edge-hugegraphサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: instances
         type: 0
         i18n:
           zh-CN: instances
           en-US: instances
+          ja-JP: instances
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-id-hugegraph-capacity
         type: 0
         i18n:
           zh-CN: schema-id-hugegraph-capacity
           en-US: schema-id-hugegraph-capacity
+          ja-JP: schema-id-hugegraph容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-id-hugegraph-expire
         type: 0
         i18n:
           zh-CN: schema-id-hugegraph-expire
           en-US: schema-id-hugegraph-expire
+          ja-JP: schema-id-hugegraph期限切れ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-id-hugegraph-hits
         type: 0
         i18n:
           zh-CN: schema-id-hugegraph-hits
           en-US: schema-id-hugegraph-hits
+          ja-JP: schema-id-hugegraphヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-id-hugegraph-miss
         type: 0
         i18n:
           zh-CN: schema-id-hugegraph-miss
           en-US: schema-id-hugegraph-miss
+          ja-JP: schema-id-hugegraphミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-id-hugegraph-size
         type: 0
         i18n:
           zh-CN: schema-id-hugegraph-size
           en-US: schema-id-hugegraph-size
+          ja-JP: schema-id-hugegraphサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-name-hugegraph-capacity
         type: 0
         i18n:
           zh-CN: schema-name-hugegraph-capacity
           en-US: schema-name-hugegraph-capacity
+          ja-JP: schema-name-hugegraph容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-name-hugegraph-expire
         type: 0
         i18n:
           zh-CN: schema-name-hugegraph-expire
           en-US: schema-name-hugegraph-expire
+          ja-JP: schema-name-hugegraph期限切れ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-name-hugegraph-hits
         type: 0
         i18n:
           zh-CN: schema-name-hugegraph-hits
           en-US: schema-name-hugegraph-hits
+          ja-JP: schema-name-hugegraphヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-name-hugegraph-miss
         type: 0
         i18n:
           zh-CN: schema-name-hugegraph-miss
           en-US: schema-name-hugegraph-miss
+          ja-JP: schema-name-hugegraphミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: schema-name-hugegraph-size
         type: 0
         i18n:
           zh-CN: schema-name-hugegraph-size
           en-US: schema-name-hugegraph-size
+          ja-JP: schema-name-hugegraphサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token-hugegraph-capacity
         type: 0
         i18n:
           zh-CN: token-hugegraph-capacity
           en-US: token-hugegraph-capacity
+          ja-JP: token-hugegraph容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token-hugegraph-expire
         type: 0
         i18n:
           zh-CN: token-hugegraph-expire
           en-US: token-hugegraph-expire
+          ja-JP: token-hugegraph期限切れ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token-hugegraph-hits
         type: 0
         i18n:
           zh-CN: token-hugegraph-hits
           en-US: token-hugegraph-hits
+          ja-JP: token-hugegraphヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token-hugegraph-miss
         type: 0
         i18n:
           zh-CN: token-hugegraph-miss
           en-US: token-hugegraph-miss
+          ja-JP: token-hugegraphミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token-hugegraph-size
         type: 0
         i18n:
           zh-CN: token-hugegraph-size
           en-US: token-hugegraph-size
+          ja-JP: token-hugegraphサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users-hugegraph-capacity
         type: 0
         i18n:
           zh-CN: users-hugegraph-capacity
           en-US: users-hugegraph-capacity
+          ja-JP: users-hugegraph容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users-hugegraph-expire
         type: 0
         i18n:
           zh-CN: users-hugegraph-expire
           en-US: users-hugegraph-expire
+          ja-JP: users-hugegraph期限切れ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users-hugegraph-hits
         type: 0
         i18n:
           zh-CN: users-hugegraph-hits
           en-US: users-hugegraph-hits
+          ja-JP: users-hugegraphヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users-hugegraph-miss
         type: 0
         i18n:
           zh-CN: users-hugegraph-miss
           en-US: users-hugegraph-miss
+          ja-JP: users-hugegraphミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users-hugegraph-size
         type: 0
         i18n:
           zh-CN: users-hugegraph-size
           en-US: users-hugegraph-size
+          ja-JP: users-hugegraphサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users_pwd-hugegraph-capacity
         type: 0
         i18n:
           zh-CN: users_pwd-hugegraph-capacity
           en-US: users_pwd-hugegraph-capacity
+          ja-JP: users_pwd-hugegraph容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users_pwd-hugegraph-expire
         type: 0
         i18n:
           zh-CN: users_pwd-hugegraph-expire
           en-US: users_pwd-hugegraph-expire
+          ja-JP: users_pwd-hugegraph期限切れ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users_pwd-hugegraph-hits
         type: 0
         i18n:
           zh-CN: users_pwd-hugegraph-hits
           en-US: users_pwd-hugegraph-hits
+          ja-JP: users_pwd-hugegraphヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users_pwd-hugegraph-miss
         type: 0
         i18n:
           zh-CN: users_pwd-hugegraph-miss
           en-US: users_pwd-hugegraph-miss
+          ja-JP: users_pwd-hugegraphミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: users_pwd-hugegraph-size
         type: 0
         i18n:
           zh-CN: users_pwd-hugegraph-size
           en-US: users_pwd-hugegraph-size
+          ja-JP: users_pwd-hugegraphサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: vertex-hugegraph-capacity
         type: 0
         i18n:
           zh-CN: vertex-hugegraph-capacity
           en-US: vertex-hugegraph-capacity
+          ja-JP: vertex-hugegraph容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: vertex-hugegraph-expire
         type: 0
         i18n:
           zh-CN: vertex-hugegraph-expire
           en-US: vertex-hugegraph-expire
+          ja-JP: vertex-hugegraph期限切れ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: vertex-hugegraph-hits
         type: 0
         i18n:
           zh-CN: vertex-hugegraph-hits
           en-US: vertex-hugegraph-hits
+          ja-JP: vertex-hugegraphヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: vertex-hugegraph-miss
         type: 0
         i18n:
           zh-CN: vertex-hugegraph-miss
           en-US: vertex-hugegraph-miss
+          ja-JP: vertex-hugegraphミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: vertex-hugegraph-size
         type: 0
         i18n:
           zh-CN: vertex-hugegraph-size
           en-US: vertex-hugegraph-size
+          ja-JP: vertex-hugegraphサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: batch-write-threads
         type: 0
         i18n:
           zh-CN: batch-write-threads
           en-US: batch-write-threads
+          ja-JP: 一括書き込みスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: max-write-threads
         type: 0
         i18n:
           zh-CN: max-write-threads
           en-US: max-write-threads
+          ja-JP: 最大書き込みスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: pending-tasks
         type: 0
         i18n:
           zh-CN: pending-tasks
           en-US: pending-tasks
+          ja-JP: ペンディングタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: workers
         type: 0
         i18n:
           zh-CN: workers
           en-US: workers
+          ja-JP: ワーカー数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: average-load-penalty
         type: 0
         i18n:
           zh-CN: average-load-penalty
           en-US: average-load-penalty
+          ja-JP: 平均負荷ペナルティ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: estimated-size
         type: 0
         i18n:
           zh-CN: estimated-size
           en-US: estimated-size
+          ja-JP: 推定サイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: eviction-count
         type: 0
         i18n:
           zh-CN: eviction-count
           en-US: eviction-count
+          ja-JP: 立ち退き数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: eviction-weight
         type: 0
         i18n:
           zh-CN: eviction-weight
           en-US: eviction-weight
+          ja-JP: 立ち退きウェイト
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: hit-count
         type: 0
         i18n:
           zh-CN: hit-count
           en-US: hit-count
+          ja-JP: ヒット数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: hit-rate
         type: 0
         i18n:
           zh-CN: hit-rate
           en-US: hit-rate
+          ja-JP: ヒット率
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: load-count
         type: 0
         i18n:
           zh-CN: load-count
           en-US: load-count
+          ja-JP: ロード数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: load-failure-count
         type: 0
         i18n:
           zh-CN: load-failure-count
           en-US: load-failure-count
+          ja-JP: ロード失敗数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: load-failure-rate
         type: 0
         i18n:
           zh-CN: load-failure-rate
           en-US: load-failure-rate
+          ja-JP: ロード失敗率
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: load-success-count
         type: 0
         i18n:
           zh-CN: load-success-count
           en-US: load-success-count
+          ja-JP: ロード成功数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: long-run-compilation-count
         type: 0
         i18n:
           zh-CN: long-run-compilation-count
           en-US: long-run-compilation-count
+          ja-JP: long-run-compilation-count
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: miss-count
         type: 0
         i18n:
           zh-CN: miss-count
           en-US: miss-count
+          ja-JP: ミス数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: miss-rate
         type: 0
         i18n:
           zh-CN: miss-rate
           en-US: miss-rate
+          ja-JP: ミス率
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: request-count
         type: 0
         i18n:
           zh-CN: request-count
           en-US: request-count
+          ja-JP: リクエスト数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: total-load-time
         type: 0
         i18n:
           zh-CN: total-load-time
           en-US: total-load-time
+          ja-JP: ロード時間合計
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: sessions
         type: 0
         i18n:
           zh-CN: sessions
           en-US: sessions
+          ja-JP: セッション
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.['org.apache.hugegraph.backend.cache.Cache.edge-hugegraph.capacity'].['value']
@@ -568,90 +630,105 @@ metrics:
         i18n:
           zh-CN: GET-SUCCESS_COUNTER
           en-US: GET-SUCCESS_COUNTER
+          ja-JP: GET成功カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: GET-TOTAL_COUNTER
         type: 0
         i18n:
           zh-CN: GET-TOTAL_COUNTER
           en-US: GET-TOTAL_COUNTER
+          ja-JP: GETカウンタ合計
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: favicon-ico-GET-FAILED_COUNTER
         type: 0
         i18n:
           zh-CN: favicon-ico-GET-FAILED_COUNTER
           en-US: favicon-ico-GET-FAILED_COUNTER
+          ja-JP: favicon-ico-GET失敗カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: favicon-ico-GET-TOTAL_COUNTER
         type: 0
         i18n:
           zh-CN: favicon-ico-GET-TOTAL_COUNTER
           en-US: favicon-ico-GET-TOTAL_COUNTER
+          ja-JP: favicon-ico-GETカウンタ合計
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: graphs-HEAD-FAILED_COUNTER
         type: 0
         i18n:
           zh-CN: graphs-HEAD-FAILED_COUNTER
           en-US: graphs-HEAD-FAILED_COUNTER
+          ja-JP: graphs-HEAD失敗カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: graphs-HEAD-SUCCESS_COUNTER
         type: 0
         i18n:
           zh-CN: graphs-HEAD-SUCCESS_COUNTER
           en-US: graphs-HEAD-SUCCESS_COUNTER
+          ja-JP: graphs-HEAD成功カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: graphs-HEAD-TOTAL_COUNTER
         type: 0
         i18n:
           zh-CN: graphs-HEAD-TOTAL_COUNTER
           en-US: graphs-HEAD-TOTAL_COUNTER
+          ja-JP: graphs-HEADカウンタ合計
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: graphs-hugegraph-graph-vertices-GET-SUCCESS_COUNTER
         type: 0
         i18n:
           zh-CN: graphs-hugegraph-graph-vertices-GET-SUCCESS_COUNTER
           en-US: graphs-hugegraph-graph-vertices-GET-SUCCESS_COUNTER
+          ja-JP: graphs-hugegraph-graph-vertices-GET成功カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: graphs-hugegraph-graph-vertices-GET-TOTAL_COUNTER
         type: 0
         i18n:
           zh-CN: graphs-hugegraph-graph-vertices-GET-TOTAL_COUNTER
           en-US: graphs-hugegraph-graph-vertices-GET-TOTAL_COUNTER
+          ja-JP: graphs-hugegraph-graph-vertices-GETカウンタ合計
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: metircs-GET-FAILED_COUNTER
         type: 0
         i18n:
           zh-CN: metircs-GET-FAILED_COUNTER
           en-US: metircs-GET-FAILED_COUNTER
+          ja-JP: metircs-GET失敗カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: metircs-GET-TOTAL_COUNTER
         type: 0
         i18n:
           zh-CN: metircs-GET-TOTAL_COUNTER
           en-US: metircs-GET-TOTAL_COUNTER
+          ja-JP: metircs-GETカウンタ合計
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: metrics-GET-SUCCESS_COUNTER
         type: 0
         i18n:
           zh-CN: metrics-GET-SUCCESS_COUNTER
           en-US: metrics-GET-SUCCESS_COUNTER
+          ja-JP: metircs-GET成功カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: metrics-GET-TOTAL_COUNTER
         type: 0
         i18n:
           zh-CN: metrics-GET-TOTAL_COUNTER
           en-US: metrics-GET-TOTAL_COUNTER
+          ja-JP: metircs-GETカウンタ合計
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: metrics-gauges-GET-SUCCESS_COUNTER
         type: 0
         i18n:
           zh-CN: metrics-gauges-GET-SUCCESS_COUNTER
           en-US: metrics-gauges-GET-SUCCESS_COUNTER
+          ja-JP: metrics-gauges-GET成功カウンタ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: metrics-gauges-GET-TOTAL_COUNTER
         type: 0
         i18n:
           zh-CN: metrics-gauges-GET-TOTAL_COUNTER
           en-US: metrics-gauges-GET-TOTAL_COUNTER
+          ja-JP: metrics-gauges-GETカウンタ合計
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.['//GET/SUCCESS_COUNTER'].['count']
@@ -705,126 +782,151 @@ metrics:
         i18n:
           zh-CN: mem
           en-US: mem
+          ja-JP: メモリ
       - field: mem_total
         type: 0
         i18n:
           zh-CN: mem_total
           en-US: mem_total
+          ja-JP: メモリ容量
       - field: mem_used
         type: 0
         i18n:
           zh-CN: mem_used
           en-US: mem_used
+          ja-JP: 使用したメモリ
       - field: mem_free
         type: 0
         i18n:
           zh-CN: mem_free
           en-US: mem_free
+          ja-JP: 利用可能なメモリ
       - field: mem_unit
         type: 1
         i18n:
           zh-CN: mem_unit
           en-US: mem_unit
+          ja-JP: メモリ単位
       - field: processors
         type: 0
         i18n:
-          zh-CN: processors
+          zh-CN: 处理器数
           en-US: processors
+          ja-JP: プロセッサ数
       - field: uptime
         type: 0
         i18n:
           zh-CN: uptime
           en-US: uptime
+          ja-JP: アップタイム
       - field: systemload_average
         type: 0
         i18n:
           zh-CN: systemload_average
           en-US: systemload_average
+          ja-JP: システムロードアベレージ
       - field: heap_committed
         type: 0
         i18n:
           zh-CN: heap_committed
           en-US: heap_committed
+          ja-JP: ヒープのコミットされたメモリ
       - field: heap_init
         type: 0
         i18n:
           zh-CN: heap_init
           en-US: heap_init
+          ja-JP: ヒープのイニシャルメモリ
       - field: heap_used
         type: 0
         i18n:
           zh-CN: heap_used
           en-US: heap_used
+          ja-JP: ヒープの使用したメモリ
       - field: heap_max
         type: 0
         i18n:
           zh-CN: heap_max
           en-US: heap_max
+          ja-JP: ヒープの最大メモリ
       - field: nonheap_committed
         type: 0
         i18n:
           zh-CN: nonheap_committed
           en-US: nonheap_committed
+          ja-JP: ノンヒープのコミットされたメモリ
       - field: nonheap_init
         type: 0
         i18n:
           zh-CN: nonheap_init
           en-US: nonheap_init
+          ja-JP: ノンヒープのイニシャルメモリ
       - field: nonheap_used
         type: 0
         i18n:
           zh-CN: nonheap_used
           en-US: nonheap_used
+          ja-JP: ノンヒープの使用したメモリ
       - field: nonheap_max
         type: 0
         i18n:
           zh-CN: nonheap_max
           en-US: nonheap_max
+          ja-JP: ノンヒープの最大メモリ
       - field: thread_peak
         type: 0
         i18n:
           zh-CN: thread_peak
           en-US: thread_peak
+          ja-JP: ピークスレッド数
       - field: thread_daemon
         type: 0
         i18n:
           zh-CN: thread_daemon
           en-US: thread_daemon
+          ja-JP: デーモンスレッド数
       - field: thread_total_started
         type: 0
         i18n:
           zh-CN: thread_total_started
           en-US: thread_total_started
+          ja-JP: スレッド開始数
       - field: thread_count
         type: 0
         i18n:
           zh-CN: thread_count
           en-US: thread_count
+          ja-JP: スレッド総数
       - field: garbage_collector_g1_young_generation_count
         type: 0
         i18n:
           zh-CN: garbage_collector_g1_young_generation_count
           en-US: garbage_collector_g1_young_generation_count
+          ja-JP: garbage_collector_g1若い領域GC回数
       - field: garbage_collector_g1_young_generation_time
         type: 0
         i18n:
           zh-CN: garbage_collector_g1_young_generation_time
           en-US: garbage_collector_g1_young_generation_time
+          ja-JP: garbage_collector_g1若い領域GC時間
       - field: garbage_collector_g1_old_generation_count
         type: 0
         i18n:
           zh-CN: garbage_collector_g1_old_generation_count
           en-US: garbage_collector_g1_old_generation_count
+          ja-JP: garbage_collector_g1古い領域GC回数
       - field: garbage_collector_g1_old_generation_time
         type: 0
         i18n:
           zh-CN: garbage_collector_g1_old_generation_time
           en-US: garbage_collector_g1_old_generation_time
+          ja-JP: garbage_collector_g1古い領域GC時間
       - field: garbage_collector_time_unit
         type: 1
         i18n:
           zh-CN: garbage_collector_time_unit
           en-US: garbage_collector_time_unit
+          ja-JP: garbage_collector時間単位
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.basic.mem

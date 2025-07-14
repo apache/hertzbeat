@@ -26,8 +26,8 @@ name:
 help:
   zh-CN: HertzBeat 对网站全部页面的 URL 路径、HTTP 状态码、响应时间及请求反馈进行监测。由于一个网站可能有多个不同服务提供的页面，系统将采集网站暴露的<a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>网站地图(SiteMap)</a>来监控全站。<span class='help_module_span'><br>⚠️注意：此功能需要您的网站支持 XML 和 TXT 格式的 SiteMap。</span>
   en-US: HertzBeat monitoring all pages of website by URL path, HTTP status code, response times and request feedback. Due to the possibility that a website may have multiple pages provided by different services, Hertzbeat will collect <a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>SiteMap</a> which exposed by the website to monitor the entire site. <span class='help_module_span'><br>⚠️Note:HertzBeat support SiteMap in XML or TXT format.</span>
-  zh-TW: HertzBeat對網站全部頁面的URL路徑、HTTP狀態碼、回應時間及請求迴響進行監測。 由於一個網站可能有多個不同服務提供的頁面，系統將採集網站暴露的<a class='help_ module_ content' href='https://en.wikipedia.org/wiki/Site_map'>網站地圖（SiteMap）</a>來監控全站。<span class='help_ module_ span'> <br>⚠️注意：此功能需要您的網站支持XML和TXT格式的SiteMap。</span>
-  ja-JP: HertzBeat はウェブサイトの全てのURL、HTTPステータスコード、応答時間などのメトリック監視します。ウェブサイトには、異なるサービスによって提供される複数のページが存在する可能性があるため、システムはウェブサイトによって公開される<a class='help_ module_ content' href='https://en.wikipedia.org/wiki/Site_map'>SiteMap</a>を収集して監視します。<span class='help_ module_ span'> <br>⚠️注意：この機能を使用するには、ウェブサイトがXMLおよびTXT形式のSiteMapをサポートしている必要があります。</span>
+  zh-TW: HertzBeat對網站全部頁面的URL路徑、HTTP狀態碼、回應時間及請求迴響進行監測。 由於一個網站可能有多個不同服務提供的頁面，系統將採集網站暴露的<a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>網站地圖（SiteMap）</a>來監控全站。<span class='help_module_span'> <br>⚠️注意：此功能需要您的網站支持XML和TXT格式的SiteMap。</span>
+  ja-JP: HertzBeat はウェブサイトの全てのURL、HTTPステータスコード、応答時間などのメトリクスを監視します。ウェブサイトには、異なるサービスによって提供される複数のページが存在する可能性があるため、システムはウェブサイトによって公開される<a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>SiteMap</a>を収集して監視します。<span class='help_module_span'> <br>⚠️注意：この機能を使用するには、ウェブサイトがXMLおよびTXT形式のSiteMapをサポートしている必要があります。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/guide/
   en-US: https://hertzbeat.apache.org/docs/help/guide/

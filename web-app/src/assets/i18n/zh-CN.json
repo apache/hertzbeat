@@ -469,6 +469,7 @@
   "common.name": "指标名",
   "common.new-time": "创建时间",
   "common.no": "否",
+  "common.preview.button": "预览",
   "common.notice": "提醒",
   "common.notify.apply-fail": "应用失败!",
   "common.notify.apply-success": "应用成功!",
@@ -702,9 +703,11 @@
   "monitor.edit.failed": "修改监控失败",
   "monitor.edit.success": "修改监控成功",
   "monitor.enable": "恢复监控",
-  "monitor.export": "导出监控",
+  "monitor.export": "导出所选",
+  "monitor.export-all": "导出全部",
   "monitor.export.switch-type": "请选择导出文件格式!",
-  "monitor.export.use-type": "以 {{type}} 文件格式导出监控",
+  "monitor.export.use-type": "以 {{type}} 文件格式导出所选监控",
+  "monitor.export-all.use-type": "以 {{type}} 文件格式导出全部监控",
   "monitor.grafana.enabled.label": "启用Grafana",
   "monitor.grafana.enabled.tip": "是否启用Grafana",
   "monitor.grafana.upload.label": "上传Grafana模板",
@@ -912,5 +915,6 @@
   "ai.bot.greeting": "你好！我是AI助手，有什么可以帮助你的吗？",
   "ai.bot.input.placeholder": "请输入问题...",
   "ai.bot.send": "发送",
-  "ai.bot.connect-fail": "抱歉，连接AI助手时出现问题，请稍后再试。"
+  "ai.bot.connect-fail": "抱歉，连接AI助手时出现问题，请稍后再试。",
+  "monitor.help": "监控管理页面，您可以在此查看指标数据并管理监控任务。正常服务的状态为"
 }

@@ -25,7 +25,7 @@ tags: [opensource, practice]
 #### Prerequisites, you already have IoTDB environment and HertzBeat environment
 
 - IoTDB [deployment and installation documentation](https://iotdb.apache.org/UserGuide/V0.13.x/QuickStart/QuickStart.html)
-- HertzBeat [deployment installation documentation](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [deployment installation documentation](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### 1. Enable the `metrics` function on the IoTDB side, which will provide interface data in the form of prometheus metrics
 
@@ -54,7 +54,7 @@ tags: [opensource, practice]
 2. Configure the parameters required for monitoring IoTDB
 
     Fill in the IoTDB **service IP** and **monitoring port** (default 9091) on the monitoring page, and finally click OK to add.
-    For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/iotdb/) <https://hertzbeat.com/docs/help> /iotdb/
+    For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.apache.org/docs/help/iotdb/) <https://hertzbeat.apache.org/docs/help> /iotdb/
 
     ![HertzBeat](/img/blog/monitor-iotdb-2.png)
 
@@ -96,7 +96,7 @@ tags: [opensource, practice]
 
     Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-   - Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
    - Configure the receiver parameters in HertzBeat as follows.
 
     【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】

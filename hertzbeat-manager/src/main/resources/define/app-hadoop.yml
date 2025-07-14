@@ -26,8 +26,8 @@ name:
 help:
   zh-CN: HertzBeat 使用<a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX 协议</a>对 Hadoop 的 JVM 虚拟机的通用性能指标（memory pool，限JDK8及以下的code cache、class loading、thread）进行采集监控。<br><span class='help_module_span'>⚠️注意：您需要在 Hadoop 应用开启 JMX 服务, <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>点击查看开启步骤</a>。</span>
   en-US: "HertzBeat monitors general performance metrics(memory pool, class loading, thread) of Hadoop VMware through <a class='help_module_content' href='https://zh.wikipedia.org/JMX'>JMX protocol</a>. <br><span class='help_module_span'>⚠️Note: You should enable the JMX service in Hadoop application, and the metric of code cache is only available to JDK8 and below.<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat使用<a class='help_ module_ content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX協定</a>對Hadoop的JVM虛擬機器的通用性能指標（memory pool，限JDK8及以下的code cache、class loading、thread）進行採集監控。<br><span class='help_ module_ span'> ⚠️ ️注意：您需要在Hadoop應用開啟JMX服務，<a class='help_ module_ content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>點擊查看開啟步驟</a>。</span>
-  ja-JP: HertzBeatは <a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMXプロトコルを介して</a> HadoopのJava仮想マシンの一般的なパフォーマンスのメトリックを監視します。<br><span class='help_module_span'> ⚠️注意：Hadoop で JMX サービスを有効にする必要があります。<a class='help_module_content' href=' https://hertzbeat.apache.org/zh-cn/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>クリックしてガイドを見ます</a>。</span>
+  zh-TW: HertzBeat使用<a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX協定</a>對Hadoop的JVM虛擬機器的通用性能指標（memory pool，限JDK8及以下的code cache、class loading、thread）進行採集監控。<br><span class='help_module_span'> ⚠️ ️注意：您需要在Hadoop應用開啟JMX服務，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>點擊查看開啟步驟</a>。</span>
+  ja-JP: HertzBeatは <a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMXプロトコルを介して</a> HadoopのJava仮想マシンの一般的なパフォーマンスのメトリクスを監視します。<br><span class='help_module_span'> ⚠️注意：Hadoop で JMX サービスを有効にする必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hadoop/
   en-US: https://hertzbeat.apache.org/docs/help/hadoop/
@@ -168,14 +168,14 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
-          ja-JP: 指標名
+          ja-JP: メトリクス名
       - field: committed
         type: 0
         unit: MB
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
-          ja-JP: コミットメモリ
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         unit: MB
@@ -196,7 +196,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used
-          ja-JP: 使用済みのメモリ
+          ja-JP: 使用したメモリ
     units:
       - committed=B->MB
       - init=B->MB
@@ -240,7 +240,7 @@ metrics:
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
-          ja-JP: コミットメモリ
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         i18n:
@@ -258,7 +258,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used
-          ja-JP: 使用済みのメモリ
+          ja-JP: 使用したメモリ
     aliasFields:
       - Usage->committed
       - Usage->init

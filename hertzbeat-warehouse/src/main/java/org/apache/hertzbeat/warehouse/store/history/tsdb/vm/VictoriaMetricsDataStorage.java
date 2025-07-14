@@ -100,10 +100,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private final VictoriaMetricsProperties victoriaMetricsProp;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
-
-    private boolean isBatchImportEnabled = false;
+    
     private HashedWheelTimer metricsFlushTimer = null;
     private MetricsFlushTask metricsFlushtask = null;
+    private final VictoriaMetricsProperties.InsertConfig insertConfig;
 
     public VictoriaMetricsDataStorage(VictoriaMetricsProperties victoriaMetricsProperties, RestTemplate restTemplate) {
         if (victoriaMetricsProperties == null) {
@@ -114,11 +114,9 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         victoriaMetricsProp = victoriaMetricsProperties;
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
-        metricsBufferQueue = new LinkedBlockingQueue<>(victoriaMetricsProperties.insert().bufferSize());
-        isBatchImportEnabled = victoriaMetricsProperties.insert().flushInterval() != 0 && victoriaMetricsProperties.insert().bufferSize() != 0;
-        if (isBatchImportEnabled){
-            initializeFlushTimer();
-        }
+        insertConfig = victoriaMetricsProperties.insert() == null ? new VictoriaMetricsProperties.InsertConfig(100, 3) : victoriaMetricsProperties.insert();
+        metricsBufferQueue = new LinkedBlockingQueue<>(insertConfig.bufferSize());
+        initializeFlushTimer();
     }
 
     private void initializeFlushTimer() {
@@ -244,10 +242,6 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             log.info("[warehouse victoria-metrics] flush metrics data {} is empty, ignore.", metricsData.getId());
             return;
         }
-        if (!isBatchImportEnabled){
-            doSaveData(contentList);
-            return;
-        }
         sendVictoriaMetrics(contentList);
     }
 
@@ -279,7 +273,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + EXPORT_PATH)
+            URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + EXPORT_PATH)
                     .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
                     .queryParam("end", "now")
@@ -374,7 +368,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -410,7 +404,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
             // max
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -445,7 +439,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 }
             }
             // min
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -480,7 +474,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 }
             }
             // avg
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -585,10 +579,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                     log.error("[Victoria Metrics] Failed to save metrics directly: {}", e.getMessage(), e);
                 }
             }
-            // Refresh in advance to avoid waiting
-            if (metricsBufferQueue.size() >= victoriaMetricsProp.insert().bufferSize() * 0.8) {
-                triggerImmediateFlush();
-            }
+        }
+        // Refresh in advance to avoid waiting
+        if (metricsBufferQueue.size() >= insertConfig.bufferSize() * 0.8) {
+            triggerImmediateFlush();
         }
     }
 
@@ -603,14 +597,14 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         @Override
         public void run(Timeout timeout) {
             try {
-                List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch = new ArrayList<>(victoriaMetricsProp.insert().bufferSize());
-                metricsBufferQueue.drainTo(batch, victoriaMetricsProp.insert().bufferSize());
+                List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch = new ArrayList<>(insertConfig.bufferSize());
+                metricsBufferQueue.drainTo(batch, insertConfig.bufferSize());
                 if (!batch.isEmpty()) {
                     doSaveData(batch);
                     log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
                 }
                 if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
-                    metricsFlushTimer.newTimeout(this, victoriaMetricsProp.insert().flushInterval(), TimeUnit.SECONDS);
+                    metricsFlushTimer.newTimeout(this, insertConfig.flushInterval(), TimeUnit.SECONDS);
                 }
             } catch (Exception e) {
                 log.error("[VictoriaMetrics] flush task error: {}", e.getMessage(), e);
