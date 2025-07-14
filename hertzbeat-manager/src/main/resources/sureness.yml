@@ -107,9 +107,6 @@ excludedResource:
   - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
-  # Prometheus endpoint
-  - /actuator/prometheus/**===get
-
 
 # account info config
 # eg: admin has role [admin,user], password is hertzbeat
