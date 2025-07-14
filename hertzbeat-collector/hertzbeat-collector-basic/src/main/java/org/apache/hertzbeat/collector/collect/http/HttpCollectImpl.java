@@ -68,6 +68,7 @@ import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
@@ -144,37 +145,46 @@ public class HttpCollectImpl extends AbstractCollect {
                 builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
-            /*
-             this could create large objects, potentially impacting JVM memory space significantly.
-             Option 1: Parse using InputStream, but this requires significant code changes;
-             Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
-             */
-            String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            if (!StringUtils.hasText(resp)) {
-                log.info("http response entity is empty, status: {}.", statusCode);
-            }
-            Long responseTime = System.currentTimeMillis() - startTime;
+
+            long responseTime = System.currentTimeMillis() - startTime;
             String parseType = metrics.getHttp().getParseType();
+            HttpEntity entity = response.getEntity();
+
             try {
-                switch (parseType) {
-                    case DispatchConstants.PARSE_JSON_PATH ->
-                            parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    case DispatchConstants.PARSE_PROM_QL ->
-                            parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                    case DispatchConstants.PARSE_PROMETHEUS ->
-                            parseResponseByPrometheusExporter(response.getEntity().getContent(), metrics.getAliasFields(), builder);
-                    case DispatchConstants.PARSE_XML_PATH ->
-                            parseResponseByXmlPath(resp, metrics, builder, responseTime);
-                    case DispatchConstants.PARSE_WEBSITE ->
-                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, statusCode);
-                    case DispatchConstants.PARSE_SITE_MAP ->
-                            parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
-                    case DispatchConstants.PARSE_HEADER ->
-                            parseResponseByHeader(builder, metrics.getAliasFields(), response);
-                    case DispatchConstants.PARSE_CONFIG ->
-                            parseResponseByConfig(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                    default ->
-                            parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
+                    if (entity != null) {
+                        parseResponseByPrometheusExporter(entity.getContent(), metrics.getAliasFields(), builder);
+                    }
+                } else if (DispatchConstants.PARSE_HEADER.equals(parseType)) {
+                    parseResponseByHeader(builder, metrics.getAliasFields(), response);
+                    // Consume entity to release connection
+                    EntityUtils.consumeQuietly(entity);
+                } else {
+                    /*
+                     this could create large objects, potentially impacting JVM memory space significantly.
+                     Option 1: Parse using InputStream, but this requires significant code changes;
+                     Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
+                     */
+                    String resp = entity == null ? "" : EntityUtils.toString(entity, StandardCharsets.UTF_8);
+                    if (!StringUtils.hasText(resp)) {
+                        log.info("http response entity is empty, status: {}.", statusCode);
+                    }
+                    switch (parseType) {
+                        case DispatchConstants.PARSE_JSON_PATH ->
+                                parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                        case DispatchConstants.PARSE_PROM_QL ->
+                                parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                        case DispatchConstants.PARSE_XML_PATH ->
+                                parseResponseByXmlPath(resp, metrics, builder, responseTime);
+                        case DispatchConstants.PARSE_WEBSITE ->
+                                parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, statusCode);
+                        case DispatchConstants.PARSE_SITE_MAP ->
+                                parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
+                        case DispatchConstants.PARSE_CONFIG ->
+                                parseResponseByConfig(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                        default ->
+                                parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                    }
                 }
             } catch (Exception e) {
                 log.info("parse error: {}.", e.getMessage(), e);
