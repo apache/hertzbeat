@@ -70,7 +70,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             logEntries.forEach(entry -> {
                 try {
                     commonDataQueue.sendLogEntry(entry);
-                    log.debug("Log entry sent to queue: {}", entry);
+                    log.info("Log entry sent to queue: {}", entry);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.error("Failed to send log entry to queue: {}", e.getMessage());

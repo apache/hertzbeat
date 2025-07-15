@@ -148,14 +148,14 @@ public interface CommonConstants {
     String ALERT_STATUS_PENDING = "pending";
 
     /**
-     * metrics alert threshold type: realtime
+     * metric alert threshold type: realtime
      */
-    String METRICS_ALERT_THRESHOLD_TYPE_REALTIME = "realtime_metrics";
+    String METRIC_ALERT_THRESHOLD_TYPE_REALTIME = "realtime_metric";
 
     /**
-     * metrics alert threshold type: periodic
+     * metric alert threshold type: periodic
      */
-    String METRICS_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_metrics";
+    String METRIC_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_metric";
 
     /**
      * log alert threshold type: realtime
@@ -238,9 +238,9 @@ public interface CommonConstants {
     String CACHE_ALERT_SILENCE = "alert_silence";
 
     /**
-     * cache key metrics alert define
+     * cache key metric alert define
      */
-    String METRICS_CACHE_ALERT_DEFINE = "metrics_alert_define";
+    String METRIC_CACHE_ALERT_DEFINE = "metric_alert_define";
 
     /**
      * cache key log alert define

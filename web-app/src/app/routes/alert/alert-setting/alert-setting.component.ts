@@ -130,6 +130,8 @@ export class AlertSettingComponent implements OnInit {
   ];
 
   isSelectTypeModalVisible = false;
+  dataType: string = 'metric'; // Default to metric
+  alertType: string = 'realtime'; // Default to realtime
 
   previewData: any[] = [];
   previewColumns: Array<{ title: string; key: string; width?: string }> = [];
@@ -321,24 +323,47 @@ export class AlertSettingComponent implements OnInit {
 
   onSelectAlertType(type: string) {
     this.isSelectTypeModalVisible = false;
+    this.alertType = type;
     this.define = new AlertDefine();
-    this.define.type = type;
     this.severity = '';
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     this.selectedLabels = new Set<string>();
-    // Set default period for periodic_metrics alert
-    if (type === 'periodic_metrics') {
+    // Set default period for periodic alert
+    if (type === 'periodic') {
       this.define.period = 300;
     }
-    // Initialize log fields for realtime_log alert
-    if (type === 'realtime_log') {
-      this.updateLogQbConfig();
-    }
+    this.updateAlertDefineType();
     this.resetQbDataDefault();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
+
+  }
+
+  onDataTypeChange() {
+    this.updateAlertDefineType();
+  }
+
+  private updateAlertDefineType() {
+    // Combine main type with data type
+    if (this.alertType === 'realtime' && this.dataType === 'metric') {
+      this.define.type = 'realtime_metric';
+    } else if (this.alertType === 'realtime' && this.dataType === 'log') {
+      this.define.type = 'realtime_log';
+      this.updateLogQbConfig();
+    } else if (this.alertType === 'periodic' && this.dataType === 'metric') {
+      this.define.type = 'periodic_metric';
+    } else if (this.alertType === 'periodic' && this.dataType === 'log') {
+      this.define.type = 'periodic_log';
+      this.updateLogQbConfig();
+    }
+    
+    // Reset form state when switching data source type
+    this.userExpr = '';
+    this.cascadeValues = [];
+    this.currentMetrics = [];
+    this.resetQbDataDefault();
   }
 
   onSelectTypeModalCancel() {
@@ -561,6 +586,7 @@ export class AlertSettingComponent implements OnInit {
         finalize(() => {
           getDefine$.unsubscribe();
           this.isLoadingEdit = -1;
+          this.extractDataTypeAndAlertType(this.define.type);
           this.isManageModalVisible = true;
           this.clearPreview();
         })
@@ -572,15 +598,15 @@ export class AlertSettingComponent implements OnInit {
             if (this.define.labels && this.define.labels['severity']) {
               this.severity = this.define.labels['severity'];
             }
-            // Set default period for periodic_metrics alert if not set
-            if (this.define.type === 'periodic_metrics' && !this.define.period) {
+            // Set default period for periodic_metric alert if not set
+            if (this.define.type === 'periodic_metric' && !this.define.period) {
               this.define.period = 300;
             }
-            // Set default type as realtime_metrics if not set
+            // Set default type as realtime_metric if not set
             if (!this.define.type) {
-              this.define.type = 'realtime_metrics';
+              this.define.type = 'realtime_metric';
             }
-            if (this.define.type == 'realtime_metrics') {
+            if (this.define.type == 'realtime_metric') {
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);
@@ -1655,12 +1681,10 @@ export class AlertSettingComponent implements OnInit {
    * Get the edit tooltip title i18n key based on the data type.
    */
   getEditTooltipTitle(data: any): string {
-    if (data.type === 'realtime_metrics') {
-      return 'alert.setting.edit.metrics.realtime';
-    } else if (data.type === 'realtime_log') {
-      return 'alert.setting.edit.log.realtime';
+    if (data.type === 'realtime') {
+      return 'alert.setting.edit.realtime';
     } else {
-      return 'alert.setting.edit.metrics.periodic';
+      return 'alert.setting.edit.periodic';
     }
   }
 
@@ -1668,27 +1692,23 @@ export class AlertSettingComponent implements OnInit {
    * Get the modal title i18n key based on the add/edit mode and data type.
    * Similar to a computed property in Vue.
    */
-  getModalTitle(): string {
+  get modalTitle(): string {
     if (this.isManageModalAdd) {
-      if (this.define.type === 'periodic_metrics') {
-        return 'alert.setting.new.metrics.periodic';
-      } else if (this.define.type === 'periodic_log') {
-        return 'alert.setting.new.log.periodic';
-      } else if (this.define.type === 'realtime_metrics') {
-        return 'alert.setting.new.metrics.realtime';
+      if (this.alertType === 'periodic') {
+        return 'alert.setting.new.periodic';
       } else {
-        return 'alert.setting.new.log.realtime';
+        return 'alert.setting.new.realtime';
       }
     } else {
-      if (this.define.type === 'periodic_metrics') {
-        return 'alert.setting.edit.metrics.periodic';
-      } else if (this.define.type === 'periodic_log') {
-        return 'alert.setting.edit.log.periodic';
-      } else if (this.define.type === 'realtime_metrics') {
-        return 'alert.setting.edit.metrics.realtime';
+      if (this.alertType === 'periodic') {
+        return 'alert.setting.edit.periodic';
       } else {
-        return 'alert.setting.edit.log.realtime';
+        return 'alert.setting.edit.realtime';
       }
     }
+  }
+  private extractDataTypeAndAlertType(type: string): void {
+    this.dataType = type.split('_')[1] || 'metric';
+    this.alertType = type.split('_')[0] || 'realtime';
   }
 }

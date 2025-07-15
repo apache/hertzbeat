@@ -30,14 +30,14 @@ BEGIN
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'HZB_ALERT_DEFINE';
     
     IF table_exists = 1 THEN
-        -- Update type from 'realtime' to 'realtime_metrics'
+        -- Update type from 'realtime' to 'realtime_metric'
         UPDATE HZB_ALERT_DEFINE 
-        SET type = 'realtime_metrics' 
+        SET type = 'realtime_metric' 
         WHERE type = 'realtime';
         
-        -- Update type from 'periodic' to 'periodic_metrics'
+        -- Update type from 'periodic' to 'periodic_metric'
         UPDATE HZB_ALERT_DEFINE 
-        SET type = 'periodic_metrics' 
+        SET type = 'periodic_metric' 
         WHERE type = 'periodic';
     END IF;
 END //

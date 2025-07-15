@@ -87,7 +87,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
         if (StringUtils.hasText(alertDefine.getExpr())) {
-            if (CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())
+            if (CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())
                     || CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
                 try {
                     JexlExpressionRunner.compile(alertDefine.getExpr());
@@ -218,7 +218,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     public List<AlertDefine> getMetricsRealTimeAlertDefines() {
         List<AlertDefine> alertDefines = CacheFactory.getMetricsAlertDefineCache();
         if (alertDefines == null) {
-            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_REALTIME);
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME);
             CacheFactory.setMetricsAlertDefineCache(alertDefines);
         }
         return alertDefines;
@@ -240,7 +240,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             return Collections.emptyList();
         }
         switch (type) {
-            case CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
                 return dataSourceService.calculate(datasource, expr);
             default:
                 log.error("Get define preview unsupported type: {}", type);
@@ -255,8 +255,8 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         }
         
         switch (type) {
-            case CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_REALTIME:
-            case CommonConstants.METRICS_ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME:
+            case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME:
             case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
                 // Valid type, proceed with query

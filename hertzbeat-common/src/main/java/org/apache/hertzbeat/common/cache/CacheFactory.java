@@ -87,7 +87,7 @@ public final class CacheFactory {
      */
     @SuppressWarnings("unchecked")
     public static List<AlertDefine> getMetricsAlertDefineCache() {
-        return (List<AlertDefine>) COMMON_CACHE.get(CommonConstants.METRICS_CACHE_ALERT_DEFINE);
+        return (List<AlertDefine>) COMMON_CACHE.get(CommonConstants.METRIC_CACHE_ALERT_DEFINE);
     }
 
     /**
@@ -95,14 +95,14 @@ public final class CacheFactory {
      * @param alertDefines alert defines
      */
     public static void setMetricsAlertDefineCache(List<AlertDefine> alertDefines) {
-        COMMON_CACHE.put(CommonConstants.METRICS_CACHE_ALERT_DEFINE, alertDefines);
+        COMMON_CACHE.put(CommonConstants.METRIC_CACHE_ALERT_DEFINE, alertDefines);
     }
     
     /**
      * clear metrics alert define cache
      */
     public static void clearMetricsAlertDefineCache() {
-        COMMON_CACHE.remove(CommonConstants.METRICS_CACHE_ALERT_DEFINE);
+        COMMON_CACHE.remove(CommonConstants.METRIC_CACHE_ALERT_DEFINE);
     }
 
     /**

@@ -41,7 +41,7 @@ import java.util.Map;
 @Slf4j
 public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<LogEntry> {
 
-    public static final String LOG_PREFIX = "LOG";
+    public static final String LOG_PREFIX = "log";
 
     @Autowired
     public LogRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
