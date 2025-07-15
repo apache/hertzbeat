@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.apache.hertzbeat.collector.metrics.HertzBeatMetricsCollector;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.collector.timer.WheelTimerTask;
@@ -33,8 +34,7 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.otel.service.MetricsService; // 新增
-import org.springframework.beans.factory.annotation.Autowired; // 新增
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -93,7 +93,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private final String collectorIdentity;
 
     @Autowired
-    private MetricsService metricsService; // 新增注入
+    private HertzBeatMetricsCollector metricsCollector;
 
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
                             TimerDispatch timerDispatch,
@@ -165,12 +165,12 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     }
                     WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
                     Job job = timerJob.getJob();
-                    // ========================> 超时埋点 <========================
-                    if (metricsService != null) {
+                    // timeout metrics
+                    if (metricsCollector != null) {
                         long duration = System.currentTimeMillis() - removedMetricsTime.getStartTime();
-                        metricsService.recordCollectMetrics(job, duration, "timeout");
+                        metricsCollector.recordCollectMetrics(job, duration, "timeout");
                     }
-                    // ========================> 埋点结束 <========================
+
                     CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                             .setId(job.getMonitorId())
                             .setTenantId(job.getTenantId())
@@ -223,13 +223,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             monitorKey = job.getId() + "-" + metrics.getName();
         }
         MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(monitorKey);
-        // ========================> 任务完成埋点 <========================
-        if (metricsTime != null && metricsService != null) {
+
+        // job completed metrics
+        if (metricsTime != null && metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
             String status = metricsData.getCode() == CollectRep.Code.SUCCESS ? "success" : "fail";
-            metricsService.recordCollectMetrics(job, duration, status);
+            metricsCollector.recordCollectMetrics(job, duration, status);
         }
-        // ========================> 埋点结束 <========================
         if (metrics.isHasSubTask()) {
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);
             if (isLastTask) {
@@ -349,14 +349,12 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
         MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
-        // ========================> Prometheus任务完成埋点 <========================
-        if (metricsTime != null && metricsService != null) {
+        if (metricsTime != null && metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
             // For a list, we consider it a success if at least one item is successful.
             boolean isSuccess = metricsDataList.stream().anyMatch(item -> item.getCode() == CollectRep.Code.SUCCESS);
-            metricsService.recordCollectMetrics(job, duration, isSuccess ? "success" : "fail");
+            metricsCollector.recordCollectMetrics(job, duration, isSuccess ? "success" : "fail");
         }
-        // ========================> 埋点结束 <========================
         if (job.isCyclic()) {
             // The collection and execution of all task of this job are completed.
             // The periodic task pushes the task to the time wheel again.
