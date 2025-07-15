@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
@@ -31,6 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -650,8 +653,16 @@ class MonitorServiceTest {
 
     @Test
     void getMonitors() {
-        doReturn(Page.empty()).when(monitorDao).findAll(any(Specification.class), any(PageRequest.class));
-        assertNotNull(monitorService.getMonitors(null, null, null, null, "gmtCreate", "desc", 1, 1, null));
+        when(monitorDao.findAll(any(Specification.class), any(PageRequest.class))).thenAnswer((invocation)->{
+            Specification<Monitor> spec = invocation.getArgument(0);
+            CriteriaBuilder cb = mock(CriteriaBuilder.class);
+            CriteriaQuery<?> query = mock(CriteriaQuery.class);
+            Root<Monitor> root = mock(Root.class);
+            spec.toPredicate(root, query, cb);
+            return Page.empty();
+        });
+        assertNotNull(monitorService.getMonitors(null, null, "9.111", null, "gmtCreate", "desc", 1, 1, null));
+        assertNotNull(monitorService.getMonitors(null, null, "9", null, "gmtCreate", "desc", 1, 1, null));
     }
 
     @Test
