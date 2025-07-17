@@ -62,13 +62,13 @@ import { CONSTANTS } from '../../../shared/constants';
         </div>
         <div style="margin-top: 10px; font-weight: bolder; font-size: medium;">
           <a [href]="'https://github.com/apache/hertzbeat/releases/tag/' + version" target="_blank">
-            Apache HertzBeat (incubating) {{ version }}
+            Apache HertzBeat {{ version }}
           </a>
         </div>
         <div style="margin-top: 10px; font-weight: normal; font-size: small;">
           Copyright &copy; {{ currentYear }}
           <nz-divider nzType="vertical"></nz-divider>
-          <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat (incubating)</a>
+          <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat</a>
         </div>
         <label
           style="margin-top: 16px;color:gray;font-size:13px"

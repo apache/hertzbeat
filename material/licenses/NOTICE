@@ -1,4 +1,4 @@
-Apache HertzBeat (incubating)
+Apache HertzBeat
 Copyright 2024-2025 The Apache Software Foundation
 
 This product includes software developed at
@@ -233,8 +233,8 @@ an open source universal data plane API, which can be obtained at:
   * LOCATION_IN_GRPC:
     * xds/third_party/udpa
 ========================================================================
-JJWT's `io.jsonwebtoken.io.Base64` implementation is based on [MigBase64](https://github.com/brsanthu/migbase64) with 
-continued modifications for Base64 URL support and additional test cases. The MigBase64 copyright and license notice 
+JJWT's `io.jsonwebtoken.io.Base64` implementation is based on [MigBase64](https://github.com/brsanthu/migbase64) with
+continued modifications for Base64 URL support and additional test cases. The MigBase64 copyright and license notice
 have been retained and are repeated here per that code's requirements:
 
 ```
@@ -564,7 +564,7 @@ the HTTP/2 HPACK algorithm written by Twitter. It can be obtained at:
     * license/LICENSE.hpack.txt (Apache License 2.0)
   * HOMEPAGE:
     * https://github.com/twitter/hpack
-    
+
 This product contains a modified version of 'HPACK', a Java implementation of
 the HTTP/2 HPACK algorithm written by Cory Benfield. It can be obtained at:
 
@@ -632,7 +632,7 @@ limitations under the License.
 -----------------------------------------------------------------------
 
 This product contains a modified portion of 'Catapult', an open source
-Trace Event viewer for Chome, Linux, and Android applications, which can 
+Trace Event viewer for Chome, Linux, and Android applications, which can
 be obtained at:
 
   * LICENSE:
@@ -1020,13 +1020,13 @@ LAMP/EPFL (https://lamp.epfl.ch/) and
 Lightbend, Inc. (https://www.lightbend.com/).
 ========================================================================
    Copyright (c) 2012-2022, The ATTOPARSER team (https://www.attoparser.org)
- 
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
- 
+
        https://www.apache.org/licenses/LICENSE-2.0
- 
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1059,13 +1059,13 @@ This product includes the software developed by third-party:
  * sbt-extras: https://github.com/paulp/sbt-extras  (BSD)  (LICENSE.sbt-extras.txt)
 ========================================================================
    Copyright (c) 2011-2022, The THYMELEAF team (http://www.thymeleaf.org)
- 
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
- 
+
        http://www.apache.org/licenses/LICENSE-2.0
- 
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1073,13 +1073,13 @@ This product includes the software developed by third-party:
    limitations under the License.
 ========================================================================
    Copyright (c) 2014-2017, The UNBESCAPE team (http://www.unbescape.org)
- 
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
- 
+
        http://www.apache.org/licenses/LICENSE-2.0
- 
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1093,12 +1093,12 @@ This product includes software developed by Apache
  PureJavaCrc32C from apache-hadoop-common http://hadoop.apache.org/
  (Apache 2.0 license)
 
-This library contains statically linked libstdc++. This inclusion is allowed by 
-"GCC Runtime Library Exception" 
+This library contains statically linked libstdc++. This inclusion is allowed by
+"GCC Runtime Library Exception"
 http://gcc.gnu.org/onlinedocs/libstdc++/manual/license.html
 
 == Contributors ==
-  * Tatu Saloranta  
+  * Tatu Saloranta
     * Providing benchmark suite
   * Alec Wysoker
     * Performance and memory usage improvement
@@ -1118,7 +1118,7 @@ Third-Party Notices and Licenses:
    Portions of this software were originally based on the following:
      - software copyright (c) 1999, IBM Corporation., http://www.ibm.com.
      - software copyright (c) 1999, Sun Microsystems., http://www.sun.com.
-     - voluntary contributions made by Paul Eng on behalf of the 
+     - voluntary contributions made by Paul Eng on behalf of the
        Apache Software Foundation that were originally developed at iClick, Inc.,
        software copyright (c) 1999.
 ========================================================================
@@ -1152,7 +1152,7 @@ The Apache Software Foundation (http://www.apache.org/).
    Portions of this software were originally based on the following:
      - software copyright (c) 1999, IBM Corporation., http://www.ibm.com.
      - software copyright (c) 1999, Sun Microsystems., http://www.sun.com.
-     - voluntary contributions made by Paul Eng on behalf of the 
+     - voluntary contributions made by Paul Eng on behalf of the
        Apache Software Foundation that were originally developed at iClick, Inc.,
        software copyright (c) 1999.
 ========================================================================
