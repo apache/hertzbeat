@@ -51,6 +51,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -81,6 +82,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
+    private static final String LOG_TABLE_NAME = "hertzbeat_logs";
 
     private GreptimeDB greptimeDb;
 
@@ -292,4 +294,61 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             this.greptimeDb = null;
         }
     }
+
+    @Override
+    public void saveLogData(LogEntry logEntry) {
+        if (!isServerAvailable()) {
+            return;
+        }
+
+        try {
+            // Create table schema
+            TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
+            tableSchemaBuilder.addTimestamp("time_unix_nano", DataType.TimestampNanosecond)
+                    .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
+                    .addField("severity_number", DataType.Int32)
+                    .addField("severity_text", DataType.String)
+                    .addField("body", DataType.Json)
+                    .addField("trace_id", DataType.String)
+                    .addField("span_id", DataType.String)
+                    .addField("trace_flags", DataType.Int32)
+                    .addField("attributes", DataType.Json)
+                    .addField("resource", DataType.Json)
+                    .addField("instrumentation_scope", DataType.Json)
+                    .addField("dropped_attributes_count", DataType.Int32);
+
+            Table table = Table.from(tableSchemaBuilder.build());
+
+            // Convert LogEntry to table row
+            Object[] values = new Object[] {
+                    logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
+                    logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
+                    logEntry.getSeverityNumber(),
+                    logEntry.getSeverityText(),
+                    JsonUtil.toJson(logEntry.getBody()),
+                    logEntry.getTraceId(),
+                    logEntry.getSpanId(),
+                    logEntry.getTraceFlags(),
+                    JsonUtil.toJson(logEntry.getAttributes()),
+                    JsonUtil.toJson(logEntry.getResource()),
+                    JsonUtil.toJson(logEntry.getInstrumentationScope()),
+                    logEntry.getDroppedAttributesCount()
+            };
+
+            table.addRow(values);
+
+            // Write to GreptimeDB
+            CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
+            Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
+
+            if (result.isOk()) {
+                log.debug("[warehouse greptime-log] Write successful");
+            } else {
+                log.warn("[warehouse greptime-log] Write failed: {}", result.getErr());
+            }
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] Error saving log entry", e);
+        }
+    }
+
 }

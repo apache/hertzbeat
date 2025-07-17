@@ -63,10 +63,12 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final ReentrantLock metricDataToStorageLock = new ReentrantLock();
     private final ReentrantLock serviceDiscoveryDataLock = new ReentrantLock();
     private final ReentrantLock logEntryLock = new ReentrantLock();
+    private final ReentrantLock logEntryToStorageLock = new ReentrantLock();
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
     private final LinkedBlockingQueue<LogEntry> logEntryQueue;
+    private final LinkedBlockingQueue<LogEntry> logEntryToStorageQueue;
     private final CommonProperties.KafkaProperties kafka;
     private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
     private KafkaProducer<Long, LogEntry> logEntryProducer;
@@ -85,6 +87,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         metricsDataToStorageQueue = new LinkedBlockingQueue<>();
         serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
         logEntryQueue = new LinkedBlockingQueue<>();
+        logEntryToStorageQueue = new LinkedBlockingQueue<>();
         initDataQueue();
     }
 
@@ -207,7 +210,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public void sendLogEntry(LogEntry logEntry) throws InterruptedException {
+    public void sendLogEntry(LogEntry logEntry) {
         if (logEntryProducer != null) {
             try {
                 ProducerRecord<Long, LogEntry> record = new ProducerRecord<>(kafka.getLogEntryDataTopic(), logEntry);
@@ -215,17 +218,39 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             } catch (Exception e) {
                 log.error("Failed to send LogEntry to Kafka: {}", e.getMessage());
                 // Fallback to memory queue if Kafka fails
-                logEntryQueue.put(logEntry);
+                logEntryQueue.offer(logEntry);
             }
         } else {
             log.warn("logEntryProducer is not enabled, using memory queue");
-            logEntryQueue.put(logEntry);
+            logEntryQueue.offer(logEntry);
         }
     }
 
     @Override
     public LogEntry pollLogEntry() throws InterruptedException {
         return genericPollDataFunction(logEntryQueue, logEntryConsumer, logEntryLock);
+    }
+
+    @Override
+    public void sendLogEntryToStorage(LogEntry logEntry) {
+        if (logEntryProducer != null) {
+            try {
+                ProducerRecord<Long, LogEntry> record = new ProducerRecord<>(kafka.getLogEntryDataTopic(), logEntry);
+                logEntryProducer.send(record);
+            } catch (Exception e) {
+                log.error("Failed to send LogEntry to storage via Kafka: {}", e.getMessage());
+                // Fallback to memory queue if Kafka fails
+                logEntryToStorageQueue.offer(logEntry);
+            }
+        } else {
+            log.warn("logEntryProducer is not enabled, using memory queue for storage");
+            logEntryToStorageQueue.offer(logEntry);
+        }
+    }
+
+    @Override
+    public LogEntry pollLogEntryToStorage() throws InterruptedException {
+        return genericPollDataFunction(logEntryToStorageQueue, logEntryConsumer, logEntryToStorageLock);
     }
 
     @Override

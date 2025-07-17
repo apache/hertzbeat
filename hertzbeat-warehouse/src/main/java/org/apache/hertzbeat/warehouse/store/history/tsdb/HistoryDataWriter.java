@@ -17,7 +17,11 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb;
 
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * history data writer
@@ -34,4 +38,33 @@ public interface HistoryDataWriter {
      * @param metricsData metrics data
      */
     void saveData(CollectRep.MetricsData metricsData);
+
+    /**
+     * default save log data
+     * @param logEntry log entry
+     */
+    default void saveLogData(LogEntry logEntry) {
+        throw new UnsupportedOperationException("save log data is not supported");
+    }
+
+
+    default List<LogEntry> queryLogs(Long startTime, Long endTime, Integer limit){
+        return null;
+    }
+
+    default List<LogEntry> queryLogsByResource(Map<String, Object> resource, Long startTime, Long endTime, Integer limit){
+        return null;
+    }
+
+    default List<LogEntry> queryLogsBySpanId(String spanId, Integer limit){
+        return null;
+    }
+
+    default List<LogEntry> queryLogsBySeverity(Integer severityNumber, Long startTime, Long endTime, Integer limit){
+        return null;
+    }
+
+    default List<LogEntry> queryLogsByTraceId(String traceId, Integer limit){
+        return null;
+    }
 }

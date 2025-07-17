@@ -75,7 +75,7 @@ public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<
 
     @Override
     protected void processDataAfterCalculation(LogEntry logEntry) {
-        // todo send log to storage
+        dataQueue.sendLogEntryToStorage(logEntry);
     }
 
     @Override

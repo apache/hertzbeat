@@ -90,12 +90,22 @@ public class NettyDataQueue implements CommonDataQueue {
     }
 
     @Override
-    public void sendLogEntry(LogEntry logEntry) throws InterruptedException {
+    public void sendLogEntry(LogEntry logEntry) {
 
     }
 
     @Override
     public LogEntry pollLogEntry() throws InterruptedException {
+        return null;
+    }
+
+    @Override
+    public void sendLogEntryToStorage(LogEntry logEntry) {
+
+    }
+
+    @Override
+    public LogEntry pollLogEntryToStorage() throws InterruptedException {
         return null;
     }
 }

@@ -69,7 +69,7 @@ public interface CommonDataQueue {
      * @param logEntry log entry data based on OpenTelemetry log data model
      * @throws InterruptedException when sending is interrupted
      */
-    void sendLogEntry(LogEntry logEntry) throws InterruptedException;
+    void sendLogEntry(LogEntry logEntry);
 
     /**
      * poll log entry from queue
@@ -77,4 +77,18 @@ public interface CommonDataQueue {
      * @throws InterruptedException when poll timeout
      */
     LogEntry pollLogEntry() throws InterruptedException;
+    
+    /**
+     * send log entry to storage queue
+     * @param logEntry log entry data based on OpenTelemetry log data model
+     * @throws InterruptedException when sending is interrupted
+     */
+    void sendLogEntryToStorage(LogEntry logEntry);
+
+    /**
+     * poll log entry from storage queue
+     * @return log entry data
+     * @throws InterruptedException when poll timeout
+     */
+    LogEntry pollLogEntryToStorage() throws InterruptedException;
 }

@@ -68,13 +68,8 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             log.debug("Successfully extracted {} log entries from OTLP payload {}", logEntries.size(), content);
             
             logEntries.forEach(entry -> {
-                try {
-                    commonDataQueue.sendLogEntry(entry);
-                    log.info("Log entry sent to queue: {}", entry);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    log.error("Failed to send log entry to queue: {}", e.getMessage());
-                }
+                commonDataQueue.sendLogEntry(entry);
+                log.info("Log entry sent to queue: {}", entry);
             });
             
         } catch (InvalidProtocolBufferException e) {

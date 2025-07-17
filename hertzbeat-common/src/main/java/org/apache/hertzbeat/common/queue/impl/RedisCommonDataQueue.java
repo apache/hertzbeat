@@ -54,6 +54,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final String metricsDataQueueNameForServiceDiscovery;
     private final String metricsDataQueueNameToAlerter;
     private final String logEntryQueueName;
+    private final String logEntryToStorageQueueName;
     private final CommonProperties.RedisProperties redisProperties;
 
     public RedisCommonDataQueue(CommonProperties properties) {
@@ -81,6 +82,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.metricsDataQueueNameForServiceDiscovery = redisProperties.getMetricsDataQueueNameForServiceDiscovery();
         this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
         this.logEntryQueueName = redisProperties.getLogEntryQueueName();
+        this.logEntryToStorageQueueName = redisProperties.getLogEntryQueueName() + "_storage";
     }
 
     @Override
@@ -141,12 +143,11 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public void sendLogEntry(LogEntry logEntry) throws InterruptedException {
+    public void sendLogEntry(LogEntry logEntry) {
         try {
             logEntrySyncCommands.lpush(logEntryQueueName, logEntry);
         } catch (Exception e) {
             log.error("Failed to send LogEntry to Redis: {}", e.getMessage());
-            throw new InterruptedException("Failed to send LogEntry to Redis");
         }
     }
 
@@ -157,6 +158,25 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         } catch (Exception e) {
             log.error("Failed to poll LogEntry from Redis: {}", e.getMessage());
             throw new InterruptedException("Failed to poll LogEntry from Redis");
+        }
+    }
+
+    @Override
+    public void sendLogEntryToStorage(LogEntry logEntry) {
+        try {
+            logEntrySyncCommands.lpush(logEntryToStorageQueueName, logEntry);
+        } catch (Exception e) {
+            log.error("Failed to send LogEntry to storage via Redis: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public LogEntry pollLogEntryToStorage() throws InterruptedException {
+        try {
+            return logEntrySyncCommands.rpop(logEntryToStorageQueueName);
+        } catch (Exception e) {
+            log.error("Failed to poll LogEntry from storage via Redis: {}", e.getMessage());
+            throw new InterruptedException("Failed to poll LogEntry from storage via Redis");
         }
     }
 
