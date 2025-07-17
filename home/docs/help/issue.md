@@ -21,6 +21,24 @@ sidebar_label: Common issues
    > When you install HertzBeat via DockerDocker root is enabled by default. No such problem.  
    > See <https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address>
 
+4. Configured Kubernetes monitoring, but the actual monitoring is not executing at the correct interval  
+   Please troubleshoot the issue by following these steps:
+
+   > 1. First, check HertzBeat's error logs. If you see the message 'desc: SQL statement too long, check maxSQLLength config',
+   > 2. You need to adjust the TDengine configuration file. Create a taos.cfg file on the server and modify # max length of an SQL : maxSQLLength 654800, then restart TDengine. Ensure the configuration file is properly mounted.
+   > 3. If TDengine fails to restart, adjust the configuration in the mounted data file. Refer to .../taosdata/dnode/dnodeEps.json and change dnodeFqdn to the Docker ID of the failed startup instance, then run docker restart tdengine.
+
+5. Configured HTTP API monitoring for business interface probing to ensure service availability. The API has token authentication, e.g., "Authorization: Bearer eyJhbGciOiJIUzI1....". After configuration, testing returns "StatusCode 401". The server receives the token as "Authorization: Bearer%20eyJhbGciOiJIUzI1....". HertzBeat escapes spaces to %20, but the server does not unescape it, causing authentication failure. It is recommended to make the escaping feature optional.
+
+6. What is the task limit for a single collector?
+
+   > Specific limit parameters:  
+   Core thread count: Math.max(2, Runtime.getRuntime().availableProcessors()) – at least 2 threads, or equal to the number of CPU cores.  
+   Maximum thread count: Runtime.getRuntime().availableProcessors() * 16 – 16 times the number of CPU cores.  
+   > The limit depends entirely on the server's CPU core count. For example, on an 8-core CPU server, a maximum of 8 × 16 = 128 collection tasks can be processed simultaneously. Exceeding this number triggers the error message. This is a dynamic configuration that adjusts automatically based on the hardware specifications of the runtime environment.  
+   > If the runtime exceeds the maximum thread count, an error will appear: "the worker pool is full, reject this metrics task, put in queue again".  
+   > In such cases, it is recommended to configure a new collector in public mode. HertzBeat will automatically distribute tasks to other collectors, avoiding errors due to the task limit of a single collector.
+
 ### Docker Deployment common issues
 
 1. **MYSQL, TDENGINE and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**
