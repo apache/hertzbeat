@@ -61,9 +61,7 @@ import { CONSTANTS } from '../../../shared/constants';
           {{ 'about.help' | i18n }}
         </div>
         <div style="margin-top: 10px; font-weight: bolder; font-size: medium;">
-          <a [href]="'https://github.com/apache/hertzbeat/releases/tag/' + version" target="_blank">
-            Apache HertzBeat {{ version }}
-          </a>
+          <a [href]="'https://github.com/apache/hertzbeat/releases/tag/' + version" target="_blank"> Apache HertzBeat {{ version }} </a>
         </div>
         <div style="margin-top: 10px; font-weight: normal; font-size: small;">
           Copyright &copy; {{ currentYear }}
