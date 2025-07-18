@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM openjdk:17-slim-buster
+FROM openjdk:21-slim-bullseye
 
 MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
 
