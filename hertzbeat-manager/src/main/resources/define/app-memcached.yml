@@ -21,19 +21,22 @@ app: memcached
 name:
   zh-CN: Memcached
   en-US: Memcached
+  ja-JP: Memcached
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 支持 Memcached 服务监控，通过(stats、stats settings、stats sizes)命令对(服务器进程ID、服务器已运行秒数、版本、当前线程数、item的大小、item的数量、当前存储占用的字节数)等指标进行监测。
   en-US: HertzBeat supports Memcached service monitoring by using commands such as stats, stats settings, and stats sizes to monitor indicators such as server process ID, server running seconds, version, current number of threads, item size, number of items, and current byte storage usage.
   zh-TW: HertzBeat支持Memcached服務監控，通過（stats、stats settings、stats sizes）命令對（服務器行程ID、服務器已運行秒數、版本、當前線程數、item的大小、item的數量、當前存儲佔用的位元組數）等名額進行監測。
+  ja-JP: HertzBeat は Memcached サービスの一般的なメトリクスを監視します。
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
   - field: host
     # name-param field display i18n name
     name:
-      zh-CN: Memcached服务的Host
-      en-US: Host of Memcached service
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -59,6 +63,7 @@ metrics:
     i18n:
       zh-CN: 系统信息
       en-US: Server Info
+      ja-JP: サーバー情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -70,89 +75,106 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: pid
         type: 1
         i18n:
           zh-CN: 服务器进程ID
-          en-US: Pid
+          en-US: PID
+          ja-JP: プロセスID
       - field: uptime
         type: 0
         unit: s
         i18n:
           zh-CN: 已运行秒数
           en-US: Uptime
+          ja-JP: アップタイム
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: curr_connections
         type: 0
         i18n:
           zh-CN: 当前连接数量
           en-US: Curr Connections
+          ja-JP: 現在接続数
       - field: auth_errors
         type: 0
         i18n:
           zh-CN: 认证失败数目
           en-US: Auth Errors
+          ja-JP: 認証失敗回数
       - field: threads
         type: 0
         i18n:
           zh-CN: 当前线程数
           en-US: Threads
+          ja-JP: 現在スレッド数
       - field: item_size
         type: 0
         unit: byte
         i18n:
           zh-CN: Item 大小
           en-US: Item Size
+          ja-JP: Itemサイズ
       - field: item_count
         type: 0
         i18n:
           zh-CN: Item 数量
           en-US: Item Count
+          ja-JP: Item数量
       - field: curr_items
         type: 0
         i18n:
           zh-CN: 当前存储的数据总数
           en-US: Curr Items
+          ja-JP: 現在のItem数
       - field: total_items
         type: 0
         i18n:
           zh-CN: 启动以来存储的数据总数
           en-US: Total Items
+          ja-JP: Item総数
       - field: bytes
         type: 0
         unit: byte
         i18n:
           zh-CN: 当前存储占用的字节数
           en-US: Bytes
+          ja-JP: バイト
       - field: cmd_get
         type: 0
         i18n:
           zh-CN: Get命令请求次数
           en-US: Cmd Get
+          ja-JP: Getコマンドの実行回数
       - field: cmd_set
         type: 0
         i18n:
           zh-CN: Set命令请求次数
           en-US: Cmd Set
+          ja-JP: Setコマンドの実行回数
       - field: cmd_flush
         type: 0
         i18n:
           zh-CN: Flush命令请求次数
           en-US: Cmd Flush
+          ja-JP: Flushコマンドの実行回数
       - field: get_misses
         type: 0
         i18n:
           zh-CN: Get命令未命中次数
           en-US: Get Misses
+          ja-JP: Getコマンドのミス回数
       - field: delete_misses
         type: 0
         i18n:
           zh-CN: Delete命令未命中次数
           en-US: Delete Misses
+          ja-JP: Deleteコマンドのミス回数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: memcached
     # Specific collection configuration when protocol is telnet protocol
