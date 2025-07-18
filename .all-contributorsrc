@@ -6,6 +6,7 @@
   "files": [
     "README.md",
     "README_CN.md",
+    "README_JP.md"
     "home/src/pages/team/index.jsx"
   ],
   "imageSize": 100,
@@ -2503,6 +2504,24 @@
       "contributions": [
         "code",
         "test"
+      ]
+    },
+    {
+      "login": "RainBondsongyg",
+      "name": "songyg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94501396?v=4",
+      "profile": "https://github.com/RainBondsongyg",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "lx1229",
+      "name": "Liuxin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44620005?v=4",
+      "profile": "https://github.com/lx1229",
+      "contributions": [
+        "code"
       ]
     }
   ],
