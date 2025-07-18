@@ -81,6 +81,7 @@ public class CollectorAlertHandler {
             firingAlert.setTriggerTimes(1);
             firingAlert.setEndAt(System.currentTimeMillis());
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+            firingAlert.setContent(this.bundle.getString("alerter.availability.collector.recover"));
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
     }
