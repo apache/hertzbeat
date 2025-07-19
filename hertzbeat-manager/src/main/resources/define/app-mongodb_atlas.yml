@@ -22,11 +22,13 @@ app: mongodb_atlas
 name:
   zh-CN: MongoDB Atlas 数据库
   en-US: MongoDB Atlas Database
+  ja-JP: MongoDB Atlas データベース
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 MongoDB Atlas 数据库的通用指标进行测量监控。<br>您可以点击 “<i>新建 MongoDB Atlas 数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors MongoDB Atlas general performance metrics. You could click the "<i>New MongoDB Atlas</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 MongoDB Atlas 數據庫的通用指標進行測量監控。<br>您可以點擊 “<i>新建 MongoDB Atlas 數據庫</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は MongoDB Atlas データベースの一般的なメトリクスを監視します。<br>「<i>新規 MongoDB Atlas データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/mongodb
   en-US: https://hertzbeat.apache.org/docs/help/mongodb
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -54,12 +58,14 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
   - field: database
     name:
       zh-CN: 数据库
       en-US: database
+      ja-JP: データベース
     type: text
     # when type is text, use limit to limit string length
     limit: 50
@@ -69,6 +75,7 @@ params:
     name:
       zh-CN: 认证数据库
       en-US: authenticationDatabase
+      ja-JP: 認証データベース
     type: text
     limit: 50
     required: true
@@ -78,6 +85,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -93,7 +101,8 @@ params:
     # name-param field display i18n name
     name:
       zh-CN: 集群模式
-      en-US: Cluster Model
+      en-US: Cluster Mode
+      ja-JP: クラスターモード
     # type-param field type(most mapping the html input type)
     type: text
 # can get status information and other config params of MongoDB by running Diagnostic Commands
@@ -112,6 +121,7 @@ metrics:
     i18n:
       zh-CN: 构建信息
       en-US: Build Info
+      ja-JP: ビルド情報
     # monitoring metrics list
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -120,26 +130,31 @@ metrics:
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: gitVersion
         type: 1
         i18n:
           zh-CN: git版本
           en-US: Git Version
+          ja-JP: Gitバージョン
       - field: sysInfo
         type: 1
         i18n:
           zh-CN: 系统信息
           en-US: Sys Info
+          ja-JP: システム情報
       - field: allocator
         type: 1
         i18n:
           zh-CN: 分配器
           en-US: Allocator
+          ja-JP: メモリ割り当て器
       - field: javascriptEngine
         type: 1
         i18n:
           zh-CN: JavaScript引擎
           en-US: JavaScript Engine
+          ja-JP: JavaScriptエンジン
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: mongodb
     # the config content when protocol is mongodb
@@ -169,37 +184,44 @@ metrics:
     i18n:
       zh-CN: 服务器文档
       en-US: Server Document
+      ja-JP: サーバードキュメント
     fields:
       - field: delete
         type: 0
         i18n:
           zh-CN: 已删除数
           en-US: delete
+          ja-JP: 削除回数
       - field: insert
         type: 0
         i18n:
           zh-CN: 已插入数
           en-US: insert
+          ja-JP: インサート回数
       - field: update
         type: 0
         i18n:
           zh-CN: 更新数
           en-US: update
+          ja-JP: 更新回数
       - field: query
         type: 0
         i18n:
           zh-CN: 查询数
           en-US: query
+          ja-JP: クエリ回数
       - field: getmore
         type: 0
         i18n:
           zh-CN: 光标中剩余文档的请求数
           en-US: getmore
+          ja-JP: getmore
       - field: command
         type: 0
         i18n:
           zh-CN: 执行命令操作的总数
           en-US: command
+          ja-JP: 実行されたコマンド数
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -217,22 +239,26 @@ metrics:
     i18n:
       zh-CN: 网络操作
       en-US: Network Operation
+      ja-JP: ネットワーク操作
     fields:
       - field: bytesIn
         type: 0
         i18n:
           zh-CN: 读取字节数
           en-US: Bytes In
+          ja-JP: 読み取りバイト数
       - field: bytesOut
         type: 0
         i18n:
           zh-CN: 写入字节数
           en-US: Bytes Out
+          ja-JP: 書き込みバイト数
       - field: numRequests
         type: 0
         i18n:
           zh-CN: 请求数
           en-US: Request Num
+          ja-JP: リクエスト数
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -250,22 +276,26 @@ metrics:
     i18n:
       zh-CN: 连接信息
       en-US: Connection Info
+      ja-JP: 接続情報
     fields:
       - field: current
         type: 0
         i18n:
           zh-CN: 当前正在进行连接数
           en-US: Current Connections
+          ja-JP: 現在接続数
       - field: available
         type: 0
         i18n:
           zh-CN: 可用连接数
           en-US: Available Connections
+          ja-JP: 利用可能な接続数
       - field: totalCreated
         type: 0
         i18n:
           zh-CN: 总创建连接数
           en-US: Total Created Connections
+          ja-JP: 作成された接続総数
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
@@ -283,56 +313,66 @@ metrics:
     i18n:
       zh-CN: 数据库统计
       en-US: Database Statistics
+      ja-JP: データベース統計
     fields:
       - field: db
         type: 1
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: collections
         type: 0
         i18n:
           zh-CN: 集合数
           en-US: Collections
+          ja-JP: コレクション数
       - field: views
         type: 0
         i18n:
           zh-CN: 视图数
           en-US: Views
+          ja-JP: ビュー数
       - field: objects
         type: 0
         i18n:
           zh-CN: 文档数
           en-US: Objects
+          ja-JP: ドキュメント数
       - field: avgObjSize
         type: 0
         unit: Bytes
         i18n:
           zh-CN: 文档平均大小
           en-US: Document Avg Size
+          ja-JP: ドキュメントの平均サイズ
       - field: dataSize
         type: 0
         unit: Bytes
         i18n:
           zh-CN: 文档大小
           en-US: Document Size
+          ja-JP: ドキュメントサイズ
       - field: storageSize
         type: 0
         unit: Bytes
         i18n:
           zh-CN: 使用存储空间大小
           en-US: Storage Size
+          ja-JP: ストレージサイズ
       - field: indexes
         type: 0
         i18n:
           zh-CN: 索引数
           en-US: Indexes
+          ja-JP: インデックス数
       - field: indexSize
         type: 0
         unit: Bytes
         i18n:
           zh-CN: 索引大小
           en-US: Index Size
+          ja-JP: インデックスサイズ
     protocol: mongodb
     mongodb:
       host: ^_^host^_^
