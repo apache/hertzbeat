@@ -46,9 +46,11 @@ export class SystemConfigComponent implements OnInit {
 
   loading = true;
   config!: SystemConfig;
+  timezones: Array<{ zoneId: string; offset: string; displayName: string }> = [];
 
   ngOnInit(): void {
     this.loadSystemConfig();
+    this.loadTimezones();
   }
 
   loadSystemConfig() {
@@ -72,6 +74,23 @@ export class SystemConfigComponent implements OnInit {
         console.error(error.msg);
         this.loading = false;
         configInit$.unsubscribe();
+      }
+    );
+  }
+
+  loadTimezones() {
+    this.configService.getTimezones().subscribe(
+      message => {
+        if (message.code === 0 && Array.isArray(message.data)) {
+          this.timezones = message.data;
+        } else {
+          this.timezones = [];
+        }
+        this.cdr.markForCheck();
+      },
+      error => {
+        this.timezones = [];
+        this.cdr.markForCheck();
       }
     );
   }
