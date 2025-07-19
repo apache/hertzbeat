@@ -22,65 +22,52 @@
     <div class="left">
       <form nz-form nzLayout="vertical" #f="ngForm" (submit)="onSaveSystemConfig()" se-container="1">
         <se [label]="'settings.system-config.locale' | i18n" [error]="'validation.required' | i18n">
-          <nz-select
-            [(ngModel)]="config.locale"
-            [ngModelOptions]="{ standalone: true }"
-            style="text-align: center; font-weight: bolder"
-            [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
-          >
-            <nz-option [nzValue]="'en_US'" [nzLabel]="'settings.system-config.locale.en_US' | i18n"></nz-option>
-            <nz-option [nzValue]="'zh_CN'" [nzLabel]="'settings.system-config.locale.zh_CN' | i18n"></nz-option>
-            <nz-option [nzValue]="'zh_TW'" [nzLabel]="'settings.system-config.locale.zh_TW' | i18n"></nz-option>
-            <nz-option [nzValue]="'ja_JP'" [nzLabel]="'settings.system-config.locale.ja-JP' | i18n"></nz-option>
-            <nz-option [nzValue]="'pt_BR'" [nzLabel]="'settings.system-config.locale.pt_BR' | i18n"></nz-option>
-          </nz-select>
+          <div style="width: 400px">
+            <nz-select
+              [(ngModel)]="config.locale"
+              [ngModelOptions]="{ standalone: true }"
+              style="text-align: center; font-weight: bolder"
+              [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
+            >
+              <nz-option [nzValue]="'en_US'" [nzLabel]="'settings.system-config.locale.en_US' | i18n"></nz-option>
+              <nz-option [nzValue]="'zh_CN'" [nzLabel]="'settings.system-config.locale.zh_CN' | i18n"></nz-option>
+              <nz-option [nzValue]="'zh_TW'" [nzLabel]="'settings.system-config.locale.zh_TW' | i18n"></nz-option>
+              <nz-option [nzValue]="'ja_JP'" [nzLabel]="'settings.system-config.locale.ja-JP' | i18n"></nz-option>
+              <nz-option [nzValue]="'pt_BR'" [nzLabel]="'settings.system-config.locale.pt_BR' | i18n"></nz-option>
+            </nz-select>
+          </div>
         </se>
         <se [label]="'settings.system-config.timezone' | i18n" [error]="'validation.required' | i18n">
-          <nz-select
-            [(ngModel)]="config.timeZoneId"
-            [ngModelOptions]="{ standalone: true }"
-            [nzDropdownMatchSelectWidth]="false"
-            style="text-align: center; font-weight: bolder"
-            [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
-          >
-            <nz-option [nzValue]="'Pacific/Pago_Pago'" [nzLabel]="'Pacific/Pago_Pago(UTC-11:00)'"></nz-option>
-            <nz-option [nzValue]="'Pacific/Tahiti'" [nzLabel]="'Pacific/Tahiti(UTC-10:00)'"></nz-option>
-            <nz-option [nzValue]="'Pacific/Gambier'" [nzLabel]="'Pacific/Gambier(UTC-09:00)'"></nz-option>
-            <nz-option [nzValue]="'America/Nome'" [nzLabel]="'America/Nome(UTC-08:00)'"></nz-option>
-            <nz-option [nzValue]="'America/Phoenix'" [nzLabel]="'America/Phoenix(UTC-07:00)'"></nz-option>
-            <nz-option [nzValue]="'America/Boise'" [nzLabel]="'America/Boise(UTC-06:00)'"></nz-option>
-            <nz-option [nzValue]="'America/Lima'" [nzLabel]="'America/Lima(UTC-05:00)'"></nz-option>
-            <nz-option [nzValue]="'America/Tortola'" [nzLabel]="'America/Tortola(UTC-04:00)'"></nz-option>
-            <nz-option [nzValue]="'America/Maceio'" [nzLabel]="'America/Maceio(UTC-03:00)'"></nz-option>
-            <nz-option [nzValue]="'America/Miquelon'" [nzLabel]="'America/Miquelon(UTC-02:00)'"></nz-option>
-            <nz-option [nzValue]="'Atlantic/Cape_Verde'" [nzLabel]="'Atlantic/Cape_Verde(UTC-01:00)'"></nz-option>
-            <nz-option [nzValue]="'Africa/Lome'" [nzLabel]="'Africa/Lome(UTC+00:00)'"></nz-option>
-            <nz-option [nzValue]="'Europe/Dublin'" [nzLabel]="'Europe/Dublin(UTC+01:00)'"></nz-option>
-            <nz-option [nzValue]="'Europe/Madrid'" [nzLabel]="'Europe/Madrid(UTC+02:00)'"></nz-option>
-            <nz-option [nzValue]="'Europe/Athens'" [nzLabel]="'Europe/Athens(UTC+03:00)'"></nz-option>
-            <nz-option [nzValue]="'Indian/Reunion'" [nzLabel]="'Indian/Reunion(UTC+04:00)'"></nz-option>
-            <nz-option [nzValue]="'Asia/Samarkand'" [nzLabel]="'Asia/Samarkand(UTC+05:00)'"></nz-option>
-            <nz-option [nzValue]="'Asia/Bishkek'" [nzLabel]="'Asia/Bishkek(UTC+06:00)'"></nz-option>
-            <nz-option [nzValue]="'Asia/Jakarta'" [nzLabel]="'Asia/Jakarta(UTC+07:00)'"></nz-option>
-            <nz-option [nzValue]="'Asia/Shanghai'" [nzLabel]="'Asia/Shanghai(UTC+08:00)'"></nz-option>
-            <nz-option [nzValue]="'Asia/Tokyo'" [nzLabel]="'Asia/Tokyo(UTC+09:00)'"></nz-option>
-            <nz-option [nzValue]="'Australia/Sydney'" [nzLabel]="'Australia/Sydney(UTC+10:00)'"></nz-option>
-            <nz-option [nzValue]="'Pacific/Noumea'" [nzLabel]="'Pacific/Noumea(UTC+12:00)'"></nz-option>
-            <nz-option [nzValue]="'Pacific/Apia'" [nzLabel]="'Pacific/Apia(UTC+13:00)'"></nz-option>
-            <nz-option [nzValue]="'Pacific/Kiritimati'" [nzLabel]="'Pacific/Kiritimati(UTC+14:00)'"></nz-option>
-          </nz-select>
+          <div style="width: 400px">
+            <nz-select
+              [(ngModel)]="config.timeZoneId"
+              [ngModelOptions]="{ standalone: true }"
+              [nzDropdownMatchSelectWidth]="false"
+              style="text-align: center; font-weight: bolder"
+              [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
+              nzShowSearch
+            >
+              <nz-option
+                *ngFor="let tz of timezones"
+                [nzValue]="tz.zoneId"
+                [nzLabel]="tz.zoneId + ' (' + tz.offset + ') ' + tz.displayName"
+              ></nz-option>
+            </nz-select>
+          </div>
         </se>
         <se [label]="'settings.system-config.theme' | i18n" [error]="'validation.required' | i18n">
-          <nz-select
-            [(ngModel)]="config.theme"
-            [ngModelOptions]="{ standalone: true }"
-            style="text-align: center; font-weight: bolder"
-            [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
-          >
-            <nz-option [nzValue]="'default'" [nzLabel]="'settings.system-config.theme.default' | i18n"></nz-option>
-            <nz-option [nzValue]="'dark'" [nzLabel]="'settings.system-config.theme.dark' | i18n"></nz-option>
-            <nz-option [nzValue]="'compact'" [nzLabel]="'settings.system-config.theme.compact' | i18n"></nz-option>
-          </nz-select>
+          <div style="width: 400px">
+            <nz-select
+              [(ngModel)]="config.theme"
+              [ngModelOptions]="{ standalone: true }"
+              style="text-align: center; font-weight: bolder"
+              [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
+            >
+              <nz-option [nzValue]="'default'" [nzLabel]="'settings.system-config.theme.default' | i18n"></nz-option>
+              <nz-option [nzValue]="'dark'" [nzLabel]="'settings.system-config.theme.dark' | i18n"></nz-option>
+              <nz-option [nzValue]="'compact'" [nzLabel]="'settings.system-config.theme.compact' | i18n"></nz-option>
+            </nz-select>
+          </div>
         </se>
         <se>
           <button nz-button nzType="primary" [disabled]="f.invalid">{{ 'settings.system-config.ok' | i18n }}</button>
