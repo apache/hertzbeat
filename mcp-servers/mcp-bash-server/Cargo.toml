@@ -1,0 +1,33 @@
+[package]
+name = "mcp-bash-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tracing-appender = "0.2"
+anyhow = "1.0.98"
+# rmcp = { path = "/home/yyx/rust-sdk-main/crates/rmcp", features = ["server", "transport-sse-server", "transport-io", "transport-streamable-http-server", "auth"] }
+rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["server", "transport-sse-server", "transport-io", "transport-streamable-http-server", "auth"]}
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+tokio-util = { version = "0.7.15", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = [
+    "env-filter",
+    "std",
+    "fmt",
+] }
+axum = { version = "0.8", features = ["macros"] }
+chrono = "0.4"
+tower-http = { version = "0.6", features = ["cors"] }
+askama = { version = "0.14"}
+rand = { version = "0.8", features = ["std"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+serde_urlencoded = "0.7"
+oauth2 = "5.0"
+toml = "0.8"
+
+[[bin]]
+name = "mcp-bash-server"
+path = "src/main.rs"
