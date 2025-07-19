@@ -147,6 +147,9 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+                Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                appDefine.setMetadata(metadata);
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream()
                         .map(param -> Configmap.builder()
