@@ -4,7 +4,7 @@ title: Use aaPanel Deploy HertzBeat
 sidebar_label: Install via aaPanel
 ---
 
-Apache HertzBeat (incubating) supports one-click deployment in the `Docker` application store of the aaPanel.
+Apache HertzBeat supports one-click deployment in the `Docker` application store of the aaPanel.
 
 ## Prerequisites
 

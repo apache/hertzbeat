@@ -8,7 +8,7 @@ sidebar_label: JsonPath解析方式
 
 注意⚠️ 响应数据为JSON格式
 
-**使用JsonPath脚本将响应数据解析成符合 Apache HertzBeat (incubating) 指定的数据结构规则的数据**
+**使用JsonPath脚本将响应数据解析成符合 Apache HertzBeat 指定的数据结构规则的数据**
 
 #### JsonPath操作符
 
