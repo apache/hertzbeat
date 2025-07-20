@@ -73,6 +73,7 @@ resourceRole:
 excludedResource:
   - /api/alerts/report/**===*
   - /api/alert/sse/**===*
+  - /api/log/sse/**===*
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get

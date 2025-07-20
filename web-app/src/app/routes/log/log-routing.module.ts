@@ -21,10 +21,12 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { LogIntegrationComponent } from './log-integration/log-integration.component';
+import { LogStreamComponent } from './log-stream/log-stream.component';
 
 const routes: Routes = [
   { path: '', component: LogIntegrationComponent },
-  { path: 'integration/:source', component: LogIntegrationComponent }
+  { path: 'integration/:source', component: LogIntegrationComponent },
+  { path: 'stream', component: LogStreamComponent }
 ];
 
 @NgModule({

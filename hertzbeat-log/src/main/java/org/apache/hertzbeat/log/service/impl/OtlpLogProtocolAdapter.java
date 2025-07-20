@@ -29,6 +29,7 @@ import io.opentelemetry.proto.logs.v1.ScopeLogs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.log.notice.LogSseManager;
 import org.apache.hertzbeat.log.service.LogProtocolAdapter;
 import org.springframework.stereotype.Service;
 
@@ -47,9 +48,11 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     private static final String PROTOCOL_NAME = "otlp";
 
     private final CommonDataQueue commonDataQueue;
+    private final LogSseManager logSseManager;
 
-    public OtlpLogProtocolAdapter(CommonDataQueue commonDataQueue) {
+    public OtlpLogProtocolAdapter(CommonDataQueue commonDataQueue, LogSseManager logSseManager) {
         this.commonDataQueue = commonDataQueue;
+        this.logSseManager = logSseManager;
     }
 
     @Override
@@ -69,6 +72,7 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             
             logEntries.forEach(entry -> {
                 commonDataQueue.sendLogEntry(entry);
+                logSseManager.broadcast(entry);
                 log.info("Log entry sent to queue: {}", entry);
             });
             

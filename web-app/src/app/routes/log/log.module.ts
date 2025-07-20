@@ -28,6 +28,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 
 import { LogIntegrationComponent } from './log-integration/log-integration.component';
 import { LogRoutingModule } from './log-routing.module';
+import { LogStreamComponent } from './log-stream/log-stream.component';
 
 const COMPONENTS: Array<Type<void>> = [];
 
@@ -41,7 +42,8 @@ const COMPONENTS: Array<Type<void>> = [];
     NzPaginationModule,
     NzEmptyModule,
     NzBreadCrumbModule,
-    LogIntegrationComponent
+    LogIntegrationComponent,
+    LogStreamComponent
   ],
   declarations: COMPONENTS
 })

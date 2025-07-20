@@ -147,6 +147,12 @@
           "i18n": "menu.log.integration",
           "icon": "anticon-api",
           "link": "/log/integration/otlp"
+        },
+        {
+          "text": "Stream",
+          "i18n": "menu.log.stream",
+          "icon": "anticon-api",
+          "link": "/log/stream"
         }
       ]
     },
