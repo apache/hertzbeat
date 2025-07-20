@@ -17,48 +17,30 @@
  * under the License.
  */
 
+import { CommonModule } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { SharedModule } from '@shared';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
+import { NzDividerComponent } from 'ng-zorro-antd/divider';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import { NzSwitchModule } from 'ng-zorro-antd/switch';
-import { NzAlertModule } from 'ng-zorro-antd/alert';
-import { NzEmptyModule } from 'ng-zorro-antd/empty';
-import { NzModalModule } from 'ng-zorro-antd/modal';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; 
-import { NzDividerComponent } from 'ng-zorro-antd/divider';
 
-// Define LogEntry interface based on backend structure
-interface LogEntry {
-  timeUnixNano?: number;
-  observedTimeUnixNano?: number;
-  severityNumber?: number;
-  severityText?: string;
-  body?: any;
-  attributes?: { [key: string]: any };
-  droppedAttributesCount?: number;
-  traceId?: string;
-  spanId?: string;
-  traceFlags?: number;
-  resource?: { [key: string]: any };
-  instrumentationScope?: {
-    name?: string;
-    version?: string;
-    attributes?: { [key: string]: any };
-  };
-}
+import { LogEntry } from '../../../pojo/LogEntry';
 
-interface ExtendedLogEntry extends LogEntry {
+interface ExtendedLogEntry {
+  original: LogEntry;
   isNew?: boolean;
   timestamp?: Date;
-  displayMessage?: string;
 }
 
 @Component({
@@ -101,9 +83,8 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   filterSpanId: string = '';
 
   // UI state
-  autoScroll: boolean = true;
   showFilters: boolean = true;
-  
+
   // Modal state
   isModalVisible: boolean = false;
   selectedLogEntry: ExtendedLogEntry | null = null;
@@ -117,8 +98,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   // ViewChild for log container
   @ViewChild('logContainer', { static: false }) logContainerRef!: ElementRef;
 
-  constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {
-  }
+  constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   ngOnInit(): void {
     this.connectToLogStream();
@@ -138,7 +118,6 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     this.connectToLogStream();
   }
 
-
   private connectToLogStream(): void {
     if (this.eventSource) {
       this.disconnectFromLogStream();
@@ -148,7 +127,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Build filter parameters
     const filterParams = this.buildFilterParams();
-    const url = '/api/log/sse/subscribe' + (filterParams ? '?' + filterParams : '');
+    const url = `/api/log/sse/subscribe${filterParams ? `?${filterParams}` : ''}`;
 
     try {
       this.eventSource = new EventSource(url);
@@ -219,10 +198,9 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private addLogEntry(logEntry: LogEntry): void {
     const extendedEntry: ExtendedLogEntry = {
-      ...logEntry,
+      original: logEntry,
       isNew: true,
-      timestamp: logEntry.timeUnixNano ? new Date(logEntry.timeUnixNano / 1000000) : new Date(),
-      displayMessage: this.extractDisplayMessage(logEntry)
+      timestamp: logEntry.timeUnixNano ? new Date(logEntry.timeUnixNano / 1000000) : new Date()
     };
 
     this.logEntries.unshift(extendedEntry);
@@ -249,13 +227,13 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   private setupScrollListener(): void {
     if (this.logContainerRef?.nativeElement) {
       const container = this.logContainerRef.nativeElement;
-      
+
       container.addEventListener('scroll', () => {
         // Debounce scroll events for better performance
         if (this.scrollDebounceTimeout) {
           clearTimeout(this.scrollDebounceTimeout);
         }
-        
+
         this.scrollDebounceTimeout = setTimeout(() => {
           this.handleScroll();
         }, 100);
@@ -277,10 +255,10 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const container = this.logContainerRef.nativeElement;
     const scrollTop = container.scrollTop;
-    
+
     // Check if user is near the top (within 20px for more precise detection)
     this.isNearBottom = scrollTop <= 20;
-    
+
     // If user scrolls away from top, mark as user scrolled
     if (!this.isNearBottom) {
       this.userScrolled = true;
@@ -308,23 +286,12 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const container = this.logContainerRef.nativeElement;
-    
+
     // Use smooth scroll for better UX
     container.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-  }
-
-  private extractDisplayMessage(logEntry: LogEntry): string {
-    if (logEntry.body) {
-      if (typeof logEntry.body === 'string') {
-        return logEntry.body;
-      } else {
-        return JSON.stringify(logEntry.body);
-      }
-    }
-    return 'No message content';
   }
 
   // Event handlers
@@ -374,7 +341,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!severityNumber) {
       return 'default';
     }
-    
+
     // Based on OpenTelemetry specification:
     // 1-4: TRACE, 5-8: DEBUG, 9-12: INFO, 13-16: WARN, 17-20: ERROR, 21-24: FATAL
     if (severityNumber >= 1 && severityNumber <= 4) {
@@ -410,11 +377,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   trackByLogEntry(index: number, logEntry: ExtendedLogEntry): any {
-    return logEntry.timeUnixNano || index;
-  }
-
-  getObjectKeys(obj: any): string[] {
-    return Object.keys(obj || {});
+    return logEntry.original.timeUnixNano || index;
   }
 
   // Modal methods
@@ -433,7 +396,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedLogEntry = null;
   }
 
-  getLogEntryJson(logEntry: ExtendedLogEntry): string {
+  getLogEntryJson(logEntry: LogEntry): string {
     return JSON.stringify(logEntry, null, 2);
   }
 }

@@ -338,7 +338,6 @@ export class AlertSettingComponent implements OnInit {
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
-
   }
 
   onDataTypeChange() {
@@ -358,7 +357,7 @@ export class AlertSettingComponent implements OnInit {
       this.define.type = 'periodic_log';
       this.updateLogQbConfig();
     }
-    
+
     // Reset form state when switching data source type
     this.userExpr = '';
     this.cascadeValues = [];

@@ -59,8 +59,8 @@ public class LogSseFilterCriteria {
         }
         
         // Check severity number match (if both are present)
-        if (severityNumber != null && log.getSeverityNumber() != null && 
-            !severityNumber.equals(log.getSeverityNumber())) {
+        if (severityNumber != null && log.getSeverityNumber() != null
+                && !severityNumber.equals(log.getSeverityNumber())) {
             return false;
         }
         

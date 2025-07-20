@@ -9,9 +9,8 @@ describe('LogStreamComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LogStreamComponent]
-    })
-    .compileComponents();
-    
+    }).compileComponents();
+
     fixture = TestBed.createComponent(LogStreamComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
