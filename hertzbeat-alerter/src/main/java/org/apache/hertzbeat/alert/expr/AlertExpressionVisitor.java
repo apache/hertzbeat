@@ -26,12 +26,13 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  * by {@link AlertExpressionParser}.
  *
  * @param <T> The return type of the visit operation. Use {@link Void} for
- * operations with no return type.
+ *            operations with no return type.
  */
 public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#expression}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -40,6 +41,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code AndExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -48,6 +50,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code ComparisonExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -56,6 +59,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code UnlessExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -64,6 +68,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code SqlExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -72,6 +77,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code SqlCallExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -80,6 +86,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code LiteralExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -88,6 +95,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code ParenExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -96,6 +104,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code PromqlCallExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -104,6 +113,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code PromqlExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -112,6 +122,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by the {@code OrExpr}
      * labeled alternative in {@link AlertExpressionParser#expr}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -119,6 +130,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#functionCall}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -126,6 +138,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#parameterList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -133,6 +146,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#parameter}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -140,6 +154,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#number}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -147,6 +162,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#string}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -154,6 +170,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#duration}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -161,6 +178,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#functionName}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -168,6 +186,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#selectSql}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -175,6 +194,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#selectFieldList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -182,6 +202,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#selectField}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -189,6 +210,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#groupByList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -196,6 +218,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#orderByList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -203,6 +226,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#orderByField}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -210,6 +234,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#limitClause}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -217,6 +242,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#relList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -224,6 +250,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#relation}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -231,6 +258,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#conditionList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -238,6 +266,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#compOp}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -245,6 +274,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#condition}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -252,6 +282,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#conditionUnit}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -259,6 +290,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#promql}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -266,6 +298,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#metricSelector}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -273,6 +306,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#labelMatcherList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -280,6 +314,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#labelMatcherItem}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -287,6 +322,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#labelMatcherOp}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -294,6 +330,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#labelList}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -301,6 +338,7 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#instantVectorOp}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -308,15 +346,9 @@ public interface AlertExpressionVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link AlertExpressionParser#aggregationOperator}.
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
     T visitAggregationOperator(AlertExpressionParser.AggregationOperatorContext ctx);
-
-    /**
-     * Visit a parse tree produced by {@link AlertExpressionParser#binaryOperator}.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    T visitBinaryOperator(AlertExpressionParser.BinaryOperatorContext ctx);
 }
