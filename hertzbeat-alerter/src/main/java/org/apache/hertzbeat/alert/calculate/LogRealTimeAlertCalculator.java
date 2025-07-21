@@ -101,15 +101,16 @@ public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<
             // here use the alert name as finger, not care the alert name may be changed
             // todo add more fingerprints
             commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
+            commonFingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
             commonFingerPrints.putAll(define.getLabels());
 
             try {
                 boolean match = execAlertExpression(commonContext, expr, false);
                 try {
                     if (match) {
-                        afterThresholdRuleMatch(currentTimeMilli, commonFingerPrints, commonContext, define, null);
+                        afterThresholdRuleMatch(define.getId(), currentTimeMilli, commonFingerPrints, commonContext, define, null);
                     } else {
-                        handleRecoveredAlert(commonFingerPrints);
+                        handleRecoveredAlert(define.getId(), commonFingerPrints);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

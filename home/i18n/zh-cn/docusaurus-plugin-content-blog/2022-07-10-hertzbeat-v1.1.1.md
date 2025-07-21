@@ -9,7 +9,7 @@ tags: [opensource]
 
 [HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn) 开源的一个支持网站，API，PING，端口，数据库，全站，操作系统，中间件等监控类型，支持阈值告警，告警通知 (邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。
 
-**官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
+**官网: [hertzbeat.com](https://hertzbeat.apache.org) | [tancloud.cn](https://tancloud.cn)**
 
 大家好，HertzBeat v1.1.1 发布啦！这个版本带来了自定义监控增强，采集指标数据可以作为变量赋值给下一个采集。修复了若干bug，提升整体稳定性。
 

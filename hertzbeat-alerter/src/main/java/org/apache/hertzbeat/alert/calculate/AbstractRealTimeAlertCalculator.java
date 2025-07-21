@@ -166,10 +166,11 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
     /**
      * Handle alert after threshold rule match
      */
-    protected void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
-                                         Map<String, Object> fieldValueMap, AlertDefine define, Map<String, String> annotations) {
+    protected void afterThresholdRuleMatch(long defineId, long currentTimeMilli, Map<String, String> fingerPrints,
+                                         Map<String, Object> fieldValueMap, AlertDefine define,
+                                         Map<String, String> annotations) {
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
-        SingleAlert existingAlert = alarmCacheManager.getPending(fingerprint);
+        SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
         fieldValueMap.putAll(define.getLabels());
         int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
         if (existingAlert == null) {
@@ -201,11 +202,11 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
             // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
                 newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                alarmCacheManager.putFiring(fingerprint, newAlert);
+                alarmCacheManager.putFiring(defineId, fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
             } else {
                 // Otherwise put into pending queue first
-                alarmCacheManager.putPending(fingerprint, newAlert);
+                alarmCacheManager.putPending(define.getId(), fingerprint, newAlert);
             }
         } else {
             // Update existing alert
@@ -215,9 +216,9 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
             // Check if required trigger times reached
             if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
                 // Reached trigger times threshold, change to firing status
-                alarmCacheManager.removePending(fingerprint);
+                alarmCacheManager.removePending(defineId, fingerprint);
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                alarmCacheManager.putFiring(fingerprint, existingAlert);
+                alarmCacheManager.putFiring(defineId, fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }
@@ -226,9 +227,9 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
     /**
      * Handle recovered alert
      */
-    protected void handleRecoveredAlert(Map<String, String> fingerprints) {
+    protected void handleRecoveredAlert(Long defineId, Map<String, String> fingerprints) {
         String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
-        SingleAlert firingAlert = alarmCacheManager.removeFiring(fingerprint);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(defineId, fingerprint);
         if (firingAlert != null) {
             // todo consider multi times to tig for resolved alert
             firingAlert.setTriggerTimes(1);
@@ -236,6 +237,6 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
-        alarmCacheManager.removePending(fingerprint);
+        alarmCacheManager.removePending(defineId, fingerprint);
     }
 } 

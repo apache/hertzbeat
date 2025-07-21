@@ -30,7 +30,7 @@ tags: [opensource, practice]
 #### 操作前提，您已拥有 DynamicTp 环境和 HertzBeat 环境
 
 - DynamicTp [集成接入文档](https://dynamictp.cn/guide/use/quick-start.html)
-- HertzBeat [部署安装文档](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [部署安装文档](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### 一. 在 DynamicTp 端暴露出`DynamicTp`指标接口 `/actuator/dynamic-tp`，它将提供 metrics 接口数据
 
@@ -89,7 +89,7 @@ tags: [opensource, practice]
 2. 配置监控 DynamicTp 所需参数
 
     在监控页面填写 DynamicTp **服务IP**，**监控端口**(默认8080)，最后点击确定添加即可。
-    其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/dynamic_tp/) <https://hertzbeat.com/docs/help/dynamic_tp/>
+    其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.apache.org/docs/help/dynamic_tp/) <https://hertzbeat.apache.org/docs/help/dynamic_tp/>
 
     ![HertzBeat](/img/blog/monitor-dynamic-tp-2.png)
 
@@ -138,7 +138,7 @@ tags: [opensource, practice]
 
     消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。
 
-   - 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
+   - 参照此[帮助文档](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
    - 在 HertzBeat 配置接收人参数如下。
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】

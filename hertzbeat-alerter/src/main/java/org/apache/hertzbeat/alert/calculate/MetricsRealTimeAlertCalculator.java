@@ -154,9 +154,11 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
             if (StringUtils.isBlank(expr)) {
                 continue;
             }
+            Long defineId = define.getId();
             Map<String, String> commonFingerPrints = new HashMap<>(8);
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
             // here use the alert name as finger, not care the alert name may be changed
+            commonFingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
             commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_NAME, instanceName);
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_HOST, instanceHost);
@@ -171,9 +173,9 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
                     try {
                         if (match) {
                             // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                            afterThresholdRuleMatch(currentTimeMilli, commonFingerPrints, fieldValueMap, define, annotations);
+                            afterThresholdRuleMatch(defineId, currentTimeMilli, commonFingerPrints, fieldValueMap, define, annotations);
                         } else {
-                            handleRecoveredAlert(commonFingerPrints);
+                            handleRecoveredAlert(defineId, commonFingerPrints);
                         }
                         // if this threshold pre compile success, ignore blew
                         continue;
@@ -225,9 +227,9 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
                     boolean match = execAlertExpression(fieldValueMap, expr, false);
                     try {
                         if (match) {
-                            afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define, annotations);
+                            afterThresholdRuleMatch(defineId, currentTimeMilli, fingerPrints, fieldValueMap, define, annotations);
                         } else {
-                            handleRecoveredAlert(fingerPrints);
+                            handleRecoveredAlert(defineId, fingerPrints);
                         }
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
