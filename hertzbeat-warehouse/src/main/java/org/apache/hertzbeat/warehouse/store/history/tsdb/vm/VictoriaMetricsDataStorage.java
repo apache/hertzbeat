@@ -639,8 +639,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream(payload.length());
                  GZIPOutputStream gzip = new GZIPOutputStream(bos)) {
                 gzip.write(payload.getBytes(StandardCharsets.UTF_8));
-                // gzip stream must be turned off to complete the compression
-                gzip.close();
+                // finishes writing compressed data before the gzip stream is closed.
+                gzip.finish();
                 compressedPayload = bos.toByteArray();
             }
 
