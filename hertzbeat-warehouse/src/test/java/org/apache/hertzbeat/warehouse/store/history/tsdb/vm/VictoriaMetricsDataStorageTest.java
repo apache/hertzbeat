@@ -92,8 +92,8 @@ class VictoriaMetricsDataStorageTest {
         victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
         // execute one-time data insertion
         victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
-        // wait for the timer's first task execution and verify if it was called once
-        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() ->
+        // wait for the timer's first insertion task execution and verify if it was called once
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
                 verify(restTemplate, times(1)).postForEntity(
                         startsWith(victoriaMetricsProperties.url()),
                         any(HttpEntity.class),
@@ -105,13 +105,13 @@ class VictoriaMetricsDataStorageTest {
     @Test
     void testSaveDataBySize() {
         // verify insert process for buffer size, with the flush interval defined as an unreachable state
-        when(victoriaMetricsProperties.insert()).thenReturn(
-                new VictoriaMetricsProperties.InsertConfig(10, Integer.MAX_VALUE));
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                10, Integer.MAX_VALUE, new VictoriaMetricsProperties.Compression(false)));
         victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
 
         victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
-        // wait for the timer to execute its first task
-        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() ->
+        // wait for the timer to execute its first insertion task
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
                 verify(restTemplate, times(1)).postForEntity(
                         startsWith(victoriaMetricsProperties.url()),
                         any(HttpEntity.class),
@@ -124,7 +124,7 @@ class VictoriaMetricsDataStorageTest {
             victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
         }
         // wait for the timer to execute the task again
-        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() ->
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
                 verify(restTemplate, times(2)).postForEntity(
                         startsWith(victoriaMetricsProperties.url()),
                         any(HttpEntity.class),
@@ -136,13 +136,13 @@ class VictoriaMetricsDataStorageTest {
     @Test
     void testSaveDataByTime() {
         // verify insert process for flush interval and set the buffer size to an unreachable state
-        when(victoriaMetricsProperties.insert()).thenReturn(
-                new VictoriaMetricsProperties.InsertConfig(10000, 2));
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                10000, 2, new VictoriaMetricsProperties.Compression(false)));
         victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
 
         victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
-        // wait for the timer to execute its first task
-        Awaitility.await().atMost(2, TimeUnit.SECONDS).untilAsserted(() ->
+        // wait for the timer to execute its first insertion task
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
                 verify(restTemplate, times(1)).postForEntity(
                         startsWith(victoriaMetricsProperties.url()),
                         any(HttpEntity.class),

@@ -115,7 +115,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         this.restTemplate = restTemplate;
         victoriaMetricsProp = victoriaMetricsProperties;
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
-        insertConfig = victoriaMetricsProperties.insert() == null ? new VictoriaMetricsProperties.InsertConfig(100, 3) : victoriaMetricsProperties.insert();
+        insertConfig = victoriaMetricsProperties.insert() == null ? new VictoriaMetricsProperties.InsertConfig(100, 3,
+                new VictoriaMetricsProperties.Compression(false)) : victoriaMetricsProperties.insert();
         metricsBufferQueue = new LinkedBlockingQueue<>(insertConfig.bufferSize());
         initializeFlushTimer();
     }
@@ -627,24 +628,29 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
-            headers.set(HttpHeaders.CONTENT_ENCODING, "gzip");
 
             StringBuilder stringBuilder = new StringBuilder();
             for (VictoriaMetricsContent content : contentList) {
                 stringBuilder.append(JsonUtil.toJson(content)).append("\n");
             }
             String payload = stringBuilder.toString();
-            // compress the payload using gzip
-            byte[] compressedPayload;
-            try (ByteArrayOutputStream bos = new ByteArrayOutputStream(payload.length());
-                 GZIPOutputStream gzip = new GZIPOutputStream(bos)) {
-                gzip.write(payload.getBytes(StandardCharsets.UTF_8));
-                // finishes writing compressed data before the gzip stream is closed.
-                gzip.finish();
-                compressedPayload = bos.toByteArray();
+
+            Object httpEntity;
+            if (insertConfig.compression().enabled()) {
+                // enable compression
+                headers.set(HttpHeaders.CONTENT_ENCODING, "gzip");
+                // compress the payload using gzip
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream(payload.length());
+                     GZIPOutputStream gzip = new GZIPOutputStream(bos)) {
+                    gzip.write(payload.getBytes(StandardCharsets.UTF_8));
+                    // finishes writing compressed data before the gzip stream is closed.
+                    gzip.finish();
+                    httpEntity = new HttpEntity<>(bos.toByteArray(), headers);
+                }
+            } else {
+                httpEntity = new HttpEntity<>(payload, headers);
             }
 
-            HttpEntity<byte[]> httpEntity = new HttpEntity<>(compressedPayload, headers);
             ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.url() + IMPORT_PATH,
                     httpEntity, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
