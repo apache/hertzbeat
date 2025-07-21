@@ -54,13 +54,13 @@ params:
     name:
       zh-CN: accessKey
       en-US: accessKey
-      ja-JP: accessKey
+      ja-JP: アクセスキー
     type: text
   - field: secretKey
     name:
       zh-CN: secretKey
       en-US: secretKey
-      ja-JP: secretKey
+      ja-JP: 秘密鍵
     type: text
 metrics:
   - name: cluster
@@ -74,7 +74,7 @@ metrics:
         i18n:
           zh-CN: BrokerId
           en-US: BrokerId
-          ja-JP: BrokerId
+          ja-JP: ブローカーId
         type: 1
       - field: Address
         i18n:
@@ -93,37 +93,37 @@ metrics:
         i18n:
           zh-CN: 生产消息TPS
           en-US: Producer_Message_TPS
-          ja-JP: プロデューサーメッセージTPS
+          ja-JP: プロデューサーの送信速度(TPS)
         type: 0
       - field: Consumer_Message_TPS
         i18n:
           zh-CN: 消费消息TPS
           en-US: Consumer_Message_TPS
-          ja-JP: コンシューマーメッセージTPS
+          ja-JP: コンシューマーの受信速度(TPS)
         type: 0
       - field: Yesterday_Produce_Count
         i18n:
           zh-CN: 昨天生产消息数
           en-US: Yesterday_Produce_Count
-          ja-JP: 昨日の生成メッセージ数
+          ja-JP: 昨日のプロデューサーの送信数
         type: 0
       - field: Yesterday_Consume_Count
         i18n:
           zh-CN: 昨天消费消息数
           en-US: Yesterday_Consume_Count
-          ja-JP: 昨日の消費メッセージ数
+          ja-JP: 昨日のコンシューマーの受信数
         type: 0
       - field: Today_Produce_Count
         i18n:
           zh-CN: 今天生产消息数
           en-US: Today_Produce_Count
-          ja-JP: 今日の生成メッセージ数
+          ja-JP: 今日のプロデューサーの送信数
         type: 0
       - field: Today_Consume_Count
         i18n:
           zh-CN: 今天消费消息数
           en-US: Today_Consume_Count
-          ja-JP: 今日の消費メッセージ数
+          ja-JP: 今日のコンシューマーの受信数
         type: 0
     aliasFields:
       - brokerId
@@ -190,7 +190,7 @@ metrics:
         i18n:
           zh-CN: 消费TPS
           en-US: Consume_tps
-          ja-JP: 消費TPS
+          ja-JP: 受信速度(TPS)
         type: 0
       - field: Delay
         i18n:
