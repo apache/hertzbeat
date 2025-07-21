@@ -21,13 +21,13 @@ app: zookeeper
 name:
   zh-CN: Zookeeper服务
   en-US: Zookeeper Server
-  ja-JP: Zookeeper サービスです
+  ja-JP: Zookeeperサーバー
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 支持对 Zookeeper 的通用性能指标(conf、stats)进行采集监控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 来收集指标数据，您需要将 zookeeper 的四字命令加入白名单，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper'>点击查看具体步骤</a>。
   en-US: HertzBeat monitors Zookeeper general performance metrics such as status and configuration. <br><span class='help_module_span'>Note⚠️:Due to the need for four-letter-word provided by zookeeper to collect metric data, you should add the four-letter-word to the whitelist.<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/zookeeper'>Click here to view the specific steps.</a>"
   zh-TW: HertzBeat 支持對 Zookeeper 的通用性能指標(conf、stats)進行采集監控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 來收集指標數據，您需要將 zookeeper 的四字命令加入白名單，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper'>點擊查看具體步驟</a>。
-  ja-JP: HertzBeat はZookeeperの汎用的なパフォーマンス指標（conf、stats）の収集・監視をサポートしています <br><span class='help_module_span'>注意⚠️：Zookeeper が提供する4文字のコマンドと netcat を使用してメトリックデータを収集する必要があるため、Zookeeper の4文字のコマンドをホワイトリストに追加する必要があります、<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/zookeeper'>詳細な手順はこちらをクリックしてご覧ください</a>
+  ja-JP: HertzBeat はZookeeperの一般的なパフォーマンスメトリクス（conf、stats）の収集・監視をサポートしています <br><span class='help_module_span'>注意⚠️：Zookeeper が提供する4文字のコマンドと netcat を使用してメトリックデータを収集する必要があるため、Zookeeper の4文字のコマンドをホワイトリストに追加する必要があります、<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/zookeeper'>詳細な手順はこちらをクリックしてご覧ください</a>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper
   en-US: https://hertzbeat.apache.org/docs/help/zookeeper
@@ -108,14 +108,14 @@ metrics:
         i18n:
           zh-CN: 日志目录
           en-US: Data Log Directory
-          ja-JP: ログディレクトリ
+          ja-JP: データログのディレクトリ
       - field: dataLogSize
         type: 0
         unit: kb
         i18n:
           zh-CN: 日志目录大小
           en-US: Data Log Size
-          ja-JP: ログディレクトリのサイズ
+          ja-JP: データログのディレクトリのサイズ
       - field: tickTime
         type: 0
         unit: ms
@@ -135,14 +135,14 @@ metrics:
         i18n:
           zh-CN: 最小会话超时
           en-US: Min Session Timeout
-          ja-JP: 最小セッションタイムアウト
+          ja-JP: セッションタイムアウトの最小値
       - field: maxSessionTimeout
         type: 0
         unit: ms
         i18n:
           zh-CN: 最大会话超时
           en-US: Max Session Timeout
-          ja-JP: 最大セッションタイムアウト
+          ja-JP: セッションタイムアウトの最大値
       - field: serverId
         type: 0
         i18n:
@@ -209,14 +209,14 @@ metrics:
         i18n:
           zh-CN: 发送数据包数
           en-US: Packets Sent
-          ja-JP: 送信データパケット数
+          ja-JP: 転送されたパケットの数
       - field: zk_packets_received
         type: 0
         unit: 个
         i18n:
           zh-CN: 接收数据包数
           en-US: Packets Received
-          ja-JP: 受信データパケット数
+          ja-JP: 受信されたパケットの数
       - field: zk_watch_count
         type: 0
         unit: 个
@@ -230,7 +230,7 @@ metrics:
         i18n:
           zh-CN: 最大文件描述符数量
           en-US: Max File Descriptor Count
-          ja-JP: 最大ファイルディスクリプタ数
+          ja-JP: 開かれたファイル記述子の最大値
       - field: zk_approximate_data_size
         type: 0
         unit: kb
@@ -244,7 +244,7 @@ metrics:
         i18n:
           zh-CN: 打开的文件描述符数量
           en-US: Open File Descriptor Count
-          ja-JP: 開いているファイルディスクリプタの数
+          ja-JP: 開かれたファイル記述子の数
       - field: zk_max_latency
         type: 0
         unit: ms
@@ -258,7 +258,7 @@ metrics:
         i18n:
           zh-CN: 临时节点数量
           en-US: Ephemerals Count
-          ja-JP: 一時ノードの数
+          ja-JP: 一時的なノードの数
       - field: zk_min_latency
         type: 0
         unit: ms
@@ -298,7 +298,7 @@ metrics:
         i18n:
           zh-CN: Java供应商
           en-US: Java Vendor
-          ja-JP: Javaのプロバイダー
+          ja-JP: Javaのベンダー
       - field: java_home
         type: 1
         i18n:
@@ -322,7 +322,7 @@ metrics:
         i18n:
           zh-CN: Java临时目录
           en-US: Java IO Temp Directory
-          ja-JP: Javaの一時ディレクトリ
+          ja-JP: Java IOの一時的なディレクトリ
       - field: java_compiler
         type: 1
         i18n:
@@ -334,19 +334,19 @@ metrics:
         i18n:
           zh-CN: 操作系统名称
           en-US: OS Name
-          ja-JP: オペレーティングシステムの名前
+          ja-JP: オーエスの名前
       - field: os_arch
         type: 1
         i18n:
           zh-CN: 操作系统架构
           en-US: OS Architecture
-          ja-JP: オペレーティングシステムのアーキテクチャ
+          ja-JP: オーエスアーキテクチャ
       - field: os_version
         type: 1
         i18n:
           zh-CN: 操作系统版本
           en-US: OS Version
-          ja-JP: オペレーティングシステムのバージョン
+          ja-JP: オーエスバージョン
       - field: user_name
         type: 1
         i18n:
