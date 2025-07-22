@@ -1,3 +1,12 @@
+//! OAuth2 authentication implementation for MCP server
+//!
+//! This module provides OAuth2 authentication capabilities including:
+//! - Client registration and validation
+//! - Authorization code flow
+//! - Token management and validation
+//! - Session management for auth flows
+//! - Middleware for request authentication
+
 use std::{collections::HashMap, sync::Arc};
 
 use askama::Template;
@@ -21,18 +30,24 @@ use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
-// Type alias for OAuth2 standard token response
+/// Type alias for OAuth2 standard token response
+/// Type alias for OAuth2 standard token response
 pub type AuthToken = StandardTokenResponse<EmptyExtraTokenFields, oauth2::basic::BasicTokenType>;
 
-// A easy way to manage MCP OAuth Store for managing tokens and sessions
+/// Centralized OAuth store for managing clients, sessions, and tokens
+/// Provides thread-safe access to OAuth-related data structures
 #[derive(Clone, Debug)]
 pub struct McpOAuthStore {
+    /// Registered OAuth clients with their configurations
     pub clients: Arc<RwLock<HashMap<String, OAuthClientConfig>>>,
+    /// Active authorization sessions indexed by session ID
     pub auth_sessions: Arc<RwLock<HashMap<String, AuthSession>>>,
+    /// Valid access tokens indexed by token string
     pub access_tokens: Arc<RwLock<HashMap<String, McpAccessToken>>>,
 }
 
 impl McpOAuthStore {
+    /// Create a new OAuth store with a default client configuration
     pub fn new() -> Self {
         let mut clients = HashMap::new();
         clients.insert(
@@ -52,6 +67,8 @@ impl McpOAuthStore {
         }
     }
 
+    /// Validate client credentials and redirect URI
+    /// Returns Some(client_config) if valid, None otherwise
     pub async fn validate_client(
         &self,
         client_id: &str,
@@ -66,6 +83,8 @@ impl McpOAuthStore {
         None
     }
 
+    /// Create a new authorization session for the OAuth flow
+    /// Returns the session ID for tracking the auth process
     pub async fn create_auth_session(
         &self,
         client_id: String,
@@ -88,6 +107,8 @@ impl McpOAuthStore {
         session_id
     }
 
+    /// Update an authorization session with a generated token
+    /// Links the OAuth token to the session for later retrieval
     pub async fn update_auth_session_token(
         &self,
         session_id: &str,
@@ -102,6 +123,8 @@ impl McpOAuthStore {
         }
     }
 
+    /// Create a new MCP access token linked to an authorization session
+    /// Returns the generated McpAccessToken on success
     pub async fn create_mcp_token(&self, session_id: &str) -> Result<McpAccessToken, String> {
         let sessions = self.auth_sessions.read().await;
         if let Some(session) = sessions.get(session_id) {
@@ -132,12 +155,14 @@ impl McpOAuthStore {
         }
     }
 
+    /// Validate an access token and return the associated McpAccessToken if valid
     pub async fn validate_token(&self, token: &str) -> Option<McpAccessToken> {
         self.access_tokens.read().await.get(token).cloned()
     }
 }
 
-// a simple session record for auth session
+/// Authorization session data structure
+/// Tracks ongoing OAuth authorization flows with client and state information
 #[derive(Clone, Debug)]
 pub struct AuthSession {
     pub client_id: String,
@@ -147,7 +172,8 @@ pub struct AuthSession {
     pub auth_token: Option<AuthToken>,
 }
 
-// a simple token record for mcp token using oauth2 standard token
+/// MCP-specific access token structure
+/// Wraps OAuth2 standard tokens with additional MCP metadata
 #[derive(Clone, Debug, Serialize)]
 pub struct McpAccessToken {
     pub access_token: String,
@@ -159,6 +185,8 @@ pub struct McpAccessToken {
     pub client_id: String,
 }
 
+/// OAuth authorization request parameters
+/// Contains all required fields for initiating an OAuth authorization flow
 #[derive(Debug, Deserialize)]
 pub struct AuthorizeQuery {
     #[allow(dead_code)]
@@ -169,6 +197,8 @@ pub struct AuthorizeQuery {
     pub state: Option<String>,
 }
 
+/// OAuth token request parameters
+/// Used for exchanging authorization codes for access tokens
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TokenRequest {
     pub grant_type: String,
@@ -186,6 +216,8 @@ pub struct TokenRequest {
     pub refresh_token: String,
 }
 
+/// User information structure for OAuth responses
+/// Contains standard user profile data
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UserInfo {
     pub sub: String,
@@ -194,6 +226,8 @@ pub struct UserInfo {
     pub username: String,
 }
 
+/// Template context for OAuth authorization page
+/// Contains all data needed to render the authorization consent form
 #[derive(Template)]
 #[template(path = "mcp_oauth_authorize.html")]
 pub struct OAuthAuthorizeTemplate {
@@ -204,7 +238,8 @@ pub struct OAuthAuthorizeTemplate {
     pub scopes: String,
 }
 
-// handle approval of authorization
+/// Form data for user authorization approval
+/// Contains user's decision and associated OAuth parameters
 #[derive(Debug, Deserialize)]
 pub struct ApprovalForm {
     pub client_id: String,
@@ -214,6 +249,8 @@ pub struct ApprovalForm {
     pub approved: String,
 }
 
+/// Generate a cryptographically secure random string
+/// Used for creating client secrets and other security tokens
 pub fn generate_random_string(length: usize) -> String {
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -222,7 +259,8 @@ pub fn generate_random_string(length: usize) -> String {
         .collect()
 }
 
-// Initial OAuth authorize endpoint
+/// OAuth authorization endpoint handler
+/// Displays the authorization consent page to users
 pub async fn oauth_authorize(
     Query(params): Query<AuthorizeQuery>,
     State(state): State<Arc<McpOAuthStore>>,
@@ -256,6 +294,8 @@ pub async fn oauth_authorize(
     }
 }
 
+/// Handle user approval/rejection of OAuth authorization
+/// Processes the consent form and generates authorization codes
 pub async fn oauth_approve(
     State(state): State<Arc<McpOAuthStore>>,
     Form(form): Form<ApprovalForm>,
@@ -324,7 +364,8 @@ pub async fn oauth_approve(
     Redirect::to(&redirect_url).into_response()
 }
 
-// Handle token request from the MCP client
+/// OAuth token endpoint handler
+/// Exchanges authorization codes for access tokens
 pub async fn oauth_token(
     State(state): State<Arc<McpOAuthStore>>,
     request: axum::http::Request<Body>,
@@ -464,7 +505,8 @@ pub async fn oauth_token(
     }
 }
 
-// Auth middleware for StreamableHttp connections
+/// Authentication middleware for validating Bearer tokens
+/// Intercepts requests and validates access tokens before allowing access
 pub async fn validate_token_middleware(
     State(token_store): State<Arc<McpOAuthStore>>,
     request: Request<axum::body::Body>,
@@ -494,7 +536,8 @@ pub async fn validate_token_middleware(
     }
 }
 
-// handle oauth server metadata request
+/// OAuth authorization server metadata endpoint
+/// Returns server capabilities and endpoint URLs per RFC 8414
 pub async fn oauth_authorization_server(bind_address: &str) -> impl IntoResponse {
     let mut additional_fields = HashMap::new();
     additional_fields.insert(
@@ -518,7 +561,8 @@ pub async fn oauth_authorization_server(bind_address: &str) -> impl IntoResponse
     (StatusCode::OK, Json(metadata))
 }
 
-// handle client registration request
+/// Dynamic client registration endpoint
+/// Allows clients to register themselves with the OAuth server
 pub async fn oauth_register(
     State(state): State<Arc<McpOAuthStore>>,
     Json(req): Json<ClientRegistrationRequest>,

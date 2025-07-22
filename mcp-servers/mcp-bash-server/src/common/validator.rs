@@ -1,3 +1,8 @@
+//! Command validation module for security enforcement
+//! 
+//! This module provides command validation functionality to prevent execution
+//! of dangerous commands and operations based on configurable blacklists.
+
 use std::ffi::OsStr;
 use tracing::debug;
 
@@ -5,16 +10,23 @@ use crate::config::Blacklist;
 use rmcp::model::ErrorData;
 use tracing::error;
 
+/// Command validator that checks commands against security blacklists
+/// Prevents execution of dangerous commands and operations
 #[derive(Debug, Clone)]
 pub struct Validator {
+    /// Security blacklist configuration containing forbidden commands and operations
     blacklist: Blacklist,
 }
 
 impl Validator {
+    /// Create a new validator with the specified blacklist configuration
     pub fn new(blacklist: Blacklist) -> Self {
         Validator { blacklist }
     }
 
+    /// Validate a command against the security blacklist
+    /// Returns Ok(()) if command is safe, Err(ErrorData) if command is blacklisted
+    /// Also handles nested shell commands (e.g., bash -c "command")
     pub fn is_unsafe_command(&self, args: Vec<&OsStr>) -> Result<(), ErrorData> {
         // Dangerous commands
         let blacklist = &self.blacklist.commands;

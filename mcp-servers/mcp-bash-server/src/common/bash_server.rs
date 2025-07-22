@@ -1,9 +1,23 @@
+//! Bash Server Implementation for MCP (Model Context Protocol)
+//!
+//! This module provides a bash command execution server that can run shell commands
+//! safely with validation and timeout controls. It supports multiple operating systems
+//! and provides various execution methods for different use cases.
+
 use rmcp::model::Content;
-use rmcp::serde_json;
 use rmcp::{
-    RoleServer, ServerHandler, handler::server::tool::IntoCallToolResult, model::*, schemars,
-    serde_json::Value, service::RequestContext, tool,
+    RoleServer, ServerHandler,
+    handler::server::{
+        router::tool::ToolRouter,
+        tool::{IntoCallToolResult, Parameters},
+    },
+    model::*,
+    schemars,
+    serde_json::Value,
+    service::RequestContext,
+    tool,
 };
+use rmcp::{serde_json, tool_handler, tool_router};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::process::Output;
@@ -22,6 +36,9 @@ use uuid::Uuid;
 use crate::common::config::Config;
 use crate::common::validator::Validator;
 
+/// Request structure for executing bash commands
+/// Contains all necessary parameters for command execution including
+/// working directory, environment variables, and timeout settings
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct DefaultExecuteRequest {
     #[schemars(description = "The bash command or script to execute")]
@@ -34,12 +51,19 @@ pub struct DefaultExecuteRequest {
     pub timeout_seconds: Option<u64>,
 }
 
+/// Response structure for command execution results
+/// Contains stdout, stderr, exit code, success status and any parsed data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DefaultExecuteResponse {
+    /// Standard output from the executed command
     pub stdout: String,
+    /// Standard error output from the executed command  
     pub stderr: String,
+    /// Exit code returned by the command (0 for success, non-zero for failure)
     pub exit_code: i32,
+    /// Whether the command executed successfully (exit code 0)
     pub success: bool,
+    /// Additional parsed data from command output (JSON format)
     pub parsed_data: serde_json::Value,
 }
 
@@ -64,12 +88,19 @@ impl IntoCallToolResult for DefaultExecuteResponse {
     }
 }
 
+/// Main bash server implementation that handles command execution
+/// with optional validation and timeout controls
 #[derive(Debug, Clone)]
 pub struct BashServer {
     validator: Option<Validator>,
+    tool_router: ToolRouter<BashServer>,
 }
 
+/// Trait for command execution utilities
+/// Provides common functionality for command formatting and execution
 pub trait CommandRunner {
+    /// Convert a Command instance to a readable string representation
+    /// Handles proper quoting of arguments containing spaces
     fn stringify_command(cmd: &Command) -> String {
         let program = cmd.get_program().to_string_lossy();
         let args = cmd
@@ -88,6 +119,8 @@ pub trait CommandRunner {
         format!("{program} {args}")
     }
 
+    /// Execute a command with timeout protection
+    /// Returns command output or timeout error
     async fn execute_command_with_timeout(
         timeout: std::time::Duration,
         mut cmd: Command,
@@ -122,21 +155,30 @@ pub trait CommandRunner {
 
 impl CommandRunner for BashServer {}
 
-#[tool(tool_box)]
+#[tool_router]
 impl BashServer {
+    /// Create a new BashServer instance
+    /// Attempts to load configuration from config.toml, creates validator if successful
     pub fn new() -> Self {
+        let tool_router = Self::tool_router();
         if let Ok(config) = Config::read_config("config.toml")
             .inspect_err(|e| eprintln!("read config.toml fail, error: {e}"))
         {
             let blacklist = config.blacklist;
             BashServer {
                 validator: Some(Validator::new(blacklist)),
+                tool_router,
             }
         } else {
-            Self { validator: None }
+            Self {
+                validator: None,
+                tool_router,
+            }
         }
     }
 
+    /// Internal method for executing commands via default shell
+    /// Supports validation toggle and handles cross-platform shell differences
     async fn _all_execute_via_default_shell(
         &self,
         need_validate: bool,
@@ -203,7 +245,7 @@ impl BashServer {
     #[tool(description = "Execute commands using default shell in all kinds of os")]
     async fn all_execute_via_default_shell(
         &self,
-        #[tool(aggr)] request: DefaultExecuteRequest,
+        Parameters(request): Parameters<DefaultExecuteRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         self._all_execute_via_default_shell(true, request).await
     }
@@ -211,7 +253,7 @@ impl BashServer {
     #[tool(description = "Execute a python script")]
     async fn unix_execute_python(
         &self,
-        #[tool(aggr)] request: DefaultExecuteRequest,
+        Parameters(request): Parameters<DefaultExecuteRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let timeout_duration =
             std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
@@ -263,10 +305,12 @@ impl BashServer {
         Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
+    /// Execute a Unix script by writing it to a temporary file
+    /// Creates a temporary shell script file with proper permissions and executes it
     #[tool(description = "Execute a unix script")]
     async fn unix_execute_script(
         &self,
-        #[tool(aggr)] request: DefaultExecuteRequest,
+        Parameters(request): Parameters<DefaultExecuteRequest>,
     ) -> Result<CallToolResult, ErrorData> {
         let timeout_duration =
             std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
@@ -318,6 +362,8 @@ impl BashServer {
         Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
+    /// Get comprehensive system information including OS, kernel, memory, and disk usage
+    /// Uses a multi-line shell command to gather various system details
     #[tool(description = "Get system information using bash commands")]
     async fn unix_get_system_info_via_default_shell(&self) -> Result<CallToolResult, ErrorData> {
         let command = r#"
@@ -348,6 +394,8 @@ df -h / 2>/dev/null || echo "df command not available"
         .await
     }
 
+    /// Get formatted system information in a structured format
+    /// Returns version, hostname, and uptime in a single line format
     #[tool(description = "Get system information using bash commands")]
     async fn unix_preset_get_system_info_via_default_shell(
         &self,
@@ -366,6 +414,8 @@ df -h / 2>/dev/null || echo "df command not available"
         .await
     }
 
+    /// Get list of available shells from /etc/shells
+    /// Filters out comments and validates shell executable existence
     #[tool(description = "Get the available shell in unix-like os")]
     async fn unix_get_available_shell(&self) -> Result<CallToolResult, ErrorData> {
         let mut available_shell = vec![];
@@ -397,6 +447,8 @@ df -h / 2>/dev/null || echo "df command not available"
         Ok(result)
     }
 
+    /// Get network interface statistics including receive and transmit bytes
+    /// Parses /proc/net/dev to extract interface names and traffic data
     #[tool(description = "Get the nic info through the default shell")]
     async fn unix_preset_get_nic_info_via_default_shell(
         &self,
@@ -417,6 +469,9 @@ df -h / 2>/dev/null || echo "df command not available"
         Ok(result)
     }
 
+    /// Get detailed CPU information including model, core count, load averages, and performance metrics
+    /// Combines data from lscpu, /proc/cpuinfo, uptime, and vmstat commands
+    /// Parses the output to provide structured CPU performance data
     #[tool(description = "Get the cpu info through the default shell")]
     async fn unix_preset_get_cpu_info_via_default_shell(
         &self,
@@ -479,6 +534,8 @@ df -h / 2>/dev/null || echo "df command not available"
         Ok(result)
     }
 
+    /// Get disk usage information for all mounted filesystems
+    /// Returns filesystem usage data in tabular format with columns for filesystem, used, available, usage percentage, and mount point
     #[tool(description = "Get the disk free info through the default shell")]
     async fn unix_preset_get_disk_free_info_via_default_shell(
         &self,
@@ -498,6 +555,8 @@ df -h / 2>/dev/null || echo "df command not available"
         Ok(result)
     }
 
+    /// Get top 10 processes consuming the most CPU
+    /// Returns process information sorted by CPU usage in descending order
     #[tool(description = "Get the top 10 cpu processes through the default shell")]
     async fn unix_preset_get_top10_cpu_processes_via_default_shell(
         &self,
@@ -517,6 +576,8 @@ df -h / 2>/dev/null || echo "df command not available"
         Ok(result)
     }
 
+    /// Get top 10 processes consuming the most memory
+    /// Returns process information sorted by memory usage in descending order
     #[tool(description = "Get the top 10 mem processes through the default shell")]
     async fn unix_preset_get_top10_mem_processes_via_default_shell(
         &self,
@@ -537,8 +598,9 @@ df -h / 2>/dev/null || echo "df command not available"
     }
 }
 
-#[tool(tool_box)]
+#[tool_handler]
 impl ServerHandler for BashServer {
+    /// Returns server information including protocol version, capabilities, and usage instructions
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: ProtocolVersion::LATEST,
@@ -560,6 +622,8 @@ impl ServerHandler for BashServer {
         }
     }
 
+    /// Set the logging level for the server
+    /// Sends a logging message notification to the connected peer
     async fn set_level(
         &self,
         SetLevelRequestParam { level }: SetLevelRequestParam,

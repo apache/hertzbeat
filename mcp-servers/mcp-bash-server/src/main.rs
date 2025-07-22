@@ -1,3 +1,15 @@
+//! MCP Bash Server - A Model Context Protocol server for executing bash commands
+//!
+//! This server provides secure bash command execution capabilities through the MCP protocol.
+//! It includes OAuth2 authentication, command validation, and cross-platform support.
+//!
+//! Features:
+//! - Secure command execution with blacklist validation
+//! - OAuth2 authentication for client authorization  
+//! - Cross-platform shell support (Linux, Windows, macOS)
+//! - Built-in system information tools
+//! - Configurable timeout and environment settings
+
 use std::sync::OnceLock;
 use std::{net::SocketAddr, sync::Arc};
 
@@ -28,15 +40,17 @@ use common::oauth::{
 
 const INDEX_HTML: &str = include_str!("html/mcp_oauth_index.html");
 
+/// Global storage for server bind address, initialized once at startup
 // Init once from environment variable BIND_ADDRESS
 pub static BIND_ADDRESS: OnceLock<String> = OnceLock::new();
 
-// Root path handler
+/// Root path handler
+/// Serves the main OAuth authorization index page
 async fn index() -> Html<&'static str> {
     Html(INDEX_HTML)
 }
 
-// Wrapper function for oauth_authorization_server to handle BIND_ADDRESS
+/// Wrapper function for oauth_authorization_server to handle BIND_ADDRESS
 async fn oauth_authorization_server_handler() -> impl IntoResponse {
     let bind_address = BIND_ADDRESS
         .get()
@@ -44,7 +58,8 @@ async fn oauth_authorization_server_handler() -> impl IntoResponse {
     oauth_authorization_server(bind_address).await
 }
 
-// Log all HTTP requests
+/// HTTP request logging middleware
+/// Logs all incoming requests including method, URI, headers and response status
 async fn log_request(request: Request<Body>, next: Next) -> Response {
     let method = request.method().clone();
     let uri = request.uri().clone();
@@ -84,6 +99,8 @@ async fn log_request(request: Request<Body>, next: Next) -> Response {
     response
 }
 
+/// Main application entry point
+/// Sets up logging, OAuth store, HTTP server, and starts the MCP bash server
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging
@@ -120,7 +137,7 @@ async fn main() -> Result<()> {
 
     // Create StreamableHttpServer
     let service = StreamableHttpService::new(
-        BashServer::new,
+        || Ok(BashServer::new()),
         LocalSessionManager::default().into(),
         Default::default(),
     );
