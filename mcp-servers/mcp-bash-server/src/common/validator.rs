@@ -1,12 +1,12 @@
 //! Command validation module for security enforcement
-//! 
+//!
 //! This module provides command validation functionality to prevent execution
 //! of dangerous commands and operations based on configurable blacklists.
 
 use std::ffi::OsStr;
 use tracing::debug;
 
-use crate::config::Blacklist;
+use crate::{common::config::Whitelist, config::Blacklist};
 use rmcp::model::ErrorData;
 use tracing::error;
 
@@ -16,12 +16,17 @@ use tracing::error;
 pub struct Validator {
     /// Security blacklist configuration containing forbidden commands and operations
     blacklist: Blacklist,
+    /// Security whitelist configuration containing secure commands
+    whitelist: Whitelist,
 }
 
 impl Validator {
     /// Create a new validator with the specified blacklist configuration
-    pub fn new(blacklist: Blacklist) -> Self {
-        Validator { blacklist }
+    pub fn new(blacklist: Blacklist, whitelist: Whitelist) -> Self {
+        Validator {
+            blacklist,
+            whitelist,
+        }
     }
 
     /// Validate a command against the security blacklist
@@ -38,6 +43,27 @@ impl Validator {
             .join(&OsStr::new(" "))
             .into_string()
             .expect("Convert OsStr to String failed!");
+
+        // Check whitelist
+        if self.whitelist.commands.contains(&full_cmd) {
+            return Ok(());
+        }
+        // Check regex patterns in whitelist
+        for pattern in &self.whitelist.regex {
+            match regex::Regex::new(pattern) {
+                Ok(regex) => {
+                    if regex.is_match(&full_cmd) {
+                        debug!("Command matched whitelist regex pattern: {pattern}");
+                        return Ok(());
+                    } else {
+                        debug!("Command did not match whitelist regex pattern: {pattern}");
+                    }
+                }
+                Err(e) => {
+                    error!("Invalid regex pattern in whitelist: {pattern}, error: {e}");
+                }
+            }
+        }
 
         for word in blacklist.iter() {
             for &arg in args.iter() {

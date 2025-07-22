@@ -165,8 +165,9 @@ impl BashServer {
             .inspect_err(|e| eprintln!("read config.toml fail, error: {e}"))
         {
             let blacklist = config.blacklist;
+            let whitelist = config.whitelist;
             BashServer {
-                validator: Some(Validator::new(blacklist)),
+                validator: Some(Validator::new(blacklist, whitelist)),
                 tool_router,
             }
         } else {

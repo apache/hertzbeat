@@ -3,11 +3,24 @@
 [settings]
 port = 4000
 host = "127.0.0.1"
-# Set env to "development" or "production", production use oauth.
+# Set env to "development" or "production", production use oauth2.0.
 env = "development"
+
+[whitelist]
+commands = [
+    "echo \"hello\" | tee /tmp/hello.txt && rm /tmp/hello.txt",
+    # Add your allowed commands here
+]
+regex = [
+    # Example: `echo -e "hello\nworld" | tee /tmp/hello.txt` pass validation,
+    # `echo -e "hello\nworld" | head -n 1 | tee /tmp/hello.txt` does not.
+    'echo [\-a-z]* "*[a-z\\]+"* \| tee /tmp/[a-z]+',
+    # Add your whitelist regex patterns here
+]
 
 [blacklist]
 commands = [
+    # Add your forbidden commands here
     "rm",
     "dd",
     "mkfs",
@@ -31,6 +44,7 @@ commands = [
     "fork",
 ]
 operations = [
+    # Add your forbidden operations here
     "|",
     "&",
     ";",

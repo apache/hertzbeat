@@ -1,5 +1,5 @@
 //! Configuration management for the MCP Bash Server
-//! 
+//!
 //! This module handles reading and parsing configuration from TOML files,
 //! including server settings and security blacklists for command validation.
 
@@ -11,6 +11,18 @@ use std::fs;
 pub struct Config {
     pub settings: Settings,
     pub blacklist: Blacklist,
+    pub whitelist: Whitelist,
+}
+
+/// Security whitelist configuration for command validation
+/// Contains lists of allowed commands and operations
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Whitelist {
+    /// List of command names that are allowed to be executed
+    pub commands: Vec<String>,
+    /// List of regular expressions for commands that are allowed
+    /// These patterns are matched against the full command line
+    pub regex: Vec<String>,
 }
 
 /// Security blacklist configuration for command validation

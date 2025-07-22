@@ -27,6 +27,7 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 serde_urlencoded = "0.7"
 oauth2 = "5.0"
 toml = "0.8"
+regex = "1.11.1"
 
 [[bin]]
 name = "mcp-bash-server"

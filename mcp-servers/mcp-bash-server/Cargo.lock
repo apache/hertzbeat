@@ -886,6 +886,7 @@ dependencies = [
  "chrono",
  "oauth2",
  "rand 0.8.5",
+ "regex",
  "rmcp",
  "serde",
  "serde_urlencoded",
