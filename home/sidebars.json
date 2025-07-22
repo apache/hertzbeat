@@ -334,6 +334,7 @@
       "type": "category",
       "label": "Community",
       "items": [
+        "community/maturity",
         "community/contact",
         "community/development",
         {

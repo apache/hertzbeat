@@ -463,6 +463,8 @@ export default function () {
                 </tr>
                 <tr>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaomizhou2"><img src="https://avatars.githubusercontent.com/u/47807926?v=4?s=100" width="100px;" alt="zhangyaxi"/><br /><sub><b>zhangyaxi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Tests">⚠️</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/RainBondsongyg"><img src="https://avatars.githubusercontent.com/u/94501396?v=4?s=100" width="100px;" alt="songyg"/><br /><sub><b>songyg</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=RainBondsongyg" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/lx1229"><img src="https://avatars.githubusercontent.com/u/44620005?v=4?s=100" width="100px;" alt="Liuxin"/><br /><sub><b>Liuxin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lx1229" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

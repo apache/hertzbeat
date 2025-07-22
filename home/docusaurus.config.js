@@ -155,7 +155,7 @@ module.exports = {
             },
             {
               label: 'Events',
-              to: 'https://eu.communityovercode.org/',
+              to: 'https://www.apache.org/events/current-event.html',
             },
             {
               label: 'Security',
@@ -376,7 +376,7 @@ module.exports = {
           },
           {
             tagName: 'meta',
-            name: 'apple-mobile-web-app-capable',
+            name: 'mobile-web-app-capable',
             content: 'yes',
           },
           {

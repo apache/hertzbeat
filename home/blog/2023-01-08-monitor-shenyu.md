@@ -33,7 +33,7 @@ tags: [opensource, practice]
 #### You must have a ShenYu environment and a HertzBeat environment
 
 - ShenYu [Deployment and Installation Documentation](https://shenyu.apache.org/zh/docs/deployment/deployment-before)
-- HertzBeat [Deployment and Installation Documentation](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [Deployment and Installation Documentation](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### i. Enable the `metrics` plugin on the ShenYu side, which will provide the metrics interface data
 
@@ -77,7 +77,7 @@ tags: [opensource, practice]
 2. Configure the parameters required for monitoring ShenYu
 
     On the monitor page, fill in ShenYu **service IP**, **monitor port** (default 8090), and click OK to add.
-    For other parameters such as **collection interval**, **timeout**, etc., you can refer to the [help file](https://hertzbeat.com/docs/help/shenyu/) <https://hertzbeat.com/docs/help/shenyu/>
+    For other parameters such as **collection interval**, **timeout**, etc., you can refer to the [help file](https://hertzbeat.apache.org/docs/help/shenyu/) <https://hertzbeat.apache.org/docs/help/shenyu/>
 
     ![HertzBeat](/img/blog/monitor-shenyu-1.png)
 
@@ -126,7 +126,7 @@ Of course, just looking at it is not perfect, monitoring is often accompanied by
 
     Message notification methods support **Email, Nail, WeChat, Flybook, WebHook, SMS**, etc. Here we take the commonly used Nail as an example.
 
-   - Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> Configure the bot on the pinning side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Refer to this [help document](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> Configure the bot on the pinning side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
    - Configure the recipient parameters in HertzBeat as follows.
 
     [Alert Notification] -> [Add Recipient] -> [Select Nailed Bot Notification Method] -> [Set Nailed Bot ACCESS_TOKEN] -> [OK]

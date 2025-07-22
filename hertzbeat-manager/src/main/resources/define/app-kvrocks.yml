@@ -21,11 +21,13 @@ app: kvrocks
 name:
   zh-CN: Kvrocks 数据库
   en-US: Kvrocks
+  ja-JP: Kvrocksデータベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 Apache Kvrocks 数据库的通用性能指标进行采集监控(server、clients、memory、persistence、stats、replication、cpu、cluster、commandstats)，支持版本为 Apache Kvrocks 2.9.0+。<br>您可以点击“<i>新建 Kvrocks 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors Apache Kvrocks database of general performance metrics such as memory, persistence, replication and so on. The versions we support is Apache Kvrocks 2.9.0+. <br>You could click the "<i>New Kvrocks</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 對 Apache Kvrocks 數據庫的通用性能指標進行采集監控(server、clients、memory、persistence、stats、replication、cpu、cluster、commandstats)，支持版本爲 Apache Kvrocks 2.9.0+。<br>您可以點擊“<i>新建 Kvrocks 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は Apache Kvrocks データベース（2.9.0+）の一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Kvrocks データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kvrocks
   en-US: https://hertzbeat.apache.org/docs/help/kvrocks
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 超时时间
       en-US: Timeout
+      ja-JP: タイムアウト
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -74,6 +79,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -82,6 +88,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
 
@@ -95,6 +102,7 @@ metrics:
     i18n:
       zh-CN: 服务器信息
       en-US: Server
+      ja-JP: サーバー情報
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: kvrocks_version
@@ -102,101 +110,121 @@ metrics:
         i18n:
           zh-CN: Kvrocks 服务版本
           en-US: Kvrocks Version
+          ja-JP: Kvrocks バージョン
       - field: redis_version
         type: 1
         i18n:
           zh-CN: Redis 服务版本
           en-US: Redis Version
+          ja-JP: Redis バージョン
       - field: git_sha1
         type: 0
         i18n:
           zh-CN: Kvrocks Git SHA1
           en-US: Kvrocks Git SHA1
+          ja-JP: Kvrocks Git SHA1
       - field: kvrocks_mode
         type: 1
         i18n:
           zh-CN: 运行模式
           en-US: Server Mode
+          ja-JP: サーバーモード
       - field: os
         type: 1
         i18n:
           zh-CN: 操作系统
           en-US: Operating System
+          ja-JP: オーエス
       - field: arch_bits
         type: 0
         i18n:
           zh-CN: 架构
           en-US: Architecture Bits
+          ja-JP: アーキテクチャ
       - field: multiplexing_api
         type: 1
         i18n:
           zh-CN: IO多路复用器API
           en-US: Multiplexing API
+          ja-JP: IO多重化API
       - field: atomicvar_api
         type: 1
         i18n:
           zh-CN: 原子操作处理API
           en-US: Atomicvar API
+          ja-JP: 原子操作API
       - field: gcc_version
         type: 1
         i18n:
           zh-CN: GCC版本
           en-US: GCC Version
+          ja-JP: GCC バージョン
       - field: process_id
         type: 0
         i18n:
           zh-CN: 进程ID
           en-US: PID
+          ja-JP: プロセスID
       - field: tcp_port
         type: 0
         i18n:
           zh-CN: TCP/IP监听端口
           en-US: TCP Port
+          ja-JP: TCP ポート
       - field: server_time_usec
         type: 0
         i18n:
           zh-CN: 服务器时间戳
           en-US: Server Time Usec
+          ja-JP: サーバー時間
       - field: uptime_in_seconds
         type: 0
         i18n:
           zh-CN: 运行时长(秒)
           en-US: Uptime(Seconds)
+          ja-JP: アップタイム（秒）
       - field: uptime_in_days
         type: 0
         i18n:
           zh-CN: 运行时长(天)
           en-US: Uptime(Days)
+          ja-JP: アップタイム（日）
       - field: hz
         type: 0
         i18n:
           zh-CN: 事件循环频率
           en-US: hz
+          ja-JP: hz
       - field: configured_hz
         type: 0
         i18n:
           zh-CN: 配置的事件循环频率
           en-US: Configured hz
+          ja-JP: Configured hz
       - field: lru_clock
         type: 0
         i18n:
           zh-CN: LRU时钟
           en-US: LRU Clock
+          ja-JP: LRUクロック
       - field: executable
         type: 1
         i18n:
           zh-CN: 服务器执行路径
           en-US: Server's Executable Path
+          ja-JP: サーバーの実行パス
       - field: config_file
         type: 1
         i18n:
           zh-CN: 配置文件路径
           en-US: Config File Path
+          ja-JP: 配置ファイルのパス
       - field: io_threads_active
         type: 0
         i18n:
           zh-CN: 活跃IO线程数
           en-US: Active IO Threads
+          ja-JP: 活動中のI/Oスレッド数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -219,6 +247,7 @@ metrics:
     i18n:
       zh-CN: 客户端信息
       en-US: Clients
+      ja-JP: クライアント情報
     # collect metrics content
     fields:
       - field: connected_clients
@@ -226,21 +255,25 @@ metrics:
         i18n:
           zh-CN: 已连接客户端数量
           en-US: Connected Clients
+          ja-JP: 接続クライアント数
       - field: maxclients
         type: 0
         i18n:
           zh-CN: 最大客户端连接数
           en-US: Max Clients
+          ja-JP: 最大クライアント数
       - field: blocked_clients
         type: 0
         i18n:
           zh-CN: 阻塞客户端数量
           en-US: Blocked Clients
+          ja-JP: ブロックされたクライアント数
       - field: monitor_clients
         type: 0
         i18n:
           zh-CN: 监控的客户端数量
           en-US: monitor Clients
+          ja-JP: モニタークライアント数
     protocol: redis
     redis:
       host: ^_^host^_^
@@ -256,6 +289,7 @@ metrics:
     i18n:
       zh-CN: 内存信息
       en-US: Memory
+      ja-JP: メモリ情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -264,28 +298,33 @@ metrics:
         i18n:
           zh-CN: 已使用内存(字节)
           en-US: Used Memory RSS
+          ja-JP: 使用した物理メモリ（バイト）
       - field: used_memory_rss_human
         type: 0
         unit: MB
         i18n:
           zh-CN: 已使用物理内存
           en-US: Used Memory RSS Human
+          ja-JP: 使用した物理メモリ
       - field: used_memory_lua
         type: 0
         i18n:
           zh-CN: LUA脚本占用的内存(字节)
           en-US: Used Memory LUA
+          ja-JP: LUAが使用するメモリ（バイト）
       - field: used_memory_lua_human
         type: 0
         unit: KB
         i18n:
           zh-CN: LUA脚本占用的内存
           en-US: Used Memory LUA Human
+          ja-JP: LUAが使用するメモリ
       - field: used_memory_startup
         type: 0
         i18n:
           zh-CN: 启动占用内存
           en-US: Used Memory Startup
+          ja-JP: 起動時の使用メモリ
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -309,6 +348,7 @@ metrics:
     i18n:
       zh-CN: 持久化信息
       en-US: Persistence
+      ja-JP: 永続化
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -317,26 +357,31 @@ metrics:
         i18n:
           zh-CN: 是否正在加载持久化文件
           en-US: Loading
+          ja-JP: 読み込み中
       - field: bgsave_in_progress
         type: 0
         i18n:
           zh-CN: 是否正在进行bgsave
           en-US: bgsave In Progress
+          ja-JP: bgsaveである
       - field: last_bgsave_time
         type: 0
         i18n:
           zh-CN: 最近一次bgsave命令执行时间
           en-US: Last Save Time
+          ja-JP: 最後のbgsave実行時間
       - field: last_bgsave_status
         type: 1
         i18n:
           zh-CN: 最近一次bgsave命令执行状态
           en-US: Last bgsave Status
+          ja-JP: 最後のbgsaveの実行状況
       - field: last_bgsave_time_sec
         type: 0
         i18n:
           zh-CN: 最近一次bgsave命令执行时间(秒)
           en-US: Last bgsave Time Sec
+          ja-JP: 最後のbgsave実行時間（秒）
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -360,6 +405,7 @@ metrics:
     i18n:
       zh-CN: 全局统计信息
       en-US: Stats
+      ja-JP: 統計情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -368,61 +414,73 @@ metrics:
         i18n:
           zh-CN: 已接受的总连接数
           en-US: Total Connections Received
+          ja-JP: 受信された接続数
       - field: total_commands_processed
         type: 0
         i18n:
           zh-CN: 执行过的命令总数
           en-US: Total Commands Processed
+          ja-JP: 処理済みのコマンド数
       - field: instantaneous_ops_per_sec
         type: 0
         i18n:
           zh-CN: 命令处理条数/秒
           en-US: Instantaneous Ops Per Sec
+          ja-JP: 処理されたコマンド数／秒
       - field: total_net_input_bytes
         type: 0
         i18n:
           zh-CN: 输入总网络流量(字节)
           en-US: Total Net Input Bytes
+          ja-JP: 受信されたネットワークトラフィック（バイト）
       - field: total_net_output_bytes
         type: 0
         i18n:
           zh-CN: 输出总网络流量(字节)
           en-US: Total Net Output Bytes
+          ja-JP: 転送されたネットワークトラフィック（バイト）
       - field: instantaneous_input_kbps
         type: 0
         i18n:
           zh-CN: 输入字节数/秒
           en-US: Instantaneous Input Kbps
+          ja-JP: 受信されたバイト／秒
       - field: instantaneous_output_kbps
         type: 0
         i18n:
           zh-CN: 输出字节数/秒
           en-US: Instantaneous Output Kbps
+          ja-JP: 転送されたバイト／秒
       - field: sync_full
         type: 0
         i18n:
           zh-CN: 主从完全同步成功次数
           en-US: Sync Full
+          ja-JP: Full Sync回数
       - field: sync_partial_ok
         type: 0
         i18n:
           zh-CN: 主从部分同步成功次数
           en-US: Sync Partial OK
+          ja-JP: Partial Sync成功回数
       - field: sync_partial_err
         type: 0
         i18n:
           zh-CN: 主从部分同步失败次数
           en-US: Sync Partial Error
+          ja-JP: Partial Sync失敗回数
       - field: pubsub_channels
         type: 0
         i18n:
           zh-CN: 订阅的频道数量
           en-US: Pubsub Channels
+          ja-JP: 購読されたチャンネル数
       - field: pubsub_patterns
         type: 0
         i18n:
           zh-CN: 订阅的模式数量
           en-US: Pubsub Patterns
+          ja-JP: 購読されたパターン数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -446,6 +504,7 @@ metrics:
     i18n:
       zh-CN: 主从同步信息
       en-US: Replication
+      ja-JP: レプリケーション情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -454,16 +513,19 @@ metrics:
         i18n:
           zh-CN: 节点角色
           en-US: Role
+          ja-JP: 役割
       - field: connected_slaves
         type: 0
         i18n:
           zh-CN: 已连接的从节点个数
           en-US: Connected Slaves
+          ja-JP: 接続スレーブ数
       - field: master_repl_offset
         type: 0
         i18n:
           zh-CN: 主节点偏移量
           en-US: Master Repl Offset
+          ja-JP: マスターのログオフセット
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -487,6 +549,7 @@ metrics:
     i18n:
       zh-CN: CPU消耗信息
       en-US: CPU
+      ja-JP: CPU情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -495,11 +558,13 @@ metrics:
         i18n:
           zh-CN: Kvrocks进程使用的CPU时钟总和(内核态)
           en-US: Used CPU Sys
+          ja-JP: Kvrocksが使用するシステム時間
       - field: used_cpu_user
         type: 0
         i18n:
           zh-CN: Kvrocks进程使用的CPU时钟总和(用户态)
           en-US: Used CPU User
+          ja-JP: Kvrocksが使用するユーザー時間
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -523,6 +588,7 @@ metrics:
     i18n:
       zh-CN: 命令信息
       en-US: Command Stats
+      ja-JP: コマンドの統計情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -531,11 +597,13 @@ metrics:
         i18n:
           zh-CN: 命令
           en-US: Command Stat Command
+          ja-JP: コマンド
       - field: cmdstat_info
         type: 1
         i18n:
           zh-CN: 命令监控信息
           en-US: Command Stat Info
+          ja-JP: コマンドの統計情報
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -558,6 +626,7 @@ metrics:
     i18n:
       zh-CN: 集群信息
       en-US: Cluster
+      ja-JP: クラスター情報
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: cluster_enabled
@@ -565,6 +634,7 @@ metrics:
         i18n:
           zh-CN: 节点是否开启集群模式
           en-US: Cluster Enabled
+          ja-JP: 有効
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -588,6 +658,7 @@ metrics:
     i18n:
       zh-CN: 命令统计信息
       en-US: Command Stats
+      ja-JP: コマンドの統計情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -596,46 +667,55 @@ metrics:
         i18n:
           zh-CN: 客户端命令统计
           en-US: cmdstat client
+          ja-JP: クライエントのコマンド
       - field: cmdstat_config
         type: 1
         i18n:
           zh-CN: 配置命令统计
           en-US: cmdstat config
+          ja-JP: 配置のコマンド
       - field: cmdstat_get
         type: 1
         i18n:
           zh-CN: get
           en-US: get
+          ja-JP: get
       - field: cmdstat_hello
         type: 1
         i18n:
           zh-CN: hello
           en-US: hello
+          ja-JP: hello
       - field: cmdstat_info
         type: 1
         i18n:
           zh-CN: info
           en-US: info
+          ja-JP: info
       - field: cmdstat_keys
         type: 1
         i18n:
           zh-CN: keys
           en-US: keys
+          ja-JP: keys
       - field: cmdstat_ping
         type: 1
         i18n:
           zh-CN: ping
           en-US: ping
+          ja-JP: ping
       - field: cmdstat_select
         type: 1
         i18n:
           zh-CN: select
           en-US: select
+          ja-JP: select
       - field: cmdstat_set
         type: 1
         i18n:
           zh-CN: set
           en-US: set
+          ja-JP: set
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
@@ -659,6 +739,7 @@ metrics:
     i18n:
       zh-CN: 数据库统计信息
       en-US: Keyspace
+      ja-JP: キー空間
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -667,41 +748,49 @@ metrics:
         i18n:
           zh-CN: db0
           en-US: db0
+          ja-JP: db0
       - field: sequence
         type: 1
         i18n:
           zh-CN: 序列
           en-US: sequence
+          ja-JP: シーケンス
       - field: used_db_size
         type: 1
         i18n:
           zh-CN: 数据库使用大小
           en-US: used_db_size
+          ja-JP: 使用したサイズ
       - field: max_db_size
         type: 1
         i18n:
           zh-CN: 数据库最大使用大小
           en-US: max_db_size
+          ja-JP: 最大サイズ
       - field: used_percent
         type: 1
         i18n:
           zh-CN: 数据库使用百分比
           en-US: used_percent
+          ja-JP: パーセント
       - field: disk_capacity
         type: 1
         i18n:
           zh-CN: 磁盘容量
           en-US: disk_capacity
+          ja-JP: ディスク容量
       - field: used_disk_size
         type: 1
         i18n:
           zh-CN: 占用磁盘大小
           en-US: used_disk_size
+          ja-JP: 使用したディスクサイズ
       - field: used_disk_percent
         type: 1
         i18n:
           zh-CN: 占用磁盘百分比
           en-US: used_disk_percent
+          ja-JP: 使用したディスク率
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
