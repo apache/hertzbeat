@@ -163,7 +163,6 @@ metrics:
         i18n:
           zh-CN: 速率模式
           en-US: Rates Mode
-          ja-JP: レートモード
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
