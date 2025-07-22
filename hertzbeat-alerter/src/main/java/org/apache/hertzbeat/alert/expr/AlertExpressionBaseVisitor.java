@@ -27,7 +27,7 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * of the available methods.
  *
  * @param <T> The return type of the visit operation. Use {@link Void} for
- * operations with no return type.
+ *            operations with no return type.
  */
 @SuppressWarnings("CheckReturnValue")
 public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements AlertExpressionVisitor<T> {
@@ -37,7 +37,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitExpression(AlertExpressionParser.ExpressionContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitExpression(AlertExpressionParser.ExpressionContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -45,7 +48,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitAndExpr(AlertExpressionParser.AndExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitAndExpr(AlertExpressionParser.AndExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -53,7 +59,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitComparisonExpr(AlertExpressionParser.ComparisonExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitComparisonExpr(AlertExpressionParser.ComparisonExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -61,7 +70,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitUnlessExpr(AlertExpressionParser.UnlessExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitUnlessExpr(AlertExpressionParser.UnlessExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -69,7 +81,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitSqlExpr(AlertExpressionParser.SqlExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitSqlExpr(AlertExpressionParser.SqlExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -77,7 +92,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitSqlCallExpr(AlertExpressionParser.SqlCallExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitSqlCallExpr(AlertExpressionParser.SqlCallExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -85,7 +103,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitLiteralExpr(AlertExpressionParser.LiteralExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitLiteralExpr(AlertExpressionParser.LiteralExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -93,7 +114,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitParenExpr(AlertExpressionParser.ParenExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitParenExpr(AlertExpressionParser.ParenExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -101,7 +125,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitPromqlCallExpr(AlertExpressionParser.PromqlCallExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitPromqlCallExpr(AlertExpressionParser.PromqlCallExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -109,7 +136,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitPromqlExpr(AlertExpressionParser.PromqlExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitPromqlExpr(AlertExpressionParser.PromqlExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -117,7 +147,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitOrExpr(AlertExpressionParser.OrExprContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitOrExpr(AlertExpressionParser.OrExprContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -125,7 +158,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitFunctionCall(AlertExpressionParser.FunctionCallContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitFunctionCall(AlertExpressionParser.FunctionCallContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -133,7 +169,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitParameterList(AlertExpressionParser.ParameterListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitParameterList(AlertExpressionParser.ParameterListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -141,7 +180,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitParameter(AlertExpressionParser.ParameterContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitParameter(AlertExpressionParser.ParameterContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -149,7 +191,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitNumber(AlertExpressionParser.NumberContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitNumber(AlertExpressionParser.NumberContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -157,7 +202,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitString(AlertExpressionParser.StringContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitString(AlertExpressionParser.StringContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -165,7 +213,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitDuration(AlertExpressionParser.DurationContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitDuration(AlertExpressionParser.DurationContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -173,7 +224,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitFunctionName(AlertExpressionParser.FunctionNameContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitFunctionName(AlertExpressionParser.FunctionNameContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -181,7 +235,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitSelectSql(AlertExpressionParser.SelectSqlContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitSelectSql(AlertExpressionParser.SelectSqlContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -189,7 +246,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitSelectFieldList(AlertExpressionParser.SelectFieldListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitSelectFieldList(AlertExpressionParser.SelectFieldListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -197,7 +257,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitSelectField(AlertExpressionParser.SelectFieldContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitSelectField(AlertExpressionParser.SelectFieldContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -205,7 +268,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitGroupByList(AlertExpressionParser.GroupByListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitGroupByList(AlertExpressionParser.GroupByListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -213,7 +279,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitOrderByList(AlertExpressionParser.OrderByListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitOrderByList(AlertExpressionParser.OrderByListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -221,7 +290,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitOrderByField(AlertExpressionParser.OrderByFieldContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitOrderByField(AlertExpressionParser.OrderByFieldContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -229,7 +301,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitLimitClause(AlertExpressionParser.LimitClauseContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitLimitClause(AlertExpressionParser.LimitClauseContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -237,7 +312,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitRelList(AlertExpressionParser.RelListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitRelList(AlertExpressionParser.RelListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -245,7 +323,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitRelation(AlertExpressionParser.RelationContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitRelation(AlertExpressionParser.RelationContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -253,7 +334,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitConditionList(AlertExpressionParser.ConditionListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitConditionList(AlertExpressionParser.ConditionListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -261,7 +345,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitCompOp(AlertExpressionParser.CompOpContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitCompOp(AlertExpressionParser.CompOpContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -269,7 +356,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitCondition(AlertExpressionParser.ConditionContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitCondition(AlertExpressionParser.ConditionContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -277,7 +367,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitConditionUnit(AlertExpressionParser.ConditionUnitContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitConditionUnit(AlertExpressionParser.ConditionUnitContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -285,7 +378,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitPromql(AlertExpressionParser.PromqlContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitPromql(AlertExpressionParser.PromqlContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -293,7 +389,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitMetricSelector(AlertExpressionParser.MetricSelectorContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitMetricSelector(AlertExpressionParser.MetricSelectorContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -301,7 +400,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitLabelMatcherList(AlertExpressionParser.LabelMatcherListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitLabelMatcherList(AlertExpressionParser.LabelMatcherListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -309,7 +411,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitLabelMatcherItem(AlertExpressionParser.LabelMatcherItemContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitLabelMatcherItem(AlertExpressionParser.LabelMatcherItemContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -317,7 +422,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitLabelMatcherOp(AlertExpressionParser.LabelMatcherOpContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitLabelMatcherOp(AlertExpressionParser.LabelMatcherOpContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -325,7 +433,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitLabelList(AlertExpressionParser.LabelListContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitLabelList(AlertExpressionParser.LabelListContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -333,7 +444,10 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitInstantVectorOp(AlertExpressionParser.InstantVectorOpContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitInstantVectorOp(AlertExpressionParser.InstantVectorOpContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /**
      * {@inheritDoc}
@@ -341,13 +455,8 @@ public class AlertExpressionBaseVisitor<T> extends AbstractParseTreeVisitor<T> i
      * <p>The default implementation returns the result of calling
      * {@link #visitChildren} on {@code ctx}.</p>
      */
-    @Override public T visitAggregationOperator(AlertExpressionParser.AggregationOperatorContext ctx) { return visitChildren(ctx); }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
-     */
-    @Override public T visitBinaryOperator(AlertExpressionParser.BinaryOperatorContext ctx) { return visitChildren(ctx); }
+    @Override
+    public T visitAggregationOperator(AlertExpressionParser.AggregationOperatorContext ctx) {
+        return visitChildren(ctx);
+    }
 }
