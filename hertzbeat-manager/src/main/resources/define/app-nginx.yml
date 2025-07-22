@@ -134,7 +134,7 @@ metrics:
         i18n:
           zh-CN: 接受连接数
           en-US: Accepts
-          ja-JP: クライアント接続を受けた総数
+          ja-JP: 受けたクライアント接続の総数
       - field: handled
         type: 0
         i18n:
@@ -152,7 +152,7 @@ metrics:
         i18n:
           zh-CN: 已丢弃连接数
           en-US: Dropped
-          ja-JP: リクエストとして中断したクライアント接続数
+          ja-JP: 中断したクライアント接続数
       - field: requests
         type: 0
         i18n:
@@ -164,19 +164,19 @@ metrics:
         i18n:
           zh-CN: 正在执行读操作的连接数
           en-US: Reading
-          ja-JP: がリクエストヘッダを読んでいる接続の現在の数
+          ja-JP: 読み込み中の接続数
       - field: writing
         type: 0
         i18n:
           zh-CN: 正在执行写操作的连接数
           en-US: Writing
-          ja-JP: がクライアントに応答を書き込んでいる接続の現在の数
+          ja-JP: 書き込み中の接続数
       - field: waiting
         type: 0
         i18n:
           zh-CN: 正在等待的连接数
           en-US: Waiting
-          ja-JP: リクエストを待っているアイドル状態のクライアント接続の現在の数
+          ja-JP: 待機中の接続数
     # Alias field list, used to identify metrics in the query result
     aliasFields:
       - accepts
@@ -209,7 +209,7 @@ metrics:
     i18n:
       zh-CN: 请求详细信息
       en-US: Req Status
-      ja-JP: リクエストの詳細
+      ja-JP: リクエストの詳細情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -219,7 +219,7 @@ metrics:
         i18n:
           zh-CN: 分组类别
           en-US: Zone Name
-          ja-JP: グループカテゴリ
+          ja-JP: ゾーン名
       - field: key
         type: 1
         i18n:
@@ -231,21 +231,21 @@ metrics:
         i18n:
           zh-CN: 最大并发连接数
           en-US: Max Active
-          ja-JP: 記録された最大の同時接続数
+          ja-JP: 最大の同時実行の接続数
       - field: max_bw
         type: 0
         unit: KB
         i18n:
           zh-CN: 最大带宽
           en-US: Max BW
-          ja-JP: 記録された最大の帯域幅
+          ja-JP: 最大帯域幅
       - field: traffic
         type: 0
         unit: KB
         i18n:
           zh-CN: 总流量
           en-US: Traffic
-          ja-JP: 累積したトラフィックの合計
+          ja-JP: 通信量
       - field: requests
         type: 0
         i18n:
@@ -257,14 +257,14 @@ metrics:
         i18n:
           zh-CN: 当前并发连接数
           en-US: Active
-          ja-JP: 現在アクティブな接続数
+          ja-JP: 現在のアクティブな同時実行接続数
       - field: bandwidth
         type: 0
         unit: KB
         i18n:
           zh-CN: 当前带宽
           en-US: Bandwidth
-          ja-JP: 現在の転送帯域幅
+          ja-JP: 現在の帯域幅
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: nginx
     # the config content when protocol is http
