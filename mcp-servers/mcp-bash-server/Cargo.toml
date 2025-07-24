@@ -29,6 +29,13 @@ oauth2 = "5.0"
 toml = "0.8"
 regex = "1.11.1"
 
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.0"
+tower = "0.5"
+hyper = "1.0"
+axum-test = "14.1"
+
 [[bin]]
 name = "mcp-bash-server"
 path = "src/main.rs"

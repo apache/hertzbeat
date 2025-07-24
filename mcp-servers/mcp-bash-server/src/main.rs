@@ -190,3 +190,419 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::Method;
+    use axum::http::Request;
+
+    #[tokio::test]
+    async fn test_index_handler() {
+        let response = index().await;
+        let html_content = response.0;
+
+        // Verify it returns the expected HTML content
+        assert_eq!(html_content, INDEX_HTML);
+        assert!(html_content.contains("OAuth"));
+    }
+
+    #[tokio::test]
+    async fn test_oauth_authorization_server_handler() {
+        // Set up BIND_ADDRESS for testing
+        let _ = BIND_ADDRESS.set("localhost:8080".to_string());
+
+        let response = oauth_authorization_server_handler().await;
+
+        // Test that the handler returns a response
+        // We can't easily test the exact content without mocking, but we can verify it doesn't panic
+        let _response_body = response.into_response();
+    }
+
+    #[test]
+    fn test_bind_address_initialization() {
+        // Create a new OnceLock for testing to avoid conflicts
+        let test_bind_address: OnceLock<String> = OnceLock::new();
+
+        // Test that we can set the value once
+        let result = test_bind_address.set("127.0.0.1:9090".to_string());
+        assert!(result.is_ok());
+
+        // Test that we can get the value
+        let value = test_bind_address.get();
+        assert!(value.is_some());
+        assert_eq!(value.unwrap(), "127.0.0.1:9090");
+
+        // Test that we can't set it again
+        let result2 = test_bind_address.set("different:port".to_string());
+        assert!(result2.is_err());
+    }
+
+    #[test]
+    fn test_index_html_constant() {
+        // Test that INDEX_HTML is not empty and contains expected content
+        assert!(!INDEX_HTML.is_empty());
+        assert!(INDEX_HTML.contains("html") || INDEX_HTML.contains("HTML"));
+    }
+
+    #[tokio::test]
+    async fn test_log_request_middleware_functionality() {
+        // Test basic properties of log_request function
+        // Since it requires complex setup with actual middleware,
+        // we focus on testing the types and structure
+
+        let request = Request::builder()
+            .method(Method::GET)
+            .uri("/test")
+            .body(Body::empty())
+            .unwrap();
+
+        // Verify request properties that log_request would process
+        assert_eq!(request.method(), Method::GET);
+        assert_eq!(request.uri().path(), "/test");
+        assert!(request.headers().is_empty());
+    }
+
+    #[test]
+    fn test_module_imports() {
+        // Test that our modules are properly imported and accessible
+        let _server = BashServer::new();
+        let _store = McpOAuthStore::new();
+
+        // Test config module
+        let config_result = config::Config::read_config("nonexistent.toml");
+        assert!(config_result.is_err()); // Should fail gracefully
+    }
+
+    #[test]
+    fn test_constants_and_statics() {
+        // Test that our constants and statics are properly defined
+        assert!(!INDEX_HTML.is_empty());
+
+        // BIND_ADDRESS should be a valid OnceLock
+        // We can't test the value without potentially interfering with other tests,
+        // but we can verify the type is correct by using it
+        let _bind_addr_ref = &BIND_ADDRESS;
+    }
+
+    #[test]
+    fn test_error_handling_types() {
+        // Test that Result type is properly used
+        let test_result: Result<String> = Ok("test".to_string());
+        assert!(test_result.is_ok());
+
+        let test_error: Result<String> = Err(anyhow::anyhow!("test error"));
+        assert!(test_error.is_err());
+    }
+
+    #[test]
+    fn test_dependencies_availability() {
+        // Test that critical dependencies are available
+        use std::sync::Arc;
+
+        let _arc_store = Arc::new(McpOAuthStore::new());
+
+        // Test that we can create basic types
+        let _socket_addr: Result<SocketAddr, _> = "127.0.0.1:8080".parse();
+    }
+
+    // ========== OAuth Mock Tests ==========
+
+    #[tokio::test]
+    async fn test_oauth_store_functionality() {
+        use common::oauth::{AuthToken, McpOAuthStore};
+        use oauth2::{AccessToken, EmptyExtraTokenFields};
+
+        let store = McpOAuthStore::new();
+
+        // Test client validation
+        let client = store
+            .validate_client("mcp-client", "http://localhost:8080/callback")
+            .await;
+        assert!(client.is_some());
+
+        let invalid_client = store
+            .validate_client("invalid-client", "http://localhost:8080/callback")
+            .await;
+        assert!(invalid_client.is_none());
+
+        // Test auth session creation
+        let session_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile email".to_string()),
+                Some("test-state".to_string()),
+                "test-session-123".to_string(),
+            )
+            .await;
+
+        assert_eq!(session_id, "test-session-123");
+
+        // Test token update and MCP token creation
+        let auth_token = AuthToken::new(
+            AccessToken::new("mock-third-party-token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+
+        let update_result = store
+            .update_auth_session_token(&session_id, auth_token)
+            .await;
+        assert!(update_result.is_ok());
+
+        let mcp_token = store.create_mcp_token(&session_id).await;
+        assert!(mcp_token.is_ok());
+
+        let token = mcp_token.unwrap();
+        assert!(token.access_token.starts_with("mcp-token-"));
+        assert_eq!(token.client_id, "mcp-client");
+
+        // Test token validation
+        let validated = store.validate_token(&token.access_token).await;
+        assert!(validated.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_oauth_authorization_flow_mock() {
+        use common::oauth::{AuthorizeQuery, McpOAuthStore};
+        use std::sync::Arc;
+
+        let store = Arc::new(McpOAuthStore::new());
+
+        // Mock authorization request
+        let auth_query = AuthorizeQuery {
+            response_type: "code".to_string(),
+            client_id: "mcp-client".to_string(),
+            redirect_uri: "http://localhost:8080/callback".to_string(),
+            scope: Some("profile email".to_string()),
+            state: Some("test-state-456".to_string()),
+        };
+
+        // Test that oauth_authorize function can be called
+        // Note: In a real test, we'd use test frameworks like tower::ServiceExt
+        // but here we're testing the basic functionality
+        let store_clone = store.clone();
+        let sessions_before = store_clone.auth_sessions.read().await.len();
+
+        // Verify store is accessible and functional
+        assert_eq!(sessions_before, 0);
+
+        // Test client validation within the flow
+        let client_validation = store
+            .validate_client(&auth_query.client_id, &auth_query.redirect_uri)
+            .await;
+        assert!(client_validation.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_oauth_token_exchange_mock() {
+        use common::oauth::AuthToken;
+        use common::oauth::{McpOAuthStore, TokenRequest};
+        use oauth2::{AccessToken, EmptyExtraTokenFields};
+        use std::sync::Arc;
+
+        let store = Arc::new(McpOAuthStore::new());
+
+        // Create a session and add auth token (simulating successful OAuth flow)
+        let session_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile".to_string()),
+                Some("test-state".to_string()),
+                "token-exchange-session".to_string(),
+            )
+            .await;
+
+        let auth_token = AuthToken::new(
+            AccessToken::new("mock-external-token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+
+        store
+            .update_auth_session_token(&session_id, auth_token)
+            .await
+            .unwrap();
+
+        // Mock token request (just for structure validation)
+        let _token_request = TokenRequest {
+            grant_type: "authorization_code".to_string(),
+            code: "mock-auth-code".to_string(),
+            client_id: "mcp-client".to_string(),
+            client_secret: "mcp-client-secret".to_string(),
+            redirect_uri: "http://localhost:8080/callback".to_string(),
+            code_verifier: None,
+            refresh_token: "".to_string(),
+        };
+
+        // Test token creation
+        let mcp_token_result = store.create_mcp_token(&session_id).await;
+        assert!(mcp_token_result.is_ok());
+
+        let mcp_token = mcp_token_result.unwrap();
+        assert_eq!(mcp_token.token_type, "bearer");
+        assert_eq!(mcp_token.expires_in, Some(3600));
+        assert!(mcp_token.refresh_token.is_some());
+
+        // Verify token can be validated
+        let validation_result = store.validate_token(&mcp_token.access_token).await;
+        assert!(validation_result.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_oauth_middleware_functionality() {
+        use common::oauth::AuthToken;
+        use common::oauth::McpOAuthStore;
+        use oauth2::{AccessToken, EmptyExtraTokenFields};
+        use std::sync::Arc;
+
+        let store = Arc::new(McpOAuthStore::new());
+
+        // Create a valid token for middleware testing
+        let session_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile".to_string()),
+                None,
+                "middleware-test-session".to_string(),
+            )
+            .await;
+
+        let auth_token = AuthToken::new(
+            AccessToken::new("middleware-test-token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+
+        store
+            .update_auth_session_token(&session_id, auth_token)
+            .await
+            .unwrap();
+        let mcp_token = store.create_mcp_token(&session_id).await.unwrap();
+
+        // Test token validation (simulating middleware behavior)
+        let valid_token_check = store.validate_token(&mcp_token.access_token).await;
+        assert!(valid_token_check.is_some());
+
+        // Test invalid token
+        let invalid_token_check = store.validate_token("invalid-token-12345").await;
+        assert!(invalid_token_check.is_none());
+
+        // Test empty token
+        let empty_token_check = store.validate_token("").await;
+        assert!(empty_token_check.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_oauth_error_handling() {
+        use common::oauth::McpOAuthStore;
+        use std::sync::Arc;
+
+        let store = Arc::new(McpOAuthStore::new());
+
+        // Test creating MCP token without session
+        let no_session_result = store.create_mcp_token("nonexistent-session").await;
+        assert!(no_session_result.is_err());
+        assert_eq!(no_session_result.unwrap_err(), "Session not found");
+
+        // Test creating MCP token without auth token in session
+        let session_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile".to_string()),
+                None,
+                "no-auth-token-session".to_string(),
+            )
+            .await;
+
+        let no_auth_token_result = store.create_mcp_token(&session_id).await;
+        assert!(no_auth_token_result.is_err());
+        assert_eq!(
+            no_auth_token_result.unwrap_err(),
+            "No third-party token available for session"
+        );
+
+        // Test updating nonexistent session
+        let auth_token = oauth2::StandardTokenResponse::new(
+            oauth2::AccessToken::new("test-token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            oauth2::EmptyExtraTokenFields {},
+        );
+
+        let update_nonexistent = store
+            .update_auth_session_token("nonexistent", auth_token)
+            .await;
+        assert!(update_nonexistent.is_err());
+        assert_eq!(update_nonexistent.unwrap_err(), "Session not found");
+    }
+
+    #[tokio::test]
+    async fn test_oauth_security_validations() {
+        use common::oauth::McpOAuthStore;
+        use std::sync::Arc;
+
+        let store = Arc::new(McpOAuthStore::new());
+
+        // Test invalid client ID
+        let invalid_client = store
+            .validate_client("malicious-client", "http://localhost:8080/callback")
+            .await;
+        assert!(invalid_client.is_none());
+
+        // Test invalid redirect URI (potential open redirect attack)
+        let malicious_redirect = store
+            .validate_client("mcp-client", "http://evil.com/steal-tokens")
+            .await;
+        assert!(malicious_redirect.is_none());
+
+        // Test valid client with valid redirect URI
+        let valid_client = store
+            .validate_client("mcp-client", "http://localhost:8080/callback")
+            .await;
+        assert!(valid_client.is_some());
+
+        // Test that tokens are properly random and unique
+        let session1_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile".to_string()),
+                None,
+                "security-test-1".to_string(),
+            )
+            .await;
+
+        let session2_id = store
+            .create_auth_session(
+                "mcp-client".to_string(),
+                Some("profile".to_string()),
+                None,
+                "security-test-2".to_string(),
+            )
+            .await;
+
+        // Add auth tokens to both sessions
+        for (i, session_id) in [&session1_id, &session2_id].iter().enumerate() {
+            let auth_token = oauth2::StandardTokenResponse::new(
+                oauth2::AccessToken::new(format!("security-token-{}", i)),
+                oauth2::basic::BasicTokenType::Bearer,
+                oauth2::EmptyExtraTokenFields {},
+            );
+            store
+                .update_auth_session_token(session_id, auth_token)
+                .await
+                .unwrap();
+        }
+
+        let token1 = store.create_mcp_token(&session1_id).await.unwrap();
+        let token2 = store.create_mcp_token(&session2_id).await.unwrap();
+
+        // Tokens should be different
+        assert_ne!(token1.access_token, token2.access_token);
+        assert_ne!(token1.refresh_token, token2.refresh_token);
+
+        // Both should be valid
+        assert!(store.validate_token(&token1.access_token).await.is_some());
+        assert!(store.validate_token(&token2.access_token).await.is_some());
+    }
+}

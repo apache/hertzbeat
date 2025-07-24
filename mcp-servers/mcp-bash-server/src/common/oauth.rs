@@ -607,3 +607,297 @@ pub async fn oauth_register(
 
     (StatusCode::CREATED, Json(response)).into_response()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+    fn create_test_oauth_store() -> McpOAuthStore {
+        McpOAuthStore::new()
+    }
+
+    #[tokio::test]
+    async fn test_oauth_store_creation() {
+        let store = create_test_oauth_store();
+        
+        // Check that default client exists
+        let clients = store.clients.read().await;
+        assert!(clients.contains_key("mcp-client"));
+        
+        let default_client = clients.get("mcp-client").unwrap();
+        assert_eq!(default_client.client_id, "mcp-client");
+        assert_eq!(default_client.client_secret, Some("mcp-client-secret".to_string()));
+        assert!(default_client.scopes.contains(&"profile".to_string()));
+        assert!(default_client.scopes.contains(&"email".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_validate_client_success() {
+        let store = create_test_oauth_store();
+        
+        let result = store.validate_client("mcp-client", "http://localhost:8080/callback").await;
+        assert!(result.is_some());
+        
+        let client = result.unwrap();
+        assert_eq!(client.client_id, "mcp-client");
+    }
+
+    #[tokio::test]
+    async fn test_validate_client_invalid_client_id() {
+        let store = create_test_oauth_store();
+        
+        let result = store.validate_client("invalid-client", "http://localhost:8080/callback").await;
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_validate_client_invalid_redirect_uri() {
+        let store = create_test_oauth_store();
+        
+        let result = store.validate_client("mcp-client", "http://malicious.com/callback").await;
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_create_auth_session() {
+        let store = create_test_oauth_store();
+        
+        let session_id = store.create_auth_session(
+            "mcp-client".to_string(),
+            Some("profile email".to_string()),
+            Some("state123".to_string()),
+            "session123".to_string(),
+        ).await;
+        
+        assert_eq!(session_id, "session123");
+        
+        // Verify session exists
+        let sessions = store.auth_sessions.read().await;
+        assert!(sessions.contains_key("session123"));
+        
+        let session = sessions.get("session123").unwrap();
+        assert_eq!(session.client_id, "mcp-client");
+        assert_eq!(session.scope, Some("profile email".to_string()));
+        assert!(session.auth_token.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_update_auth_session_token() {
+        let store = create_test_oauth_store();
+        
+        // Create session first
+        let session_id = store.create_auth_session(
+            "mcp-client".to_string(),
+            Some("profile".to_string()),
+            None,
+            "session456".to_string(),
+        ).await;
+        
+        // Create a mock token
+        let token = AuthToken::new(
+            AccessToken::new("access_token_123".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+        
+        // Update session with token
+        let result = store.update_auth_session_token(&session_id, token).await;
+        assert!(result.is_ok());
+        
+        // Verify token was added
+        let sessions = store.auth_sessions.read().await;
+        let session = sessions.get("session456").unwrap();
+        assert!(session.auth_token.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_update_auth_session_token_invalid_session() {
+        let store = create_test_oauth_store();
+        
+        let token = AuthToken::new(
+            AccessToken::new("access_token_123".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+        
+        let result = store.update_auth_session_token("nonexistent", token).await;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Session not found");
+    }
+
+    #[tokio::test]
+    async fn test_create_mcp_token_success() {
+        let store = create_test_oauth_store();
+        
+        // Create session and update with auth token
+        let session_id = store.create_auth_session(
+            "mcp-client".to_string(),
+            Some("profile".to_string()),
+            None,
+            "session789".to_string(),
+        ).await;
+        
+        let auth_token = AuthToken::new(
+            AccessToken::new("third_party_token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+        
+        store.update_auth_session_token(&session_id, auth_token).await.unwrap();
+        
+        // Create MCP token
+        let result = store.create_mcp_token(&session_id).await;
+        assert!(result.is_ok());
+        
+        let mcp_token = result.unwrap();
+        assert!(mcp_token.access_token.starts_with("mcp-token-"));
+        assert!(mcp_token.refresh_token.as_ref().unwrap().starts_with("mcp-refresh-"));
+        assert_eq!(mcp_token.token_type, "bearer");
+        assert_eq!(mcp_token.expires_in, Some(3600));
+        assert_eq!(mcp_token.scope, Some("profile".to_string()));
+        assert_eq!(mcp_token.client_id, "mcp-client");
+    }
+
+    #[tokio::test]
+    async fn test_create_mcp_token_no_session() {
+        let store = create_test_oauth_store();
+        
+        let result = store.create_mcp_token("nonexistent").await;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Session not found");
+    }
+
+    #[tokio::test]
+    async fn test_create_mcp_token_no_auth_token() {
+        let store = create_test_oauth_store();
+        
+        // Create session without auth token
+        let session_id = store.create_auth_session(
+            "mcp-client".to_string(),
+            Some("profile".to_string()),
+            None,
+            "session_no_token".to_string(),
+        ).await;
+        
+        let result = store.create_mcp_token(&session_id).await;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "No third-party token available for session");
+    }
+
+    #[tokio::test]
+    async fn test_validate_token_success() {
+        let store = create_test_oauth_store();
+        
+        // Create a complete flow to get a valid token
+        let session_id = store.create_auth_session(
+            "mcp-client".to_string(),
+            Some("profile".to_string()),
+            None,
+            "token_test_session".to_string(),
+        ).await;
+        
+        let auth_token = AuthToken::new(
+            AccessToken::new("third_party_token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+        
+        store.update_auth_session_token(&session_id, auth_token).await.unwrap();
+        let mcp_token = store.create_mcp_token(&session_id).await.unwrap();
+        
+        // Validate the token
+        let result = store.validate_token(&mcp_token.access_token).await;
+        assert!(result.is_some());
+        
+        let validated_token = result.unwrap();
+        assert_eq!(validated_token.access_token, mcp_token.access_token);
+        assert_eq!(validated_token.client_id, "mcp-client");
+    }
+
+    #[tokio::test]
+    async fn test_validate_token_invalid() {
+        let store = create_test_oauth_store();
+        
+        let result = store.validate_token("invalid_token").await;
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_mcp_access_token_serialization() {
+        let auth_token = AuthToken::new(
+            AccessToken::new("test_token".to_string()),
+            oauth2::basic::BasicTokenType::Bearer,
+            EmptyExtraTokenFields {},
+        );
+        
+        let mcp_token = McpAccessToken {
+            access_token: "mcp-token-123".to_string(),
+            token_type: "bearer".to_string(),
+            expires_in: Some(3600),
+            refresh_token: Some("mcp-refresh-123".to_string()),
+            scope: Some("profile email".to_string()),
+            auth_token,
+            client_id: "test-client".to_string(),
+        };
+        
+        // Test that it can be serialized to JSON
+        let json_result = serde_json::to_string(&mcp_token);
+        assert!(json_result.is_ok());
+        
+        let json_str = json_result.unwrap();
+        assert!(json_str.contains("mcp-token-123"));
+        assert!(json_str.contains("bearer"));
+        assert!(json_str.contains("3600"));
+    }
+
+    #[tokio::test]
+    async fn test_auth_session_creation_with_minimal_data() {
+        let store = create_test_oauth_store();
+        
+        let session_id = store.create_auth_session(
+            "test-client".to_string(),
+            None, // No scope
+            None, // No state
+            "minimal_session".to_string(),
+        ).await;
+        
+        assert_eq!(session_id, "minimal_session");
+        
+        let sessions = store.auth_sessions.read().await;
+        let session = sessions.get("minimal_session").unwrap();
+        assert_eq!(session.client_id, "test-client");
+        assert!(session.scope.is_none());
+        assert!(session._state.is_none());
+        assert!(session.auth_token.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_access() {
+        let store = Arc::new(create_test_oauth_store());
+        
+        // Test concurrent session creation
+        let mut handles = vec![];
+        for i in 0..10 {
+            let store_clone = store.clone();
+            let handle = tokio::spawn(async move {
+                store_clone.create_auth_session(
+                    "mcp-client".to_string(),
+                    Some("profile".to_string()),
+                    None,
+                    format!("concurrent_session_{}", i),
+                ).await
+            });
+            handles.push(handle);
+        }
+        
+        for handle in handles {
+            let session_id = handle.await.unwrap();
+            assert!(session_id.starts_with("concurrent_session_"));
+        }
+        
+        // Verify all sessions were created
+        let sessions = store.auth_sessions.read().await;
+        assert_eq!(sessions.len(), 10);
+    }
+}

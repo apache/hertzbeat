@@ -646,3 +646,298 @@ impl ServerHandler for BashServer {
             })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use crate::common::config::{Blacklist, Whitelist};
+
+    fn create_test_bash_server() -> BashServer {
+        let blacklist = Blacklist {
+            commands: vec!["rm".to_string(), "dd".to_string()],
+            operations: vec!["|".to_string(), "&".to_string()],
+        };
+        
+        let whitelist = Whitelist {
+            commands: vec!["echo hello".to_string()],
+            regex: vec!["echo.*".to_string()],
+        };
+        
+        let validator = Validator::new(blacklist, whitelist);
+        let tool_router = BashServer::tool_router();
+        
+        BashServer {
+            validator: Some(validator),
+            tool_router,
+        }
+    }
+
+    fn create_test_request(command: &str) -> DefaultExecuteRequest {
+        DefaultExecuteRequest {
+            command: command.to_string(),
+            working_dir: None,
+            env_vars: None,
+            timeout_seconds: Some(5),
+        }
+    }
+
+    #[test]
+    fn test_default_execute_response_success() {
+        let response = DefaultExecuteResponse {
+            stdout: "Hello World".to_string(),
+            stderr: "".to_string(),
+            exit_code: 0,
+            success: true,
+            parsed_data: Value::Null,
+        };
+
+        let result = response.into_call_tool_result();
+        assert!(result.is_ok());
+        
+        let call_result = result.unwrap();
+        assert_eq!(call_result.is_error, Some(false));
+        assert!(!call_result.content.is_empty());
+    }
+
+    #[test]
+    fn test_default_execute_response_failure() {
+        let response = DefaultExecuteResponse {
+            stdout: "".to_string(),
+            stderr: "Command not found".to_string(),
+            exit_code: 127,
+            success: false,
+            parsed_data: Value::Null,
+        };
+
+        let result = response.into_call_tool_result();
+        assert!(result.is_ok());
+        
+        let call_result = result.unwrap();
+        assert_eq!(call_result.is_error, Some(true));
+        assert!(!call_result.content.is_empty());
+    }
+
+    #[test]
+    fn test_command_runner_stringify_simple_command() {
+        let mut cmd = Command::new("echo");
+        cmd.arg("hello");
+        
+        let result = BashServer::stringify_command(&cmd);
+        assert_eq!(result, "echo hello");
+    }
+
+    #[test]
+    fn test_command_runner_stringify_command_with_spaces() {
+        let mut cmd = Command::new("echo");
+        cmd.arg("hello world");
+        
+        let result = BashServer::stringify_command(&cmd);
+        assert_eq!(result, "echo \"hello world\"");
+    }
+
+    #[test]
+    fn test_command_runner_stringify_complex_command() {
+        let mut cmd = Command::new("find");
+        cmd.arg("/tmp")
+           .arg("-name")
+           .arg("*.txt");
+        
+        let result = BashServer::stringify_command(&cmd);
+        assert_eq!(result, "find /tmp -name *.txt");
+    }
+
+    #[tokio::test]
+    async fn test_execute_command_with_timeout_success() {
+        let cmd = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("cmd");
+            cmd.arg("/c").arg("echo test");
+            cmd
+        } else {
+            let mut cmd = Command::new("echo");
+            cmd.arg("test");
+            cmd
+        };
+
+        let result = BashServer::execute_command_with_timeout(
+            std::time::Duration::from_secs(5),
+            cmd,
+        ).await;
+
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.status.success());
+        assert!(String::from_utf8_lossy(&output.stdout).contains("test"));
+    }
+
+    #[tokio::test]
+    async fn test_execute_command_with_timeout_failure() {
+        let cmd = Command::new("nonexistent_command_12345");
+        
+        let result = BashServer::execute_command_with_timeout(
+            std::time::Duration::from_secs(5),
+            cmd,
+        ).await;
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_bash_server_creation_with_validator() {
+        let server = create_test_bash_server();
+        assert!(server.validator.is_some());
+    }
+
+    #[test]
+    fn test_bash_server_creation_without_config() {
+        // This will create a server without validator since config.toml doesn't exist in test
+        let _server = BashServer::new();
+        // In test environment, config.toml might not exist, so validator could be None
+        // This is expected behavior
+    }
+
+    #[tokio::test]
+    async fn test_all_execute_via_default_shell_simple_command() {
+        let server = create_test_bash_server();
+        let request = create_test_request("echo 'Hello Test'");
+        
+        let result = server.all_execute_via_default_shell(Parameters(request)).await;
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_default_execute_request_creation() {
+        let mut env_vars = HashMap::new();
+        env_vars.insert("TEST_VAR".to_string(), "test_value".to_string());
+        
+        let request = DefaultExecuteRequest {
+            command: "echo $TEST_VAR".to_string(),
+            working_dir: Some("/tmp".to_string()),
+            env_vars: Some(env_vars),
+            timeout_seconds: Some(10),
+        };
+        
+        assert_eq!(request.command, "echo $TEST_VAR");
+        assert_eq!(request.working_dir, Some("/tmp".to_string()));
+        assert_eq!(request.timeout_seconds, Some(10));
+        assert!(request.env_vars.is_some());
+        assert_eq!(request.env_vars.unwrap().get("TEST_VAR"), Some(&"test_value".to_string()));
+    }
+
+    #[test]
+    fn test_default_execute_request_minimal() {
+        let request = DefaultExecuteRequest {
+            command: "pwd".to_string(),
+            working_dir: None,
+            env_vars: None,
+            timeout_seconds: None,
+        };
+        
+        assert_eq!(request.command, "pwd");
+        assert!(request.working_dir.is_none());
+        assert!(request.env_vars.is_none());
+        assert!(request.timeout_seconds.is_none());
+    }
+
+    #[test]
+    fn test_default_execute_response_with_parsed_data() {
+        let parsed_data = serde_json::json!({
+            "status": "success",
+            "data": ["item1", "item2"]
+        });
+        
+        let response = DefaultExecuteResponse {
+            stdout: "Command output".to_string(),
+            stderr: "".to_string(),
+            exit_code: 0,
+            success: true,
+            parsed_data,
+        };
+        
+        assert_eq!(response.exit_code, 0);
+        assert!(response.success);
+        assert_eq!(response.parsed_data["status"], "success");
+        assert!(response.parsed_data["data"].is_array());
+    }
+
+    #[tokio::test]
+    async fn test_execute_command_timeout() {
+        // Test with a very short timeout to ensure timeout behavior
+        let cmd = if cfg!(target_os = "windows") {
+            let mut cmd = Command::new("timeout");
+            cmd.arg("5"); // 5 seconds on Windows
+            cmd
+        } else {
+            let mut cmd = Command::new("sleep");
+            cmd.arg("10"); // 10 seconds on Unix
+            cmd
+        };
+
+        let result = BashServer::execute_command_with_timeout(
+            std::time::Duration::from_millis(100), // Very short timeout
+            cmd,
+        ).await;
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.message.contains("timed out"));
+    }
+
+    #[test]
+    fn test_bash_server_debug_trait() {
+        let server = create_test_bash_server();
+        let debug_str = format!("{:?}", server);
+        assert!(debug_str.contains("BashServer"));
+    }
+
+    #[test]
+    fn test_bash_server_clone_trait() {
+        let server = create_test_bash_server();
+        let cloned_server = server.clone();
+        
+        // Both should have validators
+        assert!(server.validator.is_some());
+        assert!(cloned_server.validator.is_some());
+    }
+
+    #[test]
+    fn test_default_execute_response_serialization() {
+        let response = DefaultExecuteResponse {
+            stdout: "output".to_string(),
+            stderr: "error".to_string(),
+            exit_code: 1,
+            success: false,
+            parsed_data: serde_json::json!({"key": "value"}),
+        };
+        
+        let json_result = serde_json::to_string(&response);
+        assert!(json_result.is_ok());
+        
+        let json_str = json_result.unwrap();
+        assert!(json_str.contains("output"));
+        assert!(json_str.contains("error"));
+        assert!(json_str.contains("\"exit_code\":1"));
+        assert!(json_str.contains("\"success\":false"));
+    }
+
+    #[test]
+    fn test_default_execute_response_deserialization() {
+        let json_str = r#"{
+            "stdout": "test output",
+            "stderr": "test error",
+            "exit_code": 0,
+            "success": true,
+            "parsed_data": null
+        }"#;
+        
+        let result: Result<DefaultExecuteResponse, _> = serde_json::from_str(json_str);
+        assert!(result.is_ok());
+        
+        let response = result.unwrap();
+        assert_eq!(response.stdout, "test output");
+        assert_eq!(response.stderr, "test error");
+        assert_eq!(response.exit_code, 0);
+        assert!(response.success);
+        assert_eq!(response.parsed_data, Value::Null);
+    }
+}
