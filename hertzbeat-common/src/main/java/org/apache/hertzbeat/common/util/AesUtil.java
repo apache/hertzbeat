@@ -37,7 +37,7 @@ public final class AesUtil {
      *  Default encryption key The AES encryption key is 16 bits by default.
      *  If the AES encryption key is larger than or smaller than 16 bits, an error message is displayed
      */
-    private static final String ENCODE_RULES = "tomSun28HaHaHaHa";
+    public static final String ENCODE_RULES = "tomSun28HaHaHaHa";
 
     /**
      * Default algorithm

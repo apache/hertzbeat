@@ -35,4 +35,9 @@ public class SystemSecret {
      * secret key for jwt
      */
     private String jwtSecret;
+
+    /**
+     * secret key for aes
+     */
+    private String aesSecret;
 }
