@@ -31,7 +31,7 @@ spring:
         prompt-change-notification: true
         sse-endpoint: /api/sse
         sse-message-endpoint: /api/mcp/message
-        type: async
+        type: SYNC
         capabilities:
           tool: true
           resource: true

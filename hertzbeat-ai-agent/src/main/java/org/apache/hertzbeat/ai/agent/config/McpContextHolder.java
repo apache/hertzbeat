@@ -15,23 +15,39 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.agent.config;
 
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import com.usthe.sureness.subject.SubjectSum;
+import org.springframework.core.NamedInheritableThreadLocal;
 
 /**
- * Configuration class for Large Language Model (LLM) settings.
+ * Context holder for AI agent security context.
  */
+public final class McpContextHolder {
+    private static final ThreadLocal<SubjectSum> subjectHolder =
+            new NamedInheritableThreadLocal<>("AI Agent Security Context");
 
-@Configuration
-public class LlmConfig {
-    @Bean
-    public ChatClient openAiChatClient(OpenAiChatModel chatModel) {
-        return ChatClient.create(chatModel);
+    private McpContextHolder() {}
+
+    /**
+     * Attaches the user's context to the current thread.
+     */
+    public static void setSubject(SubjectSum subject) {
+        subjectHolder.set(subject);
+
     }
 
+    /**
+     * Retrieves the context from the current thread.
+     */
+    public static SubjectSum getSubject() {
+        return subjectHolder.get();
+    }
+
+    /**
+     * Clears the context from the thread to prevent memory leaks.
+     */
+    public static void clear() {
+        subjectHolder.remove();
+    }
 }

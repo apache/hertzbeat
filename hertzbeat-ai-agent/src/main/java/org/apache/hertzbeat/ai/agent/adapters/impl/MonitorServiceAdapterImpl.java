@@ -1,5 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
 package org.apache.hertzbeat.ai.agent.adapters.impl;
 
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.springframework.data.domain.Page;
@@ -8,7 +28,6 @@ import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -32,7 +51,8 @@ public class MonitorServiceAdapterImpl implements MonitorServiceAdapter {
             String labels) {
         try {
             Object monitorService = null;
-
+            SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
+            log.debug("Current security subject: {}", subjectSum);
             try {
                 monitorService = SpringContextHolder.getBean("monitorServiceImpl");
             } catch (Exception e) {
@@ -40,15 +60,13 @@ public class MonitorServiceAdapterImpl implements MonitorServiceAdapter {
             }
 
             assert monitorService != null;
-            System.out.println("MonitorServiceImpl found: " + Arrays.toString(monitorService.getClass().getMethods()));
-            // Get the method with correct parameter types
+            log.debug("MonitorService bean found: {}", monitorService.getClass().getSimpleName());
             Method method = monitorService.getClass().getMethod(
                     "getMonitors",
                     List.class, String.class, String.class, Byte.class,
                     String.class, String.class, int.class, int.class, String.class);
 
 
-            // Invoke the method and cast the result
             @SuppressWarnings("unchecked")
             Page<Monitor> result = (Page<Monitor>) method.invoke(
                     monitorService,

@@ -1,7 +1,28 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hertzbeat.ai.agent.tools.impl;
 
+import com.usthe.sureness.subject.SubjectSum;
+import io.modelcontextprotocol.server.McpSyncServerExchange;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
+import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -9,6 +30,7 @@ import org.apache.hertzbeat.ai.agent.tools.MonitorTools;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+
 import java.util.List;
 
 /**
@@ -27,7 +49,6 @@ public class MonitorToolsImpl implements MonitorTools {
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
      * pagination.
      * Returns monitor names as string.
-     * method yet to complete
      */
     @Override
     @Tool(name = "list_monitors", returnDirect = true, description = """
@@ -56,7 +77,14 @@ public class MonitorToolsImpl implements MonitorTools {
 
     @Override
     @Tool(name = "add_monitor", description = "Add a new monitor")
-    public String addMonitor(@ToolParam(description = "Name of the monitor") String name) {
+    public String addMonitor(@ToolParam(description = "Name of the monitor") String name, ToolContext context) {
+        log.debug("Adding monitor with name: {}", name);
+        log.debug("Tool context keys: {}", context.getContext().keySet());
+        McpSyncServerExchange exchangeObj = (McpSyncServerExchange) context.getContext().get("exchange");
+        log.debug("MCP exchange object: {}", exchangeObj);
+        SubjectSum subjectSum = McpContextHolder.getSubject();
+        log.debug("Current subject in tool: {}", subjectSum);
+        log.debug("Tool call history: {}", context.getToolCallHistory());
         return "Monitor added: " + name;
     }
 
