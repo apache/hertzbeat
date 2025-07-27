@@ -121,6 +121,14 @@ public class MonitorsController {
         monitorService.export(ids, type, res);
     }
 
+    @GetMapping("/export/all")
+    @Operation(summary = "export all monitor config", description = "export all monitor config")
+    public void exportAll(
+            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
+            HttpServletResponse res) throws Exception {
+        monitorService.exportAll(type, res);
+    }
+
     @PostMapping("/import")
     @Operation(summary = "import monitor config", description = "import monitor config")
     public ResponseEntity<Message<Void>> export(MultipartFile file) throws Exception {

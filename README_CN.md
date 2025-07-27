@@ -33,11 +33,11 @@
 ### 特点
 
 - 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
-- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。    
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
+- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，无需学习成本。    
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需简单配置即可快速适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
 - 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
+- 灵活的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 - 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
 
 
@@ -126,7 +126,7 @@
 
    - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
     - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
-    - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertaBeat 服务的对外 IP。
+    - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertzBeat 服务的对外 IP。
     - `-e MANAGER_PORT=1158` : 配置连接主 HertzBeat 服务的对外端口，默认1158。
 
 
@@ -525,6 +525,8 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaomizhou2"><img src="https://avatars.githubusercontent.com/u/47807926?v=4?s=100" width="100px;" alt="zhangyaxi"/><br /><sub><b>zhangyaxi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/RainBondsongyg"><img src="https://avatars.githubusercontent.com/u/94501396?v=4?s=100" width="100px;" alt="songyg"/><br /><sub><b>songyg</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=RainBondsongyg" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lx1229"><img src="https://avatars.githubusercontent.com/u/44620005?v=4?s=100" width="100px;" alt="Liuxin"/><br /><sub><b>Liuxin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lx1229" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

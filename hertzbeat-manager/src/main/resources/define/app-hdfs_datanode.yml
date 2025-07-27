@@ -21,11 +21,13 @@ app: hdfs_datanode
 name:
   zh-CN: Apache HDFS DataNode
   en-US: Apache HDFS DataNode
+  ja-JP: Apache HDFS DataNode
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 HDFS DataNode 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache HDFS DataNode</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the HDFS DataNode metrics. <br>You can click "<i>New Apache HDFS DataNode</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 HDFS DataNode 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache HDFS DataNode</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は HDFS DataNodeの一般的なメトリクスを監視します。<br>「<i>新規 Apache HDFS DataNode</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hdfs_datanode/
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +51,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +66,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -86,6 +91,7 @@ metrics:
         i18n:
           zh-CN: DataNode HDFS使用量
           en-US: DfsUsed
+          ja-JP: 使用したHDFS容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: Remaining
         type: 0
@@ -93,6 +99,7 @@ metrics:
         i18n:
           zh-CN: DataNode HDFS剩余空间
           en-US: Remaining
+          ja-JP: 使用可能のHDFS容量
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: Capacity
         type: 0
@@ -100,6 +107,7 @@ metrics:
         i18n:
           zh-CN: DataNode HDFS空间总量
           en-US: Capacity
+          ja-JP: HDFS容量合計
     units:
       - DfsUsed=B->GB
       - Remaining=B->GB
@@ -134,60 +142,70 @@ metrics:
         i18n:
           zh-CN: JVM 当前已经使用的 NonHeapMemory 的大小
           en-US: MemNonHeapUsedM
+          ja-JP: 使用したノンヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemNonHeapCommittedM
         type: 0
         i18n:
           zh-CN: JVM 配置的 NonHeapCommittedM 的大小
           en-US: MemNonHeapCommittedM
+          ja-JP: コミットされたノンヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapUsedM
         type: 0
         i18n:
           zh-CN: JVM 当前已经使用的 HeapMemory 的大小
           en-US: MemHeapUsedM
+          ja-JP: 使用したヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapCommittedM
         type: 0
         i18n:
           zh-CN: JVM HeapMemory 提交大小
           en-US: MemHeapCommittedM
+          ja-JP: コミットされたヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapMaxM
         type: 0
         i18n:
           zh-CN: JVM 配置的 HeapMemory 的大小
           en-US: MemHeapMaxM
+          ja-JP: 配置のヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemMaxM
         type: 0
         i18n:
           zh-CN: JVM 运行时可以使用的最大内存大小
           en-US: MemMaxM
+          ja-JP: 最大のヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsRunnable
         type: 0
         i18n:
           zh-CN: 处于 RUNNABLE 状态的线程数量
           en-US: ThreadsRunnable
+          ja-JP: 実行中のスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsBlocked
         type: 0
         i18n:
           zh-CN: 处于 BLOCKED 状态的线程数量
           en-US: ThreadsBlocked
+          ja-JP: ブロックされたスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsWaiting
         type: 0
         i18n:
           zh-CN: 处于 WAITING 状态的线程数量
           en-US: ThreadsWaiting
+          ja-JP: 待機中のスレッド数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ThreadsTimedWaiting
         type: 0
         i18n:
           zh-CN: 处于 TIMED WAITING 状态的线程数量
           en-US: ThreadsTimedWaiting
+          ja-JP: 時間指定の待機中のスレッド数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.MemNonHeapUsedM
@@ -232,6 +250,7 @@ metrics:
         i18n:
           zh-CN: 启动时间
           en-US: StartTime
+          ja-JP: 起動時間
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.beans[?(@.name == "java.lang:type=Runtime")].StartTime

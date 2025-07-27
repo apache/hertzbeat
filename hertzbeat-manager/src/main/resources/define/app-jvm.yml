@@ -21,11 +21,13 @@ app: jvm
 name:
   zh-CN: JVM虚拟机
   en-US: JVM
+  ja-JP: Java仮想マシン
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">JMX 协议</a> 对 JVM 虚拟机的通用性能指标(基础信息，内存池，类加载，线程信息等)进行采集监控。<br>⚠️注意：您需要在 JVM 应用中开启 JMX 服务，应用启动时添加 JMX 参数, 可自定义暴露端口,对外IP。<a href="https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote">点击查看开启步骤</a>。
   en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'>JMX Protocol</a> to monitoring and collect general performance metric of jvm application. <br>⚠️Note:You need to enable JMX services in JVM application, and add the JXM parameters when the application start. You can also customize external IP address and exposed port.<a href='https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote'>Click here to view the activation steps.</a>"
   zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">JMX 協議</a> 對 JVM 虛擬機的通用性能指標(基礎信息，內存池，類加載，線程信息等)進行采集監控。<br>⚠️注意：您需要在 JVM 應用中開啓 JMX 服務，應用啓動時添加 JMX 參數, 可自定義暴露端口,對外IP。<a href="https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote">點擊查看開啓步驟</a>。
+  ja-JP: HertzBeat は <a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMXプロトコルを介して</a> Java仮想マシンの一般的なパフォーマンスのメトリクスを監視します。<br>⚠️注意：Java仮想マシンの応用 で JMX サービスを有効にする必要があります。<a href='https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote'>クリックしてガイドを見ます</a>。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/jvm/
   en-US: https://hertzbeat.apache.org/docs/help/jvm/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: JMX URL
       en-US: JMX URL
+      ja-JP: JMX URL
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -89,6 +95,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -105,6 +112,7 @@ metrics:
     i18n:
       zh-CN: 虚拟机基础信息
       en-US: JVM Basic
+      ja-JP: Java仮想マシン基礎情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -113,22 +121,26 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Vm Name
+          ja-JP: 仮想マシン名
       - field: VmVendor
         type: 1
         i18n:
           zh-CN: 厂商
           en-US: Vm Vendor
+          ja-JP: 仮想マシンベンダー
       - field: VmVersion
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Vm Version
+          ja-JP: 仮想マシンバージョン
       - field: Uptime
         type: 0
         unit: ms
         i18n:
           zh-CN: 运行时长
           en-US: Up time
+          ja-JP: アップタイム
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is jmx
@@ -148,6 +160,7 @@ metrics:
     i18n:
       zh-CN: 内存池
       en-US: Memory Pool
+      ja-JP: メモリプール
     fields:
       - field: name
         type: 1
@@ -155,30 +168,35 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
+          ja-JP: メトリクス名
       - field: committed
         type: 0
         unit: MB
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         unit: MB
         i18n:
           zh-CN: 初始化内存
           en-US: Init
+          ja-JP: イニシャルメモリ
       - field: max
         type: 0
         unit: MB
         i18n:
           zh-CN: 最大内存
           en-US: Max
+          ja-JP: 最大メモリ
       - field: used
         type: 0
         unit: MB
         i18n:
           zh-CN: 已使用内存
           en-US: Used
+          ja-JP: 使用したメモリ
     units:
       - committed=B->MB
       - init=B->MB
@@ -215,27 +233,32 @@ metrics:
     i18n:
       zh-CN: 本地代码缓冲区
       en-US: Code Cache
+      ja-JP: コードキャッシュ
     fields:
       - field: committed
         type: 0
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         i18n:
           zh-CN: 初始化内存
           en-US: Init
+          ja-JP: イニシャルメモリ
       - field: max
         type: 0
         i18n:
           zh-CN: 最大内存
           en-US: Max
+          ja-JP: 最大メモリ
       - field: used
         type: 0
         i18n:
           zh-CN: 已使用内存
           en-US: Used
+          ja-JP: 使用したメモリ
     aliasFields:
       - Usage->committed
       - Usage->init
@@ -262,6 +285,7 @@ metrics:
     i18n:
       zh-CN: 类加载信息
       en-US: Class Loading
+      ja-JP: クラスローディング情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -270,16 +294,19 @@ metrics:
         i18n:
           zh-CN: 当前已加载类数量
           en-US: Loaded Class Count
+          ja-JP: ロードされたクラス数
       - field: TotalLoadedClassCount
         type: 0
         i18n:
           zh-CN: 已加载类总数量
           en-US: Total Loaded Class Count
+          ja-JP: ロードされたクラス総数
       - field: UnloadedClassCount
         type: 0
         i18n:
           zh-CN: 未加载类总数量
           en-US: Unloaded Class Count
+          ja-JP: アンロードされたクラス総数
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -294,6 +321,7 @@ metrics:
     i18n:
       zh-CN: 线程信息
       en-US: Thread
+      ja-JP: スレッド情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -302,33 +330,39 @@ metrics:
         i18n:
           zh-CN: 已启动线程总数
           en-US: Total Started Thread Count
+          ja-JP: スレッド総数
       - field: ThreadCount
         type: 0
         i18n:
           zh-CN: 活跃线程数
           en-US: Thread Count
+          ja-JP: 活躍スレッド数
       - field: PeakThreadCount
         type: 0
         i18n:
           zh-CN: 最大峰值线程数
           en-US: Peak Thread Count
+          ja-JP: 最大スレッド数
       - field: DaemonThreadCount
         type: 0
         i18n:
           zh-CN: 活跃守护线程数
           en-US: Daemon Thread Count
+          ja-JP: デーモンスレッド数
       - field: CurrentThreadUserTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间(用户态)
           en-US: Current Thread User Time
+          ja-JP: 現在のスレッドユーザー時間
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间
           en-US: Current Thread CPU Time
+          ja-JP: 現在のスレッドシステム時間
     units:
       - CurrentThreadUserTime=NS->S
       - CurrentThreadCpuTime=NS->S

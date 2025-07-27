@@ -21,11 +21,13 @@ app: hadoop
 name:
   zh-CN: Apache Hadoop
   en-US: Apache Hadoop
+  ja-JP: Apache Hadoop
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用<a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX 协议</a>对 Hadoop 的 JVM 虚拟机的通用性能指标（memory pool，限JDK8及以下的code cache、class loading、thread）进行采集监控。<br><span class='help_module_span'>⚠️注意：您需要在 Hadoop 应用开启 JMX 服务, <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>点击查看开启步骤</a>。</span>
   en-US: "HertzBeat monitors general performance metrics(memory pool, class loading, thread) of Hadoop VMware through <a class='help_module_content' href='https://zh.wikipedia.org/JMX'>JMX protocol</a>. <br><span class='help_module_span'>⚠️Note: You should enable the JMX service in Hadoop application, and the metric of code cache is only available to JDK8 and below.<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat使用<a class='help_ module_ content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX協定</a>對Hadoop的JVM虛擬機器的通用性能指標（memory pool，限JDK8及以下的code cache、class loading、thread）進行採集監控。<br><span class='help_ module_ span'> ⚠️ ️注意：您需要在Hadoop應用開啟JMX服務，<a class='help_ module_ content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>點擊查看開啟步驟</a>。</span>
+  zh-TW: HertzBeat使用<a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMX協定</a>對Hadoop的JVM虛擬機器的通用性能指標（memory pool，限JDK8及以下的code cache、class loading、thread）進行採集監控。<br><span class='help_module_span'> ⚠️ ️注意：您需要在Hadoop應用開啟JMX服務，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>點擊查看開啟步驟</a>。</span>
+  ja-JP: HertzBeatは <a class='help_module_content' href='https://baijiahao.baidu.com/s?id=1605937053950156833&wfr=spider&for=pc'> JMXプロトコルを介して</a> HadoopのJava仮想マシンの一般的なパフォーマンスのメトリクスを監視します。<br><span class='help_module_span'> ⚠️注意：Hadoop で JMX サービスを有効にする必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/hadoop#hadoop%E5%BA%94%E7%94%A8%E5%BC%80%E5%90%AFjmx%E5%8D%8F%E8%AE%AE%E6%AD%A5%E9%AA%A4'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hadoop/
   en-US: https://hertzbeat.apache.org/docs/help/hadoop/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: JMX URL
       en-US: JMX URL
+      ja-JP: JMX URL
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -89,6 +95,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -102,6 +109,7 @@ metrics:
     i18n:
       zh-CN: 虚拟机基础信息
       en-US: JVM Basic
+      ja-JP: Java仮想マシン基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -113,22 +121,26 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Vm Name
+          ja-JP: 仮想マシン名
       - field: VmVendor
         type: 1
         i18n:
           zh-CN: 厂商
           en-US: Vm Vendor
+          ja-JP: 仮想マシンベンダー
       - field: VmVersion
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Vm Version
+          ja-JP: 仮想マシンバージョン
       - field: Uptime
         type: 0
         unit: ms
         i18n:
           zh-CN: 运行时长
           en-US: Up time
+          ja-JP: アップタイム
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is jmx
@@ -148,6 +160,7 @@ metrics:
     i18n:
       zh-CN: 内存池
       en-US: Memory Pool
+      ja-JP: メモリプール
     fields:
       - field: name
         type: 1
@@ -155,30 +168,35 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
+          ja-JP: メトリクス名
       - field: committed
         type: 0
         unit: MB
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         unit: MB
         i18n:
           zh-CN: 初始化内存
           en-US: Init
+          ja-JP: イニシャルメモリ
       - field: max
         type: 0
         unit: MB
         i18n:
           zh-CN: 最大内存
           en-US: Max
+          ja-JP: 最大メモリ
       - field: used
         type: 0
         unit: MB
         i18n:
           zh-CN: 已使用内存
           en-US: Used
+          ja-JP: 使用したメモリ
     units:
       - committed=B->MB
       - init=B->MB
@@ -215,27 +233,32 @@ metrics:
     i18n:
       zh-CN: 本地代码缓冲区
       en-US: Code Cache
+      ja-JP: コードキャッシュ
     fields:
       - field: committed
         type: 0
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         i18n:
           zh-CN: 初始化内存
           en-US: Init
+          ja-JP: イニシャルメモリ
       - field: max
         type: 0
         i18n:
           zh-CN: 最大内存
           en-US: Max
+          ja-JP: 最大メモリ
       - field: used
         type: 0
         i18n:
           zh-CN: 已使用内存
           en-US: Used
+          ja-JP: 使用したメモリ
     aliasFields:
       - Usage->committed
       - Usage->init
@@ -262,6 +285,7 @@ metrics:
     i18n:
       zh-CN: 类加载信息
       en-US: Class Loading
+      ja-JP: クラスローディング情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -270,16 +294,19 @@ metrics:
         i18n:
           zh-CN: 当前已加载类数量
           en-US: Loaded Class Count
+          ja-JP: ロードされたクラス数
       - field: TotalLoadedClassCount
         type: 0
         i18n:
           zh-CN: 已加载类总数量
           en-US: Total Loaded Class Count
+          ja-JP: ロードされたクラス総数
       - field: UnloadedClassCount
         type: 0
         i18n:
           zh-CN: 未加载类总数量
           en-US: Unloaded Class Count
+          ja-JP: アンロードされたクラス総数
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -294,6 +321,7 @@ metrics:
     i18n:
       zh-CN: 线程信息
       en-US: Thread
+      ja-JP: スレッド情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -302,33 +330,39 @@ metrics:
         i18n:
           zh-CN: 已启动线程总数
           en-US: Total Started Thread Count
+          ja-JP: スレッド総数
       - field: ThreadCount
         type: 0
         i18n:
           zh-CN: 活跃线程数
           en-US: Thread Count
+          ja-JP: 活躍スレッド数
       - field: PeakThreadCount
         type: 0
         i18n:
           zh-CN: 最大峰值线程数
           en-US: Peak Thread Count
+          ja-JP: 最大スレッド数
       - field: DaemonThreadCount
         type: 0
         i18n:
           zh-CN: 活跃守护线程数
           en-US: Daemon Thread Count
+          ja-JP: デーモンスレッド数
       - field: CurrentThreadUserTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间(用户态)
           en-US: Current Thread User Time
+          ja-JP: 現在のスレッドユーザー時間
       - field: CurrentThreadCpuTime
         type: 0
         unit: s
         i18n:
           zh-CN: 线程占用的CPU时间
           en-US: Current Thread CPU Time
+          ja-JP: 現在のスレッドシステム時間
     units:
       - CurrentThreadUserTime=NS->S
       - CurrentThreadCpuTime=NS->S

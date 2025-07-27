@@ -30,7 +30,7 @@ tags: [opensource, practice]
 #### operation, you already have a DynamicTp environment and a HertzBeat environment
 
 - DynamicTp [Integration Access Documentation](https://dynamictp.cn/guide/use/quick-start.html)
-- HertzBeat [Deployment and Installation Documentation](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [Deployment and Installation Documentation](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### i. Expose the `DynamicTp` metrics interface `/actuator/dynamic-tp` on the DynamicTp side, which will provide the metrics interface data
 
@@ -89,7 +89,7 @@ tags: [opensource, practice]
 2. Configure the parameters required for monitoring DynamicTp.
 
     On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.
-    For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.com/docs/help/dynamic_tp/) <https://hertzbeat.com/docs/help/dynamic_tp/>
+    For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.apache.org/docs/help/dynamic_tp/) <https://hertzbeat.apache.org/docs/help/dynamic_tp/>
 
     ![HertzBeat](/img/blog/monitor-dynamic-tp-2.png)
 
@@ -138,7 +138,7 @@ Of course, just watching is not perfect, monitoring is often accompanied by alar
 
     Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook, SMS**, etc. We take the commonly used Dingtalk as an example.
 
-   - Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> Configure the bot on Dingtalk side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Refer to this [help document](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> Configure the bot on Dingtalk side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
    - Configure the recipient parameters in HertzBeat as follows.
 
     [Alert Notification] -> [Add Recipient] -> [Choose Dingtalk bot notification method] -> [Set Dingtalk bot ACCESS_TOKEN] -> [OK]

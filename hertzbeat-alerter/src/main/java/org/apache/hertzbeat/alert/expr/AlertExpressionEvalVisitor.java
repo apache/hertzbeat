@@ -18,21 +18,26 @@
 package org.apache.hertzbeat.alert.expr;
 
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.hertzbeat.common.support.exception.ExpressionVisitorException;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Alert expression visitor implement
  */
 public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<Map<String, Object>>> {
 
-    private static final String THRESHOLD = "__threshold__";
+    private static final String SCALAR = "__scalar__";
+    private static final String NAME = "__name__";
     private static final String VALUE = "__value__";
+    private static final String TIMESTAMP = "__timestamp__";
 
     private final QueryExecutor executor;
     private final CommonTokenStream tokens;
@@ -56,70 +61,126 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
     public List<Map<String, Object>> visitComparisonExpr(AlertExpressionParser.ComparisonExprContext ctx) {
         List<Map<String, Object>> leftResult = visit(ctx.left);
         List<Map<String, Object>> rightResult = visit(ctx.right);
-        if (rightResult.size() == 1 && rightResult.get(0).containsKey(THRESHOLD)) {
-            double threshold = (double) rightResult.get(0).get(THRESHOLD);
-            String operator = ctx.op.getText();
+        int type = ctx.op.getType();
+        boolean boolModifier = ctx.BOOL() != null;
+        boolean leftIsScalar = isScalar(leftResult);
+        boolean rightIsScalar = isScalar(rightResult);
+        List<Map<String, Object>> results = new ArrayList<>();
 
-            List<Map<String, Object>> result = new ArrayList<>();
-            for (Map<String, Object> item : leftResult) {
-                Object queryValues = item.get(VALUE);
-                if (queryValues == null) {
-                    // ignore the query result data is empty
+        // scalar and scalar
+        if (leftIsScalar && rightIsScalar) {
+            if (!boolModifier) {
+                // Between two scalars,
+                // the bool modifier must be provided and these operators result in another scalar that is either 0 (false) or 1 (true), depending on the comparison result.
+                return results;
+            }
+            Object leftVal = leftResult.get(0).get(SCALAR);
+            Object rightVal = rightResult.get(0).get(SCALAR);
+            Boolean match = compareOp(leftVal, type, rightVal);
+            // returns a result only if the comparison condition is met.
+            Map<String, Object> result = new HashMap<>();
+            result.put(VALUE, match ? 1 : 0);
+            results.add(result);
+            return results;
+        }
+
+        // scalar and vector
+        if (leftIsScalar) {
+            Object leftVal = leftResult.get(0).get(SCALAR);
+            for (Map<String, Object> rightItem : rightResult) {
+                Object rightVal = rightItem.getOrDefault(VALUE, null);
+                if (isValidValue(rightVal)) {
                     continue;
                 }
-                // queryValues may be a list of values, or a single value
-                Object matchValue = evaluateCondition(queryValues, operator, threshold);
-                Map<String, Object> resultMap = new HashMap(item);
-                resultMap.put(VALUE, matchValue);
-                // if matchValue is null, mean not match the threshold
-                // if not null, mean match the threshold
-                result.add(resultMap);
+                Boolean match = compareOp(leftVal, type, rightVal);
+                Map<String, Object> result = new HashMap<>(rightItem);
+                if (boolModifier) {
+                    result.put(VALUE, match ? 1 : 0);
+                    results.add(result);
+                } else {
+                    result.put(VALUE, match ? rightVal : null);
+                    results.add(result);
+                }
             }
-            return result;
+            return results;
         }
-        return new LinkedList<>();
+
+        // vector and scalar
+        if (rightIsScalar) {
+            Object rightVal = rightResult.get(0).get(SCALAR);
+            for (Map<String, Object> leftItem : leftResult) {
+                Object leftVal = leftItem.getOrDefault(VALUE, null);
+                if (isValidValue(leftVal)) {
+                    continue;
+                }
+                Boolean match = compareOp(leftVal, type, rightVal);
+                Map<String, Object> result = new HashMap<>(leftItem);
+                if (boolModifier) {
+                    result.put(VALUE, match ? 1 : 0);
+                    results.add(result);
+                } else {
+                    result.put(VALUE, match ? leftVal : null);
+                    results.add(result);
+                }
+            }
+            return results;
+        }
+
+        // vector and vector
+        Map<String, Map<String, Object>> rightMap = rightResult.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .collect(Collectors.toMap(this::labelKey, item -> item, (existing, replacement) -> existing));
+
+        for (Map<String, Object> leftItem : leftResult) {
+            Object leftVal = leftItem.getOrDefault(VALUE, null);
+            if (isValidValue(leftVal)) {
+                continue;
+            }
+            Map<String, Object> rightItem = rightMap.get(labelKey(leftItem));
+            if (rightItem == null) {
+                continue;
+            }
+            Object rightVal = rightItem.get(VALUE);
+            if (isValidValue(rightVal)) {
+                continue;
+            }
+            Boolean match = compareOp(leftVal, type, rightVal);
+            Map<String, Object> result = new HashMap<>(leftItem);
+            if (boolModifier) {
+                result.put(VALUE, match ? 1 : 0);
+                results.add(result);
+            } else {
+                result.put(VALUE, match ? leftVal : null);
+                results.add(result);
+            }
+        }
+        return results;
     }
 
     @Override
     public List<Map<String, Object>> visitAndExpr(AlertExpressionParser.AndExprContext ctx) {
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
+        List<Map<String, Object>> results = new ArrayList<>();
 
-        Map<String, Object> leftMap = null;
-        boolean leftMatch = false;
-        Map<String, Object> rightMap = null;
-        boolean rightMatch = false;
-        for (Map<String, Object> item : leftOperand) {
-            if (leftMap == null) {
-                leftMap = item;
+        // build a hash set of the right-side tag collection
+        Set<String> rightLabelsSet = rightOperand.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .map(this::labelKey)
+                .collect(Collectors.toSet());
+
+        // iterate over the left side, O(1) match
+        for (Map<String, Object> leftItem : leftOperand) {
+            Object leftVal = leftItem.get(VALUE);
+            if (leftVal == null) {
+                continue;
             }
-            if (item.get(VALUE) != null) {
-                leftMap = item;
-                leftMatch = true;
-                break;
-            }
-        }
-        for (Map<String, Object> item : rightOperand) {
-            if (rightMap == null) {
-                rightMap = item;
-            }
-            if (item.get(VALUE) != null) {
-                rightMap = item;
-                rightMatch = true;
-                break;
+            String labelKey = labelKey(leftItem);
+            if (rightLabelsSet.contains(labelKey)) {
+                results.add(new HashMap<>(leftItem));
             }
         }
-        if (leftMatch && rightMatch) {
-            rightMap.putAll(leftMap);
-            return new LinkedList<>(List.of(rightMap));
-        } else if (leftMap != null) {
-            leftMap.put(VALUE, null);
-            return new LinkedList<>(List.of(leftMap));
-        } else if (rightMap != null) {
-            rightMap.put(VALUE, null);
-            return new LinkedList<>(List.of(rightMap));
-        }
-        return new LinkedList<>();
+        return results;
     }
 
     @Override
@@ -127,92 +188,51 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
 
-        Map<String, Object> leftMap = null;
-        boolean leftMatch = false;
-        Map<String, Object> rightMap = null;
-        boolean rightMatch = false;
-        for (Map<String, Object> item : leftOperand) {
-            if (leftMap == null) {
-                leftMap = item;
+        // build a hashMap of the left-hand label collection
+        Map<String, Map<String, Object>> leftLabelMap = leftOperand.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .collect(Collectors.toMap(this::labelKey, HashMap::new, (k1, k2) -> k1));
+
+        // first add all the non-empty items on the left side
+        List<Map<String, Object>> results = new ArrayList<>(leftLabelMap.values());
+
+        // add the term that has a value on the right side and not on the left side
+        for (Map<String, Object> rightItem : rightOperand) {
+            Object rightVal = rightItem.get(VALUE);
+            if (rightVal == null) {
+                continue;
             }
-            if (item.get(VALUE) != null) {
-                leftMap = item;
-                leftMatch = true;
-                break;
-            }
-        }
-        for (Map<String, Object> item : rightOperand) {
-            if (rightMap == null) {
-                rightMap = item;
-            }
-            if (item.get(VALUE) != null) {
-                rightMap = item;
-                rightMatch = true;
-                break;
+            String key = labelKey(rightItem);
+            if (!leftLabelMap.containsKey(key)) {
+                results.add(new HashMap<>(rightItem));
             }
         }
-        if (leftMatch && rightMatch) {
-            rightMap.putAll(leftMap);
-            return new LinkedList<>(List.of(rightMap));
-        } else if (leftMatch) {
-            return new LinkedList<>(List.of(leftMap));
-        } else if (rightMatch) {
-            return new LinkedList<>(List.of(rightMap));
-        } else {
-            if (leftMap != null && rightMap != null) {
-                rightMap.putAll(leftMap);
-                return new LinkedList<>(List.of(rightMap));
-            } else if (leftMap != null) {
-                return new LinkedList<>(List.of(leftMap));
-            } else if (rightMap != null) {
-                return new LinkedList<>(List.of(rightMap));
-            }
-        }
-        return new LinkedList<>();
+        return results;
     }
 
     @Override
     public List<Map<String, Object>> visitUnlessExpr(AlertExpressionParser.UnlessExprContext ctx) {
         List<Map<String, Object>> leftOperand = visit(ctx.left);
         List<Map<String, Object>> rightOperand = visit(ctx.right);
-        Map<String, Object> leftMap = null;
-        boolean leftMatch = false;
-        Map<String, Object> rightMap = null;
-        boolean rightMatch = false;
-        for (Map<String, Object> item : leftOperand) {
-            if (leftMap == null) {
-                leftMap = item;
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        // build a hash set of the right-side tag collection
+        Set<String> rightLabelSet = rightOperand.stream()
+                .filter(item -> item.get(VALUE) != null)
+                .map(this::labelKey)
+                .collect(Collectors.toSet());
+
+        // iterate over the left side, O(1) match
+        for (Map<String, Object> leftItem : leftOperand) {
+            Object leftVal = leftItem.get(VALUE);
+            if (leftVal == null) {
+                continue;
             }
-            if (item.get(VALUE) != null) {
-                leftMap = item;
-                leftMatch = true;
-                break;
-            }
-        }
-        for (Map<String, Object> item : rightOperand) {
-            if (rightMap == null) {
-                rightMap = item;
-            }
-            if (item.get(VALUE) != null) {
-                rightMap = item;
-                rightMatch = true;
-                break;
+            if (!rightLabelSet.contains(labelKey(leftItem))) {
+                results.add(new HashMap<>(leftItem));
             }
         }
-        if (leftMatch && !rightMatch) {
-            return new LinkedList<>(List.of(leftMap));
-        } else {
-            if (leftMap != null) {
-                leftMap.put(VALUE, null);
-                return new LinkedList<>(List.of(leftMap));
-            } else {
-                if (rightMap != null) {
-                    rightMap.put(VALUE, null);
-                    return new LinkedList<>(List.of(rightMap));
-                }
-            }
-        }
-        return new LinkedList<>();
+        return results;
     }
 
     @Override
@@ -220,7 +240,7 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         double value = Double.parseDouble(ctx.number().getText());
         List<Map<String, Object>> numAsList = new ArrayList<>();
         Map<String, Object> valueMap = new HashMap<>();
-        valueMap.put(THRESHOLD, value);
+        valueMap.put(SCALAR, value);
         numAsList.add(valueMap);
         return numAsList;
     }
@@ -247,84 +267,56 @@ public class AlertExpressionEvalVisitor extends AlertExpressionBaseVisitor<List<
         return callSqlOrPromql(tokens.getText(ctx.string()));
     }
 
-    private Object evaluateCondition(Object value, String operator, Double threshold) {
-        // value may be a list of values, or a single value
-        switch (operator) {
-            case ">":
-                // if value is list, return the max value
-                if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).max(Double::compareTo).orElse(null);
-                    if (doubleValue != null) {
-                        return doubleValue > threshold ? doubleValue : null;
-                    } else {
-                        return null;
-                    }
-                } else {
-                    return Double.parseDouble(value.toString()) > threshold ? value : null;
-                }
-            case ">=":
-                if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).max(Double::compareTo).orElse(null);
-                    if (doubleValue != null) {
-                        return doubleValue >= threshold ? doubleValue : null;
-                    } else {
-                        return null;
-                    }
-                } else {
-                    return Double.parseDouble(value.toString()) >= threshold ? value : null;
-                }
-            case "<":
-                if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).min(Double::compareTo).orElse(null);
-                    if (doubleValue != null) {
-                        return doubleValue < threshold ? doubleValue : null;
-                    } else {
-                        return null;
-                    }
-                } else {
-                    return Double.parseDouble(value.toString()) < threshold ? value : null;
-                }
-            case "<=":
-                if (value instanceof List<?> values) {
-                    Double doubleValue = values.stream().map(v -> Double.valueOf(v.toString())).min(Double::compareTo).orElse(null);
-                    if (doubleValue != null) {
-                        return doubleValue <= threshold ? doubleValue : null;
-                    } else {
-                        return null;
-                    }
-                } else {
-                    return Double.parseDouble(value.toString()) <= threshold ? value : null;
-                }
-            case "==":
-                if (value instanceof List<?> values) {
-                    for (Object v : values) {
-                        if (v.equals(threshold)) {
-                            return v;
-                        }
-                    }
-                    return null;
-                } else {
-                    return value.equals(threshold) ? value : null;
-                }
-            case "!=":
-                if (value instanceof List<?> values) {
-                    for (Object v : values) {
-                        if (v.equals(threshold)) {
-                            return null;
-                        }
-                    }
-                    return value;
-                } else {
-                    return value.equals(threshold) ? null : value;
-                }
-            default:
-                // unsupported operator todo add more operator
-                return null;
+    private List<Map<String, Object>> callSqlOrPromql(String text) {
+        String script = text.substring(1, text.length() - 1);
+        return executor.execute(script);
+    }
+
+    /**
+     * Generate tag key (excluding `__name__` and `__value__` and `__timestamp__`)
+     */
+    private String labelKey(Map<String, Object> labelsMap) {
+        if (null == labelsMap || labelsMap.isEmpty()) {
+            return "-";
+        }
+        String key = labelsMap.entrySet().stream()
+                .filter(e -> !e.getKey().equals(VALUE) && !e.getKey().equals(NAME) && !e.getKey().equals(TIMESTAMP))
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + "=" + (e.getValue() == null ? "" : e.getValue()))
+                .collect(Collectors.joining(","));
+        return key.isEmpty() ? "-" : key;
+    }
+
+    private boolean isScalar(List<Map<String, Object>> context) {
+        return CollectionUtils.isNotEmpty(context)
+                && context.size() == 1
+                && context.get(0).containsKey(SCALAR)
+                && null != context.get(0).get(SCALAR);
+    }
+
+    private double parseStrToDouble(String text) {
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException e) {
+            throw new ExpressionVisitorException("number format exception", e);
         }
     }
 
-    private List<Map<String, Object>> callSqlOrPromql(String text){
-        String script = text.substring(1, text.length() - 1);
-        return executor.execute(script);
+    private boolean isValidValue(Object val) {
+        return val == null || val instanceof List<?>;
+    }
+
+    private Boolean compareOp(Object leftVal, int opType, Object rightVal) {
+        double left = parseStrToDouble(leftVal.toString());
+        double right = parseStrToDouble(rightVal.toString());
+        return switch (opType) {
+            case AlertExpressionParser.GT -> left > right;
+            case AlertExpressionParser.GE -> left >= right;
+            case AlertExpressionParser.LT -> left < right;
+            case AlertExpressionParser.LE -> left <= right;
+            case AlertExpressionParser.EQ -> left == right;
+            case AlertExpressionParser.NE -> left != right;
+            default -> false;
+        };
     }
 }

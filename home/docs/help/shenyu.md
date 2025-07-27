@@ -5,7 +5,7 @@ sidebar_label: Apache ShenYu
 keywords: [open source monitoring tool, open source apache shenyu monitoring tool, monitoring apache shenyu metrics]
 ---
 
-> monitor ShenYu running status(JVM-related), include request response and other related metrics.
+> monitor ShenYu running status (JVM-related), include request response and other related metrics.
 
 ## Pre-monitoring operations
 

@@ -27,7 +27,7 @@ help:
   zh-CN: EMQX 是一款开源的大规模分布式 MQTT 消息服务器。Hertzbeat对EMQX MQTT消息服务器 5.0+ 版本的通用指标进行测量监控，<br>您可以点击 “<i>新建 EMQX 消息服务器</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: EMQX is an open source large-scale distributed MQTT message server. Hertzbeat measures and monitors common metrics of the EMQX message server 5.0+ version.<br>You can click "<i>New EMQX message server</i>" and configure it, or select "<i>More operations</i>", Import existing configuration.
   zh-TW: EMQX 是一款開源的大規模分散式 MQTT 訊息伺服器。 Hertzbeat對EMQX MQTT訊息伺服器 5.0+ 版本的通用指標進行測量監控，<br>您可以點擊“<i>新建 EMQX 訊息伺服器</i>” 並進行配置，或者選擇“<i>更多操作</i>” ，導入已有配置。
-  ja-JP: EMQXは、オープンソースの大規模分散MQTTメッセージサーバーです。HertzbeatはEMQX MQTTメッセージサーバー（バージョン5.0+）の一般的なフォーマンスのメトリック監視します。<br>「<i>新規 EMQX</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: EMQXは、オープンソースの大規模分散MQTTメッセージサーバーです。HertzbeatはEMQX MQTTメッセージサーバー（バージョン5.0+）の一般的なフォーマンスのメトリクスを監視します。<br>「<i>新規 EMQX</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/emqx
   en-US: https://hertzbeat.apache.org/docs/help/emqx
@@ -179,7 +179,7 @@ metrics:
     i18n:
       zh-CN: 指标
       en-US: Metrics
-      ja-JP: メトリック
+      ja-JP: メトリクス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -203,31 +203,31 @@ metrics:
         i18n:
           zh-CN: 发送数据包
           en-US: Packets Sent
-          ja-JP: 送信パケット
+          ja-JP: 転送されたパケット
       - field: packets_received
         type: 0
         i18n:
           zh-CN: 接收数据包
           en-US: Packets Received
-          ja-JP: 受信パケット
+          ja-JP: 受信されたパケット
       - field: bytes_sent
         type: 0
         i18n:
           zh-CN: 发送字节
           en-US: Bytes Sent
-          ja-JP: 送信バイト数
+          ja-JP: 転送されたバイト数
       - field: bytes_received
         type: 0
         i18n:
           zh-CN: 接收字节
           en-US: Bytes Received
-          ja-JP: 受信バイト数
+          ja-JP: 受信されたバイト数
       - field: messages_sent
         type: 0
         i18n:
           zh-CN: 发送消息
           en-US: Messages Sent
-          ja-JP: 送信メッセージ
+          ja-JP: 転送されたメッセージ
       - field: messages_acked
         type: 0
         i18n:
@@ -257,13 +257,13 @@ metrics:
         i18n:
           zh-CN: 会话创建
           en-US: Session Created
-          ja-JP: 目標ホスト
+          ja-JP: 作成されたセッション
       - field: session_discarded
         type: 0
         i18n:
           zh-CN: 会话丢弃
           en-US: Session Discarded
-          ja-JP: 目標ホスト
+          ja-JP: 廃棄されたセッション
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - client.connected
@@ -324,7 +324,7 @@ metrics:
     i18n:
       zh-CN: 统计
       en-US: Stats
-      ja-JP: スタッツ
+      ja-JP: 統計
     priority: 2
     fields:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
