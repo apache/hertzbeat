@@ -34,7 +34,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 * new login page
 
-  ![HertzBeat](/img/blog//blog-new-login-page.png)
+  ![HertzBeat](/img/blog/blog-new-login-page.png)
 
   ![HertzBeat](/img/blog/blog-new-dashboard.png)
 
