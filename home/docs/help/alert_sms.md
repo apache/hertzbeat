@@ -32,7 +32,7 @@ alerter:
 ```
 
 1. Create a signature (sign-name) in Tencent Cloud SMS  
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/3a4c287d-b23d-4398-8562-4894296af485)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-signature.png)
 
 2. Create a message template (template-id) in Tencent Cloud SMS
 
@@ -40,13 +40,13 @@ alerter:
    Monitor: {1}, Alert Level: {2}. Content: {3}
    ```
 
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/face71a6-46d5-452c-bed3-59d2a975afeb)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-template.png)
 
 3. Create an application (app-id) in Tencent Cloud SMS  
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/2732d710-37fa-4455-af64-48bba273c2f8)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-app.png)
 
 4. Obtain Tencent Cloud Access Management credentials (secret-id, secret-key)  
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/36f056f0-94e7-43db-8f07-82893c98024e)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-access.png)
 
 ### Alibaba Cloud SMS Configuration
 
