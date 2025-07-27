@@ -21,6 +21,7 @@ app: push
 name:
   zh-CN: 推送方式监控
   en-US: Push Style Monitor
+  ja-JP: プッシュ方法のモニター
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
@@ -29,6 +30,7 @@ params:
     name:
       zh-CN: 推送模块Host
       en-US: Push Module Host
+      ja-JP: プッシュモジュールのホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -40,6 +42,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -53,6 +56,7 @@ params:
     name:
       zh-CN: 监控数据字段
       en-US: Metrics fields
+      ja-JP: メトリクスフィールド
     # type-param field type(most mapping the html input type)
     type: metrics-field
     # required-true or false
@@ -65,6 +69,7 @@ metrics:
     i18n:
       zh-CN: 指标
       en-US: Metrics
+      ja-JP: メトリクス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
