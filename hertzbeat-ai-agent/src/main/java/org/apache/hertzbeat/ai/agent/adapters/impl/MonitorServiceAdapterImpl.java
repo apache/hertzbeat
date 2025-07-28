@@ -19,9 +19,9 @@
 package org.apache.hertzbeat.ai.agent.adapters.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
-import com.usthe.sureness.util.SurenessContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
+import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
 import org.springframework.data.domain.Page;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
@@ -46,13 +46,28 @@ public class MonitorServiceAdapterImpl implements MonitorServiceAdapter {
             Byte status,
             String sort,
             String order,
-            int pageIndex,
-            int pageSize,
+            Integer pageIndex,
+            Integer pageSize,
             String labels) {
         try {
+            // Provide default values for all nullable parameters
+            if (sort == null || sort.trim().isEmpty()) {
+                sort = "gmtCreate";
+            }
+            if (order == null || order.trim().isEmpty()) {
+                order = "desc";
+            }
+            if (pageIndex == null) {
+                pageIndex = 0;
+            }
+            if (pageSize == null) {
+                pageSize = 8;
+            }
+            
             Object monitorService = null;
-            SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
+            SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current security subject: {}", subjectSum);
+
             try {
                 monitorService = SpringContextHolder.getBean("monitorServiceImpl");
             } catch (Exception e) {
@@ -71,12 +86,13 @@ public class MonitorServiceAdapterImpl implements MonitorServiceAdapter {
             Page<Monitor> result = (Page<Monitor>) method.invoke(
                     monitorService,
                     ids, app, search, status, sort, order, pageIndex, pageSize, labels);
-
+            log.debug("MonitorServiceAdapter.getMonitors result: {}", result.getContent());
             return result;
 
         } catch (NoSuchMethodException e) {
             throw new RuntimeException("Method not found: getMonitors", e);
         } catch (Exception e) {
+            log.debug("Failed to invoke getMonitors via adapter", e);
             throw new RuntimeException("Failed to invoke getMonitors via adapter", e);
         }
     }

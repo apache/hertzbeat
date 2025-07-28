@@ -43,6 +43,8 @@ public interface MonitorTools {
             String labels,
             String sort,
             String order,
-            int pageIndex,
-            int pageSize);
+            Integer pageIndex,
+            Integer pageSize,
+            ToolContext context);
+
 }

@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.ai.agent.tools.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
-import io.modelcontextprotocol.server.McpSyncServerExchange;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
@@ -64,11 +63,12 @@ public class MonitorToolsImpl implements MonitorTools {
             @ToolParam(description = "Monitor labels, e.g., 'env:prod,instance:22' (default: null)", required = false) String labels,
             @ToolParam(description = "Sort field, e.g., 'name' (default: gmtCreate)", required = false) String sort,
             @ToolParam(description = "Sort order, 'asc' or 'desc' (default: desc)", required = false) String order,
-            @ToolParam(description = "Page index (default: 0)", required = false) int pageIndex,
-            @ToolParam(description = "Page size (default: 8)", required = false) int pageSize) {
+            @ToolParam(description = "Page index (default: 0)", required = false) Integer pageIndex,
+            @ToolParam(description = "Page size (default: 8)", required = false) Integer pageSize,
+            ToolContext context) {
         try {
             Page<Monitor> result = monitorServiceAdapter.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
-            log.info("MonitorServiceAdapter.getMonitors result: {}", result);
+            log.debug("MonitorServiceAdapter.getMonitors result: {}", result);
             return result.getContent().stream().map(Monitor::getName).toList().toString();
         } catch (Exception e) {
             return "error is" + e.getMessage();
@@ -79,12 +79,8 @@ public class MonitorToolsImpl implements MonitorTools {
     @Tool(name = "add_monitor", description = "Add a new monitor")
     public String addMonitor(@ToolParam(description = "Name of the monitor") String name, ToolContext context) {
         log.debug("Adding monitor with name: {}", name);
-        log.debug("Tool context keys: {}", context.getContext().keySet());
-        McpSyncServerExchange exchangeObj = (McpSyncServerExchange) context.getContext().get("exchange");
-        log.debug("MCP exchange object: {}", exchangeObj);
         SubjectSum subjectSum = McpContextHolder.getSubject();
         log.debug("Current subject in tool: {}", subjectSum);
-        log.debug("Tool call history: {}", context.getToolCallHistory());
         return "Monitor added: " + name;
     }
 

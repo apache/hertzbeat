@@ -34,8 +34,8 @@ public interface MonitorServiceAdapter {
         Byte status,
         String sort,
         String order,
-        int pageIndex,
-        int pageSize,
+        Integer pageIndex,
+        Integer pageSize,
         String labels
     );
 } 

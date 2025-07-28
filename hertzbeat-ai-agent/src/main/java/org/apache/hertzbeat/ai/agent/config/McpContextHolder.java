@@ -25,7 +25,7 @@ import org.springframework.core.NamedInheritableThreadLocal;
  */
 public final class McpContextHolder {
     private static final ThreadLocal<SubjectSum> subjectHolder =
-            new NamedInheritableThreadLocal<>("AI Agent Security Context");
+            new NamedInheritableThreadLocal<>("MCP Security and User Identification Context");
 
     private McpContextHolder() {}
 
