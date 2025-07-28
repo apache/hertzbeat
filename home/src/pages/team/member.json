@@ -86,6 +86,11 @@
       "githubId": "30208283",
       "gitUrl": "https://github.com/LiuTianyou",
       "name": "LiuTianyou"
+    },
+    {
+      "githubId": "25810623",
+      "gitUrl": "https://github.com/Aias00",
+      "name": "Aias00"
     }
   ],
   "committer" : [
@@ -115,11 +120,6 @@
       "name": "Shown"
     },
     {
-      "githubId": "25810623",
-      "gitUrl": "https://github.com/Aias00",
-      "name": "Aias00"
-    },
-    {
       "githubId": "61108539",
       "gitUrl": "https://github.com/zuobiao-zhou",
       "name": "Yuxuan Zhang"
@@ -133,6 +133,16 @@
       "githubId": "69385076",
       "gitUrl": "https://github.com/pwallk",
       "name": "Kang Li"
+    },
+    {
+      "githubId": "22274133",
+      "gitUrl": "https://github.com/masamiyui",
+      "name": "Yijun Yin"
+    },
+    {
+      "githubId": "73413979",
+      "gitUrl": "https://github.com/bigcyy",
+      "name": "Yang Chen"
     }
   ]
 }

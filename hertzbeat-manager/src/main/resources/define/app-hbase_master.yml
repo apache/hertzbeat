@@ -21,12 +21,13 @@ app: hbase_master
 name:
   zh-CN: Apache Hbase Master
   en-US: Apache Hbase Master
+  ja-JP: Apache Hbase Master
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Hbase 数据库 Master 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache Hbase Master</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the Master node monitoring indicators of the Hbase database. <br>You can click "<i>New Apache Hbase Master</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 Hbase 數據庫 Master 节點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache Hbase Master</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-
+  ja-JP: Hertzbeat は HbaseデータベースのMasterノードの一般的なメトリクスを監視します。<br>「<i>新規 Apache Hbase Master</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hbase_master/
   en-US: https://hertzbeat.apache.org/docs/help/hbase_master/
@@ -38,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +65,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -76,6 +80,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -87,6 +92,7 @@ metrics:
     i18n:
       zh-CN: Master服务信息
       en-US: Master Service Info
+      ja-JP: マスターサービス情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -98,21 +104,25 @@ metrics:
         i18n:
           zh-CN: 活跃RegionServer数量
           en-US: numRegionServers
+          ja-JP: 活躍的なRegionServer数
       - field: numDeadRegionServers
         type: 0
         i18n:
           zh-CN: 异常RegionServer数量
           en-US: numDeadRegionServers
+          ja-JP: 異常的なRegionServer数
       - field: averageLoad
         type: 0
         i18n:
           zh-CN: 集群平均负载
           en-US: averageLoad
+          ja-JP: 平均ロード
       - field: clusterRequests
         type: 0
         i18n:
           zh-CN: 集群请求数量
           en-US: clusterRequests
+          ja-JP: クラスターのリクエスト数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.numRegionServers
@@ -137,6 +147,7 @@ metrics:
     i18n:
       zh-CN: Region In Transition 信息
       en-US: Region In Transition Info
+      ja-JP: Region In Transition 情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -148,16 +159,19 @@ metrics:
         i18n:
           zh-CN: 当前的 RIT 数量
           en-US: ritCount
+          ja-JP: RIT数
       - field: ritCountOverThreshold
         type: 0
         i18n:
           zh-CN: 超过阈值的 RIT 数量
           en-US: ritCountOverThreshold
+          ja-JP: 閾値を超えたRIT数
       - field: ritOldestAge
         type: 0
         i18n:
           zh-CN: 最老的RIT的持续时间
           en-US: ritOldestAge
+          ja-JP: 最古のRITのスパン
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.ritCount
@@ -180,6 +194,7 @@ metrics:
     i18n:
       zh-CN: 基础信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -191,48 +206,57 @@ metrics:
         i18n:
           zh-CN: 当前活跃RegionServer列表
           en-US: liveRegionServers
+          ja-JP: 活躍的なRegionServer
       - field: deadRegionServers
         type: 1
         i18n:
           zh-CN: 当前离线RegionServer列表
           en-US: deadRegionServers
+          ja-JP: オフラインRegionServer
       - field: zookeeperQuorum
         type: 1
         i18n:
           zh-CN: Zookeeper列表
           en-US: zookeeperQuorum
+          ja-JP: zookeeper定足数
       - field: masterHostName
         type: 1
         i18n:
           zh-CN: Master节点
           en-US: masterHostName
+          ja-JP: マスターホスト名
       - field: BalancerCluster_num_ops
         type: 0
         i18n:
           zh-CN: 集群负载均衡次数
           en-US: BalancerCluster_num_ops
+          ja-JP: クラスターのロードバランシング回数
       - field: numActiveHandler
         type: 0
         i18n:
           zh-CN: RPC句柄数
           en-US: numActiveHandler
+          ja-JP: RPCハンドル数
       - field: receivedBytes
         type: 0
         unit: 'MB'
         i18n:
           zh-CN: 集群接收数据量(MB)
           en-US: receivedBytes
+          ja-JP: 受信されたバイト
       - field: sentBytes
         type: 0
         unit: 'MB'
         i18n:
           zh-CN: 集群发送数据量(MB)
           en-US: sentBytes
+          ja-JP: 転送されたバイト
       - field: clusterRequests
         type: 0
         i18n:
           zh-CN: 集群总请求数量
           en-US: clusterRequests
+          ja-JP: クラスターのリクエスト数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.beans[?(@.name == "Hadoop:service=HBase,name=Master,sub=Server")].['tag.liveRegionServers']

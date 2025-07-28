@@ -27,7 +27,7 @@ Keywords: [Open source monitoring tool, open source database monitoring, Mysql d
 #### The premise of the operation is that you already have the Mysql environment and the HertzBeat environment
 
 - Mysql [Installation and deployment document](https://www.runoob.com/mysql/mysql-install.html)
-- HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
+- HertzBeat [Installation and deployment documentation](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 #### Add monitoring of Mysql database on the open source monitoring tool HertzBeat monitoring page
 
@@ -40,7 +40,7 @@ Keywords: [Open source monitoring tool, open source database monitoring, Mysql d
 2. Configure the parameters required for the new monitoring Mysql database
 
    On the monitoring page, fill in Mysql **service IP**, **monitoring port** (default 3306), **account password, etc.**, and finally click OK to add.
-   For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/mysql/) <https://hertzbeat.com/docs/help> /mysql/
+   For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.apache.org/docs/help/mysql/) <https://hertzbeat.apache.org/docs/help> /mysql/
 
    ![HertzBeat](/img/blog/monitor-mysql-2.png)
 
@@ -88,7 +88,7 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
    Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-   - Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
    - Configure the receiver parameters in HertzBeat as follows.
 
    【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】

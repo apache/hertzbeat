@@ -26,8 +26,8 @@ name:
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMX 协议</a> 对 Apache ActiveMQ 消息中间件的运行状态，节点，Topic等相关指标（broker、topic、memory pool、class loading、thread）进行监测。<br><span class='help_module_span'>⚠️注意：您需要在 ActiveMQ 开启 JMX 服务。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/activemq'>点击查看开启步骤</a>。</span>
   en-US: "HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMX protocol</a> to monitor the running status, nodes, topics, and other metrics of Apache ActiveMQ message-oriented middleware. <br><span class='help_module_span'>⚠️Note: You should enable the JMX service in ActiveMQ. <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/activemq'>Click here to view the specific steps.</a></span>"
-  zh-TW: HertzBeat使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMX 協定</a> 對 Apache ActiveMQ 消息中介軟體的運行狀態，節點，Topic 等相關名額（broker、topic、memory pool、class loading、thread）進行監測。<br><span class='help_module_span'> ⚠️注意：您需要在 ActiveMQ 開啟 JMX 服務。<a class='help_module_content' href=' https://hertzbeat.apache.org/zh-cn/docs/help/activemq'>點擊查看開啟步驟</a>。</span>
-  ja-JP: HertzBeatは <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMXプロトコルを介して</a> Apache ActiveMQメッセージングシステムのランタイムステータス、ノード、トピック、その他の関連メトリックを監視します。<br><span class='help_module_span'> ⚠️注意：ActiveMQ で JMX サービスを有効にする必要があります。<a class='help_module_content' href=' https://hertzbeat.apache.org/zh-cn/docs/help/activemq'>クリックしてガイドを見ます</a>。</span>
+  zh-TW: HertzBeat使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMX 協定</a> 對 Apache ActiveMQ 消息中介軟體的運行狀態，節點，Topic 等相關名額（broker、topic、memory pool、class loading、thread）進行監測。<br><span class='help_module_span'> ⚠️注意：您需要在 ActiveMQ 開啟 JMX 服務。<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/activemq'>點擊查看開啟步驟</a>。</span>
+  ja-JP: HertzBeatは <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'> JMXプロトコルを介して</a> Apache ActiveMQメッセージングシステムのランタイムステータス、ノード、トピック、その他の関連メトリクスを監視します。<br><span class='help_module_span'> ⚠️注意：ActiveMQ で JMX サービスを有効にする必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/activemq'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/activemq
   en-US: https://hertzbeat.apache.org/docs/help/activemq
@@ -196,7 +196,7 @@ metrics:
         i18n:
           zh-CN: 持久化
           en-US: Persistence
-          ja-JP: 永続性
+          ja-JP: 永続化
         type: 1
       - field: DataDirectory
         i18n:
@@ -271,19 +271,19 @@ metrics:
         i18n:
           zh-CN: 平均消息大小
           en-US: Average Message Size
-          ja-JP: 平均メッセージサイズ
+          ja-JP: メッセージの平均サイズ
         type: 0
       - field: MaxMessageSize
         i18n:
           zh-CN: 最大消息大小
           en-US: Max Message Size
-          ja-JP: 最大メッセージサイズ
+          ja-JP: メッセージの最大サイズ
         type: 0
       - field: MinMessageSize
         i18n:
           zh-CN: 最小消息大小
           en-US: Min Message Size
-          ja-JP: 最小メッセージサイズ
+          ja-JP: メッセージの最小サイズ
         type: 0
     protocol: jmx
     jmx:
@@ -372,7 +372,7 @@ metrics:
         i18n:
           zh-CN: 存储消息大小
           en-US: Store Message Size
-          ja-JP: ストレージメッセージサイズ
+          ja-JP: ストレージメッセージのサイズ
       - field: AverageEnqueueTime
         type: 0
         unit: ms
@@ -407,21 +407,21 @@ metrics:
         i18n:
           zh-CN: 平均消息大小
           en-US: Average Message Size
-          ja-JP: 平均メッセージサイズ
+          ja-JP: メッセージの平均サイズ
       - field: MaxMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 最大消息大小
           en-US: Max Message Size
-          ja-JP: 最大メッセージサイズ
+          ja-JP: メッセージの最大サイズ
       - field: MinMessageSize
         type: 0
         unit: B
         i18n:
           zh-CN: 最小消息大小
           en-US: Min Message Size
-          ja-JP: 最小メッセージサイズ
+          ja-JP: メッセージの最小サイズ
     units:
       - MemoryLimit=B->MB
     protocol: jmx
@@ -446,14 +446,14 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Name
-          ja-JP: 指標名
+          ja-JP: メトリクス名
       - field: committed
         type: 0
         unit: MB
         i18n:
           zh-CN: 已分配内存
           en-US: Committed
-          ja-JP: コミットメモリー
+          ja-JP: コミットされたメモリ
       - field: init
         type: 0
         unit: MB
@@ -474,7 +474,7 @@ metrics:
         i18n:
           zh-CN: 已使用内存
           en-US: Used
-          ja-JP: 使用済みメモリ
+          ja-JP: 使用したメモリ
     units:
       - committed=B->MB
       - init=B->MB

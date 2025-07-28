@@ -23,6 +23,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { Rule, RuleSet, QueryBuilderConfig, QueryBuilderClassNames } from '@kerwin612/ngx-query-builder';
 import { NzCascaderFilter } from 'ng-zorro-antd/cascader';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -52,7 +53,8 @@ export class AlertSettingComponent implements OnInit {
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private message: NzMessageService
   ) {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
     this.qbFormCtrl.valueChanges.subscribe(() => {
@@ -124,6 +126,10 @@ export class AlertSettingComponent implements OnInit {
   ];
 
   isSelectTypeModalVisible = false;
+
+  previewData: any[] = [];
+  previewColumns: Array<{ title: string; key: string; width?: string }> = [];
+  previewTableLoading = false;
 
   ngOnInit(): void {
     this.loadAlertDefineTable();
@@ -477,6 +483,7 @@ export class AlertSettingComponent implements OnInit {
           getDefine$.unsubscribe();
           this.isLoadingEdit = -1;
           this.isManageModalVisible = true;
+          this.clearPreview();
         })
       )
       .subscribe(
@@ -959,7 +966,6 @@ export class AlertSettingComponent implements OnInit {
   selectedLabels: Set<string> = new Set(); // Selected labels
   inputLabelValue = '';
   labelInputElement!: ElementRef<HTMLInputElement>;
-  monitorDataByLabel: any[] = [];
 
   $asTransferItems = (data: unknown): TransferItem[] => data as TransferItem[];
   onConnectModalCancel() {
@@ -1000,7 +1006,6 @@ export class AlertSettingComponent implements OnInit {
 
   handleDeleteLabel(removedLabel: string): void {
     this.selectedLabels.delete(removedLabel);
-    this.showMonitorByLabel();
   }
 
   showLabelInput(): void {
@@ -1014,21 +1019,8 @@ export class AlertSettingComponent implements OnInit {
     if (this.inputLabelValue && !this.selectedLabels.has(this.inputLabelValue)) {
       this.selectedLabels.add(this.inputLabelValue);
     }
-    this.showMonitorByLabel();
     this.inputLabelValue = '';
     this.labelInputVisible = false;
-  }
-
-  showMonitorByLabel(): void {
-    const monitorsByLabel = this.transferData.filter(item => item.labels.some((label: string) => this.selectedLabels.has(label)));
-    this.monitorDataByLabel = monitorsByLabel.map(item => {
-      return {
-        key: item.key,
-        title: item.title,
-        description: item.description,
-        labels: item.labels
-      };
-    });
   }
 
   onFilterLabelsChange(newLabels: string[], direction: string): void {
@@ -1188,8 +1180,8 @@ export class AlertSettingComponent implements OnInit {
         .replace(/^\s*&&\s*/, '')
         .replace(/\s*&&\s*$/, '')
         // Remove monitor label binding expressions
-        .replace(/&&\s*\(?(equals\(__labels__,\s*"[^"]+"\)(\s*or\s*equals\(__labels__,\s*"[^"]+"\))*)\)?/, '')
-        .replace(/\(?(equals\(__labels__,\s*"[^"]+"\)(\s*or\s*equals\(__labels__,\s*"[^"]+"\))*)\)?\s*&&\s*/, '')
+        .replace(/&&\s*\(?(contains\(__labels__,\s*"[^"]+"\)(\s*or\s*contains\(__labels__,\s*"[^"]+"\))*)\)?/, '')
+        .replace(/\(?(contains\(__labels__,\s*"[^"]+"\)(\s*or\s*contains\(__labels__,\s*"[^"]+"\))*)\)?\s*&&\s*/, '')
     );
   }
 
@@ -1301,7 +1293,7 @@ export class AlertSettingComponent implements OnInit {
 
   // Parse label from expression
   private parseLabelFromExpr(expr: string) {
-    const labelPattern = /equals\(__labels__,\s*"([^"]+)"\)/g;
+    const labelPattern = /contains\(__labels__,\s*"([^"]+)"\)/g;
     let match;
     this.selectedLabels.clear();
     while ((match = labelPattern.exec(expr)) !== null) {
@@ -1423,5 +1415,91 @@ export class AlertSettingComponent implements OnInit {
 
   onTextareaDragLeave(event: DragEvent): void {
     (event.target as HTMLElement).classList.remove('drag-over');
+  }
+
+  get monitorDataByLabel(): any[] {
+    return this.transferData
+      .filter(item => item.labels.some((label: string) => this.selectedLabels.has(label)))
+      .map(item => ({
+        key: item.key,
+        title: item.title,
+        description: item.description,
+        labels: item.labels
+      }));
+  }
+
+  onPreviewExpr(): void {
+    if (!this.define.expr) {
+      this.clearPreview();
+      this.previewTableLoading = false;
+      return;
+    }
+    this.previewTableLoading = true;
+    const COLUMNS = [{ title: 'metric', key: 'metric_data' } as any, { title: 'value', key: '__value__', width: '120px' } as any];
+    this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.expr).subscribe({
+      next: res => {
+        if (res.code === 15 || res.code === 1 || res.code === 4) {
+          this.message.error(res.msg || 'Expression parsing exception');
+          this.clearPreview();
+          this.previewTableLoading = false;
+          return;
+        }
+        if (res.code === 0 && Array.isArray(res.data)) {
+          this.previewColumns = COLUMNS;
+          this.previewData = res.data.reduce((acc, item) => {
+            const processedItem = this.filterEmptyFields(item);
+
+            if (processedItem.__value__ == null) return acc;
+
+            const labels: string[] = [];
+            let metricName = '';
+
+            for (const [key, value] of Object.entries(processedItem)) {
+              if (key === '__value__') continue;
+              if (key === '__name__') {
+                metricName = String(value);
+              } else {
+                labels.push(`${key}="${value}"`);
+              }
+            }
+
+            const metric = metricName ? (labels.length > 0 ? `${metricName}{${labels.join(', ')}}` : metricName) : `{${labels.join(', ')}}`;
+
+            acc.push({
+              metric_data: metric,
+              __value__: processedItem.__value__
+            });
+
+            return acc;
+          }, [] as any[]);
+
+          if (this.previewData.length === 0) {
+            this.previewData = [];
+          }
+        } else {
+          this.clearPreview();
+        }
+        this.previewTableLoading = false;
+      },
+      error: err => {
+        this.clearPreview();
+        this.previewTableLoading = false;
+        this.message.error('Failed to get preview data.');
+      }
+    });
+  }
+
+  private filterEmptyFields(mapData: Record<string, any>): Record<string, any> {
+    return Object.entries(mapData).reduce<Record<string, any>>((acc, [key, value]) => {
+      if (value == null) return acc;
+      if (typeof value === 'string' && value.trim() === '') return acc;
+      acc[key] = value;
+      return acc;
+    }, {});
+  }
+
+  private clearPreview(): void {
+    this.previewData = [];
+    this.previewColumns = [];
   }
 }

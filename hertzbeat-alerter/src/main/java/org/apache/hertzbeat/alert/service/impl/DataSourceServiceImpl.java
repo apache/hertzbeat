@@ -24,11 +24,14 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.hertzbeat.alert.expr.AlertExpressionEvalVisitor;
 import org.apache.hertzbeat.alert.expr.AlertExpressionLexer;
 import org.apache.hertzbeat.alert.expr.AlertExpressionParser;
 import org.apache.hertzbeat.alert.service.DataSourceService;
+import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
+import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +39,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,6 +48,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class DataSourceServiceImpl implements DataSourceService {
+
+    protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Setter
     @Autowired(required = false)
@@ -69,7 +75,7 @@ public class DataSourceServiceImpl implements DataSourceService {
             throw new IllegalArgumentException("Empty expression");
         }
         if (executors == null || executors.isEmpty()) {
-            throw new IllegalArgumentException("No query executor found");
+            throw new IllegalArgumentException(bundle.getString("alerter.datasource.executor.not.found"));
         }
         QueryExecutor executor = executors.stream().filter(e -> e.support(datasource)).findFirst().orElse(null);
 
@@ -80,6 +86,9 @@ public class DataSourceServiceImpl implements DataSourceService {
         expr = expr.replaceAll("\\s+", " ");
         try {
             return evaluate(expr, executor);
+        } catch (AlertExpressionException ae) {
+            log.error("Calculate query parse error {}: {}", datasource, ae.getMessage());
+            throw ae;
         } catch (Exception e) {
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
             throw new RuntimeException("Query execution failed", e);
@@ -90,9 +99,11 @@ public class DataSourceServiceImpl implements DataSourceService {
         CommonTokenStream tokens = tokenStreamCache.get(expr, this::createTokenStream);
         AlertExpressionParser parser = new AlertExpressionParser(tokens);
         ParseTree tree = expressionCache.get(expr, e -> parser.expr());
+        if (null != tokens && tokens.LA(1) != Token.EOF) {
+            throw new AlertExpressionException(bundle.getString("alerter.calculate.parse.error"));
+        }
         AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens);
         return visitor.visit(tree);
-
     }
 
     private CommonTokenStream createTokenStream(String expr) {

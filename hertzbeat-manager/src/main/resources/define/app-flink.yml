@@ -21,11 +21,13 @@ app: flink
 name:
   zh-CN: Apache Flink
   en-US: Apache Flink
+  ja-JP: Apache Flink
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Flink流引擎的通用指标进行测量监控。<br>您可以点击 “<i>新建 Flink流引擎</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Flink Stream through general performance metric. You could click the "<i>New Flink Stream</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 Flink流引擎的通用名額進行量測監控。<br>您可以點擊“<i>新建Flink流引擎</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: HertzBeat は Flinkの一般的なメトリクスを監視します。<br>「<i>新規 Flink</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/flink
   en-US: https://hertzbeat.apache.org/docs/help/flink
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL利用
     # type-param field type(boolean mapping the html switch tag)
     type: boolean
     # required-true or false
@@ -70,6 +75,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(most mapping the html input type)
     type: radio
     required: false
@@ -84,6 +90,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -92,6 +99,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
     hide: true
@@ -110,6 +118,7 @@ metrics:
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
@@ -143,26 +152,31 @@ metrics:
         i18n:
           zh-CN: 插槽总数
           en-US: Slots Total
+          ja-JP: スロット数
       - field: slots_used        # slots used count
         type: 0
         i18n:
           zh-CN: 已用插槽数
           en-US: Slots Used
+          ja-JP: 使用したスロット数
       - field: task_total        # task count
         type: 0
         i18n:
           zh-CN: 任务总数
           en-US: Task Total
+          ja-JP: タスク数
       - field: jobs_running        # Number of running tasks
         type: 0
         i18n:
           zh-CN: 正在运行的任务数
           en-US: Jobs Running
+          ja-JP: 実行中のタスク数
       - field: jobs_failed        # Number of failed tasks
         type: 0
         i18n:
           zh-CN: 已经失败的任务数
           en-US: Jobs Failed
+          ja-JP: 失敗したタスク数
     aliasFields:
       - slots-total
       - slots-available

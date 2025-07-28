@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 对 ElasticSearch 数据库监控通用指标进行测量监控。<br>您可以点击 “<i>新建 ElasticSearch</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring ElasticSearch through general performance metrics. You could click the "<i>New ElasticSearch</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 ElasticSearch 資料庫監控通用名額進行量測監控。<br>您可以點擊“<i>新建ElasticSearch</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: HertzBeat は ElasticSearch データベースの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 ElasticSearch</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: HertzBeat は ElasticSearch データベースの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 ElasticSearch</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/elasticsearch
   en-US: https://hertzbeat.apache.org/docs/help/elasticsearch

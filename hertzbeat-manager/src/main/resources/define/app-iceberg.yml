@@ -21,11 +21,13 @@ app: iceberg
 name:
   zh-CN: Apache Iceberg
   en-US: Apache Iceberg
+  ja-JP: Apache Iceberg
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 <a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a> 暴露的通用性能指标(basic、environment、thread、code_cache)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 Apache Iceberg 中的信息，需要您的 Apache Iceberg 应用集成并开启 Hive Server2, <a class='help_module_content'  href='https://hertzbeat.apache.org/zh-cn/docs/help/hive'>点击查看具体步骤</a>。</span>
   en-US: HertzBeat collects and monitors Apache Iceberg through general performance metric(health, environment, threads, memory_used) that exposed by the Hive Server2. <br><span class='help_module_span'>⚠️Note:You should make sure that your Apache Iceberg application have already integrated and enabled the Hive Server2, <a class='help_module_content'  href='https://hertzbeat.apache.org/docs/help/hive'>click here to see the specific steps.</a></span>
   zh-TW: HertzBeat 對<a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a>暴露的通用性能指標（basic、environment、thread、code_cache）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控Apache Iceberg 中的指標，需要您的Apache Iceberg 應用集成並開啟 Hive Server2，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hive'>點擊查看具體步驟</a>。</span>
+  ja-JP: HertzBeat は <a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a> の一般的なパフォーマンスのメトリクスを監視します。<span class='help_module_span'>⚠️注意：Apache Iceberg で Hive Server2を有効にする必要があります。<a class='help_module_content'  href='https://hertzbeat.apache.org/docs/help/hive'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/iceberg
   en-US: https://hertzbeat.apache.org/docs/help/iceberg
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL
     # When the type is boolean, the frontend will display a switch for it.
     type: boolean
     # required-true or false
@@ -71,6 +76,7 @@ params:
     name:
       zh-CN: Base Path
       en-US: Base Path
+      ja-JP: Base Path
     # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
     type: text
     # default value
@@ -83,6 +89,10 @@ params:
 metrics:
   # metrics - available
   - name: available
+    i18n:
+      zh-CN: 可用性
+      en-US: Availability
+      ja-JP: 可用性
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -93,6 +103,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
         type: 0
         unit: ms
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -116,27 +127,32 @@ metrics:
     i18n:
       zh-CN: 基本信息
       en-US: Basic
+      ja-JP: 基礎情報
     priority: 1
     fields:
       - field: vm_name
         i18n:
           zh-CN: 虚拟机名称
           en-US: VM Name
+          ja-JP: 仮想マシン名
         type: 1
       - field: vm_vendor
         i18n:
           zh-CN: 虚拟机供应商
           en-US: VM Vendor
+          ja-JP: 仮想マシンベンダー
         type: 1
       - field: vm_version
         i18n:
           zh-CN: 虚拟机版本
           en-US: VM Version
+          ja-JP: 仮想マシンバージョン
         type: 1
       - field: up_time
         i18n:
           zh-CN: 运行时间
           en-US: Uptime
+          ja-JP: アップタイム
         type: 0
         unit: ms
     aliasFields:
@@ -164,6 +180,7 @@ metrics:
     i18n:
       zh-CN: 环境信息
       en-US: Environment
+      ja-JP: 環境
     priority: 2
     # collect metrics content
     fields:
@@ -172,31 +189,37 @@ metrics:
         i18n:
           zh-CN: https 代理端口
           en-US: https Proxy Port
+          ja-JP: https プロキシポート
         type: 0
       - field: os_name
         i18n:
           zh-CN: os 名称
           en-US: OS Name
+          ja-JP: OS名
         type: 1
       - field: os_version
         i18n:
           zh-CN: os 版本
           en-US: OS Version
+          ja-JP: OSバージョン
         type: 1
       - field: os_arch
         i18n:
           zh-CN: os 架构
           en-US: OS Arch
+          ja-JP: OSアーキテクチャ
         type: 1
       - field: java_runtime_name
         i18n:
           zh-CN: java 运行时名称
           en-US: Java Runtime Name
+          ja-JP: Java ランタイム名
         type: 1
       - field: java_runtime_version
         i18n:
           zh-CN: java 运行时版本
           en-US: Java Runtime Version
+          ja-JP: Java ランタイムバージョン
         type: 1
     # metric alias list, used to identify metrics in query results
     aliasFields:
@@ -237,27 +260,32 @@ metrics:
     i18n:
       zh-CN: 线程
       en-US: Thread
+      ja-JP: スレッド
     priority: 3
     fields:
       - field: thread_count
         i18n:
           zh-CN: 线程数
           en-US: Thread Count
+          ja-JP: スレッド総数
         type: 0
       - field: total_started_thread
         i18n:
           zh-CN: 启动线程数
           en-US: Total Started Thread
+          ja-JP: スレッド開始数
         type: 0
       - field: peak_thread_count
         i18n:
           zh-CN: 峰值线程数
           en-US: Peak Thread Count
+          ja-JP: ピークスレッド数
         type: 0
       - field: daemon_thread_count
         i18n:
           zh-CN: 守护线程数
           en-US: Daemon Thread Count
+          ja-JP: デーモンスレッド数
         type: 0
     aliasFields:
       - $.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount
@@ -283,30 +311,35 @@ metrics:
     i18n:
       zh-CN: 代码缓存
       en-US: Code Cache
+      ja-JP: コードキャッシュ
     priority: 4
     fields:
       - field: committed
         i18n:
           zh-CN: 已提交
           en-US: Committed
+          ja-JP: コミット
         type: 1
         unit: MB
       - field: init
         i18n:
           zh-CN: 初始化
           en-US: Init
+          ja-JP: イニシャル
         type: 0
         unit: MB
       - field: max
         i18n:
           zh-CN: 最大
           en-US: Max
+          ja-JP: 最大
         type: 0
         unit: MB
       - field: used
         i18n:
           zh-CN: 已使用
           en-US: Used
+          ja-JP: 使用済み
         type: 0
         unit: MB
     aliasFields:

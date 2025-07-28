@@ -73,14 +73,14 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
-      ja-JP: HTTPS利用
+      ja-JP: SSL利用
     type: boolean
     required: false
     defaultValue: false
 
 # collect metrics config list
 metrics:
-  - name: network_info # 指标集合名称
+  - name: network_info
     i18n:
       zh-CN: 网络信息
       en-US: Network Info

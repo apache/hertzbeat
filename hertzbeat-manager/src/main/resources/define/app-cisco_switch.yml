@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 思科交换机 的通用指标(可用性，系统信息，端口流量等)进行采集监控。<br>您可以点击 “<i>新建 思科通用交换机</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring Cisco Switch general performance metrics. <br>You can click the "<i>New Cisco Switch</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 協議</a> 對 思科交換機 的通用指標(可用性，系統信息，端口流量等)進行采集監控。<br>您可以點擊 “<i>新建 思科通用交換機</i>” 並進行配置SNMP相關參數添加，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP プロトコルを介して</a> シスコ・スイッチングハブの一般的なメトリック監視します。<br>「<i>新規 シスコ・スイッチングハブ</i>」をクリックしてSNMPなどのパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP プロトコルを介して</a> シスコ・スイッチングハブの一般的なメトリクスを監視します。<br>「<i>新規 シスコ・スイッチングハブ</i>」をクリックしてSNMPなどのパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/cisco_switch
   en-US: https://hertzbeat.apache.org/docs/help/cisco_switch
@@ -361,13 +361,13 @@ metrics:
         i18n:
           zh-CN: 入流量
           en-US: In Octets
-          ja-JP: 受信バイト数
+          ja-JP: 受信されたバイト数
       - field: in_discards
         type: 0
         i18n:
           zh-CN: 入丢包数
           en-US: In Discards
-          ja-JP: 受信パケットロス数
+          ja-JP: 受信されたパケットのロス数
       - field: in_errors
         type: 0
         i18n:
@@ -380,19 +380,19 @@ metrics:
         i18n:
           zh-CN: 出流量
           en-US: Out Octets
-          ja-JP: 送信バイト数
+          ja-JP: 転送されたバイト数
       - field: out_discards
         type: 0
         i18n:
           zh-CN: 出丢包数
           en-US: Out Discards
-          ja-JP: 送信パケットロス数
+          ja-JP: 転送されたパケットロス数
       - field: out_errors
         type: 0
         i18n:
           zh-CN: 出错包数
           en-US: Out Errors
-          ja-JP: 送信異常パケット数
+          ja-JP: 転送された異常パケット数
       - field: admin_status
         type: 1
         i18n:
@@ -404,7 +404,7 @@ metrics:
         i18n:
           zh-CN: 当前状态
           en-US: Current Status
-          ja-JP: ステータス
+          ja-JP: 現在のステータス
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - ifIndex

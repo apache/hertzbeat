@@ -98,7 +98,7 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 
 ### 如何参与Hertzbeat
 
-+ 官网有非常完善的贡献者指南：[贡献者指南 | HertzBeat](https://hertzbeat.com/docs/community/contribution)
++ 官网有非常完善的贡献者指南：[贡献者指南 | HertzBeat](https://hertzbeat.apache.org/docs/community/contribution)
 
 + Github issues：[Issues · apache/hertzbeat (github.com)](https://github.com/apache/hertzbeat/issues)
 

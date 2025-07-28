@@ -26,7 +26,7 @@ help:
   zh-CN: Hertzbeat 对 DORIS 数据库BE的通用性能指标（load channel count、memtable flush total、process thread num、light work max threads等）进行采集监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseBE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Doris DatabaseBE through general performance metric such as load channel count, memtable flush total, process thread num and light work max threads. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseBE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 DORIS 資料庫BE的通用性能指標（load channel count、memtable flush total、process thread num、light work max threads等）進行採集監控，支持版本為DORIS2.0.0。<br>您可以點擊“<i>新建Doris DatabaseBE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: Hertzbeat は DORIS 2.0.0のデータベースBEの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 Doris DatabaseBE</i>」をクリックしてパラメタを設定した後、新規することができます。
+  ja-JP: Hertzbeat は DORIS 2.0.0のデータベースBEの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Doris DatabaseBE</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/doris_be/
   en-US: https://hertzbeat.apache.org/docs/help/doris_be/
@@ -178,7 +178,7 @@ metrics:
     i18n:
       zh-CN: 批量发送线程池队列大小
       en-US: Send Batch Thread Pool Queue Size
-      ja-JP: バッチ送信スレッドプールのキューサイズ
+      ja-JP: バッチ転送されたスレッドプールのキューサイズ
     priority: 6
     fields:
       - field: value

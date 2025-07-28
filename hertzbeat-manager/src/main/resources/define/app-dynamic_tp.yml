@@ -26,8 +26,8 @@ name:
 help:
   zh-CN: HertzBeat 对 DynamicTp actuator 暴露的线程池性能指标（thread pool）进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要集成使用 DynamicTp，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/dynamic_tp'>点击查看集成步骤</a>。
   en-US: HertzBeat monitoring DynamicTp of the thread Pool Performance Metrics which exposed by DynamicTp actuator. <br><span class='help_module_span'>Note⚠️:You should integrate and use DynamicTp, <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/dynamic_tp'>Click here to view the specific steps.</a>"
-  zh-TW: HertzBeat 對 DynamicTp actuator暴露的執行緒池性能指標（thread pool）進行採集監控。<br><span class='help_ module_ span'>注意⚠️：您需要集成使用DynamicTp，<a class='help_ module_ content' href='https://hertzbeat.apache.org/zh-cn/docs/help/dynamic_tp'>點擊查看集成步驟</a>。
-  ja-JP: HertzBeat は DynamicTpスレッドプールの一般的なパフォーマンスのメトリック監視します。<br><span class='help_module_span'>注意⚠️：DynamicTpの使用を統合する必要があり、<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/dynamic_tp'>クリックしてガイドを見ます</a>。
+  zh-TW: HertzBeat 對 DynamicTp actuator暴露的執行緒池性能指標（thread pool）進行採集監控。<br><span class='help_module_span'>注意⚠️：您需要集成使用DynamicTp，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/dynamic_tp'>點擊查看集成步驟</a>。
+  ja-JP: HertzBeat は DynamicTpスレッドプールの一般的なパフォーマンスのメトリクスを監視します。<br><span class='help_module_span'>注意⚠️：DynamicTpの使用を統合する必要があり、<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/dynamic_tp'>クリックしてガイドを見ます</a>。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/dynamic_tp/
   en-US: https://hertzbeat.apache.org/docs/help/dynamic_tp/
@@ -128,7 +128,7 @@ metrics:
         i18n:
           zh-CN: 公平
           en-US: fair
-          ja-JP: 目標ホスト
+          ja-JP: 公平
         type: 1
       - field: reject_handler_name
         type: 1
@@ -211,7 +211,7 @@ metrics:
         i18n:
           zh-CN: 队列剩余容量
           en-US: queue remaining capacity
-          ja-JP: 使用可能なキュー容量
+          ja-JP: 使用可能のキュー容量
         type: 0
         unit: MB
       - field: active_count

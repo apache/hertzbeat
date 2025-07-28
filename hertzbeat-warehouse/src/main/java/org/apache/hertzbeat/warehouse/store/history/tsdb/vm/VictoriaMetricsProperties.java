@@ -26,16 +26,22 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * Victoria metrics configuration information.
  */
-
-@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE + SignConstants.DOT + WarehouseConstants.STORE + SignConstants.DOT + WarehouseConstants.HistoryName.VM)
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+        + SignConstants.DOT
+        + WarehouseConstants.STORE
+        + SignConstants.DOT
+        + WarehouseConstants.HistoryName.VM)
 public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
                                         @DefaultValue("http://localhost:8428") String url,
                                         String username,
                                         String password,
                                         InsertConfig insert) {
 
-    record InsertConfig(@DefaultValue("1000") int bufferSize,
-                        @DefaultValue("3") int flushInterval) {
+    record InsertConfig(@DefaultValue("100") int bufferSize,
+                        @DefaultValue("3") int flushInterval,
+                        Compression compression) {
+    }
 
+    record Compression(@DefaultValue("false") boolean enabled) {
     }
 }

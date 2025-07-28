@@ -23,7 +23,7 @@ expression
 
 expr
     : LPAREN expr RPAREN                                          # ParenExpr
-    | left=expr op=(GE|LE|GT|LT|EQ|NE) right=expr                 # ComparisonExpr
+    | left=expr op=(GE|LE|GT|LT|EQ|NE) BOOL? right=expr          # ComparisonExpr
     | left=expr AND right=expr                                    # AndExpr
     | left=expr UNLESS right=expr                                 # UnlessExpr
     | left=expr OR right=expr                                     # OrExpr
@@ -156,7 +156,6 @@ conditionUnit
 promql
     : metricSelector instantVectorOp?
     | aggregationOperator LPAREN promql (BY labelList)? RPAREN
-    | promql binaryOperator promql
     | functionCall
     | promql LBRACKET duration RBRACKET
     | promql LBRACKET duration COLON duration RBRACKET
@@ -190,11 +189,6 @@ instantVectorOp
 
 aggregationOperator
     : SUM | AVG | COUNT | MIN | MAX | STDDEV | STDVAR | TOPK | BOTTOMK | QUANTILE
-    ;
-
-binaryOperator
-    : EQ | NE | GT | LT | GE | LE
-    | AND | OR | UNLESS
     ;
 
 // Lexer rules
@@ -260,6 +254,7 @@ LT      : '<' ;
 LE      : '<=' ;
 EQ      : '==' | '=' ;
 NE      : '!=' ;
+BOOL    : 'bool';
 
 // Delimiters
 LPAREN  : '(' ;

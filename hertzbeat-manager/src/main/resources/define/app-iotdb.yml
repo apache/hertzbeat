@@ -21,11 +21,13 @@ app: iotdb
 name:
   zh-CN: Apache IoTDB
   en-US: Apache IoTDB
+  ja-JP: Apache IoTDB
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 Apache IoTDB JVM相关的物联网时序数据库的运行状态，内存任务集群等相关指标(cluster node status、jvm memory committed bytes、jvm memory used bytes、jvm threads states threads、quantity、cache hit、queue、hrift connections) 进行监控。<br><span class='help_module_span'>⚠️注意：您需要在 IoTDB 开启 prometheus exporter metrics 接口，<a class='help_module_content' href='https://iotdb.apache.org/zh/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html'>点击查看开启步骤</a>。</span>
   en-US: HertzBeat monitoring the Apache IoTDB metrics such as operational status, memory, task, clusters, jvm etc. <br><span class='help_module_span'>⚠️Note:You should enable the prometheus metrics api in IoTDB. <a class='help_module_content' href='https://iotdb.apache.org/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html'>Click here to view the specific steps.</a></span>"
   zh-TW: HertzBeat 對 Apache IoTDB JVM相關的物聯網時序數據庫的運行狀態，內存任務集群等相關指標(cluster node status、jvm memory committed bytes、jvm memory used bytes、jvm threads states threads、quantity、cache hit、queue、hrift connections) 進行監控。<br><span class='help_module_span'>⚠️注意：您需要在 IoTDB 開啓 prometheus exporter metrics 接口，<a class='help_module_content' href='https://iotdb.apache.org/zh/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html'>點擊查看開啓步驟</a>。</span>
+  ja-JP: HertzBeat は Apache IoTDB Java仮想マシンについてのIoT時系列データベースを監視します。<br><span class='help_module_span'>⚠️注意：IoTDB で prometheus exporter metricsを有効にする必要があります。<a class='help_module_content' href='https://iotdb.apache.org/UserGuide/V0.13.x/Maintenance-Tools/Metric-Tool.html'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/iotdb/
   en-US: https://hertzbeat.apache.org/docs/help/iotdb/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -45,6 +48,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -56,6 +60,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     # hide param-true or false
@@ -69,6 +74,7 @@ metrics:
     i18n:
       zh-CN: 集群节点状态
       en-US: Cluster Node Status
+      ja-JP: クラスタノードステータス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -79,12 +85,14 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: name
+          ja-JP: 名前
         type: 1
         label: true
       - field: status
         i18n:
           zh-CN: 状态
           en-US: status
+          ja-JP: ステータス
         type: 0
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
@@ -115,23 +123,27 @@ metrics:
     i18n:
       zh-CN: JVM内存已提交
       en-US: JVM memory committed bytes
+      ja-JP: Java仮想マシンコミットされたメモリのバイト
     priority: 1
     fields:
       - field: area
         i18n:
           zh-CN: 区域
           en-US: Area
+          ja-JP: エリア
         type: 1
       - field: id
         i18n:
           zh-CN: 内存块Id
           en-US: Memory Block Id
+          ja-JP: メモリブロックId
         type: 1
         label: true
       - field: value
         i18n:
           zh-CN: JVM请求内存大小(当前)
           en-US: JVM requests memory size (current)
+          ja-JP: Java仮想マシンが要求するメモリのサイズ
         type: 0
         unit: MB
     units:
@@ -149,23 +161,27 @@ metrics:
     i18n:
       zh-CN: JVM内存已使用
       en-US: JVM memory used bytes
+      ja-JP: Java仮想マシン使用したメモリのバイト
     priority: 2
     fields:
       - field: area
         i18n:
           zh-CN: 区域
           en-US: Area
+          ja-JP: エリア
         type: 1
       - field: id
         i18n:
           zh-CN: 内存块Id
           en-US: Memory Block Id
+          ja-JP: メモリブロックId
         type: 1
         label: true
       - field: value
         i18n:
           zh-CN: JVM已使用内存大小
           en-US: JVM used memory size
+          ja-JP: Java仮想マシン使用したメモリのサイズ
         type: 0
         unit: MB
     units:
@@ -183,18 +199,21 @@ metrics:
     i18n:
       zh-CN: JVM线程状态
       en-US: JVM thread state
+      ja-JP: Java仮想マシンスレッド状態
     priority: 3
     fields:
       - field: state
         i18n:
           zh-CN: 线程状态
           en-US: thread state
+          ja-JP: スレッド状態
         type: 1
         label: true
       - field: count
         i18n:
           zh-CN: 线程数量
           en-US: thread count
+          ja-JP: スレッド総数
         type: 0
     aliasFields:
       - state
@@ -214,28 +233,33 @@ metrics:
     i18n:
       zh-CN: 数量
       en-US: Quantity
+      ja-JP: 数量
     priority: 4
     fields:
       - field: id
         i18n:
           zh-CN: Id
           en-US: Id
+          ja-JP: Id
         type: 1
         label: true
       - field: name
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
         type: 1
       - field: type
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
         type: 1
       - field: value
         i18n:
           zh-CN: 值
           en-US: Value
+          ja-JP: 値
         type: 0
     aliasFields:
       - name
@@ -256,18 +280,21 @@ metrics:
     i18n:
       zh-CN: 缓存命中率
       en-US: Cache hit rate
+      ja-JP: キャッシュ命中率
     priority: 5
     fields:
       - field: name
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
         type: 1
         label: true
       - field: value
         i18n:
           zh-CN: 命中率
           en-US: Hit rate
+          ja-JP: 命中率
         type: 0
     protocol: http
     http:
@@ -282,28 +309,33 @@ metrics:
     i18n:
       zh-CN: 队列
       en-US: Queue
+      ja-JP: キュー
     priority: 6
     fields:
       - field: id
         i18n:
           zh-CN: ID
           en-US: ID
+          ja-JP: ID
         type: 1
         label: true
       - field: name
         i18n:
           zh-CN: 队列名称
           en-US: Queue name
+          ja-JP: キュー名
         type: 1
       - field: status
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
         type: 1
       - field: value
         i18n:
           zh-CN: 当前队列任务数量
           en-US: Number of tasks in queue
+          ja-JP: キューのタスク数
         type: 0
     aliasFields:
       - name
@@ -324,18 +356,21 @@ metrics:
     i18n:
       zh-CN: Thrift连接数
       en-US: Thrift connection number
+      ja-JP: Thrift接続数
     priority: 7
     fields:
       - field: name
         i18n:
           zh-CN: 连接名称
           en-US: Connection name
+          ja-JP: 接続名
         type: 1
         label: true
       - field: connection
         i18n:
           zh-CN: 连接数
           en-US: Connection number
+          ja-JP: 接続数
         type: 0
     aliasFields:
       - name

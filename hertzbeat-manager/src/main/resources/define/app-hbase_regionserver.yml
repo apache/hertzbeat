@@ -21,11 +21,13 @@ app: hbase_regionserver
 name:
   zh-CN: Apache Hbase RegionServer
   en-US: Apache Hbase RegionServer
+  ja-JP: Apache Hbase RegionServer
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Hbase 数据库 RegionServer 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache Hbase RegionServer</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the RegionServer node monitoring indicators of the Hbase database. <br>You can click "<i>New Apache Hbase RegionServer</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 Hbase 數據庫 RegionServer 节點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache Hbase RegionServer</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は HbaseデータベースのRegionServerノードの一般的なメトリクスを監視します。<br>「<i>新規 Apache Hbase RegionServer</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hbase_regionserver/
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +51,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +66,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -76,6 +81,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -87,6 +93,7 @@ metrics:
       i18n:
         zh-CN: RegionServer 服务信息
         en-US: RegionServer Service Info
+        ja-JP: RegionServerサービス情報
       # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
       # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
       priority: 0
@@ -98,24 +105,28 @@ metrics:
           i18n:
             zh-CN: Region数量
             en-US: regionCount
+            ja-JP: Region数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: readRequestCount
           type: 0
           i18n:
             zh-CN: 重启集群后的读请求数量
             en-US: readRequestCount
+            ja-JP: 読み取りリクエスト数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: writeRequestCount
           type: 0
           i18n:
             zh-CN: 重启集群后的写请求数量
             en-US: writeRequestCount
+            ja-JP: 書き込みリクエスト数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: averageRegionSize
           type: 0
           i18n:
             zh-CN: 平均Region大小
             en-US: averageRegionSize
+            ja-JP: Regionの平均サイズ
           unit: 'MB'
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: totalRequestCount
@@ -123,108 +134,126 @@ metrics:
           i18n:
             zh-CN: 全部请求数量
             en-US: totalRequestCount
+            ja-JP: リクエスト総数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: ScanTime_num_ops
           type: 0
           i18n:
             zh-CN: Scan 请求总量
             en-US: ScanTime_num_ops
+            ja-JP: Scan操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: Append_num_ops
           type: 0
           i18n:
             zh-CN: Append 请求量
             en-US: Append_num_ops
+            ja-JP: Append操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: Increment_num_ops
           type: 0
           i18n:
             zh-CN: Increment请求量
             en-US: Increment_num_ops
+            ja-JP: Increment操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: Get_num_ops
           type: 0
           i18n:
             zh-CN: Get 请求量
             en-US: Get_num_ops
+            ja-JP: Get操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: Delete_num_ops
           type: 0
           i18n:
             zh-CN: Delete 请求量
             en-US: Delete_num_ops
+            ja-JP: Delete操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: Put_num_ops
           type: 0
           i18n:
             zh-CN: Put 请求量
             en-US: Put_num_ops
+            ja-JP: Put操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: ScanTime_mean
           type: 0
           i18n:
             zh-CN: 平均 Scan 请求时间
             en-US: ScanTime_mean
+            ja-JP: Scan操作の平均時間
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: ScanTime_min
           type: 0
           i18n:
             zh-CN: 最小 Scan 请求时间
             en-US: ScanTime_min
+            ja-JP: Scan操作の最小時間
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: ScanTime_max
           type: 0
           i18n:
             zh-CN: 最大 Scan 请求时间
             en-US: ScanTime_max
+            ja-JP: Scan操作の最大時間
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: ScanSize_mean
           type: 0
           i18n:
             zh-CN: 平均 Scan 请求大小
             en-US: ScanSize_mean
+            ja-JP: Scan操作の平均サイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: ScanSize_min
           type: 0
           i18n:
             zh-CN: 最小 Scan 请求大小
             en-US: ScanSize_min
+            ja-JP: Scan操作の最小サイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: ScanSize_max
           type: 0
           i18n:
             zh-CN: 最大 Scan 请求大小
             en-US: ScanSize_max
+            ja-JP: Scan操作の最大サイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: slowPutCount
           type: 0
           i18n:
             zh-CN: 慢操作次数/Put
             en-US: slowPutCount
+            ja-JP: スローPut操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: slowGetCount
           type: 0
           i18n:
             zh-CN: 慢操作次数/Get
             en-US: slowGetCount
+            ja-JP: スローGet操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: slowAppendCount
           type: 0
           i18n:
             zh-CN: 慢操作次数/Append
             en-US: slowAppendCount
+            ja-JP: スローAppend操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: slowIncrementCount
           type: 0
           i18n:
             zh-CN: 慢操作次数/Increment
             en-US: slowIncrementCount
+            ja-JP: スローIncrement操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: slowDeleteCount
           type: 0
           i18n:
             zh-CN: 慢操作次数/Delete
             en-US: slowDeleteCount
+            ja-JP: スローDelete操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: blockCacheSize
           type: 0
@@ -232,36 +261,42 @@ metrics:
           i18n:
             zh-CN: 缓存块内存占用大小
             en-US: blockCacheSize
+            ja-JP: ブロックキャッシュのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: blockCacheCount
           type: 0
           i18n:
             zh-CN: 缓存块数量_Block Cache 中的 Block 数量
             en-US: blockCacheCount
+            ja-JP: ブロックキャッシュ数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: blockCacheExpressHitPercent
           type: 0
           i18n:
             zh-CN: 读缓存命中率
             en-US: blockCacheExpressHitPercent
+            ja-JP: ブロックキャッシュ命中率
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: memStoreSize
           type: 0
           i18n:
             zh-CN: Memstore 大小
             en-US: memStoreSize
+            ja-JP: Memstoreサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: FlushTime_num_ops
           type: 0
           i18n:
             zh-CN: RS写磁盘次数/MemStore Flush 写磁盘次数
             en-US: FlushTime_num_ops
+            ja-JP: MemStore Flush操作回数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: flushQueueLength
           type: 0
           i18n:
             zh-CN: Region Flush 队列长度
             en-US: flushQueueLength
+            ja-JP: Region Flushキューの長さ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: flushedCellsSize
           type: 0
@@ -269,18 +304,21 @@ metrics:
           i18n:
             zh-CN: flush到磁盘大小
             en-US: flushedCellsSize
+            ja-JP: flushedサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: storeCount
           type: 0
           i18n:
             zh-CN: Store 个数
             en-US: storeCount
+            ja-JP: Store数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: storeFileCount
           type: 0
           i18n:
             zh-CN: Storefile 个数
             en-US: storeFileCount
+            ja-JP: Storeファイル数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: storeFileSize
           type: 0
@@ -288,36 +326,42 @@ metrics:
           i18n:
             zh-CN: Storefile 大小
             en-US: storeFileSize
+            ja-JP: Storeファイルサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: compactionQueueLength
           type: 0
           i18n:
             zh-CN: Compaction 队列长度
             en-US: compactionQueueLength
+            ja-JP: Compactionキューの長さ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: percentFilesLocal
           type: 0
           i18n:
             zh-CN: Region 的 HFile 位于本地 HDFS data node的比例
             en-US: percentFilesLocal
+            ja-JP: Regionのローカルファイルのパーセント
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: percentFilesLocalSecondaryRegions
           type: 0
           i18n:
             zh-CN: Region 副本的 HFile 位于本地 HDFS data node的比例
             en-US: percentFilesLocalSecondaryRegions
+            ja-JP: Secondary　Regionのローカルファイルのパーセント
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: hlogFileCount
           type: 0
           i18n:
             zh-CN: WAL 文件数量
             en-US: hlogFileCount
+            ja-JP: WALファイル数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: hlogFileSize
           type: 0
           i18n:
             zh-CN: WAL 文件大小
             en-US: hlogFileSize
+            ja-JP: WALファイルサイズ
       # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
       aliasFields:
         - $.regionCount
@@ -414,6 +458,7 @@ metrics:
       i18n:
         zh-CN: RegionServer IPC 信息
         en-US: RegionServer IPC Info
+        ja-JP: RegionServer IPC 情報
       # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
       # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
       priority: 1
@@ -425,24 +470,28 @@ metrics:
           i18n:
             zh-CN: RPC句柄数
             en-US: numActiveHandler
+            ja-JP: RPCハンドル数
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: NotServingRegionException
           type: 0
           i18n:
             zh-CN: NotServingRegionException 异常数量
             en-US: NotServingRegionException
+            ja-JP: NotServingRegionException
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: RegionMovedException
           type: 0
           i18n:
             zh-CN: RegionMovedException异常数量
             en-US: RegionMovedException
+            ja-JP: RegionMovedException
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: RegionTooBusyException
           type: 0
           i18n:
             zh-CN: RegionTooBusyException异常数量
             en-US: RegionTooBusyException
+            ja-JP: RegionTooBusyException
       # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
       aliasFields:
         - $.numActiveHandler
@@ -468,6 +517,7 @@ metrics:
       i18n:
         zh-CN: RegionServer JVM 信息
         en-US: RegionServer JVM Info
+        ja-JP: RegionServer Java仮想マシン情報
       # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
       # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
       priority: 2
@@ -480,6 +530,7 @@ metrics:
           i18n:
             zh-CN: 进程使用的非堆内存大小
             en-US: MemNonHeapUsedM
+            ja-JP: 使用したノンヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemNonHeapCommittedM
           type: 0
@@ -487,6 +538,7 @@ metrics:
           i18n:
             zh-CN: 进程 commit 的非堆内存大小
             en-US: MemNonHeapCommittedM
+            ja-JP: コミットされたノンヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemHeapUsedM
           type: 0
@@ -494,6 +546,7 @@ metrics:
           i18n:
             zh-CN: 进程使用的堆内存大小
             en-US: MemHeapUsedM
+            ja-JP: 使用したヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemHeapCommittedM
           type: 0
@@ -501,6 +554,7 @@ metrics:
           i18n:
             zh-CN: 进程 commit 的堆内存大小
             en-US: MemHeapCommittedM
+            ja-JP: コミットされたヒープメモリのサイズ
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemHeapMaxM
           type: 0
@@ -508,6 +562,7 @@ metrics:
           i18n:
             zh-CN: 进程最大的堆内存大小
             en-US: MemHeapMaxM
+            ja-JP: ヒープメモリサイズの最大値
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: MemMaxM
           type: 0
@@ -515,12 +570,14 @@ metrics:
           i18n:
             zh-CN: 进程最大内存大小
             en-US: MemMaxM
+            ja-JP: メモリサイズの最大値
         # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
         - field: GcCount
           type: 0
           i18n:
             zh-CN: Young GC次数
             en-US: GcCount
+            ja-JP: GC回数
       # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
       aliasFields:
         - $.MemNonHeapUsedM

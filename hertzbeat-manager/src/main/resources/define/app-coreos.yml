@@ -27,7 +27,7 @@ help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 Fedora CoreOS 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 Fedora CoreOS</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH protocol</a> to monitors Fedora CoreOS operating system's general performance metrics such as cpu, memory, disk, basic, interface, disk_free, top_process etc. <br>You can click the "<i>New Fedora CoreOS</i>" and config host port and other related params to add, auth support password or secretKey. Or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 對 Fedora CoreOS 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Fedora CoreOS</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
-  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH プロトコルを介して</a> Fedora CoreOSの一般的なパフォーマンスのメトリック監視します。<br>「<i>新規 Fedora CoreOS</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH プロトコルを介して</a> Fedora CoreOSの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Fedora CoreOS</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/coreos
   en-US: https://hertzbeat.apache.org/docs/help/coreos
@@ -80,7 +80,7 @@ params:
     name:
       zh-CN: 复用连接
       en-US: Reuse Connection
-      ja-JP: コネクション再利用
+      ja-JP: 接続再利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -92,7 +92,7 @@ params:
     name:
       zh-CN: 使用代理
       en-US: Use Proxy Connection
-      ja-JP: プロキシコネクション利用
+      ja-JP: プロキシ接続利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -246,7 +246,7 @@ metrics:
         i18n:
           zh-CN: 操作系统版本
           en-US: System Version
-          ja-JP: システムバージョン
+          ja-JP: オーエスバージョン
       - field: uptime
         type: 1
         i18n:
@@ -415,7 +415,7 @@ metrics:
         i18n:
           zh-CN: 剩余可用内存
           en-US: Available Memory
-          ja-JP: 使用可能なメモリ
+          ja-JP: 使用可能のメモリ
       - field: usage
         type: 0
         unit: '%'
@@ -544,14 +544,14 @@ metrics:
         i18n:
           zh-CN: 入站数据流量
           en-US: Receive Bytes
-          ja-JP: 受信バイト数
+          ja-JP: 受信されたバイト数
       - field: transmit_bytes
         type: 0
         unit: Mb
         i18n:
           zh-CN: 出站数据流量
           en-US: Transmit Bytes
-          ja-JP: 送信バイト数
+          ja-JP: 転送されたバイト数
     units:
       - receive_bytes=B->MB
       - transmit_bytes=B->MB
@@ -679,7 +679,7 @@ metrics:
         i18n:
           zh-CN: 执行命令
           en-US: Command
-          ja-JP: 指令
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^
@@ -738,7 +738,7 @@ metrics:
         i18n:
           zh-CN: 执行命令
           en-US: Command
-          ja-JP: 指令
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^

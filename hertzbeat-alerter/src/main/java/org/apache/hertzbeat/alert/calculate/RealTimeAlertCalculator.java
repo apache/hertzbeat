@@ -183,9 +183,11 @@ public class RealTimeAlertCalculator {
             if (StringUtils.isBlank(expr)) {
                 continue;
             }
+            Long defineId = define.getId();
             Map<String, String> commonFingerPrints = new HashMap<>(8);
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
             // here use the alert name as finger, not care the alert name may be changed
+            commonFingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
             commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_NAME, instanceName);
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_HOST, instanceHost);
@@ -200,9 +202,9 @@ public class RealTimeAlertCalculator {
                     try {
                         if (match) {
                             // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                            afterThresholdRuleMatch(currentTimeMilli, commonFingerPrints, fieldValueMap, define, annotations);
+                            afterThresholdRuleMatch(defineId, currentTimeMilli, commonFingerPrints, fieldValueMap, define, annotations);
                         } else {
-                            handleRecoveredAlert(commonFingerPrints);
+                            handleRecoveredAlert(defineId, commonFingerPrints);
                         }
                         // if this threshold pre compile success, ignore blew
                         continue;
@@ -254,9 +256,9 @@ public class RealTimeAlertCalculator {
                     boolean match = execAlertExpression(fieldValueMap, expr, false);
                     try {
                         if (match) {
-                            afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define, annotations);
+                            afterThresholdRuleMatch(defineId, currentTimeMilli, fingerPrints, fieldValueMap, define, annotations);
                         } else {
-                            handleRecoveredAlert(fingerPrints);
+                            handleRecoveredAlert(defineId, fingerPrints);
                         }
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
@@ -334,9 +336,9 @@ public class RealTimeAlertCalculator {
                 .collect(Collectors.toList());
     }
 
-    private void handleRecoveredAlert(Map<String, String> fingerprints) {
+    private void handleRecoveredAlert(Long defineId, Map<String, String> fingerprints) {
         String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
-        SingleAlert firingAlert = alarmCacheManager.removeFiring(fingerprint);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(defineId, fingerprint);
         if (firingAlert != null) {
             // todo consider multi times to tig for resolved alert
             firingAlert.setTriggerTimes(1);
@@ -344,13 +346,14 @@ public class RealTimeAlertCalculator {
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
-        alarmCacheManager.removePending(fingerprint);
+        alarmCacheManager.removePending(defineId, fingerprint);
     }
 
-    private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
-                                         Map<String, Object> fieldValueMap, AlertDefine define, Map<String, String> annotations) {
+    private void afterThresholdRuleMatch(long defineId, long currentTimeMilli, Map<String, String> fingerPrints,
+                                         Map<String, Object> fieldValueMap, AlertDefine define,
+                                         Map<String, String> annotations) {
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
-        SingleAlert existingAlert = alarmCacheManager.getPending(fingerprint);
+        SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
         fieldValueMap.putAll(define.getLabels());
         int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
         if (existingAlert == null) {
@@ -382,11 +385,11 @@ public class RealTimeAlertCalculator {
             // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
                 newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                alarmCacheManager.putFiring(fingerprint, newAlert);
+                alarmCacheManager.putFiring(defineId, fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
             } else {
                 // Otherwise put into pending queue first
-                alarmCacheManager.putPending(fingerprint, newAlert);
+                alarmCacheManager.putPending(define.getId(), fingerprint, newAlert);
             }
         } else {
             // Update existing alert
@@ -396,9 +399,9 @@ public class RealTimeAlertCalculator {
             // Check if required trigger times reached
             if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
                 // Reached trigger times threshold, change to firing status
-                alarmCacheManager.removePending(fingerprint);
+                alarmCacheManager.removePending(defineId, fingerprint);
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
-                alarmCacheManager.putFiring(fingerprint, existingAlert);
+                alarmCacheManager.putFiring(defineId, fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }

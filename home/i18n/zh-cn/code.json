@@ -431,10 +431,10 @@
     "description": "The live editor label of the live codeblocks"
   },
   "convenient-content": {
-    "message": "{docker} {br}集监控-告警-通知为一体，支持应用服务，Web，数据库，缓存，操作系统，中间件，大数据，云原生，网络等监控阈值告警通知一步到位。{br} 易用友好，无需Agent，全WEB页面操作，鼠标点一点就能监控告警，零上手学习成本。{br}安全是最重要的，数据密钥全链路加密。"
+    "message": "{docker} {br}集监控-告警-通知为一体，支持应用服务，Web，数据库，缓存，操作系统，中间件，大数据，云原生，网络等监控阈值告警通知一步到位。{br} 易用友好，无需Agent，全WEB页面操作，鼠标点一点就能监控告警，无需学习成本。{br}安全是最重要的，数据密钥全链路加密。"
   },
   "custom-multi-support-content": {
-    "message": "将 Http,Jmx,Ssh,Snmp,Jdbc 等协议规范可配置模板化，只需在线配置YML就可自定义监控指标。{br} 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。{br}自由的告警阈值规则，邮箱，短信，钉钉，企业微信，飞书，Webhook等消息及时送达。{br} 您相信只需配置下就能适配新K8s监控类型吗？"
+    "message": "将 Http,Jmx,Ssh,Snmp,Jdbc 等协议规范可配置模板化，只需在线配置YML就可自定义监控指标。{br} 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。{br}灵活的告警阈值规则，邮箱，短信，钉钉，企业微信，飞书，Webhook等消息及时送达。{br} 您相信只需配置下就能适配新K8s监控类型吗？"
   },
   "opensource-content": {
     "message": "Apache HertzBeat (incubating) 是开源的，拥有一个包容开放的社区。{br}欢迎任何对此有兴趣的同学参与其中，无论是代码文档或者错别字，尊重社区的每一位，一起进步成长。{br}我们的代码正被部署到全球成千上万机器上。{github}"

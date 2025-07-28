@@ -20,11 +20,13 @@ app: hertzbeat
 name:
   zh-CN: HertzBeat
   en-US: HertzBeat
+  ja-JP: HertzBeat
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Hertzbeat 监控系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控系统</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors HertzBeat Monitor through general performance metric. You could click the "<i>New HertzBeat Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat對Hertzbeat監控系統的通用名額進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  zh-TW: Hertzbeat對Hertzbeat監控系統的通用指標進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat は Hertzbeatの一般的なメトリクスを監視します。<br>「<i>新規 Apache Hertzbeat</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat
   en-US: https://hertzbeat.apache.org/docs/help/hertzbeat
@@ -33,12 +35,14 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -47,12 +51,14 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     type: boolean
     required: true
   - field: timeout
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     type: number
     required: false
     hide: true
@@ -60,6 +66,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     type: radio
     required: false
     hide: true
@@ -72,6 +79,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -80,6 +88,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
     hide: true
@@ -90,6 +99,7 @@ metrics:
     i18n:
       zh-CN: 概要信息
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -102,26 +112,31 @@ metrics:
         i18n:
           zh-CN: 应用
           en-US: App
+          ja-JP: 応用
       - field: category
         type: 1
         i18n:
           zh-CN: 类别
           en-US: Category
+          ja-JP: カテゴリ
       - field: status
         type: 0
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
       - field: size
         type: 0
         i18n:
           zh-CN: 数量
           en-US: Size
+          ja-JP: サイズ
       - field: availableSize
         type: 0
         i18n:
           zh-CN: 可用数量
           en-US: Available Size
+          ja-JP: 利用可能なサイズ
     #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
     protocol: http
     # the config content when protocol is http
@@ -153,6 +168,7 @@ metrics:
     i18n:
       zh-CN: 内部队列
       en-US: Inner Queue
+      ja-JP: 内部キュー
     priority: 1
     fields:
       - field: responseTime
@@ -161,26 +177,31 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: alertDataQueue
         type: 0
         i18n:
           zh-CN: 变更数据队列
           en-US: Data Change Queue
+          ja-JP: データ変更キュー
       - field: metricsDataToAlertQueue
         type: 0
         i18n:
           zh-CN: 指标数据到变更队列
           en-US: Metrics Data to Change Queue
+          ja-JP: データ変更キュー
       - field: metricsDataToPersistentStorageQueue
         type: 0
         i18n:
           zh-CN: 指标数据到持久化队列
           en-US: Metrics Data to Persistent Queue
+          ja-JP: 永続キュー
       - field: metricsDataToMemoryStorageQueue
         type: 0
         i18n:
           zh-CN: 指标数据到内存存储队列
           en-US: Metrics Data to Memory Storage Queue
+          ja-JP: メモリストレージキュー
     protocol: http
     http:
       host: ^_^host^_^
@@ -202,6 +223,7 @@ metrics:
     i18n:
       zh-CN: 线程状态
       en-US: Thread State
+      ja-JP: スレッド状態
     visible: false
     priority: 1
     fields:
@@ -210,6 +232,7 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
     protocol: http
     http:
       host: ^_^host^_^
@@ -230,6 +253,7 @@ metrics:
     i18n:
       zh-CN: 线程
       en-US: Threads
+      ja-JP: スレッド
     priority: 3
     fields:
       - field: state
@@ -237,11 +261,13 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
       - field: number
         type: 0
         i18n:
           zh-CN: 数量
           en-US: Number
+          ja-JP: 総数
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
@@ -267,6 +293,7 @@ metrics:
     i18n:
       zh-CN: 空间名称
       en-US: Space Name
+      ja-JP: スペース名
     visible: false
     priority: 4
     fields:
@@ -275,6 +302,7 @@ metrics:
         i18n:
           zh-CN: ID
           en-US: ID
+          ja-JP: ID
     protocol: http
     http:
       host: ^_^host^_^
@@ -295,6 +323,7 @@ metrics:
     i18n:
       zh-CN: 内存使用
       en-US: Memory Used
+      ja-JP: 使用したメモリ
     priority: 5
     fields:
       - field: space
@@ -302,12 +331,14 @@ metrics:
         i18n:
           zh-CN: 空间
           en-US: Space
+          ja-JP: スペース
       - field: mem_used
         type: 0
         unit: MB
         i18n:
           zh-CN: 已使用内存
           en-US: Used Memory
+          ja-JP: 使用したメモリ
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
