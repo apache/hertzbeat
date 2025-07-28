@@ -109,4 +109,9 @@ public class AlarmCacheManager {
     private String getCustomKey(String fingerPrint) {
         return CUSTOM_FIRING_ROW_KEY + fingerPrint;
     }
+
+
+    public SingleAlert removeFiring(String fingerPrint) {
+        return this.firingAlertMap.remove(getCustomKey(fingerPrint), fingerPrint);
+    }
 }

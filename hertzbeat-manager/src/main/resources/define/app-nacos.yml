@@ -21,11 +21,13 @@ app: nacos
 name:
   zh-CN: Nacos分布式
   en-US: Nacos Server
+  ja-JP: Nacosサーバー
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 通过调用 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">Nacos Metrics 接口</a> 对 Nacos 注册配置中心服务的通用指标进行采集监控。<br>注意⚠️：需要您提前 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">开启暴露 Nacos Metrics 数据</a>，支持 Nacos 版本0.8+，您可以点击 “<i>新建 Nacos</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors metrics of the Nacos Server by calling the <a href="https://nacos.io/en-us/docs/monitor-guide.html">Nacos Metrics Api</a>. <br>Note⚠️:You need to <a href="https://nacos.io/en-us/docs/monitor-guide.html">enable exposure of Nacos Metrics data</a> in advance, support Nacos version 0.8+ , you can click "<i>New Nacos</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: Hertzbeat 通過調用 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">Nacos Metrics 接口</a> 對 Nacos 注冊配置中心服務的通用指標進行采集監控。<br>注意⚠️：需要您提前 <a href="https://nacos.io/zh-cn/docs/monitor-guide.html">開啓暴露 Nacos Metrics 數據</a>，支持 Nacos 版本0.8+，您可以點擊 “<i>新建 Nacos</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeatは、<a href="https://nacos.io/zh-cn/docs/monitor-guide.html">Nacos Metricsインタフェース</a>は、Nacosレジストレーション構成センターサービスの共通指標を収集監視します。<br/>注意⚠️：事前に<a href="https://nacos.io/zh-cn/docs/monitor-guide.html「＞Nacos Metricsデータの暴露をオンにし、Nacosバージョン0.8+をサポートします。「<i>新規Nacos</i>」をクリックして構成するか、「<i>その他の操作</i>」を選択して既存の構成をインポートできます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nacos
   en-US: https://hertzbeat.apache.org/docs/help/nacos
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 服务器Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: Nacos服务端口
       en-US: Nacos Port
+      ja-JP: Nacosポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +66,7 @@ metrics:
     i18n:
       zh-CN: CPU 使用率
       en-US: CPU Usage
+      ja-JP: CPU 使用率
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -72,6 +77,7 @@ metrics:
         i18n:
           zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
     aliasFields:
       - value
     calculates:
@@ -94,6 +100,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存使用
       en-US: JVM Memory Used
+      ja-JP: Java仮想マシンのメモリ使用量
     priority: 1
     fields:
       - field: area
@@ -101,18 +108,21 @@ metrics:
         i18n:
           zh-CN: 区域
           en-US: Area
+          ja-JP: エリア
       - field: id
         type: 1
         label: true
         i18n:
           zh-CN: ID
           en-US: ID
+          ja-JP: ID
       - field: value
         type: 0
         unit: MB
         i18n:
           zh-CN: 大小
           en-US: Size
+          ja-JP: サイズ
     units:
       - value=B->MB
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -133,6 +143,7 @@ metrics:
     i18n:
       zh-CN: Nacos 详情
       en-US: Nacos Monitor
+      ja-JP: Nacos 詳細情報
     priority: 2
     fields:
       - field: module
@@ -140,16 +151,19 @@ metrics:
         i18n:
           zh-CN: 模块
           en-US: Module
+          ja-JP: モジュール
       - field: name
         type: 1
         i18n:
           zh-CN: 指标名称
           en-US: Metric Name
+          ja-JP: メトリクス名
       - field: value
         type: 0
         i18n:
           zh-CN: 大小
           en-US: Value
+          ja-JP: サイズ
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # The config content when protocol is http
