@@ -4,7 +4,7 @@
 port = 4000
 host = "127.0.0.1"
 # Set env to "development" or "production", production use oauth2.0.
-env = "development"
+env = "production"
 
 [whitelist]
 commands = [
