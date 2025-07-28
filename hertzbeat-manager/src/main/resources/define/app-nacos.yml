@@ -157,8 +157,8 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Metric Name
-          ja-JP: 指標名
-      - field: メトリクス名
+          ja-JP: メトリクス名
+      - field: value
         type: 0
         i18n:
           zh-CN: 大小
