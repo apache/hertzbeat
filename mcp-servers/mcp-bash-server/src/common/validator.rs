@@ -31,7 +31,7 @@ impl Validator {
 
     /// Validate a command against the security blacklist and whitelist
     /// Returns Ok(()) if command is safe, Err(ErrorData) if command is blocked
-    /// 
+    ///
     /// Security Logic:
     /// 1. All commands are denied by default
     /// 2. Blacklist has higher priority than whitelist
@@ -48,7 +48,7 @@ impl Validator {
         }
 
         let full_cmd = args
-            .join(&OsStr::new(" "))
+            .join(OsStr::new(" "))
             .into_string()
             .expect("Convert OsStr to String failed!");
 
@@ -58,9 +58,12 @@ impl Validator {
         // Check blacklist exact commands - match against the full command
         for blacklisted_cmd in &self.blacklist.commands {
             if &full_cmd == blacklisted_cmd {
-                error!("Command blocked by blacklist exact match: {}, full command: {}", blacklisted_cmd, full_cmd);
+                error!(
+                    "Command blocked by blacklist exact match: {}, full command: {}",
+                    blacklisted_cmd, full_cmd
+                );
                 return Err(ErrorData::invalid_request(
-                    format!("Command blocked by blacklist: {}", blacklisted_cmd),
+                    format!("Command blocked by blacklist: {blacklisted_cmd}"),
                     None,
                 ));
             }
@@ -71,15 +74,21 @@ impl Validator {
             match regex::Regex::new(pattern) {
                 Ok(regex) => {
                     if regex.is_match(&full_cmd) {
-                        error!("Command blocked by blacklist regex pattern: {}, full command: {}", pattern, full_cmd);
+                        error!(
+                            "Command blocked by blacklist regex pattern: {}, full command: {}",
+                            pattern, full_cmd
+                        );
                         return Err(ErrorData::invalid_request(
-                            format!("Command blocked by blacklist pattern: {}", pattern),
+                            format!("Command blocked by blacklist pattern: {pattern}"),
                             None,
                         ));
                     }
                 }
                 Err(e) => {
-                    error!("Invalid regex pattern in blacklist: {}, error: {}", pattern, e);
+                    error!(
+                        "Invalid regex pattern in blacklist: {}, error: {}",
+                        pattern, e
+                    );
                 }
             }
         }
@@ -101,7 +110,10 @@ impl Validator {
                     }
                 }
                 Err(e) => {
-                    error!("Invalid regex pattern in whitelist: {}, error: {}", pattern, e);
+                    error!(
+                        "Invalid regex pattern in whitelist: {}, error: {}",
+                        pattern, e
+                    );
                 }
             }
         }
@@ -121,16 +133,16 @@ impl Validator {
                     let inner_args: Vec<&OsStr> = args[2]
                         .to_str()
                         .map(|s| s.split_whitespace().map(OsStr::new).collect())
-                        .unwrap_or_else(|| Vec::new());
+                        .unwrap_or_default();
                     return self.is_unsafe_command(inner_args);
                 }
             }
         }
 
         // Default deny - command didn't match whitelist
-        error!("Command denied - not in whitelist: {}", full_cmd);
+        error!("Command denied - not in whitelist: {full_cmd}");
         Err(ErrorData::invalid_request(
-            format!("Command not allowed: {}", full_cmd),
+            format!("Command not allowed: {full_cmd}"),
             None,
         ))
     }
@@ -150,18 +162,22 @@ mod tests {
                 "kill".to_string(),
             ],
             regex: vec![
-                ".*[|&;><].*".to_string(),     // Block commands with dangerous operators
-                "^sudo .*".to_string(),        // Block sudo commands
-                ".*/etc/.*".to_string(),       // Block access to /etc
-                ".*passwd.*".to_string(),      // Block password-related commands
+                ".*[|&;><].*".to_string(), // Block commands with dangerous operators
+                "^sudo .*".to_string(),    // Block sudo commands
+                ".*/etc/.*".to_string(),   // Block access to /etc
+                ".*passwd.*".to_string(),  // Block password-related commands
             ],
         };
 
         let whitelist = Whitelist {
-            commands: vec!["echo hello".to_string(), "ls -la".to_string(), "pwd".to_string()],
+            commands: vec![
+                "echo hello".to_string(),
+                "ls -la".to_string(),
+                "pwd".to_string(),
+            ],
             regex: vec![
-                "^echo [a-zA-Z0-9 ]+$".to_string(),   // Only simple echo commands
-                "^ls [a-zA-Z0-9 /-]*$".to_string(),   // Only simple ls commands
+                "^echo [a-zA-Z0-9 ]+$".to_string(), // Only simple echo commands
+                "^ls [a-zA-Z0-9 /-]*$".to_string(), // Only simple ls commands
                 "^(pwd|whoami|date|uptime)$".to_string(), // Basic system info commands
             ],
         };
@@ -226,7 +242,12 @@ mod tests {
     fn test_blacklisted_regex_operation() {
         let validator = create_test_validator();
         // Test pipe operation which should be blocked by regex
-        let args = vec![OsStr::new("echo"), OsStr::new("test"), OsStr::new("|"), OsStr::new("cat")];
+        let args = vec![
+            OsStr::new("echo"),
+            OsStr::new("test"),
+            OsStr::new("|"),
+            OsStr::new("cat"),
+        ];
         let result = validator.is_unsafe_command(args);
         assert!(result.is_err()); // Contains "|" which matches ".*[|&;><].*" regex
     }
@@ -252,7 +273,11 @@ mod tests {
         for op in dangerous_ops {
             let args = vec![OsStr::new("echo"), OsStr::new("test"), OsStr::new(op)];
             let result = validator.is_unsafe_command(args);
-            assert!(result.is_err(), "Operation '{}' should be blocked by regex", op);
+            assert!(
+                result.is_err(),
+                "Operation '{}' should be blocked by regex",
+                op
+            );
         }
     }
 
@@ -374,19 +399,19 @@ mod tests {
         };
 
         let validator = Validator::new(blacklist, whitelist);
-        
+
         // Command in whitelist should be allowed
         let args = vec![OsStr::new("pwd")];
         let result = validator.is_unsafe_command(args);
         assert!(result.is_ok());
-        
+
         // Command not in whitelist should be denied
         let args = vec![OsStr::new("ls")];
         let result = validator.is_unsafe_command(args);
         assert!(result.is_err());
     }
 
-    #[test] 
+    #[test]
     fn test_exact_vs_partial_blacklist_matching() {
         // Test the fix: blacklist should match exactly, not partially
         let blacklist = Blacklist {
@@ -400,17 +425,23 @@ mod tests {
         };
 
         let validator = Validator::new(blacklist, whitelist);
-        
+
         // "rm" exactly should be blocked by blacklist
         let args = vec![OsStr::new("rm")];
         let result = validator.is_unsafe_command(args);
-        assert!(result.is_err(), "Exact match 'rm' should be blocked by blacklist");
-        
+        assert!(
+            result.is_err(),
+            "Exact match 'rm' should be blocked by blacklist"
+        );
+
         // "rm -rf /tmp/test" should be allowed by whitelist (not blocked by blacklist)
         let args = vec![OsStr::new("rm"), OsStr::new("-rf"), OsStr::new("/tmp/test")];
         let result = validator.is_unsafe_command(args);
-        assert!(result.is_ok(), "'rm -rf /tmp/test' should be allowed by whitelist");
-        
+        assert!(
+            result.is_ok(),
+            "'rm -rf /tmp/test' should be allowed by whitelist"
+        );
+
         // "rm -rf /" should be denied (not in whitelist, not exact blacklist match)
         let args = vec![OsStr::new("rm"), OsStr::new("-rf"), OsStr::new("/")];
         let result = validator.is_unsafe_command(args);

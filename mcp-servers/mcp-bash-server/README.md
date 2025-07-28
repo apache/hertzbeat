@@ -1,6 +1,6 @@
 # mcp-bash-server
 
-A hertzbeat MCP server for running scripts with security command blacklist and logging capabilities
+A HertzBeat MCP server for running scripts with security command blacklist and logging capabilities
 
 ## Dependencies
 
@@ -8,9 +8,9 @@ A hertzbeat MCP server for running scripts with security command blacklist and l
 
 If you need to deploy this MCP Server locally, you will need a Rust runtime environment.
 
-Visit [rust-lang.org](https://www.rust-lang.org/tools/install) to learn how to download the Rust runtime environment.
+Visit [rust-lang.org](https://www.rust-lang.org/tools/install) to learn how to install the Rust runtime environment.
 
-We recommend choosing the latest version of Rust.
+We recommend using the latest version of Rust.
 
 ## Deployment
 
@@ -24,15 +24,35 @@ cargo run
 
 This MCP server will be deployed at `http://127.0.0.1:4000/mcp`, and you can use the `modelcontextprotocol/inspector` tool to connect to and use this MCP server.
 
-For information on how to use the modelcontextprotocol/inspector tool, refer to [inspector](https://github.com/modelcontextprotocol/inspector)
+For information on how to use the modelcontextprotocol/inspector tool, refer to the [inspector documentation](https://github.com/modelcontextprotocol/inspector).
 
 ### Container Deployment
 
-TODO
+Using container deployment for this MCP Server is an excellent way to try out the tools provided by the server without polluting your machine, as all MCP Server operations are completed within the container.
 
-## config
+To deploy using containers, simply run the following docker command:
 
-`config.toml` contains the settings for this MCP server. The configuration items currently supported by the configuration file are as follows:
+```shell
+docker run -d --name mcp-bash-server -p 4000:4000 --restart unless-stopped yexuanyang/mcp-bash-server
+```
+
+If you want to build this image yourself, refer to the `Dockerfile` in the code repository and create your own Dockerfile. After creating it, run the following build command:
+
+```shell
+docker build -t custom/mcp-bash-server:latest .
+```
+
+After building, use the following command to run it:
+
+```shell
+docker run -d --name mcp-bash-server -p 4000:4000 --restart unless-stopped custom/mcp-bash-server:latest
+```
+
+The MCP Server inside the container runs on 0.0.0.0:4000. On the host machine, use the inspector with URL `http://localhost:4000/mcp` to connect to the MCP Server inside the container.
+
+## Configuration
+
+The `config.toml` file contains the settings for this MCP server. The configuration items currently supported by the configuration file are as follows:
 
 ```toml
 # This is the configuration file for mcp-bash-server
@@ -42,8 +62,8 @@ TODO
 port = 4000
 # IP for MCP Server deployment
 host = "127.0.0.1"
-# Usage environment for MCP Server, can be development or production environment.
-# Set env to "development" or "production", production uses oauth2.0.
+# Usage environment for MCP Server, can be either development or production environment.
+# Set env to "development" or "production"; production uses OAuth 2.0.
 env = "development"
 
 [whitelist]
@@ -55,7 +75,7 @@ commands = [
     "pwd",
     # Add your allowed commands here
 ]
-# Whitelist of allowed command regex patterns, a regex expression string list
+# Whitelist of allowed command regex patterns, a list of regex expression strings
 # Commands where the complete command string matches any of these regex patterns will be allowed
 regex = [
     '^echo [a-zA-Z0-9 ]+$',
@@ -73,7 +93,7 @@ commands = [
     "shutdown",
     # Add your forbidden commands here
 ]
-# Blacklist of forbidden command regex patterns, a regex expression string list  
+# Blacklist of forbidden command regex patterns, a list of regex expression strings  
 # Blacklist has higher priority than whitelist. If the complete command string matches any of these regex patterns, it will be blocked, even if it would be allowed by the whitelist
 regex = [
     # Block any command with dangerous operators
@@ -133,9 +153,9 @@ The unit tests include:
 - **Debug and Clone Traits**: Tests that BashServer properly implements Debug and Clone traits
 - **Timeout Behavior**: Tests that commands properly timeout when exceeding time limits
 
-### Use inspector to test manually
+### Manual Testing with Inspector
 
-Use the official MCP debugging tool modelcontextprotocol/inspector. For usage instructions, refer to: [inspector](https://github.com/modelcontextprotocol/inspector)
+Use the official MCP debugging tool modelcontextprotocol/inspector. For usage instructions, refer to the [inspector documentation](https://github.com/modelcontextprotocol/inspector).
 
 If you deploy the MCP Server locally using the default method, run the inspector debugging tool after the server starts.
 
@@ -143,19 +163,19 @@ If you deploy the MCP Server locally using the default method, run the inspector
 npx @modelcontextprotocol/inspector
 ```
 
-Then set the connection method to `Streamable HTTP` and set the URL to `http://127.0.0.1:4000/mcp`
+Then set the connection method to `Streamable HTTP` and set the URL to `http://127.0.0.1:4000/mcp`.
 
-### Use OAuth in inspector (Optional)
+### Using OAuth in Inspector (Optional)
 
-If your running mode is `development`, you don't need to go through `Open Auth Settings` and can directly click Connect to connect to the MCP Server. If your running mode is `production`, you need to complete `Open Auth Settings` verification.
+If your running mode is `development`, you don't need to go through `Open Auth Settings` and can directly click Connect to connect to the MCP Server. If your running mode is `production`, you need to complete the `Open Auth Settings` verification.
 
-The method to use `OAuth` verification and connection is as follows:
+The method for using OAuth verification and connection is as follows:
 
 1. Click `Open Auth Settings`
 2. Click `Quick OAuth Flow`
 3. Click `Approve` on the pop-up webpage
-4. Return to the MCP inspector, click the Access Tokens under `Authentication Complete` in `OAuth Flow Progress`. Copy the `access_token` from there
-5. Click `Authentication`, paste the previously copied token into the `Bearer Token` field, then click connect
+4. Return to the MCP inspector, click on the Access Tokens under `Authentication Complete` in `OAuth Flow Progress`. Copy the `access_token` from there
+5. Click `Authentication`, paste the previously copied token into the `Bearer Token` field, then click Connect
 
 After connecting, you can test the various tools provided by the MCP Server in the inspector.
 
@@ -166,7 +186,7 @@ The MCP Server currently provides the following tools:
 ### Command Execution Tools
 
 1. **all_execute_via_default_shell**
-   - Description: Execute commands using default shell in all kinds of OS
+   - Description: Execute commands using the default shell on all types of operating systems
    - Parameters:
      - `command`: The bash command or script to execute
      - `working_dir`: Working directory for the command (optional)
@@ -197,7 +217,7 @@ The MCP Server currently provides the following tools:
    - Returns: Version, hostname, and uptime in a single line format
 
 3. **unix_get_available_shell**
-   - Description: Get the available shells in Unix-like OS
+   - Description: Get the available shells on Unix-like operating systems
    - Parameters: None
    - Returns: List of available shells from /etc/shells
 

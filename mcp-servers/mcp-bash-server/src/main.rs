@@ -17,7 +17,7 @@ use anyhow::Result;
 use axum::{
     Router,
     body::Body,
-    http::Request,
+    http::{HeaderMap, Request},
     middleware::{self, Next},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
@@ -51,11 +51,11 @@ async fn index() -> Html<&'static str> {
 }
 
 /// Wrapper function for oauth_authorization_server to handle BIND_ADDRESS
-async fn oauth_authorization_server_handler() -> impl IntoResponse {
+async fn oauth_authorization_server_handler(headers: HeaderMap) -> impl IntoResponse {
     let bind_address = BIND_ADDRESS
         .get()
         .expect("BIND_ADDRESS must be initialized in main()");
-    oauth_authorization_server(bind_address).await
+    oauth_authorization_server(bind_address, headers).await
 }
 
 /// HTTP request logging middleware
@@ -210,10 +210,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_oauth_authorization_server_handler() {
+        use axum::http::HeaderMap;
+
         // Set up BIND_ADDRESS for testing
         let _ = BIND_ADDRESS.set("localhost:8080".to_string());
 
-        let response = oauth_authorization_server_handler().await;
+        let mut headers = HeaderMap::new();
+        headers.insert("host", "localhost:8080".parse().unwrap());
+
+        let response = oauth_authorization_server_handler(headers).await;
 
         // Test that the handler returns a response
         // We can't easily test the exact content without mocking, but we can verify it doesn't panic
