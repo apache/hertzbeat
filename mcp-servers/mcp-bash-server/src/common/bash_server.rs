@@ -656,7 +656,7 @@ mod tests {
     fn create_test_bash_server() -> BashServer {
         let blacklist = Blacklist {
             commands: vec!["rm".to_string(), "dd".to_string()],
-            operations: vec!["|".to_string(), "&".to_string()],
+            regex: vec![".*[|&].*".to_string()],
         };
         
         let whitelist = Whitelist {

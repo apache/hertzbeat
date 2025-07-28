@@ -47,59 +47,44 @@ host = "127.0.0.1"
 env = "development"
 
 [whitelist]
-# Whitelist of allowed commands, a string list.
-# If a command exactly matches an item in the list, the validator will allow the command
+# Whitelist of allowed commands (exact match), a string list.
+# Only commands where the complete command string exactly matches an item in this list will be allowed
 commands = [
-    "echo \"hello\" | tee /tmp/hello.txt && rm /tmp/hello.txt",
+    "echo hello",
+    "ls -la", 
+    "pwd",
     # Add your allowed commands here
 ]
 # Whitelist of allowed command regex patterns, a regex expression string list
-# If a command matches a regex pattern in the list, the validator will allow the command
+# Commands where the complete command string matches any of these regex patterns will be allowed
 regex = [
-    # Example: `echo -e "hello\nworld" | tee /tmp/hello.txt` pass validation,
-    # `echo -e "hello\nworld" | head -n 1 | tee /tmp/hello.txt` does not.
-    'echo [\-a-z]* "*[a-z\\]+"* \| tee /tmp/[a-z]+',
+    '^echo [a-zA-Z0-9 ]+$',
+    '^ls [a-zA-Z0-9 /-]*$',
     # Add your whitelist regex patterns here
 ]
 
 [blacklist]
-# Blacklist of forbidden commands, a string list
-# Blacklist has higher priority than whitelist. If a command exactly matches an item in the command list, the validator will forbid the command, even if this command would be allowed by the whitelist
+# Blacklist of forbidden commands (exact match), a string list
+# Blacklist has higher priority than whitelist. If the complete command string exactly matches an item in this list, the entire command will be blocked, even if it would be allowed by the whitelist
+# Note: Only exact matches are blocked. For example, if "rm" is blacklisted, only the exact command "rm" is blocked, not commands like "rm -rf /tmp/test"
 commands = [
-    # Add your forbidden commands here
-    "rm",
-    "dd",
-    "mkfs",
+    # Dangerous file operations
+    "rm -rf /",
     "shutdown",
-    "reboot",
-    "init",
-    "halt",
-    "userdel",
-    "passwd",
-    "chown",
-    "chmod",
-    "kill",
-    "killall",
-    "eval",
-    "exec",
-    "curl",
-    "wget",
-    "nc",
-    "ncat",
-    ":(){",
-    "fork",
+    # Add your forbidden commands here
 ]
-# Blacklist of forbidden operators, a string list
-# Blacklist has higher priority than whitelist. If a command contains an item from the operator list, the validator will forbid the command, even if this command would be allowed by the whitelist.
-operations = [
-    # Add your forbidden operations here
-    "|",
-    "&",
-    ";",
-    "`",
-    "$(",
-    ">",
-    "<"
+# Blacklist of forbidden command regex patterns, a regex expression string list  
+# Blacklist has higher priority than whitelist. If the complete command string matches any of these regex patterns, it will be blocked, even if it would be allowed by the whitelist
+regex = [
+    # Block any command with dangerous operators
+    '.*[|&;`$()><].*',
+    # Block commands that try to write to system directories
+    '.*/etc/.*',
+    '.*/root/.*',
+    # Block commands with sudo or su
+    '^sudo .*',
+    '^su .*',
+    # Add your blacklist regex patterns here
 ]
 ```
 
@@ -122,18 +107,19 @@ The unit tests include:
 
 #### Validator Tests (`validator.rs`)
 
-- **Validator Creation**: Tests creation of command validators with blacklist and whitelist rules
-- **Safe Command Validation**: Tests allowing safe commands like `pwd`
-- **Whitelisted Command Validation**: Tests allowing explicitly whitelisted commands
-- **Regex Whitelist Validation**: Tests regex pattern matching for allowed commands
-- **Blacklisted Command Blocking**: Tests blocking of dangerous commands like `rm`, `dd`
-- **Blacklisted Operation Blocking**: Tests blocking of dangerous operators like `|`, `&`, `;`
-- **Multiple Command/Operation Testing**: Tests validation of various dangerous commands and operations
-- **Empty Command Handling**: Tests handling of empty command arguments
-- **Complex Safe Command Testing**: Tests validation of complex but safe commands
-- **Invalid Regex Handling**: Tests error handling for invalid regex patterns in whitelist
-- **Case Sensitivity Testing**: Tests case-sensitive command matching
-- **Partial Command Match Testing**: Tests that partial matches don't trigger false positives
+- **Validator Creation**: Tests creation of command validators with blacklist and whitelist rules (both commands and regex)
+- **Whitelisted Command Validation**: Tests allowing commands that exactly match whitelist entries
+- **Whitelisted Regex Validation**: Tests allowing commands that match whitelist regex patterns
+- **Blacklisted Command Blocking**: Tests blocking of commands that exactly match blacklist entries (complete command string)
+- **Blacklisted Regex Blocking**: Tests blocking of commands matching blacklist regex patterns  
+- **Priority Testing**: Tests that blacklist has higher priority than whitelist
+- **Exact vs Partial Match Testing**: Tests that blacklist only blocks exact command matches, not partial matches
+- **Default Deny Behavior**: Tests that commands not in whitelist are denied by default
+- **Empty Command Handling**: Tests that empty commands are denied by default
+- **Case Sensitivity Testing**: Tests case-sensitive command matching behavior
+- **Invalid Regex Handling**: Tests error handling for invalid regex patterns
+- **Complex Command Testing**: Tests validation of multi-argument commands
+- **Nested Shell Command Testing**: Tests validation of commands within shell invocations
 
 #### Bash Server Tests (`bash_server.rs`)
 
@@ -244,12 +230,23 @@ The MCP Server currently provides the following tools:
 
 ### Security Features
 
-All command execution tools support:
+All command execution tools support comprehensive security validation:
 
-- **Command validation**: Commands are validated against configurable whitelist and blacklist
-- **Timeout protection**: Commands have configurable timeout limits to prevent hanging
-- **Environment isolation**: Optional working directory and environment variable settings
-- **Logging**: All command executions are logged for audit purposes
+- **Default Deny Policy**: All commands are denied by default unless explicitly allowed
+- **Blacklist Priority**: Blacklist rules have higher priority than whitelist rules
+- **Dual Validation Modes**: Both exact string matching and regex pattern matching for blacklist and whitelist
+- **Command Validation Logic**:
+  1. Empty commands are denied by default
+  2. If the **complete command string** exactly matches any blacklist command entry, deny immediately
+  3. If the **complete command string** matches any blacklist regex pattern, deny immediately
+  4. If command doesn't match blacklist and the **complete command string** exactly matches any whitelist command entry, allow
+  5. If command doesn't match blacklist and the **complete command string** matches any whitelist regex pattern, allow
+  6. Otherwise, deny by default
+- **Important**: Blacklist validation checks the **entire command string**, not individual arguments. For example, if `"rm"` is blacklisted, only the exact command `"rm"` is blocked, not commands like `"rm -rf /tmp/test"` (which would be evaluated separately against the whitelist)
+- **Timeout Protection**: Commands have configurable timeout limits to prevent hanging
+- **Environment Isolation**: Optional working directory and environment variable settings
+- **Logging**: All command executions and validation results are logged for audit purposes
+- **Nested Shell Protection**: Validates commands within shell invocations (e.g., `bash -c "command"`)
 
 ### Tool Categories
 

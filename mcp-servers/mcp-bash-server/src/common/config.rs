@@ -26,13 +26,14 @@ pub struct Whitelist {
 }
 
 /// Security blacklist configuration for command validation
-/// Contains lists of forbidden commands and operations
+/// Contains lists of forbidden commands and regex patterns
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Blacklist {
     /// List of command names that are not allowed to be executed
     pub commands: Vec<String>,
-    /// List of operations/symbols that are not allowed in commands
-    pub operations: Vec<String>,
+    /// List of regular expressions for commands that are not allowed
+    /// These patterns are matched against the full command line
+    pub regex: Vec<String>,
 }
 
 /// Server runtime settings including network configuration
@@ -73,7 +74,7 @@ regex = ["echo.*", "ls.*"]
 
 [blacklist]
 commands = ["rm", "dd"]
-operations = ["|", "&"]
+regex = [".*[|&].*", "^sudo .*"]
 "#;
 
         let mut temp_file = NamedTempFile::new().unwrap();
@@ -103,9 +104,9 @@ operations = ["|", "&"]
         assert!(config.blacklist.commands.contains(&"rm".to_string()));
         assert!(config.blacklist.commands.contains(&"dd".to_string()));
 
-        assert_eq!(config.blacklist.operations.len(), 2);
-        assert!(config.blacklist.operations.contains(&"|".to_string()));
-        assert!(config.blacklist.operations.contains(&"&".to_string()));
+        assert_eq!(config.blacklist.regex.len(), 2);
+        assert!(config.blacklist.regex.contains(&".*[|&].*".to_string()));
+        assert!(config.blacklist.regex.contains(&"^sudo .*".to_string()));
     }
 
     #[test]
@@ -146,15 +147,15 @@ port = 4000
     #[test]
     fn test_blacklist_creation() {
         let commands = vec!["rm".to_string(), "dd".to_string()];
-        let operations = vec!["|".to_string(), "&".to_string()];
+        let regex = vec![".*[|&].*".to_string(), "^sudo .*".to_string()];
 
         let blacklist = Blacklist {
             commands: commands.clone(),
-            operations: operations.clone(),
+            regex: regex.clone(),
         };
 
         assert_eq!(blacklist.commands, commands);
-        assert_eq!(blacklist.operations, operations);
+        assert_eq!(blacklist.regex, regex);
     }
 
     #[test]

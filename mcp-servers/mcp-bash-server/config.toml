@@ -1,56 +1,51 @@
 # This is the configuration file for mcp-bash-server
 
 [settings]
+# Port for MCP Server deployment
 port = 4000
+# IP for MCP Server deployment
 host = "127.0.0.1"
-# Set env to "development" or "production", production use oauth2.0.
+# Usage environment for MCP Server, can be development or production environment.
+# Set env to "development" or "production", production uses oauth2.0.
 env = "production"
 
 [whitelist]
+# Whitelist of allowed commands (exact match), a string list.
+# Only commands where the complete command string exactly matches an item in this list will be allowed
 commands = [
-    "echo \"hello\" | tee /tmp/hello.txt && rm /tmp/hello.txt",
+    "echo hello",
+    "ls -la", 
+    "pwd",
     # Add your allowed commands here
 ]
+# Whitelist of allowed command regex patterns, a regex expression string list
+# Commands where the complete command string matches any of these regex patterns will be allowed
 regex = [
-    # Example: `echo -e "hello\nworld" | tee /tmp/hello.txt` pass validation,
-    # `echo -e "hello\nworld" | head -n 1 | tee /tmp/hello.txt` does not.
-    'echo [\-a-z]* "*[a-z\\]+"* \| tee /tmp/[a-z]+',
+    '^echo [a-zA-Z0-9 ]+$',
+    '^ls [a-zA-Z0-9 /-]*$',
     # Add your whitelist regex patterns here
 ]
 
 [blacklist]
+# Blacklist of forbidden commands (exact match), a string list
+# Blacklist has higher priority than whitelist. If the complete command string exactly matches an item in this list, the entire command will be blocked, even if it would be allowed by the whitelist
+# Note: Only exact matches are blocked. For example, if "rm" is blacklisted, only the exact command "rm" is blocked, not commands like "rm -rf /tmp/test"
 commands = [
-    # Add your forbidden commands here
-    "rm",
-    "dd",
-    "mkfs",
+    # Dangerous file operations
+    "rm -rf /",
     "shutdown",
-    "reboot",
-    "init",
-    "halt",
-    "userdel",
-    "passwd",
-    "chown",
-    "chmod",
-    "kill",
-    "killall",
-    "eval",
-    "exec",
-    "curl",
-    "wget",
-    "nc",
-    "ncat",
-    ":(){",
-    "fork",
+    # Add your forbidden commands here
 ]
-operations = [
-    # Add your forbidden operations here
-    "|",
-    "&",
-    ";",
-    "`",
-    "$(",
-    ">",
-    "<"
+# Blacklist of forbidden command regex patterns, a regex expression string list  
+# Blacklist has higher priority than whitelist. If the complete command string matches any of these regex patterns, it will be blocked, even if it would be allowed by the whitelist
+regex = [
+    # Block any command with dangerous operators
+    '.*[|&;`$()><].*',
+    # Block commands that try to write to system directories
+    '.*/etc/.*',
+    '.*/root/.*',
+    # Block commands with sudo or su
+    '^sudo .*',
+    '^su .*',
+    # Add your blacklist regex patterns here
 ]
-
