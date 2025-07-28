@@ -34,23 +34,23 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 * new login page
 
-  <img width="1952" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/5bc5015a-9343-472d-9754-6b06b9138893"/>
+  ![HertzBeat](/img/blog/blog-new-login-page.png)
 
-  <img width="1950" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/71a29284-9cad-4ed2-983a-50430ddb1e2f"/>
+  ![HertzBeat](/img/blog/blog-new-dashboard.png)
 
 * collector manage
 
-<img width="1943" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/ba79f743-a450-4b01-adf0-5f15f3722c19"/>
+  ![HertzBeat](/img/blog/blog-collector-manage.png)
 
-<img width="1901" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/b090ec18-5aae-444e-9ef6-e62fd1d8d239"/>
+  ![HertzBeat](/img/blog/blog-collector-manage-form.png)
 
 * new help moudle
 
-<img width="1942" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/c635fab6-504b-47de-9b7e-0c2df86f7e6a"/>
+  ![HertzBeat](/img/blog/blog-new-help-moudle.png)
 
 * monitor metrics dashboard name i18n
 
-<img width="1802" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/d5c74647-6c18-4b12-b858-f29cf1c61661"/>
+  ![HertzBeat](/img/blog/blog-name-i18n.png)
 
 * refactor collector dispatcher and more
 
