@@ -621,7 +621,7 @@ metrics:
         i18n:
           zh-CN: 客户端中断数
           en-US: Aborted Clients
-          ja-JP: クライエントの割り込み数
+          ja-JP: クライアントの割り込み数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
