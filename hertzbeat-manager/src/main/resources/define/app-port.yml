@@ -21,11 +21,13 @@ app: port
 name:
   zh-CN: 端口可用性
   en-US: PORT TELNET
+  ja-JP: ポート可用性
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 通过判断对端服务中暴露的TCP端口是否可用，进而判断对端服务是否可用。同时以ms为指标，对响应时间等指标进行监测。您可以点击“<i>新建 端口可用性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat determines whether the exposed tcp ports in the peer service are available, thereby determining whether the peer service is available. Simultaneously monitoring response time and other metrics using ms as metric unit. You could click the "<i>New port</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 通過判斷對端服務中暴露的TCP端口是否可用，進而判斷對端服務是否可用。同時以ms爲指標，對響應時間等指標進行監測。您可以點擊“<i>新建 端口可用性</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: HertzBeat は、接続性を判断するために、エンド TCP ポートに対してリクエストを ms 単位で実行します。<br>「<i>新規 ポート可用性</i>」をクリックして設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/port
   en-US: https://hertzbeat.apache.org/docs/help/port
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -76,6 +81,7 @@ metrics:
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -87,6 +93,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: telnet
     # Specific collection configuration when protocol is telnet protocol
