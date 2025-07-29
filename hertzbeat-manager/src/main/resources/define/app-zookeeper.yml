@@ -78,6 +78,10 @@ params:
 metrics:
   # metrics - cluster
   - name: conf
+    i18n:
+      zh-CN: 配置信息
+      en-US: Configuration Info
+      ja-JP: 配置情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -89,7 +93,7 @@ metrics:
         i18n:
           zh-CN: 客户端端口
           en-US: Client Port
-          ja-JP: クライアントポート
+          ja-JP: クライエントポート
       - field: dataDir
         type: 1
         i18n:
@@ -128,7 +132,7 @@ metrics:
         i18n:
           zh-CN: 最大客户端连接数
           en-US: Max Client Connections
-          ja-JP: 最大クライアント接続数
+          ja-JP: 最大クライエント接続数
       - field: minSessionTimeout
         type: 0
         unit: ms
@@ -161,6 +165,10 @@ metrics:
       # telnet collect cmd
       cmd: conf
   - name: stats
+    i18n:
+      zh-CN: 统计信息
+      en-US: Stats
+      ja-JP: 統計情報
     priority: 1
     fields:
       - field: zk_version
@@ -181,7 +189,7 @@ metrics:
         i18n:
           zh-CN: 存活连接数
           en-US: Number of Alive Connections
-          ja-JP: 生存接続数
+          ja-JP: アライブ接続数
       - field: zk_avg_latency
         type: 0
         unit: ms
@@ -273,6 +281,10 @@ metrics:
       timeout: ^_^timeout^_^
       cmd: mntr
   - name: envi
+    i18n:
+      zh-CN: 环境信息
+      en-US: Environment
+      ja-JP: 環境情報
     priority: 2
     fields:
       - field: zk_version
