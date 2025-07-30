@@ -19,19 +19,21 @@ app: mqtt
 name:
   zh-CN: MQTT 连接
   en-US: MQTT Connection
+  ja-JP: MQTT 接続
 help:
   zh-CN: HertzBeat 对 MQTT 连接进行监测。<br>您可以点击 “<i>新建 MQTT 连接</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors MQTT connections. <br>You can click "<i>New MQTT connection</i>" and configure it, or select "<i>More actions</i>" to import an existing configuration.
   zh-TW: HertzBeat 對 MQTT 連接進行監測。 <br>您可以點選 “<i>新建 MQTT 連線</i>” 並進行配置，或選擇“<i>更多操作</i>”，匯入已有配置。
+  ja-JP: Hertzbeat はMQTT 接続を監視します。<br>「<i>新規 MQTT 接続</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/mqtt
   en-US: https://hertzbeat.apache.org/docs/help/mqtt
 params:
-
   - field: clientId
     name:
       zh-CN: 客户端ID
       en-US: Client Id
+      ja-JP: クライエントID
     type: text
     defaultValue: hertzbeat-mqtt-client
     required: true
@@ -39,25 +41,28 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     required: false
   - field: password
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
-
   - field: host
     name:
       zh-CN: MQTT的Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -66,6 +71,7 @@ params:
     name:
       zh-CN: 连接协议
       en-US: Protocol
+      ja-JP: 接続プロトコル
     type: radio
     options:
       - label: MQTT
@@ -74,11 +80,11 @@ params:
         value: MQTTS
     required: true
     defaultValue: MQTT
-
   - field: timeout
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     type: number
     range: '[0,100000]'
     required: true
@@ -87,15 +93,16 @@ params:
     name:
       zh-CN: 心跳检测时间(s)
       en-US: Keep Alive(s)
+      ja-JP: ハートビート間隔(s)
     type: number
     range: '[0,100000]'
     required: true
     defaultValue: 30
-
   - field: tlsVersion
     name:
       zh-CN: TLS版本
       en-US: TLS Version
+      ja-JP: TLSバージョン
     type: radio
     options:
       - label: TLSv1.2
@@ -109,6 +116,7 @@ params:
     name:
       zh-CN: 跳过证书验证
       en-US: Skip Certificate Verification
+      ja-JP: 証明書の検証をスキップ
     type: boolean
     defaultValue: false
     hide: true
@@ -116,6 +124,7 @@ params:
     name:
       zh-CN: CA证书
       en-US: CA Certificate
+      ja-JP: CA証明書
     type: text
     required: false
     hide: true
@@ -123,6 +132,7 @@ params:
     name:
       zh-CN: 双向认证
       en-US: Enable Mutual Auth
+      ja-JP: 相互認証
     type: boolean
     defaultValue: false
     hide: true
@@ -130,6 +140,7 @@ params:
     name:
       zh-CN: 客户端证书
       en-US: Client Certificate
+      ja-JP: クライエントの証明書
     type: text
     required: false
     hide: true
@@ -137,28 +148,31 @@ params:
     name:
       zh-CN: 客户端私钥
       en-US: Client Private Key
+      ja-JP: クライエントの秘密鍵
     type: text
     required: false
     hide: true
-
-
   - field: topic
     name:
       zh-CN: 主题
       en-US: Topic
+      ja-JP: トピック
     type: text
     required: true
   - field: testMessage
     name:
       zh-CN: 测试消息
       en-US: Test message
+      ja-JP: 試験メッセージ
     type: text
     required: false
+
 metrics:
   - name: summary
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     priority: 0
     fields:
       - field: responseTime
@@ -167,26 +181,31 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: canSubscribe
         type: 1
         i18n:
           zh-CN: 订阅状态
           en-US: Normal subscribe
+          ja-JP: サブスクライ状態
       - field: canPublish
         type: 1
         i18n:
           zh-CN: 发布状态
           en-US: Normal publish
+          ja-JP: メッセージを転送できる
       - field: canReceive
         type: 1
         i18n:
           zh-CN: 接收数据
           en-US: Receive data
+          ja-JP: 受信されたデータ
       - field: canUnSubscribe
         type: 1
         i18n:
           zh-CN: 取消订阅状态
           en-US: Normal unsubscribe
+          ja-JP: サブスクライブ解除の状態
     protocol: mqtt
     mqtt:
       clientId: ^_^clientId^_^

@@ -21,11 +21,13 @@ app: pop3
 name:
   zh-CN: POP3邮件服务器
   en-US: POP3 Email Server
+  ja-JP: POP3メールサーバー
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> 通过开启邮箱 pop3 服务 对 POP3服务器 的通用性能指标(email_count、mailbox_size)进行采集监控。<br>您可以点击“<i>新建 POP3</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> to open pop3 service for collecting general metrics of POP3 Server (email_count, mailbox_size.). <br>You can click "<i>New POP3</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> 通過开启邮箱 pop3 服务 對 POP3服务器 的通用性能指標(邮件数量、邮箱大小等)進行采集監控。<br>您可以點擊“<i>新建 POP3</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: HertzBeat は <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'>POP3 サービスを介して</a>POP3メールサーバーの一般的なメトリクスを監視します。<br>「<i>新規 POP3メールサーバー</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/pop3
   en-US: https://hertzbeat.apache.org/docs/help/pop3
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -74,6 +79,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL
     # When the type is boolean, the frontend will display a switch for it.
     type: boolean
     # required-true or false
@@ -83,7 +89,8 @@ params:
     # name-param field display i18n name
     name:
       zh-CN: POP邮箱地址
-      en-US: Email
+      en-US: POP Address
+      ja-JP: POPアドレス
     # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
     type: text
     # required-true or false
@@ -94,6 +101,7 @@ params:
     name:
       zh-CN: 授权码
       en-US: Authorize Code
+      ja-JP: 認証コード
     # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
     type: text
     # required-true or false
@@ -106,6 +114,7 @@ metrics:
     i18n:
       zh-CN: 可用性
       en-US: Available
+      ja-JP: 可用性
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -118,6 +127,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: pop3
     # Specific collection configuration when protocol is http protocol
@@ -139,6 +149,7 @@ metrics:
     i18n:
       zh-CN: 邮箱状态信息
       en-US: Email Status
+      ja-JP: 電子メールステータス情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -148,12 +159,14 @@ metrics:
         i18n:
           zh-CN: 邮箱数量
           en-US: Email Count
+          ja-JP: 電子メール数量
       - field: mailbox_size
         type: 0
         unit: KB
         i18n:
           zh-CN: 邮箱大小
           en-US: MailBox Size
+          ja-JP: メールボックスサイズ
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: pop3
     # Specific collection configuration when protocol is http protocol

@@ -25,11 +25,13 @@ app: ping
 name:
   zh-CN: PING连通性
   en-US: PING CONNECT
+  ja-JP: PING接続
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 以 ms 为指标单位，对端 HOST 地址进行 PING 操作，判断其连通性。您可以点击“<i>新建 PING 连通性</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses 'ms' as the metric unit to PING the end HOST address and determines the connectivity. You could click the "Add API " button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 以 ms 爲指標單位，對端 HOST 地址進行 PING 操作，判斷其連通性。您可以點擊“<i>新建 PING 連通性</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: HertzBeat は、接続性を判断するために、エンド HOST アドレスに対して PING 操作を ms 単位で実行します。<br>「<i>新規 PING接続</i>」をクリックして設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ping
   en-US: https://hertzbeat.apache.org/docs/help/ping
@@ -41,6 +43,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -51,6 +54,7 @@ params:
     name:
       zh-CN: Ping超时时间(ms)
       en-US: Ping Timeout(ms)
+      ja-JP: Pingタイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -67,6 +71,7 @@ metrics:
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -78,6 +83,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
     # Monitoring and collection protocols eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: icmp
     # Specific collection configuration when the protocol is the ping protocol
