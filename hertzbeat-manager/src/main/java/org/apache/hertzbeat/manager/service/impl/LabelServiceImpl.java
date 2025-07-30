@@ -67,7 +67,7 @@ public class LabelServiceImpl implements LabelService {
     public void modifyLabel(Label label) {
         Optional<Label> optional = labelDao.findById(label.getId());
         if (optional.isPresent()) {
-            
+
             Optional<Label> existOptional = labelDao.findLabelByNameAndTagValue(label.getName(), label.getTagValue());
             if (existOptional.isPresent() && !existOptional.get().getId().equals(label.getId())) {
                 throw new IllegalArgumentException("The label with same key and value already exists.");
@@ -116,33 +116,38 @@ public class LabelServiceImpl implements LabelService {
 
     @Override
     public void deleteLabels(HashSet<Long> ids) {
-        if (CollectionUtils.isEmpty(ids)){
+        if (CollectionUtils.isEmpty(ids)) {
             return;
         }
         labelDao.deleteLabelsByIdIn(ids);
     }
 
-    public List<Label> determineNewLabels(Set<Map.Entry<String, String>> originLabels){
+    @Override
+    public List<Label> determineNewLabels(Set<Map.Entry<String, String>> originLabels) {
 
         if (originLabels == null || originLabels.isEmpty()) return List.of();
 
         // Get all labels from the database
-        Set<Map.Entry<String, String>> allLabels = labelDao.findAll().stream()
-                .map(label -> Map.entry(label.getName(), label.getTagValue()))
+        Set<Label> allLabels = labelDao.findAll().stream()
+                .map(label -> Label.builder()
+                        .name(label.getName())
+                        .tagValue(label.getTagValue())
+                        .build())
                 .collect(Collectors.toSet());
 
         // If the bound label (key:value) does not exist, then add it
-        Set<Map.Entry<String, String>> addLabelsKv = originLabels.stream()
+        return originLabels.stream()
+                .map(entry -> Label.builder()
+                        .name(entry.getKey())
+                        .tagValue(entry.getValue())
+                        .build())
                 .filter(label -> !allLabels.contains(label))
-                .collect(Collectors.toCollection(HashSet::new));
-
-        return addLabelsKv.stream().map(kv -> {
-            Label label = new Label();
-            label.setId(null);
-            label.setName(kv.getKey());
-            label.setTagValue(kv.getValue());
-            label.setType((byte) 0);
-            return label;
-        }).toList();
+                .map(label -> Label.builder()
+                        .id(null)
+                        .name(label.getName())
+                        .tagValue(label.getTagValue())
+                        .type((byte) 0)
+                        .build())
+                .toList();
     }
 }
