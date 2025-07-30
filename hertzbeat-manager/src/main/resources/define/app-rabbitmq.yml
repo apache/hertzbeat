@@ -651,7 +651,6 @@ metrics:
       method: GET
       # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
       ssl: ^_^ssl^_^
-      # 认证
       # Authentication
       authorization:
         # Authentication mode: Basic Auth, Digest Auth, Bearer Token
