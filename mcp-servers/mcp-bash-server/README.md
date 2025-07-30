@@ -26,29 +26,52 @@ This MCP server will be deployed at `http://127.0.0.1:4000/mcp`, and you can use
 
 For information on how to use the modelcontextprotocol/inspector tool, refer to the [inspector documentation](https://github.com/modelcontextprotocol/inspector).
 
+If you encounter any issues while using Inspector, it is recommended to use version `v0.16.2`. Other versions may also work.
+
 ### Container Deployment
 
 Using container deployment for this MCP Server is an excellent way to try out the tools provided by the server without polluting your machine, as all MCP Server operations are completed within the container.
 
-To deploy using containers, simply run the following docker command:
+Refer to the `Dockerfile` in the code repository and create your own Dockerfile. After creating it, run the following build command:
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 --restart unless-stopped yexuanyang/mcp-bash-server
-```
-
-If you want to build this image yourself, refer to the `Dockerfile` in the code repository and create your own Dockerfile. After creating it, run the following build command:
-
-```shell
-docker build -t custom/mcp-bash-server:latest .
+docker build -t apache/hertzbeat-mcp-bash-server:latest .
 ```
 
 After building, use the following command to run it:
 
 ```shell
-docker run -d --name mcp-bash-server -p 4000:4000 --restart unless-stopped custom/mcp-bash-server:latest
+docker run -d --name mcp-bash-server -p 4000:4000 --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
 ```
 
 The MCP Server inside the container runs on 0.0.0.0:4000. On the host machine, use the inspector with URL `http://localhost:4000/mcp` to connect to the MCP Server inside the container.
+
+#### Use custom config in container
+
+Container's workdir is `/app` and it will run the `/app/mcp-bash-server` when it start, this program will read the `config.toml` at the same directory, so you can put the `config.toml` in the `/app` directory to cover the default config in image. Use the command below to do it.
+
+```shell
+docker run -d --name mcp-bash-server -p 4000:4000 -v `pwd`/config.toml:/app/config.toml --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+```
+
+If you are using SELinux, you may need to run the command instead to let the container access the file in host.
+
+```shell
+docker run -d --name mcp-bash-server -p 4000:4000 -v `pwd`/config.toml:/app/config.toml:Z --restart unless-stopped apache/hertzbeat-mcp-bash-server:latest
+```
+
+To check if the config.toml is used, do this
+
+```shell
+docker logs mcp-bash-server
+```
+
+or check the config.toml in container
+
+```shell
+docker exec mcp-bash-server ls /app
+docker exec mcp-bash-server cat /app/config.toml
+```
 
 ## Configuration
 
