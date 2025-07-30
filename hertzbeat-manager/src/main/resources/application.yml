@@ -125,7 +125,7 @@ warehouse:
   store:
     # store history metrics data, enable only one below
     jpa:
-      enabled: true
+      enabled: false
       # The maximum retention time for history records, after which records will be deleted
       expire-time: 1h
       # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
@@ -161,7 +161,7 @@ warehouse:
       username: root
       password: taosdata
     greptime:
-      enabled: false
+      enabled: true
       grpc-endpoints: localhost:4001
       http-endpoint: http://localhost:4000
       # if you config other database name, you should create them first

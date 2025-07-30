@@ -654,7 +654,7 @@
           </nz-card>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'periodic_metric'" [ngStyle]="{ marginBottom: '5px' }">
+      <nz-form-item *ngIf="define.type == 'periodic_metric' || define.type == 'periodic_log'" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzFor="datasource" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
@@ -664,11 +664,14 @@
               <label nz-radio-button [nzValue]="'promql'">
                 {{ 'PromQL' | i18n }}
               </label>
+              <label nz-radio-button [nzValue]="'sql'">
+                {{ 'SQL' | i18n }}
+              </label>
             </nz-radio-group>
           </ng-container>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'periodic_metric'">
+      <nz-form-item *ngIf="define.type == 'periodic_metric' || define.type == 'periodic_log'">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="100">
@@ -679,7 +682,7 @@
               nz-input
               name="periodic_expr"
               id="periodic_expr"
-              [placeholder]="'alert.setting.promql.tip' | i18n"
+              [placeholder]="define.datasource == 'promql' ? ('alert.setting.promql.tip' | i18n) : ('alert.setting.sql.tip' | i18n)"
             >
             </textarea>
           </nz-textarea-count>

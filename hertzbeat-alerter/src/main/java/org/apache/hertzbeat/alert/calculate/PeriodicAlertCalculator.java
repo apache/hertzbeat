@@ -27,6 +27,7 @@ import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -66,10 +67,19 @@ public class PeriodicAlertCalculator {
             // result: [{'value': 100, 'timestamp': 1343554, 'instance': 'node1'},{'value': 200, 'timestamp': 1343555, 'instance': 'node2'}]
             // the return result should be matched with threshold
             try {
-                List<Map<String, Object>> results = dataSourceService.calculate(
-                        define.getDatasource(),
-                        define.getExpr()
-                );
+                List<Map<String, Object>> results;
+                String sqlOrPromql = define.getDatasource();
+                if (WarehouseConstants.SQL.equals(sqlOrPromql)) {
+                    // sql
+                    results = dataSourceService.query(sqlOrPromql, define.getExpr());
+                    // this.doCaculate();
+                } else {
+                    // promql
+                    results = dataSourceService.calculate(
+                            define.getDatasource(),
+                            define.getExpr()
+                    );
+                }
                 // if no match the expr threshold, the results item map {'value': null} should be null and others field keep
                 // if results has multi list, should trigger multi alert
                 if (CollectionUtils.isEmpty(results)) {
