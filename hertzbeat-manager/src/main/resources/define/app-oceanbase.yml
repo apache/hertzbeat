@@ -21,6 +21,7 @@ app: oceanbase
 name:
   zh-CN: OceanBase数据库
   en-US: OceanBase DB
+  ja-JP: OceanBaseデータベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 OceanBase 数据库的通用性能指标(系统信息、性能状态、Innodb、缓存、事物、用户线程、慢SQL等)进行采集监控，支持版本为 OceanBase 4.0+。<br>您可以点击“<i>新建 OceanBase 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
@@ -260,7 +261,7 @@ metrics:
       sql: select tenant_id, tenant_name, info, status from oceanbase.__all_tenant;
       # JDBC url
       url: ^_^url^_^
-      
+
   - name: sql
     priority: 2
     i18n:
@@ -373,7 +374,7 @@ metrics:
         i18n:
           zh-CN: 该状态进程数量
           en-US: Num
-          ja-JP: 状態プロセス数
+          ja-JP: プロセス総数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
