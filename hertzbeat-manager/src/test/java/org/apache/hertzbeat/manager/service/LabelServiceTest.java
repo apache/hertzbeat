@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,7 +27,10 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.hertzbeat.common.entity.manager.Label;
@@ -46,25 +50,25 @@ import org.springframework.data.jpa.domain.Specification;
  */
 @ExtendWith(MockitoExtension.class)
 class LabelServiceTest {
-    
+
     @InjectMocks
     private LabelServiceImpl labelService;
-    
+
     @Mock
     private LabelDao labelDao;
-    
+
     @Test
     void addLabel() {
         // Prepare test data
-        Label label =  Label.builder().id(1L).name("tagname").tagValue("tagvalue").build();
+        Label label = Label.builder().id(1L).name("tagname").tagValue("tagvalue").build();
         when(labelDao.findLabelByNameAndTagValue(anyString(), anyString())).thenReturn(Optional.empty());
-        
+
         labelService.addLabel(label);
-        
+
         verify(labelDao).save(label);
-        
+
     }
-    
+
     @Test
     void modifyLabel() {
         Label tag = Label.builder().id(1L).build();
@@ -75,15 +79,29 @@ class LabelServiceTest {
         when(labelDao.findById(1L)).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> labelService.modifyLabel(tag));
     }
-    
+
     @Test
     void getLabels() {
         when(labelDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
         assertNotNull(labelService.getLabels(null, null, 1, 10));
     }
-    
+
     @Test
     void deleteLabels() {
         assertDoesNotThrow(() -> labelService.deleteLabels(new HashSet<>(1)));
+    }
+
+    @Test
+    void determineNewLabels() {
+        List<Label> allLabelList = labelDao.findAll();
+        allLabelList.add(Label.builder().name("tag1").build());
+        when(labelDao.findAll()).thenReturn(allLabelList);
+
+        Map<String, String> labels = new HashMap<>();
+        labels.put("tag1", null);
+        labels.put("tag2", "2");
+        assertDoesNotThrow(() -> labelService.determineNewLabels(labels.entrySet()));
+        assertNotNull(labelService.determineNewLabels(labels.entrySet()));
+        Assertions.assertEquals(1, labelService.determineNewLabels(labels.entrySet()).size());
     }
 }
