@@ -49,14 +49,16 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
     protected final AlertDefineService alertDefineService;
     protected final AlarmCommonReduce alarmCommonReduce;
     protected final AlarmCacheManager alarmCacheManager;
+    protected final JexlExprCalculator jexlExprCalculator;
 
     /**
      * Constructor with auto-start enabled
      */
     protected AbstractRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
-                                         AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                         AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
-        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, true);
+                                              AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                              AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
+                                              JexlExprCalculator jexlExprCalculator) {
+        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator, true);
     }
 
     /**
@@ -72,13 +74,15 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
      *                            set to false to disable thread start (useful for unit testing).
      */
     protected AbstractRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
-                                         AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                         AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager, boolean start) {
+                                              AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                              AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
+                                              JexlExprCalculator jexlExprCalculator, boolean start) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.alarmCommonReduce = alarmCommonReduce;
         this.alertDefineService = alertDefineService;
         this.alarmCacheManager = alarmCacheManager;
+        this.jexlExprCalculator = jexlExprCalculator;
         if (start) {
             startCalculate();
         }
@@ -126,42 +130,6 @@ public abstract class AbstractRealTimeAlertCalculator<T> {
      * @param data The data to calculate alerts for
      */
     protected abstract void calculate(T data);
-
-    /**
-     * Execute an alert expression
-     * @param fieldValueMap The field value map for expression evaluation
-     * @param expr The expression to evaluate
-     * @param ignoreJexlException Whether to ignore JEXL exceptions
-     * @return true if the expression matches, false otherwise
-     */
-    protected boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr, boolean ignoreJexlException) {
-        Boolean match;
-        JexlExpression expression;
-        try {
-            expression = JexlExpressionRunner.compile(expr);
-        } catch (JexlException jexlException) {
-            log.warn("Alarm Rule: {} Compile Error: {}.", expr, jexlException.getMessage());
-            throw jexlException;
-        } catch (Exception e) {
-            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
-            throw e;
-        }
-
-        try {
-            match = (Boolean) JexlExpressionRunner.evaluate(expression, fieldValueMap);
-        } catch (JexlException jexlException) {
-            if (ignoreJexlException) {
-                log.debug("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
-            } else {
-                log.error("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
-            }
-            throw jexlException;
-        } catch (Exception e) {
-            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
-            throw e;
-        }
-        return match != null && match;
-    }
 
     /**
      * Handle alert after threshold rule match

@@ -654,7 +654,7 @@
           </nz-card>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'periodic_metric' || define.type == 'periodic_log'" [ngStyle]="{ marginBottom: '5px' }">
+      <nz-form-item *ngIf="define.type == 'periodic_metric'" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzFor="datasource" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
@@ -671,7 +671,8 @@
           </ng-container>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'periodic_metric' || define.type == 'periodic_log'">
+      <!-- Metric query and alert expression -->
+      <nz-form-item *ngIf="define.type == 'periodic_metric'">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="100">
@@ -696,12 +697,12 @@
               [nzData]="previewData"
               [nzSize]="'small'"
               [nzLoading]="previewTableLoading"
-              [nzScroll]="previewData.length > 3 ? { x: '1240px', y: '180px' } : { x: '1240px' }"
+              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
               [nzShowPagination]="false"
             >
               <thead>
                 <tr>
-                  <th *ngFor="let column of previewColumns" [nzWidth]="column.width || 'auto'">
+                  <th *ngFor="let column of previewColumns">
                     {{ column.title }}
                   </th>
                 </tr>
@@ -715,6 +716,90 @@
               </tbody>
             </nz-table>
           </div>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'periodic_log'" [ngStyle]="{ marginBottom: '5px' }">
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="query_expr" [nzTooltipTitle]="'alert.setting.log.query.tip' | i18n">
+          {{ 'alert.setting.log.query' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
+            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" name="datasource" id="datasource">
+              <label nz-radio-button [nzValue]="'promql'">
+                {{ 'PromQL' | i18n }}
+              </label>
+              <label nz-radio-button [nzValue]="'sql'">
+                {{ 'SQL' | i18n }}
+              </label>
+            </nz-radio-group>
+          </ng-container>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- Log query expression -->
+      <nz-form-item *ngIf="define.type == 'periodic_log'">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="query_expr"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea
+              [(ngModel)]="define.queryExpr"
+              required
+              rows="3"
+              nz-input
+              name="query_expr"
+              id="query_expr"
+              [placeholder]="'alert.setting.log.query.placeholder' | i18n"
+            >
+            </textarea>
+          </nz-textarea-count>
+          <button nz-button nzType="primary" style="width: 100%; margin-bottom: 10px" (click)="onPreviewLogQueryExpr()">
+            <i nz-icon nzType="eye" nzTheme="outline"></i>
+            {{ 'common.preview.button' | i18n }}
+          </button>
+          <div *ngIf="previewData && previewColumns.length > 0" class="preview-table-container">
+            <nz-table
+              #previewTable
+              [nzData]="previewData"
+              [nzSize]="'small'"
+              [nzLoading]="previewTableLoading"
+              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
+              [nzShowPagination]="false"
+            >
+              <thead>
+                <tr>
+                  <th *ngFor="let column of previewColumns">
+                    {{ column.title }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let data of previewTable.data">
+                  <td *ngFor="let column of previewColumns">
+                    {{ data[column.key] }}
+                  </td>
+                </tr>
+              </tbody>
+            </nz-table>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- Log alert expression -->
+      <nz-form-item *ngIf="define.type == 'periodic_log'">
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="periodic_expr" [nzTooltipTitle]="'alert.setting.log.expr.tip' | i18n">
+          {{ 'alert.setting.log.expr' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea
+              [(ngModel)]="define.expr"
+              required
+              rows="3"
+              nz-input
+              name="periodic_expr"
+              id="periodic_expr"
+              [placeholder]="'alert.setting.log.expr.placeholder' | i18n"
+            >
+            </textarea>
+          </nz-textarea-count>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="define.type === 'periodic_metric' || define.type === 'periodic_log'">

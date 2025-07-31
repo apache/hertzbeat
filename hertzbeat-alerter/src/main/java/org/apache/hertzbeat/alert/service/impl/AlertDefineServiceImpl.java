@@ -88,7 +88,8 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
         if (StringUtils.hasText(alertDefine.getExpr())) {
             if (CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())
-                    || CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
+                    || CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())
+                    || CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC.equals(alertDefine.getType())) {
                 try {
                     JexlExpressionRunner.compile(alertDefine.getExpr());
                 } catch (Exception e) {
@@ -242,6 +243,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         switch (type) {
             case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
                 return dataSourceService.calculate(datasource, expr);
+            case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
+                // todo support alert expr preview
+                return dataSourceService.query(datasource, expr);
             default:
                 log.error("Get define preview unsupported type: {}", type);
                 return Collections.emptyList();

@@ -70,8 +70,9 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
     @Autowired
     public MetricsRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                                           AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                          AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
-        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager);
+                                          AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
+                                          JexlExprCalculator jexlExprCalculator) {
+        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator);
     }
 
     /**
@@ -88,8 +89,9 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
      */
     public MetricsRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                                           AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                          AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager, boolean start) {
-        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, start);
+                                          AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
+                                          JexlExprCalculator jexlExprCalculator, boolean start) {
+        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager,jexlExprCalculator, start);
     }
 
     @Override
@@ -169,7 +171,7 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
             {
                 // trigger the expr before the metrics data, due the available up down or others
                 try {
-                    boolean match = execAlertExpression(fieldValueMap, expr, true);
+                    boolean match = jexlExprCalculator.execAlertExpression(fieldValueMap, expr, true);
                     try {
                         if (match) {
                             // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
@@ -224,7 +226,7 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
                     }
                 }
                 try {
-                    boolean match = execAlertExpression(fieldValueMap, expr, false);
+                    boolean match = jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
                     try {
                         if (match) {
                             afterThresholdRuleMatch(defineId, currentTimeMilli, fingerPrints, fieldValueMap, define, annotations);

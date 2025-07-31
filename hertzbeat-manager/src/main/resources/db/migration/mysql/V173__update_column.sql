@@ -17,12 +17,13 @@
 
 -- ensure every sql can rerun without error
 
--- Update hzb_alert_define table type column to support log monitoring
+-- Update hzb_alert_define table type column to support log monitoring and modify annotations/query_expr columns
 
 DELIMITER //
-CREATE PROCEDURE UpdateAlertDefineType()
+CREATE PROCEDURE UpdateAlertDefineColumns()
 BEGIN
     DECLARE table_exists INT;
+    DECLARE column_exists INT;
 
     -- Check if the table exists
     SELECT COUNT(*) INTO table_exists 
@@ -39,11 +40,25 @@ BEGIN
         UPDATE HZB_ALERT_DEFINE 
         SET type = 'periodic_metric' 
         WHERE type = 'periodic';
+        
+        -- Modify annotations column length from 4096 to 2048
+        ALTER TABLE HZB_ALERT_DEFINE 
+        MODIFY COLUMN annotations VARCHAR(2048);
+        
+        -- Add query_expr column if not exists
+        SELECT COUNT(*) INTO column_exists 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'HZB_ALERT_DEFINE' AND COLUMN_NAME = 'query_expr';
+        
+        IF column_exists = 0 THEN
+            ALTER TABLE HZB_ALERT_DEFINE 
+            ADD COLUMN query_expr VARCHAR(2048);
+        END IF;
     END IF;
 END //
 
 DELIMITER ;
 
-CALL UpdateAlertDefineType();
-DROP PROCEDURE IF EXISTS UpdateAlertDefineType;
+CALL UpdateAlertDefineColumns();
+DROP PROCEDURE IF EXISTS UpdateAlertDefineColumns;
 COMMIT;

@@ -1662,6 +1662,75 @@ export class AlertSettingComponent implements OnInit {
     });
   }
 
+  onPreviewLogQueryExpr(): void {
+    if (!this.define.queryExpr) {
+      this.clearPreview();
+      this.previewTableLoading = false;
+      return;
+    }
+    this.previewTableLoading = true;
+    
+    this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.queryExpr).subscribe({
+      next: res => {
+        if (res.code === 15 || res.code === 1 || res.code === 4) {
+          this.message.error(res.msg || 'Expression parsing exception');
+          this.clearPreview();
+          this.previewTableLoading = false;
+          return;
+        }
+        if (res.code === 0 && Array.isArray(res.data)) {
+          // Process log data for table display
+          this.processLogPreviewData(res.data);
+        } else {
+          this.clearPreview();
+        }
+        this.previewTableLoading = false;
+      },
+      error: err => {
+        this.clearPreview();
+        this.previewTableLoading = false;
+        this.message.error('Failed to get preview data.');
+      }
+    });
+  }
+
+  private processLogPreviewData(data: any[]): void {
+    if (!data || data.length === 0) {
+      this.clearPreview();
+      return;
+    }
+
+    // Get all unique keys from the log data to create columns
+    const allKeys = new Set<string>();
+    data.forEach(item => {
+      Object.keys(item).forEach(key => allKeys.add(key));
+    });
+
+    // Create columns based on actual query result keys - use the key as both title and key
+    this.previewColumns = Array.from(allKeys).map(key => ({
+      title: key,
+      key: key
+    }));
+
+    // Process data for display
+    this.previewData = data.map(item => {
+      const processedItem: any = {};
+      for (const [key, value] of Object.entries(item)) {
+        if (value != null) {
+          // Format complex objects as JSON strings for display
+          if (typeof value === 'object') {
+            processedItem[key] = JSON.stringify(value);
+          } else {
+            processedItem[key] = String(value);
+          }
+        } else {
+          processedItem[key] = '';
+        }
+      }
+      return processedItem;
+    });
+  }
+
   private filterEmptyFields(mapData: Record<string, any>): Record<string, any> {
     return Object.entries(mapData).reduce<Record<string, any>>((acc, [key, value]) => {
       if (value == null) return acc;

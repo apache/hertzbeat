@@ -45,9 +45,10 @@ public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<
 
     @Autowired
     public LogRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
-                                   AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager) {
-        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager);
+                                      AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                      AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
+                                      JexlExprCalculator jexlExprCalculator) {
+        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator);
     }
 
     /**
@@ -63,9 +64,10 @@ public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<
      *                            set to false to disable thread start (useful for unit testing).
      */
     public LogRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
-                                   AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
-                                   AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager, boolean start) {
-        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, start);
+                                      AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
+                                      AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
+                                      JexlExprCalculator jexlExprCalculator, boolean start) {
+        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator, start);
     }
 
     @Override
@@ -105,7 +107,7 @@ public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<
             commonFingerPrints.putAll(define.getLabels());
 
             try {
-                boolean match = execAlertExpression(commonContext, expr, false);
+                boolean match = jexlExprCalculator.execAlertExpression(commonContext, expr, false);
                 try {
                     if (match) {
                         afterThresholdRuleMatch(define.getId(), currentTimeMilli, commonFingerPrints, commonContext, define, null);

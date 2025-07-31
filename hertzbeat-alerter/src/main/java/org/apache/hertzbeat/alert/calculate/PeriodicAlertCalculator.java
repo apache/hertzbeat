@@ -30,9 +30,7 @@ import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Periodic Alert Calculator
@@ -44,16 +42,19 @@ public class PeriodicAlertCalculator {
     
     private static final String VALUE = "__value__";
     private static final String TIMESTAMP = "__timestamp__";
+    private static final String ROWS = "__rows__";
 
     private final DataSourceService dataSourceService;
     private final AlarmCommonReduce alarmCommonReduce;
     private final AlarmCacheManager alarmCacheManager;
+    private final JexlExprCalculator jexlExprCalculator;
 
     public PeriodicAlertCalculator(DataSourceService dataSourceService, AlarmCommonReduce alarmCommonReduce,
-                                   AlarmCacheManager alarmCacheManager) {
+                                   AlarmCacheManager alarmCacheManager, JexlExprCalculator jexlExprCalculator) {
         this.dataSourceService = dataSourceService;
         this.alarmCommonReduce = alarmCommonReduce;
         this.alarmCacheManager = alarmCacheManager;
+        this.jexlExprCalculator = jexlExprCalculator;
     }
     
     public void calculate(AlertDefine define) {
@@ -71,8 +72,8 @@ public class PeriodicAlertCalculator {
                 String sqlOrPromql = define.getDatasource();
                 if (WarehouseConstants.SQL.equals(sqlOrPromql)) {
                     // sql
-                    results = dataSourceService.query(sqlOrPromql, define.getExpr());
-                    // this.doCaculate();
+                    results = dataSourceService.query(sqlOrPromql, define.getQueryExpr());
+                    results = this.doCalculate(results, define.getExpr());
                 } else {
                     // promql
                     results = dataSourceService.calculate(
@@ -119,6 +120,23 @@ public class PeriodicAlertCalculator {
         } catch (Exception e) {
             log.error("Calculate periodic define {} failed: {}", define.getName(), e.getMessage());
         }
+    }
+
+    private List<Map<String, Object>> doCalculate(List<Map<String, Object>> results, String expression) {
+        if (CollectionUtils.isEmpty(results)) {
+            return List.of();
+        }
+        List<Map<String, Object>> newResults = new ArrayList<>(results.size());
+        for (Map<String, Object> result : results) {
+            HashMap<String, Object> fieldMap = new HashMap<>(result);
+            // todo improvement the rows judge
+            fieldMap.put(ROWS, results.size());
+            boolean match = jexlExprCalculator.execAlertExpression(fieldMap, expression, true);
+            if (match) {
+                newResults.add(result);
+            }
+        }
+        return newResults;
     }
 
     private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,

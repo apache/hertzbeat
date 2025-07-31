@@ -47,11 +47,12 @@ class MetricsRealTimeAlertCalculatorTest {
         SingleAlertDao mockDao = Mockito.mock(SingleAlertDao.class);
         AlarmCommonReduce mockReduce = Mockito.mock(AlarmCommonReduce.class);
         AlarmCacheManager alarmCacheManager = Mockito.mock(AlarmCacheManager.class);
+        JexlExprCalculator mockExprCalculator = Mockito.mock(JexlExprCalculator.class);
 
         Mockito.when(mockDao.querySingleAlertsByStatus(Mockito.anyString()))
                 .thenReturn(Collections.emptyList());
 
-        calculator = new MetricsRealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService, mockDao, mockReduce, alarmCacheManager, false);
+        calculator = new MetricsRealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService, mockDao, mockReduce, alarmCacheManager, mockExprCalculator,false);
     }
 
     @Test

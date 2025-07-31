@@ -29,4 +29,12 @@ UPDATE HZB_ALERT_DEFINE
 SET type = 'periodic_metric' 
 WHERE type = 'periodic';
 
+-- Modify annotations column length from 4096 to 2048
+ALTER TABLE HZB_ALERT_DEFINE
+ALTER COLUMN annotations TYPE VARCHAR(2048);
+
+-- Add query_expr column
+ALTER TABLE HZB_ALERT_DEFINE
+ADD COLUMN IF NOT EXISTS query_expr VARCHAR(2048);
+
 commit;

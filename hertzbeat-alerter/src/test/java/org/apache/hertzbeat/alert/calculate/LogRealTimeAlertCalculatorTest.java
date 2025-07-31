@@ -45,9 +45,10 @@ class LogRealTimeAlertCalculatorTest {
         SingleAlertDao mockDao = Mockito.mock(SingleAlertDao.class);
         AlarmCommonReduce mockReduce = Mockito.mock(AlarmCommonReduce.class);
         AlarmCacheManager alarmCacheManager = Mockito.mock(AlarmCacheManager.class);
+        JexlExprCalculator mockExprCalculator = Mockito.mock(JexlExprCalculator.class);
 
         calculator = new LogRealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService, 
-                mockDao, mockReduce, alarmCacheManager, false);
+                mockDao, mockReduce, alarmCacheManager, mockExprCalculator,false);
     }
 
     @Test
@@ -60,7 +61,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "(log.severityNumber == 2) && (contains(log.severityText, \"ERROR\"))";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Expression should match when severityNumber is 2 and severityText contains 'ERROR'");
@@ -76,7 +77,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "(log.severityNumber == 2) && (contains(log.severityText, \"ERROR\"))";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertFalse(result, "Expression should not match when severityText doesn't contain 'ERROR'");
@@ -92,7 +93,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "(log.severityNumber == 2) && (contains(log.severityText, \"ERROR\"))";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertFalse(result, "Expression should not match when severityNumber is not 2");
@@ -108,7 +109,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "(log.severityNumber == 2) && (contains(log.severityText.toLowerCase(), \"error\"))";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Expression should match with case-insensitive comparison");
@@ -124,7 +125,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "log.severityNumber > 2";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Expression should match when severityNumber is greater than 2");
@@ -140,7 +141,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "contains(log.body, \"Database\")";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Expression should match when body contains 'Database'");
@@ -160,7 +161,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "log.attributes.service == \"user-service\"";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Expression should match when attributes contain expected service");
@@ -180,7 +181,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "(log.severityNumber >= 3) && (contains(log.severityText, \"ERROR\")) && (log.attributes.environment == \"production\")";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Complex expression should match all conditions");
@@ -196,7 +197,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "(log.severityNumber == 5) || (contains(log.body, \"Debug\"))";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "OR expression should match when at least one condition is true");
@@ -221,7 +222,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "log.timeUnixNano > 0";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Expression should match when timestamp is greater than 0");
@@ -236,7 +237,7 @@ class LogRealTimeAlertCalculatorTest {
 
         String expr = "contains(log.body, \"error\")";
 
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
         // Act & Assert
         assertFalse(result, "Expression should not match when body is null");
     }
@@ -251,7 +252,7 @@ class LogRealTimeAlertCalculatorTest {
         String expr = "log.attributes.service == \"user-service\"";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertFalse(result, "Expression should not match when attributes is empty");
@@ -282,7 +283,7 @@ class LogRealTimeAlertCalculatorTest {
                 + "(log.traceId == \"abc123\")";
 
         // Act
-        boolean result = calculator.execAlertExpression(fieldValueMap, expr, false);
+        boolean result = calculator.jexlExprCalculator.execAlertExpression(fieldValueMap, expr, false);
 
         // Assert
         assertTrue(result, "Complex expression with multiple log fields should match");
