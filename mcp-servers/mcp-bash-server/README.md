@@ -38,6 +38,12 @@ Refer to the `Dockerfile` in the code repository and create your own Dockerfile.
 docker build -t apache/hertzbeat-mcp-bash-server:latest .
 ```
 
+You can use the proxy in docker build
+
+```shell
+docker build --build-arg HTTPS_PROXY=<your https_proxy> --build-arg HTTP_PROXY=<your http_proxy> -t apache/hertzbeat-mcp-bash-server:latest .
+```
+
 After building, use the following command to run it:
 
 ```shell
@@ -175,6 +181,7 @@ The unit tests include:
 - **Working Directory Handling**: Tests command execution in specific working directories
 - **Debug and Clone Traits**: Tests that BashServer properly implements Debug and Clone traits
 - **Timeout Behavior**: Tests that commands properly timeout when exceeding time limits
+- **Unix script and Python Execution**: Tests tool `unix_execute_script` and `unix_execute_python`
 
 ### Manual Testing with Inspector
 

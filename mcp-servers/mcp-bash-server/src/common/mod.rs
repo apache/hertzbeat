@@ -1,5 +1,5 @@
 //! Common utilities and shared components for the MCP Bash Server
-//! 
+//!
 //! This module contains the core functionality including:
 //! - Bash command execution server implementation
 //! - Configuration management

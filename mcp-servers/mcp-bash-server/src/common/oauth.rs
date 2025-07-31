@@ -76,7 +76,7 @@ impl McpOAuthStore {
     ) -> Option<OAuthClientConfig> {
         let clients = self.clients.read().await;
         if let Some(client) = clients.get(client_id) {
-            if client.redirect_uri.contains(&redirect_uri.to_string()) {
+            if client.redirect_uri == redirect_uri {
                 return Some(client.clone());
             }
         }

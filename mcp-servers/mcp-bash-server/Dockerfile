@@ -24,10 +24,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV RUST_VERSION=stable
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Set proxy environment variables if needed
-# Uncomment the following lines if you need to use a proxy
-ENV https_proxy=http://172.17.0.1:7897
-ENV http_proxy=http://172.17.0.1:7897
+# Set proxy environment variables via build arguments
+ARG HTTPS_PROXY
+ARG HTTP_PROXY
+ENV https_proxy=${HTTPS_PROXY}
+ENV http_proxy=${HTTP_PROXY}
 
 # Change the sources list to use a custom Ubuntu source
 # Uncomment the following lines if you use the default Ubuntu sources

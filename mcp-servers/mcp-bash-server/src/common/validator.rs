@@ -7,7 +7,7 @@ use std::ffi::OsStr;
 use tracing::debug;
 
 use crate::{common::config::Whitelist, config::Blacklist};
-use rmcp::model::ErrorData;
+use rmcp::model::{ErrorCode, ErrorData};
 use tracing::error;
 
 /// Command validator that checks commands against security blacklists
@@ -47,10 +47,13 @@ impl Validator {
             ));
         }
 
-        let full_cmd = args
-            .join(OsStr::new(" "))
-            .into_string()
-            .expect("Convert OsStr to String failed!");
+        let full_cmd = args.join(OsStr::new(" ")).into_string().map_err(|_| {
+            ErrorData::new(
+                ErrorCode::INTERNAL_ERROR,
+                "Convert OsStr to String failed!",
+                None,
+            )
+        })?;
 
         debug!("Validating command: {}", full_cmd);
 

@@ -313,6 +313,16 @@ impl BashServer {
         &self,
         Parameters(request): Parameters<DefaultExecuteRequest>,
     ) -> Result<CallToolResult, ErrorData> {
+        if let Some(validator) = &self.validator {
+            for line in request.command.lines() {
+                if line.is_empty() || line.starts_with('#') {
+                    continue;
+                }
+                validator
+                    .is_unsafe_command(line.split(" ").map(OsStr::new).collect::<Vec<&OsStr>>())?;
+            }
+        }
+
         let timeout_duration =
             std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
 
@@ -322,14 +332,33 @@ impl BashServer {
         let tmp_name = Uuid::new_v4().to_string();
         let script_path = tmp_dir.join(format!("{tmp_name}.sh"));
         {
-            let mut file =
-                File::create(&script_path).expect("Can not create temporary script file");
-            file.write_all(request.command.as_bytes())
-                .expect("Write to script file error");
+            let mut file = File::create(&script_path).map_err(|_| {
+                ErrorData::new(
+                    ErrorCode::INTERNAL_ERROR,
+                    "Can not create temporary script file",
+                    None,
+                )
+            })?;
+            file.write_all(request.command.as_bytes()).map_err(|_| {
+                ErrorData::new(
+                    ErrorCode::INTERNAL_ERROR,
+                    "Write to script file error",
+                    None,
+                )
+            })?;
             // Set execution mode
-            let mut perms = file.metadata().unwrap().permissions();
+            let metadata = file.metadata().map_err(|_| {
+                ErrorData::new(ErrorCode::INTERNAL_ERROR, "Get file metadata error", None)
+            })?;
+            let mut perms = metadata.permissions();
             perms.set_mode(0o755);
-            fs::set_permissions(&script_path, perms).expect("Set mode 755 fail");
+            fs::set_permissions(&script_path, perms).map_err(|_| {
+                ErrorData::new(
+                    ErrorCode::INTERNAL_ERROR,
+                    "Failed to set script file permissions",
+                    None,
+                )
+            })?;
         }
 
         let mut cmd = Command::new(&script_path);
@@ -650,23 +679,23 @@ impl ServerHandler for BashServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
     use crate::common::config::{Blacklist, Whitelist};
+    use std::collections::HashMap;
 
     fn create_test_bash_server() -> BashServer {
         let blacklist = Blacklist {
             commands: vec!["rm".to_string(), "dd".to_string()],
             regex: vec![".*[|&].*".to_string()],
         };
-        
+
         let whitelist = Whitelist {
             commands: vec!["echo hello".to_string()],
             regex: vec!["echo.*".to_string()],
         };
-        
+
         let validator = Validator::new(blacklist, whitelist);
         let tool_router = BashServer::tool_router();
-        
+
         BashServer {
             validator: Some(validator),
             tool_router,
@@ -682,6 +711,50 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn test_unix_execute_script() {
+        let server = create_test_bash_server();
+        let safe_request = create_test_request(
+            r#"#!/bin/bash
+echo hello
+"#,
+        );
+        let result = server.unix_execute_script(Parameters(safe_request)).await;
+        assert!(result.is_ok());
+        let call_result = result.unwrap();
+        assert!(!call_result.content.is_empty());
+        let unsafe_request = create_test_request(
+            r#"#!/bin/bash
+touch hello.txt
+rm -rf hello.txt
+"#,
+        );
+        let result = server.unix_execute_script(Parameters(unsafe_request)).await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_unix_execute_python() {
+        let server = create_test_bash_server();
+        let safe_request = create_test_request(
+            r#"import os
+import subprocess
+print("hello world")
+subprocess.run(["ls", "-l"], cwd="/root")
+"#,
+        );
+        let result = server.unix_execute_python(Parameters(safe_request)).await;
+        assert!(result.is_ok());
+        let content = result.unwrap().content[0].clone();
+        if let RawContent::Text(RawTextContent { text }) = content.raw {
+            let response = serde_json::from_str::<DefaultExecuteResponse>(&text);
+            assert!(response.is_ok());
+            let response = response.unwrap();
+            assert!(!response.success);
+            assert!(response.exit_code != 0);
+        }
+    }
+
     #[test]
     fn test_default_execute_response_success() {
         let response = DefaultExecuteResponse {
@@ -694,7 +767,7 @@ mod tests {
 
         let result = response.into_call_tool_result();
         assert!(result.is_ok());
-        
+
         let call_result = result.unwrap();
         assert_eq!(call_result.is_error, Some(false));
         assert!(!call_result.content.is_empty());
@@ -712,7 +785,7 @@ mod tests {
 
         let result = response.into_call_tool_result();
         assert!(result.is_ok());
-        
+
         let call_result = result.unwrap();
         assert_eq!(call_result.is_error, Some(true));
         assert!(!call_result.content.is_empty());
@@ -722,7 +795,7 @@ mod tests {
     fn test_command_runner_stringify_simple_command() {
         let mut cmd = Command::new("echo");
         cmd.arg("hello");
-        
+
         let result = BashServer::stringify_command(&cmd);
         assert_eq!(result, "echo hello");
     }
@@ -731,7 +804,7 @@ mod tests {
     fn test_command_runner_stringify_command_with_spaces() {
         let mut cmd = Command::new("echo");
         cmd.arg("hello world");
-        
+
         let result = BashServer::stringify_command(&cmd);
         assert_eq!(result, "echo \"hello world\"");
     }
@@ -739,10 +812,8 @@ mod tests {
     #[test]
     fn test_command_runner_stringify_complex_command() {
         let mut cmd = Command::new("find");
-        cmd.arg("/tmp")
-           .arg("-name")
-           .arg("*.txt");
-        
+        cmd.arg("/tmp").arg("-name").arg("*.txt");
+
         let result = BashServer::stringify_command(&cmd);
         assert_eq!(result, "find /tmp -name *.txt");
     }
@@ -759,10 +830,8 @@ mod tests {
             cmd
         };
 
-        let result = BashServer::execute_command_with_timeout(
-            std::time::Duration::from_secs(5),
-            cmd,
-        ).await;
+        let result =
+            BashServer::execute_command_with_timeout(std::time::Duration::from_secs(5), cmd).await;
 
         assert!(result.is_ok());
         let output = result.unwrap();
@@ -773,11 +842,9 @@ mod tests {
     #[tokio::test]
     async fn test_execute_command_with_timeout_failure() {
         let cmd = Command::new("nonexistent_command_12345");
-        
-        let result = BashServer::execute_command_with_timeout(
-            std::time::Duration::from_secs(5),
-            cmd,
-        ).await;
+
+        let result =
+            BashServer::execute_command_with_timeout(std::time::Duration::from_secs(5), cmd).await;
 
         assert!(result.is_err());
     }
@@ -800,8 +867,10 @@ mod tests {
     async fn test_all_execute_via_default_shell_simple_command() {
         let server = create_test_bash_server();
         let request = create_test_request("echo 'Hello Test'");
-        
-        let result = server.all_execute_via_default_shell(Parameters(request)).await;
+
+        let result = server
+            .all_execute_via_default_shell(Parameters(request))
+            .await;
         assert!(result.is_ok());
     }
 
@@ -809,19 +878,22 @@ mod tests {
     fn test_default_execute_request_creation() {
         let mut env_vars = HashMap::new();
         env_vars.insert("TEST_VAR".to_string(), "test_value".to_string());
-        
+
         let request = DefaultExecuteRequest {
             command: "echo $TEST_VAR".to_string(),
             working_dir: Some("/tmp".to_string()),
             env_vars: Some(env_vars),
             timeout_seconds: Some(10),
         };
-        
+
         assert_eq!(request.command, "echo $TEST_VAR");
         assert_eq!(request.working_dir, Some("/tmp".to_string()));
         assert_eq!(request.timeout_seconds, Some(10));
         assert!(request.env_vars.is_some());
-        assert_eq!(request.env_vars.unwrap().get("TEST_VAR"), Some(&"test_value".to_string()));
+        assert_eq!(
+            request.env_vars.unwrap().get("TEST_VAR"),
+            Some(&"test_value".to_string())
+        );
     }
 
     #[test]
@@ -832,7 +904,7 @@ mod tests {
             env_vars: None,
             timeout_seconds: None,
         };
-        
+
         assert_eq!(request.command, "pwd");
         assert!(request.working_dir.is_none());
         assert!(request.env_vars.is_none());
@@ -845,7 +917,7 @@ mod tests {
             "status": "success",
             "data": ["item1", "item2"]
         });
-        
+
         let response = DefaultExecuteResponse {
             stdout: "Command output".to_string(),
             stderr: "".to_string(),
@@ -853,7 +925,7 @@ mod tests {
             success: true,
             parsed_data,
         };
-        
+
         assert_eq!(response.exit_code, 0);
         assert!(response.success);
         assert_eq!(response.parsed_data["status"], "success");
@@ -876,7 +948,8 @@ mod tests {
         let result = BashServer::execute_command_with_timeout(
             std::time::Duration::from_millis(100), // Very short timeout
             cmd,
-        ).await;
+        )
+        .await;
 
         assert!(result.is_err());
         let error = result.unwrap_err();
@@ -894,7 +967,7 @@ mod tests {
     fn test_bash_server_clone_trait() {
         let server = create_test_bash_server();
         let cloned_server = server.clone();
-        
+
         // Both should have validators
         assert!(server.validator.is_some());
         assert!(cloned_server.validator.is_some());
@@ -909,10 +982,10 @@ mod tests {
             success: false,
             parsed_data: serde_json::json!({"key": "value"}),
         };
-        
+
         let json_result = serde_json::to_string(&response);
         assert!(json_result.is_ok());
-        
+
         let json_str = json_result.unwrap();
         assert!(json_str.contains("output"));
         assert!(json_str.contains("error"));
@@ -929,10 +1002,10 @@ mod tests {
             "success": true,
             "parsed_data": null
         }"#;
-        
+
         let result: Result<DefaultExecuteResponse, _> = serde_json::from_str(json_str);
         assert!(result.is_ok());
-        
+
         let response = result.unwrap();
         assert_eq!(response.stdout, "test output");
         assert_eq!(response.stderr, "test error");
