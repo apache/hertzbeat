@@ -30,10 +30,6 @@ ARG HTTP_PROXY
 ENV https_proxy=${HTTPS_PROXY}
 ENV http_proxy=${HTTP_PROXY}
 
-# Change the sources list to use a custom Ubuntu source
-# Uncomment the following lines if you use the default Ubuntu sources
-COPY ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources
-
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     curl \
