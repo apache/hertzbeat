@@ -21,11 +21,13 @@ app: opensuse
 name:
   zh-CN: OpenSUSE
   en-US: OpenSUSE
+  ja-JP: OpenSUSE
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 OpenSUSE 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 OpenSUSE</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH protocol</a> to monitors OpenSUSE operating system's general performance metrics such as cpu, memory, disk, basic, interface, disk_free, top_process etc. <br>You can click the "<i>New OpenSUSE</i>" and config host port and other related params to add, auth support password or secretKey. Or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 對 OpenSUSE 操作系统的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 OpenSUSE</i>”並配置HOST端口賬戶等相關參數進行添加，支持SSH賬戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> OpenSUSEシステムの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 OpenSUSE</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/opensuse
   en-US: https://hertzbeat.apache.org/docs/help/opensuse
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 复用连接
       en-US: Reuse Connection
+      ja-JP: 接続再利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -86,6 +92,7 @@ params:
     name:
       zh-CN: 使用代理
       en-US: Use Proxy Connection
+      ja-JP: プロキシ接続利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -97,6 +104,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -109,6 +117,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -119,6 +128,7 @@ params:
     name:
       zh-CN: 私钥
       en-US: PrivateKey
+      ja-JP: 秘密鍵
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -131,6 +141,7 @@ params:
     name:
       zh-CN: 密钥短语
       en-US: PrivateKey PassPhrase
+      ja-JP: 秘密鍵フレーズ
     # type-param field type(most mapping the html input type)
     type: password
     # required-true or false
@@ -143,6 +154,7 @@ params:
     name:
       zh-CN: 代理主机
       en-US: Proxy Host
+      ja-JP: プロキシホスト
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -154,6 +166,7 @@ params:
     name:
       zh-CN: 代理端口
       en-US: Proxy Port
+      ja-JP: プロキシポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -170,6 +183,7 @@ params:
     name:
       zh-CN: 代理用户名
       en-US: Proxy Username
+      ja-JP: プロキシユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -184,6 +198,7 @@ params:
     name:
       zh-CN: 代理密码
       en-US: Proxy Password
+      ja-JP: プロキシパスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -196,6 +211,7 @@ params:
     name:
       zh-CN: 代理主机私钥
       en-US: proxyPrivateKey
+      ja-JP: プロキシ秘密鍵
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -210,6 +226,7 @@ metrics:
     i18n:
       zh-CN: 系统基本信息
       en-US: Basic Info
+      ja-JP: システム基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -222,16 +239,19 @@ metrics:
         i18n:
           zh-CN: 主机名称
           en-US: Host Name
+          ja-JP: ホスト名
       - field: version
         type: 1
         i18n:
           zh-CN: 操作系统版本
           en-US: System Version
+          ja-JP: オーエスバージョン
       - field: uptime
         type: 1
         i18n:
           zh-CN: 启动时间
           en-US: Uptime
+          ja-JP: アップタイム
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh
@@ -271,6 +291,7 @@ metrics:
     i18n:
       zh-CN: CPU 信息
       en-US: CPU Info
+      ja-JP: CPU情報
     priority: 1
     fields:
       - field: info
@@ -278,32 +299,38 @@ metrics:
         i18n:
           zh-CN: 型号
           en-US: Info
+          ja-JP: バージョン
       - field: cores
         type: 1
         i18n:
           zh-CN: 核数
           en-US: Cores
+          ja-JP: コア数
       - field: interrupt
         type: 0
         i18n:
           zh-CN: 中断数
           en-US: Interrupt
+          ja-JP: 割り込み数
       - field: load
         type: 1
         i18n:
           zh-CN: 负载
           en-US: Load
+          ja-JP: ロード
       - field: context_switch
         type: 0
         i18n:
           zh-CN: 上下文切换
           en-US: Context Switch
+          ja-JP: コンテキストスイッチ
       - field: usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - info
@@ -350,6 +377,7 @@ metrics:
     i18n:
       zh-CN: 内存信息
       en-US: Memory Info
+      ja-JP: メモリ情報
     priority: 2
     fields:
       - field: total
@@ -358,36 +386,42 @@ metrics:
         i18n:
           zh-CN: 总内存容量
           en-US: Total Memory
+          ja-JP: メモリ容量
       - field: used
         type: 0
         unit: Mb
         i18n:
           zh-CN: 用户程序内存量
           en-US: User Program Memory
+          ja-JP: ユーザープログラムメモリ
       - field: free
         type: 0
         unit: Mb
         i18n:
           zh-CN: 空闲内存容量
           en-US: Free Memory
+          ja-JP: 空きメモリ
       - field: buff_cache
         type: 0
         unit: Mb
         i18n:
           zh-CN: 缓存占用内存
           en-US: Buff Cache Memory
+          ja-JP: バッファメモリ
       - field: available
         type: 0
         unit: Mb
         i18n:
           zh-CN: 剩余可用内存
           en-US: Available Memory
+          ja-JP: 使用可能のメモリ
       - field: usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存使用率
           en-US: Memory Usage
+          ja-JP: メモリ使用率
     aliasFields:
       - total
       - used
@@ -430,6 +464,7 @@ metrics:
     i18n:
       zh-CN: 磁盘信息
       en-US: Disk Info
+      ja-JP: ディスク情報
     priority: 3
     fields:
       - field: disk_num
@@ -437,27 +472,32 @@ metrics:
         i18n:
           zh-CN: 磁盘总数
           en-US: Disk Num
+          ja-JP: ディスク番号
       - field: partition_num
         type: 1
         i18n:
           zh-CN: 分区总数
           en-US: Partition Num
+          ja-JP: パーティション
       - field: block_write
         type: 0
         i18n:
           zh-CN: 写磁盘块数
           en-US: Block Write
+          ja-JP: 書き込みディスクブロック数
       - field: block_read
         type: 0
         i18n:
           zh-CN: 读磁盘块数
           en-US: Block Read
+          ja-JP: 読み取りブロック数
       - field: write_rate
         type: 0
         unit: iops
         i18n:
           zh-CN: 磁盘写速率
           en-US: Write Rate
+          ja-JP: ディスク書き込み速度
     protocol: ssh
     ssh:
       host: ^_^host^_^
@@ -487,6 +527,7 @@ metrics:
     i18n:
       zh-CN: 网卡信息
       en-US: Interface Info
+      ja-JP: ネットワークカード情報
     priority: 4
     fields:
       - field: interface_name
@@ -495,18 +536,21 @@ metrics:
         i18n:
           zh-CN: 网卡名称
           en-US: Interface Name
+          ja-JP: ネットワークカード名
       - field: receive_bytes
         type: 0
         unit: Mb
         i18n:
           zh-CN: 入站数据流量
           en-US: Receive Bytes
+          ja-JP: 受信されたバイト数
       - field: transmit_bytes
         type: 0
         unit: Mb
         i18n:
           zh-CN: 出站数据流量
           en-US: Transmit Bytes
+          ja-JP: 転送されたバイト数
     units:
       - receive_bytes=B->MB
       - transmit_bytes=B->MB
@@ -539,6 +583,7 @@ metrics:
     i18n:
       zh-CN: 文件系统
       en-US: Disk Free
+      ja-JP: ファイルシステム
     priority: 5
     fields:
       - field: filesystem
@@ -546,30 +591,35 @@ metrics:
         i18n:
           zh-CN: 文件系统
           en-US: Filesystem
+          ja-JP: ファイルシステム
       - field: used
         type: 0
         unit: Mb
         i18n:
           zh-CN: 已使用量
           en-US: Used
+          ja-JP: 使用済み
       - field: available
         type: 0
         unit: Mb
         i18n:
           zh-CN: 可用量
           en-US: Available
+          ja-JP: 使用可能
       - field: usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
       - field: mounted
         type: 1
         label: true
         i18n:
           zh-CN: 挂载点
           en-US: Mounted
+          ja-JP: マウント
     protocol: ssh
     ssh:
       host: ^_^host^_^
@@ -599,6 +649,7 @@ metrics:
     i18n:
       zh-CN: Top10 CPU 进程
       en-US: Top10 CPU Process
+      ja-JP: トップ10 CPUプロセス
     priority: 6
     fields:
       - field: pid
@@ -607,23 +658,27 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
+          ja-JP: プロセスID
       - field: cpu_usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: CPU占用率
           en-US: CPU Usage
+          ja-JP: CPU使用率
       - field: mem_usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存占用率
           en-US: Memory Usage
+          ja-JP: メモリ使用率
       - field: command
         type: 1
         i18n:
           zh-CN: 执行命令
           en-US: Command
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^
@@ -653,6 +708,7 @@ metrics:
     i18n:
       zh-CN: Top10 内存进程
       en-US: Top10 Memory Process
+      ja-JP: トップ10 メモリプロセス
     priority: 7
     fields:
       - field: pid
@@ -661,23 +717,27 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
+          ja-JP: プロセスID
       - field: mem_usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存占用率
           en-US: Memory Usage
+          ja-JP: メモリ使用率
       - field: cpu_usage
         type: 0
         unit: '%'
         i18n:
           zh-CN: CPU占用率
           en-US: CPU Usage
+          ja-JP: CPU使用率
       - field: command
         type: 1
         i18n:
           zh-CN: 执行命令
           en-US: Command
+          ja-JP: コマンド
     protocol: ssh
     ssh:
       host: ^_^host^_^
