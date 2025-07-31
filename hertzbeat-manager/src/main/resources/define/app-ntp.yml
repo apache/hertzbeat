@@ -21,11 +21,13 @@ app: ntp
 name:
   zh-CN: NTP服务器
   en-US: NTP Server
+  ja-JP: NTPサーバー
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 对 NTP 服务的(响应时间、时间戳、时间、偏移量、延迟、版本号、模式、层级、参考ID、精度)相关指标进行监测。<br>您可以点击 “<i>新建 NTP</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors the relevant metrics of NTP services, including response time, timestamp, time, offset, delay, version number, mode, hierarchy, reference ID, and accuracy. <br>You can click "<i>New NTP</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
-  zh-TW: HertzBeat 對 NTP 服務的(響應時間、時間戳、時間、偏移量、延遲、版本號、模式、層級、參考ID、精度)相關指標進行監測。<br>您可以點擊 “<i>新建 NTP</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: HertzBeat 对 NTP 服务的(响应时间、时间戳、时间、偏移量、延迟、版本号、模式、层级、参考ID、精度)相关指标进行监测。<br>您可以点击 “<i>新建 NTP服务器</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors the relevant metrics of NTP services, including response time, timestamp, time, offset, delay, version number, mode, hierarchy, reference ID, and accuracy. <br>You can click "<i>New NTP Server</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
+  zh-TW: HertzBeat 對 NTP 服務的(響應時間、時間戳、時間、偏移量、延遲、版本號、模式、層級、參考ID、精度)相關指標進行監測。<br>您可以點擊 “<i>新建 NTP服務器</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は NTPサーバーの一般的なメトリクスを監視します。<br>「<i>新規 NTPサーバー</i>」をクリックしてパラメタを設定した後、新規することができます。
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -34,6 +36,7 @@ params:
     name:
       zh-CN: NTP服务Host
       en-US: NTP Host
+      ja-JP: NTPホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -59,6 +63,7 @@ metrics:
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -70,54 +75,64 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: time
         type: 0
         unit: ms
         i18n:
           zh-CN: 时间戳
           en-US: Timestamp
+          ja-JP: タイムスタンプ
       - field: date
         type: 1
         i18n:
           zh-CN: 时间
           en-US: Date
+          ja-JP: 時間
       - field: offset
         type: 0
         unit: ms
         i18n:
           zh-CN: 偏移量
           en-US: Offset
+          ja-JP: オフセット
       - field: delay
         type: 0
         unit: ms
         i18n:
           zh-CN: 延迟
           en-US: Delay
+          ja-JP: 遅延
       - field: version
         type: 0
         i18n:
           zh-CN: 版本号
           en-US: Version
+          ja-JP: バージョン
       - field: mode
         type: 0
         i18n:
           zh-CN: 模式
           en-US: Mode
+          ja-JP: モード
       - field: stratum
         type: 0
         i18n:
           zh-CN: 层级
           en-US: Stratum
+          ja-JP: 階層
       - field: referenceId
         type: 1
         i18n:
           zh-CN: 参考ID
           en-US: ReferenceId
+          ja-JP: 参照ID
       - field: precision
         type: 0
         i18n:
           zh-CN: 精度
           en-US: Precision
+          ja-JP: 精度
 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ntp
