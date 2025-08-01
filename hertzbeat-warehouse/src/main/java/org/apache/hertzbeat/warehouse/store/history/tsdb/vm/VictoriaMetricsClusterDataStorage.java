@@ -72,6 +72,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -79,7 +80,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import static org.apache.hertzbeat.common.constants.ConfigConstants.FunctionModuleConstants.STATUS;
 
 /**
- * tdengine data storage
+ * VictoriaMetrics data storage
  */
 @Primary
 @Component
@@ -97,6 +98,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_JOB = "job";
     private static final String LABEL_KEY_INSTANCE = "instance";
+    private static final String LABEL_KEY_HOST = "host";
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
@@ -241,6 +243,12 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 labels.put(LABEL_KEY_NAME, labelName);
                                 if (!isPrometheusAuto) {
                                     labels.put(MONITOR_METRIC_KEY, entry.getKey());
+                                }
+                                labels.put(LABEL_KEY_HOST, metricsData.getInstanceHost());
+                                // add customized labels as identifier
+                                var customizedLabels = metricsData.getLabels();
+                                if (!ObjectUtils.isEmpty(customizedLabels)) {
+                                    labels.putAll(customizedLabels);
                                 }
                                 VictoriaMetricsDataStorage.VictoriaMetricsContent content = VictoriaMetricsDataStorage.VictoriaMetricsContent.builder()
                                         .metric(new HashMap<>(labels))
