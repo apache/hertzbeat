@@ -21,11 +21,13 @@ app: oracle
 name:
   zh-CN: Oracle数据库
   en-US: Oracle DB
+  ja-JP: Oracle データベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 Oracle 数据库的通用性能指标(表空间、性能状态、用户连接、缓存、慢SQL等)进行采集监控。<br>您可以点击“<i>新建 Oracle 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of Oracle database (tablespace、user connect、performance、slow SQL etc.). <br>You can click "<i>New Oracle Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 Oracle 數據庫的通用性能指標(表空間、性能狀態、用戶連接、緩存、慢SQL等)進行采集監控。<br>您可以點擊“<i>新建 Oracle 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBCプロトコルを介して</a> Oracle データベースの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Oracle データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/oracle/
   en-US: https://hertzbeat.apache.org/docs/help/oracle/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -59,6 +63,7 @@ params:
     name:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
+      ja-JP: クエリタイムアウト（ｍｓ）
     type: number
     range: '[400,200000]'
     required: false
@@ -68,6 +73,7 @@ params:
     name:
       zh-CN: 复用连接
       en-US: Reuse Connection
+      ja-JP: 接続再利用
     type: boolean
     required: false
     defaultValue: true
@@ -75,12 +81,14 @@ params:
     name:
       zh-CN: 服务名
       en-US: Service Name
+      ja-JP: サービス名
     type: text
     required: false
   - field: username
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -88,12 +96,14 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
   - field: url
     name:
       zh-CN: URL
       en-US: URL
+      ja-JP: URL
     type: text
     required: false
     hide: true
@@ -105,6 +115,7 @@ metrics:
     i18n:
       zh-CN: 基本信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -117,26 +128,31 @@ metrics:
         i18n:
           zh-CN: 数据库版本
           en-US: Database Version
+          ja-JP: データベースバージョン
       - field: hostname
         type: 1
         i18n:
           zh-CN: 主机名
           en-US: Host Name
+          ja-JP: ホスト名
       - field: instance_name
         type: 1
         i18n:
           zh-CN: 实例名
           en-US: Instance Name
+          ja-JP: インスタンス名
       - field: startup_time
         type: 1
         i18n:
           zh-CN: 启动时间
           en-US: Startup Time
+          ja-JP: 起動時間
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - VERSION
@@ -177,6 +193,7 @@ metrics:
     i18n:
       zh-CN: 表空间
       en-US: Tablespace
+      ja-JP: 表領域
     priority: 1
     fields:
       - field: file_id
@@ -185,32 +202,38 @@ metrics:
         i18n:
           zh-CN: 文件ID
           en-US: File ID
+          ja-JP: ファイルID
       - field: file_name
         type: 1
         i18n:
           zh-CN: 文件名
           en-US: File Name
+          ja-JP: ファイル名
       - field: tablespace_name
         type: 1
         i18n:
           zh-CN: 表空间名
           en-US: Tablespace Name
+          ja-JP: 表領域名
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
       - field: bytes
         type: 0
         i18n:
           zh-CN: 字节数
           en-US: Bytes
+          ja-JP: バイト数
         unit: MB
       - field: blocks
         type: 0
         i18n:
           zh-CN: 块数
           en-US: Blocks
+          ja-JP: ブロック数
         unit: 块
     protocol: jdbc
     jdbc:
@@ -230,6 +253,7 @@ metrics:
     i18n:
       zh-CN: 会话总数
       en-US: Total Sessions
+      ja-JP: セッション総数
     priority: 2
     fields:
       - field: count
@@ -237,6 +261,7 @@ metrics:
         i18n:
           zh-CN: 总数
           en-US: Count
+          ja-JP: 総数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -255,6 +280,7 @@ metrics:
     i18n:
       zh-CN: 活动会话
       en-US: Active Sessions
+      ja-JP: アクティブなセッション
     priority: 3
     fields:
       - field: count
@@ -262,6 +288,7 @@ metrics:
         i18n:
           zh-CN: 总数
           en-US: Count
+          ja-JP: 総数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -280,6 +307,7 @@ metrics:
     i18n:
       zh-CN: 后台会话
       en-US: Background Sessions
+      ja-JP: バックグラウンドセッション
     priority: 4
     fields:
       - field: count
@@ -287,6 +315,7 @@ metrics:
         i18n:
           zh-CN: 总数
           en-US: Count
+          ja-JP: 総数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -305,6 +334,7 @@ metrics:
     i18n:
       zh-CN: 连接
       en-US: Connection
+      ja-JP: 接続
     priority: 5
     fields:
       - field: username
@@ -312,11 +342,13 @@ metrics:
         i18n:
           zh-CN: 用户名
           en-US: Username
+          ja-JP: ユーザー名
         label: true
       - field: count
         i18n:
           zh-CN: 总数
           en-US: Count
+          ja-JP: 総数
         type: 0
     protocol: jdbc
     jdbc:
@@ -336,6 +368,7 @@ metrics:
     i18n:
       zh-CN: 性能
       en-US: Performance
+      ja-JP: パフォーマンス
     priority: 6
     fields:
       - field: qps
@@ -343,18 +376,21 @@ metrics:
         i18n:
           zh-CN: 每秒查询数
           en-US: QPS
+          ja-JP: QPS
         unit: qps
       - field: tps
         type: 0
         i18n:
           zh-CN: 每秒事务数
           en-US: TPS
+          ja-JP: TPS
         unit: tps
       - field: mbps
         type: 0
         i18n:
           zh-CN: 每秒IO读写
           en-US: MBPS
+          ja-JP: MBPS
         unit: mbps
     aliasFields:
       - I/O Requests per Second
@@ -383,6 +419,7 @@ metrics:
     i18n:
       zh-CN: 百分比
       en-US: Percentage
+      ja-JP: パーセント
     priority: 7
     fields:
       - field: tablespace_name
@@ -390,33 +427,39 @@ metrics:
         i18n:
           zh-CN: 表空间名
           en-US: Tablespace Name
+          ja-JP: 表領域名
         label: true
       - field: total
         i18n:
           zh-CN: 全部
           en-US: Total
+          ja-JP: 合計
         type: 0
       - field: used
         i18n:
           zh-CN: 已用
           en-US: Used
+          ja-JP: 使用済み
         type: 0
       - field: free
         i18n:
           zh-CN: 空闲
           en-US: Free
+          ja-JP: 利用可能
         type: 0
       - field: used_percentage
         type: 0
         i18n:
           zh-CN: 已用百分比
           en-US: Used Percentage
+          ja-JP: 使用した比率
         unit: '%'
       - field: free_percentage
         type: 0
         i18n:
           zh-CN: 空闲百分比
           en-US: Free Percentage
+          ja-JP: 利用可能な比率
         unit: '%'
     protocol: jdbc
     jdbc:
@@ -429,7 +472,6 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
-      # DBA_TABLESPACE_USAGE_METRICS可以查出表空间used_max值，它的大小计算单位是block，1kb=8block，把block*8/1024转化为MB单位
       sql: "SELECT tablespace_name,ROUND ( (TABLESPACE_SIZE * 8 / 1024), 0) AS total,ROUND ( (USED_SPACE * 8 / 1024), 0) AS used,ROUND ( ( (TABLESPACE_SIZE * 8 / 1024) - (USED_SPACE * 8 / 1024)), 0) AS free,ROUND ( (USED_PERCENT), 0) AS used_percentage,100 - ROUND ( (USED_PERCENT), 0) AS free_percentage FROM sys.dba_tablespace_usage_metrics ORDER BY used_percent DESC"
       url: ^_^url^_^
 
@@ -437,6 +479,7 @@ metrics:
     i18n:
       zh-CN: 进程
       en-US: Process
+      ja-JP: プロセス
     priority: 8
     fields:
       - field: process_count
@@ -444,6 +487,7 @@ metrics:
         i18n:
           zh-CN: 进程数
           en-US: Process Count
+          ja-JP: プロセス数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -462,6 +506,7 @@ metrics:
     i18n:
       zh-CN: 事务
       en-US: Transaction
+      ja-JP: トランザクション
     priority: 9
     fields:
       - field: commits
@@ -470,12 +515,14 @@ metrics:
         i18n:
           zh-CN: 提交数
           en-US: Commits
+          ja-JP: コミット回数
       - field: rollbacks
         type: 0
         unit: 't/s'
         i18n:
           zh-CN: 回滚数
           en-US: Rollbacks
+          ja-JP: ロールバック回数
     aliasFields:
       - User Commits Per Sec
       - User Rollbacks Per Sec
@@ -500,6 +547,7 @@ metrics:
     i18n:
       zh-CN: 等待
       en-US: Wait
+      ja-JP: 待機
     priority: 10
     fields:
       - field: concurrent_wait_time
@@ -508,48 +556,56 @@ metrics:
         i18n:
           zh-CN: 并发等待时间
           en-US: Concurrent Wait Time
+          ja-JP: 同時実行の待機時間
       - field: commit_wait_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 提交等待时间
           en-US: Commit Wait Time
+          ja-JP: コミット待機時間
       - field: app_wait_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 应用等待时间
           en-US: Application Wait Time
+          ja-JP: 応用待機時間
       - field: network_wait_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 网络等待时间
           en-US: Network Wait Time
+          ja-JP: ネットワーク待機時間
       - field: system_io_wait_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 系统I/O等待时间
           en-US: System I/O Wait Time
+          ja-JP: システムI/O待機時間
       - field: user_io_wait_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 用户I/O等待时间
           en-US: User I/O Wait Time
+          ja-JP: ユーザーI/O待機時間
       - field: configure_wait_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 配置等待时间
           en-US: Configure Wait Time
+          ja-JP: 配置待機時間
       - field: scheduler_wait_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 调度等待时间
           en-US: Scheduler Wait Time
+          ja-JP: Scheduler待機時間
     aliasFields:
       - System I/O
       - Application
@@ -586,6 +642,7 @@ metrics:
     i18n:
       zh-CN: CPU状态
       en-US: CPU Stats
+      ja-JP: CPU状態
     priority: 11
     fields:
       - field: type
@@ -594,11 +651,13 @@ metrics:
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: num
         type: 1
         i18n:
           zh-CN: 数量
           en-US: Num
+          ja-JP: 数量
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -617,6 +676,7 @@ metrics:
     i18n:
       zh-CN: 内存状态
       en-US: Memory Stats
+      ja-JP: メモリ状態
     priority: 12
     fields:
       - field: type
@@ -625,11 +685,13 @@ metrics:
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: num
         type: 1
         i18n:
           zh-CN: 数量
           en-US: Num
+          ja-JP: 数量
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -648,6 +710,7 @@ metrics:
     i18n:
       zh-CN: 缓存命中率
       en-US: Cache Hit Ratio
+      ja-JP: キャッシュ命中率
     priority: 13
     fields:
       - field: lib_cache_hit_ratio
@@ -655,11 +718,13 @@ metrics:
         i18n:
           zh-CN: 库缓存命中率
           en-US: LIB CACHE HIT RATIO
+          ja-JP: LIBキャッシュ命中率
       - field: buffer_cache_hit_ratio
         type: 0
         i18n:
           zh-CN: 缓冲区缓存命中率
           en-US: BUFFER CACHE HIT RATIO
+          ja-JP: バッファキャッシュ命中率
     aliasFields:
       - Library Cache Hit Ratio
       - Buffer Cache Hit Ratio
@@ -684,6 +749,7 @@ metrics:
     i18n:
       zh-CN: 慢查询
       en-US: Slow Query
+      ja-JP: スロークエリ
     priority: 14
     fields:
       - field: sql_id
@@ -691,59 +757,70 @@ metrics:
         i18n:
           zh-CN: sql 主键
           en-US: SQL ID
+          ja-JP: SQL ID
       - field: child_number
         type: 1
         i18n:
           zh-CN: 子编号
           en-US: Child Number
+          ja-JP: 子カーソルの番号
       - field: executions
         type: 1
         i18n:
           zh-CN: 执行数
           en-US: EXECUTIONS
+          ja-JP: 行われた実行数
         unit: 次
       - field: per_secs
         type: 1
         i18n:
           zh-CN: 每秒执行数
           en-US: Per Secs
+          ja-JP: 1秒当たりの実行数
         unit: 秒
       - field: cpu_secs
         type: 1
         i18n:
           zh-CN: 每秒CPU
           en-US: CPU Secs
+          ja-JP: 使用したCPU時間
         unit: 秒
       - field: buffer_gets
         type: 1
         i18n:
           zh-CN: 获得的缓冲区
           en-US: Buffer Gets
+          ja-JP: バッファ取得数
       - field: disk_reads
         type: 1
         i18n:
           zh-CN: 磁盘读取
           en-US: Disk Reads
+          ja-JP: ディスク読取り数
       - field: fetches
         type: 1
         i18n:
           zh-CN: 获取数量
           en-US: Fetches
+          ja-JP: SQL文に関連するフェッチ数
       - field: parse_calls
         type: 1
         i18n:
           zh-CN: 解析调用
           en-US: Parse Calls
+          ja-JP: 解析コール数
       - field: optimizer_cost
         type: 1
         i18n:
           zh-CN: 优化器成本
           en-US: Optimizer Cost
+          ja-JP: オプティマイザによるこの問合せのコスト
       - field: sql_text
         type: 1
         i18n:
           zh-CN: SQL文本
           en-US: SQL Text
+          ja-JP: SQLテキスト
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
