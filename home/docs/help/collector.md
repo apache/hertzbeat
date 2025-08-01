@@ -5,7 +5,7 @@ sidebar_label: Collector
 keywords: [monitoring, observability, collector, metrics]
 ---
 
-> HertzBeat Collector is a lightweight data collection module that enables metrics collection, high availability deployments, and cloud-edge collaboration in Apache HertzBeat (incubating).
+> HertzBeat Collector is a lightweight data collection module that enables metrics collection, high availability deployments, and cloud-edge collaboration in Apache HertzBeat.
 
 ## Introduction
 
