@@ -10,7 +10,7 @@ If you need to deploy this MCP Server locally, you will need a Rust runtime envi
 
 Visit [rust-lang.org](https://www.rust-lang.org/tools/install) to learn how to install the Rust runtime environment.
 
-We recommend using the latest version of Rust.
+Version `1.88.0` can absolutely work, and we recommend using the latest version of Rust.
 
 ## Deployment
 
@@ -78,6 +78,34 @@ or check the config.toml in container
 docker exec mcp-bash-server ls /app
 docker exec mcp-bash-server cat /app/config.toml
 ```
+
+## Use it by Agents
+
+### Vscode Copilot
+
+Start the MCP Server in daemon mode, then add the settings to your Vscode Copilot mcp config. Note that you can use modelcontextprotocol/inspector to finish the OAuth flow and get the access token, put it in config and restart server, then Copilot can connect to the server and use the tools.
+
+```json
+{
+   "servers": {
+      "bash-server": {
+         "url": "http://localhost:4000/mcp",
+         "headers": {
+            "Authorization": "Bearer <your-token>"
+         }
+      }
+   }
+}
+```
+
+**Currently Vscode MCP OAuth can not automatically authorize this bash-server**
+The vscode mcp OAuth flow is:
+
+1. GET /.well-known/oauth-authorization-server
+2. GET /authorize with query-params
+3. ...
+
+But we requires the client registration before accessing endpoint `/authorize` with query-params that contains invalid client-id. So we can only set the token manually now.
 
 ## Configuration
 
@@ -181,7 +209,7 @@ The unit tests include:
 - **Working Directory Handling**: Tests command execution in specific working directories
 - **Debug and Clone Traits**: Tests that BashServer properly implements Debug and Clone traits
 - **Timeout Behavior**: Tests that commands properly timeout when exceeding time limits
-- **Unix script and Python Execution**: Tests tool `unix_execute_script` and `unix_execute_python`
+- **Unix script and Python Execution**: Tests tool `execute_script` and `execute_python`
 
 ### Manual Testing with Inspector
 
@@ -224,12 +252,12 @@ The MCP Server currently provides the following tools:
      - `timeout_seconds`: Timeout in seconds (default: 30)
    - Returns: Execution result with stdout, stderr, exit code, and success status
 
-2. **unix_execute_python**
+2. **execute_python**
    - Description: Execute a Python script
    - Parameters: Same as above, but command should be Python code
    - Returns: Python script execution result
 
-3. **unix_execute_script**
+3. **execute_script**
    - Description: Execute a Unix script by writing it to a temporary file
    - Parameters: Same as above, command should be shell script content
    - Returns: Script execution result

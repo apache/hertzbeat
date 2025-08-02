@@ -21,6 +21,7 @@
 //! safely with validation and timeout controls. It supports multiple operating systems
 //! and provides various execution methods for different use cases.
 
+#![allow(unused_imports, unused_variables, dead_code)]
 use rmcp::model::Content;
 use rmcp::{
     RoleServer, ServerHandler,
@@ -37,13 +38,15 @@ use rmcp::{
 use rmcp::{serde_json, tool_handler, tool_router};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+
 use std::process::Output;
 use std::{
     borrow::Cow,
     env,
     fs::{self, File},
     io::Write,
-    os::unix::fs::PermissionsExt,
     process::Command,
 };
 use tracing::error;
@@ -172,7 +175,6 @@ pub trait CommandRunner {
 
 impl CommandRunner for BashServer {}
 
-#[tool_router]
 impl BashServer {
     /// Create a new BashServer instance
     /// Attempts to load configuration from config.toml, creates validator if successful
@@ -260,18 +262,141 @@ impl BashServer {
         Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
-    #[tool(description = "Execute commands using default shell in all kinds of os")]
-    async fn all_execute_via_default_shell(
+    /// Execute python script on Windows systems
+    #[cfg(windows)]
+    async fn windows_execute_python(
         &self,
-        Parameters(request): Parameters<DefaultExecuteRequest>,
+        request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
-        self._all_execute_via_default_shell(true, request).await
+        let timeout_duration =
+            std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
+
+        // Try to find Python executable on Windows
+        // First try 'python', then 'python3', then 'py'
+        let python_commands = ["python", "python3", "py"];
+        let mut cmd = None;
+
+        for python_cmd in &python_commands {
+            if let Ok(output) = std::process::Command::new(python_cmd)
+                .arg("--version")
+                .output()
+            {
+                if output.status.success() {
+                    cmd = Some(Command::new(python_cmd));
+                    break;
+                }
+            }
+        }
+
+        let mut cmd = cmd.ok_or_else(|| ErrorData {
+            code: ErrorCode::INTERNAL_ERROR,
+            message: Cow::Owned(
+                "Python execution failed: No Python interpreter found on system. Please install Python and ensure it's in your PATH.".to_string(),
+            ),
+            data: None,
+        })?;
+
+        cmd.arg("-c").arg(&request.command);
+
+        // Set working directory if provided
+        if let Some(working_dir) = &request.working_dir {
+            cmd.current_dir(working_dir);
+        }
+
+        // Set environment variables if provided
+        if let Some(env_vars) = &request.env_vars {
+            for (key, value) in env_vars {
+                cmd.env(key, value);
+            }
+        }
+
+        let output: Output = Self::execute_command_with_timeout(timeout_duration, cmd).await?;
+
+        // log the execution of python
+        info!("Execute python script: {}", &request.command);
+
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let exit_code = output.status.code().unwrap_or(-1);
+        let success = output.status.success();
+
+        let response = DefaultExecuteResponse {
+            stdout,
+            stderr,
+            exit_code,
+            success,
+            parsed_data: Value::Null,
+        };
+        Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
-    #[tool(description = "Execute a python script")]
+    #[cfg(windows)]
+    async fn windows_execute_script(
+        &self,
+        request: DefaultExecuteRequest,
+    ) -> Result<CallToolResult, ErrorData> {
+        if let Some(validator) = &self.validator {
+            for line in request.command.lines() {
+                if line.is_empty() || line.starts_with('#') {
+                    continue;
+                }
+                validator
+                    .is_unsafe_command(line.split(" ").map(OsStr::new).collect::<Vec<&OsStr>>())?;
+            }
+        }
+
+        let timeout_duration =
+            std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
+
+        // Write the script to a temporary file
+        let tmp_dir = env::temp_dir();
+        let tmp_name = Uuid::new_v4().to_string();
+        let script_path = tmp_dir.join(format!("{tmp_name}.ps1"));
+        {
+            let mut file = File::create(&script_path).map_err(|_| {
+                ErrorData::new(
+                    ErrorCode::INTERNAL_ERROR,
+                    "Can not create temporary script file",
+                    None,
+                )
+            })?;
+            file.write_all(request.command.as_bytes()).map_err(|_| {
+                ErrorData::new(
+                    ErrorCode::INTERNAL_ERROR,
+                    "Write to script file error",
+                    None,
+                )
+            })?;
+        }
+
+        let mut cmd = Command::new("powershell");
+        cmd.arg("-ExecutionPolicy")
+            .arg("Bypass")
+            .arg("-File")
+            .arg(script_path);
+        // Execute the script
+        let output: Output = Self::execute_command_with_timeout(timeout_duration, cmd).await?;
+
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let exit_code = output.status.code().unwrap_or(-1);
+        let success = output.status.success();
+
+        let response = DefaultExecuteResponse {
+            stdout,
+            stderr,
+            exit_code,
+            success,
+            parsed_data: Value::Null,
+        };
+        Ok(CallToolResult::success(vec![Content::json(response)?]))
+    }
+
+    /// Execute a python script on Unix-like systems
+    #[cfg(unix)]
     async fn unix_execute_python(
         &self,
-        Parameters(request): Parameters<DefaultExecuteRequest>,
+        request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
         let timeout_duration =
             std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
@@ -325,10 +450,10 @@ impl BashServer {
 
     /// Execute a Unix script by writing it to a temporary file
     /// Creates a temporary shell script file with proper permissions and executes it
-    #[tool(description = "Execute a unix script")]
+    #[cfg(unix)]
     async fn unix_execute_script(
         &self,
-        Parameters(request): Parameters<DefaultExecuteRequest>,
+        request: DefaultExecuteRequest,
     ) -> Result<CallToolResult, ErrorData> {
         if let Some(validator) = &self.validator {
             for line in request.command.lines() {
@@ -407,6 +532,44 @@ impl BashServer {
             parsed_data: Value::Null,
         };
         Ok(CallToolResult::success(vec![Content::json(response)?]))
+    }
+}
+
+#[tool_router]
+impl BashServer {
+    #[tool(description = "Execute commands using default shell in all kinds of os")]
+    async fn all_execute_via_default_shell(
+        &self,
+        Parameters(request): Parameters<DefaultExecuteRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        self._all_execute_via_default_shell(true, request).await
+    }
+
+    /// Execute a python script
+    #[tool(description = "Execute a python script")]
+    async fn execute_python(
+        &self,
+        Parameters(request): Parameters<DefaultExecuteRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        #[cfg(unix)]
+        let res = self.unix_execute_python(request).await;
+        #[cfg(windows)]
+        let res = self.windows_execute_python(request).await;
+        res
+    }
+
+    /// Execute a Unix script by writing it to a temporary file
+    /// Creates a temporary shell script file with proper permissions and executes it
+    #[tool(description = "Execute a script")]
+    async fn execute_script(
+        &self,
+        Parameters(request): Parameters<DefaultExecuteRequest>,
+    ) -> Result<CallToolResult, ErrorData> {
+        #[cfg(unix)]
+        let res = self.unix_execute_script(request).await;
+        #[cfg(windows)]
+        let res = self.windows_execute_script(request).await;
+        res
     }
 
     /// Get comprehensive system information including OS, kernel, memory, and disk usage
@@ -729,14 +892,14 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_unix_execute_script() {
+    async fn test_execute_script() {
         let server = create_test_bash_server();
         let safe_request = create_test_request(
             r#"#!/bin/bash
 echo hello
 "#,
         );
-        let result = server.unix_execute_script(Parameters(safe_request)).await;
+        let result = server.execute_script(Parameters(safe_request)).await;
         assert!(result.is_ok());
         let call_result = result.unwrap();
         assert!(!call_result.content.is_empty());
@@ -746,12 +909,12 @@ touch hello.txt
 rm -rf hello.txt
 "#,
         );
-        let result = server.unix_execute_script(Parameters(unsafe_request)).await;
+        let result = server.execute_script(Parameters(unsafe_request)).await;
         assert!(result.is_err());
     }
 
     #[tokio::test]
-    async fn test_unix_execute_python() {
+    async fn test_execute_python() {
         let server = create_test_bash_server();
         let safe_request = create_test_request(
             r#"import os
@@ -760,7 +923,7 @@ print("hello world")
 subprocess.run(["ls", "-l"], cwd="/root")
 "#,
         );
-        let result = server.unix_execute_python(Parameters(safe_request)).await;
+        let result = server.execute_python(Parameters(safe_request)).await;
         assert!(result.is_ok());
         let content = result.unwrap().content[0].clone();
         if let RawContent::Text(RawTextContent { text }) = content.raw {
@@ -953,8 +1116,8 @@ subprocess.run(["ls", "-l"], cwd="/root")
     async fn test_execute_command_timeout() {
         // Test with a very short timeout to ensure timeout behavior
         let cmd = if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("timeout");
-            cmd.arg("5"); // 5 seconds on Windows
+            let mut cmd = Command::new("powershell");
+            cmd.arg("Start-Sleep -Seconds 5"); // 5 seconds on Windows
             cmd
         } else {
             let mut cmd = Command::new("sleep");
