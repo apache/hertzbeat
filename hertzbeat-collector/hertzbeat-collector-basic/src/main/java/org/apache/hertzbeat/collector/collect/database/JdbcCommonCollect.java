@@ -471,19 +471,19 @@ public class JdbcCommonCollect extends AbstractCollect {
             // remove special characters
             String cleanedUrl = jdbcProtocol.getUrl().replaceAll("[\\x00-\\x1F\\x7F\\xA0]", "");
             String url = recursiveDecode(cleanedUrl);
-            url = url.toLowerCase();
+            String urlLowerCase = url.toLowerCase();
             // url format check
-            if (!url.matches("^jdbc:[a-zA-Z0-9]+:([^\\s;]+)(;[^\\s;]+)*$")) {
+            if (!urlLowerCase.matches("^jdbc:[a-zA-Z0-9]+:([^\\s;]+)(;[^\\s;]+)*$")) {
                 throw new IllegalArgumentException("Invalid JDBC URL format");
             }
             // backlist check
             for (String keyword : BLACK_LIST) {
-                if (url.contains(keyword.toLowerCase())) {
+                if (urlLowerCase.contains(keyword.toLowerCase())) {
                     throw new IllegalArgumentException("Invalid JDBC URL: contains potentially malicious parameter: " + keyword);
                 }
             }
             // universal detection
-            String normalizedUrl = url.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", " ").toLowerCase();
+            String normalizedUrl = urlLowerCase.replaceAll("[\\x00-\\x1F\\x7F\\xA0]", " ");
             // universal detection of JDBC injection and deserialization attacks
             if (normalizedUrl.matches(".*jndi\\s*[:=].*")
                     || normalizedUrl.matches(".*ldap\\s*[:=].*")
@@ -514,7 +514,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                     }
                 }
             }
-            return normalizedUrl;
+            return url;
         }
         assert jdbcProtocol.getPlatform() != null;
         return switch (jdbcProtocol.getPlatform()) {
