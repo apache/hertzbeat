@@ -18,8 +18,6 @@
 package org.apache.hertzbeat.alert.calculate;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.jexl3.JexlException;
-import org.apache.commons.jexl3.JexlExpression;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
@@ -30,8 +28,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.common.util.JexlExpressionRunner;
-
 import java.util.HashMap;
 import java.util.Map;
 

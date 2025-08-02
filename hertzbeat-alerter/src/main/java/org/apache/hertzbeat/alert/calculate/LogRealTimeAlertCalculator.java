@@ -111,8 +111,6 @@ public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<
                 try {
                     if (match) {
                         afterThresholdRuleMatch(define.getId(), currentTimeMilli, commonFingerPrints, commonContext, define, null);
-                    } else {
-                        handleRecoveredAlert(define.getId(), commonFingerPrints);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
