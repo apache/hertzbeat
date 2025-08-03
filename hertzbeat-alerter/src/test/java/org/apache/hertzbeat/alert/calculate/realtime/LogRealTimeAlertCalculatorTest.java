@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.calculate;
+package org.apache.hertzbeat.alert.calculate.realtime;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
+import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
+import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;

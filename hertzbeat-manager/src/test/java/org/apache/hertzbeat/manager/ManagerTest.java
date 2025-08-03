@@ -23,7 +23,7 @@ import javax.annotation.Resource;
 import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
-import org.apache.hertzbeat.alert.calculate.MetricsRealTimeAlertCalculator;
+import org.apache.hertzbeat.alert.calculate.realtime.MetricsRealTimeAlertCalculator;
 import org.apache.hertzbeat.alert.controller.AlertDefineController;
 import org.apache.hertzbeat.alert.controller.AlertDefinesController;
 import org.apache.hertzbeat.alert.controller.AlertsController;

@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.alert.service;
 
 import com.google.common.collect.Lists;
-import org.apache.hertzbeat.alert.calculate.PeriodicAlertRuleScheduler;
+import org.apache.hertzbeat.alert.calculate.periodic.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
