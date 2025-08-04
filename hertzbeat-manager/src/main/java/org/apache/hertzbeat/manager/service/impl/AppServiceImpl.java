@@ -41,6 +41,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.JexlKeywordsEnum;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -457,6 +458,10 @@ public class AppServiceImpl implements AppService, InitializingBean {
                 if (fieldsSet.contains(field.getField())) {
                     throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " " 
                             + field.getField() + " can not duplicated.");
+                }
+                if (JexlKeywordsEnum.match(field.getField())) {
+                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " "
+                            + field.getField() + " prohibited keywords.");
                 }
                 fieldsSet.add(field.getField());
             }

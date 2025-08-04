@@ -27,6 +27,7 @@ import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
+import org.apache.hertzbeat.common.constants.JexlKeywordsEnum;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
@@ -78,6 +79,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -433,6 +435,18 @@ public class MonitorServiceImpl implements MonitorService {
                         default:
                             throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
                     }
+                }
+            }
+        }
+        Job app = appService.getAppDefine(monitorDto.getMonitor().getApp());
+        for (Metrics metrics : app.getMetrics()) {
+            if (null == metrics.getFields() || metrics.getFields().isEmpty()) {
+                continue;
+            }
+            for (Metrics.Field field : metrics.getFields()) {
+                if (JexlKeywordsEnum.match(field.getField())) {
+                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " "
+                            + field.getField() + " prohibited keywords, please modify the template information.");
                 }
             }
         }
