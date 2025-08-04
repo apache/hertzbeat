@@ -437,15 +437,24 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        Job app = appService.getAppDefine(monitorDto.getMonitor().getApp());
-        for (Metrics metrics : app.getMetrics()) {
-            if (null == metrics.getFields() || metrics.getFields().isEmpty()) {
-                continue;
-            }
-            for (Metrics.Field field : metrics.getFields()) {
-                if (JexlKeywordsEnum.match(field.getField())) {
-                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " "
-                            + field.getField() + " prohibited keywords, please modify the template information.");
+        checkJobFields(monitorDto.getMonitor().getApp());
+    }
+
+    private void checkJobFields(String app) {
+        if (null == app || app.trim().isEmpty()) {
+            return;
+        }
+        Job job = appService.getAppDefine(app);
+        if (null != job && !CollectionUtils.isEmpty(job.getMetrics())) {
+            for (Metrics metrics : job.getMetrics()) {
+                if (null == metrics.getFields() || metrics.getFields().isEmpty()) {
+                    continue;
+                }
+                for (Metrics.Field field : metrics.getFields()) {
+                    if (JexlKeywordsEnum.match(field.getField())) {
+                        throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
+                                + field.getField() + " prohibited keywords, please modify the template information.");
+                    }
                 }
             }
         }
