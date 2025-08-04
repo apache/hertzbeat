@@ -54,7 +54,8 @@
           "label": "use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
-            "start/usecase/springboot-auto-practice"
+            "start/usecase/springboot-auto-practice",
+            "start/usecase/linux-os-practice"
           ]
         }
       ]
@@ -70,7 +71,8 @@
           "label": "use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
-            "start/usecase/springboot-auto-practice"
+            "start/usecase/springboot-auto-practice",
+            "start/usecase/linux-os-practice"
           ]
         },
         {
