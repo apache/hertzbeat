@@ -25,8 +25,11 @@ import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
+import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,22 +105,160 @@ public class LogRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<
                 continue;
             }
             Map<String, String> commonFingerPrints = new HashMap<>(8);
+            Map<String, String> extendFingerPrints = new HashMap<>(8);
+
             // here use the alert name as finger, not care the alert name may be changed
-            // todo add more fingerprints
             commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
             commonFingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
             commonFingerPrints.putAll(define.getLabels());
+            addLogEntryToMap(logEntry, extendFingerPrints);
+
+            Map<String, String> annotations = new HashMap<>();
+            annotations.putAll(define.getAnnotations());
 
             try {
                 boolean match = jexlExprCalculator.execAlertExpression(commonContext, expr, false);
                 try {
                     if (match) {
-                        afterThresholdRuleMatch(define.getId(), currentTimeMilli, commonFingerPrints, commonContext, define, null);
+                        afterThresholdRuleMatch(define.getId(), currentTimeMilli, commonFingerPrints, extendFingerPrints, commonContext, define, annotations);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
             } catch (Exception ignored) {}
+        }
+    }
+
+    /**
+     * Handle alert after threshold rule match
+     */
+    protected void afterThresholdRuleMatch(long defineId, long currentTimeMilli, Map<String, String> fingerPrints,
+                                           Map<String, String> extendFingerPrints,
+                                           Map<String, Object> fieldValueMap, AlertDefine define,
+                                           Map<String, String> annotations) {
+        // fingerprint for the padding cache
+        String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
+        SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
+        fieldValueMap.putAll(define.getLabels());
+        int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
+        if (existingAlert == null) {
+            // First time triggering alert, create new alert and set to pending status
+            Map<String, String> alertLabels = new HashMap<>(8);
+            alertLabels.putAll(fingerPrints);
+            alertLabels.putAll(extendFingerPrints);
+            Map<String, String> alertAnnotations = new HashMap<>(8);
+            if (annotations != null) {
+                alertAnnotations.putAll(annotations);
+            }
+            if (define.getAnnotations() != null) {
+                alertAnnotations.putAll(define.getAnnotations());
+            }
+            // render var content in annotations
+            for (Map.Entry<String, String> entry : alertAnnotations.entrySet()) {
+                entry.setValue(AlertTemplateUtil.render(entry.getValue(), fieldValueMap));
+            }
+            SingleAlert newAlert = SingleAlert.builder()
+                    .labels(alertLabels)
+                    .annotations(alertAnnotations)
+                    // render var content in content
+                    .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
+                    .status(CommonConstants.ALERT_STATUS_PENDING)
+                    .triggerTimes(1)
+                    .startAt(currentTimeMilli)
+                    .activeAt(currentTimeMilli)
+                    .build();
+
+            // If required trigger times is 1, set to firing status directly
+            if (requiredTimes <= 1) {
+                newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+                alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
+            } else {
+                // Otherwise put into pending queue first
+                alarmCacheManager.putPending(define.getId(), fingerprint, newAlert);
+            }
+        } else {
+            // Update existing alert
+            existingAlert.setTriggerTimes(existingAlert.getTriggerTimes() + 1);
+            existingAlert.setActiveAt(currentTimeMilli);
+
+            // Check if required trigger times reached
+            if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
+                // Reached trigger times threshold, change to firing status
+                alarmCacheManager.removePending(defineId, fingerprint);
+                existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+                alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
+            }
+        }
+    }
+
+
+    /**
+     * Add the content from LogEntry object (except timestamp) to commonFingerPrints
+     * 
+     * @param logEntry log entry object
+     * @param context context
+     */
+    private void addLogEntryToMap(LogEntry logEntry, Map<String, String> context) {
+        // Add basic fields
+        if (logEntry.getSeverityNumber() != null) {
+            context.put("severityNumber", String.valueOf(logEntry.getSeverityNumber()));
+        }
+        if (logEntry.getSeverityText() != null) {
+            context.put("severityText", logEntry.getSeverityText());
+        }
+        if (logEntry.getBody() != null) {
+            context.put("body", String.valueOf(logEntry.getBody()));
+        }
+        if (logEntry.getDroppedAttributesCount() != null) {
+            context.put("droppedAttributesCount", String.valueOf(logEntry.getDroppedAttributesCount()));
+        }
+        if (logEntry.getTraceId() != null) {
+            context.put("traceId", logEntry.getTraceId());
+        }
+        if (logEntry.getSpanId() != null) {
+            context.put("spanId", logEntry.getSpanId());
+        }
+        if (logEntry.getTraceFlags() != null) {
+            context.put("traceFlags", String.valueOf(logEntry.getTraceFlags()));
+        }
+        
+        // Add attributes
+        if (logEntry.getAttributes() != null && !logEntry.getAttributes().isEmpty()) {
+            for (Map.Entry<String, Object> entry : logEntry.getAttributes().entrySet()) {
+                if (entry.getValue() != null) {
+                    context.put("attr_" + entry.getKey(), String.valueOf(entry.getValue()));
+                }
+            }
+        }
+        
+        // Add resource
+        if (logEntry.getResource() != null && !logEntry.getResource().isEmpty()) {
+            for (Map.Entry<String, Object> entry : logEntry.getResource().entrySet()) {
+                if (entry.getValue() != null) {
+                    context.put("resource_" + entry.getKey(), String.valueOf(entry.getValue()));
+                }
+            }
+        }
+        
+        // Add instrumentationScope
+        if (logEntry.getInstrumentationScope() != null) {
+            LogEntry.InstrumentationScope scope = logEntry.getInstrumentationScope();
+            if (scope.getName() != null) {
+                context.put("scope_name", scope.getName());
+            }
+            if (scope.getVersion() != null) {
+                context.put("scope_version", scope.getVersion());
+            }
+            if (scope.getDroppedAttributesCount() != null) {
+                context.put("scope_droppedAttributesCount", String.valueOf(scope.getDroppedAttributesCount()));
+            }
+            if (scope.getAttributes() != null && !scope.getAttributes().isEmpty()) {
+                for (Map.Entry<String, Object> entry : scope.getAttributes().entrySet()) {
+                    if (entry.getValue() != null) {
+                        context.put("scope_attr_" + entry.getKey(), String.valueOf(entry.getValue()));
+                    }
+                }
+            }
         }
     }
 }

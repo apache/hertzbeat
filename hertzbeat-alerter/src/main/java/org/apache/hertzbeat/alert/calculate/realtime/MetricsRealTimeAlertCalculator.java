@@ -34,8 +34,11 @@ import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
+import org.apache.hertzbeat.alert.util.AlertUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.CommonUtil;
@@ -93,7 +96,7 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
                                           AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
                                           AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
                                           JexlExprCalculator jexlExprCalculator, boolean start) {
-        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager,jexlExprCalculator, start);
+        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator, start);
     }
 
     @Override
@@ -244,6 +247,66 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
     }
 
     /**
+     * Handle alert after threshold rule match
+     */
+    private void afterThresholdRuleMatch(long defineId, long currentTimeMilli, Map<String, String> fingerPrints,
+                                           Map<String, Object> fieldValueMap, AlertDefine define,
+                                           Map<String, String> annotations) {
+        // fingerprint for the padding cache
+        String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
+        SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
+        fieldValueMap.putAll(define.getLabels());
+        int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
+        if (existingAlert == null) {
+            // First time triggering alert, create new alert and set to pending status
+            Map<String, String> alertLabels = new HashMap<>(8);
+            alertLabels.putAll(fingerPrints);
+            Map<String, String> alertAnnotations = new HashMap<>(8);
+            if (annotations != null) {
+                alertAnnotations.putAll(annotations);
+            }
+            if (define.getAnnotations() != null) {
+                alertAnnotations.putAll(define.getAnnotations());
+            }
+            // render var content in annotations
+            for (Map.Entry<String, String> entry : alertAnnotations.entrySet()) {
+                entry.setValue(AlertTemplateUtil.render(entry.getValue(), fieldValueMap));
+            }
+            SingleAlert newAlert = SingleAlert.builder()
+                    .labels(alertLabels)
+                    .annotations(alertAnnotations)
+                    // render var content in content
+                    .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
+                    .status(CommonConstants.ALERT_STATUS_PENDING)
+                    .triggerTimes(1)
+                    .startAt(currentTimeMilli)
+                    .activeAt(currentTimeMilli)
+                    .build();
+
+            // If required trigger times is 1, set to firing status directly
+            if (requiredTimes <= 1) {
+                newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+                alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
+            } else {
+                // Otherwise put into pending queue first
+                alarmCacheManager.putPending(define.getId(), fingerprint, newAlert);
+            }
+        } else {
+            // Update existing alert
+            existingAlert.setTriggerTimes(existingAlert.getTriggerTimes() + 1);
+            existingAlert.setActiveAt(currentTimeMilli);
+
+            // Check if required trigger times reached
+            if (existingAlert.getStatus().equals(CommonConstants.ALERT_STATUS_PENDING) && existingAlert.getTriggerTimes() >= requiredTimes) {
+                // Reached trigger times threshold, change to firing status
+                alarmCacheManager.removePending(defineId, fingerprint);
+                existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+                alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
+            }
+        }
+    }
+
+    /**
      * Filter alert definitions by app, metrics and instance
      *
      * @param thresholds Alert definitions to filter
@@ -310,6 +373,22 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
                     return false;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Handle recovered alert
+     */
+    private void handleRecoveredAlert(Long defineId, Map<String, String> fingerprints) {
+        String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(defineId, fingerprint);
+        if (firingAlert != null) {
+            // todo consider multi times to tig for resolved alert
+            firingAlert.setTriggerTimes(1);
+            firingAlert.setEndAt(System.currentTimeMillis());
+            firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+            alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
+        }
+        alarmCacheManager.removePending(defineId, fingerprint);
     }
 
     private Set<String> kvLabelsToKvStringSet(Map<String, String> labels) {
