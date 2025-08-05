@@ -184,16 +184,16 @@ metrics:
           en-US: state
         type: 1
         label: true
-      - field: size
+      - field: Size
         i18n:
           zh-CN: 大小
-          en-US: size
+          en-US: Size
         type: 0
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - state='^o^state^o^'
-      - size=$.measurements[?(@.statistic == "VALUE")].value
+      - Size=$.measurements[?(@.statistic == "VALUE")].value
     protocol: http
     http:
       host: ^_^host^_^

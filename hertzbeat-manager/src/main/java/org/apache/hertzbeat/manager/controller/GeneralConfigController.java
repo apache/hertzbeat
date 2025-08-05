@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +24,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.ConfigService;
@@ -37,6 +37,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.TextStyle;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 /**
  * Alert sender Configuration API
  */
@@ -45,6 +58,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Alert sender Configuration API")
 @Slf4j
 public class GeneralConfigController {
+
+    private static final Set<String> ZONE_IDS = ZoneId.getAvailableZoneIds();
+
     @Resource
     private ConfigService configService;
 
@@ -73,5 +89,29 @@ public class GeneralConfigController {
             @PathVariable("app") @NotNull final String app,
             @RequestBody TemplateConfig.AppTemplate template) {
         return ResponseUtil.handle(() -> configService.updateTemplateAppConfig(app, template));
+    }
+
+    @GetMapping(path = "/timezones")
+    @Operation(summary = "Get all available timezones and their current UTC offset", description = "Get all available timezones and their current UTC offset")
+    public ResponseEntity<Message<List<Map<String, String>>>> getTimezones() {
+        List<Map<String, String>> timezones = ZONE_IDS.stream()
+                .map(id -> {
+                    try {
+                        ZoneId zoneId = ZoneId.of(id);
+                        ZonedDateTime now = ZonedDateTime.now(zoneId);
+                        int totalSeconds = now.getOffset().getTotalSeconds();
+                        String offset = String.format("UTC%+03d:%02d", totalSeconds / 3600, Math.abs((totalSeconds / 60) % 60));
+                        String displayName = zoneId.getDisplayName(TextStyle.FULL, Locale.getDefault());
+                        return Map.of("zoneId", id, "offset", offset, "displayName", displayName);
+                    } catch (Exception e) {
+                        String errorMsg = CommonUtil.getMessageFromThrowable(e);
+                        log.warn("Query Timezone failed. {} ", errorMsg);
+                        return null;
+                    }
+                })
+                .filter(t -> Objects.nonNull(t) && Objects.nonNull(t.get("zoneId")))
+                .sorted(Comparator.comparing(m -> m.get("zoneId")))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(Message.success(timezones));
     }
 }

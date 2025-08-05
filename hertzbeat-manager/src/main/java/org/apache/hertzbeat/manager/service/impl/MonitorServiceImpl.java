@@ -27,6 +27,7 @@ import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
+import org.apache.hertzbeat.common.constants.JexlKeywordsEnum;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
@@ -432,6 +433,27 @@ public class MonitorServiceImpl implements MonitorService {
                         // todo More parameter definitions and actual value format verification
                         default:
                             throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
+                    }
+                }
+            }
+        }
+        checkJobFields(monitorDto.getMonitor().getApp());
+    }
+
+    private void checkJobFields(String app) {
+        if (null == app || app.trim().isEmpty()) {
+            return;
+        }
+        Job job = appService.getAppDefine(app);
+        if (null != job && !CollectionUtils.isEmpty(job.getMetrics())) {
+            for (Metrics metrics : job.getMetrics()) {
+                if (null == metrics.getFields() || metrics.getFields().isEmpty()) {
+                    continue;
+                }
+                for (Metrics.Field field : metrics.getFields()) {
+                    if (JexlKeywordsEnum.match(field.getField())) {
+                        throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
+                                + field.getField() + " prohibited keywords, please modify the template information.");
                     }
                 }
             }
