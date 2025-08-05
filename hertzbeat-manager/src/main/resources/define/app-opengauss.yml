@@ -133,7 +133,7 @@ metrics:
       # SQL query method: oneRow, multiRow, columns
       queryType: columns
       # sql
-      sql: select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';
+      sql: "select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';"
       url: ^_^url^_^
 
   - name: state
@@ -203,7 +203,7 @@ metrics:
       # SQL query method: oneRow, multiRow, columns
       queryType: multiRow
       # sql
-      sql: SELECT COALESCE(datname,'shared-object') as name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      sql: "SELECT COALESCE(datname,'shared-object') as name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;"
       url: ^_^url^_^
 
   - name: activity

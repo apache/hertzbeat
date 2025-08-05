@@ -411,7 +411,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: columns
-      sql: select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'
+      sql: "select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'"
       url: ^_^url^_^
 
 
@@ -540,7 +540,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: columns
-      sql: select metric_name, value from gv$sysmetric where metric_name = 'User Commits Per Sec' or  metric_name = 'User Rollbacks Per Sec'
+      sql: "select metric_name, value from gv$sysmetric where metric_name = 'User Commits Per Sec' or  metric_name = 'User Rollbacks Per Sec'"
       url: ^_^url^_^
 
   - name: wait
@@ -669,7 +669,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
-      sql: select stat_name as type, value as num from v$osstat where stat_name like '%CPU%' or stat_name like '%TIME'
+      sql: "select stat_name as type, value as num from v$osstat where stat_name like '%CPU%' or stat_name like '%TIME'"
       url: ^_^url^_^
 
   - name: mem_stats

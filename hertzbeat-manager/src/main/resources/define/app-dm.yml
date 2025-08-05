@@ -161,7 +161,8 @@ metrics:
       # SQL Query Method：oneRow, multiRow, columns
       queryType: columns
       # script sql
-      sql: select PARA_NAME, PARA_VALUE from SYS."V$DM_INI" where PARA_NAME = 'MAX_SESSIONS'or PARA_NAME = 'CTL_PATH' or PARA_NAME = 'PORT_NUM';
+      sql: "'select PARA_NAME, PARA_VALUE from SYS.\"V$DM_INI\" where PARA_NAME = ''MAX_SESSIONS'' or PARA_NAME = ''CTL_PATH'' or PARA_NAME = ''PORT_NUM'';'"
+
       # JDBC url
       url: ^_^url^_^
 
