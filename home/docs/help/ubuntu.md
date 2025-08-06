@@ -115,8 +115,50 @@ Statistics for the top 10 processes using memory. Statistics include: process ID
 | cpu_usage   | %           | CPU usage               |
 | command     | None        | Executed command        |
 
-#### Metric Set: Average CPU Temperature Across All Cores
+#### Other Metric Set: Average CPU Temperature Across All Cores
 
 | Metric Name  | Metric Unit | Metric help description |
 |--------------|-------------|-------------------------|
 | avg_cpu_temp | C           | Average Temp All Cores  |
+
+* Note: This indicator information relies on the hardware sensor monitoring tool (lm-sensors). Please confirm that the Ubuntu operating system can obtain monitoring information normally. You can add the following indicator collection configuration as needed.
+```yaml
+metrics:
+  - name: avg_cpu_temp
+    i18n:
+      zh-CN: 所有核心的平均CPU温度
+      en-US: Average CPU Temperature Across All Cores
+    priority: 4
+    fields:
+      - field: avg_cpu_temp
+        type: 1
+        label: true
+        unit: 'C'
+        i18n:
+          zh-CN: 所有核心的平均温度
+          en-US: Average Temp All Cores
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      script: sensors | grep "^Core\s[0-9\d+\:]" | awk  '{print $3}'  | sed "s/°C/\ /g" | awk '{ total += $1; count++ } END { print total/count }'
+      parseType: oneRow
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+```
