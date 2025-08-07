@@ -102,7 +102,8 @@ impl IntoCallToolResult for DefaultExecuteResponse {
         };
 
         Ok(CallToolResult {
-            content: vec![Content::text(content)],
+            content: Some(vec![Content::text(content)]),
+            structured_content: None,
             is_error: Some(!self.success),
         })
     }
@@ -698,7 +699,13 @@ df -h / 2>/dev/null || echo "df command not available"
                 },
             )
             .await?;
-        let raw_content = &mut result.content.get_mut(0).unwrap().raw;
+        if result.content.is_none() {
+            return Err(ErrorData::internal_error("Result content is null", None));
+        }
+        if result.content.as_ref().unwrap().is_empty() {
+            return Err(ErrorData::internal_error("Result content is empty", None));
+        }
+        let raw_content = &mut result.content.as_mut().unwrap().get_mut(0).unwrap().raw;
         if let RawContent::Text(RawTextContent { text }) = raw_content {
             if let Ok(mut response) = serde_json::from_str::<DefaultExecuteResponse>(&text.clone())
             {
@@ -902,7 +909,7 @@ echo hello
         let result = server.execute_script(Parameters(safe_request)).await;
         assert!(result.is_ok());
         let call_result = result.unwrap();
-        assert!(!call_result.content.is_empty());
+        assert!(!call_result.content.unwrap().is_empty());
         let unsafe_request = create_test_request(
             r#"#!/bin/bash
 touch hello.txt
@@ -925,7 +932,7 @@ subprocess.run(["ls", "-l"], cwd="/root")
         );
         let result = server.execute_python(Parameters(safe_request)).await;
         assert!(result.is_ok());
-        let content = result.unwrap().content[0].clone();
+        let content = result.unwrap().content.unwrap()[0].clone();
         if let RawContent::Text(RawTextContent { text }) = content.raw {
             let response = serde_json::from_str::<DefaultExecuteResponse>(&text);
             assert!(response.is_ok());
@@ -950,7 +957,7 @@ subprocess.run(["ls", "-l"], cwd="/root")
 
         let call_result = result.unwrap();
         assert_eq!(call_result.is_error, Some(false));
-        assert!(!call_result.content.is_empty());
+        assert!(!call_result.content.unwrap().is_empty());
     }
 
     #[test]
@@ -968,7 +975,7 @@ subprocess.run(["ls", "-l"], cwd="/root")
 
         let call_result = result.unwrap();
         assert_eq!(call_result.is_error, Some(true));
-        assert!(!call_result.content.is_empty());
+        assert!(!call_result.content.unwrap().is_empty());
     }
 
     #[test]

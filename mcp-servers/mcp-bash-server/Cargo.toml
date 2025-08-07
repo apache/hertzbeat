@@ -21,7 +21,7 @@ edition = "2024"
 [dependencies]
 tracing-appender = "0.2"
 anyhow = "1.0.98"
-rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main", features = ["server", "transport-sse-server", "transport-io", "transport-streamable-http-server", "auth"]}
+rmcp = { version = "0.4.0", features = ["server", "transport-sse-server", "transport-io", "transport-streamable-http-server", "auth"]}
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["net"] }
