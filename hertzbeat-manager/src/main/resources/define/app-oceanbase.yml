@@ -21,11 +21,13 @@ app: oceanbase
 name:
   zh-CN: OceanBase数据库
   en-US: OceanBase DB
+  ja-JP: OceanBaseデータベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 OceanBase 数据库的通用性能指标(系统信息、性能状态、Innodb、缓存、事物、用户线程、慢SQL等)进行采集监控，支持版本为 OceanBase 4.0+。<br>您可以点击“<i>新建 OceanBase 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of OceanBase database (system information, performance status, Innodb, cache, things, user threads, slow SQL, etc.). Supported version is OceanBase 4.0+. <br>You can click "<i>New OceanBase Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 OceanBase 數據庫的通用性能指標(系統信息、性能狀態、Innodb、緩存、事物、用戶線程、慢SQL等)進行采集監控，支持版本爲 OceanBase 4.0+。<br>您可以點擊“<i>新建 OceanBase 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: HertzBeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC プロトコル</a> を使用して、SQL を設定することで OceanBase データベースの一般的なパフォーマンスのメトリクス（システム情報、パフォーマンス状態、Innodb、キャッシュ、トランザクション、ユーザー スレッド、スロー SQL など）を収集および監視します。対応バージョンは OceanBase 4.0+ です。<br>「<i>新規 OceanBase データベース</i>」をクリックして設定するか、「<i>その他の操作</i>」を選択して既存の設定をインポートすることができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/oceanbase
   en-US: https://hertzbeat.apache.org/docs/help/oceanbase
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: ターゲットホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
+      ja-JP: クエリタイムアウト(ms)
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -77,6 +82,7 @@ params:
     name:
       zh-CN: 数据库名称
       en-US: Database Name
+      ja-JP: データベース名
     # type-param field type(most mapping the html input tag)
     type: text
     # required-true or false
@@ -87,6 +93,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input tag)
     type: text
     # when type is text, use limit to limit string length
@@ -99,6 +106,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -109,6 +117,7 @@ params:
     name:
       zh-CN: URL
       en-US: URL
+      ja-JP: URL
     # type-param field type(most mapping the html input tag)
     type: text
     # required-true or false
@@ -126,6 +135,7 @@ metrics:
     i18n:
       zh-CN: 基础 信息
       en-US: Basic Info
+      ja-JP: 基本情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -135,16 +145,19 @@ metrics:
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: datadir
         type: 1
         i18n:
           zh-CN: 存储目录
           en-US: DataDir
+          ja-JP: データディレクトリ
       - field: max_connections
         type: 0
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
+          ja-JP: 最大接続数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - version
@@ -190,6 +203,7 @@ metrics:
     i18n:
       zh-CN: 租户 信息
       en-US: Tenant Info
+      ja-JP: テナント情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -199,16 +213,19 @@ metrics:
         i18n:
           zh-CN: 租户id
           en-US: TenantId
+          ja-JP: テナントID
       - field: tenant_name
         type: 1
         i18n:
           zh-CN: 租户名称
           en-US: tenantName
+          ja-JP: テナント名
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: status
+          ja-JP: ステータス
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - tenant_id
@@ -244,12 +261,13 @@ metrics:
       sql: select tenant_id, tenant_name, info, status from oceanbase.__all_tenant;
       # JDBC url
       url: ^_^url^_^
-      
+
   - name: sql
     priority: 2
     i18n:
       zh-CN: Sql 信息
       en-US: Sql Info
+      ja-JP: Sql情報
     fields:
       - field: con_id
         type: 1
@@ -257,36 +275,43 @@ metrics:
         i18n:
           zh-CN: 租户id
           en-US: TenantId
+          ja-JP: テナントID
       - field: sql_select_count
         type: 0
         i18n:
           zh-CN: select 语句执行次数
           en-US: sql select count
+          ja-JP: sql select 回数
       - field: sql_insert_count
         type: 0
         i18n:
           zh-CN: insert 语句执行次数
           en-US: sql insert count
+          ja-JP: sql insert 回数
       - field: sql_update_count
         type: 0
         i18n:
           zh-CN: update 语句执行次数
           en-US: sql update count
+          ja-JP: sql update 回数
       - field: sql_delete_count
         type: 0
         i18n:
           zh-CN: delete 语句执行次数
           en-US: sql delete count
+          ja-JP: sql delete 回数
 #      - field: com_commit
 #        type: 0
 #        i18n:
 #          zh-CN: 事务提交次数
 #          en-US: trans commit count
+#          ja-JP: trans commit 回数
 #      - field: com_rollback
 #        type: 0
 #        i18n:
 #          zh-CN: 事务回滚次数
 #          en-US: trans rollback count
+#          ja-JP: trans rollback 回数
     aliasFields:
       - con_id
       - sql_select_count
@@ -335,6 +360,7 @@ metrics:
     i18n:
       zh-CN: 进程状态 信息
       en-US: Process State Info
+      ja-JP: プロセス状態情報
     fields:
       - field: state
         type: 1
@@ -342,11 +368,13 @@ metrics:
         i18n:
           zh-CN: 进程状态
           en-US: State
+          ja-JP: 状態
       - field: num
         type: 0
         i18n:
           zh-CN: 该状态进程数量
           en-US: Num
+          ja-JP: プロセス総数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
