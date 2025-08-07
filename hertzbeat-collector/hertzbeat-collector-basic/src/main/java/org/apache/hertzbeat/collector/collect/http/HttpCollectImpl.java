@@ -604,6 +604,18 @@ public class HttpCollectImpl extends AbstractCollect {
                     }
                 }
                 builder.addValueRow(valueRowBuilder.build());
+            } else if (objectValue instanceof Number numberValue) {
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String alias : aliasFields) {
+                    if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(responseTime.toString());
+                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(Integer.toString(keywordNum));
+                    } else {
+                        valueRowBuilder.addColumn(numberValue.toString());
+                    }
+                }
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }

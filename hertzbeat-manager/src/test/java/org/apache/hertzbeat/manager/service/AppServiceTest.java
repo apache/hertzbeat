@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
@@ -30,11 +33,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -93,5 +101,59 @@ class AppServiceTest {
                 .singletonList(Monitor.builder().id(1L).build()));
         when(warehouseService.queryMonitorMetricsData(anyLong())).thenReturn(Collections.emptyList());
         assertDoesNotThrow(() -> appService.getAllAppHierarchy("en-US"));
+    }
+
+    @Test
+    void appDefineJexl() throws NoSuchMethodException {
+        Job job = new Job();
+        job.setApp("test-app");
+        job.setCategory("service");
+        job.setName(Map.of("k", "v"));
+
+        List<ParamDefine> params = new ArrayList<>();
+        ParamDefine hostParam = new ParamDefine();
+        hostParam.setField("host");
+        hostParam.setType("host");
+        hostParam.setRequired(true);
+        params.add(hostParam);
+
+        ParamDefine portParam = new ParamDefine();
+        portParam.setField("port");
+        portParam.setType("number");
+        portParam.setRequired(true);
+        portParam.setDefaultValue("8080");
+        params.add(portParam);
+
+        job.setParams(params);
+
+        List<Metrics> metrics = new ArrayList<>();
+
+        Metrics otherMetrics = new Metrics();
+        otherMetrics.setName("details");
+        otherMetrics.setPriority((byte) 0);
+        otherMetrics.setProtocol("http");
+
+        List<Metrics.Field> fields = new ArrayList<>();
+        fields.add(Metrics.Field.builder().field("size").build());
+        otherMetrics.setFields(fields);
+
+        metrics.add(otherMetrics);
+        job.setMetrics(metrics);
+
+        Method verifyMethod = AppServiceImpl.class.getDeclaredMethod("verifyDefineAppContent", Job.class, boolean.class);
+        verifyMethod.setAccessible(true);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            try {
+                verifyMethod.invoke(appService, job, false);
+            } catch (InvocationTargetException e) {
+                if (e.getCause() instanceof RuntimeException) {
+                    throw e.getCause();
+                }
+                throw new RuntimeException(e.getCause());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        assertTrue(exception.getMessage().contains("prohibited keywords"));
     }
 }

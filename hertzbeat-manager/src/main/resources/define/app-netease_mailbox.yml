@@ -21,11 +21,13 @@ app: netease_mailbox
 name:
   zh-CN: 网易邮箱监控
   en-US: NetEase Mailbox
+  ja-JP: NetEase電子メール
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 使用 IMAP 协议对网易邮箱的详细信息进行采集监控。<br>您可以点击“<i>新建 POP3</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat uses IMAP protocol to collect detailed metrics of NetEase mailbox. <br>You can click "<i>New POP3</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
-  zh-TW: HertzBeat 使用 IMAP 協議對網易郵箱的詳細信息進行採集監控。<br>您可以點擊“<i>新建 POP3</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: HertzBeat 使用 IMAP 协议对网易邮箱的详细信息进行采集监控。<br>您可以点击“<i>新建 网易邮箱</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses IMAP protocol to collect detailed metrics of NetEase mailbox. <br>You can click "<i>New NetEase Mailbox</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 IMAP 協議對網易郵箱的詳細信息進行採集監控。<br>您可以點擊“<i>新建 网易邮箱</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: HertzBeat は IMAP プロトコルを介してNetEase電子メールの詳細情報を監視します。<br>「<i>新規 NetEase電子メール</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/imap
   en-US: https://hertzbeat.apache.org/docs/help/imap
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL
     # When the type is boolean, the frontend will display a switch for it.
     type: boolean
     # required-true or false
@@ -56,6 +60,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -68,6 +73,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -81,7 +87,8 @@ params:
     # name-param field display i18n name
     name:
       zh-CN: IMAP 邮箱地址
-      en-US: Email
+      en-US: IMAP Address
+      ja-JP: IMAPアドレス
     # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
     type: text
     # required-true or false
@@ -92,6 +99,7 @@ params:
     name:
       zh-CN: 授权码
       en-US: Authorize Code
+      ja-JP: 認証コード
     # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
     type: text
     # required-true or false
@@ -104,6 +112,7 @@ metrics:
     i18n:
       zh-CN: 可用性
       en-US: Available
+      ja-JP: 可用性
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -116,6 +125,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: imap
     # Specific collection configuration when protocol is http protocol
@@ -139,6 +149,7 @@ metrics:
     i18n:
       zh-CN: 收件箱信息
       en-US: Inbox info
+      ja-JP: 受信箱情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -150,16 +161,19 @@ metrics:
         i18n:
           zh-CN: 邮件总数
           en-US: Total message count
+          ja-JP: メッセージ総数
       - field: recentMessageCount
         type: 0
         i18n:
           zh-CN: 最近收到邮件总数
           en-US: Recent message count
+          ja-JP: 最新メッセージ総数
       - field: unseenMessageCount
         type: 0
         i18n:
           zh-CN: 未读邮件总数
-          en-US: Unseen message count
+          en-US: Unread message count
+          ja-JP: 未読メッセージ総数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - INBOXTotalMessageCount
@@ -193,6 +207,7 @@ metrics:
     i18n:
       zh-CN: 已发送信息
       en-US: Sent info
+      ja-JP: 送信情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -204,6 +219,7 @@ metrics:
         i18n:
           zh-CN: 邮件总数
           en-US: Total message count
+          ja-JP: 送信したメッセージ総数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - 已发送TotalMessageCount
@@ -233,6 +249,7 @@ metrics:
     i18n:
       zh-CN: 草稿箱信息
       en-US: Drafts info
+      ja-JP: ドラフトボックス情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -244,6 +261,7 @@ metrics:
         i18n:
           zh-CN: 邮件总数
           en-US: Total message count
+          ja-JP: ドラフトメッセージ総数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - 草稿箱TotalMessageCount
@@ -273,6 +291,7 @@ metrics:
     i18n:
       zh-CN: 已删除信息
       en-US: Deleted Messages info
+      ja-JP: 削除済みメッセージ情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -284,6 +303,7 @@ metrics:
         i18n:
           zh-CN: 邮件总数
           en-US: Total message count
+          ja-JP: 削除済みメッセージ総数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - 已删除TotalMessageCount
@@ -313,6 +333,7 @@ metrics:
     i18n:
       zh-CN: 垃圾箱信息
       en-US: Junk info
+      ja-JP: 迷惑メールボックス情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -324,16 +345,19 @@ metrics:
         i18n:
           zh-CN: 邮件总数
           en-US: Total message count
+          ja-JP: 迷惑メッセージ総数
       - field: recentMessageCount
         type: 0
         i18n:
           zh-CN: 最近收到邮件总数
           en-US: Recent message count
+          ja-JP: 最新の迷惑メッセージ総数
       - field: unseenMessageCount
         type: 0
         i18n:
           zh-CN: 未读邮件总数
-          en-US: Unseen message count
+          en-US: Unread message count
+          ja-JP: 未読の迷惑メッセージ総数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - 垃圾邮件TotalMessageCount
@@ -367,6 +391,7 @@ metrics:
     i18n:
       zh-CN: 病毒邮件信息
       en-US: Virus Info
+      ja-JP: ウイルスメールボックス情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -378,16 +403,19 @@ metrics:
         i18n:
           zh-CN: 邮件总数
           en-US: Total message count
+          ja-JP: ウイルスメッセージ総数
       - field: recentMessageCount
         type: 0
         i18n:
           zh-CN: 最近收到邮件总数
           en-US: Recent message count
+          ja-JP: 最新のウイルスメッセージ総数
       - field: unseenMessageCount
         type: 0
         i18n:
           zh-CN: 未读邮件总数
-          en-US: Unseen message count
+          en-US: Unread message count
+          ja-JP: 未読のウイルスメッセージ総数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - 病毒邮件TotalMessageCount

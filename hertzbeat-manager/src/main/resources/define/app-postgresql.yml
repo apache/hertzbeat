@@ -21,11 +21,13 @@ app: postgresql
 name:
   zh-CN: PostgreSQL数据库
   en-US: PostgreSQL DB
+  ja-JP: PostgreSQL データベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 PostgreSQL 数据库的通用性能指标 (basic、state、activity etc) 进行采集监控，支持版本为 PostgreSQL10+。<br>您可以点击“<i>新建 PostgreSQL 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of PostgreSQL database  (basic、state、activity etc). Supported version is PostgreSQL10+. <br>You can click "<i>New PostgreSQL Database</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 PostgreSQL 數據庫的通用性能指標 (basic、state、activity etc)進行采集監控，支持版本爲 PostgreSQL10+。<br>您可以點擊“<i>新建 PostgreSQL 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBCプロトコルを介して</a> PostgreSQL データベース（PostgreSQL10+）の一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 PostgreSQL データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/postgresql
   en-US: https://hertzbeat.apache.org/docs/help/postgresql
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -59,6 +63,7 @@ params:
     name:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
+      ja-JP: クエリタイムアウト（ｍｓ）
     type: number
     range: '[400,200000]'
     required: false
@@ -68,6 +73,7 @@ params:
     name:
       zh-CN: 数据库名称
       en-US: Database Name
+      ja-JP: データベース名
     type: text
     defaultValue: postgres
     required: false
@@ -75,6 +81,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -82,12 +89,14 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
   - field: url
     name:
       zh-CN: URL
       en-US: URL
+      ja-JP: URL
     type: text
     required: false
     hide: true
@@ -95,6 +104,7 @@ params:
     name:
       zh-CN: 是否启用SSH隧道
       en-US: Enable SSH Tunnel
+      ja-JP: SSHトンネルの有効化
     type: boolean
     required: true
     hide: true
@@ -102,6 +112,7 @@ params:
     name:
       zh-CN: SSH Host
       en-US: SSH Host
+      ja-JP: SSHホスト
     type: text
     required: false
     placeholder: 'When Enable SSH Tunnel'
@@ -110,6 +121,7 @@ params:
     name:
       zh-CN: SSH端口
       en-US: SSH Port
+      ja-JP: SSHポート
     type: number
     range: '[0,65535]'
     required: false
@@ -120,6 +132,7 @@ params:
     name:
       zh-CN: SSH超时时间(ms)
       en-US: SSH Timeout(ms)
+      ja-JP: SSHタイムアウト（ｍｓ）
     type: number
     required: false
     range: '[400,200000]'
@@ -129,6 +142,7 @@ params:
     name:
       zh-CN: SSH用户名
       en-US: SSH Username
+      ja-JP: SSHユーザー名
     type: text
     required: false
     placeholder: 'When Enable SSH tunnel'
@@ -137,6 +151,7 @@ params:
     name:
       zh-CN: SSH密码
       en-US: SSH Password
+      ja-JP: SSHパスワード
     type: password
     required: false
     hide: true
@@ -144,6 +159,7 @@ params:
     name:
       zh-CN: 是否共享SSH连接
       en-US: Share SSH Connection
+      ja-JP: SSH接続共有
     type: boolean
     required: true
     defaultValue: true
@@ -152,6 +168,7 @@ params:
     name:
       zh-CN: SSH私钥
       en-US: SSH PrivateKey
+      ja-JP: SSH秘密鍵
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
     required: false
@@ -160,6 +177,7 @@ params:
     name:
       zh-CN: SSH密钥短语
       en-US: SSH PrivateKey PassPhrase
+      ja-JP: SSH秘密鍵フレーズ
     type: password
     required: false
     hide: true
@@ -171,6 +189,7 @@ metrics:
     i18n:
       zh-CN: 基本信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -183,26 +202,31 @@ metrics:
         i18n:
           zh-CN: 服务器版本
           en-US: Server Version
+          ja-JP: バージョン
       - field: port
         type: 1
         i18n:
           zh-CN: 端口
           en-US: Port
+          ja-JP: ポート
       - field: server_encoding
         type: 1
         i18n:
           zh-CN: 服务器编码
           en-US: Server Encoding
+          ja-JP: サーバーのエンコード
       - field: data_directory
         type: 1
         i18n:
           zh-CN: 数据目录
           en-US: Data Directory
+          ja-JP: データディレクトリ
       - field: max_connections
         type: 0
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
+          ja-JP: 最大接続数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jdbc
     # the config content when protocol is jdbc
@@ -237,6 +261,7 @@ metrics:
     i18n:
       zh-CN: 状态信息
       en-US: State Info
+      ja-JP: 状態情報
     priority: 1
     fields:
       - field: db_name
@@ -245,47 +270,55 @@ metrics:
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: conflicts
         type: 0
         unit: times
         i18n:
           zh-CN: 冲突次数
           en-US: Conflicts
+          ja-JP: コンフリクト回数
       - field: deadlocks
         type: 0
         unit: times
         i18n:
           zh-CN: 死锁次数
           en-US: Deadlocks
+          ja-JP: デッドロック回数
       - field: blks_read
         type: 0
         unit: blocks per second
         i18n:
           zh-CN: 读取块
           en-US: Blocks Read
+          ja-JP: 読み取られたブロック
       - field: blks_hit
         type: 0
         unit: blocks per second
         i18n:
           zh-CN: 命中块
           en-US: Blocks Hit
+          ja-JP: ヒットブロック
       - field: blk_read_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 读取时间
           en-US: Read Time
+          ja-JP: 読み取られタイム
       - field: blk_write_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 写入时间
           en-US: Write Time
+          ja-JP: 書き込まれ時間
       - field: stats_reset
         type: 1
         i18n:
           zh-CN: 统计重置
           en-US: Stats Reset
+          ja-JP: 統計リセット
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -313,6 +346,7 @@ metrics:
     i18n:
       zh-CN: 活动信息
       en-US: Activity Info
+      ja-JP: 活動情報
     priority: 2
     fields:
       - field: running
@@ -321,6 +355,7 @@ metrics:
         i18n:
           zh-CN: 运行中
           en-US: Running
+          ja-JP: 実行中
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -348,6 +383,7 @@ metrics:
     i18n:
       zh-CN: 资源配置
       en-US: Resource Config
+      ja-JP: リソース設定
     priority: 3
     fields:
       - field: work_mem
@@ -356,34 +392,40 @@ metrics:
         i18n:
           zh-CN: 工作内存
           en-US: Work Memory
+          ja-JP: ワークメモリ
       - field: shared_buffers
         type: 0
         unit: MB
         i18n:
           zh-CN: 共享缓冲区
           en-US: Shared Buffers
+          ja-JP: 共有バッファ
       - field: autovacuum
         type: 1
         i18n:
           zh-CN: 自动清理
           en-US: Auto Vacuum
+          ja-JP: オートバキューム
       - field: max_connections
         type: 0
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
+          ja-JP: 最大接続数
       - field: effective_cache_size
         type: 0
         unit: MB
         i18n:
           zh-CN: 有效缓存大小
           en-US: Effective Cache Size
+          ja-JP: キャッシュサイズ
       - field: wal_buffers
         type: 0
         unit: MB
         i18n:
           zh-CN: WAL缓冲区
           en-US: WAL Buffers
+          ja-JP: WALバッファ
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -411,6 +453,7 @@ metrics:
     i18n:
       zh-CN: 连接信息
       en-US: Connection Info
+      ja-JP: 接続情報
     priority: 4
     fields:
       - field: active
@@ -418,6 +461,7 @@ metrics:
         i18n:
           zh-CN: 活动连接
           en-US: Active Connection
+          ja-JP: 活躍的な接続
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -445,6 +489,7 @@ metrics:
     i18n:
       zh-CN: 连接状态
       en-US: Connection State
+      ja-JP: 接続状態
     priority: 5
     fields:
       - field: state
@@ -453,11 +498,13 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
       - field: num
         type: 0
         i18n:
           zh-CN: 数量
           en-US: Num
+          ja-JP: 数量
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -485,6 +532,7 @@ metrics:
     i18n:
       zh-CN: 连接数据库
       en-US: Connection Db
+      ja-JP: 接続データベース
     priority: 6
     fields:
       - field: db_name
@@ -493,11 +541,13 @@ metrics:
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: active
         type: 0
         i18n:
           zh-CN: 活动连接
           en-US: Active Connection
+          ja-JP: 活躍的な接続
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -525,6 +575,7 @@ metrics:
     i18n:
       zh-CN: 元组信息
       en-US: Tuple Info
+      ja-JP: 組情報
     priority: 7
     fields:
       - field: fetched
@@ -532,26 +583,31 @@ metrics:
         i18n:
           zh-CN: 获取次数
           en-US: Fetched
+          ja-JP: フェッチ回数
       - field: returned
         type: 0
         i18n:
           zh-CN: 返回次数
           en-US: Returned
+          ja-JP: 戻る回数
       - field: inserted
         type: 0
         i18n:
           zh-CN: 插入次数
           en-US: Inserted
+          ja-JP: インサート回数
       - field: updated
         type: 0
         i18n:
           zh-CN: 更新次数
           en-US: Updated
+          ja-JP: 更新回数
       - field: deleted
         type: 0
         i18n:
           zh-CN: 删除次数
           en-US: Deleted
+          ja-JP: 削除回数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -579,6 +635,7 @@ metrics:
     i18n:
       zh-CN: 临时文件
       en-US: Temp File
+      ja-JP: 一時ファイル
     priority: 8
     fields:
       - field: db_name
@@ -587,17 +644,20 @@ metrics:
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: num
         type: 0
         i18n:
           zh-CN: 次数
           en-US: Num
+          ja-JP: 数量
       - field: size
         type: 0
         unit: B
         i18n:
           zh-CN: 大小
           en-US: Size
+          ja-JP: サイズ
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -625,6 +685,7 @@ metrics:
     i18n:
       zh-CN: 锁信息
       en-US: Lock Info
+      ja-JP: ロック情報
     priority: 9
     fields:
       - field: db_name
@@ -633,18 +694,21 @@ metrics:
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: conflicts
         type: 0
         unit: times
         i18n:
           zh-CN: 冲突次数
           en-US: Conflicts
+          ja-JP: コンフリクト回数
       - field: deadlocks
         type: 0
         unit: times
         i18n:
           zh-CN: 死锁次数
           en-US: Deadlocks
+          ja-JP: デッドロック回数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -672,6 +736,7 @@ metrics:
     i18n:
       zh-CN: 慢查询
       en-US: Slow Sql
+      ja-JP: スローSQL
     priority: 10
     fields:
       - field: sql_text
@@ -680,28 +745,33 @@ metrics:
         i18n:
           zh-CN: SQL语句
           en-US: SQL Text
+          ja-JP: SQL文のテキスト
       - field: calls
         type: 0
         i18n:
           zh-CN: 调用次数
           en-US: Calls
+          ja-JP: コール回数
       - field: rows
         type: 0
         i18n:
           zh-CN: 行数
           en-US: Rows
+          ja-JP: 行
       - field: avg_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 平均时间
           en-US: Avg Time
+          ja-JP: 平均時間
       - field: total_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 总时间
           en-US: Total Time
+          ja-JP: 合計時間
     aliasFields:
       - query
       - calls
@@ -739,6 +809,7 @@ metrics:
     i18n:
       zh-CN: 事务信息
       en-US: Transaction Info
+      ja-JP: トランザクション情報
     priority: 11
     fields:
       - field: db_name
@@ -747,18 +818,21 @@ metrics:
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: commits
         type: 0
         unit: times
         i18n:
           zh-CN: 提交次数
           en-US: Commits
+          ja-JP: コミット回数
       - field: rollbacks
         type: 0
         unit: times
         i18n:
           zh-CN: 回滚次数
           en-US: Rollbacks
+          ja-JP: ロールバック回数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -786,6 +860,7 @@ metrics:
     i18n:
       zh-CN: 冲突信息
       en-US: Conflicts Info
+      ja-JP: コンフリクト情報
     priority: 12
     fields:
       - field: db_name
@@ -794,31 +869,37 @@ metrics:
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: tablespace
         type: 0
         i18n:
           zh-CN: 表空间
           en-US: Tablespace
+          ja-JP: 表領域
       - field: lock
         type: 0
         i18n:
           zh-CN: 锁
           en-US: Lock
+          ja-JP: ロック
       - field: snapshot
         type: 0
         i18n:
           zh-CN: 快照
           en-US: Snapshot
+          ja-JP: スナップショット
       - field: bufferpin
         type: 0
         i18n:
           zh-CN: 缓冲区
           en-US: Bufferpin
+          ja-JP: バッファ
       - field: deadlock
         type: 0
         i18n:
           zh-CN: 死锁
           en-US: Deadlock
+          ja-JP: デッドロック
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -846,6 +927,7 @@ metrics:
     i18n:
       zh-CN: 缓存命中率
       en-US: Cache Hit Ratio
+      ja-JP: キャッシュ命中率
     priority: 13
     fields:
       - field: db_name
@@ -854,12 +936,14 @@ metrics:
         i18n:
           zh-CN: 数据库名称
           en-US: Database Name
+          ja-JP: データベース名
       - field: ratio
         type: 0
         unit: '%'
         i18n:
           zh-CN: 命中率
           en-US: Hit Ratio
+          ja-JP: 命中率
     aliasFields:
       - blks_hit
       - blks_read
@@ -893,6 +977,7 @@ metrics:
     i18n:
       zh-CN: Checkpoint信息
       en-US: Checkpoint Info
+      ja-JP: チェックポイント情報
     priority: 14
     fields:
       - field: checkpoint_sync_time
@@ -901,12 +986,14 @@ metrics:
         i18n:
           zh-CN: Checkpoint同步时间
           en-US: Checkpoint Sync Time
+          ja-JP: チェックポイント同期時間
       - field: checkpoint_write_time
         type: 0
         unit: ms
         i18n:
           zh-CN: Checkpoint写入时间
           en-US: Checkpoint Write Time
+          ja-JP: Checkpoint書き込まれた時間
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -934,6 +1021,7 @@ metrics:
     i18n:
       zh-CN: Buffer信息
       en-US: Buffer Info
+      ja-JP: バッファ情報
     priority: 15
     fields:
       - field: allocated
@@ -941,26 +1029,31 @@ metrics:
         i18n:
           zh-CN: 已分配
           en-US: Allocated
+          ja-JP: 割り当てバッファ
       - field: fsync_calls_by_backend
         type: 0
         i18n:
           zh-CN: 后端进程直接执行的文件同步调用次数
           en-US: Fsync Calls By Backend
+          ja-JP: バックエンド同期コール回数
       - field: written_directly_by_backend
         type: 0
         i18n:
           zh-CN: 后台写入到数据文件
           en-US: Written Directly By Backend
+          ja-JP: バックエンドによる直接書き込まれたファイル
       - field: written_by_background_writer
         type: 0
         i18n:
           zh-CN: 后台写入
           en-US: Written By Background Writer
+          ja-JP: バックグラウンドライターに書き込まれた
       - field: written_during_checkpoints
         type: 0
         i18n:
           zh-CN: 检查点期间写入
           en-US: Written During Checkpoints
+          ja-JP: チェックポイント中の書き込み
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
