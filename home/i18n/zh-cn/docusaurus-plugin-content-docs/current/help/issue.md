@@ -30,6 +30,15 @@ sidebar_label: 常见问题
 
 5. 配置http api监控，用于进行业务接口探测，确保业务可以用，另外接口有进行token鉴权校验，"Authorization：Bearer eyJhbGciOiJIUzI1...."，配置后测试，提示“StatusCode 401”。服务端应用收到的token为"Authorization：Bearer%20eyJhbGciOiJIUzI1....",hertzbeat对空格进行转义为“%20”，服务器没有转义导致鉴权失败，建议转义功能作为可选项。
 
+6. 单个采集器的任务上限是多少?
+
+   > 具体上限参数
+   核心线程数: Math.max(2, Runtime.getRuntime().availableProcessors()) - 至少2个线程，或等于CPU核心数。
+   最大线程数: Runtime.getRuntime().availableProcessors() * 16 - CPU核心数的16倍。
+   > 上限完全取决于服务器的CPU核心数。例如，在8核CPU的服务器上，最大可同时处理 8 × 16 = 128 个采集任务。当超过这个数量时就会触发该错误消息。这是一个动态配置，会根据运行环境的硬件规格自动调整。
+   > 当运行时超出最大线程数会报错提示"the worker pool is full, reject this metrics task，put in queue again"。
+   > 此时建议配置新的采集器,并设置为public模式，hertzbeat会自动将任务分配给其他采集器，不会因为单个采集器任务上限而报错。
+
 ### Docker部署常见问题
 
 1. **MYSQL,TDENGINE和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败**

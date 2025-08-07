@@ -21,11 +21,13 @@ app: rabbitmq
 name:
   zh-CN: RabbitMQ消息系统
   en-US: RabbitMQ Message
+  ja-JP: RabbitMQメッセージシステム
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标（overview、object_totals、nodes、queues）进行监测。<br><span class='help_module_span'>⚠️注意：HertzBeat 使用 RabbitMQ Management 的 Rest Api 对 RabbitMQ 进行指标数据采集，因此您的 RabbitMQ 环境需要开启 Management 插件，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看开启步骤</a>。</span>
   en-US: HertzBeat monitors RabbitMQ of the runtime status, nodes, queues and other metrics through message-oriented middleware. <br><span class='help_module_span'>⚠️Note:HertzBeat uses the Rest Api of RabbitMQ Management to collect metric data for RabbitMQ, so you need to enable Management plug-in component, <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>
   zh-TW: HertzBeat 對 RabbitMQ 消息中間件的運行狀態，節點，隊列等相關指標（overview、object_totals、nodes、queues）進行監測。<br><span class='help_module_span'>⚠️注意：HertzBeat 使用 RabbitMQ Management 的 Rest Api 對 RabbitMQ 進行指標數據采集，因此您的 RabbitMQ 環境需要開啓 Management 插件，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>點擊查看開啓步驟</a>。</span>
+  ja-JP: HertzBeat は RabbitMQメッセージミドルウェアの実行状態、ノード、キューなどの関連指標（overview、object_totals、nodes、queues）を監視します。<br><span class='help_module_span'>⚠️注意：HertzBeatはRabbitMQ Managementの Rest Apiを使用してRabbitMQの指標データを収集するため、RabbitMQ環境でManagementプラグインを有効にする必要があります。<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>有効化手順を確認するにはこちらをクリック</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/rabbitmq
   en-US: https://hertzbeat.apache.org/docs/help/rabbitmq
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: HTTP 端口
       en-US: HTTP Port
+      ja-JP: HTTPポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -60,6 +64,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL有効化
     # When the type is boolean, the front end displays the switch with a switch
     type: boolean
     # required-true or false
@@ -70,6 +75,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # When the type is radio radio radio and checkbox, option represents a list of optional values {name1: value1, name2: value2}
     type: radio
     # required-true or false
@@ -84,6 +90,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # When the type is text, use limit to indicate the string limit size
@@ -96,6 +103,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -107,6 +115,7 @@ metrics:
     i18n:
       zh-CN: 概览
       en-US: Overview
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -118,39 +127,45 @@ metrics:
         i18n:
           zh-CN: 产品版本
           en-US: Product Version
+          ja-JP: 製品バージョン
       - field: product_name
         type: 1
         i18n:
           zh-CN: 产品名称
           en-US: Product Name
+          ja-JP: 製品名
       - field: rabbitmq_version
         type: 1
         i18n:
           zh-CN: RabbitMQ 版本
           en-US: RabbitMQ Version
+          ja-JP: RabbitMQバージョン
       - field: management_version
         type: 1
         i18n:
           zh-CN: RabbitMQ Management 版本
           en-US: RabbitMQ Management Version
+          ja-JP: RabbitMQ Managementバージョン
       - field: erlang_version
         type: 1
         i18n:
           zh-CN: Erlang 版本
           en-US: Erlang Version
+          ja-JP: Erlangバージョン
       - field: cluster_name
         type: 1
         i18n:
           zh-CN: 集群名称
           en-US: Cluster Name
+          ja-JP: クラスター名
       - field: rates_mode
         type: 1
         i18n:
           zh-CN: 速率模式
           en-US: Rates Mode
+          ja-JP: レートモード
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
     # the config content when protocol is http
     http:
       # Host: ipv4 ipv6 domain
@@ -176,6 +191,7 @@ metrics:
     i18n:
       zh-CN: 对象总数
       en-US: Object Totals
+      ja-JP: オブジェクト総数
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -187,26 +203,31 @@ metrics:
         i18n:
           zh-CN: 通道数
           en-US: Channels
+          ja-JP: チャネル数
       - field: connections
         type: 0
         i18n:
           zh-CN: 连接数
           en-US: Connections
+          ja-JP: 接続数
       - field: consumers
         type: 0
         i18n:
           zh-CN: 消费者数
           en-US: Consumers
+          ja-JP: コンシューマー数
       - field: exchanges
         type: 0
         i18n:
           zh-CN: 交换器数
           en-US: Exchanges
+          ja-JP: エクスチェンジ数
       - field: queues
         type: 0
         i18n:
           zh-CN: 队列数
           en-US: Queues
+          ja-JP: キュー数
     protocol: http
     http:
       # Host: ipv4 ipv6 domain
@@ -233,6 +254,7 @@ metrics:
     i18n:
       zh-CN: 节点数
       en-US: Nodes
+      ja-JP: ノード数
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -245,182 +267,216 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: running
         type: 1
         i18n:
           zh-CN: 运行状态
           en-US: Running
+          ja-JP: 実行状態
       - field: os_pid
         type: 1
         i18n:
           zh-CN: 操作系统进程ID
           en-US: OS PID
+          ja-JP: オーエスのプロセスID
       - field: mem_limit
         type: 0
         unit: MB
         i18n:
           zh-CN: 内存限制
           en-US: Memory Limit
+          ja-JP: メモリ制限
       - field: mem_used
         type: 0
         unit: MB
         i18n:
           zh-CN: 已使用内存
           en-US: Memory Used
+          ja-JP: 使用したメモリ
       - field: fd_total
         type: 0
         i18n:
           zh-CN: 文件描述符总数
           en-US: Total File Descriptors
+          ja-JP: ファイル記述子総数
       - field: fd_used
         type: 0
         i18n:
           zh-CN: 已使用文件描述符
           en-US: Used File Descriptors
+          ja-JP: 使用したファイル記述子
       - field: sockets_total
         type: 0
         i18n:
           zh-CN: 总套接字数
           en-US: Total Sockets
+          ja-JP: ソケット総数
       - field: sockets_used
         type: 0
         i18n:
           zh-CN: 已使用套接字数
           en-US: Used Sockets
+          ja-JP: 使用したソケット数
       - field: proc_total
         type: 0
         i18n:
           zh-CN: 进程总数
           en-US: Total Processes
+          ja-JP: プロセス総数
       - field: proc_used
         type: 0
         i18n:
           zh-CN: 已使用进程数
           en-US: Used Processes
+          ja-JP: 使用したプロセス数
       - field: disk_free_limit
         type: 0
         unit: GB
         i18n:
           zh-CN: 磁盘可用空间限制
           en-US: Disk Free Limit
+          ja-JP: 利用可能なディスク容量の制限
       - field: disk_free
         type: 0
         unit: GB
         i18n:
           zh-CN: 可用磁盘空间
           en-US: Disk Free
+          ja-JP: 利用可能なディスク容量
       - field: gc_num
         type: 0
         i18n:
           zh-CN: 垃圾回收次数
           en-US: GC Count
+          ja-JP: GC回数
       - field: gc_bytes_reclaimed
         type: 0
         unit: MB
         i18n:
           zh-CN: 回收的垃圾字节数
           en-US: GC Bytes Reclaimed
+          ja-JP: GCによって解放されたバイト数
       - field: context_switches
         type: 0
         i18n:
           zh-CN: 上下文切换次数
           en-US: Context Switches
+          ja-JP: コンテキストスイッチ回数
       - field: io_read_count
         type: 0
         i18n:
           zh-CN: 读取次数
           en-US: IO Read Count
+          ja-JP: IO読み取り回数
       - field: io_read_bytes
         type: 0
         unit: KB
         i18n:
           zh-CN: 读取字节数
           en-US: IO Read Bytes
+          ja-JP: IO読み取りバイト数
       - field: io_read_avg_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 平均读取时间
           en-US: IO Read Average Time
+          ja-JP: IO読み取り平均時間
       - field: io_write_count
         type: 0
         i18n:
           zh-CN: 写入次数
           en-US: IO Write Count
+          ja-JP: IO書き込み回数
       - field: io_write_bytes
         type: 0
         unit: KB
         i18n:
           zh-CN: 写入字节数
           en-US: IO Write Bytes
+          ja-JP: IO書き込みバイト数
       - field: io_write_avg_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 平均写入时间
           en-US: IO Write Average Time
+          ja-JP: IO書き込み平均時間
       - field: io_seek_count
         type: 0
         i18n:
           zh-CN: 寻址次数
           en-US: IO Seek Count
+          ja-JP: IOシーク回数
       - field: io_seek_avg_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 平均寻址时间
           en-US: IO Seek Average Time
+          ja-JP: IOシーク平均時間
       - field: io_sync_count
         type: 0
         i18n:
           zh-CN: 同步次数
           en-US: IO Sync Count
+          ja-JP: IO同期回数
       - field: io_sync_avg_time
         type: 0
         unit: ms
         i18n:
           zh-CN: 平均同步时间
           en-US: IO Sync Average Time
+          ja-JP: IO同期平均時間
       - field: connection_created
         type: 0
         i18n:
           zh-CN: 创建的连接数
           en-US: Connections Created
+          ja-JP: 作成された接続数
       - field: connection_closed
         type: 0
         i18n:
           zh-CN: 关闭的连接数
           en-US: Connections Closed
+          ja-JP: 閉じられた接続数
       - field: channel_created
         type: 0
         i18n:
           zh-CN: 创建的通道数
           en-US: Channels Created
+          ja-JP: 作成されたチャネル数
       - field: channel_closed
         type: 0
         i18n:
           zh-CN: 关闭的通道数
           en-US: Channels Closed
+          ja-JP: 閉じられたチャネル数
       - field: queue_declared
         type: 0
         i18n:
           zh-CN: 声明的队列数
           en-US: Queues Declared
+          ja-JP: 宣言されたキュー数
       - field: queue_created
         type: 0
         i18n:
           zh-CN: 创建的队列数
           en-US: Queues Created
+          ja-JP: 作成されたキュー数
       - field: queue_deleted
         type: 0
         i18n:
           zh-CN: 删除的队列数
           en-US: Queues Deleted
+          ja-JP: 削除されたキュー数
     units:
       - mem_limit=B->MB
       - mem_used=B->MB
@@ -453,8 +509,9 @@ metrics:
 
   - name: queues
     i18n:
-      zh-CN: 队列数
-      en-US: Queues
+      zh-CN: 队列信息
+      en-US: Queue info
+      ja-JP: キュー情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 3
@@ -467,102 +524,121 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: node
         type: 1
         i18n:
           zh-CN: 节点
           en-US: Node
+          ja-JP: ノード
       - field: state
         type: 1
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: vhost
         type: 1
         i18n:
           zh-CN: 虚拟主机
           en-US: Vhost
+          ja-JP: 仮想ホスト
       - field: auto_delete
         type: 1
         i18n:
           zh-CN: 自动删除
           en-US: Auto Delete
+          ja-JP: 自動削除
       - field: policy
         type: 1
         i18n:
           zh-CN: 策略
           en-US: Policy
+          ja-JP: ポリシー
       - field: consumers
         type: 0
         i18n:
           zh-CN: 消费者数
           en-US: Consumers
+          ja-JP: コンシューマー数
       - field: memory
         type: 0
         unit: B
         i18n:
           zh-CN: 内存占用
           en-US: Memory
+          ja-JP: メモリ使用量
       - field: messages_ready
         type: 0
         i18n:
           zh-CN: 就绪消息数
           en-US: Messages Ready
+          ja-JP: 準備完了メッセージ数
       - field: messages_unacknowledged
         type: 0
         i18n:
           zh-CN: 未确认消息数
           en-US: Messages Unacknowledged
+          ja-JP: 未確認メッセージ数
       - field: messages
         type: 0
         i18n:
           zh-CN: 消息总数
           en-US: Messages
+          ja-JP: メッセージ総数
       - field: messages_ready_ram
         type: 0
         i18n:
           zh-CN: 就绪消息占用内存
           en-US: Messages Ready RAM
+          ja-JP: 準備完了メッセージRAM使用量
       - field: messages_persistent
         type: 0
         i18n:
           zh-CN: 持久化消息数
           en-US: Persistent Messages
+          ja-JP: 永続化されたメッセージの数
       - field: message_bytes
         type: 0
         unit: B
         i18n:
           zh-CN: 消息字节数
           en-US: Message Bytes
+          ja-JP: メッセージバイト数
       - field: message_bytes_ready
         type: 0
         unit: B
         i18n:
           zh-CN: 就绪消息字节数
           en-US: Message Bytes Ready
+          ja-JP: 準備完了メッセージバイト数
       - field: message_bytes_unacknowledged
         type: 0
         unit: B
         i18n:
           zh-CN: 未确认消息字节数
           en-US: Message Bytes Unacknowledged
+          ja-JP: 未確認メッセージバイト数
       - field: message_bytes_ram
         type: 0
         unit: B
         i18n:
           zh-CN: 消息占用内存字节数
           en-US: Message Bytes RAM
+          ja-JP: メッセージ使用メモリバイト数
       - field: message_bytes_persistent
         type: 0
         unit: B
         i18n:
           zh-CN: 持久化消息字节数
           en-US: Persistent Message Bytes
+          ja-JP: 永続化されたメッセージのバイト数
     protocol: http
     http:
       # Host: ipv4 ipv6 domain
@@ -575,7 +651,6 @@ metrics:
       method: GET
       # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
       ssl: ^_^ssl^_^
-      # 认证
       # Authentication
       authorization:
         # Authentication mode: Basic Auth, Digest Auth, Bearer Token

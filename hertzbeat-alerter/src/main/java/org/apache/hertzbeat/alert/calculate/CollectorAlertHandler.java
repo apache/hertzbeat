@@ -76,11 +76,12 @@ public class CollectorAlertHandler {
         fingerPrints.put(KEY_COLLECTOR_VERSION, collector.getVersion());
         fingerPrints.put(KEY_COLLECTOR_HOST, collector.getIp());
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
-        SingleAlert firingAlert = alarmCacheManager.getFiring(fingerprint);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(fingerprint);
         if (firingAlert != null) {
             firingAlert.setTriggerTimes(1);
             firingAlert.setEndAt(System.currentTimeMillis());
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+            firingAlert.setContent(this.bundle.getString("alerter.availability.collector.recover"));
             alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
         }
     }
