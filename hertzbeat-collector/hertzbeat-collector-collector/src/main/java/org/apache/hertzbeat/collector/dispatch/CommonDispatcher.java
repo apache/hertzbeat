@@ -93,7 +93,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private final String collectorIdentity;
 
     @Autowired
-    private MetricsService metricsService; // 新增注入
+    private MetricsService metricsService;
 
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
                             TimerDispatch timerDispatch,
@@ -165,12 +165,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     }
                     WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
                     Job job = timerJob.getJob();
-                    // ========================> 超时埋点 <========================
                     if (metricsService != null) {
                         long duration = System.currentTimeMillis() - removedMetricsTime.getStartTime();
                         metricsService.recordCollectMetrics(job, duration, "timeout");
                     }
-                    // ========================> 埋点结束 <========================
                     CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                             .setId(job.getMonitorId())
                             .setTenantId(job.getTenantId())
@@ -223,13 +221,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             monitorKey = job.getId() + "-" + metrics.getName();
         }
         MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(monitorKey);
-        // ========================> 任务完成埋点 <========================
+
         if (metricsTime != null && metricsService != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
             String status = metricsData.getCode() == CollectRep.Code.SUCCESS ? "success" : "fail";
             metricsService.recordCollectMetrics(job, duration, status);
         }
-        // ========================> 埋点结束 <========================
+
         if (metrics.isHasSubTask()) {
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);
             if (isLastTask) {
@@ -356,7 +354,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             boolean isSuccess = metricsDataList.stream().anyMatch(item -> item.getCode() == CollectRep.Code.SUCCESS);
             metricsService.recordCollectMetrics(job, duration, isSuccess ? "success" : "fail");
         }
-        // ========================> 埋点结束 <========================
         if (job.isCyclic()) {
             // The collection and execution of all task of this job are completed.
             // The periodic task pushes the task to the time wheel again.
