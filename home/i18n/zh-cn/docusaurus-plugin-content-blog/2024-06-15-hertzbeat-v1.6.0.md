@@ -8,9 +8,9 @@ tags: [opensource, practice]
 keywords: [open source, monitoring, alerting]
 ---
 
-**Hi 朋友们，我们很高兴地宣布，Apache HertzBeat (incubating) 的了第一个Apache版本 v1.6.0 发布啦！🎉.**
+**Hi 朋友们，我们很高兴地宣布，Apache HertzBeat 的了第一个Apache版本 v1.6.0 发布啦！🎉.**
 
-经过近五个月的社区开发迭代贡献和两个月的Apache Incubator孵化过程，Apache HertzBeat (incubating) v1.6.0 终于出来了。
+经过近五个月的社区开发迭代贡献和两个月的Apache Incubator孵化过程，Apache HertzBeat v1.6.0 终于出来了。
 这个版本我们增加了对OpenAi监控，Redfish协议服务器，插件机制，支持了NebulaGraph, Apache Yarn, HDFS, Hbase, Storm等更多功能特性。
 由于License兼容问题，我们在底层替换了ORM框架，计算框架等多个依赖，Hibernate -> EclipseLink, 这也算是JPA生态下为数不多的迁移踩坑实践。
 同时修复了一些bug和优化了一些功能，更完善的文档。欢迎大家尝试使用，提出宝贵意见和建议，共同推动HertzBeat的发展。🎉
