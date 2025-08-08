@@ -21,10 +21,12 @@ app: uniview
 name:
   zh-CN: 宇视
   en-US: Uniview
+  ja-JP: Uniview
 # The description and help of this monitoring type
 help:
   zh-CN: 通过HTTP接口监控宇视设备状态，获取设备健康数据。
   en-US: Monitor Uniview devices through HTTP interface to collect health data.
+  ja-JP: Hertzbeat は HTTPインターフェースを呼び出してUniviewデバイスの健全データを収集します。
 
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -32,12 +34,14 @@ params:
     name:
       zh-CN: 主机Host
       en-US: Host
+      ja-JP: ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -46,6 +50,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     type: number
     range: '[1000,60000]'
     required: true
@@ -54,18 +59,21 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     required: true
   - field: password
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: true
   - field: ssl
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
+      ja-JP: SSL
     type: boolean
     required: false
     defaultValue: false
@@ -76,6 +84,7 @@ metrics:
     i18n:
       zh-CN: 系统信息
       en-US: System Info
+      ja-JP: システム情報
     priority: 0
     protocol: http
     http:
@@ -97,25 +106,30 @@ metrics:
         i18n:
           zh-CN: 设备名称
           en-US: Device Name
+          ja-JP: デバイス名
       - field: SerialNumber
         type: 1
         i18n:
           zh-CN: 序列号
           en-US: SerialNumber
+          ja-JP: シリアル番号
       - field: FirmwareVersion
         type: 1
         i18n:
           zh-CN: 固件版本
           en-US: Firmware Version
+          ja-JP: ファームウェアバージョン
       - field: DeviceModel
         type: 1
         i18n:
           zh-CN: 设备型号
           en-US: Device Model
+          ja-JP: デバイスモデル
   - name: ntp_info
     i18n:
       zh-CN: 校时信息
       en-US: NTP Info
+      ja-JP: NTP情報
     priority: 0
     protocol: http
     http:
@@ -136,19 +150,23 @@ metrics:
         type: 1
         i18n:
           zh-CN: IP地址
-          en-US: IPAddress
+          en-US: IP Address
+          ja-JP: IP アドレス
       - field: Port
         type: 1
         i18n:
           zh-CN: 端口号
           en-US: Port
+          ja-JP: ポート
       - field: SynchronizeInterval
         type: 1
         i18n:
           zh-CN: 同步间隔
           en-US: SynchronizeInterval
+          ja-JP: 同期間隔
       - field: Enabled
         type: 1
         i18n:
           zh-CN: 是否启用
           en-US: Enabled
+          ja-JP: 有効化
