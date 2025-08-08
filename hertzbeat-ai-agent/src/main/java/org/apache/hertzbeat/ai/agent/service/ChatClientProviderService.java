@@ -25,7 +25,6 @@ import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
  */
 public interface ChatClientProviderService {
 
-    String complete(String message);
 
     String streamChat(ChatRequestContext context);
 }

@@ -21,7 +21,6 @@ import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
-import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -64,8 +63,7 @@ public class MonitorToolsImpl implements MonitorTools {
             @ToolParam(description = "Sort field, e.g., 'name' (default: gmtCreate)", required = false) String sort,
             @ToolParam(description = "Sort order, 'asc' or 'desc' (default: desc)", required = false) String order,
             @ToolParam(description = "Page index (default: 0)", required = false) Integer pageIndex,
-            @ToolParam(description = "Page size (default: 8)", required = false) Integer pageSize,
-            ToolContext context) {
+            @ToolParam(description = "Page size (default: 8)", required = false) Integer pageSize) {
         try {
             Page<Monitor> result = monitorServiceAdapter.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
             log.debug("MonitorServiceAdapter.getMonitors result: {}", result);
@@ -77,7 +75,7 @@ public class MonitorToolsImpl implements MonitorTools {
 
     @Override
     @Tool(name = "add_monitor", description = "Add a new monitor")
-    public String addMonitor(@ToolParam(description = "Name of the monitor") String name, ToolContext context) {
+    public String addMonitor(@ToolParam(description = "Name of the monitor") String name) {
         log.debug("Adding monitor with name: {}", name);
         SubjectSum subjectSum = McpContextHolder.getSubject();
         log.debug("Current subject in tool: {}", subjectSum);

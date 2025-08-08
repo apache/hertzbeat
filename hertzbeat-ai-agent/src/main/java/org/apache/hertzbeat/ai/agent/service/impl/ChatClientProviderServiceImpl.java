@@ -47,17 +47,9 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     }
 
     @Override
-    public String complete(String message) {
-        return this.chatClient.prompt()
-                .user(message)
-                .call()
-                .content();
-    }
-
-    @Override
     public String streamChat(ChatRequestContext context) {
         try {
-            return this.chatClient.prompt(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
+            return this.chatClient.prompt()
                     .user(context.getMessage())
                     .toolCallbacks(toolCallbackProvider)
                     .call()

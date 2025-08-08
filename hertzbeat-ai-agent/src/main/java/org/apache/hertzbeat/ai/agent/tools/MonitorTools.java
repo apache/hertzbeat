@@ -27,7 +27,7 @@ import java.util.List;
  */
 public interface MonitorTools {
 
-    String addMonitor(String name, ToolContext context);
+    String addMonitor(String name);
 
     /**
      * Query monitor information with flexible filtering and pagination.
@@ -44,7 +44,6 @@ public interface MonitorTools {
             String sort,
             String order,
             Integer pageIndex,
-            Integer pageSize,
-            ToolContext context);
+            Integer pageSize);
 
 }

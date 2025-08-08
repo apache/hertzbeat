@@ -68,6 +68,8 @@ resourceRole:
   - /api/bulletin/**===delete===[admin]
   - /api/sse/**===get===[admin,user]
   - /api/sse/**===post===[admin,user]
+  - /api/chat/**===get===[admin,user]
+  - /api/chat/**===post===[admin,user]
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
