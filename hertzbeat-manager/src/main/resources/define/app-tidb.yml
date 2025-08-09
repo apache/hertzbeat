@@ -21,11 +21,13 @@ app: tidb
 name:
   zh-CN: TiDB数据库
   en-US: TiDB
+  ja-JP: TiDB データベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 HTTP 和 JDBC 协议对 TiDB 的通用性能指标进行采集监控，点击查看开启步骤</a>。<br>您可以点击“<i>新建 TiDB 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors general performance metrics of TiDB through HTTP and JDBC protocol. <br> You could click the "<i>New TiDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>".
   zh-TW: HertzBeat 使用 HTTP 和 JDBC 協議對 TiDB 的通用性能指標進行採集監控，點擊查看開啟步驟</a>。 <br>您可以點擊“<i>新建 TiDB 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は HTTP と JDBCプロトコルを介して TiDB データベースの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 TiDB データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/tidb
   en-US: https://hertzbeat.apache.org/docs/help/tidb
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: JDBC 端口
       en-US: JDBC Port
+      ja-JP: JDBCポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -60,6 +64,7 @@ params:
     name:
       zh-CN: Service 端口
       en-US: Service Port
+      ja-JP: サービスポート
     type: number
     range: '[0,65535]'
     required: true
@@ -69,6 +74,7 @@ params:
     name:
       zh-CN: PD 端口
       en-US: PD Port
+      ja-JP: PDポート
     type: number
     range: '[0,65535]'
     required: false
@@ -78,6 +84,7 @@ params:
     name:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
+      ja-JP: クエリタイムアウト（ｍｓ）
     type: number
     required: false
     defaultValue: 6000
@@ -86,6 +93,7 @@ params:
     name:
       zh-CN: 数据库名称
       en-US: Database Name
+      ja-JP: データベース名
     type: text
     required: false
     hide: true
@@ -94,6 +102,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -103,6 +112,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
     hide: true
@@ -111,6 +121,7 @@ params:
     name:
       zh-CN: JDBC URL
       en-US: JDBC URL
+      ja-JP: JDBC URL
     type: text
     required: false
     hide: true
@@ -121,6 +132,7 @@ metrics:
     i18n:
       zh-CN: 状态
       en-US: Status
+      ja-JP: ステータス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -132,16 +144,19 @@ metrics:
         i18n:
           zh-CN: 连接数
           en-US: Connections
+          ja-JP: 接続数
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: git_hash
         type: 1
         i18n:
           zh-CN: Git Hash
           en-US: Git Hash
+          ja-JP: Git Hash
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     http:
@@ -162,6 +177,7 @@ metrics:
     i18n:
       zh-CN: 存储
       en-US: Stores
+      ja-JP: ストレージ
     priority: 1
     fields:
       - field: address
@@ -169,56 +185,67 @@ metrics:
         i18n:
           zh-CN: 地址
           en-US: Address
+          ja-JP: アドレス
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: status_address
         type: 1
         i18n:
           zh-CN: 状态地址
           en-US: Status Address
+          ja-JP: ステータスアドレス
       - field: deploy_path
         type: 1
         i18n:
           zh-CN: 部署路径
           en-US: Deploy Path
+          ja-JP: デプロイパス
       - field: state_name
         type: 1
         i18n:
           zh-CN: 状态名称
           en-US: State Name
+          ja-JP: 状態名
       - field: capacity
         type: 1
         i18n:
           zh-CN: 容量
           en-US: Capacity
+          ja-JP: 容量
       - field: available
         type: 1
         i18n:
           zh-CN: 可用
           en-US: Available
+          ja-JP: 使用可能
       - field: used_size
         type: 1
         i18n:
           zh-CN: 已用
           en-US: Used
+          ja-JP: 使用済み
       - field: start_ts
         type: 1
         i18n:
           zh-CN: 启动时间
           en-US: Start Time
+          ja-JP: 起動時間
       - field: last_heartbeat_ts
         type: 1
         i18n:
           zh-CN: 上次心跳时间
           en-US: Last Heartbeat Time
+          ja-JP: 最後のハートビート時間
       - field: uptime
         type: 1
         i18n:
           zh-CN: 启动时长
           en-US: Uptime
+          ja-JP: アップタイム
     aliasFields:
       - $.store.address
       - $.store.version
@@ -257,6 +284,7 @@ metrics:
     i18n:
       zh-CN: 基本信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -268,22 +296,26 @@ metrics:
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
         label: true
       - field: port
         type: 1
         i18n:
           zh-CN: 端口
           en-US: Port
+          ja-JP: ポート
       - field: datadir
         type: 1
         i18n:
           zh-CN: 数据目录
           en-US: Data Directory
+          ja-JP: データディレクトリ
       - field: max_connections
         type: 0
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
+          ja-JP: 最大接続数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - version
