@@ -1,97 +1,99 @@
 ---
 id: linux-os-practice
-title: Linux 操作系统监控案例
-sidebar_label: Linux 操作系统监控案例
+title: Linux Operating System Monitoring Practice
+sidebar_label: Linux Operating System Monitoring Practice
 ---
 
-这篇文章介绍如何使用 Hertzbeat 监控系统对Linux操作系统的通用性能指标进行采集监控，并在文件系统使用率过高时给我们发告警消息。
+This article describes how to use the Hertzbeat monitoring system to collect and monitor general performance metrics 
+for Linux operating systems, and send us alert messages when file system usage is too high.
 
-## HertzBeat 是什么
+## What's HertzBeat
 
-Apache HertzBeat (incubating)
-一个拥有强大自定义监控能力，无需 Agent 的实时监控工具。网站监测，端口可用性，数据库，操作系统，阈值告警，告警通知(邮件微信钉钉飞书)。
+Apache HertzBeat (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without 
+Agent. Website monitoring,  port availability, database, operating system, threshold alarms, 
+alarm notification (email, WeChat, DingTalk, Feishu).
 
 github: <https://github.com/apache/hertzbeat>
 
-## 安装
+## Install
 
-1. `docker` 环境仅需一条命令即可安装
+1. The `docker` environment can be installed with just one command
 
    ```bash
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
-2. 安装成功浏览器访问 `http://ip:1157` 即可开始探索使用，默认账户密码 `admin/hertzbeat`
+2. After the installation is successful, the browser can access `http://ip:1157` to start, the default account 
+password is `admin/hertzbeat`.
 
 :::note
-生产环境建议完整部署方式,
-参考 [Docker Compose 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-compose-deploy)
+The production environment recommends a complete deployment method,
+refer [Install HertzBeat via Docker Compose](https://hertzbeat.apache.org/docs/start/docker-compose-deploy)
 :::
 
-## 监控 Linux 操作系统
+## Monitoring Linux Operating System
 
-### 1. 新增监控
+### 1. Click Add Linux Operating System Monitor
 
-> 系统页面 -> 监控中心 -> 新增监控 -> 操作系统监控 -> Linux 操作系统 -> 新增 Linux 操作系统监控
+> HertzBeat Page -> Monitors Menu -> New Monitor -> OS Monitor -> Add OS Linux
 
 ![HertzBeat](/img/docs/start/linux-os-practice-1.png)
 
-### 2. 配置参数
+### 2. Configure the monitoring parameters
 
-- **目标Host**：被监控的对端IPV4，IPV6或域名。注意️不带协议头(eg: https://, http://)）
-- **端口**：Linux SSH对外提供的端口，默认为 22
-- **超时时间**：设置连接的超时时间，单位为毫秒，默认 6000 毫秒
-- **复用连接**: 设置 SSH 连接是否复用，默认开启。如果关闭则每次获取信息都会创建一个连接
-- **用户名**: SSH 连接用户名
-- **密码**: SSH 连接密码，可选
+- **Target Host**：The IPV4, IPV6, or domain name of the host being monitored. No protocol header (e.g., https://, http://).
+- **Port**：The port provided by Linux SSH, default is 22.
+- **Timeout**：Sets the connection timeout in milliseconds, default is 6000 ms.
+- **Reuse Connection**: Sets whether SSH connections are reused, default is :false. If false, a new connection is created each time information is retrieved.
+- **Username**: SSH connection username
+- **Password**: SSH connection password, optional.
 
-> 更多参数和高级设置请查看帮助文档：[监控：Linux操作系统监控](https://hertzbeat.apache.org/zh-cn/docs/help/linux)
+> For more parameters and advanced settings, please refer to the help documentation: [Monitoring：Linux operating system monitoring](https://hertzbeat.apache.org/docs/help/linux)
 
-可以使用标签分类来管理任务，如添加`OS=Linux`等相关标签。
+Tasks can be managed using label classification, such as adding bind labels like `OS=Linux`.
 
 ![HertzBeat](/img/docs/start/linux-os-practice-2.png)
 
-### 3. 查看监控数据
+### 3. View the detection index data
 
-在监控列表可以查看任务状态，点击这个监控详情可以查看指标数据图表等。
+In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the metric data chart, etc.
 
 ![HertzBeat](/img/docs/start/linux-os-practice-3.png)
 
 ![HertzBeat](/img/docs/start/linux-os-practice-4.png)
 
-### 4. 设置阈值规则
+### 4. Set the threshold
 
-这里我们设置一个阈值规则，当**文件系统中某个目录使用率过高**时触发告警。
+Here, we set a threshold rule to trigger an alert when **the usage rate of a certain directory in the file system is too high**.
 
-> 系统页面 -> 阈值规则 -> 新增 -> 新增实时计算阈值
+> HertzBeat Page -> Alerting -> Threshold -> New Threshold -> RealTime Threshold Rule
 >
-> 配置阈值，配置告警表达式-当指标`文件系统使用率`大于等于 `50%` 触发，也支持设置告警级别和通知模板信息等。
+> Configure the threshold, configure the alarm expression-triggered when the metric`Disk Usage` greater than or equal to `50%`，set the alarm level notification template information, etc.
 
 ![HertzBeat](/img/docs/start/linux-os-practice-5.png)
 
-> 阈值规则还有其它功能可以配置, 比如阈值关联指定监控, 触发次数, 关联标签等等。
+> Threshold rule has others function you can try e.g., associating thresholds with monitoring, trigger times so on.
 
-最终可以在告警中心看到已触发的告警。
+Finally, you can see the triggered alarm in the alarm center.
 
 ![HertzBeat](/img/docs/start/linux-os-practice-6.png)
 
-### 5. 消息通知
+### 5. Alarm notification
 
-> 系统页面 -> 消息通知 -> 通知媒介 -> 新增接收对象
+> HertzBeat Page -> Notification -> Notice Receiver -> New Receiver -> Configure the Email Receiver
 
 ![HertzBeat](/img/docs/start/linux-os-practice-7.png)
 
-> 系统页面 -> 消息通知 -> 通知策略 -> 新增通知策略 -> 选择接收对象并启用通知
+> HertzBeat Page -> Notification -> Notice Policy -> New Notice Policy -> Enable Notification for the Recipient Just Configured
 
 ![HertzBeat](/img/docs/start/linux-os-practice-8.png)
 
-当阈值触发后就可以收到对应告警消息，如果没有配置消息通知，也可以在**告警中心**查看告警信息。
+When the threshold is triggered, we can receive the corresponding alarm message. If there is no notification, you can also view the alarm information in the alarm center.
 
 ----  
 
-## 总结
+## Summary
 
-监控 Linux 操作系统的实践就到这里，当然对 Hertzbeat 来说这个功能只是冰山一角，如果您觉得 Hertzbeat 这个开源项目不错的话欢迎给我们
-Star 哦，非常感谢各位的支持！
+The practice of monitoring linux operating system is here. Of course, for Hertzbeat, this function is just the tip of the iceberg. If you think Hertzbeat is a good open source project, please give us a Star on GitHub, thanks for your support.
 
 **Github: <https://github.com/apache/hertzbeat>**

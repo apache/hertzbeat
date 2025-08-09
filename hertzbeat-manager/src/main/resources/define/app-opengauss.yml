@@ -18,11 +18,13 @@ app: opengauss
 name:
   zh-CN: OpenGauss数据库
   en-US: OpenGauss DB
+  ja-JP: OpenGauss データベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 OpenGauss 数据库的通用性能指标 (basic、state、activity etc) 进行采集监控，支持版本为 PostgreSQL10+。<br>您可以点击“<i>新建 OpenGauss 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of OpenGauss database  (basic、state、activity etc). Supported version is PostgreSQL10+. <br>You can click "<i>New OpenGauss Database</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 OpenGauss 數據庫的通用性能指標 (basic、state、activity etc)進行采集監控，支持版本爲 PostgreSQL10+。<br>您可以點擊“<i>新建 OpenGauss 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBCプロトコルを介して</a> OpenGauss データベースの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 OpenGauss データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/opengauss
   en-US: https://hertzbeat.apache.org/docs/help/opengauss
@@ -31,12 +33,14 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -45,9 +49,9 @@ params:
     name:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
+      ja-JP: クエリタイムアウト（ｍｓ）
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[400,200000]'
     required: false
     hide: true
@@ -56,6 +60,7 @@ params:
     name:
       zh-CN: 数据库名称
       en-US: Database Name
+      ja-JP: データベース名
     type: text
     defaultValue: postgres
     required: false
@@ -63,6 +68,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -70,12 +76,14 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
   - field: url
     name:
       zh-CN: URL
       en-US: URL
+      ja-JP: URL
     type: text
     required: false
     hide: true
@@ -83,11 +91,10 @@ metrics:
   - name: basic
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     i18n:
       zh-CN: 基本信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     priority: 0
     # monitor metrics list
     fields:
@@ -96,27 +103,32 @@ metrics:
         i18n:
           zh-CN: 数据库版本
           en-US: Server Version
+          ja-JP: バージョン
         type: 1
         label: true
       - field: port
         i18n:
           zh-CN: 端口号
           en-US: Port
+          ja-JP: ポート
         type: 1
       - field: server_encoding
         i18n:
           zh-CN: 数据库编码格式
           en-US: Encoding
+          ja-JP: エンコード
         type: 1
       - field: data_directory
         i18n:
           zh-CN: 数据存储目录
           en-US: Data Directory
+          ja-JP: データディレクトリ
         type: 1
       - field: max_connections
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connection
+          ja-JP: 最大接続数
         type: 0
         unit: sbc
     protocol: jdbc
@@ -140,6 +152,7 @@ metrics:
     i18n:
       zh-CN: 状态
       en-US: Status
+      ja-JP: 状態情報
     priority: 1
     fields:
       # metric information includes field name, type field type: 0-number, 1-string, label-whether it is a metric label field, unit-metric unit
@@ -147,47 +160,55 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
         type: 1
       - field: conflicts
         i18n:
           zh-CN: 冲突次数
           en-US: Conflicts
+          ja-JP: コンフリクト回数
         type: 0
         unit: times
       - field: deadlocks
         i18n:
           zh-CN: 死锁次数
           en-US: Deadlocks
+          ja-JP: デッドロック回数
         type: 0
         unit: times
       - field: blks_read
         i18n:
           zh-CN: 块读取数
           en-US: Blocks Read
+          ja-JP: 読み取られたブロック
         type: 0
         unit: blocks per second
       - field: blks_hit
         i18n:
           zh-CN: 块命中数
           en-US: Blocks Hit
+          ja-JP: ヒットブロック
         type: 0
         unit: blocks per second
       - field: blk_read_time
         i18n:
           zh-CN: 块读取时间
           en-US: Block Read Time
+          ja-JP: 読み取られタイム
         type: 0
         unit: ms
       - field: blk_write_time
         i18n:
           zh-CN: 块写入时间
           en-US: Block Write
+          ja-JP: 書き込まれ時間
         type: 0
         unit: ms
       - field: stats_reset
         i18n:
           zh-CN: 统计信息重置时间
           en-US: States Reset
+          ja-JP: 統計リセット
         type: 1
     protocol: jdbc
     jdbc:
@@ -210,6 +231,7 @@ metrics:
     i18n:
       zh-CN: 活跃进程
       en-US: Activity
+      ja-JP: 活動情報
     priority: 2
     fields:
       # metric information includes field name, type field type: 0-number, 1-string, label-whether it is a metric label field, unit-metric unit
@@ -217,6 +239,7 @@ metrics:
         i18n:
           zh-CN: 运行中进程数
           en-US: Running
+          ja-JP: 実行中
         type: 0
         unit: sbc
     protocol: jdbc
