@@ -30,7 +30,23 @@ spring:
   # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed...
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration, org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration, org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - 'prometheus'
+  endpoint:
+    prometheus:
+      access: read_only
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 ---
 spring:
   config:

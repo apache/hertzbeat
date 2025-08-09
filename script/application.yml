@@ -48,7 +48,19 @@ management:
         include:
           - 'metrics'
           - 'health'
+          - 'prometheus'
     enabled-by-default: on
+  endpoint:
+    prometheus:
+      access: read_only
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 sureness:
   container: jakarta_servlet
