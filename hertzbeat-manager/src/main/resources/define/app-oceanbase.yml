@@ -192,7 +192,7 @@ metrics:
       # SQL Query Method：oneRow, multiRow, columns
       queryType: columns
       # sql
-      sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' ;
+      sql: "show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' ;"
       # JDBC url
       url: ^_^url^_^
   # metrics - tenant
