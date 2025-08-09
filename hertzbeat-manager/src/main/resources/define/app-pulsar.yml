@@ -20,11 +20,13 @@ app: pulsar
 name:
   zh-CN: Pulsar
   en-US: Pulsar
+  ja-JP: Pulsar
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat  从 Pulsar WebService接口查询到 Pulsar 的通用指标数据来进行监控。<br>您可以点击 “<i>新建 Pulsar</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat queries general metric data from Pulsar through the Pulsar WebService interface for monitoring. You can click "<i>Create Pulsar</i>" to configure a new monitoring task, or select "<i>More Actions</i>" to import existing configurations.
   zh-TW: Hertzbeat 從 Pulsar WebService接口查詢到 Pulsar 的通用指標數據來進行監控。<br>您可以點擊 “<i>新建 Pulsar</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeatは、Pulsar WebServiceを呼び出してPulsarの一般的なメトリクスを監視します。<br>「<i>新規 Pulsar</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/pulsar
   en-US: https://hertzbeat.apache.org/docs/help/pulsar
@@ -36,6 +38,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -55,6 +59,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     # hide param-true or false
@@ -65,12 +70,14 @@ metrics:
     i18n:
       zh-CN: 版本信息
       en-US: Version Info
+      ja-JP: バージョン情報
     priority: 0
     fields:
       - field: version
         i18n:
           zh-CN: 版本信息
           en-US: Version Info
+          ja-JP: バージョン情報
         type: 1
         label: false
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -90,12 +97,14 @@ metrics:
     i18n:
       zh-CN: 进程启动时间
       en-US: Process Start Time
+      ja-JP: プロセスの起動時間
     priority: 1
     fields:
       - field: value
         i18n:
           zh-CN: 进程启动时间
           en-US: Process Start Time
+          ja-JP: プロセスの起動時間
         type: 0
         label: false
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -115,6 +124,7 @@ metrics:
     i18n:
       zh-CN: 打开的文件描述符
       en-US: Open File Descriptors
+      ja-JP: 開かれたファイル記述子
     priority: 2
     fields:
       - field: value
@@ -122,6 +132,7 @@ metrics:
         i18n:
           zh-CN: 打开的文件描述符
           en-US: Open File Descriptors
+          ja-JP: 開かれたファイル記述子
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
@@ -139,6 +150,7 @@ metrics:
     i18n:
       zh-CN: 最大文件描述符
       en-US: Max File Descriptors
+      ja-JP: ファイル記述子の最大数
     priority: 3
     fields:
       - field: value
@@ -146,6 +158,7 @@ metrics:
         i18n:
           zh-CN: 最大文件描述符
           en-US: Max File Descriptors
+          ja-JP: ファイル記述子の最大数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
@@ -163,6 +176,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池已分配字节
       en-US: JVM Memory Pool Allocated Bytes
+      ja-JP: Java仮想マシンのメモリプールが割り当てられたバイト数
     priority: 4
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -172,6 +186,7 @@ metrics:
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
         label: true
       - field: pool
         type: 1
@@ -179,11 +194,13 @@ metrics:
         i18n:
           zh-CN: 池
           en-US: Pool
+          ja-JP: プール
       - field: value
         type: 0
         i18n:
           zh-CN: 值
           en-US: Value
+          ja-JP: 値
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -199,6 +216,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池已使用字节
       en-US: JVM Memory Pool Used Bytes
+      ja-JP: Java仮想マシンのメモリプールが使用したバイト数
     priority: 5
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -208,12 +226,14 @@ metrics:
         i18n:
           zh-CN: 池
           en-US: Pool
+          ja-JP: プール
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 值
           en-US: Value
+          ja-JP: 値
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -229,6 +249,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池已提交字节
       en-US: JVM Memory Pool Committed Bytes
+      ja-JP: Java仮想マシンのメモリプールがコミットされたバイト数
     priority: 6
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -238,12 +259,14 @@ metrics:
         i18n:
           zh-CN: 池
           en-US: Pool
+          ja-JP: プール
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 值
           en-US: Value
+          ja-JP: 値
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -259,6 +282,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池最大字节
       en-US: JVM Memory Pool Max Bytes
+      ja-JP: Java仮想マシンのメモリプールの最大バイト数
     priority: 7
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -268,12 +292,14 @@ metrics:
         i18n:
           zh-CN: 池
           en-US: Pool
+          ja-JP: プール
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 值
           en-US: Value
+          ja-JP: 値
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -289,6 +315,7 @@ metrics:
     i18n:
       zh-CN: broker 发布延迟
       en-US: Broker Publish Latency
+      ja-JP: ブローカーの転送レイテンシー
     priority: 8
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -298,24 +325,28 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Metric Name
+          ja-JP: メトリクス名
         label: true
       - field: cluster
         type: 1
         i18n:
           zh-CN: 集群
           en-US: Cluster
+          ja-JP: クラスター
         label: true
       - field: quantile
         type: 1
         i18n:
           zh-CN: 分位数
           en-US: Quantile
+          ja-JP: 分位数
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 值
           en-US: Value
+          ja-JP: 値
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -331,6 +362,7 @@ metrics:
     i18n:
       zh-CN: 元数据存储操作延迟
       en-US: Metadata Store Ops Latency
+      ja-JP: メタデータストレージする操作のレイテンシー
     priority: 9
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -340,30 +372,35 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Metric Name
+          ja-JP: メトリクス名
         label: true
       - field: cluster
         type: 1
         i18n:
           zh-CN: 集群
           en-US: Cluster
+          ja-JP: クラスター
         label: true
       - field: name
         type: 1
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
         label: true
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
         label: true
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: ステータス
         label: true
       - field: le
         type: 0
