@@ -530,6 +530,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
             }
         }
         jarAppDefineStore.loadAppDefines();
+        // merge define yml files inside jars
         appDefineStore.loadAppDefines();
     }
 
@@ -712,7 +713,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
                             }
                         }
                     });
-            return false;
+            return true;
         }
 
         @Override
@@ -772,7 +773,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
                     appDefines.put(define.getApp().toLowerCase(), app);
                 }
             }
-            return false;
+            return true;
         }
 
         @Override
