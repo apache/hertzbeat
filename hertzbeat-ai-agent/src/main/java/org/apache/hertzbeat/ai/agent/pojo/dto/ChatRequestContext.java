@@ -19,13 +19,17 @@
 package org.apache.hertzbeat.ai.agent.pojo.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * Chat request context for AI chat endpoint.
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatRequestContext {
@@ -37,4 +41,9 @@ public class ChatRequestContext {
      * Optional conversation ID for context
      */
     private String conversationId;
+    
+    /**
+     * Conversation history messages for context
+     */
+    private List<MessageDto> conversationHistory;
 }

@@ -75,7 +75,24 @@ public class ConversationServiceImpl implements ConversationService {
                 log.info("Starting conversation: {}", conversationId);
                 addMessageToConversation(conversationId, message, "user");
                 
-                ChatRequestContext context = new ChatRequestContext(message, conversationId);
+                // Get conversation history for context
+                List<Map<String, Object>> messagesList = conversationMessages.get(conversationId);
+                List<MessageDto> conversationHistory = new ArrayList<>();
+                
+                if (messagesList != null && messagesList.size() > 1) {
+                    // Get all messages except the last one (which is the current user message we just added)
+                    for (int i = 0; i < messagesList.size() - 1; i++) {
+                        Map<String, Object> msgMap = messagesList.get(i);
+                        conversationHistory.add(mapToMessageDto(msgMap));
+                    }
+                }
+                
+                ChatRequestContext context = ChatRequestContext.builder()
+                        .message(message)
+                        .conversationId(conversationId)
+                        .conversationHistory(conversationHistory)
+                        .build();
+                        
                 String aiResponse = chatClientProviderService.streamChat(context);
                 
                 addMessageToConversation(conversationId, aiResponse, "assistant");

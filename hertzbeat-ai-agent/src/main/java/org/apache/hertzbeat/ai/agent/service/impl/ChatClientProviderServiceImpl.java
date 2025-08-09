@@ -19,13 +19,20 @@
 package org.apache.hertzbeat.ai.agent.service.impl;
 
 import org.apache.hertzbeat.ai.agent.config.PromptProvider;
+import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of the {@link ChatClientProviderService}.
@@ -46,17 +53,39 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         this.chatClient = openAiChatClient;
     }
 
+    public String complete(String message) {
+        return this.chatClient.prompt()
+                .user(message)
+                .call()
+                .content();
+    }
+
     @Override
     public String streamChat(ChatRequestContext context) {
         try {
+            List<Message> messages = new ArrayList<>();
+            
+            // Add conversation history if available
+            if (context.getConversationHistory() != null && !context.getConversationHistory().isEmpty()) {
+                for (MessageDto historyMessage : context.getConversationHistory()) {
+                    if ("user".equals(historyMessage.getRole())) {
+                        messages.add(new UserMessage(historyMessage.getContent()));
+                    } else if ("assistant".equals(historyMessage.getRole())) {
+                        messages.add(new AssistantMessage(historyMessage.getContent()));
+                    }
+                }
+            }
+            
+            messages.add(new UserMessage(context.getMessage()));
+            
             return this.chatClient.prompt()
-                    .user(context.getMessage())
+                    .messages(messages)
+                    .system(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
                     .toolCallbacks(toolCallbackProvider)
                     .call()
                     .content();
         } catch (Exception e) {
             return "Error: " + e.getMessage();
         }
-
     }
 }
