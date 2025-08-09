@@ -21,11 +21,13 @@ app: website
 name:
   zh-CN: 网站监测
   en-US: WEBSITE
+  ja-JP: WEBSITE
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 支持对网站的是否可用，响应时间等指标进行采集监控。<br>您可以点击 “<i>新建 网站监测</i>” 并配置网站域名或IP进行添加，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat supports the collection and monitoring of website availability, response time and other metrics. <br>You can click "<i>New Website</i>" and configure the website domain name or IP to add it, or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 支持對網站的是否可用，響應時間等指標進行采集監控。<br>您可以點擊 “<i>新建 網站監測</i>” 並配置網站域名或IP進行添加，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeatは、WEBSITEが利用可能かどうかを確認し、応答時間(ms)などのメトリクスを監視します。「新規 WEBSITE」をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/website
   en-US: https://hertzbeat.apache.org/docs/help/websites
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 相对路径
       en-US: URI
+      ja-JP: URI
     # type-param field type(most mapping the html input tag)
     type: text
     # when type is text, use limit to limit string length
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -85,6 +91,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input tag)
     type: number
     # required-true or false
@@ -97,6 +104,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -115,6 +123,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(key-value mapping the html key-value input tags)
     type: text
     # when type is text, use limit to limit string length
@@ -129,6 +138,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(radio mapping the html radio tag)
     type: password
     # required-true or false
@@ -141,6 +151,7 @@ params:
     name:
       zh-CN: 计数关键字
       en-US: Keyword
+      ja-JP: キーワード
     # type-param field type(key-value mapping the html key-value input tags)
     type: text
     # param field input placeholder
@@ -155,6 +166,7 @@ metrics:
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -167,11 +179,13 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: keyword
         type: 0
         i18n:
           zh-CN: 关键词数量
           en-US: Keyword
+          ja-JP: キーワード
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
@@ -201,6 +215,7 @@ metrics:
     i18n:
       zh-CN: 请求头
       en-US: Header
+      ja-JP: ヘッダ
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -212,11 +227,13 @@ metrics:
         i18n:
           zh-CN: Content Type
           en-US: Content Type
+          ja-JP: コンテンツタイプ
       - field: content_length
         type: 1
         i18n:
           zh-CN: 响应内容长度
           en-US: Content Length
+          ja-JP: コンテンツの長さ
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http

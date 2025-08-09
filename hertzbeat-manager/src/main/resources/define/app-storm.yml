@@ -21,11 +21,13 @@ app: storm
 name:
   zh-CN: Apache Storm
   en-US: Apache Storm
+  ja-JP: Apache Storm
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Apache Storm的通用指标进行测量监控。<br>您可以点击 “<i>新建Apache Storm</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Apache Storm through general performance metric. You could click the "<i>New Apache Storm</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 Apache Storm的通用名額進行量測監控。<br>您可以點擊“<i>新建Apache Storm</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+  ja-JP: Hertzbeat は Apache Stormの一般的なメトリクスを監視します。<br>「<i>新規 Apache Storm</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/storm
   en-US: https://hertzbeat.apache.org/docs/help/storm
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL
     # type-param field type(boolean mapping the html switch tag)
     type: boolean
     # required-true or false
@@ -69,6 +74,10 @@ params:
 metrics:
   # metrics - clusterSummary
   - name: clusterSummary
+    i18n:
+      zh-CN: 集群概要
+      en-US: Cluster Summary
+      ja-JP: クラスター概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -80,75 +89,89 @@ metrics:
         i18n:
           zh-CN: Storm 版本
           en-US: Storm Version
+          ja-JP: Stormバージョン
       - field: supervisors
         type: 0
         i18n:
           zh-CN: 监督节点运行数量
           en-US: Number of supervisors running
+          ja-JP: 実行中の監視ノード数
       - field: topologies
         type: 0
         i18n:
           zh-CN: 拓扑运行数量
           en-US: Number of topologies running
+          ja-JP: 実行中のトポロジーノード数
       - field: slotsTotal
         type: 0
         i18n:
           zh-CN: 工作槽总数
           en-US: Total number of available worker slots
+          ja-JP: 使用可能なワーカースロット総数
       - field: slotsUsed
         type: 0
         i18n:
           zh-CN: 已用工作槽数量
           en-US: Number of worker slots used
+          ja-JP: 使用したワーカースロット数
       - field: slotsFree
         type: 0
         i18n:
           zh-CN: 可用工作槽数量
           en-US: Number of worker slots available
+          ja-JP: 使用可能なワーカースロット数
       - field: executorsTotal
         type: 0
         i18n:
           zh-CN: 执行者数量
           en-US: Total number of executors
+          ja-JP: 執行者総数
       - field: tasksTotal
         type: 0
         i18n:
           zh-CN: 任务总数
           en-US: Total tasks
+          ja-JP: タスク総数
       - field: totalMem
         type: 0
         unit: MB
         i18n:
           zh-CN: 集群中的内存总量（以 MB 为单位）
           en-US: The total amount of memory in the cluster in MB
+          ja-JP: クラスター内のメモリ容量(MB)
       - field: totalCpu
         type: 0
         i18n:
           zh-CN: 集群中的CPU总量
           en-US: The total amount of CPU in the cluster
+          ja-JP: クラスター内のCPU総数
       - field: availMem
         type: 0
         unit: MB
         i18n:
           zh-CN: 集群中的可用内存量（以 MB 为单位）
           en-US: The amount of available memory in the cluster in MB
+          ja-JP: クラスター内の使用可能なメモリ(MB)
       - field: availCpu
         type: 0
         i18n:
           zh-CN: 集群中的可用CPU数量
           en-US: The amount of available cpu in the cluster
+          ja-JP: クラスター内の使用可能なCPU数
       - field: memAssignedPercentUtil
         type: 0
         unit: '%'
         i18n:
           zh-CN: 集群中分配的内存资源利用率百分比
           en-US: The percent utilization of assigned memory resources in cluster
+          ja-JP: クラスター内の割り当てメモリリソースの比率
       - field: cpuAssignedPercentUtil
         type: 0
         unit: '%'
         i18n:
           zh-CN: 集群中分配的CPU资源利用率百分比
           en-US: The percent utilization of assigned CPU resources in cluster
+          ja-JP: クラスター内の割り当てCPUリソースの比率
 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http

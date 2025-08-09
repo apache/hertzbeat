@@ -21,6 +21,7 @@ package org.apache.hertzbeat.common.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
@@ -68,5 +69,22 @@ public class JexlExpressionRunnerTest {
         assertEquals(true, JexlExpressionRunner.evaluate("""
                 contains("Abc", "a")
                 """)); 
+    }
+
+    @Test
+    void testJsonFunction() {
+        Map<String, Object> context = new HashMap<String, Object>();
+        context.put("$.info", "{\"current\":537132,\"grantTotal\":63129,\"instanceCode\":\"CSDZMC\",\"timeMillis\":1754579874357}");
+
+        String expression = "json:apply($.info).current";
+
+        JexlExpression expObj = JexlExpressionRunner.compile(expression);
+        assertEquals(537132, JexlExpressionRunner.evaluate(expObj, context));
+
+        context.put("$.info", "{\"grantTotal\":63129,\"instanceCode\":\"CSDZMC\",\"timeMillis\":1754579874357}");
+        assertNull(JexlExpressionRunner.evaluate(expObj, context));
+
+        context.clear();
+        assertNull(JexlExpressionRunner.evaluate(expObj, context));
     }
 }
