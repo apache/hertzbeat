@@ -31,7 +31,7 @@ alerter:
 ```
 
 1. 腾讯云短信创建签名（sign-name）
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/3a4c287d-b23d-4398-8562-4894296af485)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-signature.png)
 
 2. 腾讯云短信创建正文模板（template-id）
 
@@ -39,13 +39,13 @@ alerter:
    监控:{1}，告警级别:{2}。内容:{3}
    ```
 
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/face71a6-46d5-452c-bed3-59d2a975afeb)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-template.png)
 
 3. 腾讯云短信创建应用（app-id）
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/2732d710-37fa-4455-af64-48bba273c2f8)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-app.png)
 
 4. 腾讯云访问管理（secret-id、secret-key）
-   ![image](https://github.com/apache/hertzbeat/assets/40455946/36f056f0-94e7-43db-8f07-82893c98024e)
+   ![image](/img/docs/help/alert-sms-tencent-cloud-access.png)
 
 ### 阿里云短信配置
 

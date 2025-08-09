@@ -23,7 +23,7 @@ expression
 
 expr
     : LPAREN expr RPAREN                                          # ParenExpr
-    | left=expr op=(GE|LE|GT|LT|EQ|NE) right=expr                 # ComparisonExpr
+    | left=expr op=(GE|LE|GT|LT|EQ|NE) BOOL? right=expr          # ComparisonExpr
     | left=expr AND right=expr                                    # AndExpr
     | left=expr UNLESS right=expr                                 # UnlessExpr
     | left=expr OR right=expr                                     # OrExpr
@@ -191,11 +191,6 @@ aggregationOperator
     : SUM | AVG | COUNT | MIN | MAX | STDDEV | STDVAR | TOPK | BOTTOMK | QUANTILE
     ;
 
-binaryOperator
-    : EQ | NE | GT | LT | GE | LE
-    | AND | OR | UNLESS
-    ;
-
 // Lexer rules
 
 // Boolean operators
@@ -259,6 +254,7 @@ LT      : '<' ;
 LE      : '<=' ;
 EQ      : '==' | '=' ;
 NE      : '!=' ;
+BOOL    : 'bool';
 
 // Delimiters
 LPAREN  : '(' ;
