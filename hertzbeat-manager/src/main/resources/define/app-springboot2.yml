@@ -274,7 +274,7 @@ metrics:
           zh-CN: 状态
           en-US: State
         label: true
-      - field: size
+      - field: Size
         type: 0
         i18n:
           zh-CN: 数量
@@ -283,7 +283,7 @@ metrics:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - state='^o^state^o^'
-      - size=$.measurements[?(@.statistic == "VALUE")].value
+      - Size=$.measurements[?(@.statistic == "VALUE")].value
     protocol: http
     http:
       host: ^_^host^_^
