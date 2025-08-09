@@ -18,11 +18,13 @@ app: rocketmq
 name:
   zh-CN: RocketMQ消息系统
   en-US: RocketMQ
+  ja-JP: RocketMQメッセージシステム
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 RocketMQ 消息系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 RocketMQ</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors RocketMQ Message System general performance metrics. You could click the "<i>New RocketMQ</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 RocketMQ 消息系統的通用指標進行測量監控。<br>您可以點擊 “<i>新建 RocketMQ</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は RocketMQメッセージシステムの一般的なメトリクスを監視します。<br>「<i>新規 RocketMQ</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/rocketmq
   en-US: https://hertzbeat.apache.org/docs/help/rocketmq
@@ -33,6 +35,7 @@ params:
     name:
       zh-CN: 注册中心Host
       en-US: Namesrv Host
+      ja-JP: ネームサーバーホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -41,6 +44,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     # when type is number, range is required
     range: '[0,65535]'
@@ -50,64 +54,76 @@ params:
     name:
       zh-CN: accessKey
       en-US: accessKey
+      ja-JP: アクセスキー
     type: text
   - field: secretKey
     name:
       zh-CN: secretKey
       en-US: secretKey
+      ja-JP: 秘密鍵
     type: text
 metrics:
   - name: cluster
     i18n:
       zh-CN: 集群
       en-US: cluster
+      ja-JP: クラスター
     priority: 0
     fields:
       - field: BrokerId
         i18n:
           zh-CN: BrokerId
           en-US: BrokerId
+          ja-JP: ブローカーId
         type: 1
       - field: Address
         i18n:
           zh-CN: 地址
           en-US: Address
+          ja-JP: アドレス
         type: 1
         label: true
       - field: Version
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
         type: 1
       - field: Producer_Message_TPS
         i18n:
           zh-CN: 生产消息TPS
           en-US: Producer_Message_TPS
+          ja-JP: プロデューサーの送信速度(TPS)
         type: 0
       - field: Consumer_Message_TPS
         i18n:
           zh-CN: 消费消息TPS
           en-US: Consumer_Message_TPS
+          ja-JP: コンシューマーの受信速度(TPS)
         type: 0
       - field: Yesterday_Produce_Count
         i18n:
           zh-CN: 昨天生产消息数
           en-US: Yesterday_Produce_Count
+          ja-JP: 昨日のプロデューサーの送信数
         type: 0
       - field: Yesterday_Consume_Count
         i18n:
           zh-CN: 昨天消费消息数
           en-US: Yesterday_Consume_Count
+          ja-JP: 昨日のコンシューマーの受信数
         type: 0
       - field: Today_Produce_Count
         i18n:
           zh-CN: 今天生产消息数
           en-US: Today_Produce_Count
+          ja-JP: 今日のプロデューサーの送信数
         type: 0
       - field: Today_Consume_Count
         i18n:
           zh-CN: 今天消费消息数
           en-US: Today_Consume_Count
+          ja-JP: 今日のコンシューマーの受信数
         type: 0
     aliasFields:
       - brokerId
@@ -142,38 +158,45 @@ metrics:
     i18n:
       zh-CN: 消费者
       en-US: Consumer
+      ja-JP: コンシューマー
     priority: 1
     fields:
       - field: Consumer_group
         i18n:
           zh-CN: 消费者组
           en-US: Consumer_group
+          ja-JP: コンシューマーグループ
         type: 1
         label: true
       - field: Client_quantity
         i18n:
           zh-CN: 客户端数量
           en-US: Client_quantity
+          ja-JP: クライアント数
         type: 0
       - field: Message_model
         i18n:
           zh-CN: 消息模式
           en-US: Message_model
+          ja-JP: メッセージモデル
         type: 1
       - field: Consume_type
         i18n:
           zh-CN: 消费类型
           en-US: Consume_type
+          ja-JP: 消費タイプ
         type: 1
       - field: Consume_tps
         i18n:
           zh-CN: 消费TPS
           en-US: Consume_tps
+          ja-JP: 受信速度(TPS)
         type: 0
       - field: Delay
         i18n:
           zh-CN: 延迟
           en-US: Delay
+          ja-JP: 遅延
         type: 0
     aliasFields:
       - consumerGroup
@@ -191,7 +214,6 @@ metrics:
       - Delay=diffTotal
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, rocketmq
     protocol: rocketmq
-    # 当protocol为http协议时具体的采集配置
     # This section describes how to configure data collection when protocol is http
     rocketmq:
       namesrvHost: ^_^host^_^

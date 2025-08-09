@@ -140,6 +140,8 @@ warehouse:
       insert:
         buffer-size: 100
         flush-interval: 3
+        compression:
+          enabled: false
       cluster:
         enabled: false
         select:

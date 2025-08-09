@@ -22,6 +22,7 @@ spring:
     url: jdbc:h2:./data/test;MODE=MYSQL
     hikari:
       max-lifetime: 120000
+
   jpa:
     show-sql: false
     database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
@@ -30,8 +31,10 @@ spring:
       eclipselink:
         logging:
           level: SEVERE
+
   flyway:
     enabled: false
+
   mail:
     host: smtp.exmail.qq.com
     username: example@tancloud.cn
@@ -55,26 +58,57 @@ warehouse:
     jpa:
       enabled: true
       expire-time: 1h
+      max-history-record-num: 6000
     victoria-metrics:
       enabled: false
       url: http://localhost:8428
       username: root
       password: root
       insert:
-        buffer-size: 1000
+        buffer-size: 100
         flush-interval: 3
+        compression:
+          enabled: false
+      cluster:
+        enabled: false
+        select:
+          url: http://localhost:8481
+          username: root
+          password: root
+        insert:
+          url: http://localhost:8480
+          username: root
+          password: root
+          buffer-size: 1000
+          flush-interval: 3
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
       url: jdbc:TAOS-RS://127.0.0.1:6041/hertzbeat
       username: root
       password: taosdata
+    greptime:
+      enabled: false
+      grpc-endpoints: localhost:4001
+      http-endpoint: http://localhost:4000
+      database: public
+      username: greptime
+      password: greptime
     iot-db:
       enabled: false
       host: 127.0.0.1
       rpc-port: 6667
       username: root
       password: root
+      query-timeout-in-ms: -1
+      expire-time: '7776000000'
+    influxdb:
+      enabled: false
+      server-url: http://127.0.0.1:8086
+      username: root
+      password: root
+      expire-time: '30d'
+      replication: 1
   # store real-time metrics data, enable only one below
   real-time:
     memory:
@@ -92,6 +126,58 @@ warehouse:
       # redis db index, default: DB0
       db: 0
 
+alerter:
+  # custom console url
+  console-url: https://console.tancloud.io
+  # we work
+  we-work-webhook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
+  # ding ding talk
+  ding-talk-webhook-url: https://oapi.dingtalk.com/robot/send?access_token=
+  # fei shu fly book
+  fly-book-webhook-url: https://open.feishu.cn/open-apis/bot/v2/hook/
+  # telegram
+  telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
+  # discord
+  discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
+  # serverChan
+  server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
+  # gotify
+  gotify-webhook-url: http://127.0.0.1/message?token=%s
+  # alert inhibit ttl unit ms, default 14400000(4 hours)
+  inhibit:
+    ttl: 14400000
+  sms:
+    enable: false
+    type: tencent
+    tencent:
+      secret-id:
+      secret-key:
+      app-id:
+      sign-name:
+      template-id:
+    alibaba:
+      access-key-id:
+      access-key-secret:
+      sign-name:
+      template-code:
+    unisms:
+      # auth-mode: simple or hmac
+      auth-mode: simple
+      access-key-id: YOUR_ACCESS_KEY_ID
+      # hmac mode need to fill in access-key-secret
+      access-key-secret: YOUR_ACCESS_KEY_SECRET
+      signature: YOUR_SMS_SIGNATURE
+      template-id: YOUR_TEMPLATE_ID
+    smslocal:
+      api-key: YOUR_API_KEY_HERE
+    aws:
+      access-key-id: YOUR_ACCESS_KEY_ID
+      access-key-secret: YOUR_ACCESS_KEY_SECRET
+      region: AWS_REGION_FOR_END_USER_MESSAGING
+    twilio:
+      account-sid: YOUR_ACCOUNT_SID
+      auth-token: YOUR_AUTH_TOKEN
+      twilio-phone-number: YOUR_TWILIO_PHONE_NUMBER
 scheduler:
   server:
     enabled: true
@@ -100,13 +186,13 @@ scheduler:
 grafana:
   enabled: false
   url: http://127.0.0.1:3000
+  expose-url: http://127.0.0.1:3000
   username: admin
   password: admin
 
-# AI config
 # See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
 ai:
-  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk
+  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk、ollama、openRouter
   type:
   # Model name：glm-4、qwen-turboo、moonshot-v1-8k、generalv3.5
   model:
@@ -114,3 +200,5 @@ ai:
   api-key:
   #At present, only IFLYTEK large model needs to be filled in
   api-secret:
+  # The URL of the ollama AI service
+  api-url:

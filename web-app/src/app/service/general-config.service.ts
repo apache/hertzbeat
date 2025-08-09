@@ -42,4 +42,8 @@ export class GeneralConfigService {
   public updateAppTemplateConfig(body: any, app: string): Observable<Message<void>> {
     return this.http.put<Message<void>>(`${general_config_uri}/template/${app}`, body);
   }
+
+  public getTimezones(): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${general_config_uri}/timezones`);
+  }
 }

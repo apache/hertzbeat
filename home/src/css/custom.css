@@ -42,6 +42,10 @@ h3 {
     }
 }
 
+.navbar__items{
+    flex-wrap: wrap;
+}
+
 .navbar__brand .navbar__title {
     font-size: 24px;
     margin-top: 4px;
@@ -56,7 +60,13 @@ h3 {
 
 .navbar__link {
     font-size: 18px;
-    font-weight: 500; 
+    font-weight: 500;
+}
+
+@media (max-width : 1100px){
+    .navbar__link {
+        font-size: 12px;
+    }
 }
 
 .menu__link {
@@ -110,12 +120,12 @@ footer > div{
         flex-direction: column;
         justify-content: center;
     }
-    
+
 }
 .footer__col{
     text-align: center;
     text-justify: distribute-all-lines ;
-   
+
 }
 .footer__title{
     font-weight: 500;
@@ -148,10 +158,10 @@ article thead {
         max-width: 100%;
         padding-left: 20px;
         padding-right: 20px;
-    }   
+    }
 }
 .container {
     max-width: 100%;
     padding-left: 20px;
     padding-right: 20px;
-}  
+}

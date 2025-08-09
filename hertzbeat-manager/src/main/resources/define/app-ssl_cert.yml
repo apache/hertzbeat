@@ -21,11 +21,13 @@ app: ssl_cert
 name:
   zh-CN: SSL证书
   en-US: SSL Certificate
+  ja-JP: SSL証明書
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 通过证书名称、是否过期、有效期开始时间、有效期开始时间戳(ms)、过期时间、过期时间戳(ms)等指标对网站的 SSL 证书进行监测。您可以点击“<i>新建 SSL 证书</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors website's SSL certificates through metrics such as certificate name, expiration date, validity start time, validity start timestamp (ms), expiration time, and expiration timestamp (ms). <br>You could click the "<i>New SSL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 通過證書名稱、是否過期、有效期開始時間、有效期開始時間戳(ms)、過期時間、過期時間戳(ms)等指標對網站的 SSL 證書進行監測。您可以點擊“<i>新建 SSL 證書</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は SSL証明書の一般的なメトリクスを監視します。<br>「<i>新規 SSL証明書</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ssl_cert
   en-US: https://hertzbeat.apache.org/docs/help/ssl_cert
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 校验证书
       en-US: verify
+      ja-JP: 検証
     # When the type is boolean, the frontend will display a switch for it.
     type: boolean
     defaultValue: true
@@ -72,6 +77,7 @@ params:
     name:
       zh-CN: 相对路径
       en-US: URI
+      ja-JP: URI
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -89,6 +95,7 @@ metrics:
     i18n:
       zh-CN: 证书
       en-US: Certificate
+      ja-JP: 証明書
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -101,39 +108,46 @@ metrics:
         i18n:
           zh-CN: 颁发对象
           en-US: Subject
+          ja-JP: 発行対象
       - field: expired
         type: 1
         i18n:
           zh-CN: 是否过期
           en-US: Expired
+          ja-JP: 期限切れ
       - field: start_time
         type: 1
         i18n:
           zh-CN: 颁发日期
           en-US: Start Time
+          ja-JP: 発行日
       - field: start_timestamp
         type: 0
         unit: ms
         i18n:
           zh-CN: 颁发时间戳
           en-US: Start Timestamp
+          ja-JP: 発行タイムスタンプ
       - field: end_time
         type: 1
         i18n:
           zh-CN: 截止日期
           en-US: End Time
+          ja-JP: 期限切れ日
       - field: end_timestamp
         type: 0
         unit: ms
         i18n:
           zh-CN: 截止时间戳
           en-US: End Timestamp
+          ja-JP: 期限切れタイムスタンプ
       - field: days_remaining
         type: 0
         unit: d
         i18n:
           zh-CN: 剩余天数
           en-US: Remaining Days
+          ja-JP: 残り日数
     aliasFields:
       - subject
       - expired

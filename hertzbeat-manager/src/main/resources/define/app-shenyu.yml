@@ -16,13 +16,15 @@
 category: mid
 app: shenyu
 name:
-  zh-CN: ShenYu网关
+  zh-CN: Apache ShenYu网关
   en-US: Apache ShenYu
+  ja-JP: Apache ShenYu
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 通过调用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 对 ShenYu 网关的通用指标 (请求量、执行时间、JVM、内存占用、线程信息等) 进行采集监控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">开启暴露 ShenYu Metrics 插件暴露其数据接口</a>。您可以点击 “<i>新建 ShenYu</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors metrics of the ShenYu Gateway by calling the <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics Api</a>. <br>Note⚠️:You need to <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">enable ShenYu Metrics Plugin</a> in advance. You can click "<i>New ShenYu</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: Hertzbeat 通過調用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 對 ShenYu 網關的通用指標 (請求量、執行時間、JVM、內存占用、線程信息等) 進行采集監控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">開啓暴露 ShenYu Metrics 插件暴露其數據接口</a>。您可以點擊 “<i>新建 ShenYu</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics プラグイン</a> を呼び出して Apache ShenYu の一般的なメトリクスを監視します。<br>注意⚠️：<a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics プラグイン を有効にする必要があります</a>。<br>「<i>新規 Apache ShenYu</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/shenyu
   en-US: https://hertzbeat.apache.org/docs/help/shenyu
@@ -31,12 +33,14 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     defaultValue: 8090
@@ -45,6 +49,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     hide: true
@@ -54,6 +59,7 @@ metrics:
     i18n:
       zh-CN: ShenYu请求总量
       en-US: ShenYu Request Total
+      ja-JP: ShenYuリクエスト総数
     priority: 0
     fields:
       - field: value
@@ -76,6 +82,7 @@ metrics:
     i18n:
       zh-CN: ShenYu请求异常总量
       en-US: ShenYu Request Exception Total
+      ja-JP: ShenYuリクエストの異常総数
     priority: 1
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -99,6 +106,7 @@ metrics:
     i18n:
       zh-CN: 进程 CPU 时间总量 (秒)
       en-US: Process CPU Time Total
+      ja-JP: プロセスのシステム時間合計
     priority: 2
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -123,6 +131,7 @@ metrics:
     i18n:
       zh-CN: 进程打开的文件描述符数量
       en-US: Process Open Fds
+      ja-JP: プロセスが開かれたファイル記述子の数量
     priority: 3
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -146,6 +155,7 @@ metrics:
     i18n:
       zh-CN: 进程最大文件描述符数量
       en-US: Process Max Fds
+      ja-JP: プロセスが開かれたファイル記述子の最大値
     priority: 4
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -169,6 +179,7 @@ metrics:
     i18n:
       zh-CN: JVM 信息
       en-US: JVM Info
+      ja-JP: Java仮想マシン情報
     priority: 5
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
@@ -177,16 +188,19 @@ metrics:
         i18n:
           zh-CN: 运行时
           en-US: Runtime
+          ja-JP: ランタイム
       - field: vendor
         type: 1
         i18n:
           zh-CN: 供应商
           en-US: Vendor
+          ja-JP: ベンダー
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
     # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # Specific collection configuration when protocol is http protocol
@@ -205,6 +219,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存使用字节数
       en-US: JVM Memory Bytes Used
+      ja-JP: Java仮想マシンメモリの使用したバイト数
     priority: 6
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
@@ -214,6 +229,7 @@ metrics:
         i18n:
           zh-CN: 区域
           en-US: Area
+          ja-JP: エリア
       - field: value
         type: 0
         unit: MB
@@ -237,6 +253,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池使用字节数
       en-US: JVM Memory Pool Bytes Used
+      ja-JP: Java仮想マシンメモリプールの使用したバイト数
     priority: 7
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
@@ -246,6 +263,7 @@ metrics:
         i18n:
           zh-CN: 池
           en-US: Pool
+          ja-JP: プール
       - field: value
         type: 0
         unit: MB
@@ -269,6 +287,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池提交字节数
       en-US: JVM Memory Pool Bytes Committed
+      ja-JP: Java仮想マシンメモリプールのコミットしたバイト数
     priority: 8
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
@@ -278,6 +297,7 @@ metrics:
         i18n:
           zh-CN: 池
           en-US: Pool
+          ja-JP: プール
       - field: value
         type: 0
         unit: MB
@@ -301,6 +321,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池最大字节数
       en-US: JVM Memory Pool Bytes Max
+      ja-JP: Java仮想マシンメモリプールのバイト数の最大値
     priority: 9
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
@@ -310,6 +331,7 @@ metrics:
         i18n:
           zh-CN: 池
           en-US: Pool
+          ja-JP: プール
       - field: value
         type: 0
         unit: MB
@@ -333,6 +355,7 @@ metrics:
     i18n:
       zh-CN: JVM 线程状态
       en-US: JVM Threads State
+      ja-JP: Java仮想マシンのスレッド状態
     priority: 10
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
@@ -342,11 +365,13 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
       - field: count
         type: 0
         i18n:
           zh-CN: 数量
           en-US: Count
+          ja-JP: 数量
     aliasFields:
       - state
       - value

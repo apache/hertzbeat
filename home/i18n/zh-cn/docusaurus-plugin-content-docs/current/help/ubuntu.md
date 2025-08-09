@@ -113,8 +113,50 @@ keywords: [开源监控系统, 开源操作系统监控, Ubuntu监控]
 | cpu_usage | %    | CPU占用率 |
 | command   | 无    | 执行命令   |
 
-#### 指标集合：所有核心的平均CPU温度
+#### 其他指标集合：所有核心的平均CPU温度
 
 | 指标名称         | 指标单位 | 指标帮助描述    |
 |--------------|------|-----------|
 | avg_cpu_temp | C    | 所有核心的平均温度 |
+
+* 注意：此指标信息依赖硬件传感器的监测工具(lm-sensors)，请确认Ubuntu操作系统可以正常获取监测信息，可根据需要补充如下指标采集配置
+```yaml
+metrics:
+  - name: avg_cpu_temp
+    i18n:
+      zh-CN: 所有核心的平均CPU温度
+      en-US: Average CPU Temperature Across All Cores
+    priority: 4
+    fields:
+      - field: avg_cpu_temp
+        type: 1
+        label: true
+        unit: 'C'
+        i18n:
+          zh-CN: 所有核心的平均温度
+          en-US: Average Temp All Cores
+    protocol: ssh
+    ssh:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      privateKey: ^_^privateKey^_^
+      privateKeyPassphrase: ^_^privateKeyPassphrase^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      script: sensors | grep "^Core\s[0-9\d+\:]" | awk  '{print $3}'  | sed "s/°C/\ /g" | awk '{ total += $1; count++ } END { print total/count }'
+      parseType: oneRow
+      # whether to use proxy server for ssh connection
+      useProxy: ^_^useProxy^_^
+      # ssh proxy host: ipv4 domain
+      proxyHost: ^_^proxyHost^_^
+      # ssh proxy port
+      proxyPort: ^_^proxyPort^_^
+      # ssh proxy username
+      proxyUsername: ^_^proxyUsername^_^
+      # ssh proxy password
+      proxyPassword: ^_^proxyPassword^_^
+      # ssh proxy private key
+      proxyPrivateKey: ^_^proxyPrivateKey^_^
+```

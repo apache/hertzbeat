@@ -667,7 +667,7 @@ metrics:
         i18n:
           zh-CN: 客户端命令统计
           en-US: cmdstat client
-          ja-JP: クライエントのコマンド
+          ja-JP: クライアントのコマンド
       - field: cmdstat_config
         type: 1
         i18n:
