@@ -523,16 +523,15 @@ public class AppServiceImpl implements AppService, InitializingBean {
         } else {
             if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
                 appDefineStore = new ObjectStoreAppDefineStoreImpl();
-            } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE){
+            } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE) {
                 appDefineStore = new DatabaseAppDefineStoreImpl();
             } else {
                 appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
-        var success = appDefineStore.loadAppDefines();
-        if (!success) {
-            new JarAppDefineStoreImpl().loadAppDefines();
-        }
+        jarAppDefineStore.loadAppDefines();
+        // merge define yml files inside jars
+        appDefineStore.loadAppDefines();
     }
 
     private interface AppDefineStore {
@@ -714,7 +713,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
                             }
                         }
                     });
-            return false;
+            return true;
         }
 
         @Override
@@ -774,8 +773,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
                     appDefines.put(define.getApp().toLowerCase(), app);
                 }
             }
-            // merge define yml files inside jars
-            return false;
+            return true;
         }
 
         @Override
