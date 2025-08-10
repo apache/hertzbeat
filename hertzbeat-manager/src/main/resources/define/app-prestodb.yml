@@ -21,10 +21,12 @@ app: prestodb
 name:
   zh-CN: PrestoDB
   en-US: PrestoDB
+  ja-JP: PrestoDB
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 PrestoDB 数据库平台的性能指标进行监测。您可以点击“新增 PrestoDB”按钮并进行配置，或在“更多操作”中导入已有配置。
   en-US: Hertzbeat monitors performance metrics of the PrestoDB database platform. You can click the "Add PrestoDB" button and proceed with the configuration or import an existing setup through the "More Actions" menu.
+  ja-JP: Hertzbeat は PrestoDBの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 PrestoDB</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/prestodb
   en-US: https://hertzbeat.apache.org/docs/help/prestodb
@@ -33,12 +35,14 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     required: true
@@ -46,12 +50,14 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     type: boolean
     required: true
   - field: timeout
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     type: number
     required: false
     hide: true
@@ -62,6 +68,7 @@ metrics:
     i18n:
       zh-CN: 集群状态
       en-US: Cluster Status
+      ja-JP: クラスターステータス情報
     priority: 0
     fields:
       - field: activeWorkers
@@ -69,31 +76,37 @@ metrics:
         i18n:
           zh-CN: 活跃节点数
           en-US: Active Workers
+          ja-JP: アクティブなワーカー数
       - field: runningQueries
         type: 0
         i18n:
           zh-CN: 运行中的查询数
           en-US: Running Queries
+          ja-JP: 実行中のクエリ数
       - field: queuedQueries
         type: 0
         i18n:
           zh-CN: 队列中的查询数
           en-US: Queued Queries
+          ja-JP: キュー内のクエリ数
       - field: blockedQueries
         type: 0
         i18n:
           zh-CN: 阻塞的查询数
           en-US: Blocked Queries
+          ja-JP: ブロックされたクエリ数
       - field: runningDrivers
         type: 0
         i18n:
           zh-CN: 运行中的驱动数
           en-US: Running Drivers
+          ja-JP: 実行中のドライバー数
       - field: runningTasks
         type: 0
         i18n:
           zh-CN: 运行中的任务数
           en-US: Running Tasks
+          ja-JP: 実行中のタスク数
     protocol: http
     http:
       host: ^_^host^_^
@@ -109,6 +122,7 @@ metrics:
     i18n:
       zh-CN: 节点信息
       en-US: Node Info
+      ja-JP: ノード情報
     priority: 1
     fields:
       - field: uri
@@ -116,41 +130,49 @@ metrics:
         i18n:
           zh-CN: 节点链接
           en-US: Node Uri
+          ja-JP: ノードURI
       - field: recentRequests
         type: 0
         i18n:
           zh-CN: 最近一段时间内的请求数量
           en-US: Recent Requests
+          ja-JP: 最近のリクエスト数
       - field: recentFailures
         type: 0
         i18n:
           zh-CN: 最近一段时间内的失败请求数量
           en-US: Recent Failures
+          ja-JP: 最近のリクエスト失敗数
       - field: recentSuccesses
         type: 0
         i18n:
           zh-CN: 最近一段时间内的成功请求数量
           en-US: Recent Successes
+          ja-JP: 最近のリクエスト成功数
       - field: lastRequestTime
         type: 1
         i18n:
           zh-CN: 最近一次请求的时间
           en-US: Last Request Time
+          ja-JP: 最後のリクエスト時刻
       - field: lastResponseTime
         type: 1
         i18n:
           zh-CN: 最近一次响应的时间
           en-US: Last Response Time
+          ja-JP: 最後の応答時刻
       - field: age
         type: 0
         i18n:
           zh-CN: 持续时间
           en-US: Age
+          ja-JP: スパン
       - field: recentFailureRatio
         type: 0
         i18n:
           zh-CN: 最近一段时间内的失败
           en-US: Recent Failure Ratio
+          ja-JP: 最近の失敗比率
 
     protocol: http
     http:
@@ -167,6 +189,7 @@ metrics:
     i18n:
       zh-CN: 节点状态
       en-US: Node Status
+      ja-JP: ノードステータス情報
     priority: 2
     fields:
       - field: nodeId
@@ -174,68 +197,81 @@ metrics:
         i18n:
           zh-CN: 节点ID
           en-US: Node ID
+          ja-JP: ノードID
       - field: nodeVersion
         type: 1
         i18n:
           zh-CN: 节点版本
           en-US: Node Version
+          ja-JP: Nodeバージョン
       - field: environment
         type: 1
         i18n:
           zh-CN: 环境
           en-US: Environment
+          ja-JP: 環境
       - field: coordinator
         type: 1
         i18n:
           zh-CN: 是否为协调节点
           en-US: Is Coordinator
+          ja-JP: コーディネーターノード
       - field: uptime
         type: 1
         i18n:
           zh-CN: 正常运行时间
           en-US: Uptime
+          ja-JP: アップタイム
       - field: externalAddress
         type: 1
         i18n:
           zh-CN: 外部地址
           en-US: External Address
+          ja-JP: 外部アドレス
       - field: internalAddress
         type: 1
         i18n:
           zh-CN: 内部地址
           en-US: Internal Address
+          ja-JP: 内部アドレス
       - field: processors
         type: 0
         i18n:
           zh-CN: 处理器数量
           en-US: Processors
+          ja-JP: プロセッサ数
       - field: processCpuLoad
         type: 0
         i18n:
           zh-CN: 进程CPU负载
           en-US: Process CPU Load
+          ja-JP: プロセスのCPUロード
       - field: systemCpuLoad
         type: 0
         i18n:
           zh-CN: 系统CPU负载
           en-US: System CPU Load
+          ja-JP: システムのCPUロード
       - field: heapUsed
         type: 0
         i18n:
           zh-CN: 已使用堆内存
           en-US: Heap Memory Used
+          ja-JP: 使用したヒープメモリ
         unit: MB
       - field: heapAvailable
         type: 0
         i18n:
           zh-CN: 可用堆内存
           en-US: Heap Memory Available
+          ja-JP: 使用可能なヒープメモリ
         unit: MB
       - field: nonHeapUsed
         type: 0
         i18n:
           zh-CN: 已使用非堆内存
           en-US: Non-Heap Memory Used
+          ja-JP: 使用したノンヒープメモリ
         unit: MB
     units:
       - heapUsed=B->MB
@@ -290,6 +326,7 @@ metrics:
     i18n:
       zh-CN: 任务查询
       en-US: Task Query
+      ja-JP: タスククエリ
     priority: 3
     fields:
       - field: taskId
@@ -297,26 +334,31 @@ metrics:
         i18n:
           zh-CN: 任务ID
           en-US: Task ID
+          ja-JP: タスクID
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: state
         type: 1
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
       - field: self
         type: 1
         i18n:
           zh-CN: 自身
           en-US: Self
+          ja-JP: 自分
       - field: lastHeartbeat
         type: 1
         i18n:
           zh-CN: 最后心跳时间
           en-US: Last Heartbeat
+          ja-JP: 最後のハートビート
     protocol: http
     http:
       host: ^_^host^_^
