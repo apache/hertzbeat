@@ -57,6 +57,10 @@ public final class AesUtil {
     public static void setDefaultSecretKey(String secretKeyNow) {
         secretKey = secretKeyNow;
     }
+    
+    public static String getDefaultSecretKey() {
+        return secretKey;
+    }
 
     public static String aesEncode(String content) {
         return aesEncode(content, secretKey);
