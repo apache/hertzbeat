@@ -43,16 +43,14 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
         if (this.timerDispatch == null) {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
-        if (ClusterMsg.Direction.RESPONSE == message.getDirection()) {
-            if (message.getMsg().isEmpty()) {
-                log.warn("The message that server response to collector is empty, please upgrade server");
+        if (message.getMsg().isEmpty()) {
+            log.warn("The message that server response to collector is empty, please upgrade server");
+        } else {
+            ServerInfo serverInfo = JsonUtil.fromJson(message.getMsg().toStringUtf8(), ServerInfo.class);
+            if (serverInfo == null || serverInfo.getAesSecret() == null) {
+                log.warn("The message that server response to collector has not secret empty, please check");
             } else {
-                ServerInfo serverInfo = JsonUtil.fromJson(message.getMsg().toStringUtf8(), ServerInfo.class);
-                if (serverInfo == null || serverInfo.getAesSecret() == null) {
-                    log.warn("The message that server response to collector has not secret empty, please check");
-                } else {
-                    AesUtil.setDefaultSecretKey(serverInfo.getAesSecret());
-                }
+                AesUtil.setDefaultSecretKey(serverInfo.getAesSecret());
             }
         }
         timerDispatch.goOnline();
