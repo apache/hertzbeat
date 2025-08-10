@@ -37,7 +37,7 @@ public final class AesUtil {
      *  Default encryption key The AES encryption key is 16 bits by default.
      *  If the AES encryption key is larger than or smaller than 16 bits, an error message is displayed
      */
-    public static final String ENCODE_RULES = "tomSun28HaHaHaHa";
+    public static final String DEFAULT_ENCODE_RULES = "tomSun28HaHaHaHa";
 
     /**
      * Default algorithm
@@ -50,12 +50,16 @@ public final class AesUtil {
      * Encryption key The AES encryption key is 16 bits.
      * If the AES encryption key is larger than 16 bits, an error message is displayed
      */
-    private static String secretKey = ENCODE_RULES;
+    private static String secretKey = DEFAULT_ENCODE_RULES;
 
     private AesUtil() {}
 
     public static void setDefaultSecretKey(String secretKeyNow) {
         secretKey = secretKeyNow;
+    }
+    
+    public static String getDefaultSecretKey() {
+        return secretKey;
     }
 
     public static String aesEncode(String content) {
@@ -109,9 +113,9 @@ public final class AesUtil {
             byte[] byteDecode = getBytes(content, decryptKey);
             return new String(byteDecode, StandardCharsets.UTF_8);
         } catch (BadPaddingException e) {
-            if (!ENCODE_RULES.equals(decryptKey)) {
+            if (!DEFAULT_ENCODE_RULES.equals(decryptKey)) {
                 log.warn("There has default encode secret encode content, try to decode with default secret key");
-                return aesDecode(content, ENCODE_RULES);
+                return aesDecode(content, DEFAULT_ENCODE_RULES);
             }
             log.error("aes decode content error: {}, please config right common secret key", e.getMessage());
             return content;
