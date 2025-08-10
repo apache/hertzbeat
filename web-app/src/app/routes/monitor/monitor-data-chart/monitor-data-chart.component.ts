@@ -22,6 +22,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { EChartsOption } from 'echarts';
 import { finalize } from 'rxjs/operators';
+import { InViewportAction } from 'ng-in-viewport';
 import { getRandomGradientTriple } from 'src/app/shared/utils/common-util';
 
 import { MonitorService } from '../../../service/monitor.service';
@@ -52,10 +53,30 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   lineHistoryTheme!: EChartsOption;
   loading: boolean = true;
   echartsInstance!: any;
-  // Default historical data period is last 6 hours
-  timePeriod: string = '6h';
+  // Default historical data period is last 30 minutes
+  timePeriod: string = '30m';
+  isInViewport = false;
+  private debounceTimer: any = undefined;
 
   constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+
+  handleViewportAction(event: InViewportAction) {
+    // 使用防抖优化性能
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    this.debounceTimer = setTimeout(() => {
+      const wasVisible = this.isInViewport;
+      const curVisible = event.visible;
+      if (curVisible && !wasVisible) {
+        this.loadData();
+      } else if (!curVisible) {
+        this.ngOnDestroy();
+      }
+      this.isInViewport = curVisible;
+    }, 1000);
+  }
 
   ngOnInit(): void {
     let metricsI18n = this.i18nSvc.fanyi(`monitor.app.${this.app}.metrics.${this.metrics}`);
@@ -223,7 +244,6 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
       // @ts-ignore
       this.lineHistoryTheme.title.subtext = `${this.i18nSvc.fanyi('monitor.detail.chart.unit')}  ${this.unit}`;
     }
-    this.loadData();
   }
 
   loadData(timePeriod?: string, isInterval?: boolean) {
