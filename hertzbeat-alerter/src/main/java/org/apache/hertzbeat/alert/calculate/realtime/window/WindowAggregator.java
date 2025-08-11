@@ -78,7 +78,6 @@ public class WindowAggregator implements TimeService.WatermarkListener, Runnable
     public void onWatermark(TimeService.Watermark watermark) {
         List<WindowData> closedWindows;
         
-        // 缩小锁范围：只保护Map操作
         synchronized (windowLock) {
             closedWindows = new ArrayList<>();
             
