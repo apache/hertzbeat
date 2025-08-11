@@ -51,8 +51,10 @@ import org.springframework.util.CollectionUtils;
  */
 @Component
 @Slf4j
-public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalculator<CollectRep.MetricsData> {
-    
+public class MetricsRealTimeAlertCalculator {
+
+    private static final int CALCULATE_THREADS = 3;
+
     private static final String KEY_INSTANCE = "__instance__";
     private static final String KEY_INSTANCE_NAME = "__instancename__";
     private static final String KEY_INSTANCE_HOST = "__instancehost__";
@@ -72,12 +74,20 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
     private static final Pattern INSTANCE_PATTERN = Pattern.compile("equals\\(__instance__,\\s*\"(\\d+)\"\\)");
     private static final Pattern METRICS_PATTERN = Pattern.compile("equals\\(__metrics__,\"([^\"]+)\"\\)");
 
+    private final AlerterWorkerPool workerPool;
+    private final CommonDataQueue dataQueue;
+    private final AlertDefineService alertDefineService;
+    private final AlarmCommonReduce alarmCommonReduce;
+    private final AlarmCacheManager alarmCacheManager;
+    private final JexlExprCalculator jexlExprCalculator;
+
+
     @Autowired
     public MetricsRealTimeAlertCalculator(AlerterWorkerPool workerPool, CommonDataQueue dataQueue,
                                           AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
                                           AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
                                           JexlExprCalculator jexlExprCalculator) {
-        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator);
+        this(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator, true);
     }
 
     /**
@@ -96,20 +106,39 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
                                           AlertDefineService alertDefineService, SingleAlertDao singleAlertDao,
                                           AlarmCommonReduce alarmCommonReduce, AlarmCacheManager alarmCacheManager,
                                           JexlExprCalculator jexlExprCalculator, boolean start) {
-        super(workerPool, dataQueue, alertDefineService, singleAlertDao, alarmCommonReduce, alarmCacheManager, jexlExprCalculator, start);
+        this.workerPool = workerPool;
+        this.dataQueue = dataQueue;
+        this.alarmCommonReduce = alarmCommonReduce;
+        this.alertDefineService = alertDefineService;
+        this.alarmCacheManager = alarmCacheManager;
+        this.jexlExprCalculator = jexlExprCalculator;
+        if (start) {
+            startCalculate();
+        }
     }
 
-    @Override
-    protected CollectRep.MetricsData pollData() throws InterruptedException {
-        return dataQueue.pollMetricsDataToAlerter();
+    /**
+     * Start the alert calculation threads
+     */
+    public void startCalculate() {
+        Runnable runnable = () -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    CollectRep.MetricsData metricsData = dataQueue.pollMetricsDataToAlerter();
+                    calculate(metricsData);
+                    dataQueue.sendMetricsDataToStorage(metricsData);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    log.error("calculate alarm error: {}.", e.getMessage(), e);
+                }
+            }
+        };
+        for (int i = 0; i < CALCULATE_THREADS; i++) {
+            workerPool.executeJob(runnable);
+        }
     }
 
-    @Override
-    protected void processDataAfterCalculation(CollectRep.MetricsData metricsData) {
-        dataQueue.sendMetricsDataToStorage(metricsData);
-    }
-
-    @Override
     protected void calculate(CollectRep.MetricsData metricsData) {
         long currentTimeMilli = System.currentTimeMillis();
         String instance = String.valueOf(metricsData.getId());
@@ -247,11 +276,97 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
     }
 
     /**
+     * Filter alert definitions by app, metrics and instance
+     *
+     * @param thresholds Alert definitions to filter
+     * @param app        Current app name
+     * @param metrics    Current metrics name
+     * @param labels     Current labels
+     * @param instance   Current instance id
+     * @param priority   Current priority
+     * @return Filtered alert definitions
+     */
+    public List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
+        return thresholds.stream()
+                .filter(define -> {
+                    if (StringUtils.isBlank(define.getExpr())) {
+                        return false;
+                    }
+                    String expr = define.getExpr();
+
+                    // Extract and check app - required
+                    Matcher appMatcher = APP_PATTERN.matcher(expr);
+                    if (!appMatcher.find() || !app.equals(appMatcher.group(1))) {
+                        return false;
+                    }
+
+                    // Extract and check available - required
+                    if (priority != 0) {
+                        Matcher availableMatcher = AVAILABLE_PATTERN.matcher(expr);
+                        if (availableMatcher.find()) {
+                            return false;
+                        }
+                    }
+
+                    // Extract and check metrics - optional
+                    Matcher metricsMatcher = METRICS_PATTERN.matcher(expr);
+                    if (metricsMatcher.find() && !metrics.equals(metricsMatcher.group(1))) {
+                        return false;
+                    }
+
+                    // Extract and check instance - optional with multiple values
+                    Matcher instanceMatcher = INSTANCE_PATTERN.matcher(expr);
+                    Matcher labelMatcher = LABEL_PATTERN.matcher(expr);
+                    // If no instance and instance labels specified in expr, accept all instances
+                    if (!instanceMatcher.find() && !labelMatcher.find()) {
+                        return true;
+                    }
+
+                    // Reset matcher to check all instances
+                    instanceMatcher.reset();
+                    labelMatcher.reset();
+                    // If instances specified, current instance must match one of them
+                    while (instanceMatcher.find()) {
+                        if (Objects.equals(instance, instanceMatcher.group(1))) {
+                            return true;
+                        }
+                    }
+                    // If instance labels specified, current instance must match one of them
+                    Set<String> labelKvStringSet = kvLabelsToKvStringSet(labels);
+                    while (labelMatcher.find()) {
+                        String label = labelMatcher.group(1);
+                        if (labelKvStringSet.contains(label)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Handle recovered alert
+     */
+    private void handleRecoveredAlert(Long defineId, Map<String, String> fingerprints) {
+        String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
+        SingleAlert firingAlert = alarmCacheManager.removeFiring(defineId, fingerprint);
+        if (firingAlert != null) {
+            // todo consider multi times to tig for resolved alert
+            firingAlert.setTriggerTimes(1);
+            firingAlert.setEndAt(System.currentTimeMillis());
+            firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+            alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
+        }
+        alarmCacheManager.removePending(defineId, fingerprint);
+    }
+
+
+    /**
      * Handle alert after threshold rule match
      */
     private void afterThresholdRuleMatch(long defineId, long currentTimeMilli, Map<String, String> fingerPrints,
-                                           Map<String, Object> fieldValueMap, AlertDefine define,
-                                           Map<String, String> annotations) {
+                                         Map<String, Object> fieldValueMap, AlertDefine define,
+                                         Map<String, String> annotations) {
         // fingerprint for the padding cache
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
         SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
@@ -304,91 +419,6 @@ public class MetricsRealTimeAlertCalculator extends AbstractRealTimeAlertCalcula
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }
-    }
-
-    /**
-     * Filter alert definitions by app, metrics and instance
-     *
-     * @param thresholds Alert definitions to filter
-     * @param app        Current app name
-     * @param metrics    Current metrics name
-     * @param labels     Current labels
-     * @param instance   Current instance id
-     * @param priority   Current priority
-     * @return Filtered alert definitions
-     */
-    public List<AlertDefine> filterThresholdsByAppAndMetrics(List<AlertDefine> thresholds, String app, String metrics, Map<String, String> labels, String instance, int priority) {
-        return thresholds.stream()
-                .filter(define -> {
-                    if (StringUtils.isBlank(define.getExpr())) {
-                        return false;
-                    }
-                    String expr = define.getExpr();
-
-                    // Extract and check app - required
-                    Matcher appMatcher = APP_PATTERN.matcher(expr);
-                    if (!appMatcher.find() || !app.equals(appMatcher.group(1))) {
-                        return false;
-                    }
-                    
-                    // Extract and check available - required
-                    if (priority != 0) {
-                        Matcher availableMatcher = AVAILABLE_PATTERN.matcher(expr);
-                        if (availableMatcher.find()) {
-                            return false;
-                        }
-                    }
-
-                    // Extract and check metrics - optional
-                    Matcher metricsMatcher = METRICS_PATTERN.matcher(expr);
-                    if (metricsMatcher.find() && !metrics.equals(metricsMatcher.group(1))) {
-                        return false;
-                    }
-
-                    // Extract and check instance - optional with multiple values
-                    Matcher instanceMatcher = INSTANCE_PATTERN.matcher(expr);
-                    Matcher labelMatcher = LABEL_PATTERN.matcher(expr);
-                    // If no instance and instance labels specified in expr, accept all instances
-                    if (!instanceMatcher.find() && !labelMatcher.find()) {
-                        return true;
-                    }
-                    
-                    // Reset matcher to check all instances
-                    instanceMatcher.reset();
-                    labelMatcher.reset();
-                    // If instances specified, current instance must match one of them
-                    while (instanceMatcher.find()) {
-                        if (Objects.equals(instance, instanceMatcher.group(1))) {
-                            return true;
-                        }
-                    }
-                    // If instance labels specified, current instance must match one of them
-                    Set<String> labelKvStringSet = kvLabelsToKvStringSet(labels);
-                    while (labelMatcher.find()) {
-                        String label = labelMatcher.group(1);
-                        if (labelKvStringSet.contains(label)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                })
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Handle recovered alert
-     */
-    private void handleRecoveredAlert(Long defineId, Map<String, String> fingerprints) {
-        String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
-        SingleAlert firingAlert = alarmCacheManager.removeFiring(defineId, fingerprint);
-        if (firingAlert != null) {
-            // todo consider multi times to tig for resolved alert
-            firingAlert.setTriggerTimes(1);
-            firingAlert.setEndAt(System.currentTimeMillis());
-            firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
-            alarmCommonReduce.reduceAndSendAlarm(firingAlert.clone());
-        }
-        alarmCacheManager.removePending(defineId, fingerprint);
     }
 
     private Set<String> kvLabelsToKvStringSet(Map<String, String> labels) {

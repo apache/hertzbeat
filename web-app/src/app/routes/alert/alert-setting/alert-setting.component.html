@@ -820,6 +820,24 @@
           <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'realtime_log'">
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="window" [nzTooltipTitle]="'alert.setting.window.tip' | i18n">
+          {{ 'alert.setting.window' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-input-number
+            [(ngModel)]="define.period"
+            required
+            [nzMin]="60"
+            [nzStep]="60"
+            name="window"
+            id="window"
+            [nzPlaceHolder]="'alert.setting.window.placeholder' | i18n"
+          >
+          </nz-input-number>
+          <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="severity" [nzTooltipTitle]="'alert.setting.priority.tip' | i18n">
           {{ 'alert.severity' | i18n }}
@@ -839,7 +857,25 @@
           </nz-select>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="define.type === 'realtime_log' || define.type === 'periodic_log'">
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="alertMode" [nzTooltipTitle]="'alert.setting.mode.tip' | i18n">
+          {{ 'alert.mode' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            [(ngModel)]="alertMode"
+            (ngModelChange)="onAlertModeChange()"
+            [nzPlaceHolder]="'alert.notice.rule.mode.placeholder' | i18n"
+            name="alertMode"
+            id="alertMode"
+            required
+          >
+            <nz-option [nzValue]="'group'" [nzLabel]="'alert.mode.group' | i18n"></nz-option>
+            <nz-option [nzValue]="'individual'" [nzLabel]="'alert.mode.individual' | i18n"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'periodic_metric' || define.type === 'realtime_metric' || define.type === 'realtime_log'">
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="duration" [nzTooltipTitle]="'alert.setting.times.tip' | i18n">
           {{ 'alert.setting.times' | i18n }}
         </nz-form-label>
@@ -847,7 +883,7 @@
           <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="999" [nzStep]="1" required name="duration" id="duration">
           </nz-input-number>
         </nz-form-control>
-      </nz-form-item>
+      </nz-form-item>  
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" [nzTooltipTitle]="'alert.setting.template.tip' | i18n">
           {{ 'alert.setting.template' | i18n }}

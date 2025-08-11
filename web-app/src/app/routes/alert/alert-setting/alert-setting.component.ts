@@ -326,6 +326,7 @@ export class AlertSettingComponent implements OnInit {
     this.alertType = type;
     this.define = new AlertDefine();
     this.severity = '';
+    this.alertMode = '';
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     this.selectedLabels = new Set<string>();
@@ -571,6 +572,7 @@ export class AlertSettingComponent implements OnInit {
   isExpr = false;
   userExpr!: string;
   severity!: string;
+  alertMode!: string;
   logFields: any[] = [];
 
   editAlertDefine(alertDefineId: number) {
@@ -596,6 +598,9 @@ export class AlertSettingComponent implements OnInit {
             this.define = message.data;
             if (this.define.labels && this.define.labels['severity']) {
               this.severity = this.define.labels['severity'];
+            }
+            if (this.define.labels && this.define.labels['alert_mode']) {
+              this.alertMode = this.define.labels['alert_mode'];
             }
             // Set default period for periodic_metric alert if not set
             if (this.define.type === 'periodic_metric' && !this.define.period) {
@@ -1008,6 +1013,13 @@ export class AlertSettingComponent implements OnInit {
       this.define.labels = {};
     }
     this.define.labels = { ...this.define.labels, severity: this.severity };
+  }
+
+  onAlertModeChange() {
+    if (!this.define.labels) {
+      this.define.labels = {};
+    }
+    this.define.labels = { ...this.define.labels, alert_mode: this.alertMode };
   }
 
   onManageModalCancel() {

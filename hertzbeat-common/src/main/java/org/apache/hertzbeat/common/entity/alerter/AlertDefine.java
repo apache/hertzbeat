@@ -73,7 +73,7 @@ public class AlertDefine {
     @Column(length = 2048)
     private String expr;
 
-    @Schema(title = "Execution Period (seconds) - For periodic rules", example = "300")
+    @Schema(title = "Execution Period/ Window Size (seconds) - For periodic rules/ For log realtime", example = "300")
     private Integer period;
     
     @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",
