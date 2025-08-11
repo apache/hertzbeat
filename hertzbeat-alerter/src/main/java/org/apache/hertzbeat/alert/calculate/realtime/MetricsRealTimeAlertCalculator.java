@@ -401,6 +401,7 @@ public class MetricsRealTimeAlertCalculator {
             // If required trigger times is 1, set to firing status directly
             if (requiredTimes <= 1) {
                 newAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+                alarmCacheManager.putFiring(defineId, fingerprint, newAlert);
                 alarmCommonReduce.reduceAndSendAlarm(newAlert.clone());
             } else {
                 // Otherwise put into pending queue first
@@ -416,6 +417,7 @@ public class MetricsRealTimeAlertCalculator {
                 // Reached trigger times threshold, change to firing status
                 alarmCacheManager.removePending(defineId, fingerprint);
                 existingAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+                alarmCacheManager.putFiring(defineId, fingerprint, existingAlert);
                 alarmCommonReduce.reduceAndSendAlarm(existingAlert.clone());
             }
         }

@@ -69,9 +69,6 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
     @Mock
     private AlarmCacheManager alarmCacheManager;
 
-    @Mock
-    private JexlExprCalculator jexlExprCalculator;
-
     private MetricsRealTimeAlertCalculator metricsRealTimeAlertCalculator;
 
     @BeforeEach
@@ -85,7 +82,7 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
                 singleAlertDao,
                 alarmCommonReduce,
                 alarmCacheManager,
-                jexlExprCalculator,
+                new JexlExprCalculator(),
                 false
         );
     }
