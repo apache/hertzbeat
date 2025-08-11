@@ -54,7 +54,8 @@ class MetricsRealTimeAlertCalculatorTest {
         Mockito.when(mockDao.querySingleAlertsByStatus(Mockito.anyString()))
                 .thenReturn(Collections.emptyList());
 
-        calculator = new MetricsRealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService, mockDao, mockReduce, alarmCacheManager, mockExprCalculator,false);
+        calculator = new MetricsRealTimeAlertCalculator(mockPool, mockQueue, mockAlertDefineService
+                , mockDao, mockReduce, alarmCacheManager, mockExprCalculator, false);
     }
 
     @Test

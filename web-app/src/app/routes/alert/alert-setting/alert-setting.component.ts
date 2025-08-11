@@ -1681,7 +1681,7 @@ export class AlertSettingComponent implements OnInit {
       return;
     }
     this.previewTableLoading = true;
-    
+
     this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.queryExpr).subscribe({
       next: res => {
         if (res.code === 15 || res.code === 1 || res.code === 4) {

@@ -151,7 +151,7 @@
         {
           "text": "Stream",
           "i18n": "menu.log.stream",
-          "icon": "anticon-api",
+          "icon": "anticon-file-text",
           "link": "/log/stream"
         }
       ]

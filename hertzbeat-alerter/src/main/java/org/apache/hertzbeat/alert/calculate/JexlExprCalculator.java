@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
+/**
+ * JexlExprCalculator is a utility class for evaluating JEXL expressions
+ */
 @Slf4j
 @Component
 public class JexlExprCalculator {
