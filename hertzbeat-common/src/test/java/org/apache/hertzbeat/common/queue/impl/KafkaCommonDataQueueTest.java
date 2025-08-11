@@ -70,6 +70,8 @@ class KafkaCommonDataQueueTest {
         
         // Set all required topics
         when(kafkaProperties.getMetricsDataTopic()).thenReturn("metricsDataTopic");
+        when(kafkaProperties.getLogEntryDataTopic()).thenReturn("logEntryDataTopic");
+        when(kafkaProperties.getLogEntryDataToStorageTopic()).thenReturn("logEntryDataToStorageTopic");
         when(kafkaProperties.getAlertsDataTopic()).thenReturn("alertsDataTopic");
         when(kafkaProperties.getMetricsDataToStorageTopic()).thenReturn("metricsDataToStorageTopic");
         when(kafkaProperties.getServiceDiscoveryDataTopic()).thenReturn("serviceDiscoveryDataTopic");

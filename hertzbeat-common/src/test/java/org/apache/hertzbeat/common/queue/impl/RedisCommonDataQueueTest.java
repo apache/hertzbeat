@@ -28,7 +28,9 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.apache.hertzbeat.common.config.CommonProperties;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.serialize.RedisLogEntryCodec;
 import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,9 @@ class RedisCommonDataQueueTest {
 
     @Mock
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
+    @Mock
+    private StatefulRedisConnection<String, LogEntry> logEntryConnection;
+
 
     @Mock
     private RedisCommands<String, CollectRep.MetricsData> syncCommands;
@@ -71,6 +76,8 @@ class RedisCommonDataQueueTest {
         try (MockedStatic<RedisClient> mockedRedisClient = mockStatic(RedisClient.class)) {
             mockedRedisClient.when(() -> RedisClient.create(any(RedisURI.class))).thenReturn(redisClient);
             when(redisClient.connect(any(RedisMetricsDataCodec.class))).thenReturn(connection);
+            when(redisClient.connect(any(RedisLogEntryCodec.class))).thenReturn(logEntryConnection);
+            when(logEntryConnection.sync()).thenReturn(mock(RedisCommands.class));
             when(connection.sync()).thenReturn(syncCommands);
 
             redisCommonDataQueue = new RedisCommonDataQueue(commonProperties);

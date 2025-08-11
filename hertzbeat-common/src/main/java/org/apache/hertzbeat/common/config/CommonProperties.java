@@ -149,5 +149,9 @@ public class CommonProperties {
          * log entry data topic
          */
         private String logEntryDataTopic;
+        /**
+         * log entry data to storage topic
+         */
+        private String logEntryDataToStorageTopic;
     }
 }

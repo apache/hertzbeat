@@ -235,7 +235,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     public void sendLogEntryToStorage(LogEntry logEntry) {
         if (logEntryProducer != null) {
             try {
-                ProducerRecord<Long, LogEntry> record = new ProducerRecord<>(kafka.getLogEntryDataTopic(), logEntry);
+                ProducerRecord<Long, LogEntry> record = new ProducerRecord<>(kafka.getLogEntryDataToStorageTopic(), logEntry);
                 logEntryProducer.send(record);
             } catch (Exception e) {
                 log.error("Failed to send LogEntry to storage via Kafka: {}", e.getMessage());
