@@ -214,7 +214,6 @@ metrics:
       - Delay=diffTotal
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, rocketmq
     protocol: rocketmq
-    # 当protocol为http协议时具体的采集配置
     # This section describes how to configure data collection when protocol is http
     rocketmq:
       namesrvHost: ^_^host^_^
