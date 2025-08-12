@@ -61,7 +61,6 @@ Please refer to [Open API](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/
 | workerWaitingTaskCount | None          | Waiting Task Count      |
 | workerExecThreadCount  | None          | Execute Thread Count    |
 
-
 ### Metric Set: Database
 
 | Metric Name               | Metric Unit | Metric Help Description     |
