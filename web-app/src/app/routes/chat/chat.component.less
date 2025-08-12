@@ -26,7 +26,7 @@
 
   .chat-sidebar {
     width: 300px;
-    background: #fff;
+    background: #fff !important;
     border-right: 1px solid @border-color-base;
     display: flex;
     flex-direction: column;
@@ -141,7 +141,7 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        
+
         p {
           margin-top: 16px;
           color: @text-color-secondary;
@@ -406,52 +406,53 @@
   }
 }
 
-// Dark theme overrides following dashboard pattern
-[data-theme='dark'] {
-  .chat-container {
-    background: #000;
-    
-    .chat-sidebar {
-      background: #000;
-      border-right-color: @border-color-base;
-      
-      .sidebar-header {
-        border-bottom-color: @border-color-base;
-        background: #000;
-      }
-      
-      .sidebar-header h3 {
-        color: fade(@white, 85%);
-      }
-      
+// Dark theme overrides with maximum specificity
+:host-context([data-theme='dark']) .chat-container,
+[data-theme='dark'] .chat-container,
+body[data-theme='dark'] .chat-container {
+  background: #000;
+
+  .chat-sidebar {
+    background: #000 !important;
+    border-right-color: @border-color-base;
+
+    .sidebar-header {
+      border-bottom-color: @border-color-base;
+      background: #000 !important;
+    }
+
+    .sidebar-header h3 {
+      color: fade(@white, 85%);
+    }
+
       .conversation-list {
         .conversation-item {
           border-bottom-color: @border-color-split;
           background: transparent;
           border-left: 3px solid transparent;
-          
+
           &:hover {
             background: transparent;
-            
+
             .conversation-content .conversation-title {
               color: @primary-color;
             }
           }
-          
+
           &.active {
             background: fade(@white, 5%);
             border-left: 3px solid @primary-color;
-            
+
             .conversation-content .conversation-title {
               color: @primary-color;
             }
           }
-          
+
           .conversation-content {
             .conversation-title {
               color: fade(@white, 65%);
             }
-            
+
             .conversation-time {
               color: fade(@white, 45%);
             }
@@ -459,84 +460,83 @@
         }
       }
     }
-    
+
     .chat-main {
       background: #000;
-      
+
       .chat-header {
         border-bottom-color: @border-color-base;
         background: #000;
-        
+
         .chat-title h2 {
           color: fade(@white, 85%);
         }
       }
-      
+
       .messages-container {
         background: #000;
-        
+
         .loading-container {
           p {
             color: fade(@white, 65%);
           }
         }
-        
+
         .welcome-message .welcome-content {
           h3 {
             color: fade(@white, 85%);
           }
-          
+
           p, ul {
             color: fade(@white, 65%);
           }
         }
-        
+
         .message {
           .message-avatar {
             background: fade(@white, 8%);
-            border: 1px solid @border-color-split;
-            
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+
             i {
               color: fade(@white, 65%);
             }
           }
-          
+
           .message-content {
-            background: #000;
-            border: 1px solid @border-color-split;
-            
+            background: #141414 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
             .message-header {
               .message-role {
                 color: fade(@white, 85%);
               }
-              
+
               .message-time {
                 color: fade(@white, 45%);
               }
             }
-            
+
             .message-text {
               color: fade(@white, 85%);
             }
-            
+
             .typing-indicator {
               color: fade(@white, 45%);
             }
           }
-          
+
           &.user-message .message-content {
             background: @primary-color;
-            border: 1px solid lighten(@primary-color, 10%);
-            
+
             .message-text {
               color: @white;
             }
-            
+
             .message-header {
               .message-role {
                 color: fade(@white, 90%);
               }
-              
+
               .message-time {
                 color: fade(@white, 70%);
               }
@@ -544,18 +544,19 @@
           }
         }
       }
-      
+
       .input-area {
-        background: #000;
+        background: #000 !important;
         border-top-color: @border-color-base;
-        
+
         .input-hint small {
           color: fade(@white, 45%);
         }
       }
     }
   }
-}
+
+
 
 // Force input styling for dark theme
 [data-theme='dark'] {
@@ -564,19 +565,38 @@
       background: fade(@white, 8%) !important;
       border-color: @border-color-split !important;
       color: fade(@white, 85%) !important;
-      
+
       &::placeholder {
         color: fade(@white, 45%) !important;
       }
-      
+
       &:focus, &:hover {
         border-color: @primary-color !important;
         box-shadow: 0 0 0 2px fade(@primary-color, 20%) !important;
       }
     }
-    
+
     .ant-input-data-count {
       color: fade(@white, 45%) !important;
     }
   }
+}
+
+// Additional high-specificity overrides for dark theme
+[data-theme="dark"] .chat-container .chat-sidebar {
+  background: #000 !important;
+}
+
+[data-theme="dark"] .chat-container .chat-sidebar .sidebar-header {
+  background: #000 !important;
+}
+
+[data-theme="dark"] .chat-container .chat-main .messages-container .message .message-content {
+  background: #141414 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  border: none !important;
+}
+
+[data-theme="dark"] .chat-container .chat-main .input-area {
+  background: #000 !important;
 }
