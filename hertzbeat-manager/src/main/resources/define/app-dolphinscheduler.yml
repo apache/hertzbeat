@@ -1,0 +1,357 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: dolphinscheduler
+# The monitoring i18n name
+name:
+  zh-CN: Apache DolphinScheduler
+  en-US: Apache DolphinScheduler
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Apache DolphinScheduler 通用指标进行测量监控。<br>您可以点击 “<i>新建 Apache DolphinScheduler</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat measures and monitors the general metrics of Apache DolphinScheduler.<br>You can click on “<i>Create New Apache DolphinScheduler</i>” to configure it, or select “<i>More Actions</i>” to import an existing configuration.
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/dolphinscheduler
+  en-US: https://hertzbeat.apache.org/docs/help/dolphinscheduler
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 12345
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    # type-param field type(most mapping the html input type)
+    type: number
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 6000
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启用HTTPS
+      en-US: SSL
+    # type-param field type(boolean mapping the html h tag)
+    type: boolean
+    # required-true or false
+    required: true
+  - field: token
+    # name-param field display i18n name
+    name:
+      zh-CN: 令牌
+      en-US: Token
+    type: text
+    limit: 100
+    required: true
+
+# collect metrics config list
+metrics:
+  - name: master
+    i18n:
+      zh-CN: Master
+      en-US: Master
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: 主机地址
+          en-US: Host
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
+      - field: serverStatus
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Server Status
+      - field: processId
+        type: 1
+        i18n:
+          zh-CN: 进程 ID
+          en-US: Process Id
+      - field: runningTime
+        type: 0
+        i18n:
+          zh-CN: 运行时间
+          en-US: Running Time
+      - field: cpuUsage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: CPU使用率
+          en-US: CPU Usage
+      - field: memoryUsage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存使用率
+          en-US: Memory Usage
+      - field: diskAvailable
+        type: 0
+        unit: 'GB'
+        i18n:
+          zh-CN: 磁盘可用容量
+          en-US: Disk Available
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - $.resInfo
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - host=json:apply($.resInfo).host
+      - port=json:apply($.resInfo).port
+      - serverStatus=json:apply($.resInfo).serverStatus
+      - processId=json:apply($.resInfo).processId
+      - runningTime=(now()-json:apply($.resInfo).startupTime)/86400000
+      - cpuUsage=json:apply($.resInfo).cpuUsage * 100
+      - memoryUsage=json:apply($.resInfo).memoryUsage * 100
+      - diskAvailable=json:apply($.resInfo).diskAvailable
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: /dolphinscheduler/monitor/masters
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: ^_^ssl^_^
+      # http request header content
+      headers:
+        token: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$.data[*]'
+
+
+  - name: worker
+    i18n:
+      zh-CN: Worker
+      en-US: Worker
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: 主机地址
+          en-US: Host
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
+      - field: serverStatus
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Server Status
+      - field: processId
+        type: 1
+        i18n:
+          zh-CN: 进程 ID
+          en-US: Process Id
+      - field: runningTime
+        type: 0
+        i18n:
+          zh-CN: 运行时间
+          en-US: Running Time
+      - field: cpuUsage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: CPU使用率
+          en-US: CPU Usage
+      - field: memoryUsage
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 内存使用率
+          en-US: Memory Usage
+      - field: diskAvailable
+        type: 0
+        unit: 'GB'
+        i18n:
+          zh-CN: 磁盘可用容量
+          en-US: Disk Available
+      - field: workerHostWeight
+        type: 0
+        i18n:
+          zh-CN: 权重
+          en-US: Weight
+      - field: workerWaitingTaskCount
+        type: 0
+        i18n:
+          zh-CN: 等待任务数
+          en-US:  Waiting Task Count
+      - field: workerExecThreadCount
+        type: 0
+        i18n:
+          zh-CN: 执行线程数
+          en-US: Execute Thread Count
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.resInfo
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - host=json:apply($.resInfo).host
+      - port=json:apply($.resInfo).port
+      - serverStatus=json:apply($.resInfo).serverStatus
+      - processId=json:apply($.resInfo).processId
+      - runningTime=(now()-json:apply($.resInfo).startupTime)/86400000
+      - cpuUsage=json:apply($.resInfo).cpuUsage * 100
+      - memoryUsage=json:apply($.resInfo).memoryUsage * 100
+      - diskAvailable=json:apply($.resInfo).diskAvailable
+      - workerHostWeight=json:apply($.resInfo).workerHostWeight
+      - workerWaitingTaskCount=json:apply($.resInfo).workerWaitingTaskCount
+      - workerExecThreadCount=json:apply($.resInfo).workerExecThreadCount
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: /dolphinscheduler/monitor/workers
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: ^_^ssl^_^
+      # http request header content
+      headers:
+        token: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$.data[*]'
+
+  - name: database
+    i18n:
+      zh-CN: 数据库
+      en-US: Database
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 2
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: dbType
+        type: 1
+        i18n:
+          zh-CN: 数据库类型
+          en-US: Database Type
+      - field: state
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: State
+      - field: maxConnections
+        type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connections
+      - field: threadsConnections
+        type: 0
+        i18n:
+          zh-CN: 当前连接数
+          en-US: Threads Connections
+      - field: threadsRunningConnections
+        type: 0
+        i18n:
+          zh-CN: 当前活跃连接数
+          en-US: Threads Running Connections
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - dbType
+      - state
+      - maxConnections
+      - threadsConnections
+      - threadsRunningConnections
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - dbType=dbType
+      - state=state
+      - maxConnections=maxConnections
+      - threadsConnections=threadsConnections
+      - threadsRunningConnections=threadsRunningConnections
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: /dolphinscheduler/monitor/databases
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: ^_^ssl^_^
+      # http request header content
+      headers:
+        token: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$.data[0]'
