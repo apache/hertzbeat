@@ -122,6 +122,7 @@ Statistics for the top 10 processes using memory. Statistics include: process ID
 | avg_cpu_temp | C           | Average Temp All Cores  |
 
 * Note: This indicator information relies on the hardware sensor monitoring tool (lm-sensors). Please confirm that the Ubuntu operating system can obtain monitoring information normally. You can add the following indicator collection configuration as needed.
+
 ```yaml
 metrics:
   - name: avg_cpu_temp
