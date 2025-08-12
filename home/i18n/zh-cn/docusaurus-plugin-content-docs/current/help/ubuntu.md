@@ -120,6 +120,7 @@ keywords: [开源监控系统, 开源操作系统监控, Ubuntu监控]
 | avg_cpu_temp | C    | 所有核心的平均温度 |
 
 * 注意：此指标信息依赖硬件传感器的监测工具(lm-sensors)，请确认Ubuntu操作系统可以正常获取监测信息，可根据需要补充如下指标采集配置
+
 ```yaml
 metrics:
   - name: avg_cpu_temp
