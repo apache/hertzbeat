@@ -225,6 +225,12 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "AI Agent Chat",
+          "i18n": "menu.extras.ai.chat",
+          "icon": "anticon-robot",
+          "link": "/chat"
+        },
+        {
           "text": "settings",
           "i18n": "menu.extras.settings",
           "icon": "anticon-setting",
