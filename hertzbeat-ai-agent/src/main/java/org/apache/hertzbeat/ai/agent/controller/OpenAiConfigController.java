@@ -22,7 +22,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.pojo.dto.OpenAiConfigDto;
 import org.apache.hertzbeat.ai.agent.service.OpenAiConfigService;
-import org.apache.hertzbeat.ai.agent.service.OpenAiValidationService;
 import org.springframework.http.ResponseEntity;
 
 import jakarta.validation.Valid;
@@ -47,11 +46,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class OpenAiConfigController {
 
     private final OpenAiConfigService openAiConfigService;
-    private final OpenAiValidationService openAiValidationService;
 
-    public OpenAiConfigController(OpenAiConfigService openAiConfigService, OpenAiValidationService openAiValidationService) {
+    public OpenAiConfigController(OpenAiConfigService openAiConfigService) {
         this.openAiConfigService = openAiConfigService;
-        this.openAiValidationService = openAiValidationService;
     }
 
     @PostMapping("/openai")
@@ -62,7 +59,7 @@ public class OpenAiConfigController {
             
             // Validate API key if enabled
             if (config.isEnable() && config.getApiKey() != null && !config.getApiKey().trim().isEmpty()) {
-                OpenAiValidationService.ValidationResult validationResult = openAiValidationService.validateApiKey(config.getApiKey());
+                OpenAiConfigService.ValidationResult validationResult = openAiConfigService.validateApiKey(config.getApiKey());
                 
                 if (!validationResult.isValid()) {
                     log.warn("API key validation failed during save: {}", validationResult.getMessage());
@@ -128,7 +125,7 @@ public class OpenAiConfigController {
             String validationMessage = "No configuration found";
             
             if (effectiveConfig != null && effectiveConfig.isEnable() && effectiveConfig.getApiKey() != null && !effectiveConfig.getApiKey().trim().isEmpty()) {
-                OpenAiValidationService.ValidationResult validationResult = openAiValidationService.validateApiKey(effectiveConfig.getApiKey());
+                OpenAiConfigService.ValidationResult validationResult = openAiConfigService.validateApiKey(effectiveConfig.getApiKey());
                 validationPassed = validationResult.isValid();
                 validationMessage = validationResult.getMessage();
                 

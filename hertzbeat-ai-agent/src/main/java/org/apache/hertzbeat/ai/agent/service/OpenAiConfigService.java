@@ -21,6 +21,7 @@ import org.apache.hertzbeat.ai.agent.pojo.dto.OpenAiConfigDto;
 
 /**
  * OpenAI Configuration Service
+ * Consolidated service for OpenAI configuration, validation, and client factory management
  */
 public interface OpenAiConfigService {
 
@@ -47,4 +48,46 @@ public interface OpenAiConfigService {
      * @return effective configuration or null if not configured
      */
     OpenAiConfigDto getEffectiveConfig();
+
+    /**
+     * Validate OpenAI API key by calling the OpenAI API
+     * @param apiKey the API key to validate
+     * @return validation result with success status and message
+     */
+    ValidationResult validateApiKey(String apiKey);
+
+    /**
+     * Force reload of OpenAI configuration cache
+     * This method is typically called when configuration changes
+     */
+    void reloadConfig();
+
+    /**
+     * Validation result class
+     */
+    class ValidationResult {
+        private final boolean valid;
+        private final String message;
+
+        private ValidationResult(boolean valid, String message) {
+            this.valid = valid;
+            this.message = message;
+        }
+
+        public static ValidationResult success(String message) {
+            return new ValidationResult(true, message);
+        }
+
+        public static ValidationResult failure(String message) {
+            return new ValidationResult(false, message);
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
 }
