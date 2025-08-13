@@ -14,8 +14,8 @@ This page explains how to run and connect to the HertzBeat MCP SSE server.
 
 ### Connect to the MCP server
 
+Make sure that hertzbeat server is up and running. If you are using any other port than 1157, replace the following accordingly
 - URL: `http://localhost:1157/api/sse`
-- Method: `GET`
 
 ### Authentication
 
@@ -28,27 +28,44 @@ You must authenticate each request using one of the following methods:
 - Basic authentication
      - Header: `Authorization: Basic <base64(username:password)>`
 
-### Examples
+### Cursor MCP configuration
 
-JWT:
-
-```bash
-curl -N \
-  -H "Accept: text/event-stream" \
-  -H "Authorization: Bearer <jwt-token>" \
-  http://localhost:1157/api/sse
-```
+Create or edit `.cursor/mcp.json` in your home directory or project root.
 
 Basic auth:
 
-```bash
-curl -N \
-  -H "Accept: text/event-stream" \
-  -H "Authorization: Basic $(printf '%s' 'username:password' | base64)" \
-  http://localhost:1157/api/sse
+```json
+{
+      "Hertzbeat-MCP": {
+            "url": "http://localhost:1157/api/sse",
+            "headers": {
+                  "Authorization": "Basic <base64(username:password)>"
+            }
+      }
+}
 ```
 
-### Notes
+JWT bearer:
 
+```json
+{
+      "Hertzbeat-MCP": {
+            "url": "http://localhost:1157/api/sse",
+            "headers": {
+                  "Authorization": "Bearer <your-jwt-token>"
+            }
+      }
+}
+```
+
+After saving, reload MCP in Cursor or restart the editor.
+
+### Tools available
+
+- list_monitors: Returns the list of names of all configured monitors.
+
+More tools are coming soon to expand management and query capabilities.
+
+### Notes
 
 - If the connection drops, reconnect using the same headers.
