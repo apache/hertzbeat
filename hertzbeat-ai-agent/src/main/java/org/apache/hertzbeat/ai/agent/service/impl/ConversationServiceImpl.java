@@ -23,6 +23,7 @@ import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.agent.service.ConversationService;
+import org.apache.hertzbeat.ai.agent.service.OpenAiConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -49,6 +50,9 @@ public class ConversationServiceImpl implements ConversationService {
     @Autowired
     private ChatClientProviderService chatClientProviderService;
     
+    @Autowired
+    private OpenAiConfigService openAiConfigService;
+    
     @Override
     public ConversationDto createConversation() {
         String conversationId = createNewConversation();
@@ -63,6 +67,20 @@ public class ConversationServiceImpl implements ConversationService {
             try {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Conversation not found: " + conversationId);
+                emitter.send(errorResponse);
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+        
+        // Check if OpenAI is properly configured
+        if (!openAiConfigService.isConfigured()) {
+            try {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "OpenAI is not configured. Please configure your OpenAI API key in the settings or application.yml file.");
+                errorResponse.put("configRequired", true);
                 emitter.send(errorResponse);
                 emitter.complete();
             } catch (Exception e) {

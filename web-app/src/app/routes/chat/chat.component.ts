@@ -24,6 +24,7 @@ import { I18NService } from '@core';
 
 import { AiChatService, ChatMessage, ConversationDto } from '../../service/ai-chat.service';
 import { ThemeService } from '../../service/theme.service';
+import { OpenAiConfigService, OpenAiConfig, OpenAiConfigStatus } from '../../service/openai-config.service';
 
 @Component({
   selector: 'app-chat',
@@ -41,18 +42,28 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   sidebarCollapsed = false;
   theme: string = 'default';
 
+  // OpenAI Configuration
+  isOpenAiConfigured = false;
+  showConfigModal = false;
+  configLoading = false;
+  openAiConfig: OpenAiConfig = {
+    enable: false,
+    apiKey: ''
+  };
+
   constructor(
     private aiChatService: AiChatService,
     private message: NzMessageService,
     private modal: NzModalService,
     private i18n: I18NService,
     private cdr: ChangeDetectorRef,
-    private themeSvc: ThemeService
+    private themeSvc: ThemeService,
+    private openAiConfigService: OpenAiConfigService
   ) {}
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
-    this.loadConversations();
+    this.checkOpenAiConfiguration();
   }
 
   ngAfterViewChecked(): void {
@@ -84,7 +95,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       error: (error) => {
         console.error('Error loading conversations:', error);
         this.message.error(`Failed to load conversations: ${error.status} ${error.statusText || error.message}`);
-        
+
         // Create a fallback new conversation if API is not available
         console.log('Creating fallback conversation...');
         this.createFallbackConversation();
@@ -113,7 +124,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       error: (error) => {
         console.error('Error creating conversation:', error);
         this.message.error(`Failed to create new conversation: ${error.status} ${error.statusText || error.message}`);
-        
+
         // Create fallback conversation
         this.createFallbackConversation();
       }
@@ -130,10 +141,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       updatedAt: new Date(),
       messages: []
     };
-    
+
     this.conversations = [fallbackConversation];
     this.selectConversation(fallbackConversation);
-    
+
     this.message.warning('AI Chat service unavailable. Running in offline mode.');
   }
 
@@ -150,12 +161,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    */
   loadConversationHistory(conversationId: string): void {
     this.isLoading = true;
-    
+
     this.aiChatService.getConversation(conversationId).subscribe({
       next: (response) => {
         this.isLoading = false;
         console.log('Conversation history response:', response);
-        
+
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
           this.cdr.detectChanges();
@@ -184,7 +195,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    */
   deleteConversation(conversation: ConversationDto, event: Event): void {
     event.stopPropagation();
-    
+
     this.modal.confirm({
       nzTitle: 'Delete Conversation',
       nzContent: 'Are you sure you want to delete this conversation?',
@@ -197,7 +208,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
             if (response.code === 0) {
               // Remove from conversations list
               this.conversations = this.conversations.filter(c => c.conversationId !== conversation.conversationId);
-              
+
               // If this was the current conversation, select another or create new
               if (this.currentConversation?.conversationId === conversation.conversationId) {
                 if (this.conversations.length > 0) {
@@ -206,7 +217,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                   this.createNewConversation();
                 }
               }
-              
+
               this.message.success('Conversation deleted');
             }
           },
@@ -235,7 +246,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
     // Add user message to the messages list
     this.messages.push(userMessage);
-    
+
     const messageContent = this.newMessage.trim();
     this.newMessage = '';
     this.isLoading = true;
@@ -267,17 +278,17 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         console.log('AI message content type:', typeof aiMessage.content);
         console.log('AI message timestamp type:', typeof aiMessage.timestamp);
         console.log('AI message timestamp value:', aiMessage.timestamp);
-        
+
         // Ensure content is string and timestamp is Date
         const processedMessage: ChatMessage = {
           content: String(aiMessage.content || ''),
           role: 'assistant',
           timestamp: aiMessage.timestamp instanceof Date ? aiMessage.timestamp : new Date()
         };
-        
+
         // Process the message to ensure content is properly handled
         this.processMessage(processedMessage);
-        
+
         // Find if there's already an assistant message at the end
         const lastMessage = this.messages[this.messages.length - 1];
         if (lastMessage && lastMessage.role === 'assistant') {
@@ -295,7 +306,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       error: (error) => {
         console.error('Error in chat stream:', error);
         this.message.error(`Failed to get AI response: ${error.status} ${error.statusText || error.message}`);
-        
+
         // Add error message to chat
         const errorMessage: ChatMessage = {
           content: 'Sorry, there was an error processing your request. Please check if the AI Agent service is running and try again.',
@@ -356,7 +367,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     if (conversation.messages && conversation.messages.length > 0) {
       const firstUserMessage = conversation.messages.find(m => m.role === 'user');
       if (firstUserMessage) {
-        return firstUserMessage.content.length > 30 
+        return firstUserMessage.content.length > 30
           ? firstUserMessage.content.substring(0, 30) + '...'
           : firstUserMessage.content;
       }
@@ -371,8 +382,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     if (!(date instanceof Date)) {
       date = new Date(date);
     }
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit'
     });
   }
@@ -409,5 +420,149 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
     }
+  }
+
+  /**
+   * Check OpenAI configuration status
+   */
+  checkOpenAiConfiguration(): void {
+    this.openAiConfigService.getOpenAiConfigStatus().subscribe({
+      next: (response) => {
+        if (response.code === 0) {
+          this.isOpenAiConfigured = response.data.configured;
+          if (this.isOpenAiConfigured) {
+            this.loadConversations();
+          } else {
+            this.showOpenAiConfigDialog(response.data);
+          }
+        } else {
+          console.error('Failed to check OpenAI configuration:', response.msg);
+          this.showOpenAiConfigDialog();
+        }
+      },
+      error: (error) => {
+        console.error('Error checking OpenAI configuration:', error);
+        this.showOpenAiConfigDialog();
+      }
+    });
+  }
+
+  /**
+   * Show OpenAI configuration dialog
+   */
+  showOpenAiConfigDialog(status?: OpenAiConfigStatus): void {
+    // Load existing configuration if available
+    this.loadOpenAiConfig();
+
+    let contentMessage = `
+      <div style="margin-bottom: 16px;">
+        <p>To use AI Agent Chat, please configure your OpenAI API key.</p>
+    `;
+
+    if (status && !status.validationPassed && status.validationMessage) {
+      contentMessage += `
+        <div style="margin-bottom: 12px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
+          <strong>Configuration Issue:</strong> ${status.validationMessage}
+        </div>
+      `;
+    }
+
+    contentMessage += `
+        <p>You can either:</p>
+        <ul>
+          <li>Configure it here (stored in database)</li>
+          <li>Add it to your application.yml file under <code>spring.ai.openai.api-key</code></li>
+        </ul>
+      </div>
+    `;
+
+    const modalRef = this.modal.create({
+      nzTitle: 'OpenAI Configuration Required',
+      nzContent: contentMessage,
+      nzWidth: 600,
+      nzClosable: false,
+      nzMaskClosable: false,
+      nzFooter: [
+        {
+          label: 'Configure Here',
+          type: 'primary',
+          onClick: () => {
+            this.showConfigModal = true;
+            modalRef.destroy();
+          }
+        }
+      ]
+    });
+  }
+
+  /**
+   * Load OpenAI configuration
+   */
+  loadOpenAiConfig(): void {
+    this.openAiConfigService.getOpenAiConfig().subscribe({
+      next: (response) => {
+        if (response.code === 0 && response.data) {
+          this.openAiConfig = { ...this.openAiConfig, ...response.data };
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load OpenAI config:', error);
+      }
+    });
+  }
+
+  /**
+   * Show configuration modal
+   */
+  onShowConfigModal(): void {
+    this.loadOpenAiConfig();
+    this.showConfigModal = true;
+  }
+
+  /**
+   * Close configuration modal
+   */
+  onCloseConfigModal(): void {
+    this.showConfigModal = false;
+  }
+
+
+  /**
+   * Save OpenAI configuration
+   */
+  onSaveOpenAiConfig(): void {
+    if (!this.openAiConfig.apiKey.trim()) {
+      this.message.error('API Key is required');
+      return;
+    }
+
+    // Always enable when saving an API key
+    this.openAiConfig.enable = true;
+
+    this.configLoading = true;
+    this.message.info('Validating API key...', { nzDuration: 2000 });
+
+    this.openAiConfigService.saveOpenAiConfig(this.openAiConfig).subscribe({
+      next: (response) => {
+        this.configLoading = false;
+        if (response.code === 0) {
+          this.message.success('OpenAI API key validated and saved successfully!');
+          this.showConfigModal = false;
+          this.isOpenAiConfigured = true;
+          this.loadConversations();
+        } else {
+          // Check if it's a validation error
+          if (response.msg.includes('validation failed')) {
+            this.message.error('❌ API Key validation failed: ' + response.msg, { nzDuration: 5000 });
+          } else {
+            this.message.error('Failed to save configuration: ' + response.msg);
+          }
+        }
+      },
+      error: (error) => {
+        this.configLoading = false;
+        this.message.error('Failed to save configuration: ' + error.message);
+      }
+    });
   }
 }

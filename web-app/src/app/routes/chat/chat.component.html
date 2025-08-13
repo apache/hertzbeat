@@ -176,7 +176,52 @@
       </div>
       <div class="input-hint">
         <small>Press Enter to send, Shift+Enter for new line</small>
+        <button
+          nz-button
+          nzType="link"
+          nzSize="small"
+          (click)="onShowConfigModal()"
+
+          style="float: right;"
+        >
+          <i nz-icon nzType="setting"></i>
+          Modify API Key
+        </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- OpenAI Configuration Modal -->
+<nz-modal
+  [(nzVisible)]="showConfigModal"
+  nzTitle="OpenAI Configuration"
+  (nzOnCancel)="onCloseConfigModal()"
+  (nzOnOk)="onSaveOpenAiConfig()"
+  nzMaskClosable="false"
+  [nzClosable]="false"
+  nzWidth="600px"
+  [nzOkLoading]="configLoading"
+  nzOkText="Validate & Save"
+  nzCancelText="Cancel"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form nzLayout="vertical">
+
+      <nz-form-item>
+        <nz-form-label nzRequired="true">OpenAI API Key</nz-form-label>
+        <nz-form-control nzErrorTip="API Key is required">
+          <input
+            nz-input
+            [(ngModel)]="openAiConfig.apiKey"
+            name="apiKey"
+            type="password"
+            placeholder="sk-..."
+            required
+          />
+          <p class="form-help">Your OpenAI API key (starts with sk-). The key will be validated when saved.</p>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

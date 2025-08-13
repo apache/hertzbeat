@@ -49,7 +49,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     private ToolCallbackProvider toolCallbackProvider;
 
     @Autowired
-    public ChatClientProviderServiceImpl(@Qualifier("openAiChatClient") ChatClient openAiChatClient) {
+    public ChatClientProviderServiceImpl(ChatClient openAiChatClient) {
         this.chatClient = openAiChatClient;
     }
 
@@ -77,7 +77,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             }
             
             messages.add(new UserMessage(context.getMessage()));
-            
+
             return this.chatClient.prompt()
                     .messages(messages)
                     .system(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
