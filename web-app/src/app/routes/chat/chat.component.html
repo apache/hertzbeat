@@ -81,7 +81,7 @@
           {{ getConversationTitle(currentConversation) }}
         </h2>
         <h2 *ngIf="!currentConversation">
-          HertzBeat AI Assistant
+          HertzBeat AI Agent
         </h2>
       </div>
     </div>
@@ -102,17 +102,18 @@
       <div *ngIf="messages.length === 0 && !isLoading" class="welcome-message">
         <div class="welcome-content">
           <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon">
-          <h3>Welcome to HertzBeat AI Assistant!</h3>
+          <h3>Welcome to HertzBeat AI Agent!</h3>
           <p>
-            I'm here to help you with monitoring, alerts, and system management.
+            I'm your intelligent monitoring companion, ready to help you manage and optimize your infrastructure monitoring.
             You can ask me to:
           </p>
           <ul>
-            <li>List and manage monitors</li>
-            <li>Add new monitors for various services</li>
-            <li>Get information about monitor types</li>
+            <li>🔍 List and manage your existing monitors</li>
+            <li>➕ Add new monitors for websites, APIs, databases, and services</li>
+            <li>📊 Get detailed information about available monitor types and their parameters</li>
+            <li>⚡ Check monitor status and troubleshoot monitoring issues</li>
           </ul>
-          <p>Type your question below to get started!</p>
+          <p>Ask me anything about your monitoring setup!</p>
         </div>
       </div>
 
