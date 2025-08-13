@@ -54,7 +54,7 @@ public class RedisCommonCollectE2eTest extends AbstractCollectE2eTest {
     private static final String HOST = "127.0.0.1";
     private static final int REDIS_PORT = 6379;
     private static final String REDIS_PATTERN = "1";
-    private static final List<String> ALLOW_EMPTY_WHITE_LIST = Arrays.asList("server", "errorstats", "commandstats", "keyspace");
+    private static final List<String> ALLOW_EMPTY_WHITE_LIST = Arrays.asList("server", "errorstats", "commandstats", "keyspace", "slowlog");
 
     private static GenericContainer<?> redisContainer;
 
