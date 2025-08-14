@@ -19,10 +19,13 @@ package org.apache.hertzbeat.manager.service;
 
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
@@ -41,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -155,5 +159,33 @@ class AppServiceTest {
             }
         });
         assertTrue(exception.getMessage().contains("prohibited keywords"));
+    }
+
+    @Test
+    void testRefreshStore() throws Exception {
+        List<Define> defines = new ArrayList<>();
+        Define define = Define.builder()
+                .app("mysql")
+                .content("""
+                        app: mysql
+                        params:
+                          - field: host_test
+                            name:
+                              en-US: Target Host
+                            type: host
+                            required: true""")
+                .build();
+        defines.add(define);
+
+        when(defineDao.findAll()).thenReturn(defines);
+
+        ObjectStoreDTO<Object> objectStoreDTO = new ObjectStoreDTO<>();
+        objectStoreDTO.setType(ObjectStoreDTO.Type.DATABASE);
+        ObjectStoreConfigChangeEvent objectStoreConfigChangeEvent = new ObjectStoreConfigChangeEvent(objectStoreDTO);
+        appService.onObjectStoreConfigChange(objectStoreConfigChangeEvent);
+
+        List<ParamDefine> appParamDefines = appService.getAppParamDefines(define.getApp());
+        assertNotNull(appParamDefines);
+        assertTrue(appParamDefines.stream().anyMatch(t -> t.getField().equals("host_test")));
     }
 }
