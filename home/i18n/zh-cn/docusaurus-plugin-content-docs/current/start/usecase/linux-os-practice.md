@@ -8,8 +8,7 @@ sidebar_label: Linux 操作系统监控案例
 
 ## HertzBeat 是什么
 
-Apache HertzBeat (incubating)
-一个拥有强大自定义监控能力，无需 Agent 的实时监控工具。网站监测，端口可用性，数据库，操作系统，阈值告警，告警通知(邮件微信钉钉飞书)。
+Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需 Agent 的实时监控工具。网站监测，端口可用性，数据库，操作系统，阈值告警，告警通知(邮件微信钉钉飞书)。
 
 github: <https://github.com/apache/hertzbeat>
 
@@ -24,8 +23,7 @@ github: <https://github.com/apache/hertzbeat>
 2. 安装成功浏览器访问 `http://ip:1157` 即可开始探索使用，默认账户密码 `admin/hertzbeat`
 
 :::note
-生产环境建议完整部署方式,
-参考 [Docker Compose 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-compose-deploy)
+生产环境建议完整部署方式, 参考 [Docker Compose 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-compose-deploy)
 :::
 
 ## 监控 Linux 操作系统
@@ -91,7 +89,6 @@ github: <https://github.com/apache/hertzbeat>
 
 ## 总结
 
-监控 Linux 操作系统的实践就到这里，当然对 Hertzbeat 来说这个功能只是冰山一角，如果您觉得 Hertzbeat 这个开源项目不错的话欢迎给我们
-Star 哦，非常感谢各位的支持！
+监控 Linux 操作系统的实践就到这里，当然对 Hertzbeat 来说这个功能只是冰山一角，如果您觉得 Hertzbeat 这个开源项目不错的话欢迎给我们 Star 哦，非常感谢各位的支持！
 
 **Github: <https://github.com/apache/hertzbeat>**
