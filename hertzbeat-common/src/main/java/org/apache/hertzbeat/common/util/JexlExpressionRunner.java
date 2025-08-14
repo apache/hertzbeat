@@ -19,15 +19,19 @@
 
 package org.apache.hertzbeat.common.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Maps;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlExpression;
 import org.apache.commons.jexl3.JexlFeatures;
 import org.apache.commons.jexl3.MapContext;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * jexl express runner
@@ -41,6 +45,7 @@ public class JexlExpressionRunner {
         Map<String, Object> functions = Maps.newLinkedHashMap();
         // set the root namespace function
         functions.put(null, new JexlCommonFunction());
+        functions.put(CommonConstants.JEXL_CUSTOM_JSON_FUNCTION, jsonFunction());
         ClassLoader classLoader = new ClassLoader() {
             @Override
             public String getName() {
@@ -78,5 +83,17 @@ public class JexlExpressionRunner {
     public static JexlExpression compile(String expression) {
         return jexlEngine.createExpression(expression);
     }
-    
+
+    /**
+     * custom function `json:apply(xx)`
+     *
+     * @return java.util.function.Function
+     */
+    private static Function<String, Map<String, Object>> jsonFunction() {
+        return json -> {
+            TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {
+            };
+            return JsonUtil.fromJson(json, typeReference);
+        };
+    }
 }

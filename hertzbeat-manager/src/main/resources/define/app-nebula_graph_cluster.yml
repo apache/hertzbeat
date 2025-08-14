@@ -21,11 +21,13 @@ app: nebula_graph_cluster
 name:
   zh-CN: NebulaGraph集群
   en-US: NebulaGraph Cluster
+  ja-JP: NebulaGraphクラスター
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat通过查询使用NGQL或OpenCypher查询 NebulaGraph 集群的基础信息，节点信息等指标。
   en-US: Hertzbeat uses NGQL or OpenCypher to query the basic information, node information and other metrics of the NebulaGraph cluster.
   zh-TW: Hertzbeat透過查詢使用NGQL或OpenCypher查詢 NebulaGraph 叢集的基礎訊息，節點資訊等指標。
+  ja-JP: Hertzbeatは、NGQLかOpenCypherをクエリしてNebulaGraphクラスターのメトリクスを監視します。
 # The description and help of this monitoring type
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulagraph_cluster
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +51,7 @@ params:
     name:
       zh-CN: graph端口
       en-US: graphPort
+      ja-JP: graphポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +66,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is number, range is required
@@ -72,6 +77,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input type)
     type: password
     # when type is number, range is required
@@ -83,6 +89,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -100,6 +107,7 @@ metrics:
     i18n:
       zh-CN: 基础信息
       en-US: Base info
+      ja-JP: 基礎情報
     priority: 0
     fields:
       - field: responseTime
@@ -108,21 +116,25 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: charset
         type: 1
         i18n:
           zh-CN: 字符集
           en-US: Charset
+          ja-JP: 文字セット
       - field: Collation
         type: 1
         i18n:
           zh-CN: 排序规则
           en-US: collation
+          ja-JP: 照合
       - field: metaLeader
         type: 1
         i18n:
           zh-CN: Meta Leader
           en-US: Meta Leader
+          ja-JP: Metaリーダー
 
     aliasFields:
       - responseTime
@@ -149,6 +161,7 @@ metrics:
     i18n:
       zh-CN: Session
       en-US: Session
+      ja-JP: セッション
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -158,13 +171,14 @@ metrics:
         i18n:
           zh-CN: Session数量
           en-US: Session
+          ja-JP: セッション数量
       - field: running_query_count
         type: 1
         i18n:
           zh-CN: 正在执行的查询数量
           en-US: Running query
+          ja-JP: 実行中のクエリ数
 
-    # 指标别名列表，用于在查询结果中识别指标
     aliasFields:
       - session
       - running_query_count
@@ -188,6 +202,7 @@ metrics:
     i18n:
       zh-CN: 后台任务
       en-US: Jobs
+      ja-JP: タスク
     priority: 2
     fields:
       - field: queue_jobs
@@ -195,11 +210,13 @@ metrics:
         i18n:
           zh-CN: 等待中的任务
           en-US: Queue jobs
+          ja-JP: 待機中のタスク数
       - field: running_jobs
         type: 0
         i18n:
           zh-CN: 执行中的任务
           en-US: Running jobs
+          ja-JP: 実行中のタスク数
 
     aliasFields:
       - queue_jobs
@@ -219,6 +236,7 @@ metrics:
     i18n:
       zh-CN: 节点信息
       en-US: Cluster node info
+      ja-JP: クラスターノード情報
     priority: 3
     fields:
       - field: total_storage_node
@@ -226,33 +244,39 @@ metrics:
         i18n:
           zh-CN: Storage节点
           en-US: Total storage node
+          ja-JP: ストレージノード総数
       - field: offline_storage_node
         type: 0
         i18n:
           zh-CN: 离线Storage节点
           en-US: Offline storage node
+          ja-JP: オフラインのストレージノード
 
       - field: total_meta_node
         type: 0
         i18n:
           zh-CN: Meta节点
           en-US: Total meta node
+          ja-JP: Metaノード総数
       - field: offline_meta_node
         type: 0
         i18n:
           zh-CN: 离线Meta节点
           en-US: Offline meta node
+          ja-JP: オフラインのMetaノード
 
       - field: total_graph_node
         type: 0
         i18n:
           zh-CN: Graph节点
           en-US: Total graph node
+          ja-JP: Graphノード総数
       - field: offline_graph_node
         type: 0
         i18n:
           zh-CN: 离线Graph节点
           en-US: Offline graph node
+          ja-JP: オフラインのGraphノード
 
     aliasFields:
       - total_storage_node
@@ -283,6 +307,7 @@ metrics:
     i18n:
       zh-CN: Storage节点
       en-US: Storage Nodes
+      ja-JP: ストレージノード
     priority: 4
     fields:
       - field: host
@@ -290,36 +315,43 @@ metrics:
         i18n:
           zh-CN: Host
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 0
         i18n:
           zh-CN: Port
           en-US: Port
+          ja-JP: ポート
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: STATUS
+          ja-JP: ステータス
       - field: leaderCount
         type: 0
         i18n:
           zh-CN: Leader数量
           en-US: Leader Count
+          ja-JP: リーダー数量
       - field: leaderDistribution
         type: 1
         i18n:
           zh-CN: Leader分布
           en-US: Leader Distribution
+          ja-JP: リーダー分布
       - field: partitionDistribution
         type: 1
         i18n:
           zh-CN: Partition分布
           en-US: Partition Distribution
+          ja-JP: パーティション分布
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
 
     aliasFields:
       - Host
@@ -352,6 +384,7 @@ metrics:
     i18n:
       zh-CN: Meta节点
       en-US: Meta Nodes
+      ja-JP: Metaノード
     priority: 5
     fields:
       - field: host
@@ -359,21 +392,25 @@ metrics:
         i18n:
           zh-CN: Host
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 0
         i18n:
           zh-CN: Port
           en-US: Port
+          ja-JP: ポート
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: STATUS
+          ja-JP: ステータス
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
 
     aliasFields:
       - Host
@@ -400,6 +437,7 @@ metrics:
     i18n:
       zh-CN: Graph节点
       en-US: Graph Nodes
+      ja-JP: Graphノード
     priority: 6
     fields:
       - field: host
@@ -407,21 +445,25 @@ metrics:
         i18n:
           zh-CN: Host
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 0
         i18n:
           zh-CN: Port
           en-US: Port
+          ja-JP: ポート
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: STATUS
+          ja-JP: ステータス
       - field: version
         type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
 
     aliasFields:
       - Host

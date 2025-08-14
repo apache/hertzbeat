@@ -21,11 +21,13 @@ app: mariadb
 name:
   zh-CN: MariaDB数据库
   en-US: MariaDB
+  ja-JP: MariaDB データベース
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 MariaDB 数据库的通用性能指标(系统信息、性能状态、Innodb、缓存、事物、用户线程、慢SQL等)进行采集监控，支持版本为 MariaDB5+。<br>您可以点击“<i>新建 MariaDB 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of MariaDB database (system information, performance status, Innodb, cache, things, user threads, slow SQL, etc.). Supported version is MariaDB5+. <br>You can click "<i>New MariaDB Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 MariaDB 數據庫的通用性能指標(系統信息、性能狀態、Innodb、緩存、事物、用戶線程、慢SQL等)進行采集監控，支持版本爲 MariaDB5+。<br>您可以點擊“<i>新建 MariaDB 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBCプロトコルを介して</a> MariaDB データベース（MariaDB5+）の一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 MariaDB データベース</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/mariadb
   en-US: https://hertzbeat.apache.org/docs/help/mariadb
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -59,6 +63,7 @@ params:
     name:
       zh-CN: 查询超时时间(ms)
       en-US: Query Timeout(ms)
+      ja-JP: クエリタイムアウト（ｍｓ）
     type: number
     # when type is number, range is required
     range: '[400,200000]'
@@ -69,12 +74,14 @@ params:
     name:
       zh-CN: 数据库名称
       en-US: Database Name
+      ja-JP: データベース名
     type: text
     required: false
   - field: username
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     type: text
     limit: 50
     required: false
@@ -82,12 +89,14 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     type: password
     required: false
   - field: url
     name:
       zh-CN: URL
       en-US: URL
+      ja-JP: URL
     type: text
     required: false
     hide: true
@@ -100,8 +109,9 @@ metrics:
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
     i18n:
-      zh-CN: 基础 信息
+      zh-CN: 基础信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -110,32 +120,38 @@ metrics:
         i18n:
           zh-CN: 版本
           en-US: Version
+          ja-JP: バージョン
       - field: port
         type: 1
         i18n:
           zh-CN: 端口
           en-US: Port
+          ja-JP: ポート
       - field: datadir
         type: 1
         i18n:
           zh-CN: 存储目录
-          en-US: DataDir
+          en-US: Data Directory
+          ja-JP: データディレクトリ
       - field: max_connections
         type: 0
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
+          ja-JP: 最大接続数
       - field: thread_cache_size
         type: 0
         i18n:
           zh-CN: 连接池大小
           en-US: Thread Cache Size
+          ja-JP: キャッシュするスレッドの数
       - field: innodb_buffer_pool_size
         type: 0
         unit: KB
         i18n:
           zh-CN: InnoDB缓冲池的大小
           en-US: Innodb Buffer Pool Size
+          ja-JP: Innodbバッファープールのサイズ
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - version
@@ -188,8 +204,9 @@ metrics:
     priority: 1
     # collect metrics content
     i18n:
-      zh-CN: 缓存 信息
+      zh-CN: 缓存信息
       en-US: Cache Info
+      ja-JP: キャッシュ情報
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: query_cache_hit_rate
@@ -198,27 +215,32 @@ metrics:
         i18n:
           zh-CN: 缓存命中率
           en-US: Query Cache Hit Rate
+          ja-JP: キャッシュ命中率
       - field: cache_hits
         type: 0
         i18n:
           zh-CN: 缓存命中数
           en-US: Cache Hits
+          ja-JP: キャッシュ命中数
       - field: cache_inserts
         type: 0
         i18n:
           zh-CN: 缓存插入数
           en-US: Cache Inserts
+          ja-JP: キャッシュインサート数
       - field: cache_free_blocks
         type: 0
         i18n:
           zh-CN: 缓存空闲块数量
           en-US: Cache Free Blocks
+          ja-JP: キャッシュの空きブロック数
       - field: cache_free_memory
         type: 0
         unit: KB
         i18n:
           zh-CN: 空闲缓存大小
           en-US: Cache Free Memory
+          ja-JP: キャッシュの利用可能メモリ
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - Qcache_hits
@@ -241,7 +263,6 @@ metrics:
     # the config content when protocol is jdbc
     jdbc:
       # jdbc host
-      # jdbchost
       host: ^_^host^_^
       # port
       port: ^_^port^_^
@@ -264,19 +285,22 @@ metrics:
   - name: performance
     priority: 2
     i18n:
-      zh-CN: 性能 信息
+      zh-CN: 性能信息
       en-US: Performance Info
+      ja-JP: パフォーマンス情報
     fields:
       - field: questions
         type: 0
         i18n:
           zh-CN: 查询总数
           en-US: Questions
+          ja-JP: クエリ総数
       - field: qps
         type: 0
         i18n:
-          zh-CN: 每秒处理查询数
-          en-US: Queries Per Second
+          zh-CN: QPS
+          en-US: QPS
+          ja-JP: QPS
     aliasFields:
       - uptime
       - questions
@@ -298,8 +322,9 @@ metrics:
   - name: innodb
     priority: 3
     i18n:
-      zh-CN: Innodb 信息
+      zh-CN: Innodb信息
       en-US: Innodb Info
+      ja-JP: Innodb情報
     fields:
       - field: innodb_data_reads
         type: 0
@@ -307,30 +332,35 @@ metrics:
         i18n:
           zh-CN: 磁盘读取次数
           en-US: Innodb Data Reads
+          ja-JP: Innodb読み取り回数
       - field: innodb_data_writes
         type: 0
         unit: Times
         i18n:
           zh-CN: 磁盘写入次数
           en-US: Innodb Data Writes
+          ja-JP: Innodb書き込み回数
       - field: innodb_data_read
         type: 0
         unit: KB
         i18n:
           zh-CN: 磁盘读取数据量
           en-US: Innodb Data Read
+          ja-JP: Innodb読み取り（KB）
       - field: innodb_data_written
         type: 0
         unit: KB
         i18n:
           zh-CN: 磁盘写入数据量
           en-US: Innodb Data Written
+          ja-JP: Innodb書き込み（KB）
       - field: innodb_buffer_hit_rate
         type: 0
         unit: '%'
         i18n:
           zh-CN: Innodb 缓存命中数
           en-US: Innodb Buffer Hit Rate
+          ja-JP: Innodbバッファーキャッシュ命中率
     aliasFields:
       - Innodb_data_reads
       - Innodb_data_writes
@@ -364,8 +394,9 @@ metrics:
   - name: status
     priority: 4
     i18n:
-      zh-CN: 状态 信息
+      zh-CN: 状态信息
       en-US: Status Info
+      ja-JP: 状態情報
     fields:
       - field: uptime
         type: 0
@@ -373,61 +404,73 @@ metrics:
         i18n:
           zh-CN: 运行时间
           en-US: Uptime
+          ja-JP: アップタイム
       - field: com_select
         type: 0
         i18n:
           zh-CN: 查询次数
           en-US: Com Select
+          ja-JP: セレクト回数
       - field: com_insert
         type: 0
         i18n:
           zh-CN: 插入次数
           en-US: Com Insert
+          ja-JP: インサート回数
       - field: com_update
         type: 0
         i18n:
           zh-CN: 更新次数
           en-US: Com Update
+          ja-JP: 更新回数
       - field: com_delete
         type: 0
         i18n:
           zh-CN: 删除次数
           en-US: Com Delete
+          ja-JP: 削除回数
       - field: com_commit
         type: 0
         i18n:
           zh-CN: 事务提交次数
           en-US: Com Commit
+          ja-JP: トランザクションのコミット数
       - field: com_rollback
         type: 0
         i18n:
           zh-CN: 事务回滚次数
           en-US: Com Rollback
+          ja-JP: トランザクションのロールバック数
       - field: threads_created
         type: 0
         i18n:
           zh-CN: 线程创建数
           en-US: Threads Created
+          ja-JP: スレッド作成数
       - field: threads_connected
         type: 0
         i18n:
           zh-CN: 连接线程数
           en-US: Threads Connected
+          ja-JP: 接続スレッド数
       - field: threads_cached
         type: 0
         i18n:
           zh-CN: 缓存线程数
           en-US: Threads Cached
+          ja-JP: キャッシュスレッド数
       - field: threads_running
         type: 0
         i18n:
           zh-CN: 活动线程数
           en-US: Threads Running
+          ja-JP: 活動中のスレッド数
       - field: qps
         type: 0
         i18n:
-          zh-CN: 每秒处理查询数
-          en-US: Com Insert
+          zh-CN: QPS
+          en-US: QPS
+          ja-JP: QPS
     aliasFields:
       - uptime
       - com_select
@@ -459,69 +502,82 @@ metrics:
   - name: handler
     priority: 5
     i18n:
-      zh-CN: 处理器 信息
+      zh-CN: 处理器信息
       en-US: Handler Info
+      ja-JP: ハンドラ情報
     fields:
       - field: handler_commit
         type: 0
         i18n:
           zh-CN: 处理的事务提交数
           en-US: Handler Commit
+          ja-JP: ハンドラのコミット操作数
       - field: handler_delete
         type: 0
         i18n:
           zh-CN: 处理的删除操作数
           en-US: Handler Delete
+          ja-JP: ハンドラの削除操作数
       - field: handler_write
         type: 0
         i18n:
           zh-CN: 处理的写入操作数
           en-US: Handler Write
+          ja-JP: ハンドラの書き込み操作数
       - field: handler_update
         type: 0
         i18n:
           zh-CN: 处理的更新操作数
           en-US: Handler Update
+          ja-JP: ハンドラの更新操作数
       - field: handler_discover
         type: 0
         i18n:
           zh-CN: 处理的发现操作数
           en-US: Handler Discover
+          ja-JP: ハンドラのディスカバー操作数
       - field: handler_prepare
         type: 0
         i18n:
           zh-CN: 处理的准备操作数
           en-US: Handler Prepare
+          ja-JP: ハンドラの準備操作数
       - field: handler_read_first
         type: 0
         i18n:
           zh-CN: 读取首行操作数
           en-US: Handler Read First
+          ja-JP: ハンドラの最初の行を読む操作数
       - field: handler_read_rnd
         type: 0
         i18n:
           zh-CN: 随机读取操作数
           en-US: Handler Read RND
+          ja-JP: ハンドラのランダムアクセス操作数
       - field: handler_read_next
         type: 0
         i18n:
           zh-CN: 读取下一行操作数
           en-US: Handler Read Next
+          ja-JP: ハンドラの次の行を読む操作数
       - field: handler_read_rnd_next
         type: 0
         i18n:
           zh-CN: 随机读取下一行操作数
           en-US: Handler Read RND Next
+          ja-JP: ハンドラの次の行をランダムに読む操作数
       - field: handler_read_key
         type: 0
         i18n:
           zh-CN: 按索引键读取操作数
           en-US: Handler Read Key
+          ja-JP: ハンドラのインデックスを使用して読み取る操作数
       - field: handler_external_lock
         type: 0
         i18n:
           zh-CN: 外部锁定操作数
           en-US: Handler External Key
+          ja-JP: ハンドラの外部のキーを使用して読み取る操作数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -538,29 +594,34 @@ metrics:
   - name: connection
     priority: 6
     i18n:
-      zh-CN: 连接 信息
+      zh-CN: 连接信息
       en-US: Connection Info
+      ja-JP: 接続情報
     fields:
       - field: connections
         type: 0
         i18n:
           zh-CN: 当前连接数
           en-US: Connections
+          ja-JP: 現在接続数
       - field: max_used_connections
         type: 0
         i18n:
           zh-CN: 历史最大连接数
           en-US: Max Used Connections
+          ja-JP: 最大接続数
       - field: aborted_connects
         type: 0
         i18n:
           zh-CN: 失败连接数
           en-US: Aborted Connects
+          ja-JP: 失敗接続数
       - field: aborted_clients
         type: 0
         i18n:
           zh-CN: 客户端中断数
           en-US: Aborted Clients
+          ja-JP: クライアントの割り込み数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -577,29 +638,34 @@ metrics:
   - name: thread
     priority: 7
     i18n:
-      zh-CN: 线程 信息
+      zh-CN: 线程信息
       en-US: Thread Info
+      ja-JP: スレッド情報
     fields:
       - field: threads_created
         type: 0
         i18n:
           zh-CN: 创建线程数
           en-US: Threads Created
+          ja-JP: スレッド作成数
       - field: threads_connected
         type: 0
         i18n:
           zh-CN: 连接线程数
           en-US: Threads Connected
+          ja-JP: 接続スレッド数
       - field: threads_cached
         type: 0
         i18n:
           zh-CN: 缓存线程数
           en-US: CThreads Cached
+          ja-JP: キャッシュスレッド数
       - field: threads_running
         type: 0
         i18n:
           zh-CN: 运行线程数
           en-US: Threads Running
+          ja-JP: 活動中のスレッド数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -616,24 +682,28 @@ metrics:
   - name: tmp
     priority: 8
     i18n:
-      zh-CN: 临时表 信息
+      zh-CN: 临时表信息
       en-US: TMP Info
+      ja-JP: 一時テーブル情報
     fields:
       - field: created_tmp_tables
         type: 0
         i18n:
           zh-CN: 创建的临时表数量
           en-US: Created TMP Tables
+          ja-JP: 一時テーブル作成数
       - field: created_tmp_disk_tables
         type: 0
         i18n:
           zh-CN: 创建的临时磁盘表数量
           en-US: Created TMP Disk Tables
+          ja-JP: 一時ディスクテーブル作成数
       - field: created_tmp_files
         type: 0
         i18n:
           zh-CN: 创建的临时文件数量
           en-US: Created TMP Files
+          ja-JP: 一時ファイル作成数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -650,34 +720,40 @@ metrics:
   - name: select_type
     priority: 9
     i18n:
-      zh-CN: 查询类型 信息
+      zh-CN: 查询类型信息
       en-US: Select Type Info
+      ja-JP: 検索タイプ情報
     fields:
       - field: select_full_join
         type: 0
         i18n:
           zh-CN: 全表连接数
           en-US: Select Full Join
+          ja-JP: 全件結合数
       - field: select_full_range_join
         type: 0
         i18n:
           zh-CN: 带范围的全表连接数
           en-US: Select Full Range Join
+          ja-JP: 範囲検索付き全件結合数
       - field: select_range
         type: 0
         i18n:
           zh-CN: 索引范围查询数
           en-US: Select Range
+          ja-JP: 範囲検索数
       - field: select_range_check
         type: 0
         i18n:
           zh-CN: 索引范围内二次检查数
           en-US: Select Range Check
+          ja-JP: 範囲内二次検索数
       - field: select_scan
         type: 0
         i18n:
           zh-CN: 全表扫描查询数
           en-US: Select Scan
+          ja-JP: テーブル全体をスキャンする回数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -694,29 +770,34 @@ metrics:
   - name: sort
     priority: 10
     i18n:
-      zh-CN: 排序 信息
+      zh-CN: 排序信息
       en-US: Sort Info
+      ja-JP: ソート情報
     fields:
       - field: sort_rows
         type: 0
         i18n:
           zh-CN: 排序总行数
           en-US: Sort Rows
+          ja-JP: ソートされた行数
       - field: sort_range
         type: 0
         i18n:
           zh-CN: 范围条件排序次数
           en-US: Sort Range
+          ja-JP: 範囲付きのソート回数
       - field: sort_merge_passes
         type: 0
         i18n:
           zh-CN: 合并排序段次数
           en-US: Sort Merge Passes
+          ja-JP: マージソート回数
       - field: sort_scan
         type: 0
         i18n:
           zh-CN: 全表扫描排序次数
           en-US: Sort Scan
+          ja-JP: テーブル全体をスキャンしてソートする回数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -733,19 +814,22 @@ metrics:
   - name: table_lock
     priority: 11
     i18n:
-      zh-CN: 表级锁 信息
+      zh-CN: 表级锁信息
       en-US: Table Lock Info
+      ja-JP: テーブルロック情報
     fields:
       - field: table_locks_immediate
         type: 0
         i18n:
           zh-CN: 立即获得表锁次数
           en-US: Table Locks Immediate
+          ja-JP: 即座に取得できた回数
       - field: table_locks_waited
         type: 0
         i18n:
           zh-CN: 须等待获取表锁次数
           en-US: Table Locks Waited
+          ja-JP: 取得を待機した回数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -762,8 +846,9 @@ metrics:
   - name: process_state
     priority: 12
     i18n:
-      zh-CN: 进程状态 信息
+      zh-CN: 进程状态信息
       en-US: Process State Info
+      ja-JP: プロセス状態情報
     fields:
       - field: state
         type: 1
@@ -771,11 +856,13 @@ metrics:
         i18n:
           zh-CN: 进程状态
           en-US: State
+          ja-JP: プロセス状態
       - field: num
         type: 0
         i18n:
           zh-CN: 该状态进程数量
           en-US: Num
+          ja-JP: プロセス総数
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -792,8 +879,9 @@ metrics:
   - name: slow_sql
     priority: 13
     i18n:
-      zh-CN: 慢查询 信息
+      zh-CN: 慢查询信息
       en-US: Slow Sql Info
+      ja-JP: スローSQL情報
     fields:
       - field: id
         type: 1
@@ -801,26 +889,31 @@ metrics:
         i18n:
           zh-CN: ID
           en-US: ID
+          ja-JP: ID
       - field: sql_text
         type: 1
         i18n:
           zh-CN: SQL 文本
           en-US: SQL Text
+          ja-JP: SQL文のテキスト
       - field: start_time
         type: 1
         i18n:
           zh-CN: 开始时间
           en-US: Start Time
+          ja-JP: 開始時間
       - field: db
         type: 1
         i18n:
           zh-CN: 数据库
           en-US: Database
+          ja-JP: データベース
       - field: query_time
         type: 3
         i18n:
           zh-CN: 查询时间
           en-US: Query Time
+          ja-JP: クエリ時間
     aliasFields:
       - sql_text
       - start_time

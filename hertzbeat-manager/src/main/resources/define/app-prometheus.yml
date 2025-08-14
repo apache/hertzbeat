@@ -21,11 +21,13 @@ app: prometheus
 name:
   zh-CN: Prometheus任务
   en-US: Prometheus Task
+  ja-JP: Prometheusタスク
 # The description and help of this monitoring type
 help:
   zh-CN: Prometheus 任务管理，您可以通过此监控支持 Prometheus 协议的应用类型数据，像 Prometheus 监控它们一样方便，并且是可视化页面的操作。<br><span class='help_module_span'>⚠️注意：监控对端需要提供 prometheus metrics 协议的数据接口。</span>
   en-US: Prometheus Task Management, you can use this to monitor application that supports the Prometheus protocol, as convenient as Prometheus monitoring them, and it is a visual page operation. <br><span class='help_module_span'> The monitoring peer needs to provide the data interface of the prometheus metrics protocol. </span>
   zh-TW: Prometheus 任務管理，您可以透過此監控支援 Prometheus 協定的應用程式類型數據，像 Prometheus 監控它們一樣方便，並且是視覺化頁面的操作。 <br><span class='help_module_span'>⚠️注意：監控對端需要提供 prometheus metrics 協定的資料介面。 </span>
+  ja-JP: プロメテウス・タスク管理では、プロメテウス・プロトコルをサポートするアプリケーション・タイプのデータを、プロメテウスが監視するのと同じように簡単に監視することができ、ビジュアルなページでそれを行うことができます。<br><span class='help_module_span'>⚠️注意：prometheus metrics プロトコルへのデータ・インターフェースを提供する必要があります。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/prometheus/
   en-US: https://hertzbeat.apache.org/docs/help/prometheus/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -45,6 +48,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -58,6 +62,7 @@ params:
     name:
       zh-CN: 端点路径
       en-US: Endpoint Path
+      ja-JP: エンドポイントパス
     # type-param field type(most mapping the html input type)
     type: text
     # param field input placeholder
@@ -69,6 +74,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     # hide param-true or false
@@ -80,6 +86,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: HTTPS
+      ja-JP: HTTPS
     # type-param field type(most mapping the html input type)
     type: boolean
     hide: true
@@ -89,6 +96,7 @@ params:
     name:
       zh-CN: 请求Headers
       en-US: Headers
+      ja-JP: ヘッダ
     # type-param field type(most mapping the html input type)
     type: key-value
     # required-true or false
@@ -104,6 +112,7 @@ params:
     name:
       zh-CN: 查询Params
       en-US: Params
+      ja-JP: パラメータ
     # type-param field type(most mapping the html input type)
     type: key-value
     # required-true or false
@@ -119,6 +128,7 @@ params:
     name:
       zh-CN: Content-Type
       en-US: Content-Type
+      ja-JP: コンテンツタイプ
     # type-param field type(most mapping the html input type)
     type: text
     # param field input placeholder
@@ -132,6 +142,7 @@ params:
     name:
       zh-CN: 认证方式
       en-US: Auth Type
+      ja-JP: 認証方法
     # type-param field type(most mapping the html input type)
     type: radio
     # required-true or false
@@ -150,6 +161,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -164,6 +176,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input type)
     type: password
     # required-true or false

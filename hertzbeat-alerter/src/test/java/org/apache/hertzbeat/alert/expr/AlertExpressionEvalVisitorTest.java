@@ -181,12 +181,10 @@ class AlertExpressionEvalVisitorTest {
                 List.of(new HashMap<>(Map.of("__value__", List.of(10.0, 20.0, 30.0)))));
         // promql
         List<Map<String, Object>> result = evaluate("multi_val > 25");
-        assertEquals(1, result.size());
-        assertEquals(30.0, result.get(0).get("__value__"));
+        assertEquals(0, result.size());
         // sql
         result = evaluate("(select values from multi_metrics where group_id = 'test_group') > 25");
-        assertEquals(1, result.size());
-        assertEquals(30.0, result.get(0).get("__value__"));
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -196,12 +194,10 @@ class AlertExpressionEvalVisitorTest {
                 List.of(new HashMap<>(Map.of("__value__", List.of(10.0, 20.0, 30.0)))));
         // promql
         List<Map<String, Object>> result = evaluate("multi_val < 15");
-        assertEquals(1, result.size());
-        assertEquals(10.0, result.get(0).get("__value__"));
+        assertEquals(0, result.size());
         // sql
         result = evaluate("(select response_times from performance_data where service = 'api') < 15");
-        assertEquals(1, result.size());
-        assertEquals(10.0, result.get(0).get("__value__"));
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -211,12 +207,10 @@ class AlertExpressionEvalVisitorTest {
                 List.of(new HashMap<>(Map.of("__value__", List.of()))));
         // promql
         List<Map<String, Object>> result = evaluate("empty_list > 50");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(0, result.size());
         // sql
         result = evaluate("(select error_codes from error_log where date = '2024-01-01') > 50");
-        assertEquals(1, result.size());
-        assertNull(result.get(0).get("__value__"));
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -757,6 +751,118 @@ class AlertExpressionEvalVisitorTest {
         assertEquals(16, result.get(1).get("__value__"));
     }
 
+    @Test
+    void testComparisonExpr() {
+        String promql = "3 > bool 2";
+
+        // scalar and scalar
+        List<Map<String, Object>> result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).get("__value__"));
+
+        // scalar and vector
+        promql = "0 < http_server_requests_seconds_count";
+        Map<String, Object> vector = new HashMap<>() {
+            {
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 1307);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("uri", "/actuator/prometheus");
+                put("status", "200");
+            }
+        };
+        when(mockExecutor.execute("http_server_requests_seconds_count")).thenReturn(List.of(vector));
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(1307, result.get(0).get("__value__"));
+
+        // scalar and vector bool
+        promql = "0 < bool http_server_requests_seconds_count";
+        // true
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).get("__value__"));
+
+        // false
+        vector.put("__value__", -1);
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(0, result.get(0).get("__value__"));
+
+        // vector and scalar
+        promql = "http_server_requests_seconds_sum > 0";
+        vector = new HashMap<>() {
+            {
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 13);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("uri", "/actuator/prometheus");
+                put("status", "200");
+            }
+        };
+        when(mockExecutor.execute("http_server_requests_seconds_sum")).thenReturn(List.of(vector));
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(13, result.get(0).get("__value__"));
+
+        // vector and scalar bool
+        promql = "http_server_requests_seconds_sum > bool 0";
+        // true
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).get("__value__"));
+        // false
+        vector.put("__value__", -1);
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(0, result.get(0).get("__value__"));
+
+        // vector and vector
+        promql = "http_server_requests_seconds_count > http_server_requests_seconds_sum";
+        Map<String, Object> vectorCount = new HashMap<>() {
+            {
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 13);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("uri", "/actuator/prometheus");
+                put("status", "200");
+            }
+        };
+        Map<String, Object> vectorSum = new HashMap<>() {
+            {
+                put("instance", "host.docker.internal:8989");
+                put("__value__", 10);
+                put("method", "GET");
+                put("__name__", "http_server_requests_seconds_count");
+                put("__timestamp__", "1.750320922467E9");
+                put("uri", "/actuator/prometheus");
+                put("status", "200");
+            }
+        };
+        when(mockExecutor.execute("http_server_requests_seconds_count")).thenReturn(List.of(vectorCount));
+        when(mockExecutor.execute("http_server_requests_seconds_sum")).thenReturn(List.of(vectorSum));
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(13, result.get(0).get("__value__"));
+
+        // vector and vector bool
+        promql = "http_server_requests_seconds_count > bool http_server_requests_seconds_sum";
+        // true
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).get("__value__"));
+        // false
+        vectorCount.put("__value__", 1);
+        result = evaluate(promql);
+        assertEquals(1, result.size());
+        assertEquals(0, result.get(0).get("__value__"));
+    }
 
     private List<Map<String, Object>> evaluate(String expression) {
         AlertExpressionLexer lexer = new AlertExpressionLexer(CharStreams.fromString(expression));
