@@ -5,7 +5,7 @@ sidebar_label: MCP SSE Server
 keywords: [MCP, SSE, streaming, server]
 ---
 
-This page explains how to run and connect to the HertzBeat MCP SSE server.
+This page explains how connect to the HertzBeat MCP SSE server. The MCP server auto starts on the default port 1157 when you start the HertzBeat server.
 
 ### Overview
 
