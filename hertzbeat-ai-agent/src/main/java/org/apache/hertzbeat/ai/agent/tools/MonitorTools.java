@@ -27,7 +27,7 @@ public interface MonitorTools {
 
     /**
      * Add a new monitor with comprehensive configuration
-     *
+     * 
      * @param name Monitor name
      * @param app Monitor type/application (e.g., 'linux', 'mysql', 'http')
      * @param host Target host (IP address or domain name)
@@ -39,8 +39,8 @@ public interface MonitorTools {
      * @return Result message with monitor ID if successful
      */
     String addMonitor(
-            String name,
-            String app,
+            String name, 
+            String app, 
             String host,
             Integer port,
             Integer intervals,
@@ -48,22 +48,30 @@ public interface MonitorTools {
             String password,
             String description
     );
-
+    
     /**
      * List all available monitor types that can be added
-     *
+     * 
      * @param language Language code for localized names (e.g., 'en-US', 'zh-CN')
      * @return Formatted string list of available monitor types with descriptions
      */
     String listMonitorTypes(String language);
 
     /**
-     * Query monitor information with flexible filtering and pagination.
-     * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
-     * pagination.
-     * Returns results as plain JSON string for AI tool.
+     * Comprehensive monitor querying with flexible filtering, pagination, and specialized views
+     * @param ids Specific monitor IDs to retrieve (optional)
+     * @param app Monitor type filter (linux, mysql, http, etc.)
+     * @param status Monitor status (1=online, 2=offline, 3=unreachable, 0=paused, 9=all)
+     * @param search Search in monitor names or hosts (partial matching)
+     * @param labels Label filters, format: 'key1:value1,key2:value2'
+     * @param sort Sort field (name, gmtCreate, gmtUpdate, status, app)
+     * @param order Sort order (asc, desc)
+     * @param pageIndex Page number starting from 0
+     * @param pageSize Items per page (1-100 recommended)
+     * @param includeStats Include status statistics summary
+     * @return Comprehensive monitor information with optional statistics
      */
-    String listMonitors(
+    String queryMonitors(
             List<Long> ids,
             String app,
             Byte status,
@@ -72,15 +80,15 @@ public interface MonitorTools {
             String sort,
             String order,
             Integer pageIndex,
-            Integer pageSize);
+            Integer pageSize,
+            Boolean includeStats);
 
     /**
      * Get parameter definitions required for a specific monitor type
-     *
+     * 
      * @param app Monitor type/application name (e.g., 'linux', 'mysql', 'redis')
      * @return Formatted string with parameter definitions including field names, types, and requirements
      */
     String getMonitorParamDefines(String app);
-
 
 }
