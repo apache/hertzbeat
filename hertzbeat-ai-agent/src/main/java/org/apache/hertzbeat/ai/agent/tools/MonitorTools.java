@@ -18,7 +18,6 @@
 
 package org.apache.hertzbeat.ai.agent.tools;
 
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import java.util.List;
 
 /**
