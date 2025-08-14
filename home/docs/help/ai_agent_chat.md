@@ -12,7 +12,8 @@ keywords: [AI, Chat, Agent, Monitoring, Assistant, OpenAI]
 The AI Agent Chat feature provides an interactive chat interface where you can:
 - 🔍 List and manage your existing monitors
 - ➕ Add new monitors for websites, APIs, databases, and services
-- 📊 Get detailed information about available monitor types and their parameters
+- 🗑️ Delete existing monitors
+- 📊 Get detailed information about available monitor types and their parameters-
 - ⚡ Check monitor status and troubleshoot monitoring issues
 
 ## Prerequisites
@@ -28,7 +29,7 @@ Before using the AI Agent Chat, ensure:
 
 The AI Agent Chat uses OpenAI's GPT models. You need to configure an OpenAI API key in one of two ways:
 
-#### Method 1: Database Configuration (Recommended)
+#### Method 1: Database Configuration via UI (Recommended)
 1. Navigate to the AI Agent Chat interface
 2. If no API key is configured, you'll see a configuration dialog
 3. Enter your OpenAI API key
