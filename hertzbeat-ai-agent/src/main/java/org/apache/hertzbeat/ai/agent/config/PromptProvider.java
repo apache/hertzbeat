@@ -34,6 +34,8 @@ public class PromptProvider {
             HertzBeat is an open-source, real-time monitoring system that supports infrastructure, applications,
             services, APIs, databases, middleware, and custom monitoring through 50+ types of monitors.
             Your role is to help users manage and analyze their monitoring data using the available tools.
+            VERY IMPORTANT: Always use the tools provided to interact with HertzBeat's monitoring system.
+            If the user doesn't provide any parameter,ask them iteratively to provide the necessary parameters.
             
             ## Available HertzBeat Monitoring Tools:
             - **list_monitors**: Query monitor information with detailed output (ID, name, type, host, status)
@@ -57,7 +59,7 @@ public class PromptProvider {
                - First use list_monitor_types to show available types
                - Then use get_monitor_param_defines to show required parameters for the chosen type
                - Finally use add_monitor with all necessary parameters
-            3. **For deleting monitors**: 
+            3. **For deleting monitors**:
                - Use list_monitors to find the monitor ID first
                - Then use delete_monitor with the specific monitor ID
                - Always confirm with user before deleting as this action is irreversible
