@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPOutputStream;
 
 import com.google.common.collect.Maps;
@@ -106,8 +107,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
     
     private HashedWheelTimer metricsFlushTimer = null;
-    private MetricsFlushTask metricsFlushtask = null;
     private final VictoriaMetricsProperties.InsertConfig insertConfig;
+    private final AtomicBoolean draining = new AtomicBoolean(false);
 
     public VictoriaMetricsDataStorage(VictoriaMetricsProperties victoriaMetricsProperties, RestTemplate restTemplate) {
         if (victoriaMetricsProperties == null) {
@@ -129,8 +130,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             thread.setDaemon(true);
             return thread;
         }, 1, TimeUnit.SECONDS, 512);
-        metricsFlushtask = new MetricsFlushTask();
-        this.metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.SECONDS);
+        // start flush interval timer
+        this.metricsFlushTimer.newTimeout(new MetricsFlushTask(null), insertConfig.flushInterval(), TimeUnit.SECONDS);
     }
 
     private boolean checkVictoriaMetricsDatasourceAvailable() {
@@ -591,34 +592,61 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             }
         }
         // Refresh in advance to avoid waiting
-        if (metricsBufferQueue.size() >= insertConfig.bufferSize() * 0.8) {
+        if (metricsBufferQueue.size() >= insertConfig.bufferSize() * 0.8
+                && draining.compareAndSet(false, true)) {
             triggerImmediateFlush();
         }
     }
 
     private void triggerImmediateFlush() {
-        metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.MILLISECONDS);
+        List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch = new ArrayList<>(insertConfig.bufferSize());
+        metricsBufferQueue.drainTo(batch, insertConfig.bufferSize());
+        draining.set(false);
+        if (!batch.isEmpty()) {
+            metricsFlushTimer.newTimeout(new MetricsFlushTask(batch), 0, TimeUnit.MILLISECONDS);
+        }
     }
 
     /**
      * Regularly refresh the buffer queue to the vm
      */
     private class MetricsFlushTask implements TimerTask {
+        private final List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch;
+
+        public MetricsFlushTask(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch) {
+            this.batch = batch;
+        }
+
         @Override
         public void run(Timeout timeout) {
             try {
-                List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch = new ArrayList<>(insertConfig.bufferSize());
-                metricsBufferQueue.drainTo(batch, insertConfig.bufferSize());
-                if (!batch.isEmpty()) {
-                    doSaveData(batch);
-                    log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
-                }
-                if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
-                    metricsFlushTimer.newTimeout(this, insertConfig.flushInterval(), TimeUnit.SECONDS);
-                    log.debug("[Victoria Metrics] Rescheduled next flush task in {} seconds.", insertConfig.flushInterval());
+                if (batch == null) {
+                    // If the batch is null, it means that the timer is triggered by flush interval timer
+                    List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batchT = new ArrayList<>(insertConfig.bufferSize());
+                    metricsBufferQueue.drainTo(batchT, insertConfig.bufferSize());
+                    triggerDoSaveData(batchT);
+                    // Reschedule the next flush task
+                    triggerIntervalFlushTimer();
+                } else {
+                    // If the batch is not null, it means that the timer is triggered by the immediate flush
+                    triggerDoSaveData(batch);
                 }
             } catch (Exception e) {
                 log.error("[VictoriaMetrics] flush task error: {}", e.getMessage(), e);
+            }
+        }
+
+        private void triggerDoSaveData(List<VictoriaMetricsContent> batch) {
+            if (!batch.isEmpty()) {
+                doSaveData(batch);
+                log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
+            }
+        }
+
+        private void triggerIntervalFlushTimer() {
+            if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
+                metricsFlushTimer.newTimeout(this, insertConfig.flushInterval(), TimeUnit.SECONDS);
+                log.debug("[Victoria Metrics] Rescheduled next flush task in {} seconds.", insertConfig.flushInterval());
             }
         }
     }
