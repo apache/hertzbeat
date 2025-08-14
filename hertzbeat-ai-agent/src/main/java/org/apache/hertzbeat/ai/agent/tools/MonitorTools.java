@@ -18,7 +18,7 @@
 
 package org.apache.hertzbeat.ai.agent.tools;
 
-
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import java.util.List;
 
 /**
@@ -62,7 +62,7 @@ public interface MonitorTools {
      * Query monitor information with flexible filtering and pagination.
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
      * pagination.
-     * Returns results as plain JSON.
+     * Returns results as plain JSON string for AI tool.
      */
     String listMonitors(
             List<Long> ids,
@@ -74,7 +74,7 @@ public interface MonitorTools {
             String order,
             Integer pageIndex,
             Integer pageSize);
-    
+
     /**
      * Get parameter definitions required for a specific monitor type
      * 
@@ -82,5 +82,13 @@ public interface MonitorTools {
      * @return Formatted string with parameter definitions including field names, types, and requirements
      */
     String getMonitorParamDefines(String app);
+
+    /**
+     * Delete an existing monitor by ID
+     * 
+     * @param monitorId The ID of the monitor to delete
+     * @return Result message indicating success or failure
+     */
+    String deleteMonitor(Long monitorId);
 
 }

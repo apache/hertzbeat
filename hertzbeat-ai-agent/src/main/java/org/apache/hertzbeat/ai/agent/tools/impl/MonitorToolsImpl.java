@@ -51,13 +51,15 @@ public class MonitorToolsImpl implements MonitorTools {
      * Tool to query monitor information with flexible filtering and pagination.
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
      * pagination.
-     * Returns monitor names as string.
+     * Returns detailed monitor information including ID, name, type, host, and status.
      */
     @Override
-    @Tool(name = "list_monitors", returnDirect = true, description = """
+    @Tool(name = "list_monitors", description = """
             Query monitor information with flexible filtering and pagination.
             Supports filtering by monitor IDs, type, status, host, labels, sorting, and pagination.
-            Returns results as String. When no parameters are available, pass the default value as mentioned below. If the user doesn't provide any specific parameter, the default value will be used.
+            Returns detailed results including monitor ID, name, type, host, and status for easy identification and management.
+            Show the long monitor id in the brackets
+            When no parameters are available, pass the default value as mentioned below. If the user doesn't provide any specific parameter, the default value will be used.
             """)
     public String listMonitors(
             @ToolParam(description = "List of monitor IDs to filter (default: empty list)", required = false) List<Long> ids,
@@ -72,14 +74,34 @@ public class MonitorToolsImpl implements MonitorTools {
         try {
             Page<Monitor> result = monitorServiceAdapter.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
             log.debug("MonitorServiceAdapter.getMonitors result: {}", result);
-            return result.getContent().stream().map(Monitor::getName).toList().toString();
+            
+            // Format response to include both ID and name for better usability
+            StringBuilder response = new StringBuilder();
+            response.append("Found ").append(result.getContent().size()).append(" monitors:\n\n");
+            
+            for (Monitor monitor : result.getContent()) {
+                log.info(String.valueOf(monitor.getId()));
+                response.append("ID: ").append(monitor.getId())
+                       .append(" | Name: ").append(monitor.getName())
+                       .append(" | Type: ").append(monitor.getApp())
+                       .append(" | Host: ").append(monitor.getHost())
+                       .append(" | Status: ").append(getStatusText(monitor.getStatus()))
+                       .append("\n");
+            }
+            
+            if (result.getContent().isEmpty()) {
+                response.append("No monitors found matching the specified criteria.");
+            }
+            
+            return response.toString();
         } catch (Exception e) {
-            return "error is" + e.getMessage();
+            return "Error retrieving monitors: " + e.getMessage();
         }
     }
 
+
     @Override
-    @Tool(name = "add_monitor", returnDirect = true, description = """
+    @Tool(name = "add_monitor", description = """
             Add a new monitor to HertzBeat with comprehensive configuration.
             This tool creates a monitor for various types like linux, mysql, http, redis, etc.
             validate the the monitor type using the list_monitor_types tool.
@@ -184,7 +206,7 @@ public class MonitorToolsImpl implements MonitorTools {
     }
     
     @Override
-    @Tool(name = "list_monitor_types", returnDirect = true, description = """
+    @Tool(name = "list_monitor_types", description = """
             List all available monitor types that can be added to HerzBeat.
             This tool shows all supported monitor types with their display names.
             Use this to see what types of monitors you can create with the add_monitor tool.
@@ -239,7 +261,7 @@ public class MonitorToolsImpl implements MonitorTools {
     }
     
     @Override
-    @Tool(name = "get_monitor_param_defines", returnDirect = true, description = """
+    @Tool(name = "get_monitor_param_defines", description = """
             Get the parameter definitions required for a specific monitor type.
             This tool shows what parameters are needed when adding a monitor of the specified type,
             including field names, data types, validation rules, and whether they are required.
@@ -319,6 +341,64 @@ public class MonitorToolsImpl implements MonitorTools {
         } catch (Exception e) {
             log.error("Failed to get parameter definitions for monitor type '{}': {}", app, e.getMessage(), e);
             return "Error retrieving parameter definitions for monitor type '" + app + "': " + e.getMessage();
+        }
+    }
+
+    @Override
+    @Tool(name = "delete_monitor", description = """
+            Delete an existing monitor from HertzBeat by its ID.
+            First List all the configured monitors using the list_monitors tool to find the monitor ID (long).
+            Provide that monitor ID to delete it, do not pass (1,2,3,4,5) as monitor ID.
+            This tool permanently removes the monitor and all its associated data.
+            Use with caution as this action cannot be undone.
+            """)
+    public String deleteMonitor(
+            @ToolParam(description = "Monitor ID to delete (required)", required = true) Long monitorId) {
+        
+        try {
+            log.info("Deleting monitor with ID: {}", monitorId);
+            // Validate required parameter
+            if (monitorId == null || monitorId <= 0) {
+                return "Error: Valid monitor ID is required. Monitor ID must be a positive number.";
+            }
+            
+            // Call the adapter to delete the monitor
+            boolean deleted = monitorServiceAdapter.deleteMonitor(monitorId);
+            
+            if (deleted) {
+                log.info("Successfully deleted monitor with ID: {}", monitorId);
+                return String.format("Successfully deleted monitor with ID: %d", monitorId);
+            } else {
+                log.warn("Monitor with ID {} not found or could not be deleted", monitorId);
+                return String.format("Monitor with ID %d not found or could not be deleted. Please verify the monitor ID exists.", monitorId);
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to delete monitor with ID {}: {}", monitorId, e.getMessage(), e);
+            return String.format("Error deleting monitor with ID %d: %s", monitorId, e.getMessage());
+        }
+    }
+    
+    /**
+     * Helper method to convert monitor status byte to readable text
+     * @param status The status byte from monitor
+     * @return Human-readable status text
+     */
+    private String getStatusText(Byte status) {
+        if (status == null) {
+            return "Unknown";
+        }
+        switch (status) {
+            case 0:
+                return "Paused";
+            case 1:
+                return "Online";
+            case 2:
+                return "Offline";
+            case 3:
+                return "Unreachable";
+            default:
+                return "Unknown (" + status + ")";
         }
     }
 

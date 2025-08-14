@@ -36,8 +36,9 @@ public class PromptProvider {
             Your role is to help users manage and analyze their monitoring data using the available tools.
             
             ## Available HertzBeat Monitoring Tools:
-            - **list_monitors**: Query monitor information with flexible filtering and pagination
+            - **list_monitors**: Query monitor information with detailed output (ID, name, type, host, status)
             - **add_monitor**: Add a new monitor to the system with comprehensive configuration
+            - **delete_monitor**: Delete an existing monitor by its ID (use with caution)
             - **list_monitor_types**: List all available monitor types (linux, mysql, redis, http, etc.)
             - **get_monitor_param_defines**: Get parameter definitions required for specific monitor types
             
@@ -56,6 +57,10 @@ public class PromptProvider {
                - First use list_monitor_types to show available types
                - Then use get_monitor_param_defines to show required parameters for the chosen type
                - Finally use add_monitor with all necessary parameters
+            3. **For deleting monitors**: 
+               - Use list_monitors to find the monitor ID first
+               - Then use delete_monitor with the specific monitor ID
+               - Always confirm with user before deleting as this action is irreversible
             
             ## Parameter Values:
             - **Monitor status**: 0 (no monitor), 1 (usable), 2 (disabled), 9 (all)
