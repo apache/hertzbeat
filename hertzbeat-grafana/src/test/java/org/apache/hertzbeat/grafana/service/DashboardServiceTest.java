@@ -102,7 +102,7 @@ public class DashboardServiceTest {
 
         String expectedBaseUrl = "http://127.0.0.1:3000/d/5d7d89b0-b273-40fe-bb30-d652b82f47eb";
 
-        // 验证 URL 是否以期望的基础 URL 开头
+        // Verify that the URL begins with the expected base URL.
         assertTrue(savedDashboard.getUrl().startsWith(expectedBaseUrl), "URL should start with: " + expectedBaseUrl + ", but was: " + savedDashboard.getUrl());
 
         assertTrue(savedDashboard.getUrl().contains("kiosk=tv"), "URL should contain kiosk parameter");
@@ -130,7 +130,7 @@ public class DashboardServiceTest {
 
         String expectedBaseUrl = "http://127.0.0.1:3000/d/5d7d89b0-b273-40fe-bb30-d652b82f47eb";
 
-        // 验证 URL 是否以期望的基础 URL 开头
+        // Verify that the URL begins with the expected base URL.
         assertTrue(savedDashboard.getUrl().startsWith(expectedBaseUrl), "URL should start with: " + expectedBaseUrl + ", but was: " + savedDashboard.getUrl());
 
         assertTrue(savedDashboard.getUrl().contains("kiosk=tv"), "URL should contain kiosk parameter");
