@@ -645,7 +645,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
 
         private void triggerIntervalFlushTimer() {
             if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
-                metricsFlushTimer.newTimeout(this, insertConfig.flushInterval(), TimeUnit.SECONDS);
+                metricsFlushTimer.newTimeout(new MetricsFlushTask(null), insertConfig.flushInterval(), TimeUnit.SECONDS);
                 log.debug("[Victoria Metrics] Rescheduled next flush task in {} seconds.", insertConfig.flushInterval());
             }
         }
