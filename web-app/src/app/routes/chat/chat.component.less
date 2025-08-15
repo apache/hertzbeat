@@ -265,6 +265,15 @@
               font-size: 11px;
               color: @text-color-secondary;
             }
+
+            .streaming-indicator {
+              margin-left: 8px;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              color: @primary-color;
+              font-size: 11px;
+            }
           }
 
           .message-text {
@@ -513,6 +522,10 @@ body[data-theme='dark'] .chat-container {
 
               .message-time {
                 color: fade(@white, 45%);
+              }
+
+              .streaming-indicator {
+                color: @primary-color;
               }
             }
 

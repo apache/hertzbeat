@@ -22,13 +22,7 @@
   <div class="chat-sidebar" [class.collapsed]="sidebarCollapsed">
     <div class="sidebar-header">
       <h3>{{ 'menu.extras.ai.chat' | i18n }}</h3>
-      <button
-        nz-button
-        nzType="primary"
-        nzSize="small"
-        (click)="createNewConversation()"
-        [nzLoading]="isLoading"
-      >
+      <button nz-button nzType="primary" nzSize="small" (click)="createNewConversation()" [nzLoading]="isLoading">
         <i nz-icon nzType="plus"></i>
         New Chat
       </button>
@@ -46,17 +40,10 @@
             {{ getConversationTitle(conversation) }}
           </div>
           <div class="conversation-time">
-            {{ conversation.updatedAt | date:'MMM d, HH:mm' }}
+            {{ conversation.updatedAt | date : 'MMM d, HH:mm' }}
           </div>
         </div>
-        <button
-          nz-button
-          nzType="text"
-          nzSize="small"
-          nzDanger
-          (click)="deleteConversation(conversation, $event)"
-          class="delete-btn"
-        >
+        <button nz-button nzType="text" nzSize="small" nzDanger (click)="deleteConversation(conversation, $event)" class="delete-btn">
           <i nz-icon nzType="delete"></i>
         </button>
       </div>
@@ -67,12 +54,7 @@
   <div class="chat-main">
     <!-- Header -->
     <div class="chat-header">
-      <button
-        nz-button
-        nzType="text"
-        (click)="toggleSidebar()"
-        class="sidebar-toggle"
-      >
+      <button nz-button nzType="text" (click)="toggleSidebar()" class="sidebar-toggle">
         <i nz-icon [nzType]="sidebarCollapsed ? 'menu-unfold' : 'menu-fold'"></i>
       </button>
 
@@ -80,9 +62,7 @@
         <h2 *ngIf="currentConversation">
           {{ getConversationTitle(currentConversation) }}
         </h2>
-        <h2 *ngIf="!currentConversation">
-          HertzBeat AI Agent
-        </h2>
+        <h2 *ngIf="!currentConversation"> HertzBeat AI Agent </h2>
       </div>
     </div>
 
@@ -101,11 +81,11 @@
       <!-- Welcome message -->
       <div *ngIf="messages.length === 0 && !isLoading" class="welcome-message">
         <div class="welcome-content">
-          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon">
+          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
           <h3>Welcome to HertzBeat AI Agent!</h3>
           <p>
-            I'm your intelligent monitoring companion, ready to help you manage and optimize your infrastructure monitoring.
-            You can ask me to:
+            I'm your intelligent monitoring companion, ready to help you manage and optimize your infrastructure monitoring. You can ask me
+            to:
           </p>
           <ul>
             <li>🔍 List and manage your existing monitors</li>
@@ -118,7 +98,7 @@
       </div>
 
       <!-- Chat messages -->
-      <div *ngFor="let message of messages" class="message" [class.user-message]="message.role === 'user'">
+      <div *ngFor="let message of messages; let i = index" class="message" [class.user-message]="message.role === 'user'">
         <div class="message-avatar">
           <i nz-icon [nzType]="message.role === 'user' ? 'user' : 'robot'"></i>
         </div>
@@ -126,23 +106,14 @@
           <div class="message-header">
             <span class="message-role">{{ message.role === 'user' ? 'You' : 'AI Assistant' }}</span>
             <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+            <span *ngIf="message.role === 'assistant' && isLoading && i === messages.length - 1" class="streaming-indicator">
+              <nz-spin nzSize="small"></nz-spin>
+            </span>
           </div>
           <div class="message-text" [innerHTML]="message.content"></div>
-        </div>
-      </div>
-
-      <!-- Loading indicator -->
-      <div *ngIf="isLoading" class="message">
-        <div class="message-avatar">
-          <i nz-icon nzType="robot"></i>
-        </div>
-        <div class="message-content">
-          <div class="message-header">
-            <span class="message-role">AI Assistant</span>
-          </div>
-          <div class="typing-indicator">
+          <div *ngIf="message.role === 'assistant' && message.content === '' && isLoading" class="typing-indicator">
             <nz-spin nzSize="small"></nz-spin>
-            <span>Thinking...</span>
+            <span>Starting to type...</span>
           </div>
         </div>
       </div>
@@ -159,7 +130,7 @@
             [disabled]="isLoading"
             placeholder="Ask me anything about monitoring..."
             rows="3"
-            style="resize: none;"
+            style="resize: none"
           ></textarea>
         </nz-textarea-count>
         <button
@@ -175,14 +146,7 @@
       </div>
       <div class="input-hint">
         <small>Press Enter to send, Shift+Enter for new line</small>
-        <button
-          nz-button
-          nzType="link"
-          nzSize="small"
-          (click)="onShowConfigModal()"
-
-          style="float: right;"
-        >
+        <button nz-button nzType="link" nzSize="small" (click)="onShowConfigModal()" style="float: right">
           <i nz-icon nzType="setting"></i>
           Modify API Key
         </button>
@@ -206,18 +170,10 @@
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form nzLayout="vertical">
-
       <nz-form-item>
         <nz-form-label nzRequired="true">OpenAI API Key</nz-form-label>
         <nz-form-control nzErrorTip="API Key is required">
-          <input
-            nz-input
-            [(ngModel)]="openAiConfig.apiKey"
-            name="apiKey"
-            type="password"
-            placeholder="sk-..."
-            required
-          />
+          <input nz-input [(ngModel)]="openAiConfig.apiKey" name="apiKey" type="password" placeholder="sk-..." required />
           <p class="form-help">Your OpenAI API key (starts with sk-). The key will be validated when saved.</p>
         </nz-form-control>
       </nz-form-item>

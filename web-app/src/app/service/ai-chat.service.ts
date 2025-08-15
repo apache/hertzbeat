@@ -93,87 +93,92 @@ export class AiChatService {
     console.log('Request body:', requestBody);
 
     // Use fetch API with streaming support for POST requests with SSE
-    fetch(`/api/${chat_uri}/stream`, {
+    fetch(`/api${chat_uri}/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
+        Accept: 'text/event-stream',
         'Cache-Control': 'no-cache'
       },
       body: JSON.stringify(requestBody)
-    }).then(response => {
-      console.log('Stream response status:', response.status);
+    })
+      .then(response => {
+        console.log('Stream response status:', response.status);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No reader available');
-      }
-
-      const decoder = new TextDecoder();
-
-      function readStream(): Promise<void> {
-        if (!reader) {
-          return Promise.resolve();
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return reader.read().then(({ value, done }) => {
-          if (done) {
-            console.log('Stream completed');
-            responseSubject.complete();
-            return;
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No reader available');
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = ''; // Buffer for incomplete lines
+
+        function readStream(): Promise<void> {
+          if (!reader) {
+            return Promise.resolve();
           }
+          return reader.read().then(({ value, done }) => {
+            if (done) {
+              console.log('Stream completed');
+              responseSubject.complete();
+              return;
+            }
 
-          const chunk = decoder.decode(value, { stream: true });
-          console.log('Received chunk:', chunk);
+            const chunk = decoder.decode(value, { stream: true });
+            console.log('Received chunk:', chunk);
 
-          // Process the SSE chunk
-          const lines = chunk.split('\n');
-          for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (trimmedLine.startsWith('data:')) {
-              const jsonStr = trimmedLine.substring(5).trim();
-              if (jsonStr && jsonStr !== '[DONE]') {
-                try {
-                  const data = JSON.parse(jsonStr);
-                  if (data.response) {
-                    responseSubject.next({
-                      content: data.response,
-                      role: 'assistant',
-                      timestamp: data.timestamp ? new Date(data.timestamp) : new Date()
-                    });
+            // Add chunk to buffer and process complete lines
+            buffer += chunk;
+            const lines = buffer.split('\n');
+
+            // Keep the last incomplete line in buffer
+            buffer = lines.pop() || '';
+
+            // Process complete lines
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (trimmedLine.startsWith('data:')) {
+                const jsonStr = trimmedLine.substring(5).trim();
+                if (jsonStr && jsonStr !== '[DONE]') {
+                  try {
+                    const data = JSON.parse(jsonStr);
+                    if (data.response !== undefined) {
+                      responseSubject.next({
+                        content: data.response || '',
+                        role: 'assistant',
+                        timestamp: data.timestamp ? new Date(data.timestamp) : new Date()
+                      });
+                    }
+                  } catch (parseError) {
+                    console.error('Error parsing SSE data:', parseError, 'Raw data:', jsonStr);
+                    // If not JSON, treat as plain text chunk
+                    if (jsonStr) {
+                      responseSubject.next({
+                        content: jsonStr,
+                        role: 'assistant',
+                        timestamp: new Date()
+                      });
+                    }
                   }
-                } catch (parseError) {
-                  console.error('Error parsing SSE data:', parseError);
-                  // If not JSON, treat as plain text
-                  responseSubject.next({
-                    content: jsonStr,
-                    role: 'assistant',
-                    timestamp: new Date()
-                  });
                 }
               }
             }
-          }
 
-          return readStream();
-        });
-      }
+            return readStream();
+          });
+        }
 
-      return readStream();
-    }).catch(error => {
-      console.error('Chat stream error:', error);
-      responseSubject.next({
-        content: `Sorry, there was an error processing your request: ${error.message}. Please try again.`,
-        role: 'assistant',
-        timestamp: new Date()
+        return readStream();
+      })
+      .catch(error => {
+        console.error('Chat stream error:', error);
+        responseSubject.error(error);
       });
-      responseSubject.complete();
-    });
 
     return responseSubject.asObservable();
   }
-
 }

@@ -18,13 +18,13 @@
  */
 
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
+import { I18NService } from '@core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { I18NService } from '@core';
 
 import { AiChatService, ChatMessage, ConversationDto } from '../../service/ai-chat.service';
-import { ThemeService } from '../../service/theme.service';
 import { OpenAiConfigService, OpenAiConfig, OpenAiConfigStatus } from '../../service/openai-config.service';
+import { ThemeService } from '../../service/theme.service';
 
 @Component({
   selector: 'app-chat',
@@ -76,7 +76,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   loadConversations(): void {
     console.log('Loading conversations...');
     this.aiChatService.getConversations().subscribe({
-      next: (response) => {
+      next: response => {
         console.log('Conversations response:', response);
         if (response.code === 0 && response.data) {
           this.conversations = response.data;
@@ -92,7 +92,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           this.message.error(`Failed to load conversations: ${response.msg || 'Unknown error'}`);
         }
       },
-      error: (error) => {
+      error: error => {
         console.error('Error loading conversations:', error);
         this.message.error(`Failed to load conversations: ${error.status} ${error.statusText || error.message}`);
 
@@ -109,7 +109,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   createNewConversation(): void {
     console.log('Creating new conversation...');
     this.aiChatService.createConversation().subscribe({
-      next: (response) => {
+      next: response => {
         console.log('Create conversation response:', response);
         if (response.code === 0 && response.data) {
           const newConversation = response.data;
@@ -121,7 +121,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           this.message.error(`Failed to create conversation: ${response.msg || 'Unknown error'}`);
         }
       },
-      error: (error) => {
+      error: error => {
         console.error('Error creating conversation:', error);
         this.message.error(`Failed to create new conversation: ${error.status} ${error.statusText || error.message}`);
 
@@ -136,7 +136,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    */
   createFallbackConversation(): void {
     const fallbackConversation: ConversationDto = {
-      conversationId: 'fallback-' + Date.now(),
+      conversationId: `fallback-${Date.now()}`,
       createdAt: new Date(),
       updatedAt: new Date(),
       messages: []
@@ -163,7 +163,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.isLoading = true;
 
     this.aiChatService.getConversation(conversationId).subscribe({
-      next: (response) => {
+      next: response => {
         this.isLoading = false;
         console.log('Conversation history response:', response);
 
@@ -179,7 +179,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           this.scrollToBottom();
         }
       },
-      error: (error) => {
+      error: error => {
         this.isLoading = false;
         console.error('Error loading conversation history:', error);
         // Fallback to the messages from the conversation list if API fails
@@ -204,7 +204,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       nzOkDanger: true,
       nzOnOk: () => {
         this.aiChatService.deleteConversation(conversation.conversationId).subscribe({
-          next: (response) => {
+          next: response => {
             if (response.code === 0) {
               // Remove from conversations list
               this.conversations = this.conversations.filter(c => c.conversationId !== conversation.conversationId);
@@ -221,7 +221,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
               this.message.success('Conversation deleted');
             }
           },
-          error: (error) => {
+          error: error => {
             console.error('Error deleting conversation:', error);
             this.message.error('Failed to delete conversation');
           }
@@ -258,7 +258,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       console.log('Fallback mode - showing offline message');
       setTimeout(() => {
         const offlineMessage: ChatMessage = {
-          content: 'I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI Agent module is running and try again later.',
+          content:
+            'I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI Agent module is running and try again later.',
           role: 'assistant',
           timestamp: new Date()
         };
@@ -270,44 +271,46 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       return;
     }
 
+    // Create empty assistant message for streaming
+    const assistantMessage: ChatMessage = {
+      content: '',
+      role: 'assistant',
+      timestamp: new Date()
+    };
+    this.messages.push(assistantMessage);
+    this.cdr.detectChanges();
+    this.scrollToBottom();
+
     // Send to AI service
     console.log('Sending message to AI service:', messageContent);
     this.aiChatService.streamChat(messageContent, this.currentConversation?.conversationId).subscribe({
-      next: (aiMessage) => {
-        console.log('Received AI message:', aiMessage);
-        console.log('AI message content type:', typeof aiMessage.content);
-        console.log('AI message timestamp type:', typeof aiMessage.timestamp);
-        console.log('AI message timestamp value:', aiMessage.timestamp);
+      next: chunk => {
+        console.log('Received stream chunk:', chunk);
 
-        // Ensure content is string and timestamp is Date
-        const processedMessage: ChatMessage = {
-          content: String(aiMessage.content || ''),
-          role: 'assistant',
-          timestamp: aiMessage.timestamp instanceof Date ? aiMessage.timestamp : new Date()
-        };
-
-        // Process the message to ensure content is properly handled
-        this.processMessage(processedMessage);
-
-        // Find if there's already an assistant message at the end
+        // Find the last assistant message and append content
         const lastMessage = this.messages[this.messages.length - 1];
         if (lastMessage && lastMessage.role === 'assistant') {
-          // Update existing message content
-          lastMessage.content = processedMessage.content;
-          lastMessage.timestamp = processedMessage.timestamp;
-          this.processMessage(lastMessage);
-        } else {
-          // Add new assistant message
-          this.messages.push(processedMessage);
+          // Accumulate the content for streaming effect
+          lastMessage.content += chunk.content;
+          lastMessage.timestamp = chunk.timestamp instanceof Date ? chunk.timestamp : new Date();
+
+          this.cdr.detectChanges();
+          this.scrollToBottom();
         }
-        this.cdr.detectChanges();
-        this.scrollToBottom();
       },
-      error: (error) => {
+      error: error => {
         console.error('Error in chat stream:', error);
         this.message.error(`Failed to get AI response: ${error.status} ${error.statusText || error.message}`);
 
-        // Add error message to chat
+        // Remove the empty assistant message and add error message
+        if (
+          this.messages.length > 0 &&
+          this.messages[this.messages.length - 1].role === 'assistant' &&
+          this.messages[this.messages.length - 1].content === ''
+        ) {
+          this.messages.pop();
+        }
+
         const errorMessage: ChatMessage = {
           content: 'Sorry, there was an error processing your request. Please check if the AI Agent service is running and try again.',
           role: 'assistant',
@@ -321,10 +324,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       complete: () => {
         console.log('Chat stream completed');
         this.isLoading = false;
+        this.cdr.detectChanges();
+
         // Refresh current conversation to get updated data (only if not fallback)
         if (this.currentConversation && !this.currentConversation.conversationId.startsWith('fallback-')) {
           this.aiChatService.getConversation(this.currentConversation.conversationId).subscribe({
-            next: (response) => {
+            next: response => {
               if (response.code === 0 && response.data) {
                 // Update conversation in the list
                 const index = this.conversations.findIndex(c => c.conversationId === response.data!.conversationId);
@@ -334,7 +339,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                 this.currentConversation = response.data;
               }
             },
-            error: (error) => {
+            error: error => {
               console.log('Error refreshing conversation (non-critical):', error);
             }
           });
@@ -367,9 +372,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     if (conversation.messages && conversation.messages.length > 0) {
       const firstUserMessage = conversation.messages.find(m => m.role === 'user');
       if (firstUserMessage) {
-        return firstUserMessage.content.length > 30
-          ? firstUserMessage.content.substring(0, 30) + '...'
-          : firstUserMessage.content;
+        return firstUserMessage.content.length > 30 ? `${firstUserMessage.content.substring(0, 30)}...` : firstUserMessage.content;
       }
     }
     return `Conversation ${conversation.conversationId.substring(0, 8)}`;
@@ -394,14 +397,16 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   processMessage(message: ChatMessage): void {
     // Handle Promise content
     if (typeof message.content === 'object' && message.content !== null && 'then' in message.content) {
-      (message.content as Promise<any>).then((content: any) => {
-        message.content = String(content || '');
-        this.cdr.detectChanges();
-      }).catch((error: any) => {
-        console.error('Error processing message content:', error);
-        message.content = 'Error loading message content';
-        this.cdr.detectChanges();
-      });
+      (message.content as Promise<any>)
+        .then((content: any) => {
+          message.content = String(content || '');
+          this.cdr.detectChanges();
+        })
+        .catch((error: any) => {
+          console.error('Error processing message content:', error);
+          message.content = 'Error loading message content';
+          this.cdr.detectChanges();
+        });
     } else {
       // Ensure content is always a string
       message.content = String(message.content || '');
@@ -427,7 +432,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    */
   checkOpenAiConfiguration(): void {
     this.openAiConfigService.getOpenAiConfigStatus().subscribe({
-      next: (response) => {
+      next: response => {
         if (response.code === 0) {
           this.isOpenAiConfigured = response.data.configured;
           if (this.isOpenAiConfigured) {
@@ -440,7 +445,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           this.showOpenAiConfigDialog();
         }
       },
-      error: (error) => {
+      error: error => {
         console.error('Error checking OpenAI configuration:', error);
         this.showOpenAiConfigDialog();
       }
@@ -500,12 +505,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    */
   loadOpenAiConfig(): void {
     this.openAiConfigService.getOpenAiConfig().subscribe({
-      next: (response) => {
+      next: response => {
         if (response.code === 0 && response.data) {
           this.openAiConfig = { ...this.openAiConfig, ...response.data };
         }
       },
-      error: (error) => {
+      error: error => {
         console.error('Failed to load OpenAI config:', error);
       }
     });
@@ -526,7 +531,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.showConfigModal = false;
   }
 
-
   /**
    * Save OpenAI configuration
    */
@@ -543,7 +547,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.message.info('Validating API key...', { nzDuration: 2000 });
 
     this.openAiConfigService.saveOpenAiConfig(this.openAiConfig).subscribe({
-      next: (response) => {
+      next: response => {
         this.configLoading = false;
         if (response.code === 0) {
           this.message.success('OpenAI API key validated and saved successfully!');
@@ -553,15 +557,15 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         } else {
           // Check if it's a validation error
           if (response.msg.includes('validation failed')) {
-            this.message.error('❌ API Key validation failed: ' + response.msg, { nzDuration: 5000 });
+            this.message.error(`❌ API Key validation failed: ${response.msg}`, { nzDuration: 5000 });
           } else {
-            this.message.error('Failed to save configuration: ' + response.msg);
+            this.message.error(`Failed to save configuration: ${response.msg}`);
           }
         }
       },
-      error: (error) => {
+      error: error => {
         this.configLoading = false;
-        this.message.error('Failed to save configuration: ' + error.message);
+        this.message.error(`Failed to save configuration: ${error.message}`);
       }
     });
   }

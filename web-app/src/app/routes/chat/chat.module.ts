@@ -19,13 +19,13 @@
 
 import { NgModule } from '@angular/core';
 import { SharedModule } from '@shared';
+import { MarkdownPipe } from 'ngx-markdown';
 
 import { ChatRoutingModule } from './chat-routing.module';
 import { ChatComponent } from './chat.component';
-import {MarkdownPipe} from "ngx-markdown";
 
 @NgModule({
   declarations: [ChatComponent],
-    imports: [SharedModule, ChatRoutingModule, MarkdownPipe]
+  imports: [SharedModule, ChatRoutingModule, MarkdownPipe]
 })
 export class ChatModule {}
