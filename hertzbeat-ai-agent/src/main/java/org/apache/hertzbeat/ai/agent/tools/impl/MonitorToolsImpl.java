@@ -34,7 +34,6 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of Monitoring Tools functionality
@@ -58,7 +57,7 @@ public class MonitorToolsImpl implements MonitorTools {
             
             MONITOR STATUSES:
             - status=1: Online/Active monitors (healthy, responding normally)
-            - status=2: Offline monitors (not responding, connection failed)  
+            - status=2: Offline monitors (not responding, connection failed)
             - status=3: Unreachable monitors (network/connectivity issues)
             - status=0: Paused monitors (manually disabled/suspended)
             - status=9 or null: All monitors regardless of status (default)
@@ -167,7 +166,7 @@ public class MonitorToolsImpl implements MonitorTools {
                        
                 // Add creation date for better context
                 if (monitor.getGmtCreate() != null) {
-                    response.append(" | Created: ").append(monitor.getGmtCreate().toString().substring(0, 10));
+                    response.append(" | Created: ").append(monitor.getGmtCreate().toString(), 0, 10);
                 }
                 response.append("\n");
             }
@@ -260,12 +259,12 @@ public class MonitorToolsImpl implements MonitorTools {
                     .description(description != null ? description.trim() : "")
                     .build();
             
-            // Create basic parameters list - let the adapter/service handle validation and defaults
             List<Param> params = createBasicParams(host, port, username, password, database, additionalParams);
             
             // Validate that all required parameters for this monitor type are provided
             try {
                 List<ParamDefine> requiredParams = monitorServiceAdapter.getMonitorParamDefines(app);
+                log.info("Checking required parameters for monitor type '{}': {}", app, requiredParams);
                 List<String> missingParams = new ArrayList<>();
                 
                 for (ParamDefine paramDefine : requiredParams) {
@@ -379,7 +378,7 @@ public class MonitorToolsImpl implements MonitorTools {
             // Sort monitor types alphabetically by key
             List<Map.Entry<String, String>> sortedTypes = monitorTypes.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
-                    .collect(Collectors.toList());
+                    .toList();
             
             for (Map.Entry<String, String> entry : sortedTypes) {
                 String typeKey = entry.getKey();
@@ -493,18 +492,13 @@ public class MonitorToolsImpl implements MonitorTools {
         if (status == null) {
             return "Unknown";
         }
-        switch (status) {
-            case 0:
-                return "Paused";
-            case 1:
-                return "Online";
-            case 2:
-                return "Offline";
-            case 3:
-                return "Unreachable";
-            default:
-                return "Unknown (" + status + ")";
-        }
+        return switch (status) {
+            case 0 -> "Paused";
+            case 1 -> "Online";
+            case 2 -> "Offline";
+            case 3 -> "Unreachable";
+            default -> "Unknown (" + status + ")";
+        };
     }
 
 }
