@@ -18,8 +18,10 @@
 
 package org.apache.hertzbeat.ai.agent.service;
 
+import org.apache.hertzbeat.ai.agent.pojo.dto.ChatResponseDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -40,9 +42,9 @@ public interface ConversationService {
      *
      * @param message The user's message
      * @param conversationId Optional conversation ID for continuing a chat
-     * @return SseEmitter for streaming the response
+     * @return Flux of ServerSentEvent for streaming the response
      */
-    SseEmitter streamChat(String message, String conversationId);
+    Flux<ServerSentEvent<ChatResponseDto>> streamChat(String message, String conversationId);
 
 
     /**

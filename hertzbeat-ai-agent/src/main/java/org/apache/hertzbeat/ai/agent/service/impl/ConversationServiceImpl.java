@@ -19,14 +19,16 @@ package org.apache.hertzbeat.ai.agent.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ChatResponseDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.agent.service.ConversationService;
 import org.apache.hertzbeat.ai.agent.service.OpenAiConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -60,83 +62,95 @@ public class ConversationServiceImpl implements ConversationService {
     }
     
     @Override
-    public SseEmitter streamChat(String message, String conversationId) {
-        SseEmitter emitter = new SseEmitter(30000L);
-        
+    public Flux<ServerSentEvent<ChatResponseDto>> streamChat(String message, String conversationId) {
+        // Validate conversation exists
         if (!conversationExists(conversationId)) {
-            try {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Conversation not found: " + conversationId);
-                emitter.send(errorResponse);
-                emitter.complete();
-            } catch (Exception e) {
-                emitter.completeWithError(e);
-            }
-            return emitter;
+            ChatResponseDto errorResponse = ChatResponseDto.builder()
+                    .conversationId(conversationId)
+                    .response("Error: Conversation not found: " + conversationId)
+                    .build();
+            return Flux.just(ServerSentEvent.builder(errorResponse)
+                    .event("error")
+                    .build());
         }
         
         // Check if OpenAI is properly configured
         if (!openAiConfigService.isConfigured()) {
-            try {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", "OpenAI is not configured. Please configure your OpenAI API key in the settings or application.yml file.");
-                errorResponse.put("configRequired", true);
-                emitter.send(errorResponse);
-                emitter.complete();
-            } catch (Exception e) {
-                emitter.completeWithError(e);
-            }
-            return emitter;
+            ChatResponseDto errorResponse = ChatResponseDto.builder()
+                    .conversationId(conversationId)
+                    .response("OpenAI is not configured. Please configure your OpenAI API key in the settings or application.yml file.")
+                    .build();
+            return Flux.just(ServerSentEvent.builder(errorResponse)
+                    .event("error")
+                    .build());
         }
-        new Thread(() -> {
-            try {
-                log.info("Starting conversation: {}", conversationId);
-                addMessageToConversation(conversationId, message, "user");
-                
-                // Get conversation history for context
-                List<Map<String, Object>> messagesList = conversationMessages.get(conversationId);
-                List<MessageDto> conversationHistory = new ArrayList<>();
-                
-                if (messagesList != null && messagesList.size() > 1) {
-                    // Get all messages except the last one (which is the current user message we just added)
-                    for (int i = 0; i < messagesList.size() - 1; i++) {
-                        Map<String, Object> msgMap = messagesList.get(i);
-                        conversationHistory.add(mapToMessageDto(msgMap));
-                    }
-                }
-                
-                ChatRequestContext context = ChatRequestContext.builder()
-                        .message(message)
-                        .conversationId(conversationId)
-                        .conversationHistory(conversationHistory)
-                        .build();
-                        
-                String aiResponse = chatClientProviderService.streamChat(context);
-                
-                addMessageToConversation(conversationId, aiResponse, "assistant");
-                
-                Map<String, Object> response = new HashMap<>();
-                response.put("conversationId", conversationId);
-                response.put("response", aiResponse);
-                response.put("timestamp", LocalDateTime.now().toString());
-                
-                emitter.send(response);
-                emitter.complete();
-                
-            } catch (Exception e) {
-                log.error("Error in stream chat: ", e);
-                try {
-                    Map<String, Object> errorResponse = new HashMap<>();
-                    errorResponse.put("error", "An error occurred: " + e.getMessage());
-                    emitter.send(errorResponse);
-                } catch (Exception sendError) {
-                    log.error("Error sending error response: ", sendError);
-                }
-                emitter.completeWithError(e);
-            }
-        }).start();
         
-        return emitter;
+        log.info("Starting streaming conversation: {}", conversationId);
+        
+        // Add user message to conversation
+        String userMessageId = addMessageToConversation(conversationId, message, "user");
+        
+        // Get conversation history for context
+        List<Map<String, Object>> messagesList = conversationMessages.get(conversationId);
+        List<MessageDto> conversationHistory = new ArrayList<>();
+        
+        if (messagesList != null && messagesList.size() > 1) {
+            // Get all messages except the last one (which is the current user message we just added)
+            for (int i = 0; i < messagesList.size() - 1; i++) {
+                Map<String, Object> msgMap = messagesList.get(i);
+                conversationHistory.add(mapToMessageDto(msgMap));
+            }
+        }
+        
+        ChatRequestContext context = ChatRequestContext.builder()
+                .message(message)
+                .conversationId(conversationId)
+                .conversationHistory(conversationHistory)
+                .build();
+        
+        // Stream response from AI service
+        StringBuilder fullResponse = new StringBuilder();
+        
+        return chatClientProviderService.streamChat(context)
+                .map(chunk -> {
+                    fullResponse.append(chunk);
+                    ChatResponseDto responseDto = ChatResponseDto.builder()
+                            .conversationId(conversationId)
+                            .response(chunk)
+                            .userMessageId(userMessageId)
+                            .build();
+                    
+                    return ServerSentEvent.builder(responseDto)
+                            .event("message")
+                            .build();
+                })
+                .concatWith(Flux.defer(() -> {
+                    // Add the complete AI response to conversation
+                    String assistantMessageId = addMessageToConversation(conversationId, fullResponse.toString(), "assistant");
+                    
+                    ChatResponseDto finalResponse = ChatResponseDto.builder()
+                            .conversationId(conversationId)
+                            .response("")
+                            .userMessageId(userMessageId)
+                            .assistantMessageId(assistantMessageId)
+                            .build();
+                    
+                    return Flux.just(ServerSentEvent.builder(finalResponse)
+                            .event("complete")
+                            .build());
+                }))
+                .doOnComplete(() -> log.info("Streaming completed for conversation: {}", conversationId))
+                .doOnError(error -> log.error("Error in streaming chat for conversation {}: {}", conversationId, error.getMessage(), error))
+                .onErrorResume(error -> {
+                    ChatResponseDto errorResponse = ChatResponseDto.builder()
+                            .conversationId(conversationId)
+                            .response("An error occurred: " + error.getMessage())
+                            .userMessageId(userMessageId)
+                            .build();
+                    return Flux.just(ServerSentEvent.builder(errorResponse)
+                            .event("error")
+                            .build());
+                });
     }
 
     @Override
@@ -231,11 +245,12 @@ public class ConversationServiceImpl implements ConversationService {
                 .build();
     }
     
-    private void addMessageToConversation(String conversationId, String content, String role) {
+    private String addMessageToConversation(String conversationId, String content, String role) {
         List<Map<String, Object>> messages = conversationMessages.computeIfAbsent(conversationId, k -> new ArrayList<>());
         
+        String messageId = "msg-" + UUID.randomUUID().toString().substring(0, 8);
         Map<String, Object> message = new HashMap<>();
-        message.put("messageId", "msg-" + UUID.randomUUID().toString().substring(0, 8));
+        message.put("messageId", messageId);
         message.put("conversationId", conversationId);
         message.put("content", content);
         message.put("role", role);
@@ -253,6 +268,8 @@ public class ConversationServiceImpl implements ConversationService {
                 conversation.put("title", title);
             }
         }
+        
+        return messageId;
     }
 
 

@@ -22,11 +22,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ChatResponseDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
 import org.apache.hertzbeat.ai.agent.service.ConversationService;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +36,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -79,30 +81,35 @@ public class ChatController {
      * Send a message and get a streaming response with conversation tracking
      * 
      * @param context The chat request context containing message and optional conversationId
-     * @return SSE emitter for streaming response
+     * @return Flux of ServerSentEvent for streaming response
      */
     @PostMapping(value = "/stream", produces = TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "Send a chat message with streaming response", description = "Send a message to AI and get a streaming response with conversation tracking")
-    public SseEmitter streamChat(@Valid @RequestBody ChatRequestContext context) {
+    public Flux<ServerSentEvent<ChatResponseDto>> streamChat(@Valid @RequestBody ChatRequestContext context) {
         try {
             // Validate message is not empty
             if (context.getMessage() == null || context.getMessage().trim().isEmpty()) {
-                SseEmitter emitter = new SseEmitter();
-                try {
-                    emitter.send("Error: Message cannot be empty");
-                    emitter.complete();
-                } catch (Exception sendError) {
-                    emitter.completeWithError(sendError);
-                }
-                return emitter;
+                ChatResponseDto errorResponse = ChatResponseDto.builder()
+                        .conversationId(context.getConversationId())
+                        .response("Error: Message cannot be empty")
+                        .build();
+                return Flux.just(ServerSentEvent.builder(errorResponse)
+                        .event("error")
+                        .build());
             }
             
+            log.info("Received streaming chat request for conversation: {}", context.getConversationId());
             return conversationService.streamChat(context.getMessage(), context.getConversationId());
+            
         } catch (Exception e) {
             log.error("Error in stream chat endpoint: ", e);
-            SseEmitter emitter = new SseEmitter();
-            emitter.completeWithError(e);
-            return emitter;
+            ChatResponseDto errorResponse = ChatResponseDto.builder()
+                    .conversationId(context.getConversationId())
+                    .response("An error occurred: " + e.getMessage())
+                    .build();
+            return Flux.just(ServerSentEvent.builder(errorResponse)
+                    .event("error")
+                    .build());
         }
     }
     

@@ -18,6 +18,7 @@
 
 package org.apache.hertzbeat.ai.agent.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.config.PromptProvider;
 import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
@@ -30,6 +31,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +41,7 @@ import java.util.List;
  * Provides functionality to interact with the ChatClient for handling chat
  * messages.
  */
+@Slf4j
 @Service
 public class ChatClientProviderServiceImpl implements ChatClientProviderService {
 
@@ -61,7 +64,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     }
 
     @Override
-    public String streamChat(ChatRequestContext context) {
+    public Flux<String> streamChat(ChatRequestContext context) {
         try {
             List<Message> messages = new ArrayList<>();
             
@@ -78,14 +81,21 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             
             messages.add(new UserMessage(context.getMessage()));
 
+            log.info("Starting streaming chat for conversation: {}", context.getConversationId());
+            
             return this.chatClient.prompt()
                     .messages(messages)
                     .system(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
                     .toolCallbacks(toolCallbackProvider)
-                    .call()
-                    .content();
+                    .stream()
+                    .content()
+                    .doOnNext(chunk -> log.debug("Received chunk: {}", chunk))
+                    .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
+                    .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
+                    
         } catch (Exception e) {
-            return "Error: " + e.getMessage();
+            log.error("Error setting up streaming chat: {}", e.getMessage(), e);
+            return Flux.error(e);
         }
     }
 }
