@@ -35,6 +35,8 @@ public interface MonitorTools {
      * @param intervals Collection interval in seconds (default: 600)
      * @param username Username for authentication (optional)
      * @param password Password for authentication (optional)
+     * @param database Database name (for database monitors)
+     * @param additionalParams Additional app-specific parameters as JSON string (optional)
      * @param description Monitor description (optional)
      * @return Result message with monitor ID if successful
      */
@@ -46,6 +48,8 @@ public interface MonitorTools {
             Integer intervals,
             String username,
             String password,
+            String database,
+            String additionalParams,
             String description
     );
     
@@ -89,6 +93,6 @@ public interface MonitorTools {
      * @param app Monitor type/application name (e.g., 'linux', 'mysql', 'redis')
      * @return Formatted string with parameter definitions including field names, types, and requirements
      */
-    String getMonitorParamDefines(String app);
+    String getMonitorAdditionalParams(String app);
 
 }
