@@ -344,41 +344,6 @@ public class MonitorToolsImpl implements MonitorTools {
         }
     }
 
-    @Override
-    @Tool(name = "delete_monitor", description = """
-            Delete an existing monitor from HertzBeat by its ID.
-            First List all the configured monitors using the list_monitors tool to find the monitor ID (long).
-            Provide that monitor ID to delete it, do not pass (1,2,3,4,5) as monitor ID.
-            This tool permanently removes the monitor and all its associated data.
-            Use with caution as this action cannot be undone.
-            """)
-    public String deleteMonitor(
-            @ToolParam(description = "Monitor ID to delete (required)", required = true) Long monitorId) {
-        
-        try {
-            log.info("Deleting monitor with ID: {}", monitorId);
-            // Validate required parameter
-            if (monitorId == null || monitorId <= 0) {
-                return "Error: Valid monitor ID is required. Monitor ID must be a positive number.";
-            }
-            
-            // Call the adapter to delete the monitor
-            boolean deleted = monitorServiceAdapter.deleteMonitor(monitorId);
-            
-            if (deleted) {
-                log.info("Successfully deleted monitor with ID: {}", monitorId);
-                return String.format("Successfully deleted monitor with ID: %d", monitorId);
-            } else {
-                log.warn("Monitor with ID {} not found or could not be deleted", monitorId);
-                return String.format("Monitor with ID %d not found or could not be deleted. Please verify the monitor ID exists.", monitorId);
-            }
-            
-        } catch (Exception e) {
-            log.error("Failed to delete monitor with ID {}: {}", monitorId, e.getMessage(), e);
-            return String.format("Error deleting monitor with ID %d: %s", monitorId, e.getMessage());
-        }
-    }
-    
     /**
      * Helper method to convert monitor status byte to readable text
      * @param status The status byte from monitor

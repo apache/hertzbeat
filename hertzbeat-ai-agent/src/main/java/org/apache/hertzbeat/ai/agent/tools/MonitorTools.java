@@ -82,12 +82,5 @@ public interface MonitorTools {
      */
     String getMonitorParamDefines(String app);
 
-    /**
-     * Delete an existing monitor by ID
-     * 
-     * @param monitorId The ID of the monitor to delete
-     * @return Result message indicating success or failure
-     */
-    String deleteMonitor(Long monitorId);
 
 }

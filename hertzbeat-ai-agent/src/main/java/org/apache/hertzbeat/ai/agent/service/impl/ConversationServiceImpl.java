@@ -110,7 +110,6 @@ public class ConversationServiceImpl implements ConversationService {
         
         // Stream response from AI service
         StringBuilder fullResponse = new StringBuilder();
-        
         return chatClientProviderService.streamChat(context)
                 .map(chunk -> {
                     fullResponse.append(chunk);

@@ -17,10 +17,13 @@
 
 package org.apache.hertzbeat.ai.agent.controller;
 
+import com.usthe.sureness.subject.SubjectSum;
+import com.usthe.sureness.util.SurenessContextHolder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatResponseDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
@@ -88,6 +91,9 @@ public class ChatController {
     public Flux<ServerSentEvent<ChatResponseDto>> streamChat(@Valid @RequestBody ChatRequestContext context) {
         try {
             // Validate message is not empty
+            SubjectSum subject = SurenessContextHolder.getBindSubject();
+            log.info(subject.toString());
+            McpContextHolder.setSubject(subject);
             if (context.getMessage() == null || context.getMessage().trim().isEmpty()) {
                 ChatResponseDto errorResponse = ChatResponseDto.builder()
                         .conversationId(context.getConversationId())
