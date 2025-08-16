@@ -89,11 +89,10 @@ export class AiChatService {
       requestBody.conversationId = conversationId;
     }
 
-
     const token = this.localStorageService.getAuthorizationToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Accept': 'text/event-stream',
+      Accept: 'text/event-stream',
       'Cache-Control': 'no-cache'
     };
 
@@ -109,7 +108,6 @@ export class AiChatService {
       body: JSON.stringify(requestBody)
     })
       .then(response => {
-
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
