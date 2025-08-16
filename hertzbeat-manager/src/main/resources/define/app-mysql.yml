@@ -299,7 +299,7 @@ metrics:
       # SQL Query Method：oneRow, multiRow, columns
       queryType: columns
       # sql
-      sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port' or Variable_name = 'thread_cache_size' or Variable_name = 'table_open_cache' or Variable_name = 'innodb_buffer_pool_size';
+      sql: "show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' or Variable_name = 'port' or Variable_name = 'thread_cache_size' or Variable_name = 'table_open_cache' or Variable_name = 'innodb_buffer_pool_size';"
       # JDBC url
       url: ^_^url^_^
       sshTunnel:
@@ -441,7 +441,7 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       queryType: columns
-      sql: show global status where Variable_name = 'questions' or Variable_name = 'uptime';
+      sql: "show global status where Variable_name = 'questions' or Variable_name = 'uptime';"
       url: ^_^url^_^
       sshTunnel:
         enable: ^_^enableSshTunnel^_^
@@ -641,7 +641,7 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       queryType: columns
-      sql: show global status where Variable_name like 'thread%' or Variable_name = 'com_select' or Variable_name = 'com_insert' or Variable_name = 'com_update' or Variable_name = 'com_delete' or Variable_name = 'com_commit' or Variable_name = 'com_rollback' or Variable_name = 'questions' or Variable_name = 'uptime';
+      sql: "show global status where Variable_name like 'thread%' or Variable_name = 'com_select' or Variable_name = 'com_insert' or Variable_name = 'com_update' or Variable_name = 'com_delete' or Variable_name = 'com_commit' or Variable_name = 'com_rollback' or Variable_name = 'questions' or Variable_name = 'uptime';"
       url: ^_^url^_^
       sshTunnel:
         enable: ^_^enableSshTunnel^_^
