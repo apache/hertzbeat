@@ -21,12 +21,14 @@ import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.AlertDefineServiceAdapter;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
+import org.apache.hertzbeat.ai.agent.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -164,36 +166,6 @@ public class AlertDefineServiceAdapterImpl implements AlertDefineServiceAdapter 
         }
     }
 
-    @Override
-    public boolean deleteAlertDefine(Long id) {
-        try {
-            Object alertDefineService = null;
-            SubjectSum subjectSum = McpContextHolder.getSubject();
-            log.debug("Current security subject for deleteAlertDefine: {}", subjectSum);
-
-            try {
-                alertDefineService = SpringContextHolder.getBean("alertDefineServiceImpl");
-            } catch (Exception e) {
-                log.debug("Could not find bean by name 'alertDefineServiceImpl'");
-            }
-
-            assert alertDefineService != null;
-            log.debug("AlertDefineService bean found: {}", alertDefineService.getClass().getSimpleName());
-            
-            Method method = alertDefineService.getClass().getMethod("deleteAlertDefine", long.class);
-
-            method.invoke(alertDefineService, id);
-            
-            log.debug("Successfully deleted alert define with ID: {}", id);
-            return true;
-
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Method not found: deleteAlertDefine", e);
-        } catch (Exception e) {
-            log.error("Failed to invoke deleteAlertDefine via adapter for ID: {}", id, e);
-            throw new RuntimeException("Failed to invoke deleteAlertDefine via adapter: " + e.getMessage(), e);
-        }
-    }
 
     @Override
     public void toggleAlertDefineStatus(Long id, boolean enabled) {
@@ -274,5 +246,159 @@ public class AlertDefineServiceAdapterImpl implements AlertDefineServiceAdapter 
             log.error("Failed to bind monitor {} to alert define {}: {}", monitorId, alertDefineId, e.getMessage(), e);
             return false;
         }
+    }
+    /**
+     * Retrieves the application hierarchy for a given app and language.
+     * Uses reflection to call the underlying app service method.
+     *
+     * @param app  The application name
+     * @param lang The language code (optional, defaults to "en-US")
+     * @return List of Hierarchy objects representing the app hierarchy
+     */
+
+    @Override
+    public List<Hierarchy> getAppHierarchy(String app, String lang) {
+        try {
+            Object appService = null;
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for getAppHierarchy: {}", subjectSum);
+
+            try {
+                appService = SpringContextHolder.getBean("appServiceImpl");
+            } catch (Exception e) {
+                log.debug("Could not find bean by name 'appServiceImpl', trying by class name");
+            }
+
+            assert appService != null;
+            log.debug("AppService bean found for getAppHierarchy: {}", appService.getClass().getSimpleName());
+
+            // Provide default language if not specified
+            if (lang == null || lang.trim().isEmpty()) {
+                lang = "en-US";
+            }
+
+            // Call getAppHierarchy method: getAppHierarchy(String app, String lang)
+            Method method = appService.getClass().getMethod("getAppHierarchy", String.class, String.class);
+
+            List<?> managerHierarchies = (List<?>) method.invoke(appService, app, lang);
+
+            // Convert manager DTOs to ai-agent DTOs
+            List<Hierarchy> result = convertToAgentHierarchies(managerHierarchies);
+
+            log.debug("Successfully retrieved and converted {} hierarchies for app '{}'", result.size(), app);
+            return result;
+
+        } catch (Exception e) {
+            log.error("Failed to get app hierarchy for app '{}': {}", app, e.getMessage(), e);
+            throw new RuntimeException("Failed to get app hierarchy for " + app, e);
+        }
+    }
+
+    /**
+     * Convert manager module Hierarchy objects to ai-agent module Hierarchy objects
+     * This handles the cross-module DTO conversion to avoid ClassCastException
+     */
+    private List<Hierarchy> convertToAgentHierarchies(List<?> managerHierarchies) {
+        List<Hierarchy> agentHierarchies = new ArrayList<>();
+
+        for (Object managerHierarchy : managerHierarchies) {
+            Hierarchy agentHierarchy = convertToAgentHierarchy(managerHierarchy);
+            agentHierarchies.add(agentHierarchy);
+        }
+
+        return agentHierarchies;
+    }
+
+    /**
+     * Convert a single manager Hierarchy object to ai-agent Hierarchy object using reflection
+     */
+    private Hierarchy convertToAgentHierarchy(Object managerHierarchy) {
+        try {
+            Hierarchy agentHierarchy = new Hierarchy();
+
+            // Use reflection to copy properties from manager DTO to agent DTO
+            Class<?> managerClass = managerHierarchy.getClass();
+
+            // Copy basic properties
+            agentHierarchy.setCategory(getStringField(managerHierarchy, managerClass, "category"));
+            agentHierarchy.setValue(getStringField(managerHierarchy, managerClass, "value"));
+            agentHierarchy.setLabel(getStringField(managerHierarchy, managerClass, "label"));
+            agentHierarchy.setIsLeaf(getBooleanField(managerHierarchy, managerClass, "isLeaf"));
+            agentHierarchy.setHide(getBooleanField(managerHierarchy, managerClass, "hide"));
+            agentHierarchy.setType(getByteField(managerHierarchy, managerClass, "type"));
+            agentHierarchy.setUnit(getStringField(managerHierarchy, managerClass, "unit"));
+
+            // Handle children recursively
+            List<?> managerChildren = getListField(managerHierarchy, managerClass, "children");
+            if (managerChildren != null && !managerChildren.isEmpty()) {
+                List<Hierarchy> agentChildren = convertToAgentHierarchies(managerChildren);
+                agentHierarchy.setChildren(agentChildren);
+            }
+
+            return agentHierarchy;
+
+        } catch (Exception e) {
+            log.error("Failed to convert manager hierarchy to agent hierarchy: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to convert hierarchy", e);
+        }
+    }
+
+    private String getStringField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value != null ? value.toString() : null;
+        } catch (Exception e) {
+            log.debug("Could not get string field '{}': {}", fieldName, e.getMessage());
+            return null;
+        }
+    }
+
+    private Boolean getBooleanField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value instanceof Boolean ? (Boolean) value : null;
+        } catch (Exception e) {
+            try {
+                // Try alternative getter pattern for boolean fields
+                Method isGetter = clazz.getMethod("is" + capitalize(fieldName));
+                Object value = isGetter.invoke(obj);
+                return value instanceof Boolean ? (Boolean) value : null;
+            } catch (Exception e2) {
+                log.debug("Could not get boolean field '{}': {}", fieldName, e.getMessage());
+                return null;
+            }
+        }
+    }
+
+    private Byte getByteField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value instanceof Byte ? (Byte) value : null;
+        } catch (Exception e) {
+            log.debug("Could not get byte field '{}': {}", fieldName, e.getMessage());
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<?> getListField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value instanceof List ? (List<?>) value : null;
+        } catch (Exception e) {
+            log.debug("Could not get list field '{}': {}", fieldName, e.getMessage());
+            return null;
+        }
+    }
+
+    private String capitalize(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }
