@@ -9,7 +9,7 @@ keywords: [ 开源监控系统, 监控 Apache DolphinScheduler ]
 
 ## 监控前操作
 
-> Apache DolphinScheduler v3.2.2 或更高版本
+> 支持 Apache DolphinScheduler v3.3.0 或更高版本
 
 您需在 Apache DolphinScheduler 中创建令牌。
 
@@ -36,44 +36,63 @@ keywords: [ 开源监控系统, 监控 Apache DolphinScheduler ]
 
 ### 指标集合：Master
 
-| 指标名称          | 指标单位   | 指标帮助描述 |
-|---------------|--------|--------|
-| host          | 无      | 主机地址   |
-| port          | 无      | 端口     |
-| serverStatus  | 无      | 状态     |
-| processId     | 无      | 进程 ID  |
-| runningTime   | 天      | 运行时间   |
-| cpuUsage      | 百分比(%) | CPU使用率 |
-| memoryUsage   | 百分比(%) | 内存使用率  |
-| diskAvailable | GB     | 磁盘可用容量 |
+| 指标名称           | 指标单位   | 指标帮助描述          |
+|----------------|--------|-----------------|
+| host           | 无      | 主机地址            |
+| port           | 无      | 端口              |
+| serverStatus   | 无      | 状态              |
+| processId      | 无      | 进程 ID           |
+| runningTime    | 天      | 运行时间            |
+| cpuUsage       | 百分比(%) | 处理器使用量          |
+| memoryUsage    | 百分比(%) | 内存使用量           |
+| diskUsage      | 百分比(%) | 磁盘可用容量          |
+| jvmCpuUsage    | 百分比(%) | JVM CPU 使用量     |
+| jvmMemoryUsage | 百分比(%) | JVM 内存 使用量      |
+| jvmHeapUsed    | 无      | JVM 已使用的堆内存大小   |
+| jvmNonHeapUsed | 无      | JVM 已使用的非堆内存大小  |
+| jvmHeapMax     | 无      | JVM 配置的最大堆内存大小  |
+| jvmNonHeapMax  | 无      | JVM 配置的最大非堆内存大小 |
 
 ### 指标集合：Worker
 
-| 指标名称             | 指标单位   | 指标帮助描述 |
-|------------------|--------|--------|
-| host             | 无      | 主机地址   |
-| port             | 无      | 端口     |
-| serverStatus     | 无      | 状态     |
-| processId        | 无      | 进程 ID  |
-| runningTime      | 天      | 运行时间   |
-| cpuUsage         | 百分比(%) | CPU使用率 |
-| memoryUsage      | 百分比(%) | 内存使用率  |
-| diskAvailable    | GB     | 磁盘可用容量 |
-| workerHostWeight | 无      | 权重     |
-| threadPoolUsage  | 无      | 线程池使用量 |
+| 指标名称             | 指标单位   | 指标帮助描述          |
+|------------------|--------|-----------------|
+| host             | 无      | 主机地址            |
+| port             | 无      | 端口              |
+| serverStatus     | 无      | 状态              |
+| processId        | 无      | 进程 ID           |
+| runningTime      | 天      | 运行时间            |
+| cpuUsage         | 百分比(%) | CPU使用率          |
+| memoryUsage      | 百分比(%) | 内存使用率           |
+| diskUsage        | 百分比(%) | 磁盘可用容量          |
+| jvmCpuUsage      | 百分比(%) | JVM CPU 使用量     |
+| jvmMemoryUsage   | 百分比(%) | JVM 内存 使用量      |
+| jvmHeapUsed      | 无      | JVM 已使用的堆内存大小   |
+| jvmNonHeapUsed   | 无      | JVM 已使用的非堆内存大小  |
+| jvmHeapMax       | 无      | JVM 配置的最大堆内存大小  |
+| jvmNonHeapMax    | 无      | JVM 配置的最大非堆内存大小 |
+| workerHostWeight | 无      | 权重              |
+| threadPoolUsage  | 无      | 线程池使用量          |
+| workerGroup      | 无      | Worker 组        |
 
 ### 指标集合：Alert Server
 
-| 指标名称          | 指标单位   | 指标帮助描述 |
-|---------------|--------|--------|
-| host          | 无      | 主机地址   |
-| port          | 无      | 端口     |
-| serverStatus  | 无      | 状态     |
-| processId     | 无      | 进程 ID  |
-| runningTime   | 天      | 运行时间   |
-| cpuUsage      | 百分比(%) | CPU使用率 |
-| memoryUsage   | 百分比(%) | 内存使用率  |
-| diskAvailable | GB     | 磁盘可用容量 |
+| 指标名称           | 指标单位   | 指标帮助描述          |
+|----------------|--------|-----------------|
+| host           | 无      | 主机地址            |
+| port           | 无      | 端口              |
+| serverStatus   | 无      | 状态              |
+| processId      | 无      | 进程 ID           |
+| runningTime    | 天      | 运行时间            |
+| cpuUsage       | 百分比(%) | 处理器使用量          |
+| memoryUsage    | 百分比(%) | 内存使用量           |
+| diskUsage      | 百分比(%) | 磁盘可用容量          |
+| jvmCpuUsage    | 百分比(%) | JVM CPU 使用量     |
+| jvmMemoryUsage | 百分比(%) | JVM 内存 使用量      |
+| jvmHeapUsed    | 无      | JVM 已使用的堆内存大小   |
+| jvmNonHeapUsed | 无      | JVM 已使用的非堆内存大小  |
+| jvmHeapMax     | 无      | JVM 配置的最大堆内存大小  |
+| jvmNonHeapMax  | 无      | JVM 配置的最大非堆内存大小 |
 
 ### 指标：数据库
 

@@ -9,7 +9,7 @@ keywords: [ Open Source Monitoring System, Monitor Apache DolphinScheduler ]
 
 ## Pre-monitoring operations
 
-> Apache DolphinScheduler version 3.2.2 or later
+> Support Apache DolphinScheduler version 3.3.0 or later
 
 You need to create a token in Apache DolphinScheduler.
 
@@ -36,16 +36,22 @@ Please refer to [Open API](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/
 
 ### Metric Set: Master
 
-| Metric Name   | Metric Unit   | Metric Help Description |
-|---------------|---------------|-------------------------|
-| host          | None          | Host                    |
-| port          | None          | Port                    |
-| serverStatus  | None          | Server Status           |
-| processId     | None          | Process Id              |
-| runningTime   | Day           | Running Time            |
-| cpuUsage      | Percentage(%) | CPU Usage               |
-| memoryUsage   | Percentage(%) | Memory Usage            |
-| diskAvailable | GB            | Disk Available          |
+| Metric Name    | Metric Unit   | Metric Help Description |
+|----------------|---------------|-------------------------|
+| host           | None          | Host                    |
+| port           | None          | Port                    |
+| serverStatus   | None          | Server Status           |
+| processId      | None          | Process Id              |
+| runningTime    | Day           | Running Time            |
+| cpuUsage       | Percentage(%) | CPU Usage               |
+| memoryUsage    | Percentage(%) | Memory Usage            |
+| diskUsage      | Percentage(%) | Disk Usage              |
+| jvmCpuUsage    | Percentage(%) | JVM CPU Usage           |
+| jvmMemoryUsage | Percentage(%) | JVM Memory Usage        |
+| jvmHeapUsed    | None          | JVM Heap Used           |
+| jvmNonHeapUsed | None          | JVM NonHeap Used        |
+| jvmHeapMax     | None          | JVM Heap Max            |
+| jvmNonHeapMax  | None          | JVM NonHeap Max         |
 
 ### Metric Set: Worker
 
@@ -58,22 +64,35 @@ Please refer to [Open API](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/
 | runningTime      | Day           | Running Time            |
 | cpuUsage         | Percentage(%) | CPU Usage               |
 | memoryUsage      | Percentage(%) | Memory Usage            |
-| diskAvailable    | GB            | Disk Available          |
+| diskUsage        | Percentage(%) | Disk Usage              |
+| jvmCpuUsage      | Percentage(%) | JVM CPU Usage           |
+| jvmMemoryUsage   | Percentage(%) | JVM Memory Usage        |
+| jvmHeapUsed      | None          | JVM Heap Used           |
+| jvmNonHeapUsed   | None          | JVM NonHeap Used        |
+| jvmHeapMax       | None          | JVM Heap Max            |
+| jvmNonHeapMax    | None          | JVM NonHeap Max         |
 | workerHostWeight | None          | Weight                  |
 | threadPoolUsage  | None          | Thread Pool Usage       |
+| workerGroup      | None          | Worker Group            |
 
 ### Metric Set: Alert Server
 
-| Metric Name   | Metric Unit   | Metric Help Description |
-|---------------|---------------|-------------------------|
-| host          | None          | Host                    |
-| port          | None          | Port                    |
-| serverStatus  | None          | Server Status           |
-| processId     | None          | Process Id              |
-| runningTime   | Day           | Running Time            |
-| cpuUsage      | Percentage(%) | CPU Usage               |
-| memoryUsage   | Percentage(%) | Memory Usage            |
-| diskAvailable | GB            | Disk Available          |
+| Metric Name    | Metric Unit   | Metric Help Description |
+|----------------|---------------|-------------------------|
+| host           | None          | Host                    |
+| port           | None          | Port                    |
+| serverStatus   | None          | Server Status           |
+| processId      | None          | Process Id              |
+| runningTime    | Day           | Running Time            |
+| cpuUsage       | Percentage(%) | CPU Usage               |
+| memoryUsage    | Percentage(%) | Memory Usage            |
+| diskUsage      | Percentage(%) | Disk Usage              |
+| jvmCpuUsage    | Percentage(%) | JVM CPU Usage           |
+| jvmMemoryUsage | Percentage(%) | JVM Memory Usage        |
+| jvmHeapUsed    | None          | JVM Heap Used           |
+| jvmNonHeapUsed | None          | JVM NonHeap Used        |
+| jvmHeapMax     | None          | JVM Heap Max            |
+| jvmNonHeapMax  | None          | JVM NonHeap Max         |
 
 ### Metric Set: Database
 
