@@ -36,6 +36,7 @@ import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobServi
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
+import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.Collector;
@@ -45,6 +46,7 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
@@ -261,9 +263,11 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         if (Objects.isNull(collector)) {
             return false;
         }
+        ServerInfo serverInfo = ServerInfo.builder().aesSecret(AesUtil.getDefaultSecretKey()).build();
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setType(ClusterMsg.MessageType.GO_ONLINE)
                 .setDirection(ClusterMsg.Direction.REQUEST)
+                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(serverInfo)))
                 .setIdentity(identity)
                 .build();
         ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);

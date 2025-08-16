@@ -95,7 +95,7 @@ class AesUtilTest {
         // Test with default key
         String originalText = "This is a secret message";
         // encode use default secret key
-        String encryptedText = aesEncode(originalText, AesUtil.ENCODE_RULES);
+        String encryptedText = aesEncode(originalText, AesUtil.DEFAULT_ENCODE_RULES);
         // decode use new secret key
         String decryptedText = aesDecode(encryptedText, "newkey1234567890");
         // old data can decode with default secret key
