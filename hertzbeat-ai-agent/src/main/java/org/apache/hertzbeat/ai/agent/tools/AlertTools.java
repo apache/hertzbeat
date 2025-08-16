@@ -19,7 +19,50 @@
 package org.apache.hertzbeat.ai.agent.tools;
 
 /**
- * Tools for alert operations
+ * Tools for alert operations and alarm data queries
  */
 public interface AlertTools {
+
+    /**
+     * Query alerts with comprehensive filtering and pagination
+     * @param alertType Alert type (single, group, both)
+     * @param status Alert status (firing, resolved, all)
+     * @param search Search term for alert content or labels
+     * @param sort Sort field (startAt, triggerTimes, status)
+     * @param order Sort order (asc, desc)
+     * @param pageIndex Page index
+     * @param pageSize Page size
+     * @return Formatted string with alert information
+     */
+    String queryAlerts(String alertType, String status, String search, String sort, String order, Integer pageIndex, Integer pageSize);
+
+    /**
+     * Get alerts summary statistics
+     * @return Alert summary information including counts by status
+     */
+    String getAlertsSummary();
+
+    /**
+     * Get recent frequent alarms analysis
+     * @param timeRange Time range (1h, 6h, 24h, 7d)
+     * @param limit Maximum number of frequent alerts to return
+     * @return Analysis of most frequent alerts in the specified time range
+     */
+    String getFrequentAlerts(String timeRange, Integer limit);
+
+    /**
+     * Get abnormal monitoring items
+     * @param timeRange Time range to check for abnormal items
+     * @return List of monitoring items that are currently abnormal with timestamps
+     */
+    String getAbnormalMonitors(String timeRange);
+
+    /**
+     * Search alerts by monitor ID or monitor name
+     * @param monitorId Monitor ID to search alerts for
+     * @param monitorName Monitor name to search alerts for
+     * @param timeRange Time range (1h, 6h, 24h, 7d)
+     * @return Alerts related to the specific monitor
+     */
+    String getMonitorAlerts(Long monitorId, String monitorName, String timeRange);
 }
