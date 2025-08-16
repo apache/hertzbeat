@@ -17,14 +17,18 @@
   ~ under the License.
 -->
 
-<nz-card style="height: 100%" nzHoverable [nzBordered]="true">
-  <div
-    echarts
-    [options]="eChartOption"
-    theme="default"
-    [autoResize]="true"
-    [loading]="loading"
-    (chartInit)="onChartInit($event)"
-    style="width: 100%; height: 500px"
-  ></div>
+<nz-card style="height: 100%" nzHoverable [nzBordered]="true" inViewport (inViewportAction)="handleViewportAction($event)">
+  <nz-spin [nzSpinning]="!isInViewport || !!loading" [nzTip]="loading">
+    <div
+      *ngIf="isInViewport && !loading"
+      echarts
+      [options]="eChartOption"
+      theme="default"
+      [autoResize]="true"
+      [loading]="!!loading"
+      (chartInit)="onChartInit($event)"
+      style="width: 100%; height: 500px"
+    ></div>
+    <div *ngIf="!isInViewport || !!loading" style="width: 100%; height: 500px"></div>
+  </nz-spin>
 </nz-card>

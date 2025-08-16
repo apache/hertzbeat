@@ -683,6 +683,8 @@
   "monitor.detail.chart.save": "保存图片",
   "monitor.detail.chart.unit": "单位",
   "monitor.detail.chart.zoom": "区域缩放",
+  "monitor.detail.chart.data-loading": "数据请求中",
+  "monitor.detail.chart.data-processing": "数据解析中",
   "monitor.detail.close-refresh": "关闭自动刷新",
   "monitor.detail.config-refresh": "设置 {{time}} 秒自动刷新",
   "monitor.detail.description": "描述",

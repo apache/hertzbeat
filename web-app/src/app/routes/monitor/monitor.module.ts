@@ -33,6 +33,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NgxEchartsModule } from 'ngx-echarts';
+import { InViewportModule } from 'ng-in-viewport';
 
 import { SafePipe } from '../SafePipe';
 import { MonitorDataChartComponent } from './monitor-data-chart/monitor-data-chart.component';
@@ -72,7 +73,8 @@ const COMPONENTS: Array<Type<void>> = [
     SafePipe,
     NzListModule,
     NzDescriptionsModule,
-    NzPaginationModule
+    NzPaginationModule,
+    InViewportModule
   ],
   declarations: COMPONENTS
 })

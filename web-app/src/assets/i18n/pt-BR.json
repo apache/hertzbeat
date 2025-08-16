@@ -765,6 +765,8 @@
   "monitor.detail.chart.save": "Salvar imagem",
   "monitor.detail.chart.unit": "Unidade",
   "monitor.detail.chart.zoom": "Zoom na área",
+  "monitor.detail.chart.data-loading": "O pedido de dados em curso",
+  "monitor.detail.chart.data-processing": "Na análise de dados",
   "monitor.detail.close-refresh": "Desativar atualização automática",
   "monitor.detail.config-refresh": "Configurar atualização automática a cada {{time}} segundos",
   "monitor.detail.description": "Descrição",
