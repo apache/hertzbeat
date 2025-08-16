@@ -74,11 +74,9 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
       const wasVisible = this.isInViewport;
       const curVisible = event.visible;
       if (curVisible && !wasVisible) {
+        this.isInViewport = curVisible;
         this.loadData();
-      } else if (!curVisible) {
-        this.ngOnDestroy();
       }
-      this.isInViewport = curVisible;
     }, 200);
   }
 
