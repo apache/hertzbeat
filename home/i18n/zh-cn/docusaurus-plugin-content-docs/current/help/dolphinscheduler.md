@@ -9,6 +9,8 @@ keywords: [ 开源监控系统, 监控 Apache DolphinScheduler ]
 
 ## 监控前操作
 
+> Apache DolphinScheduler v3.2.2 或更高版本
+
 您需在 Apache DolphinScheduler 中创建令牌。
 
 可参考 [API 调用](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/guide/api/open-api) 创建一个新令牌，具体步骤如下：
@@ -47,20 +49,31 @@ keywords: [ 开源监控系统, 监控 Apache DolphinScheduler ]
 
 ### 指标集合：Worker
 
-| 指标名称                   | 指标单位   | 指标帮助描述 |
-|------------------------|--------|--------|
-| host                   | 无      | 主机地址   |
-| port                   | 无      | 端口     |
-| serverStatus           | 无      | 状态     |
-| processId              | 无      | 进程 ID  |
-| runningTime            | 天      | 运行时间   |
-| cpuUsage               | 百分比(%) | CPU使用率 |
-| memoryUsage            | 百分比(%) | 内存使用率  |
-| diskAvailable          | GB     | 磁盘可用容量 |
-| workerHostWeight       | 无      | 权重     |
-| workerWaitingTaskCount | 无      | 等待任务数  |
-| workerExecThreadCount  | 无      | 执行线程数  |
+| 指标名称             | 指标单位   | 指标帮助描述 |
+|------------------|--------|--------|
+| host             | 无      | 主机地址   |
+| port             | 无      | 端口     |
+| serverStatus     | 无      | 状态     |
+| processId        | 无      | 进程 ID  |
+| runningTime      | 天      | 运行时间   |
+| cpuUsage         | 百分比(%) | CPU使用率 |
+| memoryUsage      | 百分比(%) | 内存使用率  |
+| diskAvailable    | GB     | 磁盘可用容量 |
+| workerHostWeight | 无      | 权重     |
+| threadPoolUsage  | 无      | 线程池使用量 |
 
+### 指标集合：Alert Server
+
+| 指标名称          | 指标单位   | 指标帮助描述 |
+|---------------|--------|--------|
+| host          | 无      | 主机地址   |
+| port          | 无      | 端口     |
+| serverStatus  | 无      | 状态     |
+| processId     | 无      | 进程 ID  |
+| runningTime   | 天      | 运行时间   |
+| cpuUsage      | 百分比(%) | CPU使用率 |
+| memoryUsage   | 百分比(%) | 内存使用率  |
+| diskAvailable | GB     | 磁盘可用容量 |
 
 ### 指标：数据库
 

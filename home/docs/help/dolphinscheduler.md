@@ -9,6 +9,8 @@ keywords: [ Open Source Monitoring System, Monitor Apache DolphinScheduler ]
 
 ## Pre-monitoring operations
 
+> Apache DolphinScheduler version 3.2.2 or later
+
 You need to create a token in Apache DolphinScheduler.
 
 Please refer to [Open API](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/guide/api/open-api) to create a new token.The main steps are as follows
@@ -47,19 +49,31 @@ Please refer to [Open API](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/
 
 ### Metric Set: Worker
 
-| Metric Name            | Metric Unit   | Metric Help Description |
-|------------------------|---------------|-------------------------|
-| host                   | None          | Host                    |
-| port                   | None          | Port                    |
-| serverStatus           | None          | Server Status           |
-| processId              | None          | Process Id              |
-| runningTime            | Day           | Running Time            |
-| cpuUsage               | Percentage(%) | CPU Usage               |
-| memoryUsage            | Percentage(%) | Memory Usage            |
-| diskAvailable          | GB            | Disk Available          |
-| workerHostWeight       | None          | Weight                  |
-| workerWaitingTaskCount | None          | Waiting Task Count      |
-| workerExecThreadCount  | None          | Execute Thread Count    |
+| Metric Name      | Metric Unit   | Metric Help Description |
+|------------------|---------------|-------------------------|
+| host             | None          | Host                    |
+| port             | None          | Port                    |
+| serverStatus     | None          | Server Status           |
+| processId        | None          | Process Id              |
+| runningTime      | Day           | Running Time            |
+| cpuUsage         | Percentage(%) | CPU Usage               |
+| memoryUsage      | Percentage(%) | Memory Usage            |
+| diskAvailable    | GB            | Disk Available          |
+| workerHostWeight | None          | Weight                  |
+| threadPoolUsage  | None          | Thread Pool Usage       |
+
+### Metric Set: Alert Server
+
+| Metric Name   | Metric Unit   | Metric Help Description |
+|---------------|---------------|-------------------------|
+| host          | None          | Host                    |
+| port          | None          | Port                    |
+| serverStatus  | None          | Server Status           |
+| processId     | None          | Process Id              |
+| runningTime   | Day           | Running Time            |
+| cpuUsage      | Percentage(%) | CPU Usage               |
+| memoryUsage   | Percentage(%) | Memory Usage            |
+| diskAvailable | GB            | Disk Available          |
 
 ### Metric Set: Database
 
