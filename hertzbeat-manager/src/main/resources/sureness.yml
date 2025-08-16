@@ -84,7 +84,6 @@ excludedResource:
   - /api/manager/sse/**===*
   # web ui resource
   - /===get
-  - /api/mcp/message===post
   - /assets/**===get
   - /dashboard/**===get
   - /monitors/**===get
