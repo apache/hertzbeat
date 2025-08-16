@@ -21,7 +21,6 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * history data writer
@@ -47,24 +46,62 @@ public interface HistoryDataWriter {
         throw new UnsupportedOperationException("save log data is not supported");
     }
 
-
-    default List<LogEntry> queryLogs(Long startTime, Long endTime, Integer limit){
-        return null;
+    /**
+     * Query logs with multiple filter conditions
+     * @param startTime start time in milliseconds
+     * @param endTime end time in milliseconds
+     * @param traceId trace ID filter
+     * @param spanId span ID filter
+     * @param severityNumber severity number filter
+     * @param severityText severity text filter
+     * @return filtered log entries
+     */
+    default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId, 
+                                                         String spanId, Integer severityNumber, 
+                                                         String severityText) {
+        throw new UnsupportedOperationException("query logs by multiple conditions is not supported");
     }
 
-    default List<LogEntry> queryLogsByResource(Map<String, Object> resource, Long startTime, Long endTime, Integer limit){
-        return null;
+    /**
+     * Query logs with multiple filter conditions and pagination
+     * @param startTime start time in milliseconds
+     * @param endTime end time in milliseconds
+     * @param traceId trace ID filter
+     * @param spanId span ID filter
+     * @param severityNumber severity number filter
+     * @param severityText severity text filter
+     * @param offset pagination offset
+     * @param limit pagination limit
+     * @return filtered log entries with pagination
+     */
+    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId, 
+                                                                       String spanId, Integer severityNumber, 
+                                                                       String severityText, Integer offset, Integer limit) {
+        throw new UnsupportedOperationException("query logs by multiple conditions with pagination is not supported");
     }
 
-    default List<LogEntry> queryLogsBySpanId(String spanId, Integer limit){
-        return null;
+    /**
+     * Count logs with multiple filter conditions
+     * @param startTime start time in milliseconds
+     * @param endTime end time in milliseconds
+     * @param traceId trace ID filter
+     * @param spanId span ID filter
+     * @param severityNumber severity number filter
+     * @param severityText severity text filter
+     * @return count of matching log entries
+     */
+    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId, 
+                                              String spanId, Integer severityNumber, 
+                                              String severityText) {
+        throw new UnsupportedOperationException("count logs by multiple conditions is not supported");
     }
 
-    default List<LogEntry> queryLogsBySeverity(Integer severityNumber, Long startTime, Long endTime, Integer limit){
-        return null;
-    }
-
-    default List<LogEntry> queryLogsByTraceId(String traceId, Integer limit){
-        return null;
+    /**
+     * Batch delete logs by time timestamps
+     * @param timeUnixNanos list of time timestamps to delete
+     * @return true if deletion is successful, false otherwise
+     */
+    default boolean batchDeleteLogs(List<Long> timeUnixNanos) {
+        throw new UnsupportedOperationException("batch delete logs is not supported");
     }
 }

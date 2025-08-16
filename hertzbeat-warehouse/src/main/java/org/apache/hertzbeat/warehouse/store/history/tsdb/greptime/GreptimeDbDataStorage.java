@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -58,6 +60,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
+import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -90,13 +93,17 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private final RestTemplate restTemplate;
 
-    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate) {
+    private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
+
+    public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
+                                 GreptimeSqlQueryExecutor greptimeSqlQueryExecutor) {
         if (greptimeProperties == null) {
             log.error("init error, please config Warehouse GreptimeDB props in application.yml");
             throw new IllegalArgumentException("please config Warehouse GreptimeDB props");
         }
         this.restTemplate = restTemplate;
         this.greptimeProperties = greptimeProperties;
+        this.greptimeSqlQueryExecutor = greptimeSqlQueryExecutor;
         serverAvailable = initGreptimeDbClient(greptimeProperties);
     }
 
@@ -348,6 +355,241 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             }
         } catch (Exception e) {
             log.error("[warehouse greptime-log] Error saving log entry", e);
+        }
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId, 
+                                                        String spanId, Integer severityNumber, 
+                                                        String severityText) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            sql.append(" ORDER BY time_unix_nano DESC");
+            
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            return mapRowsToLogEntries(rows);
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] queryLogsByMultipleConditions error: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId, 
+                                                                      String spanId, Integer severityNumber, 
+                                                                      String severityText, Integer offset, Integer limit) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            sql.append(" ORDER BY time_unix_nano DESC");
+            
+            // Add pagination
+            if (limit != null && limit > 0) {
+                sql.append(" LIMIT ").append(limit);
+                if (offset != null && offset > 0) {
+                    sql.append(" OFFSET ").append(offset);
+                }
+            }
+            
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            return mapRowsToLogEntries(rows);
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] queryLogsByMultipleConditionsWithPagination error: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId, 
+                                             String spanId, Integer severityNumber, 
+                                             String severityText) {
+        try {
+            StringBuilder sql = new StringBuilder("SELECT COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            
+            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
+            if (rows != null && !rows.isEmpty()) {
+                Object countObj = rows.get(0).get("count");
+                if (countObj instanceof Number) {
+                    return ((Number) countObj).longValue();
+                }
+            }
+            return 0;
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] countLogsByMultipleConditions error: {}", e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    private static long msToNs(Long ms) {
+        return ms * 1_000_000L;
+    }
+
+    private static String safeString(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("'", "''");
+    }
+
+    /**
+     *  build WHERE conditions
+     * @param sql SQL builder
+     * @param startTime start time
+     * @param endTime end time
+     * @param traceId trace id
+     * @param spanId span id
+     * @param severityNumber severity number
+     */
+    private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId, 
+                                     String spanId, Integer severityNumber, String severityText) {
+        List<String> conditions = new ArrayList<>();
+        
+        // Time range condition
+        if (startTime != null && endTime != null) {
+            conditions.add("time_unix_nano >= " + msToNs(startTime) + " AND time_unix_nano <= " + msToNs(endTime));
+        }
+        
+        // TraceId condition
+        if (StringUtils.hasText(traceId)) {
+            conditions.add("trace_id = '" + safeString(traceId) + "'");
+        }
+        
+        // SpanId condition
+        if (StringUtils.hasText(spanId)) {
+            conditions.add("span_id = '" + safeString(spanId) + "'");
+        }
+        
+        // Severity condition
+        if (severityNumber != null) {
+            conditions.add("severity_number = " + severityNumber);
+        }
+        
+        // SeverityText condition
+        if (StringUtils.hasText(severityText)) {
+            conditions.add("severity_text = '" + safeString(severityText) + "'");
+        }
+        
+        // Add WHERE clause if there are conditions
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+    }
+
+    private List<LogEntry> mapRowsToLogEntries(List<Map<String, Object>> rows) {
+        List<LogEntry> list = new LinkedList<>();
+        if (rows == null || rows.isEmpty()) {
+            return list;
+        }
+        for (Map<String, Object> row : rows) {
+            try {
+                LogEntry.InstrumentationScope scope = null;
+                Object scopeObj = row.get("instrumentation_scope");
+                if (scopeObj instanceof String scopeStr && StringUtils.hasText(scopeStr)) {
+                    try {
+                        scope = JsonUtil.fromJson(scopeStr, LogEntry.InstrumentationScope.class);
+                    } catch (Exception ignore) {
+                        scope = null;
+                    }
+                }
+
+                Object bodyObj = parseJsonMaybe(row.get("body"));
+                Map<String, Object> attributes = castToMap(parseJsonMaybe(row.get("attributes")));
+                Map<String, Object> resource = castToMap(parseJsonMaybe(row.get("resource")));
+
+                LogEntry entry = LogEntry.builder()
+                        .timeUnixNano(castToLong(row.get("time_unix_nano")))
+                        .observedTimeUnixNano(castToLong(row.get("observed_time_unix_nano")))
+                        .severityNumber(castToInteger(row.get("severity_number")))
+                        .severityText(castToString(row.get("severity_text")))
+                        .body(bodyObj)
+                        .traceId(castToString(row.get("trace_id")))
+                        .spanId(castToString(row.get("span_id")))
+                        .traceFlags(castToInteger(row.get("trace_flags")))
+                        .attributes(attributes)
+                        .resource(resource)
+                        .instrumentationScope(scope)
+                        .droppedAttributesCount(castToInteger(row.get("dropped_attributes_count")))
+                        .build();
+                list.add(entry);
+            } catch (Exception e) {
+                log.warn("[warehouse greptime-log] map row to LogEntry error: {}", e.getMessage());
+            }
+        }
+        return list;
+    }
+
+    private static Object parseJsonMaybe(Object value) {
+        if (value == null) return null;
+        if (value instanceof Map) return value;
+        if (value instanceof String str) {
+            String s = str.trim();
+            if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) {
+                try {
+                    return JsonUtil.fromJson(s, Object.class);
+                } catch (Exception e) {
+                    return s;
+                }
+            }
+            return s;
+        }
+        return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> castToMap(Object obj) {
+        if (obj instanceof Map) {
+            return (Map<String, Object>) obj;
+        }
+        return null;
+    }
+
+    private static Long castToLong(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Number n) return n.longValue();
+        try {
+            return Long.parseLong(String.valueOf(obj));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static Integer castToInteger(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Number n) return n.intValue();
+        try {
+            return Integer.parseInt(String.valueOf(obj));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String castToString(Object obj) {
+        return obj == null ? null : String.valueOf(obj);
+    }
+
+    @Override
+    public boolean batchDeleteLogs(List<Long> timeUnixNanos) {
+        if (!isServerAvailable() || timeUnixNanos == null || timeUnixNanos.isEmpty()) {
+            return false;
+        }
+
+        try {
+            StringBuilder sql = new StringBuilder("DELETE FROM ").append(LOG_TABLE_NAME).append(" WHERE time_unix_nano IN (");
+            sql.append(timeUnixNanos.stream()
+                    .filter(time -> time != null)
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(", ")));
+            sql.append(")");
+            
+            greptimeSqlQueryExecutor.execute(sql.toString());
+            log.info("[warehouse greptime-log] Batch delete executed successfully for {} logs", timeUnixNanos.size());
+            return true;
+            
+        } catch (Exception e) {
+            log.error("[warehouse greptime-log] batchDeleteLogs error: {}", e.getMessage(), e);
+            return false;
         }
     }
 

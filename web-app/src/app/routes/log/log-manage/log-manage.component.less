@@ -1,0 +1,82 @@
+.manager-card {
+  .filters-container {
+    padding: 8px 0;
+    margin-bottom: 24px;
+  }
+}
+
+.log-body {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.trace-id, .span-id {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #666;
+}
+
+.attributes-text, .resource-text {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.text-muted {
+  color: #999;
+  font-style: italic;
+}
+
+nz-statistic {
+  text-align: center;
+}
+
+.column-control-container {
+  width: 280px;
+  max-height: 400px;
+  overflow-y: auto;
+  .column-control-reset-button {
+    text-align: center;
+  }
+}
+
+.log-details-modal {
+  .basic-info-card {
+    margin-bottom: 16px;
+    .info-row {
+      margin-bottom: 8px;
+    }
+    .info-label {
+      display: inline-block;
+      width: 100px;
+      font-weight: bold;
+    }
+    .info-value {
+      font-family: monospace; 
+      word-break: break-all;
+    }
+  }
+  .json-content {
+    position: relative;
+    .copy-button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 1;
+    }
+    .pre {
+      background: #f5f5f5;
+      padding: 16px; 
+      border-radius: 4px; 
+      overflow-x: auto; 
+      margin: 0; 
+      padding-top: 40px;
+    }
+  }
+}

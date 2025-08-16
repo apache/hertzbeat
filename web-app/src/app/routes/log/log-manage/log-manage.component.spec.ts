@@ -17,22 +17,27 @@
  * under the License.
  */
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LogIntegrationComponent } from './log-integration/log-integration.component';
-import { LogManageComponent } from './log-manage/log-manage.component';
-import { LogStreamComponent } from './log-stream/log-stream.component';
+import { LogManageComponent } from './log-manage.component';
 
-const routes: Routes = [
-  { path: '', component: LogIntegrationComponent },
-  { path: 'integration/:source', component: LogIntegrationComponent },
-  { path: 'stream', component: LogStreamComponent },
-  { path: 'manage', component: LogManageComponent }
-];
+describe('LogManageComponent', () => {
+  let component: LogManageComponent;
+  let fixture: ComponentFixture<LogManageComponent>;
 
-@NgModule({
-  imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
-})
-export class LogRoutingModule {}
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [LogManageComponent]
+    }).compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(LogManageComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
