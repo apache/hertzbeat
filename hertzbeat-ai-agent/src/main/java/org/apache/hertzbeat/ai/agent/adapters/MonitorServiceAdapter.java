@@ -67,12 +67,4 @@ public interface MonitorServiceAdapter {
      * @return List of parameter definitions for the monitor type
      */
     List<ParamDefine> getMonitorParamDefines(String app);
-
-    /**
-     * Delete a monitor by its ID
-     *
-     * @param monitorId The ID of the monitor to delete
-     * @return true if the monitor was successfully deleted, false otherwise
-     */
-    boolean deleteMonitor(Long monitorId);
-} 
+}
