@@ -23,20 +23,30 @@ package org.apache.hertzbeat.ai.agent.tools;
 public interface AlertDefineTools {
 
     /**
-     * Create a new alert rule with threshold configuration
-     * @param name Alert rule name
-     * @param monitorId Monitor ID to apply the rule to (optional if monitorType provided)
-     * @param monitorType Monitor type to apply the rule to (optional if monitorId provided)
-     * @param metric Metric field name (e.g., "usage", "responseTime", "connections")
-     * @param operator Comparison operator (>, <, >=, <=, ==, !=)
-     * @param threshold Threshold value
-     * @param times Number of consecutive violations before triggering alert
-     * @param priority Alert priority (critical, warning, info)
-     * @param description Alert rule description
+     * Create a new alert rule with HertzBeat's expression format based on app hierarchy
+
+     * 
+     * @param name Alert rule name (required, must be unique)
+     * @param monitorId Monitor ID to bind rule to (optional, can bind later)
+     * @param app App name from hierarchy (must match exact hierarchy app value)
+     * @param metrics Metrics name from hierarchy (must match exact hierarchy metrics value)
+     * @param fieldConditions Field-specific conditions from metric's children (e.g., "VmName = 'arora'", "total_granted > 1000", 
+     *                       "total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)")
+     * @param type Alert rule type: 'realtime' (default) or 'periodic'
+     * @param period Execution period in seconds (only for periodic rules, default: 300)
+     * @param times Number of consecutive violations before triggering (default: 3)
+     * @param priority Alert priority as integer: 0=critical, 1=warning, 2=info (default: 1)
+     * @param description Alert rule description (optional)
+     * @param template Alert message template with variables (optional)
+     * @param datasource Data source type: 'promql' (default)
+     * @param labels Labels as key:value pairs separated by commas
+     * @param annotations Annotations as key:value pairs separated by commas
+     * @param enable Whether to enable the rule immediately (default: true)
      * @return Result message with rule ID if successful
      */
-    String createAlertRule(String name, Long monitorId, String monitorType, String metric, 
-                          String operator, String threshold, Integer times, String priority, String description);
+    String createAlertRule(String name, Long monitorId, String app, String metrics, String fieldConditions,
+                          String type, Integer period, Integer times, Integer priority, String description,
+                          String template, String datasource, String labels, String annotations, Boolean enable);
 
     /**
      * List existing alert rules with filtering
@@ -68,16 +78,17 @@ public interface AlertDefineTools {
     String toggleAlertRule(Long ruleId, Boolean enabled);
 
     /**
-     * Delete an alert rule
-     * @param ruleId Alert rule ID
-     * @return Result message
-     */
-    String deleteAlertRule(Long ruleId);
-
-    /**
      * Get detailed information about an alert rule
      * @param ruleId Alert rule ID
      * @return Detailed rule information
      */
     String getAlertRuleDetails(Long ruleId);
+
+
+    /**
+     * Get the hierarchical structure of available apps and metrics for alert rule creation
+     * @param app App type to get hierarchy for (optional, gets all if not specified)
+     * @return Hierarchical structure showing apps and their available metrics
+     */
+    String getAppsMetricsHierarchy(String app);
 }
