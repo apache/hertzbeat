@@ -39,6 +39,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+
 /**
  * Implementation of the ConversationService interface for managing chat conversations.
  */
@@ -270,7 +271,5 @@ public class ConversationServiceImpl implements ConversationService {
         
         return messageId;
     }
-
-
 
 }

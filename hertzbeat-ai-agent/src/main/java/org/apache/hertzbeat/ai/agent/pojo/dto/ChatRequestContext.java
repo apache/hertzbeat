@@ -19,11 +19,11 @@
 package org.apache.hertzbeat.ai.agent.pojo.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.util.List;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Chat request context for AI chat endpoint.

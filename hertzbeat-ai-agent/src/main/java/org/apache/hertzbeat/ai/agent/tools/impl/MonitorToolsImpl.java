@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
 /**
  * Implementation of Monitoring Tools functionality
  */
@@ -365,6 +366,5 @@ public class MonitorToolsImpl implements MonitorTools {
             default:
                 return "Unknown (" + status + ")";
         }
-    }
 
 }

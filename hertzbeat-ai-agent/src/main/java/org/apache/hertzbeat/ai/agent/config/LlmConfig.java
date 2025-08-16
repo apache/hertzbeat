@@ -64,9 +64,10 @@ public class LlmConfig {
                 .build();
     }
     
+
     @Bean
-    public ChatClient openAiChatClient(OpenAiChatModel openAiChatModel) {
-        return ChatClient.create(openAiChatModel);
+    public ChatClient openAiChatClient(OpenAiChatModel chatModel) {
+        return ChatClient.create(chatModel);
     }
 
 }

@@ -16,25 +16,15 @@
  */
 
 
-package org.apache.hertzbeat.ai.agent.service;
+package org.apache.hertzbeat.ai.agent.service.impl;
 
-import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
-import reactor.core.publisher.Flux;
-
+import org.apache.hertzbeat.ai.agent.service.AgentService;
+import org.springframework.stereotype.Service;
 
 /**
- * Service for interacting with LLM providers (like OpenAI, Anthropic, etc.)
+ * Implementation of the AgentService interface.
+ * This service provides functionality for handling AI agent operations.
  */
-public interface ChatClientProviderService {
-
-    /**
-     * Stream chat response from the LLM
-     *
-     * @param context Chat request context containing message and conversation history
-     * @return Flux of string chunks from the LLM response
-     */
-    Flux<String> streamChat(ChatRequestContext context);
-    String complete(String message);
-
-    String streamChat(ChatRequestContext context);
+@Service
+public class AgentServiceImpl implements AgentService {
 }

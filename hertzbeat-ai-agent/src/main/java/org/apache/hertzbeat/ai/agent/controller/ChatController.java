@@ -192,5 +192,5 @@ public class ChatController {
             log.error("Error deleting conversation: ", e);
             return ResponseEntity.ok(Message.fail((byte) -1, "Failed to delete conversation"));
         }
-    }
+
 }

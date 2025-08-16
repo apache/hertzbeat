@@ -16,25 +16,11 @@
  */
 
 
-package org.apache.hertzbeat.ai.agent.service;
-
-import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
-import reactor.core.publisher.Flux;
-
+package org.apache.hertzbeat.ai.agent.controller;
 
 /**
- * Service for interacting with LLM providers (like OpenAI, Anthropic, etc.)
+ * Controller for managing conversations.
  */
-public interface ChatClientProviderService {
+public class ConversationController {
 
-    /**
-     * Stream chat response from the LLM
-     *
-     * @param context Chat request context containing message and conversation history
-     * @return Flux of string chunks from the LLM response
-     */
-    Flux<String> streamChat(ChatRequestContext context);
-    String complete(String message);
-
-    String streamChat(ChatRequestContext context);
 }

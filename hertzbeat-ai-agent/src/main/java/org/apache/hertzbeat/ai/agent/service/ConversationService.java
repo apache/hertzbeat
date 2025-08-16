@@ -25,6 +25,11 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.List;
+import java.util.Map;
+
 /**
  * Service for managing chat conversations and interactions with LLM providers.
  */
@@ -46,7 +51,6 @@ public interface ConversationService {
      */
     Flux<ServerSentEvent<ChatResponseDto>> streamChat(String message, String conversationId);
 
-
     /**
      * Get conversation history for a specific conversation
      *
@@ -55,12 +59,14 @@ public interface ConversationService {
      */
     ConversationDto getConversation(String conversationId);
 
+
     /**
      * Get all conversations for the current user
      *
      * @return List of conversations
      */
     List<ConversationDto> getAllConversations();
+
 
     /**
      * Delete a conversation

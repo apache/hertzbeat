@@ -56,6 +56,11 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         this.chatClient = openAiChatClient;
     }
 
+    public ChatClientProviderServiceImpl(@Qualifier("openAiChatClient") ChatClient openAiChatClient) {
+        this.chatClient = openAiChatClient;
+    }
+
+    @Override
     public String complete(String message) {
         return this.chatClient.prompt()
                 .user(message)

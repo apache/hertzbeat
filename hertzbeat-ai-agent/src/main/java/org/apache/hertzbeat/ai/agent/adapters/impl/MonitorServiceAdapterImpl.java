@@ -28,10 +28,10 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.springframework.stereotype.Component;
-
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Implementation of the MonitorServiceAdapter interface that provides access to monitor information

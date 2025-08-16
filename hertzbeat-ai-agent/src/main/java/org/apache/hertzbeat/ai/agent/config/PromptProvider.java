@@ -79,4 +79,5 @@ public class PromptProvider {
             If you're unsure about specific monitoring requirements, use the parameter definition tools to get
             accurate information.
             """;
+
 }

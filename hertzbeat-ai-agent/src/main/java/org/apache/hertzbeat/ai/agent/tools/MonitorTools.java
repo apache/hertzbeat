@@ -18,7 +18,7 @@
 
 package org.apache.hertzbeat.ai.agent.tools;
 
-import java.util.List;
+import org.springframework.ai.chat.model.ToolContext;
 
 /**
  * Interface for Monitoring Tools
@@ -61,8 +61,7 @@ public interface MonitorTools {
      * Query monitor information with flexible filtering and pagination.
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
      * pagination.
-     * Returns results as plain JSON string for AI tool.
-     */
+     * Returns results as plain JSON string for AI tool. */
     String listMonitors(
             List<Long> ids,
             String app,
@@ -81,6 +80,5 @@ public interface MonitorTools {
      * @return Formatted string with parameter definitions including field names, types, and requirements
      */
     String getMonitorParamDefines(String app);
-
 
 }
