@@ -85,7 +85,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             return this.chatClient.prompt()
                     .messages(messages)
-                    .system(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
+                    .system(PromptProvider.HERTZBEAT_SYSTEM_PROMPT)
                     .toolCallbacks(toolCallbackProvider)
                     .stream()
                     .content()
