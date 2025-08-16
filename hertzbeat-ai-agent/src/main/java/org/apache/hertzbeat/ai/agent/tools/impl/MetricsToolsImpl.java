@@ -93,10 +93,10 @@ public class MetricsToolsImpl implements MetricsTools {
 
             if (metricsData.getValueRows() != null && !metricsData.getValueRows().isEmpty()) {
                 List<Field> fields = metricsData.getFields();
-                
+
                 response.append("Available Field Parameters (Sub-metrics):\n");
                 response.append("-".repeat(40)).append("\n");
-                
+
                 for (ValueRow valueRow : metricsData.getValueRows()) {
                     // Show labels if available
                     if (valueRow.getLabels() != null && !valueRow.getLabels().isEmpty()) {
