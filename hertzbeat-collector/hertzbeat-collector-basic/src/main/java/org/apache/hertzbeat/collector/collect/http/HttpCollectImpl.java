@@ -640,11 +640,13 @@ public class HttpCollectImpl extends AbstractCollect {
                         .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : aliasFields) {
-                    if ("value".equals(aliasField)) {
+                    String columnValue = labelMap.get(aliasField);
+                    if (columnValue != null) {
+                        valueRowBuilder.addColumn(columnValue);
+                    } else if (CommonConstants.PROM_VALUE.equals(aliasField) || CommonConstants.PROM_METRIC_VALUE.equals(aliasField)) {
                         valueRowBuilder.addColumn(String.valueOf(metric.getValue()));
                     } else {
-                        String columnValue = labelMap.get(aliasField);
-                        valueRowBuilder.addColumn(columnValue == null ? CommonConstants.NULL_VALUE : columnValue);
+                        valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                     }
                 }
                 builder.addValueRow(valueRowBuilder.build());

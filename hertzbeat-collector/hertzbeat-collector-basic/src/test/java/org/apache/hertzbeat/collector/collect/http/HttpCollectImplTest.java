@@ -25,7 +25,10 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -288,5 +291,89 @@ class HttpCollectImplTest {
         assertEquals(1, capturedRows.size());
         firstRow = capturedRows.get(0);
         assertEquals("0.268751364291017", firstRow.getColumns(0));
+    }
+
+    @Test
+    void testParsePrometheusLabelValue() throws Exception {
+        // Create Prometheus format test data
+        String prometheusData = """
+                # HELP jvm_memory_used_bytes The amount of used memory in bytes
+                # TYPE jvm_memory_used_bytes gauge
+                jvm_memory_used_bytes{area="heap",value="G1 Survivor Space"} 1048576
+                """;
+        InputStream inputStream = new ByteArrayInputStream(prometheusData.getBytes(StandardCharsets.UTF_8));
+        
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+
+            @Override
+            public String getMetrics() {
+                return "jvm_memory_used_bytes";
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByPrometheusExporter",
+                InputStream.class,
+                List.class,
+                CollectRep.MetricsData.Builder.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, inputStream, Lists.newArrayList("area", "value"), builder);
+
+        // Verify the results
+        assertEquals(1, capturedRows.size());
+        CollectRep.ValueRow firstRow = capturedRows.get(0);
+        assertEquals("heap", firstRow.getColumns(0));
+        assertEquals("G1 Survivor Space", firstRow.getColumns(1));
+    }
+
+    @Test
+    void testParsePrometheus() throws Exception {
+        // Create Prometheus format test data
+        String prometheusData = """
+                # HELP jvm_memory_used_bytes The amount of used memory
+                # TYPE jvm_memory_used_bytes gauge
+                jvm_memory_used_bytes{area="heap",id="G1 Eden Space"} 1.63577856E8
+                jvm_memory_used_bytes{area="heap",id="G1 Old Gen"} 2.7874304E7
+                jvm_memory_used_bytes{area="heap",id="G1 Survivor Space"} 512032.0
+                jvm_memory_used_bytes{area="nonheap",id="CodeCache"} 1.460288E7
+                jvm_memory_used_bytes{area="nonheap",id="Compressed Class Space"} 5844504.0
+                jvm_memory_used_bytes{area="nonheap",id="Metaspace"} 4.1576344E7
+                """;
+        InputStream inputStream = new ByteArrayInputStream(prometheusData.getBytes(StandardCharsets.UTF_8));
+
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+
+            @Override
+            public String getMetrics() {
+                return "jvm_memory_used_bytes";
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByPrometheusExporter",
+                InputStream.class,
+                List.class,
+                CollectRep.MetricsData.Builder.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, inputStream, Lists.newArrayList("area", "id"), builder);
+
+        // Verify the results
+        assertEquals(6, capturedRows.size());
+        CollectRep.ValueRow firstRow = capturedRows.get(0);
+        assertEquals("heap", firstRow.getColumns(0));
+        assertEquals("G1 Eden Space", firstRow.getColumns(1));
+        capturedRows.forEach(t -> assertEquals(2, t.getColumnsList().size()));
     }
 }
