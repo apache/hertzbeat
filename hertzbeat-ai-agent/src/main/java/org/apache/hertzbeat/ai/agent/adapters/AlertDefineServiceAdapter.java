@@ -17,8 +17,11 @@
 
 package org.apache.hertzbeat.ai.agent.adapters;
 
+import org.apache.hertzbeat.ai.agent.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 /**
  * Interface that provides access to alert definition information by retrieving data
@@ -58,14 +61,6 @@ public interface AlertDefineServiceAdapter {
      * @param alertDefine Updated alert definition
      */
     void updateAlertDefine(AlertDefine alertDefine);
-
-    /**
-     * Delete alert definition by ID
-     * @param id Alert definition ID
-     * @return true if deleted successfully
-     */
-    boolean deleteAlertDefine(Long id);
-
     /**
      * Enable or disable alert definition
      * @param id Alert definition ID
@@ -80,4 +75,12 @@ public interface AlertDefineServiceAdapter {
      * @return true if binding was successful
      */
     boolean bindMonitorToAlertDefine(Long alertDefineId, Long monitorId);
+    /**
+     * Get specific app hierarchy structure
+     * @param app App type
+     * @param lang Language for localization
+     * @return List of hierarchy objects for specific app
+     */
+
+    List<Hierarchy> getAppHierarchy(String app, String lang);
 }
