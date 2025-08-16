@@ -77,4 +77,5 @@ public interface MetricsTools {
      * @return Status of the metrics storage system
      */
     String getWarehouseStatus();
+
 }

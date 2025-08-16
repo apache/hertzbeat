@@ -48,7 +48,7 @@ public class LlmConfig {
     @Bean
     public OpenAiChatOptions openAiChatOptions() {
         return OpenAiChatOptions.builder()
-                .model("gpt-4.1-nano-2025-04-14")
+                .model("gpt-4o-mini-2024-07-18")
                 .temperature(0.3)
                 .build();
     }

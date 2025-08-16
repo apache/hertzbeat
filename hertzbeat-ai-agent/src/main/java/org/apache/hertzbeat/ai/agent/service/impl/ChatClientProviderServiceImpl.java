@@ -89,7 +89,6 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
                     .toolCallbacks(toolCallbackProvider)
                     .stream()
                     .content()
-                    .doOnNext(chunk -> log.debug("Received chunk: {}", chunk))
                     .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
                     .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
 

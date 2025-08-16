@@ -55,6 +55,7 @@ public class MetricsToolsImpl implements MetricsTools {
     @Tool(name = "get_realtime_metrics", description = """
             Get real-time metrics data for a specific monitor.
             Returns current metrics values including CPU, memory, disk usage, etc.
+            Use the query_monitors tool to find monitor IDs/name in case the user does not tell the name explicitly
             """)
     public String getRealtimeMetrics(
             @ToolParam(description = "Monitor ID", required = true) Long monitorId,
@@ -111,6 +112,8 @@ public class MetricsToolsImpl implements MetricsTools {
     @Tool(name = "get_historical_metrics", description = """
             Get historical metrics data for analysis and trending.
             Returns time-series data for specified metrics over a time range.
+            Use the query_monitors tool to find monitor IDs/name/type for the monitor user asked the metrics for
+            Ask user to provide the filters for labels, history and interval aggregation
             """)
     public String getHistoricalMetrics(
             @ToolParam(description = "Monitor ID", required = true) Long monitorId,
@@ -257,21 +260,21 @@ public class MetricsToolsImpl implements MetricsTools {
 
     @Override
     @Tool(name = "get_usage_trend", description = """
-            Get usage trend data for various metrics with comprehensive charting support.
+            Get usage trend data for various metrics with time-series analysis.
             
             SUPPORTED METRIC TYPES:
             - metricType='cpu': CPU usage percentage over time
-            - metricType='memory': Memory usage percentage over time  
+            - metricType='memory': Memory usage percentage over time
             - metricType='disk': Disk space usage percentage over time
             - metricType='network': Network bandwidth usage over time
             - metricType='custom': Custom metric with specified field name
             
             TIME RANGES:
-            - '1h': Last 1 hour with high resolution (5-minute intervals)
-            - '6h': Last 6 hours with medium resolution (15-minute intervals) 
-            - '24h': Last 24 hours with standard resolution (hourly intervals)
-            - '7d': Last 7 days with daily resolution (daily averages)
-            - '30d': Last 30 days with weekly resolution (weekly averages)
+            - '1h': Last 1 hour with 5-minute intervals
+            - '6h': Last 6 hours with 15-minute intervals
+            - '24h': Last 24 hours with hourly intervals
+            - '7d': Last 7 days with daily averages
+            - '30d': Last 30 days with weekly averages
             
             TARGET SPECIFICATION:
             - Provide monitorId for specific monitor by database ID
@@ -279,14 +282,13 @@ public class MetricsToolsImpl implements MetricsTools {
             - If both provided, monitorId takes precedence
             
             OUTPUT FORMAT:
-            - Returns CSV-style time-series data suitable for charting
-            - Format: timestamp,value (one per line)
-            - Timestamps in ISO format or epoch milliseconds
+            - Returns time-series data with timestamps and values
             - Values as numeric percentages or raw metric values
+            - Formatted for trend analysis and performance monitoring
             
             COMMON USE CASES:
             - Server performance: metricType='cpu', monitorId=123, timeRange='24h'
-            - Capacity planning: metricType='disk', host='server01.local', timeRange='7d'  
+            - Capacity planning: metricType='disk', host='server01.local', timeRange='7d'
             - Memory trends: metricType='memory', host='192.168.1.10', timeRange='6h'
             - Custom metrics: metricType='custom', customField='response_time', timeRange='1h'
             """)
