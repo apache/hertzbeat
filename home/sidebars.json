@@ -241,7 +241,8 @@
             "help/presto",
             "help/seatunnel",
             "help/spark",
-            "help/yarn"
+            "help/yarn",
+            "help/dolphinscheduler"
           ]
         },
         {
