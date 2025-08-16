@@ -52,7 +52,9 @@ public class MonitorToolsImpl implements MonitorTools {
      * Returns detailed monitor information including ID, name, type, host, and status.
      */
     @Override
-    @Tool(name = "query_monitors", description = """
+    @Tool(name = "query_monitors", description = """ 
+            Query Existing/configured monitors in HertzBeat.
+            This tool retrieves monitors based on various filters and parameters.
             Comprehensive monitor querying with flexible filtering, pagination, and specialized views.
             
             MONITOR STATUSES:
