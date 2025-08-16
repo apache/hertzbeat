@@ -18,7 +18,7 @@
 
 package org.apache.hertzbeat.ai.agent.tools;
 
-import org.springframework.ai.chat.model.ToolContext;
+import java.util.List;
 
 /**
  * Interface for Monitoring Tools
@@ -27,7 +27,7 @@ public interface MonitorTools {
 
     /**
      * Add a new monitor with comprehensive configuration
-     * 
+     *
      * @param name Monitor name
      * @param app Monitor type/application (e.g., 'linux', 'mysql', 'http')
      * @param host Target host (IP address or domain name)
@@ -39,8 +39,8 @@ public interface MonitorTools {
      * @return Result message with monitor ID if successful
      */
     String addMonitor(
-            String name, 
-            String app, 
+            String name,
+            String app,
             String host,
             Integer port,
             Integer intervals,
@@ -48,10 +48,10 @@ public interface MonitorTools {
             String password,
             String description
     );
-    
+
     /**
      * List all available monitor types that can be added
-     * 
+     *
      * @param language Language code for localized names (e.g., 'en-US', 'zh-CN')
      * @return Formatted string list of available monitor types with descriptions
      */
@@ -61,7 +61,8 @@ public interface MonitorTools {
      * Query monitor information with flexible filtering and pagination.
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
      * pagination.
-     * Returns results as plain JSON string for AI tool. */
+     * Returns results as plain JSON string for AI tool.
+     */
     String listMonitors(
             List<Long> ids,
             String app,
@@ -75,10 +76,11 @@ public interface MonitorTools {
 
     /**
      * Get parameter definitions required for a specific monitor type
-     * 
+     *
      * @param app Monitor type/application name (e.g., 'linux', 'mysql', 'redis')
      * @return Formatted string with parameter definitions including field names, types, and requirements
      */
     String getMonitorParamDefines(String app);
+
 
 }

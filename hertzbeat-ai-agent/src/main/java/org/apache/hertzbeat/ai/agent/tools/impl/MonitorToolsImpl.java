@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 /**
  * Implementation of Monitoring Tools functionality
  */
@@ -75,25 +74,25 @@ public class MonitorToolsImpl implements MonitorTools {
         try {
             Page<Monitor> result = monitorServiceAdapter.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
             log.debug("MonitorServiceAdapter.getMonitors result: {}", result);
-            
+
             // Format response to include both ID and name for better usability
             StringBuilder response = new StringBuilder();
             response.append("Found ").append(result.getContent().size()).append(" monitors:\n\n");
-            
+
             for (Monitor monitor : result.getContent()) {
                 log.info(String.valueOf(monitor.getId()));
                 response.append("ID: ").append(monitor.getId())
-                       .append(" | Name: ").append(monitor.getName())
-                       .append(" | Type: ").append(monitor.getApp())
-                       .append(" | Host: ").append(monitor.getHost())
-                       .append(" | Status: ").append(getStatusText(monitor.getStatus()))
-                       .append("\n");
+                        .append(" | Name: ").append(monitor.getName())
+                        .append(" | Type: ").append(monitor.getApp())
+                        .append(" | Host: ").append(monitor.getHost())
+                        .append(" | Status: ").append(getStatusText(monitor.getStatus()))
+                        .append("\n");
             }
-            
+
             if (result.getContent().isEmpty()) {
                 response.append("No monitors found matching the specified criteria.");
             }
-            
+
             return response.toString();
         } catch (Exception e) {
             return "Error retrieving monitors: " + e.getMessage();
@@ -117,12 +116,12 @@ public class MonitorToolsImpl implements MonitorTools {
             @ToolParam(description = "Username for authentication (optional)", required = false) String username,
             @ToolParam(description = "Password for authentication (optional)", required = false) String password,
             @ToolParam(description = "Monitor description (optional)", required = false) String description) {
-        
+
         try {
             log.info("Adding monitor: name={}, app={}, host={}", name, app, host);
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in add_monitor tool: {}", subjectSum);
-            
+
             // Validate required parameters
             if (name == null || name.trim().isEmpty()) {
                 return "Error: Monitor name is required";
@@ -133,12 +132,12 @@ public class MonitorToolsImpl implements MonitorTools {
             if (host == null || host.trim().isEmpty()) {
                 return "Error: Host is required";
             }
-            
+
             // Set default values
             if (intervals == null || intervals < 10) {
                 intervals = 600; // Default 10 minutes
             }
-            
+
             // Create Monitor entity
             Monitor monitor = Monitor.builder()
                     .name(name.trim())
@@ -149,17 +148,17 @@ public class MonitorToolsImpl implements MonitorTools {
                     .type((byte) 0)   // Type: Normal
                     .description(description != null ? description.trim() : "")
                     .build();
-            
+
             // Create parameters list
             List<Param> params = new ArrayList<>();
-            
+
             // Add host parameter (always required)
             params.add(Param.builder()
                     .field("host")
                     .paramValue(host.trim())
                     .type((byte) 0)
                     .build());
-            
+
             // Add port parameter if provided
             if (port != null && port > 0) {
                 params.add(Param.builder()
@@ -168,7 +167,7 @@ public class MonitorToolsImpl implements MonitorTools {
                         .type((byte) 0)
                         .build());
             }
-            
+
             // Add authentication parameters if provided
             if (username != null && !username.trim().isEmpty()) {
                 params.add(Param.builder()
@@ -177,7 +176,7 @@ public class MonitorToolsImpl implements MonitorTools {
                         .type((byte) 1) // Type: Password
                         .build());
             }
-            
+
             if (password != null && !password.trim().isEmpty()) {
                 params.add(Param.builder()
                         .field("password")
@@ -185,27 +184,27 @@ public class MonitorToolsImpl implements MonitorTools {
                         .type((byte) 1) // Type: Password
                         .build());
             }
-            
+
             // Add timeout parameter (default)
             params.add(Param.builder()
                     .field("timeout")
                     .paramValue("6000")
                     .type((byte) 0)
                     .build());
-            
+
             // Call the adapter to add the monitor
             Long monitorId = monitorServiceAdapter.addMonitor(monitor, params, null);
-            
+
             log.info("Successfully added monitor '{}' with ID: {}", name, monitorId);
-            return String.format("Successfully added monitor '%s' with ID: %d. Monitor type: %s, Host: %s, Interval: %d seconds", 
+            return String.format("Successfully added monitor '%s' with ID: %d. Monitor type: %s, Host: %s, Interval: %d seconds",
                     name, monitorId, app, host, intervals);
-            
+
         } catch (Exception e) {
             log.error("Failed to add monitor '{}': {}", name, e.getMessage(), e);
             return "Error adding monitor '" + name + "': " + e.getMessage();
         }
     }
-    
+
     @Override
     @Tool(name = "list_monitor_types", description = """
             List all available monitor types that can be added to HerzBeat.
@@ -214,53 +213,53 @@ public class MonitorToolsImpl implements MonitorTools {
             """)
     public String listMonitorTypes(
             @ToolParam(description = "Language code for localized names (en-US, zh-CN, etc.). Default: en-US", required = false) String language) {
-        
+
         try {
             log.info("Listing available monitor types for language: {}", language);
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in list_monitor_types tool: {}", subjectSum);
-            
+
             // Set default language if not provided
             if (language == null || language.trim().isEmpty()) {
                 language = "en-US";
             }
-            
+
             // Get available monitor types from adapter
             Map<String, String> monitorTypes = monitorServiceAdapter.getAvailableMonitorTypes(language);
-            
+
             if (monitorTypes == null || monitorTypes.isEmpty()) {
                 return "No monitor types are currently available.";
             }
-            
+
             // Format the response as a nice list
             StringBuilder response = new StringBuilder();
             response.append("Available Monitor Types (Total: ").append(monitorTypes.size()).append("):\n\n");
-            
+
             // Sort monitor types alphabetically by key
             List<Map.Entry<String, String>> sortedTypes = monitorTypes.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey())
                     .collect(Collectors.toList());
-            
+
             for (Map.Entry<String, String> entry : sortedTypes) {
                 String typeKey = entry.getKey();
                 String displayName = entry.getValue();
                 response.append("• ").append(typeKey)
-                       .append(" - ").append(displayName)
-                       .append("\n");
+                        .append(" - ").append(displayName)
+                        .append("\n");
             }
-            
+
             response.append("\nTo add a monitor, use the add_monitor tool with one of these types as the 'app' parameter.");
             response.append("\nExample: add_monitor(name='my-server', app='linux', host='192.168.1.100')");
-            
+
             log.info("Successfully listed {} monitor types", monitorTypes.size());
             return response.toString();
-            
+
         } catch (Exception e) {
             log.error("Failed to list monitor types: {}", e.getMessage(), e);
             return "Error retrieving monitor types: " + e.getMessage();
         }
     }
-    
+
     @Override
     @Tool(name = "get_monitor_param_defines", description = """
             Get the parameter definitions required for a specific monitor type.
@@ -270,75 +269,75 @@ public class MonitorToolsImpl implements MonitorTools {
             """)
     public String getMonitorParamDefines(
             @ToolParam(description = "Monitor type/application name (e.g., 'linux', 'mysql', 'redis')", required = true) String app) {
-        
+
         try {
             log.info("Getting parameter definitions for monitor type: {}", app);
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in get_monitor_param_defines tool: {}", subjectSum);
-            
+
             // Validate required parameter
             if (app == null || app.trim().isEmpty()) {
                 return "Error: Monitor type/application parameter is required";
             }
-            
+
             // Get parameter definitions from adapter
             List<ParamDefine> paramDefines = monitorServiceAdapter.getMonitorParamDefines(app);
-            
+
             if (paramDefines == null || paramDefines.isEmpty()) {
                 return String.format("No parameter definitions found for monitor type '%s'. "
-                   + "This monitor type may not exist or may not require additional parameters.", app);
+                        + "This monitor type may not exist or may not require additional parameters.", app);
             }
-            
+
             // Format the response
             StringBuilder response = new StringBuilder();
-            response.append(String.format("Parameter Definitions for Monitor Type '%s' (Total: %d):\n\n", 
-                app, paramDefines.size()));
-            
+            response.append(String.format("Parameter Definitions for Monitor Type '%s' (Total: %d):\n\n",
+                    app, paramDefines.size()));
+
             for (ParamDefine paramDefine : paramDefines) {
                 response.append("• Field: ").append(paramDefine.getField()).append("\n");
-                
+
                 // Add display name if available
                 if (paramDefine.getName() != null && !paramDefine.getName().toString().trim().isEmpty()) {
                     response.append("  Name: ").append(paramDefine.getName()).append("\n");
                 }
-                
+
                 // Add type
                 if (paramDefine.getType() != null && !paramDefine.getType().trim().isEmpty()) {
                     response.append("  Type: ").append(paramDefine.getType()).append("\n");
                 }
-                
+
                 // Add required status
                 response.append("  Required: ").append(paramDefine.isRequired() ? "Yes" : "No").append("\n");
-                
+
                 // Add default value if present
                 if (paramDefine.getDefaultValue() != null && !paramDefine.getDefaultValue().trim().isEmpty()) {
                     response.append("  Default: ").append(paramDefine.getDefaultValue()).append("\n");
                 }
-                
+
                 // Add validation range if present
                 if (paramDefine.getRange() != null && !paramDefine.getRange().trim().isEmpty()) {
                     response.append("  Range: ").append(paramDefine.getRange()).append("\n");
                 }
-                
+
                 // Add limit if present
                 if (paramDefine.getLimit() != null) {
                     response.append("  Limit: ").append(paramDefine.getLimit()).append("\n");
                 }
-                
+
                 // Add placeholder text if present
                 if (paramDefine.getPlaceholder() != null && !paramDefine.getPlaceholder().trim().isEmpty()) {
                     response.append("  Placeholder: ").append(paramDefine.getPlaceholder()).append("\n");
                 }
-                
+
                 response.append("\n");
             }
-            
+
             response.append("To add a monitor of this type, use the add_monitor tool with these parameters.\n");
             response.append(String.format("Example: add_monitor(name='my-monitor', app='%s', host='your-host', ...)", app));
-            
+
             log.info("Successfully retrieved {} parameter definitions for monitor type: {}", paramDefines.size(), app);
             return response.toString();
-            
+
         } catch (Exception e) {
             log.error("Failed to get parameter definitions for monitor type '{}': {}", app, e.getMessage(), e);
             return "Error retrieving parameter definitions for monitor type '" + app + "': " + e.getMessage();
@@ -366,5 +365,6 @@ public class MonitorToolsImpl implements MonitorTools {
             default:
                 return "Unknown (" + status + ")";
         }
+    }
 
 }

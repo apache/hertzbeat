@@ -34,19 +34,19 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Schema(description = "Chat message")
 public class MessageDto {
-    
+
     @Schema(description = "Message ID", example = "msg-123")
     private String messageId;
-    
+
     @Schema(description = "Conversation ID", example = "conv-123")
     private String conversationId;
-    
+
     @Schema(description = "Message content", example = "List all monitors")
     private String content;
-    
+
     @Schema(description = "Message role", example = "user", allowableValues = {"user", "assistant"})
     private String role;
-    
+
     @Schema(description = "Message timestamp")
     private LocalDateTime timestamp;
 }

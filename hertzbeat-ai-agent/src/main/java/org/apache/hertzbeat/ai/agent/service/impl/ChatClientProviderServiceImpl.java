@@ -56,11 +56,6 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         this.chatClient = openAiChatClient;
     }
 
-    public ChatClientProviderServiceImpl(@Qualifier("openAiChatClient") ChatClient openAiChatClient) {
-        this.chatClient = openAiChatClient;
-    }
-
-    @Override
     public String complete(String message) {
         return this.chatClient.prompt()
                 .user(message)
@@ -72,7 +67,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     public Flux<String> streamChat(ChatRequestContext context) {
         try {
             List<Message> messages = new ArrayList<>();
-            
+
             // Add conversation history if available
             if (context.getConversationHistory() != null && !context.getConversationHistory().isEmpty()) {
                 for (MessageDto historyMessage : context.getConversationHistory()) {
@@ -83,11 +78,11 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
                     }
                 }
             }
-            
+
             messages.add(new UserMessage(context.getMessage()));
 
             log.info("Starting streaming chat for conversation: {}", context.getConversationId());
-            
+
             return this.chatClient.prompt()
                     .messages(messages)
                     .system(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
@@ -97,7 +92,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
                     .doOnNext(chunk -> log.debug("Received chunk: {}", chunk))
                     .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
                     .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
-                    
+
         } catch (Exception e) {
             log.error("Error setting up streaming chat: {}", e.getMessage(), e);
             return Flux.error(e);

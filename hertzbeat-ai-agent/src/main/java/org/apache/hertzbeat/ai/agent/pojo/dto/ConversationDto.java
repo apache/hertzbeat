@@ -35,19 +35,19 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "Conversation information")
 public class ConversationDto {
-    
+
     @Schema(description = "Conversation ID", example = "conv-123")
     private String conversationId;
 
     @Schema(description = "Creation time")
     private LocalDateTime createdAt;
-    
+
     @Schema(description = "Last updated time")
     private LocalDateTime updatedAt;
-    
+
     @Schema(description = "Messages in this conversation")
     private List<MessageDto> messages;
-    
+
     @Schema(description = "Message count")
     private Integer messageCount;
 }

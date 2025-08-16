@@ -24,7 +24,6 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import java.util.List;
 import java.util.Map;
-import java.util.List;
 
 /**
  * Interface that provides access to monitor information by retrieving monitor data
@@ -32,46 +31,46 @@ import java.util.List;
  */
 public interface MonitorServiceAdapter {
     Page<Monitor> getMonitors(
-        List<Long> ids,
-        String app,
-        String search,
-        Byte status,
-        String sort,
-        String order,
-        Integer pageIndex,
-        Integer pageSize,
-        String labels
+            List<Long> ids,
+            String app,
+            String search,
+            Byte status,
+            String sort,
+            String order,
+            Integer pageIndex,
+            Integer pageSize,
+            String labels
     );
-    
+
     /**
      * Add a new monitor
-     * 
+     *
      * @param monitor The monitor entity to create
      * @param params List of parameters for the monitor
      * @param collector Optional collector assignment
      * @return The created monitor ID
      */
     Long addMonitor(Monitor monitor, List<Param> params, String collector);
-    
+
     /**
      * Get all available monitor types with their display names
-     * 
+     *
      * @param language Language code (e.g., "en-US", "zh-CN")
      * @return Map of monitor type key to display name
      */
     Map<String, String> getAvailableMonitorTypes(String language);
-    
+
     /**
      * Get parameter definitions for a specific monitor type
-     * 
+     *
      * @param app Monitor type/application name (e.g., "linux", "mysql", "redis")
      * @return List of parameter definitions for the monitor type
      */
     List<ParamDefine> getMonitorParamDefines(String app);
-    
+
     /**
      * Delete a monitor by its ID
-     * 
+     *
      * @param monitorId The ID of the monitor to delete
      * @return true if the monitor was successfully deleted, false otherwise
      */

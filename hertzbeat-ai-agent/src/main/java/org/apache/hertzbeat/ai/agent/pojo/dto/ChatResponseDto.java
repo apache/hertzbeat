@@ -32,16 +32,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Schema(description = "Chat response")
 public class ChatResponseDto {
-    
+
     @Schema(description = "Conversation ID", example = "conv-123")
     private String conversationId;
-    
+
     @Schema(description = "AI response message", example = "Here are your monitors...")
     private String response;
-    
+
     @Schema(description = "User message ID", example = "msg-user-123")
     private String userMessageId;
-    
+
     @Schema(description = "Assistant message ID", example = "msg-assistant-123")
     private String assistantMessageId;
 }

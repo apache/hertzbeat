@@ -65,7 +65,7 @@ public class ChatController {
 
     /**
      * Create a new conversation
-     * 
+     *
      * @return Created conversation details
      */
     @PostMapping(path = "/conversations")
@@ -79,10 +79,10 @@ public class ChatController {
             return ResponseEntity.ok(Message.fail((byte) -1, "Failed to create conversation"));
         }
     }
-    
+
     /**
      * Send a message and get a streaming response with conversation tracking
-     * 
+     *
      * @param context The chat request context containing message and optional conversationId
      * @return Flux of ServerSentEvent for streaming response
      */
@@ -103,10 +103,10 @@ public class ChatController {
                         .event("error")
                         .build());
             }
-            
+
             log.info("Received streaming chat request for conversation: {}", context.getConversationId());
             return conversationService.streamChat(context.getMessage(), context.getConversationId());
-            
+
         } catch (Exception e) {
             log.error("Error in stream chat endpoint: ", e);
             ChatResponseDto errorResponse = ChatResponseDto.builder()
@@ -118,10 +118,10 @@ public class ChatController {
                     .build());
         }
     }
-    
+
     /**
      * Get all conversations
-     * 
+     *
      * @return List of all conversations
      */
     @GetMapping(path = "/conversations")
@@ -135,10 +135,10 @@ public class ChatController {
             return ResponseEntity.ok(Message.fail((byte) -1, "Failed to retrieve conversations"));
         }
     }
-    
+
     /**
      * Get conversation history
-     * 
+     *
      * @param conversationId The conversation ID
      * @return Conversation details with message history
      */
@@ -151,24 +151,24 @@ public class ChatController {
             if (conversationId == null || conversationId.trim().isEmpty()) {
                 return ResponseEntity.ok(Message.fail((byte) -1, "Conversation ID is required"));
             }
-            
+
             ConversationDto conversation = conversationService.getConversation(conversationId);
-            
+
             if (conversation == null) {
                 return ResponseEntity.ok(Message.fail((byte) -1, "Conversation not found: " + conversationId));
             }
-            
+
             return ResponseEntity.ok(Message.success(conversation));
-            
+
         } catch (Exception e) {
             log.error("Error getting conversation: ", e);
             return ResponseEntity.ok(Message.fail((byte) -1, "Failed to retrieve conversation"));
         }
     }
-    
+
     /**
      * Delete a conversation
-     * 
+     *
      * @param conversationId The conversation ID to delete
      * @return Success or error message
      */
@@ -181,16 +181,17 @@ public class ChatController {
             if (conversationId == null || conversationId.trim().isEmpty()) {
                 return ResponseEntity.ok(Message.fail((byte) -1, "Conversation ID is required"));
             }
-            
+
             boolean deleted = conversationService.deleteConversation(conversationId);
             if (!deleted) {
                 return ResponseEntity.ok(Message.fail((byte) -1, "Conversation not found: " + conversationId));
             }
-            
+
             return ResponseEntity.ok(Message.success("Conversation deleted successfully"));
         } catch (Exception e) {
             log.error("Error deleting conversation: ", e);
             return ResponseEntity.ok(Message.fail((byte) -1, "Failed to delete conversation"));
         }
 
+    }
 }
