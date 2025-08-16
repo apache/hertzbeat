@@ -22,6 +22,7 @@ import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 
 import { Message } from '../pojo/Message';
+import { LocalStorageService } from './local-storage.service';
 
 export interface ChatMessage {
   content: string;
@@ -47,13 +48,12 @@ const chat_uri = '/chat';
   providedIn: 'root'
 })
 export class AiChatService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private localStorageService: LocalStorageService) {}
 
   /**
    * Create a new conversation
    */
   createConversation(): Observable<Message<ConversationDto>> {
-    console.log('Creating new conversation at:', `${chat_uri}/conversations`);
     return this.http.post<Message<ConversationDto>>(`${chat_uri}/conversations`, {});
   }
 
@@ -89,21 +89,26 @@ export class AiChatService {
       requestBody.conversationId = conversationId;
     }
 
-    console.log('Sending stream chat request to:', `${chat_uri}/stream`);
-    console.log('Request body:', requestBody);
 
-    // Use fetch API with streaming support for POST requests with SSE
+    const token = this.localStorageService.getAuthorizationToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
+      'Cache-Control': 'no-cache'
+    };
+
+    // Add Authorization header like the interceptor does
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Use fetch for SSE streaming (HttpClient doesn't support true streaming)
     fetch(`/api${chat_uri}/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
-        'Cache-Control': 'no-cache'
-      },
+      headers,
       body: JSON.stringify(requestBody)
     })
       .then(response => {
-        console.log('Stream response status:', response.status);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -115,7 +120,7 @@ export class AiChatService {
         }
 
         const decoder = new TextDecoder();
-        let buffer = ''; // Buffer for incomplete lines
+        let buffer = '';
 
         function readStream(): Promise<void> {
           if (!reader) {
@@ -123,22 +128,16 @@ export class AiChatService {
           }
           return reader.read().then(({ value, done }) => {
             if (done) {
-              console.log('Stream completed');
               responseSubject.complete();
               return;
             }
 
             const chunk = decoder.decode(value, { stream: true });
-            console.log('Received chunk:', chunk);
 
-            // Add chunk to buffer and process complete lines
             buffer += chunk;
             const lines = buffer.split('\n');
-
-            // Keep the last incomplete line in buffer
             buffer = lines.pop() || '';
 
-            // Process complete lines
             for (const line of lines) {
               const trimmedLine = line.trim();
               if (trimmedLine.startsWith('data:')) {
@@ -155,7 +154,6 @@ export class AiChatService {
                     }
                   } catch (parseError) {
                     console.error('Error parsing SSE data:', parseError, 'Raw data:', jsonStr);
-                    // If not JSON, treat as plain text chunk
                     if (jsonStr) {
                       responseSubject.next({
                         content: jsonStr,
