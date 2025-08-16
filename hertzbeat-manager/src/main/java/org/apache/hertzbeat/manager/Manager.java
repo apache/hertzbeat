@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager;
 
+import javax.annotation.PostConstruct;
 import org.apache.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -35,15 +36,20 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableJpaAuditing
-@EnableJpaRepositories(basePackages = { "org.apache.hertzbeat" })
-@EntityScan(basePackages = { "org.apache.hertzbeat" })
-@ComponentScan(basePackages = { "org.apache.hertzbeat" })
-@ConfigurationPropertiesScan(basePackages = { "org.apache.hertzbeat" })
+@EnableJpaRepositories(basePackages = {"org.apache.hertzbeat"})
+@EntityScan(basePackages = {"org.apache.hertzbeat"})
+@ComponentScan(basePackages = {"org.apache.hertzbeat"})
+@ConfigurationPropertiesScan(basePackages = {"org.apache.hertzbeat"})
 @ImportRuntimeHints(HertzbeatRuntimeHintsRegistrar.class)
 @EnableAsync
 @EnableScheduling
 public class Manager {
     public static void main(String[] args) {
         SpringApplication.run(Manager.class, args);
+    }
+
+    @PostConstruct
+    public void init() {
+        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
     }
 }
