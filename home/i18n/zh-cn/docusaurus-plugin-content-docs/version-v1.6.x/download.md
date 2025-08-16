@@ -1,10 +1,10 @@
 ---
 id: download
-title: 下载 Apache HertzBeat (incubating)
+title: 下载 Apache HertzBeat
 sidebar_label: Download
 ---
 
-> **这里是 Apache HertzBeat (incubating) 官方下载页面。**
+> **这里是 Apache HertzBeat 官方下载页面。**
 > **请在下方表中选择版本下载，推荐使用最新版本。**
 
 :::tip

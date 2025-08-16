@@ -2,7 +2,7 @@ const path = require('path')
 
 const organizationName = 'apache' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
-const deploymentBranch = 'asf-site' 
+const deploymentBranch = 'asf-site'
 const branch = 'master'
 const repoUrl = `https://github.com/apache/${projectName}`
 const cdnUrl = null
@@ -16,8 +16,8 @@ module.exports = {
   onBrokenMarkdownLinks: 'throw',
   favicon: '/img/hertzbeat-logo.svg',
   organizationName,
-  projectName, 
-  deploymentBranch,  
+  projectName,
+  deploymentBranch,
   customFields: {
     repoUrl,
     cdnUrl,
@@ -206,22 +206,22 @@ module.exports = {
         {
           type: 'localeDropdown',
           position: 'right',
-        }, 
+        },
         {
           href: repoUrl,
           position: 'right',
           className: 'header-github-link'
-        }, 
+        },
         {
           href: 'https://x.com/hertzbeat1024',
           position: 'right',
           className: 'header-twitter-link'
-        }, 
+        },
         {
           href: 'https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow',
           position: 'right',
           className: 'header-youtube-link'
-        }, 
+        },
         {
           href: 'https://discord.gg/Fb6M73htGr',
           position: 'right',
@@ -288,7 +288,7 @@ module.exports = {
             </div>
             <div style="margin-left: 40px">
               <p style="font-size: 14px;line-height: 25px;">
-              Apache HertzBeat is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.
+              Apache HertzBeat (incubating) is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.
               </p>
             </div>
           </div>

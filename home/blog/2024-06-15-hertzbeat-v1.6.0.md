@@ -8,9 +8,9 @@ tags: [opensource, practice]
 keywords: [open source, monitoring, alerting]
 ---
 
-**Hi guys, We are excited to announce that Apache HertzBeat (incubating) has released its first Apache version v1.6.0! 🎉.**
+**Hi guys, We are excited to announce that Apache HertzBeat has released its first Apache version v1.6.0! 🎉.**
 
-Through nearly five months of community development iteration and two months of Apache Incubator incubation process, Apache HertzBeat (incubating) v1.6.0 is finally out.  
+Through nearly five months of community development iteration and two months of Apache Incubator incubation process, Apache HertzBeat v1.6.0 is finally out.  
 In this version, we added monitoring for OpenAi, Redfish protocol servers, plugin mechanism, and support for NebulaGraph, Apache Yarn, HDFS, Hbase, Storm, and more functional features.  
 Due to license compatibility issues, we replaced multiple dependencies at the bottom layer, Hibernate -> EclipseLink, which is also a rare migration pitfall practice in the JPA ecosystem.  
 At the same time, some bugs were fixed and some functions were optimized, and more complete documents. Welcome everyone to try to use, put forward valuable opinions and suggestions, and promote the development of HertzBeat together.

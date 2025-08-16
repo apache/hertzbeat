@@ -5,7 +5,7 @@ sidebar_label: 安装包方式安装
 ---
 
 :::tip
-Apache HertzBeat (incubating) 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
+Apache HertzBeat 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
 由于1.6.0及以后版本使用 `Java 17` ，且安装包不再提供内置jdk的版本，参考以下情况使用新版Hertzbeat。
 
 - 当你的服务器中默认环境变量为 `Java 17` 时，这一步你无需任何操作。
