@@ -111,9 +111,7 @@ class VictoriaMetricsDataStorageTest {
         Awaitility.await()
                 .pollInterval(2, TimeUnit.SECONDS)
                 .atMost(7, TimeUnit.SECONDS)
-                .untilAsserted(() ->
-                        assertThat(postForEntityCount.get()).isEqualTo(1)
-                );
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
     }
 
     @Test
@@ -131,9 +129,7 @@ class VictoriaMetricsDataStorageTest {
         Awaitility.await()
                 .pollInterval(1, TimeUnit.SECONDS)
                 .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() ->
-                        assertThat(postForEntityCount.get()).isEqualTo(1)
-                );
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
     }
 
     @Test
@@ -148,18 +144,14 @@ class VictoriaMetricsDataStorageTest {
         Awaitility.await()
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() ->
-                        assertThat(postForEntityCount.get()).isEqualTo(1)
-                );
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
 
         victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
         // wait for the flush interval to be triggered again
         Awaitility.await()
                 .pollInterval(500, TimeUnit.MILLISECONDS)
                 .atMost(5, TimeUnit.SECONDS)
-                .untilAsserted(() ->
-                        assertThat(postForEntityCount.get()).isEqualTo(2)
-                );
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(2));
     }
 
     @Test
@@ -189,8 +181,7 @@ class VictoriaMetricsDataStorageTest {
                 .untilAsserted(() ->
                         assertThat(postForEntityCount.get())
                                 // minimum flushes: ensure all data is processed (threadCount * writeSize / bufferSize)
-                                .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize)
-                );
+                                .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize));
     }
 
     @AfterEach
