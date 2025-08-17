@@ -22,14 +22,17 @@ app: springboot3
 name:
   zh-CN: SpringBoot3.0
   en-US: SpringBoot3.0
+  ja-JP: SpringBoot3.0
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot3.0 Actuator </a> 暴露的通用性能指标(health、environment、threads、memory_used)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 SpringBoot 中的信息，需要您的 SpringBoot 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.apache.org/zh-cn/docs/help/springboot3'>点击查看具体步骤</a>。</span>
   en-US: HertzBeat collect and monitors SpringBoot through general performance metric that exposed by the SpringBoot3.0 Actuator. <br><span class='help_module_span'><br>Note⚠️:You should make sure that your SpringBoot application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://hertzbeat.apache.org/docs/help/springboot3'>click here to see the specific steps.</a></span>
   zh-TW: HertzBeat 對<a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot3.0 Actuator </a>暴露的通用性能指標（health、environment、threads、memory_used）進行採集監控。< span class='help_module_span'>注意⚠️：如果要監控SpringBoot中的指標，需要您的SpringBoot應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/springboot3'>點擊查看具體步驟</a>。</span>
+  ja-JP: HertzBeat は <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot3.0 Actuator </a> が公開する共通のパフォーマンス指標（health、environment、threads、memory_used）を収集および監視します。<span class='help_module_span'>注意⚠️：SpringBoot の情報を監視するには、SpringBoot アプリケーションに SpringBoot Actuator を統合し、有効化する必要があります。詳しい手順は <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/springboot3'>こちらをクリック</a> してください。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/springboot3
   en-US: https://hertzbeat.apache.org/docs/help/springboot3
+  ja-JP: https://hertzbeat.apache.org/docs/help/springboot3
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -38,6 +41,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +52,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +67,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL利用
     # When the type is boolean, the frontend will display a switch for it.
     type: boolean
     # required-true or false
@@ -72,6 +78,7 @@ params:
     name:
       zh-CN: Base Path
       en-US: Base Path
+      ja-JP: Base Path
     # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
     type: text
     # default value
@@ -86,6 +93,7 @@ params:
     name:
       zh-CN: Basic Auth Username
       en-US: Basic Auth Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -100,6 +108,7 @@ params:
     name:
       zh-CN: Basic Auth Password
       en-US: Basic Auth Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -113,6 +122,7 @@ metrics:
     i18n:
       zh-CN: 可用性
       en-US: available
+      ja-JP: 可用性
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -123,6 +133,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
         type: 0
         unit: ms
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -157,6 +168,7 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: state
+          ja-JP: スレッド状態
         type: 1
     protocol: http
     http:
@@ -176,18 +188,21 @@ metrics:
     i18n:
       zh-CN: 线程
       en-US: threads
+      ja-JP: スレッド
     priority: 2
     fields:
       - field: state
         i18n:
           zh-CN: 状态
           en-US: state
+          ja-JP: スレッド状態
         type: 1
         label: true
       - field: Size
         i18n:
           zh-CN: 大小
           en-US: Size
+          ja-JP: サイズ
         type: 0
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
@@ -212,6 +227,7 @@ metrics:
     i18n:
       zh-CN: 空间名称
       en-US: space name
+      ja-JP: スペース名
     visible: false
     priority: 3
     fields:
@@ -219,6 +235,7 @@ metrics:
         i18n:
           zh-CN: ID
           en-US: ID
+          ja-JP: ID
         type: 1
     protocol: http
     http:
@@ -238,18 +255,21 @@ metrics:
     i18n:
       zh-CN: 内存使用
       en-US: memory used
+      ja-JP: 使用したメモリ
     priority: 4
     fields:
       - field: space
         i18n:
           zh-CN: 空间
           en-US: space
+          ja-JP: メモリ領域
         type: 1
         label: true
       - field: mem_used
         i18n:
           zh-CN: 已使用
           en-US: memory used
+          ja-JP: メモリ使用量
         type: 0
         unit: MB
     aliasFields:
@@ -277,12 +297,14 @@ metrics:
     i18n:
       zh-CN: 健康状态
       en-US: health
+      ja-JP: ヘルス情報
     priority: 5
     fields:
       - field: status
         i18n:
           zh-CN: 状态
           en-US: status
+          ja-JP: ステータス
         type: 1
     protocol: http
     http:

@@ -241,7 +241,8 @@
             "help/presto",
             "help/seatunnel",
             "help/spark",
-            "help/yarn"
+            "help/yarn",
+            "help/dolphinscheduler"
           ]
         },
         {
@@ -273,6 +274,7 @@
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
+        "help/mcp_sse_server",
         "help/collector",
         "help/ai_config",
         "help/issue"
