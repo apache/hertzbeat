@@ -623,4 +623,52 @@ public class UtilityClass {
         }
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
+
+
+    /**
+     * Extract existing monitor IDs from the alert expression
+     * @param expression The alert expression containing __instance__ conditions
+     * @return List of existing monitor IDs
+     */
+    public List<String> extractExistingMonitorIds(String expression) {
+        List<String> monitorIds = new ArrayList<>();
+        String pattern = "equals\\(__instance__,\\s*\"([^\"]+)\"\\)";
+        java.util.regex.Pattern regex = java.util.regex.Pattern.compile(pattern);
+        java.util.regex.Matcher matcher = regex.matcher(expression);
+
+        while (matcher.find()) {
+            monitorIds.add(matcher.group(1));
+        }
+
+        return monitorIds;
+    }
+
+    /**
+     * Replace existing __instance__ conditions in the expression with new ones
+     * @param expression The current expression
+     * @param newMonitorCondition The new monitor condition to replace with
+     * @return Updated expression
+     */
+    public String replaceInstanceConditions(String expression, String newMonitorCondition) {
+        // More precise pattern to match complete __instance__ condition blocks without cutting field parameters
+        // Pattern matches either:
+        // 1. Single: equals(__instance__, "id")
+        // 2. Multiple: (equals(__instance__, "id1") or equals(__instance__, "id2") or ...)
+
+        // First try to match grouped conditions: (equals(__instance__, "id1") or equals(__instance__, "id2"))
+        String groupedPattern = "\\(\\s*equals\\(__instance__,\\s*\"[^\"]+\"\\)(?:\\s+or\\s+equals\\(__instance__,\\s*\"[^\"]+\"\\))*\\s*\\)";
+        if (expression.matches(".*" + groupedPattern + ".*")) {
+            return expression.replaceFirst(groupedPattern, newMonitorCondition);
+        }
+
+        // Then try single condition: equals(__instance__, "id")
+        String singlePattern = "equals\\(__instance__,\\s*\"[^\"]+\"\\)";
+        if (expression.matches(".*" + singlePattern + ".*")) {
+            return expression.replaceFirst(singlePattern, newMonitorCondition);
+        }
+
+        // If no match found, return original expression
+        return expression;
+    }
+
 }

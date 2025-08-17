@@ -29,7 +29,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -218,6 +217,37 @@ public class AlertDefineServiceAdapterImpl implements AlertDefineServiceAdapter 
             return false;
         }
     }
+    @Override
+    public AlertDefine modifyAlertDefine(AlertDefine alertDefine) {
+        try {
+            Object alertDefineService = null;
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for modifyAlertDefine: {}", subjectSum);
+
+            try {
+                alertDefineService = SpringContextHolder.getBean("alertDefineServiceImpl");
+            } catch (Exception e) {
+                log.debug("Could not find bean by name 'alertDefineServiceImpl'");
+            }
+
+            assert alertDefineService != null;
+            log.debug("AlertDefineService bean found: {}", alertDefineService.getClass().getSimpleName());
+            
+            Method method = alertDefineService.getClass().getMethod("modifyAlertDefine", AlertDefine.class);
+
+            method.invoke(alertDefineService, alertDefine);
+            
+            log.debug("Successfully modified alert define with ID: {}", alertDefine.getId());
+            return alertDefine;
+
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("Method not found: modifyAlertDefine", e);
+        } catch (Exception e) {
+            log.error("Failed to invoke modifyAlertDefine via adapter", e);
+            throw new RuntimeException("Failed to invoke modifyAlertDefine via adapter: " + e.getMessage(), e);
+        }
+    }
+
     /**
      * Retrieves the application hierarchy for a given app and language.
      * Uses reflection to call the underlying app service method.
