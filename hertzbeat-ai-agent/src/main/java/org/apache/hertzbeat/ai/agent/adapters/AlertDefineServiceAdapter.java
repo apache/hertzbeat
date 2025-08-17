@@ -66,6 +66,7 @@ public interface AlertDefineServiceAdapter {
      * @param id Alert definition ID
      * @param enabled Whether to enable
      */
+
     void toggleAlertDefineStatus(Long id, boolean enabled);
 
     /**
