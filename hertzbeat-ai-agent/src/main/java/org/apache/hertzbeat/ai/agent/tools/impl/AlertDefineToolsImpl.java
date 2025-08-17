@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +67,9 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                 4. Ask the user to choose a metric from the available metrics
                 5. Based on the metric chosen, present the available field conditions/params
                 6. You will construct the proper expression with field conditions
+                7. once this tool successfully executes, ask the user if they want to bind any existing monitors to this alert rule,
+                get the monitors list for a particular app using the query_monitors tool.
+                8. based on the user's output, conditionally call the bind_monitors_to_alert_rule tool to bind monitors to the alert rule
              VERY VERY IMPORTANT:
                  - ALWAYS USE the value field from the get_apps_metrics_hierarchy's json response when creating alert expressions on the field parameters
             
@@ -111,7 +115,6 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             """)
     public String createAlertRule(
             @ToolParam(description = "Alert rule name (required, must be unique)", required = true) String name,
-            @ToolParam(description = "Monitor ID to bind rule to (optional, can bind later)", required = false) Long monitorId,
             @ToolParam(description = "App name from hierarchy (must match exact hierarchy app value)", required = true) String app,
             @ToolParam(description = "Metrics name from hierarchy (must match exact hierarchy metrics value)", required = true) String metrics,
             @ToolParam(description = "Field conditions expression)", required = true) String fieldConditions,
@@ -240,18 +243,8 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
             AlertDefine createdAlertDefine = alertDefineServiceAdapter.addAlertDefine(alertDefine);
 
-            // If monitorId specified, bind the monitor to the alert definition
-            String bindingNote = "";
-            if (monitorId != null) {
-                boolean bound = alertDefineServiceAdapter.bindMonitorToAlertDefine(createdAlertDefine.getId(), monitorId);
-                if (bound) {
-                    bindingNote = String.format(" (Successfully bound to monitor ID %d)", monitorId);
-                } else {
-                    bindingNote = String.format(" (Warning: Failed to bind to monitor ID %d - manual binding may be required)", monitorId);
-                }
-            } else {
-                bindingNote = String.format(" (Rule will apply to all %s monitors with %s metrics)", app, metrics);
-            }
+            // Note: Monitor binding is handled separately via bind_monitors_to_alert_rule tool
+            String bindingNote = String.format(" (Use bind_monitors_to_alert_rule tool to associate specific monitors)");
 
             log.info("Successfully created alert rule '{}' with ID: {}", name, createdAlertDefine.getId());
             
@@ -474,6 +467,156 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
         } catch (Exception e) {
             log.error("Failed to get apps metrics hierarchy: {}", e.getMessage(), e);
             return "Error retrieving apps metrics hierarchy: " + e.getMessage();
+        }
+    }
+
+    @Override
+    @Tool(name = "bind_monitors_to_alert_rule", description = """
+            Bind monitors to an alert rule.
+            Call this tool if users want to bind specific monitors to their alert rule.
+            Get the right monitor ids for a particular app using the query_monitors tool.
+            Get the alert rule ID from the create_alert_rule tool output OR use the list_alert_rules tool with app_name search filter, if the output of create_alert_rule is not applicable.
+            If monitors are already bound, this will add the new ones to the existing bindings.
+            """)
+    public String bindMonitorsToAlertRule(
+            @ToolParam(description = "Alert rule ID to bind monitors to", required = true) Long ruleId,
+            @ToolParam(description = "Comma-separated list of monitor IDs to bind", required = true) String monitorIds) {
+        try {
+            log.info("Binding monitors to alert rule ID: {}, monitors: {}", ruleId, monitorIds);
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current subject in bind_monitors_to_alert_rule tool: {}", subjectSum);
+
+            if (ruleId == null || ruleId <= 0) {
+                return "Error: Valid alert rule ID is required";
+            }
+            if (monitorIds == null) {
+                return "Error: Monitor IDs are required";
+            }
+
+            // Get the existing alert rule
+            AlertDefine existingRule = alertDefineServiceAdapter.getAlertDefine(ruleId);
+            if (existingRule == null) {
+                return String.format("Error: Alert rule with ID %d not found", ruleId);
+            }
+
+            // Parse monitor IDs from comma-separated string
+            String[] monitorIdArray = monitorIds.split(",");
+            List<String> validMonitorIds = new ArrayList<>();
+            
+            for (String monitorId : monitorIdArray) {
+                String trimmedId = monitorId.trim();
+                if (!trimmedId.isEmpty()) {
+                    try {
+                        Long.parseLong(trimmedId); // Validate it's a number
+                        validMonitorIds.add(trimmedId);
+                    } catch (NumberFormatException e) {
+                        return String.format("Error: Invalid monitor ID '%s'. Monitor IDs must be numeric.", trimmedId);
+                    }
+                }
+            }
+            
+            if (validMonitorIds.isEmpty()) {
+                return "Error: No valid monitor IDs provided";
+            }
+
+            // Build the monitor instance condition
+            String monitorCondition;
+            if (validMonitorIds.size() == 1) {
+                monitorCondition = String.format("equals(__instance__, \"%s\")", validMonitorIds.get(0));
+            } else {
+                StringBuilder conditionBuilder = new StringBuilder("(");
+                for (int i = 0; i < validMonitorIds.size(); i++) {
+                    if (i > 0) {
+                        conditionBuilder.append(" or ");
+                    }
+                    conditionBuilder.append(String.format("equals(__instance__, \"%s\")", validMonitorIds.get(i)));
+                }
+                conditionBuilder.append(")");
+                monitorCondition = conditionBuilder.toString();
+            }
+
+            // Get the current expression and modify it
+            String currentExpr = existingRule.getExpr();
+            String newExpr;
+            
+            // Check if the expression already has __instance__ conditions
+            if (currentExpr.contains("__instance__")) {
+                // Extract existing monitor IDs and merge with new ones
+                List<String> existingMonitorIds = UtilityClass.extractExistingMonitorIds(currentExpr);
+                
+                // Add new monitor IDs that aren't already present
+                for (String newId : validMonitorIds) {
+                    if (!existingMonitorIds.contains(newId)) {
+                        existingMonitorIds.add(newId);
+                    }
+                }
+                
+                String updatedMonitorCondition;
+                if (existingMonitorIds.size() == 1) {
+                    updatedMonitorCondition = String.format("equals(__instance__, \"%s\")", existingMonitorIds.get(0));
+                } else {
+                    StringBuilder conditionBuilder = new StringBuilder("(");
+                    for (int i = 0; i < existingMonitorIds.size(); i++) {
+                        if (i > 0) {
+                            conditionBuilder.append(" or ");
+                        }
+                        conditionBuilder.append(String.format("equals(__instance__, \"%s\")", existingMonitorIds.get(i)));
+                    }
+                    conditionBuilder.append(")");
+                    updatedMonitorCondition = conditionBuilder.toString();
+                }
+                
+                // Replace existing __instance__ conditions with updated ones
+                newExpr = UtilityClass.replaceInstanceConditions(currentExpr, updatedMonitorCondition);
+                
+                // Update the alert rule
+                existingRule.setExpr(newExpr);
+                alertDefineServiceAdapter.modifyAlertDefine(existingRule);
+                
+                log.info("Successfully added monitors {} to existing bindings for alert rule ID: {}", validMonitorIds, ruleId);
+                return String.format("Successfully added %d new monitor(s) to alert rule ID %d.\nTotal bound monitors: %s\nUpdated expression: %s", 
+                    validMonitorIds.size(), ruleId, String.join(", ", existingMonitorIds), newExpr);
+            }
+            
+            // Insert the monitor condition after the metrics condition
+            // Pattern: equals(__app__,"app") && equals(__metrics__,"metric") && [existing_conditions]
+            // Result: equals(__app__,"app") && equals(__metrics__,"metric") && [monitor_condition] && [existing_conditions]
+            
+            if (currentExpr.matches(".*equals\\(__app__,\"[^\"]+\"\\)\\s*&&\\s*equals\\(__metrics__,\"[^\"]+\"\\)\\s*&&\\s*.*")) {
+                // Find the position after the metrics condition
+                String metricsPattern = "equals\\(__metrics__,\"[^\"]+\"\\)";
+                java.util.regex.Pattern regex = java.util.regex.Pattern.compile(metricsPattern);
+                java.util.regex.Matcher matcher = regex.matcher(currentExpr);
+                
+                if (matcher.find()) {
+                    int metricsEnd = matcher.end();
+                    // Find the " && " after the metrics condition
+                    int andPosition = currentExpr.indexOf(" && ", metricsEnd);
+                    if (andPosition != -1) {
+                        String beforeAndPosition = currentExpr.substring(0, andPosition + 4); // Include " && "
+                        String afterAndPosition = currentExpr.substring(andPosition + 4); // Everything after " && "
+                        newExpr = beforeAndPosition + monitorCondition + " && " + afterAndPosition;
+                    } else {
+                        return String.format("Error: Unable to find field conditions after metrics in expression: %s", currentExpr);
+                    }
+                } else {
+                    return String.format("Error: Unable to parse metrics condition in expression: %s", currentExpr);
+                }
+            } else {
+                return String.format("Error: Expression format not supported for monitor binding: %s", currentExpr);
+            }
+
+            // Update the alert rule
+            existingRule.setExpr(newExpr);
+            alertDefineServiceAdapter.modifyAlertDefine(existingRule);
+
+            log.info("Successfully bound monitors {} to alert rule ID: {}", validMonitorIds, ruleId);
+            return String.format("Successfully bound %d monitor(s) to alert rule ID %d.\nMonitor IDs: %s\nUpdated expression: %s", 
+                validMonitorIds.size(), ruleId, String.join(", ", validMonitorIds), newExpr);
+
+        } catch (Exception e) {
+            log.error("Failed to bind monitors to alert rule ID {}: {}", ruleId, e.getMessage(), e);
+            return String.format("Error binding monitors to alert rule: %s", e.getMessage());
         }
     }
 
