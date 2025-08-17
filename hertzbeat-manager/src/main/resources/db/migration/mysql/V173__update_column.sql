@@ -22,36 +22,31 @@
 DELIMITER //
 CREATE PROCEDURE UpdateAlertDefineColumns()
 BEGIN
-    DECLARE table_exists INT;
+        DECLARE table_exists INT;
     DECLARE column_exists INT;
 
-    -- Check if the table exists
     SELECT COUNT(*) INTO table_exists 
     FROM INFORMATION_SCHEMA.TABLES 
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'HZB_ALERT_DEFINE';
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_define';
     
     IF table_exists = 1 THEN
-        -- Update type from 'realtime' to 'realtime_metric'
-        UPDATE HZB_ALERT_DEFINE 
+        UPDATE hzb_alert_define
         SET type = 'realtime_metric' 
         WHERE type = 'realtime';
         
-        -- Update type from 'periodic' to 'periodic_metric'
-        UPDATE HZB_ALERT_DEFINE 
+        UPDATE hzb_alert_define
         SET type = 'periodic_metric' 
         WHERE type = 'periodic';
         
-        -- Modify annotations column length from 4096 to 2048
-        ALTER TABLE HZB_ALERT_DEFINE 
+        ALTER TABLE hzb_alert_define 
         MODIFY COLUMN annotations VARCHAR(2048);
         
-        -- Add query_expr column if not exists
         SELECT COUNT(*) INTO column_exists 
         FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'HZB_ALERT_DEFINE' AND COLUMN_NAME = 'query_expr';
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_define' AND COLUMN_NAME = 'query_expr';
         
         IF column_exists = 0 THEN
-            ALTER TABLE HZB_ALERT_DEFINE 
+            ALTER TABLE hzb_alert_define 
             ADD COLUMN query_expr VARCHAR(2048);
         END IF;
     END IF;
