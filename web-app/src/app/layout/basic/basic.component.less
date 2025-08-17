@@ -7,6 +7,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f7fa;
+  min-height: 100vh;
 
   @media (max-width: 1200px) {
     .page-header-item {
@@ -16,6 +18,217 @@
   @media (max-width: 992px) {
     .page-header-item2 {
       display: none;
+    }
+  }
+}
+
+/* Modern Layout Styles with Rounded Separation - Complete Override */
+:host ::ng-deep {
+  /* Reset all default ng-alain positioning */
+  .alain-default,
+  .alain-default * {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+  }
+
+  /* Layout container styling with CSS Grid */
+  .alain-default {
+    background-color: #f5f7fa !important;
+    padding: 12px !important;
+    display: grid !important;
+    grid-template-columns: 200px 1fr !important;
+    grid-template-rows: 64px 1fr !important;
+    grid-template-areas: 
+      "header header"
+      "sidebar content" !important;
+    gap: 12px !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Header modern styling */
+  .alain-default__header {
+    grid-area: header !important;
+    background: linear-gradient(135deg, @primary-color 0%, lighten(@primary-color, 10%) 100%) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 16px !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    z-index: 10 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 64px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Sidebar modern styling */
+  .alain-default__aside {
+    grid-area: sidebar !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(20px) !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .alain-default__aside::after {
+    display: none !important; /* Remove default border */
+  }
+
+  /* Content area modern styling */
+  .alain-default__content {
+    grid-area: content !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(20px) !important;
+    overflow: auto !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Sidebar navigation modern styling */
+  .sidebar-nav__item {
+    margin: 4px 12px;
+    border-radius: 12px;
+    border-left: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .sidebar-nav__item:hover {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.08) 0%, rgba(63, 81, 181, 0.04) 100%);
+    transform: translateX(4px);
+  }
+
+  .sidebar-nav__selected {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.12) 0%, rgba(63, 81, 181, 0.08) 100%);
+    border-left: none;
+    border-radius: 12px;
+    position: relative;
+  }
+
+  .sidebar-nav__selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(135deg, @primary-color 0%, lighten(@primary-color, 20%) 100%);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .sidebar-nav__item-link {
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  /* Header items modern styling */
+  .alain-default__nav-item {
+    border-radius: 8px;
+    margin: 0 4px;
+    transition: all 0.3s ease;
+  }
+
+  .alain-default__nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-1px);
+  }
+
+  /* Search component modern styling */
+  .alain-default__search {
+    .ant-input-affix-wrapper {
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .ant-input-affix-wrapper:hover,
+    .ant-input-affix-wrapper:focus {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* Logo area styling */
+  .alain-default__header-logo {
+    border-radius: 12px;
+    margin: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .alain-default__header-logo:hover {
+    transform: scale(1.02);
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .alain-default {
+      padding: 4px;
+    }
+
+    .alain-default__header {
+      border-radius: 12px;
+    }
+
+    .alain-default__aside {
+      margin-top: 4px;
+      border-radius: 12px;
+    }
+
+    .alain-default__content {
+      margin-top: 4px;
+      margin-left: 4px;
+      border-radius: 12px;
+    }
+  }
+
+  /* Dark theme support */
+  [data-theme='dark'] & {
+    :host {
+      background-color: #141414;
+    }
+
+    .alain-default__aside {
+      background: #1f1f1f;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .alain-default__content {
+      background: #1f1f1f;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-nav__item:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    }
+
+    .sidebar-nav__selected {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
     }
   }
 }
@@ -198,4 +411,4 @@ global-footer {
 .chatbot-input input {
   flex: 1;
   margin-right: 8px;
-} 
+}
