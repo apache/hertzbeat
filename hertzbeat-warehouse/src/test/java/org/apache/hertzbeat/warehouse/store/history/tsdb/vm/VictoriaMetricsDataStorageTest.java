@@ -21,9 +21,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.startsWith;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -53,6 +52,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Test case for {@link VictoriaMetricsDataStorage}
@@ -72,18 +72,33 @@ class VictoriaMetricsDataStorageTest {
 
     private VictoriaMetricsDataStorage victoriaMetricsDataStorage;
 
+    private final AtomicInteger postForEntityCount = new AtomicInteger(0);
+
     @BeforeEach
     void setUp() {
         when(victoriaMetricsProperties.enabled()).thenReturn(true);
         when(victoriaMetricsProperties.url()).thenReturn("http://localhost:8428");
         when(victoriaMetricsProperties.username()).thenReturn("root");
         when(victoriaMetricsProperties.password()).thenReturn("root");
+
         // on successful write, VictoriaMetrics returns HTTP 204 (No Content)
         when(responseEntity.getStatusCode()).thenReturn(HttpStatus.NO_CONTENT);
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
-                .thenReturn(responseEntity);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
-                .thenReturn(responseEntity);
+
+        when(restTemplate.exchange(
+                anyString(),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenReturn(responseEntity);
+
+        when(restTemplate.postForEntity(
+                startsWith(victoriaMetricsProperties.url()),
+                any(HttpEntity.class),
+                eq(String.class)
+        )).thenAnswer(invocation -> {
+            postForEntityCount.incrementAndGet();
+            return responseEntity;
+        });
     }
 
     @Test
@@ -92,14 +107,11 @@ class VictoriaMetricsDataStorageTest {
         victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
         // execute one-time data insertion
         victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
-        // wait for the timer's first insertion task execution and verify if it was called once
-        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-                verify(restTemplate, times(1)).postForEntity(
-                        startsWith(victoriaMetricsProperties.url()),
-                        any(HttpEntity.class),
-                        eq(String.class)
-                )
-        );
+        // wait for the timer's first insertion task execution and verify if it was called once (default 3 seconds)
+        Awaitility.await()
+                .pollInterval(2, TimeUnit.SECONDS)
+                .atMost(7, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
     }
 
     @Test
@@ -109,28 +121,15 @@ class VictoriaMetricsDataStorageTest {
                 10, Integer.MAX_VALUE, new VictoriaMetricsProperties.Compression(false)));
         victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
 
-        victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
-        // wait for the timer to execute its first insertion task
-        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-                verify(restTemplate, times(1)).postForEntity(
-                        startsWith(victoriaMetricsProperties.url()),
-                        any(HttpEntity.class),
-                        eq(String.class)
-                )
-        );
-
         // triggers the buffer size insertion condition
         for (int i = 0; i < 10 * 0.8; i++) {
             victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
         }
-        // wait for the timer to execute the task again
-        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-                verify(restTemplate, times(2)).postForEntity(
-                        startsWith(victoriaMetricsProperties.url()),
-                        any(HttpEntity.class),
-                        eq(String.class)
-                )
-        );
+        // wait for the timer to execute the task
+        Awaitility.await()
+                .pollInterval(1, TimeUnit.SECONDS)
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
     }
 
     @Test
@@ -142,22 +141,47 @@ class VictoriaMetricsDataStorageTest {
 
         victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
         // wait for the timer to execute its first insertion task
-        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-                verify(restTemplate, times(1)).postForEntity(
-                        startsWith(victoriaMetricsProperties.url()),
-                        any(HttpEntity.class),
-                        eq(String.class)
-                )
-        );
+        Awaitility.await()
+                .pollInterval(500, TimeUnit.MILLISECONDS)
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(1));
 
         victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
-        // wait for the flush interval to be triggered
-        Awaitility.await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-                verify(restTemplate, times(2)).postForEntity(
-                        startsWith(victoriaMetricsProperties.url()),
-                        any(),
-                        eq(String.class)
-        ));
+        // wait for the flush interval to be triggered again
+        Awaitility.await()
+                .pollInterval(500, TimeUnit.MILLISECONDS)
+                .atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(postForEntityCount.get()).isEqualTo(2));
+    }
+
+    @Test
+    void testMultiThreadSaveDataBySize() {
+        int threadCount = 100;
+        int bufferSize = 10;
+        int writeSize = (int) (bufferSize * 0.8);
+
+        // verify insert process for buffer size, with the flush interval defined as an unreachable state
+        when(victoriaMetricsProperties.insert()).thenReturn(new VictoriaMetricsProperties.InsertConfig(
+                bufferSize, Integer.MAX_VALUE, new VictoriaMetricsProperties.Compression(false)));
+        victoriaMetricsDataStorage = new VictoriaMetricsDataStorage(victoriaMetricsProperties, restTemplate);
+
+        for (int i = 0; i < threadCount; i++) {
+            new Thread(() -> {
+                // triggers the buffer size insertion condition
+                for (int j = 0; j < writeSize; j++) {
+                    victoriaMetricsDataStorage.saveData(generateMockedMetricsData());
+                }
+            }).start();
+        }
+
+        // wait for the timer to execute the task
+        Awaitility.await()
+                .pollInterval(3, TimeUnit.SECONDS)
+                .atMost(15, TimeUnit.SECONDS)
+                .untilAsserted(() ->
+                        assertThat(postForEntityCount.get())
+                                // minimum flushes: ensure all data is processed (threadCount * writeSize / bufferSize)
+                                .isGreaterThanOrEqualTo(threadCount * writeSize / bufferSize));
     }
 
     @AfterEach

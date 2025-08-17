@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.manager.scheduler.netty.process;
 
+import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.InetSocketAddress;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
+import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
@@ -52,6 +55,12 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
         }
         this.manageServer.addChannel(collector, ctx.channel());
         this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(collector, collectorInfo);
-        return null;
+        ServerInfo serverInfo = ServerInfo.builder().aesSecret(AesUtil.getDefaultSecretKey()).build();
+        return ClusterMsg.Message.newBuilder()
+                .setIdentity(message.getIdentity())
+                .setDirection(ClusterMsg.Direction.RESPONSE)
+                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(serverInfo)))
+                .setType(ClusterMsg.MessageType.GO_ONLINE)
+                .build();
     }
 }
