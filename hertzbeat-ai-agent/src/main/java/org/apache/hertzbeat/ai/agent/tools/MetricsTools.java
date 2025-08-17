@@ -45,34 +45,6 @@ public interface MetricsTools {
     String getHistoricalMetrics(Long monitorId, String app, String metrics, String metric, String label, String history, Boolean interval);
 
     /**
-     * Find monitors with high resource usage
-     * @param metricType Type of metric to check (cpu, memory, disk, network)
-     * @param threshold Threshold percentage (e.g., 80 for 80%)
-     * @param monitorType Monitor type filter (optional)
-     * @return List of monitors exceeding the threshold
-     */
-    String getHighUsageMonitors(String metricType, Double threshold, String monitorType);
-
-    /**
-     * Get usage trend data for various metrics with comprehensive charting support
-     * @param metricType Metric type: 'cpu', 'memory', 'disk', 'network', 'custom'
-     * @param monitorId Monitor ID for specific monitor (optional if host provided)
-     * @param host Server host/IP address for monitor lookup (optional if monitorId provided)
-     * @param timeRange Time range: '1h', '6h', '24h', '7d', '30d'
-     * @param customField Custom metric field name (required only when metricType='custom')
-     * @return Time-series usage data suitable for charting and analysis
-     */
-    String getUsageTrend(String metricType, Long monitorId, String host, String timeRange, String customField);
-
-    /**
-     * Get comprehensive system metrics summary for multiple monitors
-     * @param monitorType Monitor type filter (optional)
-     * @param metricTypes Comma-separated metric types (cpu,memory,disk)
-     * @return Summary of current system metrics across monitors
-     */
-    String getSystemMetricsSummary(String monitorType, String metricTypes);
-
-    /**
      * Check warehouse storage server status
      * @return Status of the metrics storage system
      */
