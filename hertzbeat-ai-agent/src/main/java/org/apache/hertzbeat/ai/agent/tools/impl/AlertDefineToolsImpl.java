@@ -342,62 +342,6 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
     }
 
     @Override
-    @Tool(name = "update_alert_threshold", description = """
-            Update the threshold value and settings for an existing alert rule.
-            Allows modifying trigger conditions for established rules.
-            """)
-    public String updateAlertThreshold(
-            @ToolParam(description = "Alert rule ID", required = true) Long ruleId,
-            @ToolParam(description = "New threshold value", required = true) String threshold,
-            @ToolParam(description = "New comparison operator (optional)", required = false) String operator,
-            @ToolParam(description = "New trigger times (optional)", required = false) Integer times) {
-
-        try {
-            log.info("Updating alert threshold for rule ID: {}", ruleId);
-
-            AlertDefine existingRule = alertDefineServiceAdapter.getAlertDefine(ruleId);
-            if (existingRule == null) {
-                return "Error: Alert rule with ID " + ruleId + " not found";
-            }
-
-            // Parse current expression to extract components
-            String currentExpr = existingRule.getExpr();
-            String[] parts = UtilityClass.parseExpression(currentExpr);
-            if (parts == null) {
-                return "Error: Cannot parse current expression: " + currentExpr;
-            }
-
-            String metric = parts[0];
-            String currentOperator = parts[1];
-
-            // Use provided values or keep existing ones
-            String newOperator = operator != null ? operator : currentOperator;
-            Integer newTimes = times != null ? times : existingRule.getTimes();
-
-            if (!UtilityClass.isValidOperator(newOperator)) {
-                return "Error: Invalid operator. Use >, <, >=, <=, ==, or !=";
-            }
-
-            // Build new expression
-            String newExpression = UtilityClass.buildExpression(metric, newOperator, threshold);
-
-            // Update the rule
-            existingRule.setExpr(newExpression);
-            existingRule.setTimes(newTimes);
-
-            alertDefineServiceAdapter.updateAlertDefine(existingRule);
-
-            log.info("Successfully updated alert rule ID: {}", ruleId);
-            return String.format("Successfully updated alert rule ID: %d. New expression: %s, Trigger times: %d",
-                    ruleId, newExpression, newTimes);
-
-        } catch (Exception e) {
-            log.error("Failed to update alert threshold for rule ID {}: {}", ruleId, e.getMessage(), e);
-            return "Error updating alert threshold: " + e.getMessage();
-        }
-    }
-
-    @Override
     @Tool(name = "toggle_alert_rule", description = """
             Enable or disable an alert rule.
             Allows activating or deactivating threshold monitoring.
