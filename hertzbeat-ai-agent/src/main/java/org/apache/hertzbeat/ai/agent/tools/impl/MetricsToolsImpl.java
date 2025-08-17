@@ -24,6 +24,7 @@ import org.apache.hertzbeat.ai.agent.adapters.MetricsServiceAdapter;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
 import org.apache.hertzbeat.ai.agent.tools.MetricsTools;
+import org.apache.hertzbeat.ai.agent.utils.UtilityClass;
 import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
 import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
@@ -211,7 +212,7 @@ public class MetricsToolsImpl implements MetricsTools {
 
             for (Monitor monitor : monitors.getContent()) {
                 try {
-                    String metricsName = getMetricsNameForType(metricType);
+                    String metricsName = UtilityClass.getMetricsNameForType(metricType);
                     MetricsData metricsData = metricsServiceAdapter.getMetricsData(monitor.getId(), metricsName);
                     
                     if (metricsData != null && metricsData.getValueRows() != null) {
@@ -222,7 +223,7 @@ public class MetricsToolsImpl implements MetricsTools {
                                 Field field = fields.get(i);
                                 Value value = values.get(i);
                                 
-                                if (isUsageField(field.getName(), metricType)) {
+                                if (UtilityClass.isUsageField(field.getName(), metricType)) {
                                     try {
                                         double usage = Double.parseDouble(value.getOrigin());
                                         if (usage > threshold) {
@@ -318,7 +319,7 @@ public class MetricsToolsImpl implements MetricsTools {
             // Determine metric field and display name
             String metricField = "usage";  // Default for most metrics
             String displayName = metricType.toUpperCase();
-            String metricsName = getMetricsNameForType(metricType);
+            String metricsName = UtilityClass.getMetricsNameForType(metricType);
 
             if ("custom".equals(metricType)) {
                 metricField = customField;
@@ -369,7 +370,7 @@ public class MetricsToolsImpl implements MetricsTools {
                 List<String> metricsSummary = new ArrayList<>();
                 for (Monitor monitor : monitors.getContent()) {
                     try {
-                        String metricsName = getMetricsNameForType(type);
+                        String metricsName = UtilityClass.getMetricsNameForType(type);
                         MetricsData metricsData = metricsServiceAdapter.getMetricsData(monitor.getId(), metricsName);
                         
                         if (metricsData != null && metricsData.getValueRows() != null) {
@@ -380,7 +381,7 @@ public class MetricsToolsImpl implements MetricsTools {
                                     Field field = fields.get(i);
                                     Value value = values.get(i);
                                     
-                                    if (isUsageField(field.getName(), type)) {
+                                    if (UtilityClass.isUsageField(field.getName(), type)) {
                                         try {
                                             double usage = Double.parseDouble(value.getOrigin());
                                             metricsSummary.add(String.format("• %s: %.1f%%", monitor.getName(), usage));
@@ -502,40 +503,5 @@ public class MetricsToolsImpl implements MetricsTools {
             log.error("Failed to get {} usage trend: {}", displayName, e.getMessage(), e);
             return "Error retrieving " + displayName.toLowerCase() + " usage trend: " + e.getMessage();
         }
-    }
-
-    /**
-     * Helper method to get metrics name for a metric type
-     */
-    private String getMetricsNameForType(String metricType) {
-        switch (metricType.toLowerCase()) {
-            case "cpu":
-                return "cpu";
-            case "memory":
-                return "memory";
-            case "disk":
-                return "disk";
-            case "network":
-                return "network";
-            default:
-                return "system";
-        }
-    }
-
-    /**
-     * Helper method to check if a field represents usage for a metric type
-     */
-    private boolean isUsageField(String field, String metricType) {
-        if (field == null) return false;
-        
-        String fieldLower = field.toLowerCase();
-        String typeLower = metricType.toLowerCase();
-        
-        return fieldLower.contains("usage") 
-               || fieldLower.contains("percent")
-               || fieldLower.contains("util")
-               || (typeLower.equals("cpu") && (fieldLower.contains("cpu") || fieldLower.contains("idle")))
-               || (typeLower.equals("memory") && fieldLower.contains("memory"))
-               || (typeLower.equals("disk") && fieldLower.contains("disk"));
     }
 }

@@ -26,6 +26,7 @@ import org.apache.hertzbeat.ai.agent.adapters.AlertDefineServiceAdapter;
 import org.apache.hertzbeat.ai.agent.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
 import org.apache.hertzbeat.ai.agent.tools.AlertDefineTools;
+import org.apache.hertzbeat.ai.agent.utils.UtilityClass;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -33,7 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,11 +95,12 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             FIELD CONDITIONS GUIDANCE:
             - Field names come from metric's children in hierarchy (leaf nodes)
             - Use the "value" field from the metric's children, not the label when creating conditions
-            - Supported operators: >, <, >=, <=, ==, !=, equals()
-            - Supported logical operators: and, or, not
+            - Supported operators: >, <, >=, <=, ==, !=, exists(), !exists() for numeric fields
+            - equals(), contains(), matches(),exists(), !equals(), !contains(), !matches(), !exists() for string fields
+            - Supported logical operators: and, or to connect different field parameter rules or rulesets
             - ONLY USE THESE OPERATORS, when creating conditions, do not use any other operators
             - Support grouping with parentheses: (condition1 and condition2) or condition3
-            - String values should be quoted: equals(VmName, "arora")
+            - String values should be quoted: equals(VmName, "my-vm")
             - Simple conditions: heap_memory_used > 80, total_granted <= 1000
             - Complex conditions: total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
             
@@ -185,15 +186,21 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                 return validationResult; // Return validation error message
             }
 
-            // Build the proper HertzBeat expression format
-            // Format: equals(__app__,"appname") && equals(__metrics__,"metricname") && [field_conditions]
+            // EXPRESSION VALIDATION: Verify field conditions syntax and operators
+            String expressionValidation = UtilityClass.validateExpressionSyntax(fieldConditions.trim());
+            if (!expressionValidation.equals("VALID")) {
+                return expressionValidation; // Return expression validation error message
+            }
+
             String expr = String.format("equals(__app__,\"%s\") && equals(__metrics__,\"%s\") && %s", 
                     app.trim(), metrics.trim(), fieldConditions.trim());
+
+
 
             // Parse labels if provided
             Map<String, String> labelsMap = new HashMap<>();
             if (labels != null && !labels.trim().isEmpty()) {
-                labelsMap.putAll(parseKeyValuePairs(labels));
+                labelsMap.putAll(UtilityClass.parseKeyValuePairs(labels));
             }
             // Add severity based on priority
             String severityLabel = priority == 0 ? "critical" : (priority == 1 ? "warning" : "info");
@@ -202,7 +209,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             // Parse annotations if provided
             Map<String, String> annotationsMap = new HashMap<>();
             if (annotations != null && !annotations.trim().isEmpty()) {
-                annotationsMap.putAll(parseKeyValuePairs(annotations));
+                annotationsMap.putAll(UtilityClass.parseKeyValuePairs(annotations));
             }
             // Add default annotations if not provided
             if (!annotationsMap.containsKey("summary")) {
@@ -355,7 +362,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
             // Parse current expression to extract components
             String currentExpr = existingRule.getExpr();
-            String[] parts = parseExpression(currentExpr);
+            String[] parts = UtilityClass.parseExpression(currentExpr);
             if (parts == null) {
                 return "Error: Cannot parse current expression: " + currentExpr;
             }
@@ -367,12 +374,12 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             String newOperator = operator != null ? operator : currentOperator;
             Integer newTimes = times != null ? times : existingRule.getTimes();
 
-            if (!isValidOperator(newOperator)) {
+            if (!UtilityClass.isValidOperator(newOperator)) {
                 return "Error: Invalid operator. Use >, <, >=, <=, ==, or !=";
             }
 
             // Build new expression
-            String newExpression = buildExpression(metric, newOperator, threshold);
+            String newExpression = UtilityClass.buildExpression(metric, newOperator, threshold);
 
             // Update the rule
             existingRule.setExpr(newExpression);
@@ -471,233 +478,6 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
         }
     }
 
-    /**
-     * Helper method to validate operator
-     */
-    private boolean isValidOperator(String operator) {
-        return operator != null && (operator.equals(">") || operator.equals("<")
-                || operator.equals(">=") || operator.equals("<=")
-                || operator.equals("==") || operator.equals("!="));
-    }
-
-    /**
-     * Helper method to validate priority
-     */
-    private boolean isValidPriority(String priority) {
-        return priority != null && (priority.equalsIgnoreCase("critical")
-                || priority.equalsIgnoreCase("warning") || priority.equalsIgnoreCase("info"));
-    }
-
-    /**
-     * Helper method to build expression
-     */
-    private String buildExpression(String metric, String operator, String threshold) {
-        return String.format("%s %s %s", metric, operator, threshold);
-    }
-
-    /**
-     * Helper method to parse existing expression into components
-     */
-    private String[] parseExpression(String expression) {
-        if (expression == null || expression.trim().isEmpty()) {
-            return null;
-        }
-
-        // Simple parsing for basic expressions like "metric > value"
-        String[] operators = {">", "<", ">=", "<=", "==", "!="};
-        for (String op : operators) {
-            if (expression.contains(" " + op + " ")) {
-                String[] parts = expression.split(" " + op + " ");
-                if (parts.length == 2) {
-                    return new String[]{parts[0].trim(), op, parts[1].trim()};
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Helper method to parse key-value pairs from a string
-     * Format: "key1:value1, key2:value2, ..."
-     */
-    private Map<String, String> parseKeyValuePairs(String input) {
-        Map<String, String> result = new HashMap<>();
-        if (input == null || input.trim().isEmpty()) {
-            return result;
-        }
-
-        String[] pairs = input.split(",");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split(":");
-            if (keyValue.length == 2) {
-                result.put(keyValue[0].trim(), keyValue[1].trim());
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Validates that the app, metric, and field conditions are valid according to hierarchy
-     * @param app App name to validate
-     * @param metrics Metric name to validate for the app
-     * @param fieldConditions Field conditions to validate for the metric
-     * @return "VALID" if all relationships are correct, error message otherwise
-     */
-    private String validateHierarchyRelationships(String app, String metrics, String fieldConditions) {
-        try {
-            log.debug("Validating hierarchy relationships: app={}, metrics={}, fieldConditions={}", app, metrics, fieldConditions);
-            
-            // Get hierarchy for the specified app
-            List<Hierarchy> hierarchies = alertDefineServiceAdapter.getAppHierarchy(app.toLowerCase(), "en-US");
-            
-            if (hierarchies == null || hierarchies.isEmpty()) {
-                return String.format("Error: App '%s' not found in hierarchy. Please use list_monitor_types to get valid app names.", app);
-            }
-            
-            // Find the metric in the app's hierarchy
-            Hierarchy metricHierarchy = findMetricInHierarchy(hierarchies, metrics);
-            if (metricHierarchy == null) {
-                return String.format("Error: Metric '%s' not found for app '%s'. Please use get_apps_metrics_hierarchy to get valid metrics for this app.", metrics, app);
-            }
-            
-            // Extract field names from field conditions and validate them
-            List<String> fieldNames = extractFieldNamesFromConditions(fieldConditions);
-            for (String fieldName : fieldNames) {
-                if (!isFieldValidForMetric(metricHierarchy, fieldName)) {
-                    return String.format("Error: Field '%s' not found for metric '%s' in app '%s'. Please use get_apps_metrics_hierarchy to get valid field parameters.", fieldName, metrics, app);
-                }
-            }
-            
-            log.debug("Hierarchy validation passed for app={}, metrics={}", app, metrics);
-            return "VALID";
-            
-        } catch (Exception e) {
-            log.error("Error during hierarchy validation: {}", e.getMessage(), e);
-            return String.format("Error: Unable to validate hierarchy relationships: %s", e.getMessage());
-        }
-    }
-
-    /**
-     * Recursively searches for a metric in the hierarchy
-     */
-    private Hierarchy findMetricInHierarchy(List<Hierarchy> hierarchies, String metricName) {
-        for (Hierarchy hierarchy : hierarchies) {
-            // Check if this is the metric we're looking for
-            if (metricName.equals(hierarchy.getValue())) {
-                // Verify it has field children (leaf nodes)
-                if (hierarchy.getChildren() != null && !hierarchy.getChildren().isEmpty()) {
-                    boolean hasLeafChildren = hierarchy.getChildren().stream()
-                        .anyMatch(child -> child.getIsLeaf() != null && child.getIsLeaf());
-                    if (hasLeafChildren) {
-                        return hierarchy;
-                    }
-                }
-            }
-            
-            // Recursively search in children
-            if (hierarchy.getChildren() != null) {
-                Hierarchy found = findMetricInHierarchy(hierarchy.getChildren(), metricName);
-                if (found != null) {
-                    return found;
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Checks if a field is valid for the given metric
-     */
-    private boolean isFieldValidForMetric(Hierarchy metricHierarchy, String fieldName) {
-        if (metricHierarchy.getChildren() == null) {
-            return false;
-        }
-        
-        for (Hierarchy child : metricHierarchy.getChildren()) {
-            if (child.getIsLeaf() != null && child.getIsLeaf() && fieldName.equals(child.getValue())) {
-                return true;
-            }
-            // Also check nested children
-            if (child.getChildren() != null && isFieldValidForMetric(child, fieldName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Extracts field names from field conditions string
-     * Handles simple cases like "field > 80", "equals(field, 'value')", complex expressions
-     */
-    private List<String> extractFieldNamesFromConditions(String fieldConditions) {
-        List<String> fieldNames = new ArrayList<>();
-        
-        // Split by logical operators (and, or) and parentheses, but preserve the field names
-        // This is a simple implementation - could be enhanced with a proper parser
-        String[] parts = fieldConditions.split("\\s+(and|or|&&|\\|\\|)\\s+|[()]+");
-        
-        for (String part : parts) {
-            part = part.trim();
-            if (part.isEmpty()) {
-                continue;
-            }
-            
-            // Handle equals() function: equals(fieldName, "value")
-            if (part.contains("equals(")) {
-                String fieldName = extractFieldFromEquals(part);
-                if (fieldName != null && !fieldNames.contains(fieldName)) {
-                    fieldNames.add(fieldName);
-                }
-            } else {
-                // Handle simple comparisons: fieldName > value, fieldName <= value
-                String fieldName = extractFieldFromComparison(part);
-                if (fieldName != null && !fieldNames.contains(fieldName)) {
-                    fieldNames.add(fieldName);
-                }
-            }
-        }
-        
-        return fieldNames;
-    }
-
-    /**
-     * Extracts field name from equals() function
-     */
-    private String extractFieldFromEquals(String condition) {
-        // Pattern: equals(fieldName, "value") or equals(fieldName, value)
-        int startParen = condition.indexOf('(');
-        int comma = condition.indexOf(',');
-        
-        if (startParen != -1 && comma != -1 && comma > startParen) {
-            String fieldName = condition.substring(startParen + 1, comma).trim();
-            // Remove quotes if present
-            if (fieldName.startsWith("\"") && fieldName.endsWith("\"")) {
-                fieldName = fieldName.substring(1, fieldName.length() - 1);
-            }
-            return fieldName;
-        }
-        return null;
-    }
-
-    /**
-     * Extracts field name from comparison operation
-     */
-    private String extractFieldFromComparison(String condition) {
-        // Pattern: fieldName operator value
-        String[] operators = {" >= ", " <= ", " > ", " < ", " == ", " != ", " = "};
-        
-        for (String operator : operators) {
-            if (condition.contains(operator)) {
-                String fieldName = condition.split(operator)[0].trim();
-                // Basic validation - field names shouldn't contain quotes or special chars
-                if (fieldName.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
-                    return fieldName;
-                }
-            }
-        }
-        return null;
-    }
-
     @Override
     @Tool(name = "get_apps_metrics_hierarchy", description = """
             Get the hierarchical structure of all available apps and their metrics for alert rule creation.
@@ -736,7 +516,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             if (hierarchies != null && !hierarchies.isEmpty()) {
                 ArrayNode hierarchyArray = mapper.createArrayNode();
                 for (Hierarchy hierarchy : hierarchies) {
-                    hierarchyArray.add(formatHierarchyAsJson(mapper, hierarchy));
+                    hierarchyArray.add(UtilityClass.formatHierarchyAsJson(mapper, hierarchy));
                 }
                 result.set("hierarchy", hierarchyArray);
             } else {
@@ -754,50 +534,46 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
         }
     }
 
+
     /**
-     * Helper method to format hierarchy structure as JSON recursively
+     * Validates that the app, metric, and field conditions are valid according to hierarchy
+     * @param app App name to validate
+     * @param metrics Metric name to validate for the app
+     * @param fieldConditions Field conditions to validate for the metric
+     * @return "VALID" if all relationships are correct, error message otherwise
      */
-    private ObjectNode formatHierarchyAsJson(ObjectMapper mapper, Hierarchy hierarchy) {
-        ObjectNode node = mapper.createObjectNode();
+    private String validateHierarchyRelationships(String app, String metrics, String fieldConditions) {
+        try {
+            log.debug("Validating hierarchy relationships: app={}, metrics={}, fieldConditions={}", app, metrics, fieldConditions);
 
-        node.put("value", hierarchy.getValue());
-        node.put("label", hierarchy.getLabel());
+            // Get hierarchy for the specified app
+            List<Hierarchy> hierarchies = alertDefineServiceAdapter.getAppHierarchy(app.toLowerCase(), "en-US");
 
-        if (hierarchy.getIsLeaf() != null && hierarchy.getIsLeaf()) {
-            // Leaf node - actual metric field parameter
-            node.put("type", "field_parameter");
-
-            if (hierarchy.getType() != null) {
-                node.put("dataType", hierarchy.getType() == 0 ? "numeric" : "string");
-            }
-            if (hierarchy.getUnit() != null && !hierarchy.getUnit().trim().isEmpty()) {
-                node.put("unit", hierarchy.getUnit());
-            }
-            node.put("description", "Available field parameter for alert conditions");
-        } else {
-            // Category, app, or metric node
-            // Determine node type based on children
-            boolean hasLeafChildren = hierarchy.getChildren().stream()
-                    .anyMatch(child -> child.getIsLeaf() != null && child.getIsLeaf());
-
-            if (hasLeafChildren) {
-                node.put("type", "metric");
-                node.put("description", "Metric with available field parameters");
-            } else {
-                node.put("type", "app");
-                node.put("description", "Application with available metrics");
+            if (hierarchies == null || hierarchies.isEmpty()) {
+                return String.format("Error: App '%s' not found in hierarchy. Please use list_monitor_types to get valid app names.", app);
             }
 
-            if (hierarchy.getChildren() != null && !hierarchy.getChildren().isEmpty()) {
-                ArrayNode childrenArray = mapper.createArrayNode();
-                for (Hierarchy child : hierarchy.getChildren()) {
-                    childrenArray.add(formatHierarchyAsJson(mapper, child));
+            // Find the metric in the app's hierarchy
+            Hierarchy metricHierarchy = UtilityClass.findMetricInHierarchy(hierarchies, metrics);
+            if (metricHierarchy == null) {
+                return String.format("Error: Metric '%s' not found for app '%s'. Please use get_apps_metrics_hierarchy to get valid metrics for this app.", metrics, app);
+            }
+
+            // Extract field names from field conditions and validate them
+            List<String> fieldNames = UtilityClass.extractFieldNamesFromConditions(fieldConditions);
+            for (String fieldName : fieldNames) {
+                if (!UtilityClass.isFieldValidForMetric(metricHierarchy, fieldName)) {
+                    return String.format("Error: Field '%s' not found for metric '%s' in app '%s'. Please use get_apps_metrics_hierarchy to get valid field parameters.", fieldName, metrics, app);
                 }
-                node.set("children", childrenArray);
-
             }
-        }
 
-        return node;
+            log.debug("Hierarchy validation passed for app={}, metrics={}", app, metrics);
+            return "VALID";
+
+        } catch (Exception e) {
+            log.error("Error during hierarchy validation: {}", e.getMessage(), e);
+            return String.format("Error: Unable to validate hierarchy relationships: %s", e.getMessage());
+        }
     }
+
 }

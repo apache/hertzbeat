@@ -24,6 +24,7 @@ import org.apache.hertzbeat.ai.agent.adapters.AlertServiceAdapter;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
 import org.apache.hertzbeat.ai.agent.tools.AlertTools;
+import org.apache.hertzbeat.ai.agent.utils.UtilityClass;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
@@ -34,10 +35,6 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -133,13 +130,13 @@ public class AlertToolsImpl implements AlertTools {
                     response.append("Trigger Times: ").append(alert.getTriggerTimes()).append("\n");
                     
                     if (alert.getStartAt() != null) {
-                        response.append("Started At: ").append(formatTimestamp(alert.getStartAt())).append("\n");
+                        response.append("Started At: ").append(UtilityClass.formatTimestamp(alert.getStartAt())).append("\n");
                     }
                     if (alert.getActiveAt() != null) {
-                        response.append("Active At: ").append(formatTimestamp(alert.getActiveAt())).append("\n");
+                        response.append("Active At: ").append(UtilityClass.formatTimestamp(alert.getActiveAt())).append("\n");
                     }
                     if (alert.getEndAt() != null) {
-                        response.append("Ended At: ").append(formatTimestamp(alert.getEndAt())).append("\n");
+                        response.append("Ended At: ").append(UtilityClass.formatTimestamp(alert.getEndAt())).append("\n");
                     }
                     
                     if (alert.getLabels() != null && !alert.getLabels().isEmpty()) {
@@ -274,7 +271,7 @@ public class AlertToolsImpl implements AlertTools {
             Map<String, Integer> alertFrequency = new HashMap<>();
             Map<String, SingleAlert> alertExamples = new HashMap<>();
             
-            long cutoffTime = System.currentTimeMillis() - parseTimeRangeToMillis(timeRange);
+            long cutoffTime = System.currentTimeMillis() - UtilityClass.parseTimeRangeToMillis(timeRange);
             
             for (SingleAlert alert : recentAlerts.getContent()) {
                 if (alert.getStartAt() != null && alert.getStartAt() >= cutoffTime) {
@@ -384,7 +381,7 @@ public class AlertToolsImpl implements AlertTools {
                 for (SingleAlert alert : firingAlerts.getContent()) {
                     response.append("- Alert ID: ").append(alert.getId())
                            .append(" | Content: ").append(alert.getContent())
-                           .append(" | Started: ").append(formatTimestamp(alert.getStartAt()))
+                           .append(" | Started: ").append(UtilityClass.formatTimestamp(alert.getStartAt()))
                            .append(" | Triggers: ").append(alert.getTriggerTimes()).append("\n");
                 }
             }
@@ -435,7 +432,7 @@ public class AlertToolsImpl implements AlertTools {
             String searchTerm = monitorId != null ? monitorId.toString() : monitorName;
             Page<SingleAlert> alerts = alertServiceAdapter.getSingleAlerts("all", searchTerm, "startAt", "desc", 0, 50);
             
-            long cutoffTime = System.currentTimeMillis() - parseTimeRangeToMillis(timeRange);
+            long cutoffTime = System.currentTimeMillis() - UtilityClass.parseTimeRangeToMillis(timeRange);
             
             int alertCount = 0;
             for (SingleAlert alert : alerts.getContent()) {
@@ -446,9 +443,9 @@ public class AlertToolsImpl implements AlertTools {
                     response.append("- Status: ").append(alert.getStatus()).append("\n");
                     response.append("- Content: ").append(alert.getContent()).append("\n");
                     response.append("- Trigger Times: ").append(alert.getTriggerTimes()).append("\n");
-                    response.append("- Started: ").append(formatTimestamp(alert.getStartAt())).append("\n");
+                    response.append("- Started: ").append(UtilityClass.formatTimestamp(alert.getStartAt())).append("\n");
                     if (alert.getEndAt() != null) {
-                        response.append("- Ended: ").append(formatTimestamp(alert.getEndAt())).append("\n");
+                        response.append("- Ended: ").append(UtilityClass.formatTimestamp(alert.getEndAt())).append("\n");
                     }
                     response.append("\n");
                 }
@@ -468,27 +465,5 @@ public class AlertToolsImpl implements AlertTools {
         }
     }
 
-    /**
-     * Format timestamp to readable format
-     */
-    private String formatTimestamp(Long timestamp) {
-        if (timestamp == null) {
-            return "N/A";
-        }
-        LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-    }
 
-    /**
-     * Parse time range string to milliseconds
-     */
-    private long parseTimeRangeToMillis(String timeRange) {
-        return switch (timeRange.toLowerCase()) {
-            case "1h" -> 60 * 60 * 1000L;
-            case "6h" -> 6 * 60 * 60 * 1000L;
-            case "24h" -> 24 * 60 * 60 * 1000L;
-            case "7d" -> 7 * 24 * 60 * 60 * 1000L;
-            default -> 24 * 60 * 60 * 1000L; // default to 24h
-        };
-    }
 }
