@@ -21,6 +21,7 @@ import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
+import org.apache.hertzbeat.ai.agent.utils.UtilityClass;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -164,7 +165,7 @@ public class MonitorToolsImpl implements MonitorTools {
                        .append(" | Name: ").append(monitor.getName())
                        .append(" | Type: ").append(monitor.getApp())
                        .append(" | Host: ").append(monitor.getHost())
-                       .append(" | Status: ").append(getStatusText(monitor.getStatus()));
+                       .append(" | Status: ").append(UtilityClass.getStatusText(monitor.getStatus()));
                        
                 // Add creation date for better context
                 if (monitor.getGmtCreate() != null) {
@@ -485,22 +486,6 @@ public class MonitorToolsImpl implements MonitorTools {
         }
     }
 
-    /**
-     * Helper method to convert monitor status byte to readable text
-     * @param status The status byte from monitor
-     * @return Human-readable status text
-     */
-    private String getStatusText(Byte status) {
-        if (status == null) {
-            return "Unknown";
-        }
-        return switch (status) {
-            case 0 -> "Paused";
-            case 1 -> "Online";
-            case 2 -> "Offline";
-            case 3 -> "Unreachable";
-            default -> "Unknown (" + status + ")";
-        };
-    }
+
 
 }

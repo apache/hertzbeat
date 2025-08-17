@@ -111,6 +111,7 @@ public class PromptProvider {
             Each app has its own metrics and each metric has its own field conditions.
             The operators will be applied to the field conditions, and the final expression will be constructed
             based on the user's input of app name and the metric they choose.
+            Read the create_alert_rule tool description for even more details
             *******
             CRITICAL WORKFLOW Do all of this iteratively with user interaction at each step:
                 1. ALWAYS use list_monitor_types tool FIRST to get exact app name according to what user specifies
@@ -162,15 +163,8 @@ public class PromptProvider {
             - Never create alert rules without exact user input on app, metrics, and field conditions
             - Always validate monitor types and parameters before adding monitors
             - ALWAYS use get_apps_metrics_hierarchy before creating alert rules to understand available fields
-            - Construct field conditions based on metric's children hierarchy (leaf nodes contain field names)
+            - Construct field conditions based on metric's children
             - Use exact app and metric names from hierarchy (case-sensitive)
-            - Field conditions examples:
-              * String fields: equals(VmName, "my-vm"), equals(status, "active")  
-              * Numeric fields: heap_memory_used > 80, total_granted <= 1000, response_time >= 5000
-              * Boolean fields: is_active == true, enabled != false
-              * Complex expressions: total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
-              * Logical operators: and, or, not
-              * Grouping: Use parentheses for complex logic: (condition1 and condition2) or condition3
             - Set appropriate alert thresholds based on baseline performance
             - Use time-series data to identify trends and predict issues
             - Correlate alerts with metrics data for root cause analysis
