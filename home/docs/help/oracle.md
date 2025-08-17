@@ -74,9 +74,8 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 | Metric name | Metric unit | Metric help description |
 |-------------|-------------|-------------------------|
-| username      | none      | User name               |
+| username    | none        | User name               |
 | counts      | number      | User sessions counts    |
-
 
 #### Metric set：performance
 
