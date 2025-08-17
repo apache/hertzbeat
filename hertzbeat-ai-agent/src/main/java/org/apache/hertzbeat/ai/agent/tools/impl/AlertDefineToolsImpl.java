@@ -50,6 +50,10 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
     @Override
     @Tool(name = "create_alert_rule", description = """
+            ALERT RULE means when to alert a user
+            THESE ARE ALERT RULES WITH THRESHOLD VALUES. USERS CAN SPECIFY THE THRESHOLD VALUES FOR EXAMPLE,
+            IF THE USER SAYS "ALERT ME WHEN MY COST EXCEEDS 700, THE EXPRESSION SHOULD BE 'cost > 700' NOT 'cost < 700'.
+            APPLY THE SAME LOGIC FOR LESS THAN OPERATOR.
             Create a HertzBeat alert rule based on app hierarchy structure and user requirements.
             It is important to first understand the hierarchy of apps, metrics, and field conditions
             Each app has its own metrics and each metric has its own field conditions.
@@ -65,32 +69,28 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
              VERY VERY IMPORTANT:
                  - ALWAYS USE the value field from the get_apps_metrics_hierarchy's json response when creating alert expressions on the field parameters
             
-            EXPRESSION FORMAT:
-            equals(__app__,"appname") && equals(__metrics__,"metricname") && [field_conditions]
-            
-            EXAMPLES ( Do not copy these examples, they are just for reference ):
+            EXAMPLES FOR FIELD CONDITION EXPRESSION( Do not copy these examples, they are just for reference ):
             These are all just examples, you can take inspiration from them and create a rule based on hierarchy, always ask the user for all params, do not assume them, even for these examples:
             
             1. Kafka JVM Alert:
                - App: "kafka", Metric: "jvm_basic"
                - Field condition: equals(VmName, "arora")
-               - Final expression: equals(__app__,"kafka") && equals(__metrics__,"jvm_basic") && equals(VmName, "arora")
+               - Field condition expression: equals(VmName, "arora")
             
             2. LLM Credits Alert:
                - App: "openai", Metric: "credit_grants"
                - Field condition: total_granted > some_value
-               - Final expression: equals(__app__,"openai") && equals(__metrics__,"credit_grants") && total_granted > 1000
+               - Field condition  expression: total_granted > 1000
             
             3. HBase Master Alert:
                - App: "hbase_master", Metric: "server"
-               - Field condition: heap_memory_used > 80
-               - Final expression: equals(__app__,"hbase_master") && equals(__metrics__,"server") && heap_memory_used > 80
+               - Field condition: heap_memory_used > 80 or some_factor<100
+               - Field condition  expression: heap_memory_used > 80 or some_factor<100
             
             4. Complex OpenAI Credits Alert:
                - App: "openai", Metric: "credit_grants"
                - Field condition: total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
-               - Final expression: equals(__app__,"openai") && equals(__metrics__,"credit_grants") &&
-                 total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
+               - Field condition expression: total_used > 123 and total_granted > 333 and (total_granted > 3444 and total_paid_available < 5556)
             
             FIELD CONDITIONS GUIDANCE:
             - Field names come from metric's children in hierarchy (leaf nodes)
@@ -114,8 +114,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             @ToolParam(description = "Monitor ID to bind rule to (optional, can bind later)", required = false) Long monitorId,
             @ToolParam(description = "App name from hierarchy (must match exact hierarchy app value)", required = true) String app,
             @ToolParam(description = "Metrics name from hierarchy (must match exact hierarchy metrics value)", required = true) String metrics,
-            @ToolParam(description = "Field conditions from metric's children (e.g., 'equals(VmName, \"my-vm\")', "
-                    + "'total_granted > 1000', 'total_used > 123 and (total_granted > 3444)')", required = true) String fieldConditions,
+            @ToolParam(description = "Field conditions expression)", required = true) String fieldConditions,
             @ToolParam(description = "Alert rule type: 'realtime' (default) or 'periodic'", required = false) String type,
             @ToolParam(description = "Execution period in seconds (only for periodic rules, default: 300)", required = false) Integer period,
             @ToolParam(description = "Number of consecutive violations before triggering (default: 3)", required = false) Integer times,
