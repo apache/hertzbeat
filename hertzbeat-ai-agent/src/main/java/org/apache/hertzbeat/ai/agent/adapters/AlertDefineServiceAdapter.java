@@ -57,11 +57,6 @@ public interface AlertDefineServiceAdapter {
     AlertDefine getAlertDefine(Long id);
 
     /**
-     * Update an existing alert definition
-     * @param alertDefine Updated alert definition
-     */
-    void updateAlertDefine(AlertDefine alertDefine);
-    /**
      * Enable or disable alert definition
      * @param id Alert definition ID
      * @param enabled Whether to enable

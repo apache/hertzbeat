@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.pojo.dto.Hierarchy;
-import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -17,9 +17,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Utility class providing helper methods for field expression validation, parsing,
+ * hierarchy management, timestamp formatting and metric/status conversions.
+ * This class contains stateless utility methods used across the application for
+ * common operations and validations.
+ */
 @Slf4j
 @lombok.experimental.UtilityClass
-@Service
 public class UtilityClass {
     
     /**
@@ -486,18 +491,13 @@ public class UtilityClass {
      * Helper method to get metrics name for a metric type
      */
     public String getMetricsNameForType(String metricType) {
-        switch (metricType.toLowerCase()) {
-            case "cpu":
-                return "cpu";
-            case "memory":
-                return "memory";
-            case "disk":
-                return "disk";
-            case "network":
-                return "network";
-            default:
-                return "system";
-        }
+        return switch (metricType.toLowerCase()) {
+            case "cpu" -> "cpu";
+            case "memory" -> "memory";
+            case "disk" -> "disk";
+            case "network" -> "network";
+            default -> "system";
+        };
     }
 
     /**
@@ -515,5 +515,112 @@ public class UtilityClass {
                 || (typeLower.equals("cpu") && (fieldLower.contains("cpu") || fieldLower.contains("idle")))
                 || (typeLower.equals("memory") && fieldLower.contains("memory"))
                 || (typeLower.equals("disk") && fieldLower.contains("disk"));
+    }
+
+    /**
+     * Convert manager module Hierarchy objects to ai-agent module Hierarchy objects
+     * This handles the cross-module DTO conversion to avoid ClassCastException
+     */
+    public List<Hierarchy> convertToAgentHierarchies(List<?> managerHierarchies) {
+        List<Hierarchy> agentHierarchies = new ArrayList<>();
+
+        for (Object managerHierarchy : managerHierarchies) {
+            Hierarchy agentHierarchy = convertToAgentHierarchy(managerHierarchy);
+            agentHierarchies.add(agentHierarchy);
+        }
+
+        return agentHierarchies;
+    }
+
+    /**
+     * Convert a single manager Hierarchy object to ai-agent Hierarchy object using reflection
+     */
+    public Hierarchy convertToAgentHierarchy(Object managerHierarchy) {
+        try {
+            Hierarchy agentHierarchy = new Hierarchy();
+
+            // Use reflection to copy properties from manager DTO to agent DTO
+            Class<?> managerClass = managerHierarchy.getClass();
+
+            // Copy basic properties
+            agentHierarchy.setCategory(getStringField(managerHierarchy, managerClass, "category"));
+            agentHierarchy.setValue(getStringField(managerHierarchy, managerClass, "value"));
+            agentHierarchy.setLabel(getStringField(managerHierarchy, managerClass, "label"));
+            agentHierarchy.setIsLeaf(getBooleanField(managerHierarchy, managerClass, "isLeaf"));
+            agentHierarchy.setHide(getBooleanField(managerHierarchy, managerClass, "hide"));
+            agentHierarchy.setType(getByteField(managerHierarchy, managerClass, "type"));
+            agentHierarchy.setUnit(getStringField(managerHierarchy, managerClass, "unit"));
+
+            // Handle children recursively
+            List<?> managerChildren = getListField(managerHierarchy, managerClass, "children");
+            if (managerChildren != null && !managerChildren.isEmpty()) {
+                List<Hierarchy> agentChildren = convertToAgentHierarchies(managerChildren);
+                agentHierarchy.setChildren(agentChildren);
+            }
+
+            return agentHierarchy;
+
+        } catch (Exception e) {
+            log.error("Failed to convert manager hierarchy to agent hierarchy: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to convert hierarchy", e);
+        }
+    }
+
+    public String getStringField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value != null ? value.toString() : null;
+        } catch (Exception e) {
+            log.debug("Could not get string field '{}': {}", fieldName, e.getMessage());
+            return null;
+        }
+    }
+
+    public Boolean getBooleanField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value instanceof Boolean ? (Boolean) value : null;
+        } catch (Exception e) {
+            try {
+                // Try alternative getter pattern for boolean fields
+                Method isGetter = clazz.getMethod("is" + capitalize(fieldName));
+                Object value = isGetter.invoke(obj);
+                return value instanceof Boolean ? (Boolean) value : null;
+            } catch (Exception e2) {
+                log.debug("Could not get boolean field '{}': {}", fieldName, e.getMessage());
+                return null;
+            }
+        }
+    }
+
+    public Byte getByteField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value instanceof Byte ? (Byte) value : null;
+        } catch (Exception e) {
+            log.debug("Could not get byte field '{}': {}", fieldName, e.getMessage());
+            return null;
+        }
+    }
+
+    public List<?> getListField(Object obj, Class<?> clazz, String fieldName) {
+        try {
+            Method getter = clazz.getMethod("get" + capitalize(fieldName));
+            Object value = getter.invoke(obj);
+            return value instanceof List ? (List<?>) value : null;
+        } catch (Exception e) {
+            log.debug("Could not get list field '{}': {}", fieldName, e.getMessage());
+            return null;
+        }
+    }
+
+    public String capitalize(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 }
