@@ -61,8 +61,14 @@ public interface AlertDefineServiceAdapter {
      * @param id Alert definition ID
      * @param enabled Whether to enable
      */
-
     void toggleAlertDefineStatus(Long id, boolean enabled);
+
+    /**
+     * Modify/update an existing alert definition
+     * @param alertDefine Alert definition to update
+     * @return Updated alert definition
+     */
+    AlertDefine modifyAlertDefine(AlertDefine alertDefine);
 
     /**
      * Bind a monitor to an alert definition

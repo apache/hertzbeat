@@ -27,7 +27,6 @@ public interface AlertDefineTools {
 
      * 
      * @param name Alert rule name (required, must be unique)
-     * @param monitorId Monitor ID to bind rule to (optional, can bind later)
      * @param app App name from hierarchy (must match exact hierarchy app value)
      * @param metrics Metrics name from hierarchy (must match exact hierarchy metrics value)
      * @param fieldConditions Field-specific conditions from metric's children (e.g., "VmName = 'arora'", "total_granted > 1000", 
@@ -44,7 +43,7 @@ public interface AlertDefineTools {
      * @param enable Whether to enable the rule immediately (default: true)
      * @return Result message with rule ID if successful
      */
-    String createAlertRule(String name, Long monitorId, String app, String metrics, String fieldConditions,
+    String createAlertRule(String name, String app, String metrics, String fieldConditions,
                           String type, Integer period, Integer times, Integer priority, String description,
                           String template, String datasource, String labels, String annotations, Boolean enable);
 
@@ -81,4 +80,12 @@ public interface AlertDefineTools {
      * @return Hierarchical structure showing apps and their available metrics
      */
     String getAppsMetricsHierarchy(String app);
+
+    /**
+     * Bind monitors to an alert rule by modifying the alert expression
+     * @param ruleId Alert rule ID to bind monitors to
+     * @param monitorIds Comma-separated list of monitor IDs to bind
+     * @return Result message indicating success or failure
+     */
+    String bindMonitorsToAlertRule(Long ruleId, String monitorIds);
 }
