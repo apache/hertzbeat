@@ -60,16 +60,6 @@ public interface AlertDefineTools {
     String listAlertRules(String search, String monitorType, Boolean enabled, Integer pageIndex, Integer pageSize);
 
     /**
-     * Update an existing alert rule threshold
-     * @param ruleId Alert rule ID
-     * @param threshold New threshold value
-     * @param operator New comparison operator (optional)
-     * @param times New trigger times (optional)
-     * @return Result message
-     */
-    String updateAlertThreshold(Long ruleId, String threshold, String operator, Integer times);
-
-    /**
      * Enable or disable an alert rule
      * @param ruleId Alert rule ID
      * @param enabled Whether to enable the rule
