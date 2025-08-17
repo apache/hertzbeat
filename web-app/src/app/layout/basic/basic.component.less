@@ -2,12 +2,22 @@
 /* Import system theme variables */
 @import 'src/styles/theme.less';
 
+/* CSS Variables for theme support */
 :host {
+  /* Light theme variables */
+  --background-color: #f5f7fa;
+  --sidebar-background: #ffffff;
+  --content-background: #ffffff;
+  --border-color: rgba(255, 255, 255, 0.2);
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  --primary-color: @primary-color;
+  --primary-color-light: lighten(@primary-color, 10%);
+
   display: block;  /* Change to block layout to avoid extra whitespace */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f7fa;
+  background-color: var(--background-color);
   min-height: 100vh;
 
   @media (max-width: 1200px) {
@@ -22,11 +32,48 @@
   }
 }
 
+/* Dark theme variables */
+:host.dark {
+  --background-color: #141414;
+  --sidebar-background: #1f1f1f;
+  --content-background: #1f1f1f;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark theme support for ng-alain */
+:host ::ng-deep .dark {
+  --background-color: #141414;
+  --sidebar-background: #1f1f1f;
+  --content-background: #1f1f1f;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Global dark theme support */
+[data-theme='dark'] :host,
+.dark :host {
+  --background-color: #141414;
+  --sidebar-background: #1f1f1f;
+  --content-background: #1f1f1f;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
 /* Modern Layout Styles with Rounded Separation - Complete Override */
 :host ::ng-deep {
-  /* Reset all default ng-alain positioning */
-  .alain-default,
-  .alain-default * {
+  /* Reset all default ng-alain positioning - exclude header items */
+  .alain-default {
+    position: static !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+  }
+
+  .alain-default__aside,
+  .alain-default__content {
     position: static !important;
     transform: none !important;
     left: auto !important;
@@ -37,12 +84,12 @@
 
   /* Layout container styling with CSS Grid */
   .alain-default {
-    background-color: #f5f7fa !important;
+    background-color: var(--background-color, #f5f7fa) !important;
     padding: 12px !important;
     display: grid !important;
     grid-template-columns: 200px 1fr !important;
     grid-template-rows: 64px 1fr !important;
-    grid-template-areas: 
+    grid-template-areas:
       "header header"
       "sidebar content" !important;
     gap: 12px !important;
@@ -50,11 +97,16 @@
     box-sizing: border-box !important;
   }
 
+  /* Collapsed sidebar layout */
+  .alain-default.alain-default__collapsed {
+    grid-template-columns: 64px 1fr !important;
+  }
+
   /* Header modern styling */
   .alain-default__header {
     grid-area: header !important;
-    background: linear-gradient(135deg, @primary-color 0%, lighten(@primary-color, 10%) 100%) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    background: linear-gradient(135deg, var(--primary-color, @primary-color) 0%, var(--primary-color-light, lighten(@primary-color, 10%)) 100%) !important;
+    box-shadow: 0 4px 20px var(--shadow-color, rgba(0, 0, 0, 0.08)) !important;
     border-radius: 16px !important;
     backdrop-filter: blur(10px) !important;
     transition: all 0.3s ease !important;
@@ -65,15 +117,38 @@
     height: 64px !important;
     display: flex !important;
     align-items: center !important;
+    overflow: hidden !important;
+  }
+
+  /* Ensure header items are visible and properly positioned */
+  .alain-default__header-item,
+  .alain-default__header .alain-default__header-logo,
+  .alain-default__header .alain-default__header-trigger,
+  .alain-default__header .alain-default__header-action,
+  .alain-default__nav-item,
+  header-notify,
+  header-user,
+  header-search {
+    position: relative !important;
+    z-index: 11 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Fix notification badge positioning */
+  .alain-default__nav-item .ant-badge,
+  .alain-default__nav-item nz-badge {
+    display: inline-flex !important;
+    align-items: center !important;
   }
 
   /* Sidebar modern styling */
   .alain-default__aside {
     grid-area: sidebar !important;
-    background: #ffffff !important;
+    background: var(--sidebar-background, #ffffff) !important;
     border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
     backdrop-filter: blur(20px) !important;
     overflow: hidden !important;
     transition: all 0.3s ease !important;
@@ -90,16 +165,16 @@
   /* Content area modern styling */
   .alain-default__content {
     grid-area: content !important;
-    background: #ffffff !important;
+    background: var(--content-background, #ffffff) !important;
     border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
     backdrop-filter: blur(20px) !important;
     overflow: auto !important;
     transition: all 0.3s ease !important;
     position: relative !important;
     margin: 0 !important;
-    padding: 24px !important;
+    padding: 12px !important;
     width: 100% !important;
     height: 100% !important;
   }
