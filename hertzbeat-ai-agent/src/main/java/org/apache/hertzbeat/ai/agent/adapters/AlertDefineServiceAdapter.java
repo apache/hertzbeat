@@ -71,13 +71,6 @@ public interface AlertDefineServiceAdapter {
     AlertDefine modifyAlertDefine(AlertDefine alertDefine);
 
     /**
-     * Bind a monitor to an alert definition
-     * @param alertDefineId Alert definition ID
-     * @param monitorId Monitor ID to bind
-     * @return true if binding was successful
-     */
-    boolean bindMonitorToAlertDefine(Long alertDefineId, Long monitorId);
-    /**
      * Get specific app hierarchy structure
      * @param app App type
      * @param lang Language for localization
