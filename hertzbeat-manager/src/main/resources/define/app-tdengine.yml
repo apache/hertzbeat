@@ -1,0 +1,1433 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category: service-application service monitoring, db-database monitoring, custom-custom monitoring.
+category: custom
+# The monitoring application type name (consistent with the file name)
+app: tdengine_promql
+name:
+  zh-CN: TDengine-PromQL
+  en-US: TDengine-PromQL
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 TDengine 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 TDengine，需要从 Prometheus 服务器抓取 TDengine 的监控数据。<br>您可以点击 “<i>新建 TDengine-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat uses Prometheus PromQL to query general metric data from the Prometheus server for TDengine monitoring. This solution is suitable for Prometheus that has already monitored TDengine and needs to retrieve TDengine monitoring data from the Prometheus server. <br>You can click "<i>New TDengine-PromQL</i>" and configure it, or select "<i>More Actions</i>" to import an existing configuration.
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/tdengine_promql
+  en-US: https://hertzbeat.apache.org/docs/help/tdengine_promql
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9090
+  - field: method
+    name:
+      zh-CN: 请求方式
+      en-US: Method
+      ja-JP: リクエストメソッド
+    type: radio
+    required: true
+    options:
+      - label: GET请求
+        value: GET
+      - label: POST请求
+        value: POST
+      - label: PUT请求
+        value: PUT
+      - label: DELETE请求
+        value: DELETE
+    defaultValue: GET
+  - field: uri
+    name:
+      zh-CN: 相对路径
+      en-US: URI
+      ja-JP: URI
+    type: text
+    limit: 200
+    required: true
+    placeholder: 'API地址除IP端口外的路径 例如:/v2/book/bar'
+    defaultValue: /api/v1/query
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+      ja-JP: SSL
+    type: boolean
+    required: false
+  - field: headers
+    name:
+      zh-CN: 请求Headers
+      en-US: Headers
+      ja-JP: ヘッダ
+    type: key-value
+    required: false
+    keyAlias: Header Name
+    valueAlias: Header Value
+  - field: params
+    name:
+      zh-CN: 查询Params
+      en-US: Params
+      ja-JP: パラメータ
+    type: key-value
+    required: false
+    keyAlias: Param Key
+    valueAlias: Param Value
+  - field: contentType
+    name:
+      zh-CN: Content-Type
+      en-US: Content-Type
+      ja-JP: コンテンツタイプ
+    type: text
+    placeholder: '请求BODY资源类型'
+    required: false
+    hide: true
+  - field: payload
+    name:
+      zh-CN: 请求BODY
+      en-US: BODY
+      ja-JP: ボディ
+    type: textarea
+    placeholder: 'POST PUT请求时有效'
+    required: false
+    hide: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+      ja-JP: 認証方法
+    type: radio
+    required: false
+    hide: true
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+      ja-JP: ユーザー名
+    type: text
+    limit: 50
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+      ja-JP: パスワード
+    type: password
+    required: false
+    hide: true
+
+# collect metrics config list
+metrics:
+  # 基础信息指标
+  # Basic information indicators
+  - name: taos_cluster_info_first_ep
+    i18n:
+      zh-CN: 第一个端点信息
+      en-US: First Endpoint Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 端点值
+          en-US: Endpoint Value
+        label: true
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # Host: IPv4, IPv6 or domain name of the host.
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      #URL request path.
+      url: ^_^uri^_^
+      # request methods:GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # Header content
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # Request parameter content
+      params:
+        query: taos_cluster_info_first_ep
+      # authorization
+      authorization:
+        # Authentication method: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
+      # todo xmlPath-xmlPath script, PromQL-PromQL data rule
+      parseType: PromQL
+
+  - name: taos_cluster_info_version
+    i18n:
+      zh-CN: 版本信息
+      en-US: Version Info
+    priority: 1
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 版本号
+          en-US: Version Number
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_version
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_master_uptime
+    i18n:
+      zh-CN: 主节点运行时间(天)
+      en-US: Master Node Runtime
+    priority: 2
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 天
+          en-US: Day
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_master_uptime
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  # 节点数量指标
+  # Number Of nodes indicator
+  - name: taos_cluster_info_dnodes_total
+    i18n:
+      zh-CN: Dnode 总数
+      en-US: Total Of Dnodes
+    priority: 3
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_dnodes_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_dnodes_alive
+    i18n:
+      zh-CN: Dnode 存活数
+      en-US: Dnode Survival Count
+    priority: 4
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_dnodes_alive
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_mnodes_total
+    i18n:
+      zh-CN: Mnode 总数
+      en-US: Total Of Mnodes
+    priority: 5
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_mnodes_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_mnodes_alive
+    i18n:
+      zh-CN: Mnode 存活数
+      en-US: Mnode Survival Count
+    priority: 6
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_mnodes_alive
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_vgroups_total
+    i18n:
+      zh-CN: VGroup总数
+      en-US: Total Of Virtual Groups
+    priority: 7
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_vgroups_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_vgroups_alive
+    i18n:
+      zh-CN: 存活的虚拟组数量
+      en-US: Virtual Groups Survival Count
+    priority: 8
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_vgroups_alive
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_vnodes_total
+    i18n:
+      zh-CN: VNode 总数
+      en-US: Total Virtual Nodes
+    priority: 9
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_vnodes_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_vnodes_alive
+    i18n:
+      zh-CN: VNode 存活数
+      en-US: VNodes Survival Count
+    priority: 10
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_vnodes_alive
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  # 数据库和表统计
+  # Database and table statistics
+  - name: taos_cluster_info_dbs_total
+    i18n:
+      zh-CN: 数据库总数
+      en-US: Total Databases
+    priority: 11
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_dbs_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_tbs_total
+    i18n:
+      zh-CN: 表总数
+      en-US: Total Tables
+    priority: 12
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_tbs_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_cluster_info_connections_total
+    i18n:
+      zh-CN: 连接总数
+      en-US: Total Connections
+    priority: 13
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_cluster_info_connections_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  # Dnode信息
+  # Dnode information
+  - name: taos_d_info_status
+    i18n:
+      zh-CN: Dnode 状态
+      en-US: Dnode Status
+    priority: 14
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_d_info_status
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_uptime
+    i18n:
+      zh-CN: Dnode 的启动时间(秒)
+      en-US: Dnode uptime(seconds)
+    priority: 15
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 启动时间
+          en-US: uptime
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_uptime
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_cpu_engine
+    i18n:
+      zh-CN: Dnode 的进程所使用的 CPU 百分比
+      en-US: Dnode Process CPU Usage (%)
+    priority: 16
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+    aliasFields:
+      - cluster_id
+      - dnode_ep
+      - dnode_id
+      - value
+    calculates:
+      - cluster_id=cluster_id
+      - dnode_ep=dnode_ep
+      - dnode_id=dnode_id
+      - value=value*100
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_cpu_engine
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_cpu_system
+    i18n:
+      zh-CN: Dnode 节点的系统使用的 CPU 百分比
+      en-US: Dnode System CPU Usage (%)
+    priority: 17
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+    aliasFields:
+      - cluster_id
+      - dnode_ep
+      - dnode_id
+      - value
+    calculates:
+      - cluster_id=cluster_id
+      - dnode_ep=dnode_ep
+      - dnode_id=dnode_id
+      - value=value*100
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_cpu_system
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_mem_engine
+    i18n:
+      zh-CN: Dnode 进程所使用的内存
+      en-US: Memory Usage of Dnode Processes
+    priority: 18
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 总数
+          en-US: Usage
+    aliasFields:
+      - cluster_id
+      - dnode_ep
+      - dnode_id
+      - value
+    calculates:
+      - cluster_id=cluster_id
+      - dnode_ep=dnode_ep
+      - dnode_id=dnode_id
+      - value=value/1024
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_mem_engine
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_mem_system
+    i18n:
+      zh-CN: Dnode 节点的系统使用的内存
+      en-US: Dnode System Memory Usage
+    priority: 19
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: 总数
+          en-US: Usage
+    aliasFields:
+      - cluster_id
+      - dnode_ep
+      - dnode_id
+      - value
+    calculates:
+      - cluster_id=cluster_id
+      - dnode_ep=dnode_ep
+      - dnode_id=dnode_id
+      - value=value/1024
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_mem_engine
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_disk_total
+    i18n:
+      zh-CN: Dnode 所在节点的磁盘总容量（单位 Byte）
+      en-US: Dnode Total Disk Capacity (Byte)
+    priority: 20
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        unit: Byte
+        i18n:
+          zh-CN: 总数
+          en-US: total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_disk_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_disk_used
+    i18n:
+      zh-CN: Dnode 所在节点的磁盘已使用的容量（单位 Byte）
+      en-US: Dnode Used Disk Capacity (Byte)
+    priority: 21
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        unit: Byte
+        i18n:
+          zh-CN: 总数
+          en-US: total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_disk_used
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_io_write_disk
+    i18n:
+      zh-CN: Dnode 所在节点的磁盘 io 写入速率（单位 Byte/s）
+      en-US: Dnode Node Disk I/O Write Rate (Byte/s)
+    priority: 22
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 速率
+          en-US: value
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_io_write_disk
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_dnodes_info_io_read_disk
+    i18n:
+      zh-CN: Dnode 所在节点的磁盘 io 读取速率（单位 Byte/s）
+      en-US: Dnode Disk I/O Read Rate (Byte/s)
+    priority: 23
+    fields:
+      - field: cluster_id
+        type: 1
+        i18n:
+          zh-CN: 集群ID
+          en-US: Cluster Id
+        label: true
+      - field: dnode_ep
+        type: 1
+        i18n:
+          zh-CN: Dnode 端点
+          en-US: Dnode Endpoint
+        label: true
+      - field: dnode_id
+        type: 1
+        i18n:
+          zh-CN: Dnode Id
+          en-US: Dnode Id
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_dnodes_info_io_write_disk
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  # taosadapter 相关
+  # taosadapter Related
+  - name: taos_adapter_requests_total
+    i18n:
+      zh-CN: 总请求数
+      en-US: Total Requests
+    priority: 24
+    fields:
+      - field: endpoint
+        type: 1
+        i18n:
+          zh-CN: 端点
+          en-US: Endpoint
+        label: true
+      - field: req_type
+        type: 1
+        i18n:
+          zh-CN: 请求类型
+          en-US: Req Type
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_adapter_requests_total
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_adapter_requests_success
+    i18n:
+      zh-CN: 成功的请求数
+      en-US: Successful Requests
+    priority: 25
+    fields:
+      - field: endpoint
+        type: 1
+        i18n:
+          zh-CN: 端点
+          en-US: Endpoint
+        label: true
+      - field: req_type
+        type: 1
+        i18n:
+          zh-CN: 请求类型
+          en-US: Req Type
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_adapter_requests_success
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_adapter_requests_fail
+    i18n:
+      zh-CN: 失败的请求数
+      en-US: Failed Requests
+    priority: 26
+    fields:
+      - field: endpoint
+        type: 1
+        i18n:
+          zh-CN: 端点
+          en-US: Endpoint
+        label: true
+      - field: req_type
+        type: 1
+        i18n:
+          zh-CN: 请求类型
+          en-US: Req Type
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: Total
+          en-US: value
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_adapter_requests_fail
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
+
+  - name: taos_adapter_requests_query
+    i18n:
+      zh-CN: 查询请求数
+      en-US: Query Requests
+    priority: 27
+    fields:
+      - field: endpoint
+        type: 1
+        i18n:
+          zh-CN: 端点
+          en-US: Endpoint
+        label: true
+      - field: req_type
+        type: 1
+        i18n:
+          zh-CN: 请求类型
+          en-US: Req Type
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 总数
+          en-US: Total
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^uri^_^
+      method: ^_^method^_^
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      params:
+        query: taos_adapter_requests_query
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: PromQL
