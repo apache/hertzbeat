@@ -31,8 +31,9 @@ import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.pojo.CollectorNode;
 import org.apache.hertzbeat.manager.scheduler.AssignJobs;
-import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
+import org.apache.hertzbeat.manager.scheduler.ConsistentHashCollectorKeeper;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class CollectorServiceImpl implements CollectorService {
     private CollectorMonitorBindDao collectorMonitorBindDao;
     
     @Autowired
-    private ConsistentHash consistentHash;
+    private ConsistentHashCollectorKeeper consistentHashCollectorKeeper;
     
     @Autowired(required = false)
     private ManageServer manageServer;
@@ -81,7 +82,7 @@ public class CollectorServiceImpl implements CollectorService {
         List<CollectorSummary> collectorSummaryList = new LinkedList<>();
         for (Collector collector : collectors.getContent()) {
             CollectorSummary.CollectorSummaryBuilder summaryBuilder = CollectorSummary.builder().collector(collector);
-            ConsistentHash.Node node = consistentHash.getNode(collector.getName());
+            CollectorNode node = consistentHashCollectorKeeper.getNode(collector.getName());
             if (node != null && node.getAssignJobs() != null) {
                 AssignJobs assignJobs = node.getAssignJobs();
                 summaryBuilder.pinMonitorNum(assignJobs.getPinnedJobs().size());

@@ -15,26 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.config;
+package org.apache.hertzbeat.manager.pojo;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.manager.scheduler.ConsistentHashCollectorKeeper;
-import org.apache.hertzbeat.manager.properties.SchedulerProperties;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.apache.hertzbeat.common.entity.job.Job;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * scheduler config
  */
-@Configuration
-@AutoConfigureAfter(value = {SchedulerProperties.class})
-@Slf4j
-public class SchedulerConfig {
-    
-    @Bean
-    public ConsistentHashCollectorKeeper consistentHasInstance() {
-        return new ConsistentHashCollectorKeeper();
+public class JobCache {
+    private static final Map<Long, Job> jobContentCache = new ConcurrentHashMap<>(16);
+
+    public static Job get(Long jobId) {
+        return jobContentCache.get(jobId);
     }
 
+    public static void put(Job job) {
+        jobContentCache.put(job.getId(), job);
+    }
+
+    public static void remove(Long jobId) {
+        jobContentCache.remove(jobId);
+    }
 }

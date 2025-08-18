@@ -32,7 +32,7 @@ import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
-import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
+import org.apache.hertzbeat.manager.scheduler.ConsistentHashCollectorKeeper;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.service.impl.CollectorServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -60,7 +60,7 @@ public class CollectorServiceTest {
     private CollectorDao collectorDao;
 
     @Mock
-    private ConsistentHash consistentHash;
+    private ConsistentHashCollectorKeeper consistentHashCollectorKeeper;
 
     @Mock
     private CollectorMonitorBindDao collectorMonitorBindDao;

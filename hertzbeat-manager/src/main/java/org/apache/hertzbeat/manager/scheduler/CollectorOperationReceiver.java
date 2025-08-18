@@ -20,39 +20,19 @@ package org.apache.hertzbeat.manager.scheduler;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 
 /**
- * slave collector service
+ * Receive operations about Collector from remote collector
  */
-public interface CollectorScheduling {
-    
+public interface CollectorOperationReceiver {
     /**
      * register collector go online
      * @param identity collector identity name
      * @param collectorInfo collector information
      */
     void collectorGoOnline(String identity, CollectorInfo collectorInfo);
-    
+
     /**
      * register collector go offline
      * @param identity collector identity name
      */
     void collectorGoOffline(String identity);
-    
-    /**
-     * reBalance dispatch monitoring jobs when collector go online or offline or timeout
-     */
-    void reBalanceCollectorAssignJobs();
-    
-    /**
-     * offline collector(stop collector collect operation)
-     * @param identity collector identity name
-     * @return true/false
-     */
-    boolean offlineCollector(String identity);
-
-    /**
-     * online collector(start collector collect operation)
-     * @param identity collector identity name
-     * @return true/false
-     */
-    boolean onlineCollector(String identity);
 }

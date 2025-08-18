@@ -60,7 +60,7 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
-import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
+import org.apache.hertzbeat.manager.scheduler.JobOperation;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.LabelService;
@@ -113,7 +113,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Autowired
     private AppService appService;
     @Autowired
-    private CollectJobScheduling collectJobScheduling;
+    private JobOperation jobOperation;
     @Autowired
     private MonitorDao monitorDao;
     @Autowired
@@ -193,11 +193,10 @@ public class MonitorServiceImpl implements MonitorService {
             return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
-                collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-        try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {}
+        long jobId = collector == null ? jobOperation.addAsyncCollectJob(appDefine, null) :
+                jobOperation.addAsyncCollectJob(appDefine, collector);
+
+        detectMonitorSafely(monitor, params, collector);
 
         try {
             if (collector != null) {
@@ -217,7 +216,7 @@ public class MonitorServiceImpl implements MonitorService {
             paramDao.saveAll(params);
         } catch (Exception e) {
             log.error("Error while adding monitor: {}", e.getMessage(), e);
-            collectJobScheduling.cancelAsyncCollectJob(jobId);
+            jobOperation.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -510,18 +509,11 @@ public class MonitorServiceImpl implements MonitorService {
             List<Configmap> configmaps = params.stream().map(param ->
                     new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
             appDefine.setConfigmap(configmaps);
-            long newJobId;
-            if (collector == null) {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
-            } else {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
-            }
+            long newJobId = jobOperation.updateAsyncCollectJob(appDefine, collector);
             monitor.setJobId(newJobId);
 
             // execute only in non paused status
-            try {
-                detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {}
+            detectMonitorSafely(monitor, params, collector);
         }
 
         // After the update is successfully released, refresh the database
@@ -548,7 +540,7 @@ public class MonitorServiceImpl implements MonitorService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
-            collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            jobOperation.cancelAsyncCollectJob(monitor.getJobId());
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -578,7 +570,7 @@ public class MonitorServiceImpl implements MonitorService {
             for (Monitor monitor : monitors) {
                 monitorBindDao.deleteByMonitorId(monitor.getId());
                 collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
-                collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                jobOperation.cancelAsyncCollectJob(monitor.getJobId());
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
         }
@@ -699,7 +691,7 @@ public class MonitorServiceImpl implements MonitorService {
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(managedMonitors)) {
             for (Monitor monitor : managedMonitors) {
-                collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                jobOperation.cancelAsyncCollectJob(monitor.getJobId());
             }
             monitorDao.saveAll(managedMonitors);
         }
@@ -757,13 +749,11 @@ public class MonitorServiceImpl implements MonitorService {
             Optional<CollectorMonitorBind> bindOptional =
                     collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElse(null);
-            long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+            long newJobId = jobOperation.addAsyncCollectJob(appDefine, collector);
             monitor.setJobId(newJobId);
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
-            try {
-                detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {
-            }
+
+            detectMonitorSafely(monitor, params, collector);
         }
         monitorDao.saveAll(unManagedMonitors);
     }
@@ -852,7 +842,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // if is pinned collector
                 String collector = monitorIdCollectorMap.get(monitor.getId());
                 // Delivering a collection task
-                long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
+                long newJobId = jobOperation.updateAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
                 monitorDao.save(monitor);
             } catch (Exception e) {
@@ -932,12 +922,8 @@ public class MonitorServiceImpl implements MonitorService {
                 new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         appDefine.setSd(true);
-        List<CollectRep.MetricsData> collectRep;
-        if (collector != null) {
-            collectRep = collectJobScheduling.collectSyncJobData(appDefine, collector);
-        } else {
-            collectRep = collectJobScheduling.collectSyncJobData(appDefine);
-        }
+        List<CollectRep.MetricsData> collectRep = jobOperation.collectSyncJobData(appDefine, collector);
+
         monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
         // If the detection result fails, a detection exception is thrown
         if (collectRep == null || collectRep.isEmpty()) {
@@ -975,12 +961,7 @@ public class MonitorServiceImpl implements MonitorService {
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
                 .filter(item -> item.getPriority() == 0).collect(Collectors.toList());
         appDefine.setMetrics(availableMetrics);
-        List<CollectRep.MetricsData> collectRep;
-        if (collector != null) {
-            collectRep = collectJobScheduling.collectSyncJobData(appDefine, collector);
-        } else {
-            collectRep = collectJobScheduling.collectSyncJobData(appDefine);
-        }
+        List<CollectRep.MetricsData> collectRep = jobOperation.collectSyncJobData(appDefine, collector);
         monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
 
         // If the detection result fails, a detection exception is thrown
@@ -993,5 +974,11 @@ public class MonitorServiceImpl implements MonitorService {
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
         collectRep.forEach(CollectRep.MetricsData::close);
+    }
+
+    private void detectMonitorSafely(Monitor monitor, List<Param> params, String collector) {
+        try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
     }
 }

@@ -15,26 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.config;
-
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.manager.scheduler.ConsistentHashCollectorKeeper;
-import org.apache.hertzbeat.manager.properties.SchedulerProperties;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+package org.apache.hertzbeat.manager.scheduler;
 
 /**
- * scheduler config
+ * Operate collector directly
  */
-@Configuration
-@AutoConfigureAfter(value = {SchedulerProperties.class})
-@Slf4j
-public class SchedulerConfig {
+public interface CollectorOperation {
     
-    @Bean
-    public ConsistentHashCollectorKeeper consistentHasInstance() {
-        return new ConsistentHashCollectorKeeper();
-    }
+    /**
+     * offline collector(stop collector collect operation)
+     * @param identity collector identity name
+     * @return true/false
+     */
+    boolean offlineCollector(String identity);
 
+    /**
+     * online collector(start collector collect operation)
+     * @param identity collector identity name
+     * @return true/false
+     */
+    boolean onlineCollector(String identity);
 }

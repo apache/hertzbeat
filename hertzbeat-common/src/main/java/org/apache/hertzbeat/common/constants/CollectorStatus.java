@@ -15,41 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.config;
-
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+package org.apache.hertzbeat.common.constants;
 
 /**
- * status page properties
+ * Collector status
  */
-
-@Getter
-@Setter
-@Component
-@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.STATUS)
-public class StatusProperties {
-
-    /**
-     * calculate component status properties
-     */
-    private CalculateProperties calculate;
-
-    /**
-     * calculate component status properties
-     */
-    @Getter
-    @Setter
-    public static class CalculateProperties {
-
-        /**
-         * the component status calculate interval(s)
-         */
-        private Integer interval = 300;
-
-    }
-
+public enum CollectorStatus {
+    ONLINE, OFFLINE;
 }

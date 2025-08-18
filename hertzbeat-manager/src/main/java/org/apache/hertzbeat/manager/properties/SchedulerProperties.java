@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.scheduler;
+package org.apache.hertzbeat.manager.properties;
 
 import lombok.Getter;
 import lombok.Setter;
