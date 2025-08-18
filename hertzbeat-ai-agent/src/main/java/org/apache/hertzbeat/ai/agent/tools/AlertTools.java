@@ -50,19 +50,4 @@ public interface AlertTools {
      */
     String getFrequentAlerts(String timeRange, Integer limit);
 
-    /**
-     * Get abnormal monitoring items
-     * @param timeRange Time range to check for abnormal items
-     * @return List of monitoring items that are currently abnormal with timestamps
-     */
-    String getAbnormalMonitors(String timeRange);
-
-    /**
-     * Search alerts by monitor ID or monitor name
-     * @param monitorId Monitor ID to search alerts for
-     * @param monitorName Monitor name to search alerts for
-     * @param timeRange Time range (1h, 6h, 24h, 7d)
-     * @return Alerts related to the specific monitor
-     */
-    String getMonitorAlerts(Long monitorId, String monitorName, String timeRange);
 }

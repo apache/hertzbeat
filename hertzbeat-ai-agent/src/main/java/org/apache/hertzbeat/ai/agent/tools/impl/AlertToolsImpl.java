@@ -21,14 +21,12 @@ package org.apache.hertzbeat.ai.agent.tools.impl;
 import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.adapters.AlertServiceAdapter;
-import org.apache.hertzbeat.ai.agent.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.agent.config.McpContextHolder;
 import org.apache.hertzbeat.ai.agent.tools.AlertTools;
 import org.apache.hertzbeat.ai.agent.utils.UtilityClass;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.ai.tool.annotation.Tool;
@@ -46,8 +44,6 @@ import java.util.Map;
 public class AlertToolsImpl implements AlertTools {
     @Autowired
     private AlertServiceAdapter alertServiceAdapter;
-    @Autowired
-    private MonitorServiceAdapter monitorServiceAdapter;
 
     @Override
     @Tool(name = "query_alerts", description = """
@@ -72,11 +68,13 @@ public class AlertToolsImpl implements AlertTools {
             - pageIndex: Page number starting from 0
             - pageSize: Number of alerts per page (default: 10, max recommended: 50)
             
-            COMMON USE CASES:
+            EXAMPLE AND COMMON USE CASES:
             - Recent active alerts: alertType='single', status='firing', sort='startAt', order='desc'
             - Historical analysis: alertType='single', status='resolved', pageSize=50
             - Alert grouping overview: alertType='group', status='all'
             - Search specific issues: search='cpu', alertType='single', status='firing'
+            - Find abnormal monitors: status='firing' to get active alerts indicating monitor issues
+            - Monitor-specific alerts: use search parameter with monitor ID or name to find related alerts
             """)
     public String queryAlerts(
             @ToolParam(description = "Alert type: 'single' (individual alerts), 'group' (grouped alerts), 'both' (default: single)", required = false) String alertType,
@@ -322,148 +320,6 @@ public class AlertToolsImpl implements AlertTools {
         }
     }
 
-    @Override
-    @Tool(name = "get_abnormal_monitors", description = """
-            Get list of monitoring items that are currently abnormal (offline, unreachable, or have active alerts).
-            Shows monitors with their current status and when the abnormality occurred.
-            """)
-    public String getAbnormalMonitors(
-            @ToolParam(description = "Time range to check: '1h', '6h', '24h', '7d' (default: 24h)", required = false) String timeRange) {
-
-        try {
-            log.info("Getting abnormal monitors for timeRange: {}", timeRange);
-
-            if (timeRange == null || timeRange.trim().isEmpty()) {
-                timeRange = "24h";
-            }
-
-            StringBuilder response = new StringBuilder();
-            response.append("ABNORMAL MONITORS REPORT\n");
-            response.append("========================\n\n");
-
-            // Get monitors with status issues (offline, unreachable)
-            Page<Monitor> offlineMonitors = monitorServiceAdapter.getMonitors(null, null, null, (byte) 2, "gmtUpdate", "desc", 0, 50, null);
-            Page<Monitor> unreachableMonitors = monitorServiceAdapter.getMonitors(null, null, null, (byte) 3, "gmtUpdate", "desc", 0, 50, null);
-            
-            // Get recent firing alerts
-            Page<SingleAlert> firingAlerts = alertServiceAdapter.getSingleAlerts("firing", null, "startAt", "desc", 0, 50);
-            
-            response.append("OFFLINE MONITORS:\n");
-            if (offlineMonitors.getContent().isEmpty()) {
-                response.append("- No offline monitors\n");
-            } else {
-                for (Monitor monitor : offlineMonitors.getContent()) {
-                    response.append("- ID: ").append(monitor.getId())
-                           .append(" | Name: ").append(monitor.getName())
-                           .append(" | Type: ").append(monitor.getApp())
-                           .append(" | Host: ").append(monitor.getHost())
-                           .append(" | Status: Offline\n");
-                }
-            }
-
-            response.append("\nUNREACHABLE MONITORS:\n");
-            if (unreachableMonitors.getContent().isEmpty()) {
-                response.append("- No unreachable monitors\n");
-            } else {
-                for (Monitor monitor : unreachableMonitors.getContent()) {
-                    response.append("- ID: ").append(monitor.getId())
-                           .append(" | Name: ").append(monitor.getName())
-                           .append(" | Type: ").append(monitor.getApp())
-                           .append(" | Host: ").append(monitor.getHost())
-                           .append(" | Status: Unreachable\n");
-                }
-            }
-
-            response.append("\nMONITORS WITH ACTIVE ALERTS:\n");
-            if (firingAlerts.getContent().isEmpty()) {
-                response.append("- No active alerts\n");
-            } else {
-                for (SingleAlert alert : firingAlerts.getContent()) {
-                    response.append("- Alert ID: ").append(alert.getId())
-                           .append(" | Content: ").append(alert.getContent())
-                           .append(" | Started: ").append(UtilityClass.formatTimestamp(alert.getStartAt()))
-                           .append(" | Triggers: ").append(alert.getTriggerTimes()).append("\n");
-                }
-            }
-
-            int totalAbnormal = offlineMonitors.getContent().size() + unreachableMonitors.getContent().size() + firingAlerts.getContent().size();
-            response.append("\nSUMMARY: ").append(totalAbnormal).append(" abnormal items found");
-
-            return response.toString();
-
-        } catch (Exception e) {
-            log.error("Failed to get abnormal monitors: {}", e.getMessage(), e);
-            return "Error retrieving abnormal monitors: " + e.getMessage();
-        }
-    }
-
-    @Override
-    @Tool(name = "get_monitor_alerts", description = """
-            Search alerts related to a specific monitor by monitor ID or monitor name.
-            Returns all alerts associated with the specified monitor within the given time range.
-            """)
-    public String getMonitorAlerts(
-            @ToolParam(description = "Monitor ID to search alerts for (optional if monitorName provided)", required = false) Long monitorId,
-            @ToolParam(description = "Monitor name to search alerts for (optional if monitorId provided)", required = false) String monitorName,
-            @ToolParam(description = "Time range: '1h', '6h', '24h', '7d' (default: 24h)", required = false) String timeRange) {
-
-        try {
-            log.info("Getting alerts for monitor: ID={}, name={}, timeRange={}", monitorId, monitorName, timeRange);
-
-            if (monitorId == null && (monitorName == null || monitorName.trim().isEmpty())) {
-                return "Error: Either monitor ID or monitor name must be provided";
-            }
-
-            if (timeRange == null || timeRange.trim().isEmpty()) {
-                timeRange = "24h";
-            }
-
-            StringBuilder response = new StringBuilder();
-            response.append("ALERTS FOR MONITOR");
-            if (monitorId != null) {
-                response.append(" (ID: ").append(monitorId).append(")");
-            }
-            if (monitorName != null) {
-                response.append(" (Name: ").append(monitorName).append(")");
-            }
-            response.append("\n").append("=".repeat(50)).append("\n\n");
-
-            // Search alerts by monitor ID or name
-            String searchTerm = monitorId != null ? monitorId.toString() : monitorName;
-            Page<SingleAlert> alerts = alertServiceAdapter.getSingleAlerts("all", searchTerm, "startAt", "desc", 0, 50);
-            
-            long cutoffTime = System.currentTimeMillis() - UtilityClass.parseTimeRangeToMillis(timeRange);
-            
-            int alertCount = 0;
-            for (SingleAlert alert : alerts.getContent()) {
-                if (alert.getStartAt() != null && alert.getStartAt() >= cutoffTime) {
-                    alertCount++;
-                    response.append("Alert #").append(alertCount).append(":\n");
-                    response.append("- ID: ").append(alert.getId()).append("\n");
-                    response.append("- Status: ").append(alert.getStatus()).append("\n");
-                    response.append("- Content: ").append(alert.getContent()).append("\n");
-                    response.append("- Trigger Times: ").append(alert.getTriggerTimes()).append("\n");
-                    response.append("- Started: ").append(UtilityClass.formatTimestamp(alert.getStartAt())).append("\n");
-                    if (alert.getEndAt() != null) {
-                        response.append("- Ended: ").append(UtilityClass.formatTimestamp(alert.getEndAt())).append("\n");
-                    }
-                    response.append("\n");
-                }
-            }
-
-            if (alertCount == 0) {
-                response.append("No alerts found for this monitor in the specified time range.");
-            } else {
-                response.append("Total alerts found: ").append(alertCount);
-            }
-
-            return response.toString();
-
-        } catch (Exception e) {
-            log.error("Failed to get monitor alerts: {}", e.getMessage(), e);
-            return "Error retrieving monitor alerts: " + e.getMessage();
-        }
-    }
 
 
 }
