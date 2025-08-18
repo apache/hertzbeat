@@ -33,8 +33,6 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Implementation of Alert Tools functionality for alarm data queries and management
@@ -75,6 +73,8 @@ public class AlertToolsImpl implements AlertTools {
             - Search specific issues: search='cpu', alertType='single', status='firing'
             - Find abnormal monitors: status='firing' to get active alerts indicating monitor issues
             - Monitor-specific alerts: use search parameter with monitor ID or name to find related alerts
+            - Frequent alerts analysis: sort='triggerTimes', order='desc' to find most frequently triggered alerts
+            - Recent recurring issues: status='all', sort='triggerTimes', order='desc', pageSize=20
             """)
     public String queryAlerts(
             @ToolParam(description = "Alert type: 'single' (individual alerts), 'group' (grouped alerts), 'both' (default: single)", required = false) String alertType,
@@ -241,85 +241,5 @@ public class AlertToolsImpl implements AlertTools {
             return "Error retrieving alerts summary: " + e.getMessage();
         }
     }
-
-    @Override
-    @Tool(name = "get_frequent_alerts", description = """
-            Get analysis of most frequent alarms within a specified time range.
-            Helps identify recurring issues and monitors that trigger alerts most often.
-            Time range values: '1h', '6h', '24h' (1 day), '7d' (7 days).
-            """)
-    public String getFrequentAlerts(
-            @ToolParam(description = "Time range: '1h', '6h', '24h', '7d' (default: 24h)", required = false) String timeRange,
-            @ToolParam(description = "Maximum number of frequent alerts to return (default: 10)", required = false) Integer limit) {
-
-        try {
-            log.info("Getting frequent alerts: timeRange={}, limit={}", timeRange, limit);
-
-            if (timeRange == null || timeRange.trim().isEmpty()) {
-                timeRange = "24h";
-            }
-            if (limit == null || limit <= 0) {
-                limit = 10;
-            }
-
-            // Get recent alerts and analyze frequency
-            Page<SingleAlert> recentAlerts = alertServiceAdapter.getSingleAlerts("all", null, "startAt", "desc", 0, 100);
-            
-            // Count alerts by content/fingerprint
-            Map<String, Integer> alertFrequency = new HashMap<>();
-            Map<String, SingleAlert> alertExamples = new HashMap<>();
-            
-            long cutoffTime = System.currentTimeMillis() - UtilityClass.parseTimeRangeToMillis(timeRange);
-            
-            for (SingleAlert alert : recentAlerts.getContent()) {
-                if (alert.getStartAt() != null && alert.getStartAt() >= cutoffTime) {
-                    String key = alert.getContent() != null ? alert.getContent() : alert.getFingerprint();
-                    if (key != null) {
-                        alertFrequency.put(key, alertFrequency.getOrDefault(key, 0) + 1);
-                        if (!alertExamples.containsKey(key)) {
-                            alertExamples.put(key, alert);
-                        }
-                    }
-                }
-            }
-
-            StringBuilder response = new StringBuilder();
-            response.append("FREQUENT ALERTS ANALYSIS (").append(timeRange).append(")\n");
-            response.append("==========================================\n\n");
-
-            if (alertFrequency.isEmpty()) {
-                response.append("No alerts found in the specified time range.");
-                return response.toString();
-            }
-
-            // Sort by frequency
-            alertFrequency.entrySet().stream()
-                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                    .limit(limit)
-                    .forEach(entry -> {
-                        String alertKey = entry.getKey();
-                        Integer count = entry.getValue();
-                        SingleAlert example = alertExamples.get(alertKey);
-                        
-                        response.append("Alert: ").append(alertKey).append("\n");
-                        response.append("Frequency: ").append(count).append(" times\n");
-                        if (example != null) {
-                            response.append("Status: ").append(example.getStatus()).append("\n");
-                            if (example.getLabels() != null && !example.getLabels().isEmpty()) {
-                                response.append("Labels: ").append(example.getLabels()).append("\n");
-                            }
-                        }
-                        response.append("\n");
-                    });
-
-            return response.toString();
-
-        } catch (Exception e) {
-            log.error("Failed to get frequent alerts: {}", e.getMessage(), e);
-            return "Error analyzing frequent alerts: " + e.getMessage();
-        }
-    }
-
-
 
 }
