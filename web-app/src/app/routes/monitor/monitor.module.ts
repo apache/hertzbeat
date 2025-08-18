@@ -20,6 +20,7 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import { InViewportModule } from 'ng-in-viewport';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
@@ -33,7 +34,6 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NgxEchartsModule } from 'ngx-echarts';
-import { InViewportModule } from 'ng-in-viewport';
 
 import { SafePipe } from '../SafePipe';
 import { MonitorDataChartComponent } from './monitor-data-chart/monitor-data-chart.component';
