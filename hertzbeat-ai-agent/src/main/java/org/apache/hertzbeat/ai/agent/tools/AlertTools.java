@@ -42,12 +42,5 @@ public interface AlertTools {
      */
     String getAlertsSummary();
 
-    /**
-     * Get recent frequent alarms analysis
-     * @param timeRange Time range (1h, 6h, 24h, 7d)
-     * @param limit Maximum number of frequent alerts to return
-     * @return Analysis of most frequent alerts in the specified time range
-     */
-    String getFrequentAlerts(String timeRange, Integer limit);
 
 }
