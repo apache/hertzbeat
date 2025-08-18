@@ -29,15 +29,15 @@ type WorkerResult = {
   data?: EChartsOption;
   progress: number;
 };
-// 创建在 Worker 中执行的 Observable
+// Create an Observable that executes in the Worker
 function createWorker(data: WorkerParam): Observable<WorkerResult> {
   return new Observable<WorkerResult>(subscriber => {
     const worker = new Worker(fn2workerURL(), { name: 'xxxxx' });
 
-    // 发送数据到 Worker
+    // Send data to the worker
     worker.postMessage(data);
 
-    // 监听 Worker 消息
+    // Listen to Worker messages
     const messageHandler = (event: MessageEvent<WorkerResult>) => {
       subscriber.next(event.data);
       if (event.data.progress === 100) {
@@ -52,7 +52,7 @@ function createWorker(data: WorkerParam): Observable<WorkerResult> {
     worker.addEventListener('message', messageHandler);
     worker.addEventListener('error', errorHandler);
 
-    // 清理函数
+    // Cleanup
     return () => {
       worker.removeEventListener('message', messageHandler);
       worker.removeEventListener('error', errorHandler);

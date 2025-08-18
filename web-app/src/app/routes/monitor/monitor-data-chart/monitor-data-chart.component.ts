@@ -22,7 +22,6 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { EChartsOption } from 'echarts';
 import { InViewportAction } from 'ng-in-viewport';
-import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { MonitorService } from '../../../service/monitor.service';
@@ -65,7 +64,6 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   handleViewportAction(event: InViewportAction) {
-    // 使用防抖优化性能
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
