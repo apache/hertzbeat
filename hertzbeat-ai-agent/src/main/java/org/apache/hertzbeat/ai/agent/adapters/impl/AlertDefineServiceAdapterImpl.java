@@ -177,48 +177,6 @@ public class AlertDefineServiceAdapterImpl implements AlertDefineServiceAdapter 
     }
 
     @Override
-    public boolean bindMonitorToAlertDefine(Long alertDefineId, Long monitorId) {
-        try {
-            Object alertDefineBindDao = null;
-            SubjectSum subjectSum = McpContextHolder.getSubject();
-            log.debug("Current security subject for bindMonitorToAlertDefine: {}", subjectSum);
-
-            try {
-                alertDefineBindDao = SpringContextHolder.getBean("alertDefineBindDao");
-            } catch (Exception e) {
-                log.debug("Could not find bean by name 'alertDefineBindDao'");
-                return false;
-            }
-
-            assert alertDefineBindDao != null;
-            log.debug("AlertDefineBindDao bean found: {}", alertDefineBindDao.getClass().getSimpleName());
-            
-            // Create AlertDefineMonitorBind entity
-            Object alertDefineMonitorBind = Class.forName("org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind")
-                    .getDeclaredConstructor()
-                    .newInstance();
-            
-            // Set alertDefineId and monitorId using reflection
-            Method setAlertDefineId = alertDefineMonitorBind.getClass().getMethod("setAlertDefineId", Long.class);
-            Method setMonitorId = alertDefineMonitorBind.getClass().getMethod("setMonitorId", Long.class);
-            
-            setAlertDefineId.invoke(alertDefineMonitorBind, alertDefineId);
-            setMonitorId.invoke(alertDefineMonitorBind, monitorId);
-            
-            // Save the binding
-            Method saveMethod = alertDefineBindDao.getClass().getMethod("save", Object.class);
-            saveMethod.invoke(alertDefineBindDao, alertDefineMonitorBind);
-            
-            log.debug("Successfully bound monitor {} to alert define {}", monitorId, alertDefineId);
-            return true;
-
-        } catch (Exception e) {
-            log.error("Failed to bind monitor {} to alert define {}: {}", monitorId, alertDefineId, e.getMessage(), e);
-            return false;
-        }
-    }
-
-    @Override
     public AlertDefine modifyAlertDefine(AlertDefine alertDefine) {
         try {
             Object alertDefineService = null;
