@@ -217,6 +217,7 @@ public class AlertDefineServiceAdapterImpl implements AlertDefineServiceAdapter 
             return false;
         }
     }
+
     @Override
     public AlertDefine modifyAlertDefine(AlertDefine alertDefine) {
         try {
