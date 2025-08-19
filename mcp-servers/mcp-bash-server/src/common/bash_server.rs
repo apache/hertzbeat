@@ -239,11 +239,7 @@ impl BashServer {
         if let Some(validator) = &self.validator
             && need_validate
         {
-            let program = cmd.get_program();
-            let mut full_args: Vec<&OsStr> = vec![program];
-            let args: Vec<&OsStr> = cmd.get_args().collect();
-            full_args.extend(args);
-            validator.is_unsafe_command(full_args)?;
+            validator.is_unsafe_command(&request.command)?;
         }
 
         let output: Output = Self::execute_command_with_timeout(timeout_duration, cmd).await?;
