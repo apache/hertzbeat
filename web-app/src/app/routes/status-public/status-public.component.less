@@ -4,26 +4,27 @@
   position: fixed;
   top: 0;
   left: 0;
-  height: 75px;
+  z-index: 100;
   display: flex;
   align-items: center;
   width: 100%;
-  z-index: 100;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  height: 75px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
 }
 
 .status-container{
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  width: 60%;
   margin: 0 auto;
   padding: 0;
-  width: 60%;
 }
 
 .status-banner{
-  margin: 75px -15px 0 -15px;
+  margin: 75px -15px 0;
+
   a {
     display: flex;
     justify-content:center;
@@ -32,7 +33,6 @@
     max-height:350px;
     overflow: hidden;
     text-align: center;
-    vertical-align: middle;
   }
 }
 
@@ -49,12 +49,12 @@
 
 .org-status {
   width: 60%;
+  margin: 0 auto;
+  padding: 12px 14px;
   font-weight: 600;
   font-size: 1.25rem;
   line-height: 2.0rem;
   border: 4px;
-  padding: 12px 14px;
-  margin: 0 auto;
 }
 
 .component-status {
@@ -63,13 +63,13 @@
   border: 1px solid #ccc;
 }
 
-.history_block {
+.history-block {
   width: 2.33%;
   height: 60px;
   margin-right: 1%
 }
 
 .status-incident {
-  margin: 20px auto 0 auto;
   width: 60%;
+  margin: 20px auto 0;
 }
