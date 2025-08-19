@@ -185,7 +185,7 @@ metrics:
       # SQL Query Method：oneRow, multiRow, columns
       queryType: oneRow
       # sql
-      sql: select * from sys.v_$instance
+      sql: "select * from sys.v_$instance"
       # JDBC url
       url: ^_^url^_^
 
@@ -246,7 +246,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
-      sql: select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files
+      sql: "select file_id, file_name, tablespace_name, status, bytes / 1024 / 1024 as bytes, blocks　from dba_data_files"
       url: ^_^url^_^
 
   - name: total_sessions
@@ -273,7 +273,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
-      sql: select count(*) as count from v$session
+      sql: "select count(*) as count from v$session"
       url: ^_^url^_^
 
   - name: active_sessions
@@ -300,7 +300,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
-      sql: select count(*) as count from v$session where username is not null and status = 'ACTIVE'
+      sql: "select count(*) as count from v$session where username is not null and status = 'ACTIVE'"
       url: ^_^url^_^
 
   - name: background_sessions
@@ -327,7 +327,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
-      sql: select count(*) as count from v$session where username is null
+      sql: "select count(*) as count from v$session where username is null"
       url: ^_^url^_^
 
   - name: connection
@@ -361,7 +361,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
-      sql: SELECT username, count( username ) as count FROM v$session WHERE username IS NOT NULL GROUP BY username
+      sql: "SELECT username, count( username ) as count FROM v$session WHERE username IS NOT NULL GROUP BY username"
       url: ^_^url^_^
 
   - name: performance
@@ -411,13 +411,13 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: columns
-      sql: select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'
+      sql: "select metric_name, value from gv$sysmetric where metric_name = 'I/O Megabytes per Second' or  metric_name = 'User Transaction Per Sec' or metric_name = 'I/O Requests per Second'"
       url: ^_^url^_^
 
 
   - name: percentage
     i18n:
-      zh-CN: 百分比
+      zh-CN: 表空间百分比
       en-US: Percentage
       ja-JP: パーセント
     priority: 7
@@ -499,7 +499,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: oneRow
-      sql: select count(*) as process_count from v$process
+      sql: "select count(*) as process_count from v$process"
       url: ^_^url^_^
 
   - name: transaction
@@ -540,7 +540,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: columns
-      sql: select metric_name, value from gv$sysmetric where metric_name = 'User Commits Per Sec' or  metric_name = 'User Rollbacks Per Sec'
+      sql: "select metric_name, value from gv$sysmetric where metric_name = 'User Commits Per Sec' or  metric_name = 'User Rollbacks Per Sec'"
       url: ^_^url^_^
 
   - name: wait
@@ -635,7 +635,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: columns
-      sql: select wait_class, sum(time_waited) total_wait_time from v$active_session_history where session_state = 'WAITING' GROUP BY wait_class ORDER BY total_wait_time DESC
+      sql: "select wait_class, sum(time_waited) total_wait_time from v$active_session_history where session_state = 'WAITING' GROUP BY wait_class ORDER BY total_wait_time DESC"
       url: ^_^url^_^
 
   - name: cpu_stats
@@ -669,7 +669,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
-      sql: select stat_name as type, value as num from v$osstat where stat_name like '%CPU%' or stat_name like '%TIME'
+      sql: "select stat_name as type, value as num from v$osstat where stat_name like '%CPU%' or stat_name like '%TIME'"
       url: ^_^url^_^
 
   - name: mem_stats
@@ -703,7 +703,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
-      sql: select stat_name as type, value as num from v$osstat where stat_name like '%BYTES'
+      sql: "select stat_name as type, value as num from v$osstat where stat_name like '%BYTES'"
       url: ^_^url^_^
 
   - name: cache_hit_ratio
@@ -742,7 +742,7 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: columns
-      sql: select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc
+      sql: "select metric_name, value from gv$sysmetric where metric_name like '%Cache Hit Ratio' order by end_time asc"
       url: ^_^url^_^
 
   - name: slow_query
@@ -832,5 +832,69 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       queryType: multiRow
-      sql: SELECT * FROM (SELECT sql_id, child_number, executions, ROUND(CASE WHEN executions = 0 THEN NULL ELSE elapsed_time / (executions*1000000) END,4) AS per_secs, cpu_time / 1000000 AS cpu_secs, buffer_gets, disk_reads, fetches, parse_calls, optimizer_cost, sql_text FROM  v$sql  ) where rownum <= 10 ORDER BY  per_secs DESC
+      sql: "SELECT * FROM (SELECT sql_id, child_number, executions, ROUND(CASE WHEN executions = 0 THEN NULL ELSE elapsed_time / (executions*1000000) END,4) AS per_secs, cpu_time / 1000000 AS cpu_secs, buffer_gets, disk_reads, fetches, parse_calls, optimizer_cost, sql_text FROM  v$sql  ) where rownum <= 10 ORDER BY  per_secs DESC"
+      url: ^_^url^_^
+
+  - name: users
+    i18n:
+      zh-CN: 用户信息
+      en-US: Users
+      ja-JP: スロークエリ
+    priority: 15
+    fields:
+      - field: username
+        type: 1
+        i18n:
+          zh-CN: 用户名
+          en-US: User Name
+          ja-JP: ユーザー名
+      - field: account_status
+        type: 1
+        i18n:
+          zh-CN: 账号状态
+          en-US: Account Status
+          ja-JP: アカウントのステータス
+      - field: lock_date
+        type: 1
+        i18n:
+          zh-CN: 锁定时间
+          en-US: Lock Date
+          ja-JP: ロック日付
+      - field: expiry_date
+        type: 1
+        i18n:
+          zh-CN: 密码失效时间
+          en-US: Password Expiry Date
+          ja-JP: パスワードの有効期限
+      - field: expiry_seconds
+        type: 0
+        i18n:
+          zh-CN: 密码剩余有效时间
+          en-US: Password Validity Period Remaining
+          ja-JP: パスワードの有効期間残り
+        unit: 秒
+      - field: created
+        type: 1
+        i18n:
+          zh-CN: 创建时间
+          en-US: Creation Date
+          ja-JP: 作成日
+      - field: authentication_type
+        type: 1
+        i18n:
+          zh-CN: 认证类型
+          en-US: Authentication Type
+          ja-JP: 認証タイプ
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: oracle
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      queryType: multiRow
+      sql: "SELECT username,account_status,lock_date,expiry_date,ceil((expiry_date-sysdate)* 24 * 60 * 60) as expiry_seconds,created,authentication_type FROM DBA_USERS ORDER BY expiry_date ASC"
       url: ^_^url^_^
