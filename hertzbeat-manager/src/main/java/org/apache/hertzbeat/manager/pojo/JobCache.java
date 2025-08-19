@@ -23,6 +23,18 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Utility class for caching {@link Job} objects in memory.
+ * <p>
+ * This class provides static methods to store, retrieve, and remove {@code Job} instances
+ * using a thread-safe {@link ConcurrentHashMap}. It is intended to be used as a simple
+ * in-memory cache for job data within the manager component.
+ * <p>
+ * Usage:
+ * <pre>
+ *     JobCache.put(job);
+ *     Job job = JobCache.get(jobId);
+ *     JobCache.remove(jobId);
+ * </pre>
  */
 public class JobCache {
     private static final Map<Long, Job> jobContentCache = new ConcurrentHashMap<>(16);
