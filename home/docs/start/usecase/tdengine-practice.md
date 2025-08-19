@@ -16,7 +16,7 @@ Apache HertzBeat is a real-time monitoring tool with powerful customization capa
 
 > **github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-## 安装 HertzBeat
+## Install HertzBeat
 
 1. The `docker` environment can be installed with just one command.
 
@@ -34,7 +34,7 @@ Recommended deployment method for production environments, reference: [https://h
 TDengine TSDB integrates multiple monitoring metric collection mechanisms and aggregates them through taosKeeper. taosKeeper is a monitoring metric export tool for TDengine TSDB version 3.0. With just a few simple configurations, you can obtain the runtime status of TDengine TSDB. For reference: [https://docs.taosdata.com/reference/components/taoskeeper/](https://docs.taosdata.com/reference/components/taoskeeper/)
 :::
 
-## 监控 TDengine(PromQL)
+## Monitor TDengine(PromQL)
 
 1. Added TDengine-PromQL monitoring
 
@@ -62,7 +62,7 @@ TDengine TSDB integrates multiple monitoring metric collection mechanisms and ag
 
     ![HertzBeat](/img/docs/start/tdengine_4.png)
 
-## 监控 TDengine(Prometheus)
+## Monitor TDengine(Prometheus)
 
 1. New AUTO monitoring
 

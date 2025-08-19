@@ -147,7 +147,6 @@ params:
 
 # collect metrics config list
 metrics:
-  # 基础信息指标
   # Basic information indicators
   - name: taos_cluster_info_first_ep
     i18n:
@@ -282,7 +281,6 @@ metrics:
         digestAuthPassword: ^_^password^_^
       parseType: PromQL
 
-  # 节点数量指标
   # Number Of nodes indicator
   - name: taos_cluster_info_dnodes_total
     i18n:
@@ -588,7 +586,6 @@ metrics:
         digestAuthPassword: ^_^password^_^
       parseType: PromQL
 
-  # 数据库和表统计
   # Database and table statistics
   - name: taos_cluster_info_dbs_total
     i18n:
@@ -704,7 +701,6 @@ metrics:
         digestAuthPassword: ^_^password^_^
       parseType: PromQL
 
-  # Dnode信息
   # Dnode information
   - name: taos_d_info_status
     i18n:
@@ -1254,7 +1250,6 @@ metrics:
         digestAuthPassword: ^_^password^_^
       parseType: PromQL
 
-  # taosadapter 相关
   # taosadapter Related
   - name: taos_adapter_requests_total
     i18n:
