@@ -137,12 +137,12 @@
 .help-toggle-icon {
   cursor: pointer;
   transition: color 0.3s ease;
-  
+
   svg {
     fill: var(--help-message-button-text, rgba(0, 0, 0, 0.85));
     transition: fill 0.3s ease;
   }
-  
+
   &:hover svg {
     fill: var(--help-message-button-hover, #282828);
   }
@@ -158,7 +158,6 @@
   float: left;
 }
 
-/* 主题适配 - 浅色主题（默认） */
 :host {
   --help-message-bg: #ffffff;
   --help-message-text: rgba(0, 0, 0, 0.85);
@@ -175,7 +174,6 @@
   --help-message-scrollbar-thumb-hover: rgba(63, 81, 181, 0.8);
 }
 
-/* 主题适配 - 暗色主题 */
 [data-theme='dark'] :host,
 :host.dark,
 .dark :host {
