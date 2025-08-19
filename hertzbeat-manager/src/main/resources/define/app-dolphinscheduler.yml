@@ -21,10 +21,12 @@ app: dolphinscheduler
 name:
   zh-CN: Apache DolphinScheduler
   en-US: Apache DolphinScheduler
+  ja-JP: Apache DolphinScheduler
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Apache DolphinScheduler (支持v3.3.0或更高版本)通用指标进行测量监控。<br>您可以点击 “<i>新建 Apache DolphinScheduler</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat measures and monitors the general metrics of Apache DolphinScheduler (support v3.3.0 or later).<br>You can click on “<i>Create New Apache DolphinScheduler</i>” to configure it, or select “<i>More Actions</i>” to import an existing configuration.
+  ja-JP: Hertzbeat は Apache DolphinScheduler（v3.3.0+）の一般的なメトリクスを監視します。<br>「<i>新規 Apache DolphinScheduler</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/dolphinscheduler
   en-US: https://hertzbeat.apache.org/docs/help/dolphinscheduler
@@ -36,6 +38,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -46,6 +49,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -60,6 +64,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -74,6 +79,7 @@ params:
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
+      ja-JP: SSL
     # type-param field type(boolean mapping the html h tag)
     type: boolean
     # required-true or false
@@ -83,6 +89,7 @@ params:
     name:
       zh-CN: 令牌
       en-US: Token
+      ja-JP: トークン
     type: text
     limit: 100
     required: true
@@ -93,6 +100,7 @@ metrics:
     i18n:
       zh-CN: Master
       en-US: Master
+      ja-JP: マスター情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -104,76 +112,90 @@ metrics:
         i18n:
           zh-CN: 主机地址
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 1
         i18n:
           zh-CN: 端口
           en-US: Port
+          ja-JP: ポート
       - field: serverStatus
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Server Status
+          ja-JP: サーバーステータス
       - field: processId
         type: 1
         i18n:
           zh-CN: 进程 ID
           en-US: Process Id
+          ja-JP: プロセスID
       - field: runningTime
         type: 0
         i18n:
           zh-CN: 运行时间
-          en-US: Running Time
+          en-US: Up Time
+          ja-JP: アップタイム
       - field: cpuUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 处理器使用量
           en-US: CPU Usage
+          ja-JP: CPU使用率
       - field: memoryUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存使用量
           en-US: Memory Usage
+          ja-JP: メモリ使用率
       - field: diskUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 磁盘使用量
           en-US: Disk Usage
+          ja-JP: ディスク使用率
       - field: jvmCpuUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: JVM CPU 使用量
           en-US: JVM CPU Usage
+          ja-JP: Java仮想マシンのCPU使用率
       - field: jvmMemoryUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: JVM 内存 使用量
           en-US: JVM Memory Usage
+          ja-JP: Java仮想マシンのメモリ使用率
       - field: jvmHeapUsed
         type: 0
         i18n:
           zh-CN: JVM 已使用的堆内存大小
           en-US: JVM Heap Used
+          ja-JP: Java仮想マシンが使用したヒープメモリのサイズ
       - field: jvmNonHeapUsed
         type: 0
         i18n:
           zh-CN: JVM 已使用的非堆内存大小
           en-US: JVM NonHeap Used
+          ja-JP: Java仮想マシンが使用したノンヒープメモリのサイズ
       - field: jvmHeapMax
         type: 0
         i18n:
           zh-CN: JVM 配置的最大堆内存大小
           en-US: JVM Heap Max
+          ja-JP: Java仮想マシンのヒープメモリの最大値
       - field: jvmNonHeapMax
         type: 0
         i18n:
           zh-CN: JVM 配置的最大非堆内存大小
           en-US: JVM NonHeap Max
+          ja-JP: Java仮想マシンのノンヒープメモリの最大値
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.heartBeatInfo
@@ -219,6 +241,7 @@ metrics:
     i18n:
       zh-CN: Worker
       en-US: Worker
+      ja-JP: ワーカー情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -230,92 +253,109 @@ metrics:
         i18n:
           zh-CN: 主机地址
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 1
         i18n:
           zh-CN: 端口
           en-US: Port
+          ja-JP: ポート
       - field: serverStatus
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Server Status
+          ja-JP: サーバーステータス
       - field: processId
         type: 1
         i18n:
           zh-CN: 进程 ID
           en-US: Process Id
+          ja-JP: プロセスID
       - field: runningTime
         type: 0
         i18n:
           zh-CN: 运行时间
-          en-US: Running Time
+          en-US: Up Time
+          ja-JP: アップタイム
       - field: cpuUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 处理器使用量
           en-US: CPU Usage
+          ja-JP: CPU使用率
       - field: memoryUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存使用量
           en-US: Memory Usage
+          ja-JP: メモリ使用率
       - field: diskUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 磁盘使用量
           en-US: Disk Usage
+          ja-JP: ディスク使用率
       - field: jvmCpuUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: JVM CPU 使用量
           en-US: JVM CPU Usage
+          ja-JP: Java仮想マシンのCPU使用率
       - field: jvmMemoryUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: JVM 内存 使用量
           en-US: JVM Memory Usage
+          ja-JP: Java仮想マシンのメモリ使用率
       - field: jvmHeapUsed
         type: 0
         i18n:
           zh-CN: JVM 已使用的堆内存大小
           en-US: JVM Heap Used
+          ja-JP: Java仮想マシンが使用したヒープメモリのサイズ
       - field: jvmNonHeapUsed
         type: 0
         i18n:
           zh-CN: JVM 已使用的非堆内存大小
           en-US: JVM NonHeap Used
+          ja-JP: Java仮想マシンが使用したノンヒープメモリのサイズ
       - field: jvmHeapMax
         type: 0
         i18n:
           zh-CN: JVM 配置的最大堆内存大小
           en-US: JVM Heap Max
+          ja-JP: Java仮想マシンのヒープメモリの最大値
       - field: jvmNonHeapMax
         type: 0
         i18n:
           zh-CN: JVM 配置的最大非堆内存大小
           en-US: JVM NonHeap Max
+          ja-JP: Java仮想マシンのノンヒープメモリの最大値
       - field: workerHostWeight
         type: 0
         i18n:
           zh-CN: 权重
           en-US: Weight
+          ja-JP: ウェイト
       - field: threadPoolUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 线程池使用量
-          en-US:  Thread Pool Usage
+          en-US: Thread Pool Usage
+          ja-JP: スレッドプールの使用率
       - field: workerGroup
         type: 1
         i18n:
           zh-CN: Worker 组
           en-US: Worker Group
+          ja-JP: ワーカーグループ
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.heartBeatInfo
@@ -364,6 +404,7 @@ metrics:
     i18n:
       zh-CN: Alert Server
       en-US: Alert Server
+      ja-JP: アラートサーバーの情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -375,76 +416,90 @@ metrics:
         i18n:
           zh-CN: 主机地址
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 1
         i18n:
           zh-CN: 端口
           en-US: Port
+          ja-JP: ポート
       - field: serverStatus
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Server Status
+          ja-JP: サーバーステータス
       - field: processId
         type: 1
         i18n:
           zh-CN: 进程 ID
           en-US: Process Id
+          ja-JP: プロセスID
       - field: runningTime
         type: 0
         i18n:
           zh-CN: 运行时间
-          en-US: Running Time
+          en-US: Up Time
+          ja-JP: アップタイム
       - field: cpuUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 处理器使用量
           en-US: CPU Usage
+          ja-JP: CPU使用率
       - field: memoryUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 内存使用量
           en-US: Memory Usage
+          ja-JP: メモリ使用率
       - field: diskUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: 磁盘使用量
           en-US: Disk Usage
+          ja-JP: ディスク使用率
       - field: jvmCpuUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: JVM CPU 使用量
           en-US: JVM CPU Usage
+          ja-JP: Java仮想マシンのCPU使用率
       - field: jvmMemoryUsage
         type: 0
         unit: '%'
         i18n:
           zh-CN: JVM 内存 使用量
           en-US: JVM Memory Usage
+          ja-JP: Java仮想マシンのメモリ使用率
       - field: jvmHeapUsed
         type: 0
         i18n:
           zh-CN: JVM 已使用的堆内存大小
           en-US: JVM Heap Used
+          ja-JP: Java仮想マシンが使用したヒープメモリのサイズ
       - field: jvmNonHeapUsed
         type: 0
         i18n:
           zh-CN: JVM 已使用的非堆内存大小
           en-US: JVM NonHeap Used
+          ja-JP: Java仮想マシンが使用したノンヒープメモリのサイズ
       - field: jvmHeapMax
         type: 0
         i18n:
           zh-CN: JVM 配置的最大堆内存大小
           en-US: JVM Heap Max
+          ja-JP: Java仮想マシンのヒープメモリの最大値
       - field: jvmNonHeapMax
         type: 0
         i18n:
           zh-CN: JVM 配置的最大非堆内存大小
           en-US: JVM NonHeap Max
+          ja-JP: Java仮想マシンのノンヒープメモリの最大値
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.heartBeatInfo
@@ -490,6 +545,7 @@ metrics:
     i18n:
       zh-CN: 数据库
       en-US: Database
+      ja-JP: データベース情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -501,26 +557,31 @@ metrics:
         i18n:
           zh-CN: 数据库类型
           en-US: Database Type
+          ja-JP: データベースのタイプ
       - field: state
         type: 1
         i18n:
           zh-CN: 状态
           en-US: State
+          ja-JP: 状態
       - field: maxConnections
         type: 0
         i18n:
           zh-CN: 最大连接数
           en-US: Max Connections
+          ja-JP: 最大接続数
       - field: threadsConnections
         type: 0
         i18n:
           zh-CN: 当前连接数
           en-US: Threads Connections
+          ja-JP: 現在接続数
       - field: threadsRunningConnections
         type: 0
         i18n:
           zh-CN: 当前活跃连接数
           en-US: Threads Running Connections
+          ja-JP: 現在のアクティブな接続数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - dbType
