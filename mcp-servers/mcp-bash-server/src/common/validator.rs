@@ -64,13 +64,7 @@ impl Validator {
             ));
         }
 
-        let full_cmd = args.join(OsStr::new(" ")).into_string().map_err(|_| {
-            ErrorData::new(
-                ErrorCode::INTERNAL_ERROR,
-                "Convert OsStr to String failed!",
-                None,
-            )
-        })?;
+        let full_cmd = args.to_string();
 
         debug!("Validating command: {}", full_cmd);
 
