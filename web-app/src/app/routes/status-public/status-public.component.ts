@@ -122,7 +122,7 @@ export class StatusPublicComponent implements OnInit {
 
   calculateHistoryBlockRgb(history: StatusPageHistory): string {
     if (history.state == 0) {
-      return 'green';
+      return '#28a745';
     } else if (history.state == 2) {
       return 'rgb(200 200 200)';
     } else {
@@ -172,7 +172,7 @@ export class StatusPublicComponent implements OnInit {
     } else if (status === 2) {
       return '#19a7e7';
     } else {
-      return '#34be8f';
+      return '#28a745';
     }
   }
 
