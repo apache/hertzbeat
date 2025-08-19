@@ -25,49 +25,58 @@ import org.apache.hertzbeat.manager.scheduler.AssignJobs;
 import java.util.function.BiConsumer;
 
 /**
- * Holds all collectors info and provides operations to collector
+ * Interface for managing collector nodes and their associated jobs.
+ * Maintains all collector information and provides operations for managing collectors and job assignments.
  */
 public interface CollectorKeeper {
+
+    /**
+     * Adds a new collector node to the keeper's management pool.
+     * @param newNode The collector node to be added to the management system
+     */
     void addNode(CollectorNode newNode);
 
     /**
-     * Add job to collector node
-     * @param job job
-     * @param collectorId collector node id
-     * @return collector node
+     * Assigns a monitoring job to a specific collector node.
+     * @param job The monitoring job to be assigned
+     * @param collectorId The unique identifier of the target collector node
+     * @return The collector node that received the job assignment
      */
     CollectorNode addJob(Job job, String collectorId);
 
     /**
-     * Get collector node corresponding to collector id
-     * @param collectorId collectorId
-     * @return collector node
+     * Retrieves a collector node by its unique identifier.
+     * @param collectorId The unique identifier of the collector node
+     * @return The collector node matching the given ID, or null if not found
      */
     CollectorNode getNode(String collectorId);
 
     /**
-     * Determine to which collector node should this job be allocated
-     * @param jobId job id
-     * @return collector node
+     * Determines the most appropriate collector node for a given job based on scheduling logic.
+     * @param jobId The unique identifier of the job to be assigned
+     * @return The collector node selected to handle this job
      */
     CollectorNode determineNode(Long jobId);
 
     /**
-     * Change collector node status
-     * @param collectorId collector id
-     * @param collectorStatus collector status
+     * Updates the operational status of a collector node.
+     * @param collectorId The unique identifier of the collector node
+     * @param collectorStatus The new status to assign to the collector
      */
     void changeStatus(String collectorId, CollectorStatus collectorStatus);
 
     /**
-     * Reallocate jobs when collector's status has changed
+     * Rebalances job assignments across collector nodes, typically triggered by status changes.
+     * Uses a callback mechanism to handle job reassignments.
+     * @param assignJobCollectorConsumer A biconsumer that handles the job reassignment process,
+     *                                   taking the job assignment logic and collector ID as parameters
      */
     void rebalanceJobs(BiConsumer<AssignJobs, String> assignJobCollectorConsumer);
 
     /**
-     * Remove job by job id
-     * @param jobId job id
-     * @return collector node on which removed job was
+     * Removes a job from whichever collector node it is currently assigned to.
+     * @param jobId The unique identifier of the job to be removed
+     * @return The collector node from which the job was removed, or null if job wasn't found
      */
     CollectorNode removeJob(Long jobId);
 }

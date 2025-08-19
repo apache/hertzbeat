@@ -18,21 +18,29 @@
 package org.apache.hertzbeat.manager.scheduler;
 
 /**
- * Operate collector directly
+ * Interface defining operations for managing collector.
+ * Implementations of this interface provide functionality to control the operation state
+ * of collectors in the system.
  */
 public interface CollectorOperation {
-    
+
     /**
-     * offline collector(stop collector collect operation)
-     * @param identity collector identity name
-     * @return true/false
+     * Takes a collector offline by stopping its collection operations.
+     * This is typically used for maintenance, updates, or when the collector is no longer needed.
+     *
+     * @param identity The unique identifier of the collector to be taken offline
+     * @return true if the collector was successfully taken offline,
+     *         false if the operation failed or the collector wasn't found
      */
     boolean offlineCollector(String identity);
 
     /**
-     * online collector(start collector collect operation)
-     * @param identity collector identity name
-     * @return true/false
+     * Brings a collector online by starting its collection operations.
+     * This is used to activate a collector that was previously offline.
+     *
+     * @param identity The unique identifier of the collector to be brought online
+     * @return true if the collector was successfully brought online,
+     *         false if the operation failed or the collector wasn't found
      */
     boolean onlineCollector(String identity);
 }

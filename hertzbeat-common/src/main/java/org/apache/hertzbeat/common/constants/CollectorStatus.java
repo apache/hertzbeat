@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.common.constants;
 
 /**
- * Collector status
+ * Enum representing the possible statuses of a collector.
  */
 public enum CollectorStatus {
     ONLINE, OFFLINE;
