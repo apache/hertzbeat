@@ -18,71 +18,82 @@
 -->
 
 <nz-spin [nzSpinning]="loading" [nzTip]="'Loading...'" nzSize="large">
-  <div class="status-header br-8" [style]="'margin-top: 10px;background:' + (statusOrg.color || '#e9f3d3')">
-    <header-i18n showLangText="false" class="langs"></header-i18n>
-    <div>
-      <a [href]="statusOrg.home" target="_blank">
-        <img class="status-logo" [src]="statusOrg.logo" alt="" />
-      </a>
+  <div class="status-header">
+    <div class="status-container" style="padding:0 16px">
+      <h3 style="margin:0;padding:0;font-size: 16px">{{ 'status.page' | i18n}}</h3>
+      <header-i18n showLangText="false" class="langs"></header-i18n>
     </div>
+  </div>
+  <div class="status-banner" [style]="'background:' + (statusOrg.color || 'transparent')">
+    <a [href]="statusOrg.home" target="_blank">
+      <img class="status-logo" [src]="statusOrg.logo" alt="" />
+    </a>
   </div>
 </nz-spin>
 
 <nz-spin *ngIf="showMode == 'component'" [nzSpinning]="loading" [nzTip]="'Loading...'" nzSize="large">
   <div class="status-content">
-    <div style="margin-top: 20px; margin-bottom: 20px">
-      <div style="width: 60%; margin: 0 auto; text-align: right">
-        <a
-          *ngIf="statusOrg.feedback"
-          [href]="statusOrg.feedback.includes('@') ? 'mailto:' + statusOrg.feedback : statusOrg.feedback"
-          target="_blank"
-        >
-          <button nz-button> {{ 'status.public.feedback' | i18n }} </button>
-        </a>
-      </div>
+    <div class="status-container" style="padding:20px 0">
+      <h3 style="margin:0;padding:0;font-size: 16px">{{ statusOrg.name }}</h3>
+      <a
+        *ngIf="statusOrg.feedback"
+        [href]="statusOrg.feedback.includes('@') ? 'mailto:' + statusOrg.feedback : statusOrg.feedback"
+        target="_blank"
+      >
+        <button nzType="primary"  nz-button>
+          {{ 'status.public.feedback' | i18n }}
+          <span nz-icon nzType="question-circle"></span>
+        </button>
+      </a>
     </div>
     <div
       *ngIf="statusOrg.state == 0"
       class="org-status br-8"
-      style="background-color: green; display: flex; justify-content: space-between"
+      style="background-color: #28a745; display: flex; justify-content: space-between"
     >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="check-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.0' | i18n }} </span>
+        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.0' | i18n }} </span>
       </div>
       <div>
-        <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
+        <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
+          <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </span>
       </div>
     </div>
     <div
       *ngIf="statusOrg.state == 1"
       class="org-status br-8"
-      style="background-color: orange; display: flex; justify-content: space-between"
+      style="background-color: #e56c23; display: flex; justify-content: space-between"
     >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="exclamation-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.1' | i18n }} </span>
+        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.1' | i18n }} </span>
       </div>
       <div>
-        <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
+        <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
+          <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </span>
       </div>
     </div>
-    <div *ngIf="statusOrg.state == 2" class="org-status br-8" style="background-color: red; display: flex; justify-content: space-between">
+    <div *ngIf="statusOrg.state == 2" class="org-status br-8" style="background-color: #ff2f2f; display: flex; justify-content: space-between">
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="close-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.2' | i18n }} </span>
+        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.2' | i18n }} </span>
       </div>
       <div>
-        <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
+        <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
+          <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </span>
       </div>
     </div>
-    <div style="margin-top: 50px">
+    <div style="margin-top: 20px">
       <div *ngFor="let component of componentStatus" class="component-status br-8">
         <div style="margin: 10px; display: flex; justify-content: space-between">
-          <div style="font-weight: bold; font-size: large">
+          <div style="font-weight: bold; font-size: 1rem">
             <span>{{ component.info.name }}</span>
             <span
-              style="margin-left: 4px"
+              style="margin-left: 5px"
               nz-icon
               nzType="question-circle"
               nzTheme="outline"
@@ -92,16 +103,16 @@
             ></span>
           </div>
           <div *ngIf="component.info.state == 0" style="font-weight: bold">
-            <span style="color: green">{{ 'status.component.state.0' | i18n }}</span>
-            <span nz-icon style="color: green; margin-left: 4px" nzType="check-circle" nzTheme="outline"></span>
+            <span style="color: #28a745">{{ 'status.component.state.0' | i18n }}</span>
+            <span nz-icon style="color: #28a745; margin-left: 5px" nzType="check-circle" nzTheme="outline"></span>
           </div>
           <div *ngIf="component.info.state == 1" style="font-weight: bold">
-            <span style="color: red">{{ 'status.component.state.1' | i18n }}</span>
-            <span nz-icon style="color: red; margin-left: 4px" nzType="exclamation-circle" nzTheme="outline"></span>
+            <span style="color: #ff2f2f">{{ 'status.component.state.1' | i18n }}</span>
+            <span nz-icon style="color: #ff2f2f; margin-left: 5px" nzType="exclamation-circle" nzTheme="outline"></span>
           </div>
           <div *ngIf="component.info.state == 2" style="font-weight: bold">
             <span>{{ 'status.component.state.2' | i18n }}</span>
-            <span nz-icon style="margin-left: 4px" nzType="stop" nzTheme="outline"></span>
+            <span nz-icon style="margin-left: 5px" nzType="stop" nzTheme="outline"></span>
           </div>
         </div>
         <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex">
@@ -115,7 +126,7 @@
           >
             <ng-template #contentTemplate>
               <div>
-                <p style="font-weight: bold">{{ historyItem.timestamp | date }}</p>
+                <p style="font-weight: bold">{{ historyItem.timestamp | date : 'YYYY-MM-dd HH:mm:ss' }}</p>
                 <p>Uptime {{ (100 * historyItem.uptime).toFixed(2) }}%</p>
                 <p>{{ 'status.component.state.0' | i18n }} {{ historyItem.normal }}s</p>
                 <p>{{ 'status.component.state.1' | i18n }} {{ historyItem.abnormal }}s</p>
@@ -124,7 +135,7 @@
             </ng-template>
           </div>
         </div>
-        <div style="margin: 10px; display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
+        <div style="margin: 10px; display: flex; justify-content: space-between; font-size: 0.75rem">
           <span>{{ 'status.public.today' | i18n }}</span>
           <span>{{ 'status.public.30-day' | i18n }}</span>
         </div>
@@ -135,137 +146,128 @@
 
 <nz-spin *ngIf="showMode == 'incident'" [nzSpinning]="incidentLoading" [nzTip]="'Loading...'" nzSize="large">
   <div class="status-content">
-    <div style="margin-top: 20px; margin-bottom: 20px">
-      <div style="width: 60%; margin: 0 auto; text-align: right">
-        <a
-          *ngIf="statusOrg.feedback"
-          [href]="statusOrg.feedback.includes('@') ? 'mailto:' + statusOrg.feedback : statusOrg.feedback"
-          target="_blank"
-        >
-          <button nz-button> {{ 'status.public.feedback' | i18n }} </button>
-        </a>
-      </div>
+    <div class="status-container" style="padding:20px 0">
+      <h3 style="margin:0;padding:0;">{{ statusOrg.name }}</h3>
+      <a
+        *ngIf="statusOrg.feedback"
+        [href]="statusOrg.feedback.includes('@') ? 'mailto:' + statusOrg.feedback : statusOrg.feedback"
+        target="_blank"
+      >
+        <button nzType="primary"  nz-button>
+          {{ 'status.public.feedback' | i18n }}
+          <span nz-icon nzType="question-circle"></span>
+        </button>
+      </a>
     </div>
     <div
       *ngIf="statusOrg.state == 0"
       class="org-status br-8"
-      style="background-color: green; display: flex; justify-content: space-between"
+      style="background-color: #28a745; display: flex; justify-content: space-between"
     >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="check-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.0' | i18n }} </span>
+        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.0' | i18n }} </span>
       </div>
-      <div>
-        <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
-      </div>
+      <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
+          <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </span>
     </div>
     <div
       *ngIf="statusOrg.state == 1"
       class="org-status br-8"
-      style="background-color: orange; display: flex; justify-content: space-between"
+      style="background-color: #e56c23; display: flex; justify-content: space-between"
     >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="exclamation-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.1' | i18n }} </span>
+        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.1' | i18n }} </span>
       </div>
-      <div>
-        <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
-      </div>
+      <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
+          <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </span>
     </div>
-    <div *ngIf="statusOrg.state == 2" class="org-status br-8" style="background-color: red; display: flex; justify-content: space-between">
+    <div *ngIf="statusOrg.state == 2" class="org-status br-8" style="background-color: #ff2f2f; display: flex; justify-content: space-between">
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="close-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.2' | i18n }} </span>
+        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.2' | i18n }} </span>
       </div>
-      <div>
-        <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
-      </div>
+      <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
+          <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
+        </span>
     </div>
-    <div style="margin-top: 50px">
-      <nz-collapse style="width: 60%; margin: 10px auto" nzGhost>
-        <nz-collapse-panel *ngFor="let incident of incidentStatus" [nzHeader]="incidentHeader" nzShowArrow="false">
-          <div
-            *ngFor="let content of incident.contents"
-            class="br-8"
-            style="border: 1px dotted green; margin-bottom: 4px; background: #f8f6f3"
-          >
-            <nz-list nzSize="small" nzSplit="false">
-              <nz-list-item style="font-size: medium">
-                {{ content.message }}
-              </nz-list-item>
-              <nz-list-item>
-                <span>{{ content.timestamp | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
-                <nz-tag *ngIf="content.state == 0" [nzColor]="'#ff2f2f'">
-                  {{ 'status.incident.state.0' | i18n }}
-                </nz-tag>
-                <nz-tag *ngIf="content.state == 1" [nzColor]="'#e56c23'">
-                  {{ 'status.incident.state.1' | i18n }}
-                </nz-tag>
-                <nz-tag *ngIf="content.state == 2" [nzColor]="'#19a7e7'">
-                  {{ 'status.incident.state.2' | i18n }}
-                </nz-tag>
-                <nz-tag *ngIf="content.state == 3" [nzColor]="'#34be8f'">
-                  {{ 'status.incident.state.3' | i18n }}
-                </nz-tag>
-              </nz-list-item>
-            </nz-list>
-          </div>
-          <ng-template #incidentHeader>
-            <div class="br-8" style="width: 100%; border: 1px solid gray" [ngStyle]="{ borderColor: getStatusBorderColor(incident.state) }">
-              <div style="margin: 10px; display: flex; justify-content: space-between">
-                <div style="font-weight: bold; font-size: large">
-                  <span>{{ incident.name }}</span>
-                </div>
-                <div style="font-weight: bold">
-                  <span [ngStyle]="{ color: getStatusBorderColor(incident.state) }">{{
-                    'status.incident.state.' + incident.state | i18n
-                  }}</span>
-                </div>
-              </div>
-              <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; font-size: medium">
-                {{ getLatestIncidentContentMsg(incident.contents) }}
-              </div>
-              <div style="margin: 10px; display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
-                <span>{{ 'status.incident.public.update-at' | i18n }} {{ incident.endTime || incident.startTime | date }}</span>
-                <span
-                  >--- {{ 'status.incident.public.process-time' | i18n }}
-                  {{ getProcessTimeStr(incident.startTime, incident.endTime) }}---</span
-                >
-                <span>{{ 'status.incident.public.start-at' | i18n }} {{ incident.startTime || incident.endTime | date }}</span>
-              </div>
+    <div class="status-incident">
+      <nz-collapse>
+        @for (incident of incidentStatus; track incident) {
+          <nz-collapse-panel [nzHeader]="incident.name"  [nzExtra]="incidentHeaderExtra" nzShowArrow="true"
+                             [style]="{'font-size': '14px','font-weight':'bold'}">
+           <div style="margin-bottom: 20px; display: flex; justify-content: space-between; font-size: 14px;font-weight: normal">
+             <span>
+                {{ 'status.incident.public.start-at' | i18n }} {{ incident.startTime || incident.endTime | date : 'YYYY-MM-dd HH:mm:ss'}}
+             </span>
+             <span>
+                {{ 'status.incident.public.update-at' | i18n }} {{ incident.endTime || incident.startTime | date : 'YYYY-MM-dd HH:mm:ss'}}
+              </span>
             </div>
-          </ng-template>
-        </nz-collapse-panel>
+
+            <nz-timeline>
+              @for (content of incident.contents; track content) {
+              <nz-timeline-item nzColor="gray">
+                <nz-card nzSize="small" style="width:100%">
+                  <nz-list nzSize="small" nzSplit="false">
+                    <nz-list-item style="color:#666666;padding:0;font-weight:normal">
+                      <span>{{ content.timestamp | date : 'YYYY-MM-dd HH:mm:ss' }}</span>
+                      <nz-tag [nzBordered]="false" *ngIf="content.state == 0" [nzColor]="'#ff2f2f'">
+                        {{ 'status.incident.state.0' | i18n }}
+                      </nz-tag>
+                      <nz-tag [nzBordered]="false" *ngIf="content.state == 1" [nzColor]="'#e56c23'">
+                        {{ 'status.incident.state.1' | i18n }}
+                      </nz-tag>
+                      <nz-tag [nzBordered]="false" *ngIf="content.state == 2" [nzColor]="'#19a7e7'">
+                        {{ 'status.incident.state.2' | i18n }}
+                      </nz-tag>
+                      <nz-tag [nzBordered]="false" *ngIf="content.state == 3" [nzColor]="'#28a745'">
+                        {{ 'status.incident.state.3' | i18n }}
+                      </nz-tag>
+                    </nz-list-item>
+                    <nz-list-item style="padding:10px 0;font-weight:normal">
+                      {{ content.message }}
+                    </nz-list-item>
+                  </nz-list>
+                </nz-card>
+              </nz-timeline-item>
+              }
+            </nz-timeline>
+            <ng-template #incidentHeaderExtra>
+              <span [ngStyle]="{ color: getStatusBorderColor(incident.state) }">
+                {{ 'status.incident.state.' + incident.state | i18n }}
+              </span>
+            </ng-template>
+          </nz-collapse-panel>
+        }
       </nz-collapse>
     </div>
   </div>
 </nz-spin>
 
-<nz-divider style="margin-top: 30px"></nz-divider>
+<nz-divider style="margin:20px 0"></nz-divider>
 
-<div *ngIf="showMode == 'component'" style="margin-top: 10px; margin-bottom: 250px">
-  <div style="width: 60%; margin: 0 auto">
-    <div style="display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
-      <a href="https://github.com/apache/hertzbeat" target="_blank">
-        <button nzType="link" nz-button> {{ 'status.public.power-by' | i18n }} </button>
-      </a>
-      <button nzType="primary" (click)="showIncident()" nz-button>
-        {{ 'status.public.to-incident' | i18n }} <span nz-icon nzType="right-circle"></span
-      ></button>
-    </div>
+<div *ngIf="showMode == 'component'">
+  <div class="status-container" style="padding:0 0 100px 0;font-size: 0.75rem">
+    <a nz-button nzType="link" href="https://github.com/apache/hertzbeat" target="_blank" style="padding:0">
+      {{ 'status.public.power-by' | i18n }}
+    </a>
+    <button nzType="text" (click)="showIncident()" nz-button>
+      {{ 'status.public.to-incident' | i18n }} <span nz-icon nzType="right-circle"></span
+    ></button>
   </div>
 </div>
 
-<div *ngIf="showMode == 'incident'" style="margin-top: 10px; margin-bottom: 250px">
-  <div style="width: 60%; margin: 0 auto">
-    <div style="display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
-      <button nzType="primary" (click)="showComponent()" nz-button>
+<div *ngIf="showMode == 'incident'">
+  <div class="status-container" style="padding:0 0 100px 0;font-size: 0.75rem">
+      <a nz-button nzType="link" href="https://github.com/apache/hertzbeat" target="_blank" style="padding:0">
+        {{ 'status.public.power-by' | i18n }}
+      </a>
+      <button nzType="text" (click)="showComponent()" nz-button>
         <span nz-icon nzType="left-circle"></span> {{ 'status.public.to-component' | i18n }}
       </button>
-      <a href="https://github.com/apache/hertzbeat" target="_blank">
-        <button nzType="link" nz-button> {{ 'status.public.power-by' | i18n }} </button>
-      </a>
-    </div>
   </div>
 </div>
-<nz-divider style="margin-top: 60px"></nz-divider>
