@@ -337,8 +337,7 @@ impl BashServer {
                 if line.is_empty() || line.starts_with('#') {
                     continue;
                 }
-                validator
-                    .is_unsafe_command(line.split(" ").map(OsStr::new).collect::<Vec<&OsStr>>())?;
+                validator.is_unsafe_command(line)?;
             }
         }
 
