@@ -14,7 +14,7 @@ The AI Agent Chat feature provides an interactive chat interface where you can:
 - 🔍 List and manage your existing monitors
 - ➕ Add new monitors for websites, APIs, databases, and services
 - 🗑️ Delete existing monitors
-- 📊 Get detailed information about available monitor types and their parameters-
+- 📊 Get detailed information about available monitor types and their parameters
 - ⚡ Check monitor status and troubleshoot monitoring issues
 
 ## Prerequisites
