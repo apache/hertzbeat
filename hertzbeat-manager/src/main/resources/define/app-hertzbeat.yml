@@ -62,6 +62,7 @@ params:
     type: number
     required: false
     hide: true
+    defaultValue: 6000
   - field: authType
     name:
       zh-CN: 认证方式
@@ -125,7 +126,7 @@ metrics:
           zh-CN: 状态
           en-US: Status
           ja-JP: ステータス
-      - field: size
+      - field: Size
         type: 0
         i18n:
           zh-CN: 数量
@@ -137,6 +138,18 @@ metrics:
           zh-CN: 可用数量
           en-US: Available Size
           ja-JP: 利用可能なサイズ
+    aliasFields:
+      - $.app
+      - $.category
+      - $.status
+      - $.size
+      - $.availableSize
+    calculates:
+      - app=$.app
+      - category=$.category
+      - status=$.status
+      - Size=$.size
+      - availableSize=$.availableSize
     #  the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk, we use HTTP protocol here
     protocol: http
     # the config content when protocol is http
