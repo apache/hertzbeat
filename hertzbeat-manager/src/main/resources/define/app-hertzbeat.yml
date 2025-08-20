@@ -241,7 +241,7 @@ metrics:
     priority: 1
     fields:
       - field: state
-        type: 2
+        type: 1
         i18n:
           zh-CN: 状态
           en-US: State
