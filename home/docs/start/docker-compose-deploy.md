@@ -15,13 +15,13 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 
 1. Download the startup script package
 
-   Download the installation script package `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz` from the [download](/docs/download)
+   Download the installation script package `apache-hertzbeat-xxx-docker-compose.tar.gz` from the [download](/docs/download)
 
 2. Choose to use the HertzBeat + PostgreSQL + VictoriaMetrics solution
 
    :::tip
 
-   - `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz` contains multiple deployment solutions after decompression. Here we recommend choosing the `hertzbeat-postgresql-victoria-metrics` solution.
+   - `apache-hertzbeat-xxx-docker-compose.tar.gz` contains multiple deployment solutions after decompression. Here we recommend choosing the `hertzbeat-postgresql-victoria-metrics` solution.
    - Other deployment methods, please read the README.md file of each deployment solution in detail. The MySQL solution requires you to prepare the MySQL driver package yourself.
 
    :::
@@ -29,13 +29,13 @@ Run the `docker compose version` command to check if you have a Docker Compose e
    - Unzip the script package
 
    ```shell
-   tar zxvf apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+   tar zxvf apache-hertzbeat-1.6.0-docker-compose.tar.gz
    ```
 
    - Enter the decompression directory and select `HertzBeat + PostgreSQL + VictoriaMetrics` for one-click deployment
 
    ```shell
-   cd apache-hertzbeat-1.6.0-incubating-docker-compose    
+   cd apache-hertzbeat-1.6.0-docker-compose    
    cd hertzbeat-postgresql-victoria-metrics
    ```
 
