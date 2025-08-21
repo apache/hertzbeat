@@ -470,9 +470,6 @@ export class LogManageComponent implements OnInit {
 
   getBodyText(body: any): string {
     if (!body) return '';
-    if (typeof body === 'string') return body.length > 100 ? `${body.substr(0, 100)}...` : body;
-    if (typeof body === 'object') {
-      const str = JSON.stringify(body);
     if (typeof body === 'string') return body.length > 100 ? `${body.substring(0, 100)}...` : body;
     if (typeof body === 'object') {
       const str = JSON.stringify(body);
