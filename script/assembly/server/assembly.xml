@@ -97,7 +97,6 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <directory>../</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>DISCLAIMER</include>
                 <include>README.md</include>
             </includes>
         </fileSet>
