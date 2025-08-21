@@ -37,7 +37,9 @@ public class AlibabaCloudEsPromqlQueryExecutor extends PromqlQueryExecutor {
     private final String datasource;
 
     AlibabaCloudEsPromqlQueryExecutor(AlibabaCloudEsProperties properties, RestTemplate restTemplate) {
-
+        super(restTemplate, new HttpPromqlProperties(properties.url(), properties.username(), properties.password(),
+                String.format(QUERY_PATH, properties.database()), String.format(QUERY_RANGE_PATH, properties.database())));
+        this.datasource = properties.database();
     }
 
     @Override
