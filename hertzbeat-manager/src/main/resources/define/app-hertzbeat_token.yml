@@ -160,7 +160,7 @@ metrics:
           zh-CN: 状态
           en-US: Status
           ja-JP: ステータス
-      - field: size
+      - field: Size
         type: 0
         i18n:
           zh-CN: 数量
@@ -172,6 +172,18 @@ metrics:
           zh-CN: 可用数量
           en-US: Available Size
           ja-JP: 利用可能なサイズ
+    aliasFields:
+      - $.app
+      - $.category
+      - $.status
+      - $.size
+      - $.availableSize
+    calculates:
+      - app=$.app
+      - category=$.category
+      - status=$.status
+      - Size=$.size
+      - availableSize=$.availableSize
     protocol: http
     http:
       host: ^_^host^_^

@@ -651,7 +651,7 @@ metrics:
           zh-CN: 次数
           en-US: Num
           ja-JP: 数量
-      - field: size
+      - field: Size
         type: 0
         unit: B
         i18n:
