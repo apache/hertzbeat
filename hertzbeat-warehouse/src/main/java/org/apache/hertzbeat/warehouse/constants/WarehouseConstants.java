@@ -31,6 +31,9 @@ public interface WarehouseConstants {
      * History database name.
      */
     interface HistoryName {
+
+        String ALIBABACLOUD_ES = "alibabacloud-es";
+
         String GREPTIME = "greptime";
 
         String INFLUXDB = "influxdb";

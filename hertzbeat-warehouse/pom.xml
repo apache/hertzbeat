@@ -150,5 +150,12 @@
             <artifactId>snappy-java</artifactId>
             <version>${snappy-java.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.searchbox</groupId>
+            <artifactId>jest</artifactId>
+            <version>${io.searchbox.version}</version>
+        </dependency>
+
     </dependencies>
 </project>
