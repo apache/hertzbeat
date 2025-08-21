@@ -39,35 +39,9 @@ export default function () {
             <h3><Translate>team.name</Translate></h3>
             <hr style={{maxWidth: "10rem"}}></hr>
             <p className="team_desc team_indent"><Translate>team.desc</Translate></p>
-            <h3 className="team_title">
-              Mentor
-              <span className="desc"><Translate>team.tip</Translate></span>
-            </h3>
-            <div className="team-row">
-              {
-                dataSource.mentor.map((item, i) => (
-                  <div className='team-box' key={i} data-aos="fade-up" data-aos-delay={i * 100}>
-                    <div style={{textAlign: "center"}}>
-                      <div style={{overflow: "hidden", zIndex: 1}}>
-                        <img className="team-user-img" src={avatarUrl(item.githubId)} title="" alt=""/>
-                      </div>
-                      <div className="bg-team">
-                        <h6 className="team-name">{item.name}</h6>
-                        <small>{getGitName(item.gitUrl)}</small>
-                        <div>
-                          <a className="team-link" href={item.gitUrl}>
-                            <Github className="github-icon"/>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
 
             <h3 className="team_title">
-              PPMC
+              PMC
               <span className="desc"><Translate>team.tip</Translate></span>
             </h3>
             <div className="team-row">
@@ -120,7 +94,7 @@ export default function () {
               }
             </div>
             <h3 className="team_title">
-              Contributors
+              Contributor
             </h3>
             <span className="desc"><Translate>team.thanks</Translate></span>
 

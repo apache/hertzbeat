@@ -29,10 +29,10 @@ echo Start shutdown HertzBeat %SERVER_NAME%
 for /f "tokens=1-5" %%i in ('netstat -ano^|findstr ":%SERVER_PORT%"') do (
     echo kill the process %%m who use the port 
     taskkill /pid %%m -t -f
-    echo Shutdown HertzBeat %SERVER_NAME% Success!  
+    echo Shutdown Apache HertzBeat %SERVER_NAME% Success!  
     goto q
 )
-echo Failed shutdown HertzBeat %SERVER_NAME%
+echo Failed shutdown Apache HertzBeat %SERVER_NAME%
 
 :q
 pause
