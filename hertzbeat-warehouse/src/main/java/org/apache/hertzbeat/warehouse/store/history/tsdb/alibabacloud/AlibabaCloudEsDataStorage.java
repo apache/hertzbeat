@@ -18,8 +18,6 @@
 package org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud;
 
 import com.google.common.collect.Maps;
-import io.searchbox.action.AbstractAction;
-import io.searchbox.action.AbstractDocumentTargetedAction;
 import io.searchbox.action.BulkableAction;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
@@ -47,7 +45,6 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.kafka.common.utils.Exit;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -79,9 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -193,9 +187,9 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
                 log.info("Check alibaba cloud elasticsearch metrics server status success.");
                 return true;
             }
-            log.error("check alibaba cloud elasticsearch metrics server status failed: {}.", responseEntity.getBody());
+            log.error("Check alibaba cloud elasticsearch metrics server status failed: {}.", responseEntity.getBody());
         } catch (Exception e) {
-            log.error("check alibaba cloud elasticsearch metrics server status error: {}.", e.getMessage());
+            log.error("Check alibaba cloud elasticsearch metrics server status error: {}.", e.getMessage());
         }
         return false;
     }
@@ -293,12 +287,11 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        log.info("保存指标，metrics:{}", metricsData.getMetrics());
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
         if (metricsData.getValues().isEmpty()) {
-            log.info("[warehouse AlibabaCloud elasticsearch] metrics data {} is null, ignore.", metricsData.getId());
+            log.info("[warehouse alibabaCloud elasticsearch] metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
@@ -309,9 +302,8 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
         defaultLabels.put(LABEL_KEY_INSTANCE, String.valueOf(metricsData.getId()));
-        //
-        List<TimeStreamIndexedEntity> entities = new ArrayList<>();
         try {
+            List<TimeStreamIndexedEntity> entities = new ArrayList<>();
             final int fieldSize = metricsData.getFields().size();
             Map<String, Double> fieldsValue = Maps.newHashMapWithExpectedSize(fieldSize);
             Map<String, String> labels = Maps.newHashMapWithExpectedSize(fieldSize);
@@ -354,6 +346,7 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
                                     .labels(new HashMap<>(labels))
                                     .metrics(Map.of(metricsName, entry.getValue()))
                                     .timestamp(metricsData.getTime())
+                                    .operator(TimeStreamIndexedEntity.Operator.INSERT)
                                     .build();
                             entities.add(indexedEntity);
                         } catch (Exception e) {
@@ -404,18 +397,6 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
             }
             return builder.build();
         }
-    }
-
-
-    private BiFunction ss() {
-        return new BiFunction<Map<String, Object>, BiConsumer<String, Object>, Void>() {
-
-            @Override
-            public Void apply(Map<String, Object> stringObjectMap, BiConsumer<String, Object> biConsumer) {
-                stringObjectMap.forEach(biConsumer);
-                return null;
-            }
-        };
     }
 
     @Override
