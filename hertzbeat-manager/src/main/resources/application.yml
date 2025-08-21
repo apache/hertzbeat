@@ -224,6 +224,11 @@ warehouse:
       password: root
       expire-time: '30d'
       replication: 1
+    alibabacloud-es:
+      enabled: false
+      url: http://127.0.01:9200
+      username: elastic
+      password: elastic
   # store real-time metrics data, enable only one below
   real-time:
     memory:
