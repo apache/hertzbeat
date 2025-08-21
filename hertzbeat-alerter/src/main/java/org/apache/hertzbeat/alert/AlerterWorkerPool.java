@@ -88,8 +88,8 @@ public class AlerterWorkerPool {
                 .setDaemon(true)
                 .setNameFormat("log-worker-%d")
                 .build();
-        logWorkerExecutor = new ThreadPoolExecutor(4, 10, 10, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
+        logWorkerExecutor = new ThreadPoolExecutor(10, 10, 10, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),
                 threadFactory,
                 new ThreadPoolExecutor.AbortPolicy());
     }
