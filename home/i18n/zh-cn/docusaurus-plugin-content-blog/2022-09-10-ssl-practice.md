@@ -36,7 +36,7 @@ gitee: <https://gitee.com/hertzbeat/hertzbeat>
 
 1. 点击新增SSL证书监控
 
-    > 系统页面 -> 监控菜单 -> SSL证书 -> 新增SSL证书
+    > 系统页面 -> 监控中心 -> SSL证书 -> 新增SSL证书
 
     ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bd53f343a5b54feab62e71458d076441~tplv-k3u1fbpfcp-zoom-1.image)
 
