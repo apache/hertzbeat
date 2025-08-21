@@ -22,7 +22,7 @@ CURRENT_DIR=`pwd`
 # cd dist dir
 cd ../../../dist
 # auto detect hertzbeat version
-VERSION=`ls apache-hertzbeat-collector-*-incubating-bin.tar.gz| awk -F"-" '{print $4}'`
+VERSION=`ls apache-hertzbeat-collector-*-bin.tar.gz| awk -F"-" '{print $4}'`
 # use the version param
 if [ -n "$1" ]; then
     VERSION="$1";
