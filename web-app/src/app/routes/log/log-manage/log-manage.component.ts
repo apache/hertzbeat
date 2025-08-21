@@ -473,7 +473,10 @@ export class LogManageComponent implements OnInit {
     if (typeof body === 'string') return body.length > 100 ? `${body.substr(0, 100)}...` : body;
     if (typeof body === 'object') {
       const str = JSON.stringify(body);
-      return str.length > 100 ? `${str.substr(0, 100)}...` : str;
+    if (typeof body === 'string') return body.length > 100 ? `${body.substring(0, 100)}...` : body;
+    if (typeof body === 'object') {
+      const str = JSON.stringify(body);
+      return str.length > 100 ? `${str.substring(0, 100)}...` : str;
     }
     return String(body);
   }
