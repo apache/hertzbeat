@@ -1,15 +1,15 @@
 ---
 id: spring_gateway
-Title: 监控 Spring Gateway
-sidebar_label: Spring Gateway
-keywords: [开源监控工具, 开源 Spring Gateway 监控工具, 监控 Spring Gateway 指标]
+Title: 监控 Spring Cloud Gateway
+sidebar_label: Spring Cloud Gateway
+keywords: [开源监控工具, 开源 Spring Cloud Gateway 监控工具, 监控 Spring Cloud Gateway 指标]
 ---
 
 > 收集和监控 SpringBoot Actuator 提供的常规性能指标。
 
 ## 监控前操作
 
-如果您想使用此监控类型监控 'Spring Gateway' 的信息，您需要集成您的 SpringBoot 应用程序并启用 SpringBoot Actuator。
+如果您想使用此监控类型监控 `Spring Cloud Gateway` 的信息，您需要集成您的 `Spring Cloud Gateway` 应用程序并启用 SpringBoot Actuator。
 
 **1、添加 POM .XML 依赖:**
 
@@ -26,24 +26,25 @@ keywords: [开源监控工具, 开源 Spring Gateway 监控工具, 监控 Spring
 management:
   endpoint:
     gateway:
-      enabled: true # default value
+      enabled: true
+    env:
+      show-values: ALWAYS
   endpoints:
     web:
       exposure:
-        include: '*'
-    enabled-by-default: on
+        include: "*"
 ```
 
 ### 配置参数
 
-|   参数名称   |                          参数描述                          |
-|----------|--------------------------------------------------------|-----------------------------------------------|
+| 参数名称     | 参数描述                                                   |
+|----------|--------------------------------------------------------|
 | 监控主机     | 被监控的目标 IPV4、IPV6 或域名。注意⚠️不要包含协议头（例如：https://，http://）。 |
 | 监控名称     | 用于标识此监控的名称，需要保证唯一性。                                    |
 | 端口       | 数据库提供的默认端口为 8080。                                      |
 | 启用 HTTPS | 是否通过 HTTPS 访问网站，请注意⚠️当启用 HTTPS 时，需要将默认端口更改为 443        |
 | 采集间隔     | 监控周期性采集数据的时间间隔，单位为秒，最小间隔为 30 秒。                        |
-| 是否探测     | 在新增监控前是否先进行可用性探测，只有探测成功才会继续新增或修改操作。                    | will continue only if the probe is successful |
+| 是否探测     | 在新增监控前是否先进行可用性探测，只有探测成功才会继续新增或修改操作。                    | 
 | 描述备注     | 用于添加关于监控的额外标识和描述信息。                                    |
 
 ### 采集指标
