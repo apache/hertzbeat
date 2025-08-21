@@ -245,7 +245,7 @@
   "alert.setting.default.tip": "此告警阈值配置是否應用于全局所有此類型監控",
   "alert.setting.delete": "刪除阈值規則",
   "alert.setting.edit": "編輯阈值規則",
-  "alert.setting.edit.periodic": "編輯周期阈值",
+  "alert.setting.edit.periodic": "編輯周期閾值",
   "alert.setting.edit.realtime": "編輯實時阈值",
   "alert.setting.enable": "啓用閾值",
   "alert.setting.enable.tip": "此告警阈值配置開啓生效或關閉",
