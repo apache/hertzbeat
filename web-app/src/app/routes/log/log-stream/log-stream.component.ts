@@ -337,7 +337,6 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Utility methods
   getSeverityColor(severityNumber: number | undefined): string {
-    console.log('severityNumber', severityNumber);
     if (!severityNumber) {
       return 'default';
     }
