@@ -213,9 +213,9 @@ mvn clean package -Pcluster
 
 The release package are here:
 
-- `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
-- `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
-- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
+- `dist/apache-hertzbeat-{version}-bin.tar.gz`
+- `dist/apache-hertzbeat-collector-{version}-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-docker-compose.tar.gz`
 
 #### 3.4 Package the source code
 
@@ -224,12 +224,12 @@ The release package are here:
 ```shell
 git archive \
 --format=tar.gz \
---output="dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
---prefix=apache-hertzbeat-1.6.0-incubating-src/ \
+--output="dist/apache-hertzbeat-1.6.0-src.tar.gz" \
+--prefix=apache-hertzbeat-1.6.0-src/ \
 release-1.6.0-rc1
 ```
 
-The archive package is here `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
+The archive package is here `dist/apache-hertzbeat-1.6.0-src.tar.gz`
 
 ### Sign package
 
@@ -252,18 +252,18 @@ for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
 > The final file list is as follows
 
 ```text
-apache-hertzbeat-1.6.0-incubating-src.tar.gz
-apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
-apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
-apache-hertzbeat-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
-apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
-apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
-apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-src.tar.gz
+apache-hertzbeat-1.6.0-src.tar.gz.asc
+apache-hertzbeat-1.6.0-src.tar.gz.sha512
+apache-hertzbeat-1.6.0-bin.tar.gz
+apache-hertzbeat-1.6.0-bin.tar.gz.asc
+apache-hertzbeat-1.6.0-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-docker-compose.tar.gz.asc
+apache-hertzbeat-1.6.0-docker-compose.tar.gz.sha512
+apache-hertzbeat-collector-1.6.0-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-bin.tar.gz.asc
+apache-hertzbeat-collector-1.6.0-bin.tar.gz.sha512
 ```
 
 #### 3.6 Verify signature
@@ -274,15 +274,15 @@ $ cd dist
 # Verify signature
 $ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 
-apache-hertzbeat-1.6.0-incubating-src.tar.gz
+apache-hertzbeat-1.6.0-src.tar.gz
 gpg: Signature made Tue May  2 12:16:35 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
 gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat_2.11-1.6.0-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:36 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
 gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat_2.12-1.6.0-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
 gpg: BAD signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
@@ -290,14 +290,14 @@ gpg: BAD signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimat
 # Verify SHA512
 $ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
 
-apache-hertzbeat-1.6.0-incubating-src.tar.gz
-apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
-apache-hertzbeat-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
-apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-src.tar.gz
+apache-hertzbeat-1.6.0-src.tar.gz: OK
+apache-hertzbeat-1.6.0-bin.tar.gz
+apache-hertzbeat-1.6.0-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-docker-compose.tar.gz: OK
+apache-hertzbeat-collector-1.6.0-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-bin.tar.gz: OK
 ```
 
 #### 3.7 Publish the dev directory of the Apache SVN material package
