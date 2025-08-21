@@ -22,9 +22,9 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
 http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <!--Required, will be appended to the end of the packaged file name-->
-    <id>incubating-bin-macos_arm64</id>
+    <id>bin-macos_arm64</id>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>apache-hertzbeat-collector-${hzb.version}-incubating</baseDirectory>
+    <baseDirectory>apache-hertzbeat-collector-${hzb.version}</baseDirectory>
     <!--Packaging type, multiple types can be set, different types will be packaged when packaging-->
     <formats>
         <format>tar.gz</format>
