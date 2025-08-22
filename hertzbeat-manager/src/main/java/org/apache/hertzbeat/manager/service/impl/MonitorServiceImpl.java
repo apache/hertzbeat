@@ -684,17 +684,17 @@ public class MonitorServiceImpl implements MonitorService {
         // The jobId is not deleted, and the jobId is reused again after the management is started.
         Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
         ids.addAll(subMonitorIds);
-        List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
-                .stream().filter(monitor ->
-                        monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
+        List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids).stream()
+                .filter(monitor -> monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE))
                 .collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(managedMonitors)) {
-            for (Monitor monitor : managedMonitors) {
-                jobOperation.cancelAsyncCollectJob(monitor.getJobId());
-            }
-            monitorDao.saveAll(managedMonitors);
+
+        if (CollectionUtils.isEmpty(managedMonitors)) {
+            return;
         }
+
+        managedMonitors.forEach(monitor -> jobOperation.cancelAsyncCollectJob(monitor.getJobId()));
+        monitorDao.saveAll(managedMonitors);
     }
 
     @Override
@@ -702,9 +702,8 @@ public class MonitorServiceImpl implements MonitorService {
         // Update monitoring status Add corresponding monitoring periodic task
         Set<Long> subMonitorIds = monitorBindDao.findMonitorBindsByBizIdIn(ids).stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet());
         ids.addAll(subMonitorIds);
-        List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
-                .stream().filter(monitor ->
-                        monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
+        List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids).stream()
+                .filter(monitor -> monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
                 .collect(Collectors.toList());
         if (unManagedMonitors.isEmpty()) {
