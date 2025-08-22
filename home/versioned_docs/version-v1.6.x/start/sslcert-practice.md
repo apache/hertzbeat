@@ -30,7 +30,7 @@ The production environment recommends a complete deployment method, refer <https
 
 1. Click Add SSL Certificate Monitor
 
-   > HertzBeat Page -> Monitors Menu -> New Monitor -> Service Monitor -> Add SSL Certificate
+   > HertzBeat Page -> Monitors -> New Monitor -> Service Monitor -> Add SSL Certificate
 
    ![HertzBeat](/img/docs/start/ssl_1.png)
 
