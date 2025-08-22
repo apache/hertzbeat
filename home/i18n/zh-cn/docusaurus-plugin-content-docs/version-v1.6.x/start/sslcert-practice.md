@@ -32,7 +32,7 @@ github: <https://github.com/apache/hertzbeat>
 
 1. 新增 SSL 证书监控
 
-   > 系统页面 -> 监控菜单 -> 新增监控 -> 服务监控 -> SSL 证书 -> 新增 SSL 证书
+   > 系统页面 -> 监控中心 -> 新增监控 -> 应用服务监控 -> SSL 证书 -> 新增 SSL 证书
 
    ![HertzBeat](/img/docs/start/ssl_1.png)
 
