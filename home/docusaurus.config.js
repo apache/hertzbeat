@@ -281,7 +281,7 @@ module.exports = {
         `
         <div style="text-align: left;margin-top:30px">
           <div style="align-items: center; display: flex">
-            <div style="width: 100%; background-color: #282c77; padding: 10px; border-radius: 6px">
+            <div style="width: 40%; margin-left: 30%; background-color: #282c77; padding: 10px; border-radius: 6px">
               <a href="https://apache.org/">
                 <img src="/img/icons/asf_logo.svg" alt="Apache logo">
               </a>
