@@ -193,8 +193,8 @@ public class MonitorServiceImpl implements MonitorService {
             return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
-        long jobId = collector == null ? jobOperation.addAsyncCollectJob(appDefine, null) :
-                jobOperation.addAsyncCollectJob(appDefine, collector);
+        long jobId = jobOperation.addAsyncCollectJob(appDefine, collector);
+
 
         detectMonitorSafely(monitor, params, collector);
 
