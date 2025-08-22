@@ -58,6 +58,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -74,9 +75,17 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.ES_INIT_ERROR_MSG;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.INDEX_TYPE;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.LABEL_KEY_HOST;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.LABEL_KEY_INSTANCE;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.LABEL_KEY_JOB;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.LABEL_KEY_NAME;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.QUERY_RANGE_PATH;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.SPLIT;
+import static org.apache.hertzbeat.warehouse.store.history.tsdb.alibabacloud.AlibabaCloudEsConstants.TIME_STREAM;
 
 /**
  * AlibabaCloud elasticsearch data storage.
@@ -87,24 +96,6 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(prefix = "warehouse.store.alibabacloud-es", name = "enabled", havingValue = "true")
 public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
 
-    private static final String TIME_STREAM = "_time_stream";
-
-    private static final String LABEL_KEY_HOST = "host";
-
-    private static final String SPILT = "_";
-
-    // /_time_stream/prom/{index}/query_range
-    private static final String QUERY_RANGE_PATH = TIME_STREAM + "/prom/%s/query_range";
-
-    private static final String LABEL_KEY_INSTANCE = "instance";
-
-    private static final String LABEL_KEY_JOB = "job";
-
-    private static final String LABEL_KEY_NAME = "__name__";
-
-    private static final String INDEX_TYPE = "_doc";
-
-
     private final AlibabaCloudEsProperties properties;
 
     private final RestTemplate restTemplate;
@@ -113,8 +104,8 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
 
     public AlibabaCloudEsDataStorage(AlibabaCloudEsProperties properties, RestTemplate restTemplate) {
         if (properties == null) {
-            log.error("init error, please config Warehouse GreptimeDB props in application.yml");
-            throw new IllegalArgumentException("please config Warehouse GreptimeDB props");
+            log.error("init error, please config Warehouse alibabaCloud es props in application.yml");
+            throw new IllegalArgumentException("please config Warehouse alibabaCloud es props");
         }
         this.properties = properties;
         this.restTemplate = initBasicAuthRestTemplate(restTemplate);
@@ -184,12 +175,12 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
             ResponseEntity<String> responseEntity = restTemplate.exchange(
                     properties.url() + "/" + TIME_STREAM + "/" + properties.database(), HttpMethod.GET, httpEntity, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                log.info("Check alibaba cloud elasticsearch metrics server status success.");
+                log.info("Check alibaba cloud es metrics server status success.");
                 return true;
             }
-            log.error("Check alibaba cloud elasticsearch metrics server status failed: {}.", responseEntity.getBody());
+            log.error("Check alibaba cloud es metrics server status failed: {}.", responseEntity.getBody());
         } catch (Exception e) {
-            log.error("Check alibaba cloud elasticsearch metrics server status error: {}.", e.getMessage());
+            log.error("Check alibaba cloud es metrics server status error: {}.", e.getMessage());
         }
         return false;
     }
@@ -197,12 +188,7 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         if (!serverAvailable) {
-            log.error("""
-                    
-                    \t---------------Alibaba Cloud Elasticsearch Init Failed---------------
-                    \t--------------Please Config Alibaba Cloud Elasticsearch--------------
-                    \t----------Can Not Use Metric History Now----------
-                    """);
+            log.error(ES_INIT_ERROR_MSG);
             return Collections.emptyMap();
         }
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -233,7 +219,7 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
                 step = "4h";
             }
 
-            String metricsName = metrics + SPILT + metric;
+            String metricsName = metrics + SPLIT + metric;
             if (CommonConstants.PROMETHEUS.equals(app)) {
                 metricsName = metrics;
             }
@@ -251,7 +237,7 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
 
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                log.debug("query metrics data from alibaba cloud elasticsearch success. {}", uri);
+                log.debug("query metrics data from alibaba cloud es success. {}", uri);
                 if (responseEntity.getBody().getData() != null && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (PromQlQueryContent.ContentData.Content content : contents) {
@@ -263,7 +249,6 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
                         if (content.getValues() != null && !content.getValues().isEmpty()) {
                             List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
                             for (Object[] valueArr : content.getValues()) {
-                                // todo
                                 long timestamp = ((Integer) valueArr[0]).longValue();
                                 String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                                 valueList.add(new Value(value, timestamp * 1000));
@@ -272,7 +257,7 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
                     }
                 }
             } else {
-                log.error("query metrics data from alibaba cloud elasticsearch failed. {}", responseEntity);
+                log.error("query metrics data from alibaba cloud es failed. {}", responseEntity);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -287,14 +272,36 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
+        if (!validateAndInitializeServer(metricsData)) {
             return;
+        }
+        
+        Map<String, String> defaultLabels = createDefaultLabels(metricsData);
+        List<TimeStreamIndexedEntity> entities = processMetricsData(metricsData, defaultLabels);
+        
+        if (entities.isEmpty()) {
+            return;
+        }
+        
+        bulkWriteToElasticsearch(entities);
+    }
+    
+    private boolean validateAndInitializeServer(CollectRep.MetricsData metricsData) {
+        if (!isServerAvailable()) {
+            serverAvailable = initAlibabaCloudEsDataStorage();
+        }
+        if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
+            return false;
         }
         if (metricsData.getValues().isEmpty()) {
-            log.info("[warehouse alibabaCloud elasticsearch] metrics data {} is null, ignore.", metricsData.getId());
-            return;
+            log.info("[warehouse alibabaCloud es metrics data {} is null, ignore.", metricsData.getId());
+            return false;
         }
-        Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
+        return true;
+    }
+    
+    private Map<String, String> createDefaultLabels(CollectRep.MetricsData metricsData) {
+        Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(4);
         boolean isPrometheusAuto = metricsData.getApp().startsWith(CommonConstants.PROMETHEUS_APP_PREFIX);
         if (isPrometheusAuto) {
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp().substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));
@@ -302,8 +309,14 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
         defaultLabels.put(LABEL_KEY_INSTANCE, String.valueOf(metricsData.getId()));
+        return defaultLabels;
+    }
+    
+    private List<TimeStreamIndexedEntity> processMetricsData(CollectRep.MetricsData metricsData, Map<String, String> defaultLabels) {
+        List<TimeStreamIndexedEntity> entities = new ArrayList<>();
+        boolean isPrometheusAuto = metricsData.getApp().startsWith(CommonConstants.PROMETHEUS_APP_PREFIX);
+        
         try {
-            List<TimeStreamIndexedEntity> entities = new ArrayList<>();
             final int fieldSize = metricsData.getFields().size();
             Map<String, Double> fieldsValue = Maps.newHashMapWithExpectedSize(fieldSize);
             Map<String, String> labels = Maps.newHashMapWithExpectedSize(fieldSize);
@@ -313,54 +326,94 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();
                 labels.clear();
+                fieldsValue.clear();
 
-                rowWrapper.cellStream().forEach(cell -> {
-                    String value = cell.getValue();
-                    boolean isLabel = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
-                    byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+                extractFieldsAndLabels(rowWrapper, fieldsValue, labels);
+                List<TimeStreamIndexedEntity> indexedEntities = createTimeStreamEntities(fieldsValue, labels, defaultLabels, metricsData, isPrometheusAuto);
+                entities.addAll(indexedEntities);
+            }
+        } catch (Exception e) {
+            log.error("[warehouse alibaba es] Error processing metrics data: {}", e.getMessage(), e);
+        }
+        return entities;
+    }
+    
+    private void extractFieldsAndLabels(RowWrapper rowWrapper, Map<String, Double> fieldsValue, Map<String, String> labels) {
+        rowWrapper.cellStream().forEach(cell -> {
+            String value = cell.getValue();
+            boolean isLabel = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+            byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
 
-                    if (type == CommonConstants.TYPE_NUMBER && !isLabel) {
-                        // number metrics data
-                        if (!CommonConstants.NULL_VALUE.equals(value)) {
-                            fieldsValue.put(cell.getField().getName(), CommonUtil.parseStrDouble(value));
-                        }
-                    }
-                    // label
-                    if (isLabel && !CommonConstants.NULL_VALUE.equals(value)) {
-                        labels.put(cell.getField().getName(), value);
-                    }
-                });
-
-                for (Map.Entry<String, Double> entry : fieldsValue.entrySet()) {
-                    if (entry.getKey() != null && entry.getValue() != null) {
-                        try {
-                            labels.putAll(defaultLabels);
-                            String metricsName = isPrometheusAuto ? metricsData.getMetrics() : metricsData.getMetrics() + SPILT + entry.getKey();
-                            labels.put(LABEL_KEY_HOST, metricsData.getInstanceHost());
-                            // add customized labels as identifier
-                            var customizedLabels = metricsData.getLabels();
-                            if (!ObjectUtils.isEmpty(customizedLabels)) {
-                                labels.putAll(customizedLabels);
-                            }
-                            TimeStreamIndexedEntity indexedEntity = TimeStreamIndexedEntity.builder()
-                                    .labels(new HashMap<>(labels))
-                                    .metrics(Map.of(metricsName, entry.getValue()))
-                                    .timestamp(metricsData.getTime())
-                                    .operator(TimeStreamIndexedEntity.Operator.INSERT)
-                                    .build();
-                            entities.add(indexedEntity);
-                        } catch (Exception e) {
-                            log.error("combine metrics data error: {}.", e.getMessage(), e);
-                        }
-                    }
+            if (type == CommonConstants.TYPE_NUMBER && !isLabel) {
+                // number metrics data
+                if (!CommonConstants.NULL_VALUE.equals(value)) {
+                    fieldsValue.put(cell.getField().getName(), CommonUtil.parseStrDouble(value));
                 }
             }
-            if (entities.isEmpty()) {
+            // label
+            if (isLabel && !CommonConstants.NULL_VALUE.equals(value)) {
+                labels.put(cell.getField().getName(), value);
+            }
+        });
+    }
+    
+    private List<TimeStreamIndexedEntity> createTimeStreamEntities(Map<String, Double> fieldsValue, 
+                                                                   Map<String, String> labels,
+                                                                   Map<String, String> defaultLabels,
+                                                                   CollectRep.MetricsData metricsData,
+                                                                   boolean isPrometheusAuto) {
+        List<TimeStreamIndexedEntity> entities = new ArrayList<>(fieldsValue.size());
+        
+        // Pre-calculate common values to avoid repeated computation
+        final String instanceHost = metricsData.getInstanceHost();
+        final String metricsPrefix = metricsData.getMetrics();
+        final long timestamp = metricsData.getTime();
+        final Map<String, String> customizedLabels = metricsData.getLabels();
+        final boolean hasCustomizedLabels = !ObjectUtils.isEmpty(customizedLabels);
+        
+        for (Map.Entry<String, Double> entry : fieldsValue.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                try {
+                    Map<String, String> entityLabels = Maps.newHashMapWithExpectedSize(8);
+                    entityLabels.putAll(labels);
+                    entityLabels.putAll(defaultLabels);
+                    entityLabels.put(LABEL_KEY_HOST, instanceHost);
+                    
+                    if (hasCustomizedLabels) {
+                        entityLabels.putAll(customizedLabels);
+                    }
+                    
+                    String metricsName = isPrometheusAuto ? metricsPrefix : metricsPrefix + SPLIT + entry.getKey();
+                    
+                    TimeStreamIndexedEntity indexedEntity = TimeStreamIndexedEntity.builder()
+                            .labels(entityLabels)
+                            .metrics(Map.of(metricsName, entry.getValue()))
+                            .timestamp(timestamp)
+                            .operator(TimeStreamIndexedEntity.Operator.INSERT)
+                            .build();
+                    entities.add(indexedEntity);
+                } catch (Exception e) {
+                    log.error("combine metrics data error: {}.", e.getMessage(), e);
+                }
+            }
+        }
+        
+        return entities;
+    }
+    
+    private void bulkWriteToElasticsearch(List<TimeStreamIndexedEntity> entities) {
+        try {
+            List<BulkableAction<DocumentResult>> actions = new ArrayList<>(entities.size());
+            for (TimeStreamIndexedEntity entity : entities) {
+                if (entity != null) {
+                    BulkableAction<DocumentResult> action = buildAction(entity);
+                    actions.add(action);
+                }
+            }
+
+            if (actions.isEmpty()) {
                 return;
             }
-            List<BulkableAction<DocumentResult>> actions = entities.stream().filter(Objects::nonNull)
-                    .map(this::buildAction)
-                    .collect(Collectors.toList());
 
             Bulk bulk = new Bulk.Builder()
                     .defaultIndex(properties.database())
@@ -372,28 +425,33 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
             if (!bulkResult.isSucceeded()) {
                 log.error("[warehouse alibaba es] write failed, res: {}", bulkResult.getJsonString());
             }
+        } catch (IOException e) {
+            log.error("[warehouse alibaba es] IO error writing to Elasticsearch: {}", e.getMessage(), e);
         } catch (Exception e) {
-            log.error("[warehouse influxdb]--Error: {}", e.getMessage(), e);
+            log.error("[warehouse alibaba es] Error writing to Elasticsearch: {}", e.getMessage(), e);
         }
     }
 
     private BulkableAction<DocumentResult> buildAction(TimeStreamIndexedEntity indexedEntity) {
-        if (TimeStreamIndexedEntity.Operator.DELETE.equals(indexedEntity.getOperator())) {
+        Map<String, Object> actionParams = indexedEntity.getActionParams();
+        TimeStreamIndexedEntity.Operator operator = indexedEntity.getOperator();
+        indexedEntity.clear();
+        if (TimeStreamIndexedEntity.Operator.DELETE.equals(operator)) {
             Delete.Builder builder = new Delete.Builder(indexedEntity.getId());
-            if (MapUtils.isNotEmpty(indexedEntity.getActionParams())) {
-                indexedEntity.getActionParams().forEach(builder::setParameter);
+            if (MapUtils.isNotEmpty(actionParams)) {
+                actionParams.forEach(builder::setParameter);
             }
             return builder.build();
-        } else if (TimeStreamIndexedEntity.Operator.UPDATE.equals(indexedEntity.getOperator())) {
+        } else if (TimeStreamIndexedEntity.Operator.UPDATE.equals(operator)) {
             Update.Builder builder = new Update.Builder(JsonUtil.toJson(indexedEntity)).id(indexedEntity.getId());
-            if (MapUtils.isNotEmpty(indexedEntity.getActionParams())) {
-                indexedEntity.getActionParams().forEach(builder::setParameter);
+            if (MapUtils.isNotEmpty(actionParams)) {
+                actionParams.forEach(builder::setParameter);
             }
             return builder.build();
         } else {
             Index.Builder builder = new Index.Builder(JsonUtil.toJson(indexedEntity));
-            if (MapUtils.isNotEmpty(indexedEntity.getActionParams())) {
-                indexedEntity.getActionParams().forEach(builder::setParameter);
+            if (MapUtils.isNotEmpty(actionParams)) {
+                actionParams.forEach(builder::setParameter);
             }
             return builder.build();
         }
