@@ -14,7 +14,7 @@
   "about.point.6": "提供強大的狀態頁構建功能，輕鬆向用戶傳達您產品服務的實時狀態。",
   "about.pr": "貢獻代碼",
   "about.star": "點贊支持",
-  "about.title": "Apache HertzBeat (incubating) 是一個開源實時監控系統，無需Agent，性能集羣，兼容Prometheus，自定義監控和狀態頁構建能力。",
+  "about.title": "Apache HertzBeat 是一個開源實時監控系統，無需Agent，性能集羣，兼容Prometheus，自定義監控和狀態頁構建能力。",
   "about.upgrade": "升級指引",
   "alert": "告警",
   "alert.center.clear": "一鍵清空",
