@@ -12,7 +12,7 @@ This article introduces how to use the hertzbeat monitoring tool to detect the v
 
 ## What is HertzBeat
 
-Apache HertzBeat (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
+Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
 
 github: <https://github.com/apache/hertzbeat>
 
@@ -30,7 +30,7 @@ The production environment recommends a complete deployment method, refer <https
 
 1. Click Add SSL Certificate Monitor
 
-   > HertzBeat Page -> Monitors Menu -> New Monitor -> Service Monitor -> Add SSL Certificate
+   > HertzBeat Page -> Monitors -> New Monitor -> Service Monitor -> Add SSL Certificate
 
    ![HertzBeat](/img/docs/start/ssl_1.png)
 
