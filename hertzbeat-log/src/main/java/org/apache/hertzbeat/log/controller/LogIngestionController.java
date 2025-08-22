@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "Log Ingestion Controller")
 @RestController
+@RequestMapping(path = "/api/logs", produces = "application/json")
 @Slf4j
 public class LogIngestionController {
 
@@ -55,7 +57,7 @@ public class LogIngestionController {
      * @param protocol  log protocol identifier
      * @param content raw request body
      */
-    @PostMapping("/api/logs/ingest/{protocol}")
+    @PostMapping("/ingest/{protocol}")
     public ResponseEntity<Message<Void>> ingestExternLog(@PathVariable("protocol") String protocol,
                                                          @RequestBody String content) {
         log.info("Receive extern log from protocol: {}, content length: {}", protocol, content == null ? 0 : content.length());
@@ -83,7 +85,7 @@ public class LogIngestionController {
      * Receive default log payload (when protocol is not specified).
      * It will look for a service whose supportProtocol() returns "otlp".
      */
-    @PostMapping("/api/logs/ingest")
+    @PostMapping("/ingest")
     public ResponseEntity<Message<Void>> ingestDefaultExternLog(@RequestBody String content) {
         log.info("Receive default extern log content, length: {}", content == null ? 0 : content.length());
         LogProtocolAdapter adapter = protocolAdapters.stream()
