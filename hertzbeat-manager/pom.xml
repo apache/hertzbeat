@@ -294,6 +294,21 @@
                                 </configuration>
                             </execution>
                             <execution>
+                                <id>make-docker-zip</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>../dist</outputDirectory>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-docker.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>make-docker-compose-script</id>
                                 <!--Bound maven operation-->
                                 <phase>package</phase>

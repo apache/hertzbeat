@@ -1,6 +1,6 @@
 ---
 id: introduce  
-title: Apache HertzBeat (incubating)     
+title: Apache HertzBeat     
 sidebar_label: 介绍
 slug: /
 ---

@@ -29,9 +29,7 @@ RUN localedef -c -f UTF-8 -i en_US en_US.UTF-8
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
-ADD apache-hertzbeat-1.*-incubating-bin.tar.gz /opt/
-
-RUN mv /opt/apache-hertzbeat-*-incubating-bin /opt/hertzbeat
+ADD apache-hertzbeat-1.*-docker-bin.tar.gz /opt/
 
 EXPOSE 1157 1158 22
 
