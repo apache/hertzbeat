@@ -30,7 +30,7 @@ The production environment recommends a complete deployment method, refer [Insta
 
 ### 1. Click Add Linux Operating System Monitor
 
-> HertzBeat Page -> Monitors Menu -> New Monitor -> OS Monitor -> Add OS Linux
+> HertzBeat Page -> Monitors -> New Monitor -> OS Monitor -> Add OS Linux
 
 ![HertzBeat](/img/docs/start/linux-os-practice-1.png)
 
