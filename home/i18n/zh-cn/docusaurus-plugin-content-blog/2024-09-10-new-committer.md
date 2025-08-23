@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: zuobiao-zhou
 author_title: Yuxuan Zhang
 author_url: https://github.com/zuobiao-zhou
-author_image_url: https://avatars.githubusercontent.com/u/61108539
 tags: [opensource, practice]
 keywords:
   [

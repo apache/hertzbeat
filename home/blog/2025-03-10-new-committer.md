@@ -3,7 +3,6 @@ title: Warmly Welcome HertzBeat's New Community Committer!
 author: yunfan24
 author_title: Lixin Diao
 author_url: https://github.com/yunfan24
-author_image_url: https://avatars.githubusercontent.com/u/91836599?v=4
 tags: [opensource, practice]
 keywords:
   [
