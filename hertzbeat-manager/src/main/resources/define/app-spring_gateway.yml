@@ -19,15 +19,15 @@ category: mid
 app: spring_gateway
 # The monitoring i18n name
 name:
-  zh-CN: SpringGateway
-  en-US: SpringGateway
-  ja-JP: SpringGateway
+  zh-CN: Spring Cloud Gateway
+  en-US: Spring Cloud Gateway
+  ja-JP: Spring Cloud Gateway
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 对 <a class='help_module_content' href='https://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> 暴露的通用性能指标(globalfilters、routefilters、refresh、routes)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 SpringGateway 中的信息，需要您的 SpringGateway 应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>点击查看具体步骤</a>。</span>
-  en-US: HertzBeat collect and monitors SpringGateway through general performance metric that exposed by the SpringBoot Actuator. <br><span class='help_module_span'><br>Note⚠️:You should make sure that your SpringGateway application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>click here to see the specific steps.</a></span>
-  zh-TW: HertzBeat 對 <a class='help_module_content' href='https://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。<span class='help_module_span'>注意⚠️：如果要監控SpringGateway中的指標，需要您的SpringGateway應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
-  ja-JP: HertzBeat は <a class='help_module_content' href='https://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> の一般的なパフォーマンスのメトリクスを監視します。<span class='help_module_span'>⚠️注意：SpringGateway で SpringBoot Actuatorを有効にする必要があります。<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>クリックしてガイドを見ます</a>。</span>
+  zh-CN: HertzBeat 对 <a class='help_module_content' href='https://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> 暴露的通用性能指标(globalfilters、routefilters、refresh、routes)进行采集监控。<span class='help_module_span'>注意⚠️：如果要监控 Spring Cloud Gateway  中的信息，需要您的 Spring Cloud Gateway  应用集成并开启 SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>点击查看具体步骤</a>。</span>
+  en-US: HertzBeat collect and monitors SpringGateway through general performance metric that exposed by the SpringBoot Actuator. <br><span class='help_module_span'><br>Note⚠️:You should make sure that your Spring Cloud Gateway  application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>click here to see the specific steps.</a></span>
+  zh-TW: HertzBeat 對 <a class='help_module_content' href='https://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。<span class='help_module_span'>注意⚠️：如果要監控 Spring Cloud Gateway  中的指標，需要您的 Spring Cloud Gateway  應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
+  ja-JP: HertzBeat は <a class='help_module_content' href='https://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a> の一般的なパフォーマンスのメトリクスを監視します。<span class='help_module_span'>⚠️注意：Spring Cloud Gateway  で SpringBoot Actuatorを有効にする必要があります。<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>クリックしてガイドを見ます</a>。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/spring_gateway
   en-US: https://hertzbeat.apache.org/docs/help/spring_gateway
@@ -284,7 +284,7 @@ metrics:
           en-US: State
           ja-JP: 状態
         label: true
-      - field: size
+      - field: Size
         type: 0
         i18n:
           zh-CN: 数量
@@ -294,7 +294,7 @@ metrics:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - state='^o^state^o^'
-      - size=$.measurements[?(@.statistic == "VALUE")].value
+      - Size=$.measurements[?(@.statistic == "VALUE")].value
     protocol: http
     http:
       host: ^_^host^_^

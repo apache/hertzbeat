@@ -19,9 +19,9 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
 http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <!--Required, will be appended to the end of the packaged file name-->
-    <id>bin-linux_amd64</id>
+    <id>docker-bin</id>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>apache-hertzbeat-${hzb.version}</baseDirectory>
+    <baseDirectory>hertzbeat</baseDirectory>
     <!--Packaging type, multiple types can be set, different types will be packaged when packaging-->
     <formats>
         <format>tar.gz</format>
@@ -54,7 +54,6 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>logback-spring.xml</include>
                 <include>sureness.yml</include>
             </includes>
-            <!-- Whether to perform property replacement, that is, use ${project.artifactId} -->
             <filtered>true</filtered>
             <outputDirectory>${file.separator}config</outputDirectory>
         </fileSet>
@@ -78,16 +77,10 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             </includes>
         </fileSet>
 
-        <!-- Pack the static resources of the web app into the directory-->
+        <!-- Pack the static resources of the web app into the dist directory-->
         <fileSet>
             <directory>../web-app/dist</directory>
             <outputDirectory>dist</outputDirectory>
-        </fileSet>
-
-        <!-- copy jdk -->
-        <fileSet>
-            <directory>../jdk/linux-amd64</directory>
-            <outputDirectory>java</outputDirectory>
         </fileSet>
 
         <!-- external lib -->

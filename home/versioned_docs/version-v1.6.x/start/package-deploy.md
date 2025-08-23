@@ -5,7 +5,7 @@ sidebar_label: Install via Package
 ---
 
 :::tip
-You can install and run Apache HertzBeat (incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.
+You can install and run Apache HertzBeat on Linux Windows Mac system, and CPU supports X86/ARM64.
 Since version 1.6.0 uses `Java 17` and the installation package no longer provides a built-in JDK version, use the new Hertzbeat according to the following situations:
 
 - When the default environment variable on your server is `Java 17`, you do not need to take any action for this step.
