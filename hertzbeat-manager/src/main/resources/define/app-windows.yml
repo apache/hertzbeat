@@ -316,7 +316,7 @@ metrics:
         type: 0
         i18n:
           zh-CN: 编号
-          en-US: 编号
+          en-US: Index
       - field: hrSWInstalledName
         type: 1
         i18n:
@@ -357,14 +357,14 @@ metrics:
         type: 0
         i18n:
           zh-CN: 编号
-          en-US: 编号
+          en-US: Index
       - field: descr
         type: 1
         i18n:
           zh-CN: 存储描述
           en-US: Storage Description
         label: true
-      - field: size
+      - field: Size
         i18n:
           zh-CN: 存储大小
           en-US: Storage Size
@@ -400,7 +400,7 @@ metrics:
     calculates:
       - index=hrStorageIndex
       - descr=hrStorageDescr
-      - size=hrStorageSize * hrStorageAllocationUnits
+      - Size=hrStorageSize * hrStorageAllocationUnits
       - free=(hrStorageSize - hrStorageUsed) * hrStorageAllocationUnits
       - used=hrStorageUsed * hrStorageAllocationUnits
       - usage= hrStorageUsed / hrStorageSize * 100

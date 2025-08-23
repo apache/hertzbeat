@@ -15,6 +15,7 @@ This page explains how connect to the HertzBeat MCP SSE server. The MCP server a
 ### Connect to the MCP server
 
 Make sure that hertzbeat server is up and running. If you are using any other port than 1157, replace the following accordingly
+
 - URL: `http://localhost:1157/api/sse`
 
 ### Authentication
@@ -23,10 +24,10 @@ You must authenticate each request using one of the following methods:
 
 - JWT bearer token
 
-     - Header: `Authorization: Bearer <your-jwt-token>`
+  - Header: `Authorization: Bearer <your-jwt-token>`
 
 - Basic authentication
-     - Header: `Authorization: Basic <base64(username:password)>`
+  - Header: `Authorization: Basic <base64(username:password)>`
 
 ### Cursor MCP configuration
 
