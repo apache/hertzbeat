@@ -3,7 +3,6 @@ title: How to Participate in Developing Custom Collectors
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-author_image_url: https://avatars.githubusercontent.com/u/29418975?s=400&v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
