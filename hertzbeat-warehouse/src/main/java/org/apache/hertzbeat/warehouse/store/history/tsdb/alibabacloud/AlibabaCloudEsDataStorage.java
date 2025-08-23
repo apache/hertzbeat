@@ -249,7 +249,7 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
                         if (content.getValues() != null && !content.getValues().isEmpty()) {
                             List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
                             for (Object[] valueArr : content.getValues()) {
-                                long timestamp = ((Integer) valueArr[0]).longValue();
+                                long timestamp = ((Number) valueArr[0]).longValue();
                                 String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                                 valueList.add(new Value(value, timestamp * 1000));
                             }
@@ -290,10 +290,10 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable()) {
             serverAvailable = initAlibabaCloudEsDataStorage();
         }
-        if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
+        if (!isServerAvailable() || null == metricsData || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return false;
         }
-        if (metricsData.getValues().isEmpty()) {
+        if (metricsData.rowCount() == 0) {
             log.info("[warehouse alibabaCloud es metrics data {} is null, ignore.", metricsData.getId());
             return false;
         }
@@ -317,9 +317,8 @@ public class AlibabaCloudEsDataStorage extends AbstractHistoryDataStorage {
         boolean isPrometheusAuto = metricsData.getApp().startsWith(CommonConstants.PROMETHEUS_APP_PREFIX);
         
         try {
-            final int fieldSize = metricsData.getFields().size();
-            Map<String, Double> fieldsValue = Maps.newHashMapWithExpectedSize(fieldSize);
-            Map<String, String> labels = Maps.newHashMapWithExpectedSize(fieldSize);
+            Map<String, Double> fieldsValue = Maps.newHashMapWithExpectedSize(8);
+            Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
 
             RowWrapper rowWrapper = metricsData.readRow();
 
