@@ -18,7 +18,7 @@
 -->
 
 <div class="mobile-hide">
-  <ngx-slick-carousel style="margin-top: 70px" nz-row class="carousel" [config]="slideConfig">
+  <ngx-slick-carousel nz-row class="carousel" [config]="slideConfig">
     <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
       <div class="mb-md hoverCard">
         <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
@@ -288,7 +288,7 @@
   </ngx-slick-carousel>
 </div>
 
-<div nz-row nzGutter="16" style="margin-top: 25px; height: 400px">
+<div nz-row nzGutter="16" style="margin-top: 25px; height: 500px">
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
     <nz-spin [nzSpinning]="wordCloudDataLoading">
       <angular-tag-cloud
@@ -391,7 +391,7 @@
   </div>
 </div>
 
-<div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
+<div nz-row nzGutter="16" style="margin-top: 25px; height: 420px">
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 15 }" class="mb-md timeline-card" style="height: 100%">
     <nz-spin [nzSpinning]="alertContentLoading">
       <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow: hidden">
