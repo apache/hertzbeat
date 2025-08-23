@@ -3,7 +3,6 @@ title: Announcement of Apache Hertzbeat 1.7.0 Release
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, release]
 keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 ---
