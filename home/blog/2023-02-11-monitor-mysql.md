@@ -3,7 +3,6 @@ title: Use the open source real-time monitoring tool HertzBeat to monitor and al
 author: tom
 author_title: tom
 author_url: https://github.com/tomsun28
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
 Keywords: [Open source monitoring tool, open source database monitoring, Mysql database monitoring]
 ---

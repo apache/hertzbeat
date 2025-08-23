@@ -10,7 +10,7 @@ import 'aos/dist/aos.css';
 import Translate from '@docusaurus/Translate'
 
 /**
- * Derived from https://github.com/apache/incubator-streampark-website/tree/dev/src/pages/team 
+ * Derived from https://github.com/apache/streampark-website/tree/dev/src/pages/team 
  */
 export default function () {
   const dataSource = config;
