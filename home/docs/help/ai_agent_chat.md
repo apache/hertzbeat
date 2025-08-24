@@ -101,7 +101,7 @@ Monitor created successfully with ID: 12345
 
 ```text
 You: Show me all my current monitors
-Assistant: Here are your current monitors:
+AI Agent: Here are your current monitors:
 
 1. **Linux Server** (ID: 1001)
    - Status: ✅ Online
