@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: LiuTianyou
 author_title: LiuTianyou
 author_url: https://github.com/LiuTianyou
-author_image_url: https://avatars.githubusercontent.com/u/30208283?v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
