@@ -38,7 +38,7 @@ The AI Agent Chat feature provides an interactive chat interface where you can:
 
 Before using the AI Agent Chat, ensure:
 
-1 **OpenAI Configuration**: Valid OpenAI API key must be configured. Optionally, you can change the model in `application.yml` under `spring.ai.openai.chat.options.model`
+1 **OpenAI Configuration**: Valid OpenAI API key must be configured. Optionally, you can change the model in `application.yml` under `spring.ai.openai.chat.options.model` (default is `gpt-4.1-nano`).
 2 **Database Connection**: HertzBeat database must be accessible for monitor operations
 
 ## Configuration
