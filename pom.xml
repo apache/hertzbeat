@@ -59,7 +59,7 @@
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/apache/incubator-hertzbeat/issues</url>
+        <url>https://github.com/apache/hertzbeat/issues</url>
     </issueManagement>
 
     <mailingLists>
