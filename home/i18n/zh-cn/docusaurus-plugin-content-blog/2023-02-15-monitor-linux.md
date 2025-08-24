@@ -3,7 +3,6 @@ title: 使用开源实时监控 HertzBeat 监控 Linux 操作系统
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource, practice]
 keywords: [开源监控系统, 操作系统监控, Linux监控]
 ---

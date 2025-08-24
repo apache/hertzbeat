@@ -3,7 +3,6 @@ title: 成为 Apache Committer, 对我参与开源的肯定
 author: yuluo-yx
 author_title: Shown Ji
 author_url: https://github.com/yuluo-yx
-author_image_url: https://avatars.githubusercontent.com/u/77964041
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
 ---
