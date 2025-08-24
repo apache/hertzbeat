@@ -56,7 +56,6 @@ resourceRole:
 # rule: api===method 
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
-  - /api/alerts/report/**===*
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get

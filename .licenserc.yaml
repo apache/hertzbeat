@@ -67,6 +67,7 @@ header:
     - 'karma.conf.js'
     - 'proxy.conf.js'
     - '.helmignore'
+    - 'script/helm/**'
     - 'web-app/src/app/core/**'
     - 'web-app/src/app/layout/**'
     - 'web-app/src/app/routes/exception/**'
