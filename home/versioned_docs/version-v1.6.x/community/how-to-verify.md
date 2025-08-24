@@ -114,9 +114,7 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 check as follows:
 
 - [ ] Check whether the source package contains unnecessary files, which makes the tar package too large
-- [ ] Folder contains the word `incubating`
 - [ ] There are `LICENSE` and `NOTICE` files
-- [ ] There is a `DISCLAIMER` or `DISCLAIMER-WIP` file
 - [ ] The year in the `NOTICE` file is correct
 - [ ] Only text files exist, not binary files
 - [ ] All files have ASF license at the beginning
@@ -138,7 +136,6 @@ compile the source code: [Build HertzBeat Binary Package](https://hertzbeat.apac
 and check as follows:
 
 - [ ] There are `LICENSE` and `NOTICE` files
-- [ ] There is a `DISCLAIMER` or `DISCLAIMER-WIP` file
 - [ ] The year in the `NOTICE` file is correct
 - [ ] All text files have ASF license at the beginning
 - [ ] Check the third-party dependent license:

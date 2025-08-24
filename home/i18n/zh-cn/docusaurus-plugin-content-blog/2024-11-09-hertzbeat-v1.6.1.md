@@ -3,7 +3,6 @@ title:  Apache Hertzbeat 1.6.1 发布公告
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-author_image_url: https://avatars.githubusercontent.com/u/29418975?s=400&v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
