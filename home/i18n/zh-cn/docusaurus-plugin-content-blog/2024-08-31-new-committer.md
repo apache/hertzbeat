@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: aias00
 author_title: Hongyu Liu
 author_url: https://github.com/Aias00
-author_image_url: https://avatars.githubusercontent.com/u/25810623
 tags: [opensource, practice]
 keywords:
   [

@@ -3,7 +3,6 @@ title: Welcome to HertzBeat Community Committer!
 author: aias00
 author_title: Hongyu Liu
 author_url: https://github.com/Aias00
-author_image_url: https://avatars.githubusercontent.com/u/25810623
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
 ---

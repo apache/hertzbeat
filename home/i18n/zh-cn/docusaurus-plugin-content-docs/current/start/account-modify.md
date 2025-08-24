@@ -56,7 +56,6 @@ resourceRole:
 # 需要被过滤保护的资源,不认证鉴权直接访问
 # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
 excludedResource:
-  - /api/alerts/report/**===*
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get

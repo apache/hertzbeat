@@ -3,7 +3,6 @@ title: GreptimeDB & HertzBeat, 使用开源时序数据库 GreptimeDB 存储开�
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource, practice]
 keywords: [开源监控系统, 开源时序数据库, HertzBeat, GreptimeDB]
 ---

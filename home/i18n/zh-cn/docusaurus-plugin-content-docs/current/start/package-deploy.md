@@ -18,14 +18,14 @@ Apache HertzBeat 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM
 
 1. 下载安装包
 
-   从 [下载页面](/docs/download) 下载您系统环境对应的安装包版本 `apache-hertzbeat-xxx-incubating-bin.tar.gz`
+   从 [下载页面](/docs/download) 下载您系统环境对应的安装包版本 `apache-hertzbeat-xxx-bin.tar.gz`
 
 2. 设置配置文件(可选)
 
    解压安装包到主机 eg: /opt/hertzbeat
 
    ```shell
-   tar zxvf apache-hertzbeat-xxx-incubating-bin.tar.gz
+   tar zxvf apache-hertzbeat-xxx-bin.tar.gz
    ```
 
    :::tip
@@ -67,14 +67,14 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
 1. 下载安装包
 
-   从 [下载页面](/docs/download) 下载您系统环境对应的安装包版本 `apache-hertzbeat-collector-xxx-incubating-bin.tar.gz`
+   从 [下载页面](/docs/download) 下载您系统环境对应的安装包版本 `apache-hertzbeat-collector-xxx-bin.tar.gz`
 
 2. 设置配置文件
 
    解压安装包到主机 eg: /opt/hertzbeat-collector
 
    ```shell
-   tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
+   tar zxvf apache-hertzbeat-collector-xxx-bin.tar.gz
    ```
 
    配置采集器的配置文件 `config/application.yml` 里面的 HertzBeat Server 连接 IP, 端口, 采集器名称(需保证唯一性)等参数。
