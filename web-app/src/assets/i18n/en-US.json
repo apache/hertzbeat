@@ -684,6 +684,8 @@
   "monitor.detail.chart.save": "Save as Image",
   "monitor.detail.chart.unit": "Unit",
   "monitor.detail.chart.zoom": "Zoom In",
+  "monitor.detail.chart.data-loading": "Data Loading",
+  "monitor.detail.chart.data-processing": "In data parsing",
   "monitor.detail.close-refresh": "Close Auto Refresh",
   "monitor.detail.config-refresh": "Set Auto Refresh For {{time}} s",
   "monitor.detail.description": "Desc",
