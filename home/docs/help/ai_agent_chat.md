@@ -12,24 +12,28 @@ keywords: [AI, Chat, Agent, Monitoring, AI Agent, OpenAI]
 The AI Agent Chat feature provides an interactive chat interface where you can:
 
 **Monitor Management:**
+
 - 🔍 Query and filter existing monitors by status, type, host, and labels
 - ➕ Add new monitors for websites, APIs, databases, and services
 - 📊 Get detailed information about available monitor types and their parameters
 - ⚡ Check monitor status and troubleshoot monitoring issues
 
 **Alert Management:**
+
 - 🚨 Query active alerts with comprehensive filtering (type, status, search)
 - 📈 Get alert summary statistics and distribution
 - 🔔 View both single and grouped alerts
 - 📋 Analyze alert patterns and trends
 
 **Metrics Analysis:**
+
 - 📊 Retrieve real-time metrics data for any monitor
 - 📈 Access historical metrics with customizable time ranges
 - 💾 Check warehouse storage system status
 - 🔍 Query specific metric fields and labels
 
 **Alert Rule Management:**
+
 - ⚙️ Configure alert rules and thresholds
 - 📝 Manage alert definitions for different monitor types
 - 🎯 Set up custom alerting criteria
@@ -183,6 +187,7 @@ AI Agent: Here's the CPU usage data for your Linux server (Monitor ID: 1001) ove
 
 📊 **CPU Usage Metrics - Last 6 Hours**
 ```
+
 Time          | Usage (%) | Load Avg | Processes
 14:00-15:00   | 45.2%     | 1.2      | 156
 15:00-16:00   | 67.8%     | 2.1      | 178
@@ -190,7 +195,8 @@ Time          | Usage (%) | Load Avg | Processes
 17:00-18:00   | 92.1%     | 4.2      | 203
 18:00-19:00   | 94.7%     | 4.8      | 210
 19:00-20:00   | 88.3%     | 3.5      | 188
-```
+
+``` text
 
 **Analysis:**
 - Peak usage: 94.7% at 19:00
@@ -231,13 +237,15 @@ for: 2m  # Alert after condition persists for 2 minutes
 ```
 
 This rule will:
+
 1. Monitor response time every minute
 2. Trigger alert if response time > 5s for 2+ minutes
 3. Send notifications via configured channels
 4. Show in dashboard with warning status
 
 Would you like me to apply this configuration or modify any settings?
-```
+
+``` text
 
 ### Chat Features
 
