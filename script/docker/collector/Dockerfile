@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM openjdk:21-slim-bullseye
+FROM eclipse-temurin:21-jdk
 
 MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
 
