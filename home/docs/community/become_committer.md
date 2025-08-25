@@ -61,9 +61,8 @@ writing documentation, maintaining issues boards, code review, or answering
 community questions) to HertzBeat either by contributing to the codebase
 of the main website or HertzBeat's GitHub repositories.
 
-- +3 months with light activity and engagement.
-- +2 months of medium activity and engagement.
-- +1 month with solid activity and engagement.
+- 3+ months with activity and engagement.
+- 20+ pr coding, document, test or other contributions.
 
 ### Quality of contributions
 

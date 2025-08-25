@@ -59,7 +59,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         if (ClusterMsg.Direction.REQUEST.equals(message.getDirection())) {
             this.processRequestMsg(ctx, message);
         } else {
-            this.processResponseMsg(message);
+            this.processResponseMsg(ctx, message);
         }
     }
 
@@ -86,12 +86,20 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         }
     }
 
-    protected void processResponseMsg(ClusterMsg.Message response) {
+    protected void processResponseMsg(ChannelHandlerContext ctx, ClusterMsg.Message response) {
+        // for sync response
         if (this.responseTable.containsKey(response.getIdentity())) {
             ResponseFuture responseFuture = this.responseTable.get(response.getIdentity());
             responseFuture.putResponse(response);
         } else {
-            log.warn("receive response not in responseTable, identity: {}", response.getIdentity());
+            // async response
+            NettyRemotingProcessor processor = this.processorTable.get(response.getType());
+            if (processor != null) {
+                ClusterMsg.Message repMessage = processor.handle(ctx, response);
+                if (repMessage != null) {
+                    ctx.writeAndFlush(repMessage);
+                }
+            }   
         }
     }
 

@@ -49,7 +49,19 @@ management:
         include:
           - 'metrics'
           - 'health'
+          - 'prometheus'
     enabled-by-default: on
+  endpoint:
+    prometheus:
+      access: read_only
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 sureness:
   container: jakarta_servlet
@@ -95,14 +107,11 @@ spring:
       - classpath:db/migration/mysql
   
   # Not Require, Please config if you need email notify
-  # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
     # Attention: this is mail server address.
-    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq企业邮箱为 smtp.exmail.qq.com
     host: smtp.qq.com
     username: example@qq.com
     # Attention: this is not email account password, this requires an email authorization code
-    # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: xxqzvuqbnqvbbdac
     port: 465
     default-encoding: UTF-8
@@ -116,7 +125,6 @@ spring:
 warehouse:
   store:
     # store history metrics data, enable only one below
-    # 存储历史数据方式, 下方只能enabled启用一种方式
     jpa:
       enabled: false
       expire-time: 1h

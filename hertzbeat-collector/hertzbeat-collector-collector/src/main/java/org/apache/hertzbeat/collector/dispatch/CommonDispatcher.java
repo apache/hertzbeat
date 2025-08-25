@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.apache.hertzbeat.collector.metrics.HertzBeatMetricsCollector;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.collector.timer.WheelTimerTask;
@@ -33,6 +34,7 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -89,6 +91,9 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     private final WorkerPool workerPool;
 
     private final String collectorIdentity;
+
+    @Autowired
+    private HertzBeatMetricsCollector metricsCollector;
 
     public CommonDispatcher(MetricsCollectorQueue jobRequestQueue,
                             TimerDispatch timerDispatch,
@@ -153,12 +158,23 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             for (Map.Entry<String, MetricsTime> entry : metricsTimeoutMonitorMap.entrySet()) {
                 MetricsTime metricsTime = entry.getValue();
                 if (metricsTime.getStartTime() < deadline) {
-                    // Metrics collection timeout  
+                    // Metrics collection timeout
+                    MetricsTime removedMetricsTime = metricsTimeoutMonitorMap.remove(entry.getKey());
+                    if (removedMetricsTime == null) {
+                        continue;
+                    }
                     WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
+                    Job job = timerJob.getJob();
+                    // timeout metrics
+                    if (metricsCollector != null) {
+                        long duration = System.currentTimeMillis() - removedMetricsTime.getStartTime();
+                        metricsCollector.recordCollectMetrics(job, duration, "timeout");
+                    }
+
                     CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-                            .setId(timerJob.getJob().getMonitorId())
-                            .setTenantId(timerJob.getJob().getTenantId())
-                            .setApp(timerJob.getJob().getApp())
+                            .setId(job.getMonitorId())
+                            .setTenantId(job.getTenantId())
+                            .setApp(job.getApp())
                             .setMetrics(metricsTime.getMetrics().getName())
                             .setPriority(metricsTime.getMetrics().getPriority())
                             .setTime(System.currentTimeMillis())
@@ -167,7 +183,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     if (metricsData.getPriority() == 0) {
                         dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
                     }
-                    metricsTimeoutMonitorMap.remove(entry.getKey());
                 }
             }
         } catch (Exception e) {
@@ -177,7 +192,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
 
     @Override
     public void dispatchMetricsTask(Timeout timeout) {
-        // Divide the collection task of a single application into corresponding collection tasks of the metrics according to the metrics under it.
+        // Divide the collection task of a single application into corresponding collection tasks of the metrics under it.
         // Put each collect task into the thread pool for scheduling
         WheelTimerTask timerTask = (WheelTimerTask) timeout.task();
         Job job = timerTask.getJob();
@@ -201,16 +216,27 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     public void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData) {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
+        String monitorKey;
         if (metrics.isHasSubTask()) {
-            metricsTimeoutMonitorMap.remove(job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId());
+            monitorKey = job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId();
+        } else {
+            monitorKey = job.getId() + "-" + metrics.getName();
+        }
+        MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(monitorKey);
+
+        // job completed metrics
+        if (metricsTime != null && metricsCollector != null) {
+            long duration = System.currentTimeMillis() - metricsTime.getStartTime();
+            String status = metricsData.getCode() == CollectRep.Code.SUCCESS ? "success" : "fail";
+            metricsCollector.recordCollectMetrics(job, duration, status);
+        }
+        if (metrics.isHasSubTask()) {
             boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);
             if (isLastTask) {
                 metricsData = metrics.getSubTaskDataRef().get().build();
             } else {
                 return;
             }
-        } else {
-            metricsTimeoutMonitorMap.remove(job.getId() + "-" + metrics.getName());
         }
         Set<Metrics> metricsSet = job.getNextCollectMetrics(metrics, false);
         if (job.isCyclic()) {
@@ -322,7 +348,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     public void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList) {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
-        metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
+        MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
+        if (metricsTime != null && metricsCollector != null) {
+            long duration = System.currentTimeMillis() - metricsTime.getStartTime();
+            // For a list, we consider it a success if at least one item is successful.
+            boolean isSuccess = metricsDataList.stream().anyMatch(item -> item.getCode() == CollectRep.Code.SUCCESS);
+            metricsCollector.recordCollectMetrics(job, duration, isSuccess ? "success" : "fail");
+        }
         if (job.isCyclic()) {
             // The collection and execution of all task of this job are completed.
             // The periodic task pushes the task to the time wheel again.
@@ -340,7 +372,6 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // and the result listener is notified of the combination of all metrics data
             timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
         }
-
     }
 
 

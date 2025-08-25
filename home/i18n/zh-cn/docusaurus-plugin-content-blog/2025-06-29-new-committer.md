@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: MasamiYui
 author_title: Yijun Yin
 author_url: https://github.com/MasamiYui
-author_image_url: https://avatars.githubusercontent.com/u/22274133
 tags: [opensource, practice]
 keywords:
   [

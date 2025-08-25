@@ -91,7 +91,7 @@ check result
 > If something like the following appears, it means the signature is correct. Keyword: **`Good signature`**
 
 ```shell
-apache-hertzbeat-xxx-incubating-src.tar.gz
+apache-hertzbeat-xxx-src.tar.gz
 gpg: Signature made XXXX
 gpg: using RSA key XXXXX
 gpg: Good signature from "xxx @apache.org>"
@@ -105,18 +105,16 @@ for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
 
 #### 2.4 Check the binary package
 
-unzip  `apache-hertzbeat-${release.version}-incubating-bin.tar.gz`
+unzip  `apache-hertzbeat-${release.version}-bin.tar.gz`
 
 ```shell
-tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
+tar -xzvf apache-hertzbeat-${release.version}-bin.tar.gz
 ```
 
 check as follows:
 
 - [ ] Check whether the source package contains unnecessary files, which makes the tar package too large
-- [ ] Folder contains the word `incubating`
 - [ ] There are `LICENSE` and `NOTICE` files
-- [ ] There is a `DISCLAIMER` or `DISCLAIMER-WIP` file
 - [ ] The year in the `NOTICE` file is correct
 - [ ] Only text files exist, not binary files
 - [ ] All files have ASF license at the beginning
@@ -127,10 +125,10 @@ check as follows:
 
 > If the binary/web-binary package is uploaded, check the binary package.
 
-Unzip `apache-hertzbeat-${release_version}-incubating-src.tar.gz`
+Unzip `apache-hertzbeat-${release_version}-src.tar.gz`
 
 ```shell
-cd apache-hertzbeat-${release_version}-incubating-src
+cd apache-hertzbeat-${release_version}-src
 ```
 
 compile the source code: [Build HertzBeat Binary Package](https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package)
@@ -138,7 +136,6 @@ compile the source code: [Build HertzBeat Binary Package](https://hertzbeat.apac
 and check as follows:
 
 - [ ] There are `LICENSE` and `NOTICE` files
-- [ ] There is a `DISCLAIMER` or `DISCLAIMER-WIP` file
 - [ ] The year in the `NOTICE` file is correct
 - [ ] All text files have ASF license at the beginning
 - [ ] Check the third-party dependent license:

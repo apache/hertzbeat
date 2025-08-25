@@ -372,4 +372,9 @@ public interface CommonConstants {
      * status page incident state resolved
      */
     byte MONITOR_TYPE_DISCOVERY_AUTO_CREATE = 2;
+
+    /**
+     * JEXL custom function `json`
+     */
+    String JEXL_CUSTOM_JSON_FUNCTION = "json";
 }

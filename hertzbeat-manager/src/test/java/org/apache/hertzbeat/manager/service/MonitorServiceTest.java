@@ -34,6 +34,7 @@ import java.util.Set;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
@@ -773,5 +774,32 @@ class MonitorServiceTest {
         
         // Test the exportAll method
         assertDoesNotThrow(() -> monitorService.exportAll("JSON", mockResponse));
+    }
+
+    @Test
+    void jexlKeyword() {
+
+        List<Metrics.Field> fields = new ArrayList<>();
+        fields.add(Metrics.Field.builder().field("size").build());
+
+        List<Metrics> metrics = new ArrayList<>();
+        metrics.add(Metrics.builder().name("metricsName").fields(fields).build());
+
+        Job job = new Job();
+        job.setApp("testJob");
+        job.setMetrics(metrics);
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app(job.getApp()).name(job.getApp()).host("host").build();
+
+
+        List<Param> params = new ArrayList<>();
+        params.add(Param.builder().field("field").paramValue("value").build());
+
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(params);
+
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, null));
+        assertEquals("testJob metricsName size prohibited keywords, please modify the template information.", exception.getMessage());
     }
 }

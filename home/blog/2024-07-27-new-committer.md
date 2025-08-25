@@ -3,7 +3,6 @@ title: Welcome to HertzBeat Community Committer!
 author: Calvin979
 author_title: Calvin979
 author_url: https://github.com/Calvin979
-author_image_url: https://avatars.githubusercontent.com/u/131688897?v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
