@@ -28,7 +28,8 @@ const routes: Routes = [
         data: { titleI18n: 'menu.monitor.center' }
       },
       { path: 'alert', loadChildren: () => import('./alert/alert.module').then(m => m.AlertModule) },
-      { path: 'setting', loadChildren: () => import('./setting/setting.module').then(m => m.SettingModule) }
+      { path: 'setting', loadChildren: () => import('./setting/setting.module').then(m => m.SettingModule) },
+      { path: 'chat', loadChildren: () => import('./chat/chat.module').then(m => m.ChatModule), data: { titleI18n: 'menu.extras.ai.chat' } }
     ]
   },
   {
