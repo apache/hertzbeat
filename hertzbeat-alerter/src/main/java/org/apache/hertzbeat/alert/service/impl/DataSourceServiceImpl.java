@@ -95,6 +95,29 @@ public class DataSourceServiceImpl implements DataSourceService {
         }
     }
 
+    @Override
+    public List<Map<String, Object>> query(String datasource, String expr) {
+        if (!StringUtils.hasText(expr)) {
+            throw new IllegalArgumentException("Empty expression");
+        }
+        if (executors == null || executors.isEmpty()) {
+            throw new IllegalArgumentException(bundle.getString("alerter.datasource.executor.not.found"));
+        }
+        QueryExecutor executor = executors.stream().filter(e -> e.support(datasource)).findFirst().orElse(null);
+
+        if (executor == null) {
+            throw new IllegalArgumentException("Unsupported datasource: " + datasource);
+        }
+        // replace all white space
+        expr = expr.replaceAll("\\s+", " ");
+        try {
+            return executor.execute(expr);
+        } catch (Exception e) {
+            log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
+            throw new RuntimeException("Query execution failed", e);
+        }
+    }
+
     private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor) {
         CommonTokenStream tokens = tokenStreamCache.get(expr, this::createTokenStream);
         AlertExpressionParser parser = new AlertExpressionParser(tokens);

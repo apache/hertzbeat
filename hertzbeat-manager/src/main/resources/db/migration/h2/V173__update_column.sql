@@ -19,3 +19,21 @@
 
 -- Modify message column to TEXT (H2 TEXT is equivalent to CLOB)
 ALTER TABLE HZB_STATUS_PAGE_INCIDENT_CONTENT ALTER COLUMN message CLOB;
+
+-- Update type from 'realtime' to 'realtime_metric'
+UPDATE HZB_ALERT_DEFINE 
+SET type = 'realtime_metric'
+WHERE type = 'realtime';
+
+-- Update type from 'periodic' to 'periodic_metric'
+UPDATE HZB_ALERT_DEFINE 
+SET type = 'periodic_metric'
+WHERE type = 'periodic';
+
+-- Modify annotations column length from 4096 to 2048
+ALTER TABLE HZB_ALERT_DEFINE
+ALTER COLUMN annotations VARCHAR(2048);
+
+-- Add query_expr column if not exists
+ALTER TABLE HZB_ALERT_DEFINE
+ADD COLUMN IF NOT EXISTS query_expr VARCHAR(2048);

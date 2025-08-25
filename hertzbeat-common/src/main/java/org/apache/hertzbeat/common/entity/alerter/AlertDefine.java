@@ -65,7 +65,7 @@ public class AlertDefine {
     @NotNull
     private String name;
 
-    @Schema(title = "Rule Type: realtime, periodic", example = "0")
+    @Schema(title = "Rule Type: realtime_metric, periodic_metric, realtime_log, periodic_log", example = "realtime_metric")
     private String type;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
@@ -73,7 +73,7 @@ public class AlertDefine {
     @Column(length = 2048)
     private String expr;
 
-    @Schema(title = "Execution Period (seconds) - For periodic rules", example = "300")
+    @Schema(title = "Execution Period/ Window Size (seconds) - For periodic rules/ For log realtime", example = "300")
     private Integer period;
     
     @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",
@@ -88,7 +88,7 @@ public class AlertDefine {
 
     @Schema(title = "Annotations", example = "summary: High CPU usage")
     @Convert(converter = JsonMapAttributeConverter.class)
-    @Column(length = 4096)
+    @Column(length = 2048)
     private Map<String, String> annotations;
 
     @Schema(title = "Alert Content Template", example = "Instance {{ $labels.instance }} CPU usage is {{ $value }}%")
@@ -99,6 +99,11 @@ public class AlertDefine {
     @Schema(title = "Data Source Type", example = "PROMETHEUS")
     @Size(max = 100)
     private String datasource;
+
+    @Schema(title = "Query Expression", example = "SELECT * FROM metrics WHERE value > 90")
+    @Size(max = 2048)
+    @Column(length = 2048)
+    private String queryExpr;
 
     @Schema(title = "Is Enabled", example = "true")
     private boolean enable = true;

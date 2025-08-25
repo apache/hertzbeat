@@ -17,8 +17,42 @@
 
 -- ensure every sql can rerun without error
 
--- Modify hzb_status_page_incident_content table columns to TEXT type to resolve MySQL row size limit issue
+-- Update hzb_alert_define table type column to support log monitoring and modify annotations/query_expr columns
+DELIMITER //
+CREATE PROCEDURE UpdateAlertDefineColumns()
+BEGIN
+        DECLARE table_exists INT;
+    DECLARE column_exists INT;
 
+    SELECT COUNT(*) INTO table_exists 
+    FROM INFORMATION_SCHEMA.TABLES 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_define';
+    
+    IF table_exists = 1 THEN
+        UPDATE hzb_alert_define
+        SET type = 'realtime_metric' 
+        WHERE type = 'realtime';
+        
+        UPDATE hzb_alert_define
+        SET type = 'periodic_metric' 
+        WHERE type = 'periodic';
+        
+        ALTER TABLE hzb_alert_define 
+        MODIFY COLUMN annotations VARCHAR(2048);
+        
+        SELECT COUNT(*) INTO column_exists 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_define' AND COLUMN_NAME = 'query_expr';
+        
+        IF column_exists = 0 THEN
+            ALTER TABLE hzb_alert_define 
+            ADD COLUMN query_expr VARCHAR(2048);
+        END IF;
+    END IF;
+END //
+DELIMITER ;
+
+-- Modify hzb_status_page_incident_content table columns to TEXT type to resolve MySQL row size limit issue
 DELIMITER //
 CREATE PROCEDURE ModifyStatusIncidentContentColumns()
 BEGIN
@@ -44,9 +78,10 @@ BEGIN
         END IF;
     END IF;
 END //
-
 DELIMITER ;
 
+CALL UpdateAlertDefineColumns();
+DROP PROCEDURE IF EXISTS UpdateAlertDefineColumns;
 CALL ModifyStatusIncidentContentColumns();
 DROP PROCEDURE IF EXISTS ModifyStatusIncidentContentColumns;
 COMMIT;

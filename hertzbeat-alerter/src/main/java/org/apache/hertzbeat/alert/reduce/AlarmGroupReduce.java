@@ -159,7 +159,20 @@ public class AlarmGroupReduce {
             sendSingleAlert(alert);
         }
     }
-    
+
+    public void processGroupAlert(Map<String, String> groupLabels, List<SingleAlert> alertList) {
+        GroupAlert groupAlert = GroupAlert.builder()
+                .groupKey(generateGroupKey(groupLabels))
+                .groupLabels(groupLabels)
+                .commonLabels(extractCommonLabels(alertList))
+                .commonAnnotations(extractCommonAnnotations(alertList))
+                .alerts(alertList)
+                .status(CommonConstants.ALERT_STATUS_FIRING)
+                .build();
+
+        alarmInhibitReduce.inhibitAlarm(groupAlert);
+    }
+
     private boolean hasRequiredLabels(Map<String, String> labels, List<String> requiredLabels) {
         return requiredLabels.stream().allMatch(labels::containsKey);
     }
