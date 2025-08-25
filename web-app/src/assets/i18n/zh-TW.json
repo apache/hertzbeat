@@ -795,6 +795,8 @@
   "monitor.detail.chart.save": "保存圖片",
   "monitor.detail.chart.unit": "單位",
   "monitor.detail.chart.zoom": "區域縮放",
+  "monitor.detail.chart.data-loading": "數據請求中",
+  "monitor.detail.chart.data-processing": "數據解析中",
   "monitor.detail.close-refresh": "關閉自動刷新",
   "monitor.detail.config-refresh": "設定 {{time}} 秒自動刷新",
   "monitor.detail.description": "描述",

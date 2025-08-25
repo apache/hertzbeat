@@ -3,7 +3,6 @@ title: Welcome to HertzBeat Community Committer!
 author: crossoverJie
 author_title: crossoverJie
 author_url: https://github.com/crossoverjie
-author_image_url: https://avatars.githubusercontent.com/u/15684156?s=400&v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---

@@ -3,7 +3,6 @@ title: HertzBeat First Apache version v1.6.0 released now!
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource, practice]
 keywords: [open source, monitoring, alerting]
 ---
@@ -23,7 +22,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 
 ## What is HertzBeat?
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) (incubating) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.
+[Apache HertzBeat](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.
 
 ## Features
 

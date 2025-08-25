@@ -17,7 +17,8 @@
 
 -- ensure every sql can rerun without error
 
--- Update hzb_alert_define table type column to support log monitoring
+-- Modify message column to TEXT (H2 TEXT is equivalent to CLOB)
+ALTER TABLE HZB_STATUS_PAGE_INCIDENT_CONTENT ALTER COLUMN message CLOB;
 
 -- Update type from 'realtime' to 'realtime_metric'
 UPDATE HZB_ALERT_DEFINE 

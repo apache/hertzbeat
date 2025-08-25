@@ -17,8 +17,6 @@
 
 -- ensure every sql can rerun without error
 
--- Update hzb_alert_define table type column to support log monitoring
-
 -- Update type from 'realtime' to 'realtime_metric'
 UPDATE HZB_ALERT_DEFINE 
 SET type = 'realtime_metric' 
@@ -37,4 +35,8 @@ ALTER COLUMN annotations TYPE VARCHAR(2048);
 ALTER TABLE HZB_ALERT_DEFINE
 ADD COLUMN IF NOT EXISTS query_expr VARCHAR(2048);
 
+-- Modify message column to TEXT
+ALTER TABLE HZB_STATUS_PAGE_INCIDENT_CONTENT ALTER COLUMN message TYPE TEXT;
+
 commit;
+
