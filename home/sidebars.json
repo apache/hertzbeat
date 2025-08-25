@@ -273,6 +273,7 @@
         "help/grafana_dashboard",
         "help/collector",
         "help/ai_config",
+        "help/risc-v",
         "help/issue"
       ]
     },
