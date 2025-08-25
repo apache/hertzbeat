@@ -21,11 +21,13 @@ app: yarn
 name:
   zh-CN: Apache Yarn
   en-US: Apache Yarn
+  ja-JP: Apache Yarn
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 Yarn 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache Yarn</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors the Yarn metrics. <br>You can click "<i>New Apache Yarn</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
   zh-TW: Hertzbeat 對 Yarn 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache Yarn</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は Yarnノードの一般的なメトリクスを監視します。<br>「<i>新規 Yarn</i>」をクリックしてパラメタを設定した後、新規することができます。
 
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/yarn/
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +51,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -62,6 +66,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     # type-param field type(most mapping the html input type)
     type: number
     # required-true or false
@@ -74,6 +79,10 @@ params:
 metrics:
   # metrics - Server
   - name: ClusterMetrics
+    i18n:
+      zh-CN: 集群指标
+      en-US: Cluster Metrics
+      ja-JP: クラスターメトリクス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -85,30 +94,35 @@ metrics:
         i18n:
           zh-CN: 当前存活的 NodeManager 个数
           en-US: NumActiveNMs
+          ja-JP: アクティブなNodeManager総数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: NumDecommissionedNMs
         type: 0
         i18n:
           zh-CN: 当前 Decommissioned 的 NodeManager 个数
           en-US: NumDecommissionedNMs
+          ja-JP: オフラインしたNodeManager数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: NumDecommissioningNMs
         type: 0
         i18n:
           zh-CN: 集群正在下线的节点数
           en-US: NumDecommissioningNMs
+          ja-JP: オフライン中のNodeManager数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: NumLostNMs
         type: 0
         i18n:
           zh-CN: 集群丢失的节点数
           en-US: NumLostNMs
+          ja-JP: ロストしたNodeManager数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: NumUnhealthyNMs
         type: 0
         i18n:
           zh-CN: 集群不健康的节点数
           en-US: NumUnhealthyNMs
+          ja-JP: 不健全なNodeManager数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.NumActiveNMs
@@ -136,6 +150,10 @@ metrics:
       parseType: jsonPath
       parseScript: '$.beans[?(@.name == "Hadoop:service=ResourceManager,name=ClusterMetrics")]'
   - name: JvmMetrics
+    i18n:
+      zh-CN: JVM指标
+      en-US: Jvm Metrics
+      ja-JP: Java仮想マシンのメトリクス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -149,6 +167,7 @@ metrics:
         i18n:
           zh-CN: JVM当前非堆内存大小已提交大小
           en-US: MemNonHeapCommittedM
+          ja-JP: コミットされたノンヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemNonHeapMaxM
         type: 0
@@ -156,6 +175,7 @@ metrics:
         i18n:
           zh-CN: JVM非堆最大可用内存
           en-US: MemNonHeapMaxM
+          ja-JP: 使用可能なノンヒープメモリの最大サイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemNonHeapUsedM
         type: 0
@@ -163,6 +183,7 @@ metrics:
         i18n:
           zh-CN: JVM当前已使用的非堆内存大小
           en-US: MemNonHeapUsedM
+          ja-JP: 使用したノンヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapCommittedM
         type: 0
@@ -170,6 +191,7 @@ metrics:
         i18n:
           zh-CN: JVM当前已使用堆内存大小
           en-US: MemHeapCommittedM
+          ja-JP: コミットされたヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapMaxM
         type: 0
@@ -177,6 +199,7 @@ metrics:
         i18n:
           zh-CN: JVM堆内存最大可用内存
           en-US: MemHeapMaxM
+          ja-JP: 配置のヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: MemHeapUsedM
         type: 0
@@ -184,18 +207,21 @@ metrics:
         i18n:
           zh-CN: JVM当前已使用堆内存大小
           en-US: MemHeapUsedM
+          ja-JP: 使用したヒープメモリのサイズ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: GcTimeMillis
         type: 0
         i18n:
           zh-CN: JVM GC时间
           en-US: GcTimeMillis
+          ja-JP: GC時間
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: GcCount
         type: 0
         i18n:
           zh-CN: JVM GC次数
           en-US: GcCount
+          ja-JP: GC回数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.MemNonHeapCommittedM
@@ -225,6 +251,10 @@ metrics:
       parseType: jsonPath
       parseScript: '$.beans[?(@.name == "Hadoop:service=ResourceManager,name=JvmMetrics")]'
   - name: QueueMetrics
+    i18n:
+      zh-CN: 队列指标
+      en-US: Queue Metrics
+      ja-JP: キューメトリクス
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -238,30 +268,35 @@ metrics:
         i18n:
           zh-CN: 队列名称
           en-US: queue
+          ja-JP: キュー
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AllocatedVCores
         type: 0
         i18n:
           zh-CN: 分配的虚拟核数(已分配)
           en-US: AllocatedVCores
+          ja-JP: 割り当てられたコア数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ReservedVCores
         type: 0
         i18n:
           zh-CN: 预留核数
           en-US: ReservedVCores
+          ja-JP: 予約されているコア数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AvailableVCores
         type: 0
         i18n:
           zh-CN: 可用核数(尚未分配)
           en-US: AvailableVCores
+          ja-JP: 利用可能なコア数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: PendingVCores
         type: 0
         i18n:
           zh-CN: 阻塞调度核数
           en-US: PendingVCores
+          ja-JP: 保留中のコア数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AllocatedMB
         type: 0
@@ -269,6 +304,7 @@ metrics:
         i18n:
           zh-CN: 已分配(已用)的内存大小
           en-US: AllocatedMB
+          ja-JP: 割り当てられたメモリ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AvailableMB
         type: 0
@@ -276,6 +312,7 @@ metrics:
         i18n:
           zh-CN: 可用内存(尚未分配)
           en-US: AvailableMB
+          ja-JP: 使用可能なメモリ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: PendingMB
         type: 0
@@ -283,6 +320,7 @@ metrics:
         i18n:
           zh-CN: 阻塞调度内存
           en-US: PendingMB
+          ja-JP: 保留中のメモリ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ReservedMB
         type: 0
@@ -290,96 +328,112 @@ metrics:
         i18n:
           zh-CN: 预留内存
           en-US: ReservedMB
+          ja-JP: 予約されているメモリ
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AllocatedContainers
         type: 0
         i18n:
           zh-CN: 已分配(已用)的container数
           en-US: AllocatedContainers
+          ja-JP: 割り当てられたコンテナ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: PendingContainers
         type: 0
         i18n:
           zh-CN: 阻塞调度container个数
           en-US: PendingContainers
+          ja-JP: 保留中のコンテナ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: ReservedContainers
         type: 0
         i18n:
           zh-CN: 预留container数
           en-US: ReservedContainers
+          ja-JP: 予約されているコンテナ数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AggregateContainersAllocated
         type: 0
         i18n:
           zh-CN: 累积的container分配总数
           en-US: AggregateContainersAllocated
+          ja-JP: 割り当てられたコンテナ総数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AggregateContainersReleased
         type: 0
         i18n:
           zh-CN: 累积的container释放总数
           en-US: AggregateContainersReleased
+          ja-JP: リリースされたコンテナ総数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AppsCompleted
         type: 0
         i18n:
           zh-CN: 完成的任务数
           en-US: AppsCompleted
+          ja-JP: 完了したタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AppsKilled
         type: 0
         i18n:
           zh-CN: 被杀掉的任务数
           en-US: AppsKilled
+          ja-JP: 終了したタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AppsFailed
         type: 0
         i18n:
           zh-CN: 失败的任务数
           en-US: AppsFailed
+          ja-JP: 失敗したタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AppsPending
         type: 0
         i18n:
           zh-CN: 阻塞的任务数
           en-US: AppsPending
+          ja-JP: ブロックされたタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AppsRunning
         type: 0
         i18n:
           zh-CN: 提正在运行的任务数
           en-US: AppsRunning
+          ja-JP: 実行中のタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: AppsSubmitted
         type: 0
         i18n:
           zh-CN: 提交过的任务数
           en-US: AppsSubmitted
+          ja-JP: 提出されたタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: running_0
         type: 0
         i18n:
           zh-CN: 运行时间小于60分钟的作业个数
           en-US: running_0
+          ja-JP: 実行時間60分未満のタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: running_60
         type: 0
         i18n:
           zh-CN: 运行时间介于60~300分钟的作业个数
           en-US: running_60
+          ja-JP: 実行時間が60分以上300分未満のタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: running_300
         type: 0
         i18n:
           zh-CN: 运行时间介于300~1440分钟的作业个数
           en-US: running_300
+          ja-JP: 実行時間が300分以上1440分未満のタスク数
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: running_1440
         type: 0
         i18n:
           zh-CN: 运行时间大于1440分钟的作业个数
           en-US: running_1440
+          ja-JP: 実行時間が1440分以上のタスク数
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.['tag.Queue']
@@ -442,6 +496,10 @@ metrics:
       parseScript: '$.beans[?(@.name =~ /Hadoop:service=ResourceManager,name=QueueMetrics.*/)]'
 
   - name: runtime
+    i18n:
+      zh-CN: 运行时信息
+      en-US: Runtime
+      ja-JP: ランタイム情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 3
@@ -453,6 +511,7 @@ metrics:
         i18n:
           zh-CN: 启动时间戳
           en-US: StartTime
+          ja-JP: 起動時間
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - $.StartTime
