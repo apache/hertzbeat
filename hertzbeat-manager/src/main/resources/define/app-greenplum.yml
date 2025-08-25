@@ -162,7 +162,7 @@ metrics:
       # SQL Query Method：oneRow, multiRow, columns
       queryType: columns
       # sql
-      sql: select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';
+      sql: "select name, setting as value from pg_settings where name = 'max_connections' or name = 'server_version' or name = 'server_encoding' or name = 'port' or name = 'data_directory';"
       # JDBC url
       url: ^_^url^_^
 
@@ -238,7 +238,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       queryType: multiRow
-      sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      sql: "SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks, blks_read, blks_hit, blk_read_time, blk_write_time, stats_reset from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;"
       url: ^_^url^_^
 
   - name: activity
@@ -548,7 +548,7 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       queryType: multiRow
-      sql: SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;
+      sql: "SELECT COALESCE(datname,'shared-object') as db_name, conflicts, deadlocks from pg_stat_database where (datname != 'template1' and datname != 'template0') or datname is null;"
       url: ^_^url^_^
 
   - name: slow_sql
