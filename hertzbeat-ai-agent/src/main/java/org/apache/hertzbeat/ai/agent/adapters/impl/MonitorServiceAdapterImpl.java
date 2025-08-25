@@ -212,47 +212,4 @@ public class MonitorServiceAdapterImpl implements MonitorServiceAdapter {
         }
     }
 
-    @Override
-    public boolean deleteMonitor(Long monitorId) {
-        try {
-            Object monitorService = null;
-
-            try {
-                monitorService = SpringContextHolder.getBean("monitorServiceImpl");
-            } catch (Exception e) {
-                log.debug("Could not find bean by name 'monitorServiceImpl', trying by class name");
-            }
-
-            assert monitorService != null;
-            log.debug("MonitorService bean found for deleteMonitor: {}", monitorService.getClass().getSimpleName());
-
-            // Validate monitor ID parameter
-            if (monitorId == null || monitorId <= 0) {
-                throw new IllegalArgumentException("Monitor ID must be a positive number");
-            }
-
-            // Call deleteMonitor method: deleteMonitor(long id)
-            Method method = monitorService.getClass().getMethod("deleteMonitor", long.class);
-
-            // Call the method and get the result
-            method.invoke(monitorService, monitorId);
-
-            // If no exception was thrown, consider it successful
-            log.debug("Successfully deleted monitor with ID: {}", monitorId);
-            return true;
-
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Method not found: deleteMonitor", e);
-        } catch (Exception e) {
-            log.error("Failed to invoke deleteMonitor via adapter for ID: {}", monitorId, e);
-            // Check if it's a "monitor not found" type error
-            String errorMessage = e.getMessage();
-            if (errorMessage != null && (errorMessage.contains("not found") || errorMessage.contains("does not exist"))) {
-                log.warn("Monitor with ID {} not found", monitorId);
-                return false;
-            }
-            throw new RuntimeException("Failed to invoke deleteMonitor via adapter: " + e.getMessage(), e);
-        }
-    }
-
 }
