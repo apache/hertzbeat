@@ -684,6 +684,8 @@
   "monitor.detail.chart.save": "画像として保存",
   "monitor.detail.chart.unit": "単位",
   "monitor.detail.chart.zoom": "ズームイン",
+  "monitor.detail.chart.data-loading": "データ要求",
+  "monitor.detail.chart.data-processing": "データ解析中",
   "monitor.detail.close-refresh": "自動更新を閉じる",
   "monitor.detail.config-refresh": "{{time}}秒ごとに自動更新を設定",
   "monitor.detail.description": "説明",

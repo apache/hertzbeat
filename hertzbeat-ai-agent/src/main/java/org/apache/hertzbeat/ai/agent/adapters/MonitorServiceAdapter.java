@@ -68,3 +68,4 @@ public interface MonitorServiceAdapter {
      */
     List<ParamDefine> getMonitorParamDefines(String app);
 }
+

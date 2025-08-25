@@ -20,6 +20,7 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import { InViewportModule } from 'ng-in-viewport';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
@@ -72,7 +73,8 @@ const COMPONENTS: Array<Type<void>> = [
     SafePipe,
     NzListModule,
     NzDescriptionsModule,
-    NzPaginationModule
+    NzPaginationModule,
+    InViewportModule
   ],
   declarations: COMPONENTS
 })
