@@ -1,15 +1,15 @@
 ---
 id: spring_gateway 
-Title: Monitoring Spring Gateway   
-sidebar_label: Spring Gateway
-keywords: [open source monitoring tool, open source spring gateway monitoring tool, monitoring spring gateway metrics]
+Title: Monitoring Spring Cloud Gateway
+sidebar_label: Spring Cloud Gateway
+keywords: [open source monitoring tool, open source Spring Cloud Gateway monitoring tool, monitoring Spring Cloud Gateway metrics]
 ---
 
 > Collect and monitor the general performance metrics exposed by the SpringBoot actuator.
 
 ## Pre-monitoring operations
 
-If you want to monitor information in 'Spring Gateway' with this monitoring type, you need to integrate your SpringBoot application and enable the SpringBoot Actuator.
+If you want to monitor information in `Spring Cloud Gateway` with this monitoring type, you need to integrate your `Spring Cloud Gateway` application and enable the SpringBoot Actuator.
 
 **1、Add POM .XML dependencies:**
 
@@ -26,25 +26,26 @@ If you want to monitor information in 'Spring Gateway' with this monitoring type
 management:
   endpoint:
     gateway:
-      enabled: true # default value
+      enabled: true
+    env:
+      show-values: ALWAYS
   endpoints:
     web:
       exposure:
-        include: '*'
-    enabled-by-default: on
+        include: "*"
 ```
 
 ### Configure parameters
 
-|       Parameter name        |                                                    Parameter Help describes the                                                     |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
-| Monitor Host                | THE MONITORED PEER IPV4, IPV6 OR DOMAIN NAME. Note ⚠️ that there are no protocol headers (eg: https://, http://).                   |
-| Monitoring Name             | A name that identifies this monitoring that needs to be unique.                                                                     |
-| Port                        | The default port provided by the database is 8080.                                                                                  |
-| Enable HTTPS                | Whether to access the website through HTTPS, please note that ⚠️ when HTTPS is enabled, the default port needs to be changed to 443 |
-| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                  |
-| Whether to probe the        | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation    | will continue only if the probe is successful |
-| Description Comment         | For more information identifying and describing the remarks for this monitoring, users can remark the information here              |
+| Parameter name              | Parameter Help describes the                                                                                                                                                   |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Monitor Host                | THE MONITORED PEER IPV4, IPV6 OR DOMAIN NAME. Note ⚠️ that there are no protocol headers (eg: https://, http://).                                                              |
+| Monitoring Name             | A name that identifies this monitoring that needs to be unique.                                                                                                                |
+| Port                        | The default port provided by the database is 8080.                                                                                                                             |
+| Enable HTTPS                | Whether to access the website through HTTPS, please note that ⚠️ when HTTPS is enabled, the default port needs to be changed to 443                                            |
+| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                                                             |
+| Whether to probe the        | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation will continue only if the probe is successful |
+| Description Comment         | For more information identifying and describing the remarks for this monitoring, users can remark the information here                                                         |
 
 ### Collect metrics
 

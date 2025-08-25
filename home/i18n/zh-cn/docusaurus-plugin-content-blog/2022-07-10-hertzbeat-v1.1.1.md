@@ -3,7 +3,6 @@ title: 云监控系统 HertzBeat v1.1.1 发布！
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource]
 ---
 

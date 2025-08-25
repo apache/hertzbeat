@@ -1,31 +1,9 @@
 {
-  "mentor" : [
-    {
-      "githubId": "24643893",
-      "gitUrl": "https://github.com/tuohai666",
-      "name": "Yonglun Zhang"
-    },
-    {
-      "githubId": "9673503",
-      "gitUrl": "https://github.com/yu199195",
-      "name": "Yu Xiao"
-    },
-    {
-      "githubId": "144504",
-      "gitUrl": "https://github.com/justinmclean",
-      "name": "Justin Mclean"
-    },
-    {
-      "githubId": "2263040",
-      "gitUrl": "https://github.com/F21",
-      "name": "Francis Chuang"
-    }
-  ],
   "pmc": [
     {
       "githubId": "24788200",
       "gitUrl": "https://github.com/tomsun28",
-      "name": "Tom"
+      "name": "Tom (V.P.)"
     },
     {
       "githubId": "48920254",
@@ -91,6 +69,26 @@
       "githubId": "25810623",
       "gitUrl": "https://github.com/Aias00",
       "name": "Aias00"
+    },
+    {
+      "githubId": "24643893",
+      "gitUrl": "https://github.com/tuohai666",
+      "name": "Yonglun Zhang"
+    },
+    {
+      "githubId": "9673503",
+      "gitUrl": "https://github.com/yu199195",
+      "name": "Yu Xiao"
+    },
+    {
+      "githubId": "144504",
+      "gitUrl": "https://github.com/justinmclean",
+      "name": "Justin Mclean"
+    },
+    {
+      "githubId": "2263040",
+      "gitUrl": "https://github.com/F21",
+      "name": "Francis Chuang"
     }
   ],
   "committer" : [

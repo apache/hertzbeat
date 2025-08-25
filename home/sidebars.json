@@ -54,7 +54,8 @@
           "label": "use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
-            "start/usecase/springboot-auto-practice"
+            "start/usecase/springboot-auto-practice",
+            "start/usecase/linux-os-practice"
           ]
         }
       ]
@@ -70,7 +71,9 @@
           "label": "use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
-            "start/usecase/springboot-auto-practice"
+            "start/usecase/springboot-auto-practice",
+            "start/usecase/linux-os-practice",
+            "start/usecase/tdengine-practice"
           ]
         },
         {
@@ -239,7 +242,8 @@
             "help/presto",
             "help/seatunnel",
             "help/spark",
-            "help/yarn"
+            "help/yarn",
+            "help/dolphinscheduler"
           ]
         },
         {
@@ -265,12 +269,13 @@
         {
           "type": "category",
           "label": "custom",
-          "items": ["help/kafka_promql", "help/influxdb_promql"]
+          "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
         "help/bulletin",
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
+        "help/mcp_sse_server",
         "help/collector",
         "help/ai_config",
         "help/issue"

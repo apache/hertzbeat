@@ -3,7 +3,6 @@ title: Welcome HertzBeat's New Community Committer!
 author: bigcyy
 author_title: Yang Chen
 author_url: https://github.com/bigcyy
-author_image_url: https://avatars.githubusercontent.com/u/73413979
 tags: [opensource, practice]
 keywords:
   [
