@@ -25,12 +25,12 @@ ARG VERSION
 RUN apt-get update && apt-get install -y openssh-server 
 RUN mkdir /var/run/sshd
 
-ADD apache-hertzbeat-collector-*-incubating-bin.tar.gz /opt/
+ADD apache-hertzbeat-collector-*-bin.tar.gz /opt/
 
 ENV JAVA_OPTS ""
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
-WORKDIR /opt/apache-hertzbeat-collector-${VERSION}-incubating-bin/
+WORKDIR /opt/apache-hertzbeat-collector-${VERSION}-bin/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]

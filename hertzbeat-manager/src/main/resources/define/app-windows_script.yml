@@ -21,11 +21,13 @@ app: windows_script
 name:
   zh-CN: Windows 命令
   en-US: Windows Script
+  ja-JP: Windows Script
 # The description and help of this monitoring type
 help:
-  zh-CN: Hertzbeat 使用采集器作为 agent 直接运行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD 或 Powershell 命令 </a> 对 Windows 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 Linux Script</i>”进行添加。或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: Hertzbeat uses a collector as an agent to directly execute <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD or Powershell commands </a> to collect and monitor general performance metrics of the Windows operating system (system information, CPU, memory, disk, network card, file system, TOP resource processes, etc.).<br>You can click “<i>Create New Linux Script</i>” to add it. Or select “<i>More Actions</i>” to import an existing configuration.
-  zh-TW: Hertzbeat 使用采集器作為 agent 直接運行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD 或 Powershell 命令 </a> 對 Windows 操作系統的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Linux Script</i>”進行添加。或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: Hertzbeat 使用采集器作为 agent 直接运行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD 或 Powershell 命令 </a> 对 Windows 操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。<br>您可以点击“<i>新建 Windows Script</i>”进行添加。或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat uses a collector as an agent to directly execute <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD or Powershell commands </a> to collect and monitor general performance metrics of the Windows operating system (system information, CPU, memory, disk, network card, file system, TOP resource processes, etc.).<br>You can click “<i>Create New Windows Script</i>” to add it. Or select “<i>More Actions</i>” to import an existing configuration.
+  zh-TW: Hertzbeat 使用采集器作為 agent 直接運行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD 或 Powershell 命令 </a> 對 Windows 操作系統的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Windows Script</i>”進行添加。或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は agent として <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/windows_script'> CMD か Powershell コマンドを介して </a> Windowsオーエスの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Windows Script</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/windows_script
   en-US: https://hertzbeat.apache.org/docs/help/windows_script
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +51,7 @@ metrics:
     i18n:
       zh-CN: 系统基本信息
       en-US: Basic Info
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -60,11 +64,13 @@ metrics:
         i18n:
           zh-CN: 主机名称
           en-US: Host Name
+          ja-JP: ホスト名
       - field: version
         type: 1
         i18n:
           zh-CN: 操作系统版本
           en-US: System Version
+          ja-JP: オーエスバージョン
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: script
     # the config content when protocol is ssh
@@ -86,6 +92,7 @@ metrics:
     i18n:
       zh-CN: CPU 信息
       en-US: CPU Info
+      ja-JP: CPU情報
     priority: 1
     fields:
       - field: info
@@ -93,33 +100,39 @@ metrics:
         i18n:
           zh-CN: 型号
           en-US: Info
+          ja-JP: バージョン
       - field: cores
         type: 1
         i18n:
           zh-CN: 核数
           en-US: Cores
+          ja-JP: コア数
       - field: load
         type: 1
         unit: '%'
         i18n:
           zh-CN: 负载
           en-US: Load
+          ja-JP: ロード
       - field: interrupt
         type: 1
         i18n:
           zh-CN: 中断数
           en-US: Interrupt
+          ja-JP: 割り込み数
       - field: context_switch
         type: 1
         i18n:
           zh-CN: 上下文切换
           en-US: Context Switch
+          ja-JP: コンテキストスイッチ
       - field: usage
         type: 1
         unit: '%'
         i18n:
           zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
     protocol: script
     script:
       scriptTool: cmd
@@ -133,6 +146,7 @@ metrics:
     i18n:
       zh-CN: 内存信息
       en-US: Memory Info
+      ja-JP: メモリ情報
     priority: 2
     fields:
       - field: totalPhysical
@@ -141,24 +155,28 @@ metrics:
         i18n:
           zh-CN: 总物理内存容量
           en-US: Total Physical Memory
+          ja-JP: 物理メモリ容量
       - field: freePhysical
         type: 0
         unit: Mb
         i18n:
           zh-CN: 空闲物理内存容量
           en-US: Free Physical Memory
+          ja-JP: 使用可能な物理メモリ
       - field: totalVirtual
         type: 0
         unit: Mb
         i18n:
           zh-CN: 总虚拟内存容量
           en-US: Total Virtual Memory
+          ja-JP: 仮想メモリ容量
       - field: freeVirtual
         type: 0
         unit: Mb
         i18n:
           zh-CN: 空闲虚拟内存容量
           en-US: Free Virtual Memory
+          ja-JP: 使用可能な仮想メモリ
     units:
       - totalPhysical=B->MB
       - freePhysical=KB->MB
@@ -177,6 +195,7 @@ metrics:
     i18n:
       zh-CN: 磁盘信息
       en-US: Disk Info
+      ja-JP: ディスク情報
     priority: 3
     fields:
       - field: Model
@@ -184,17 +203,20 @@ metrics:
         i18n:
           zh-CN: 磁盘型号
           en-US: Disk Type
+          ja-JP: ディスク番号
       - field: Size
         type: 0
         unit: Mb
         i18n:
           zh-CN: 磁盘大小
           en-US: Disk Size
+          ja-JP: ディスクサイズ
       - field: BytesPerSector
         type: 0
         i18n:
           zh-CN: 每个扇区的字节数
           en-US: Bytes Per Sector
+          ja-JP: 各セクターのバイト数
     protocol: script
     script:
       scriptTool: powershell
@@ -214,6 +236,7 @@ metrics:
     i18n:
       zh-CN: 文件系统
       en-US: Disk Free
+      ja-JP: ファイルシステム
     priority: 4
     fields:
       - field: Caption
@@ -221,18 +244,21 @@ metrics:
         i18n:
           zh-CN: 盘符
           en-US: Caption
+          ja-JP: キャプション
       - field: FreeSpace
         type: 0
         unit: Mb
         i18n:
           zh-CN: 可用量
           en-US: FreeSpace
+          ja-JP: 空き容量
       - field: Size
         type: 0
         unit: Mb
         i18n:
           zh-CN: 总量
           en-US: Size
+          ja-JP: サイズ
     units:
       - FreeSpace=B->MB
       - Size=B->MB
@@ -249,6 +275,7 @@ metrics:
     i18n:
       zh-CN: Top10 CPU 进程
       en-US: Top10 CPU Process
+      ja-JP: トップ10 CPUプロセス
     priority: 5
     fields:
       - field: name
@@ -256,23 +283,27 @@ metrics:
         i18n:
           zh-CN: 进程名
           en-US: Name
+          ja-JP: プロセス名
       - field: id
         type: 1
         i18n:
           zh-CN: 进程 ID
           en-US: PID
+          ja-JP: プロセスID
       - field: cpu
         type: 0
         unit: 's'
         i18n:
           zh-CN: CPU 使用时间
           en-US: CPU Usage Time
+          ja-JP: CPU使用時間
       - field: ws
         type: 0
         unit: Mb
         i18n:
           zh-CN: 内存占用量
           en-US: Memory Usage
+          ja-JP: メモリ使用率
     protocol: script
     script:
       scriptTool: powershell
@@ -293,6 +324,7 @@ metrics:
     i18n:
       zh-CN: Top10 内存进程
       en-US: Top10 Memory Process
+      ja-JP: トップ10 メモリプロセス
     priority: 6
     fields:
       - field: name
@@ -300,23 +332,27 @@ metrics:
         i18n:
           zh-CN: 进程名称
           en-US: Process Name
+          ja-JP: プロセス名
       - field: id
         type: 1
         i18n:
           zh-CN: 进程 ID
           en-US: PID
+          ja-JP: プロセスID
       - field: ws
         type: 0
         unit: Mb
         i18n:
           zh-CN: 内存占用量
           en-US: Memory Usage
+          ja-JP: メモリ使用率
       - field: cpu
         type: 0
         unit: s
         i18n:
           zh-CN: CPU 占用时间
           en-US: CPU Usage Time
+          ja-JP: CPU使用時間
     protocol: script
     script:
       scriptTool: powershell

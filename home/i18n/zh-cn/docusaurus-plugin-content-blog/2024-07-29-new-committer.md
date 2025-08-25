@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: kerwin612
 author_title: Le Zhang
 author_url: https://github.com/kerwin612
-author_image_url: https://avatars.githubusercontent.com/u/3371163?v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---

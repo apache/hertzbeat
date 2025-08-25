@@ -3,7 +3,6 @@ title: 使用 HertzBeat 5分钟搞定 SpringBoot2 监控告警
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource, practice]
 keywords: [开源监控系统, SpringBoot监控, 监控告警]
 ---

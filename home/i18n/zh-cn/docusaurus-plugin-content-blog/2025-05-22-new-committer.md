@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: pwallk
 author_title: Kang Li
 author_url: https://github.com/pwallk
-author_image_url: https://avatars.githubusercontent.com/u/69385076
 tags: [opensource, practice]
 keywords:
   [

@@ -21,11 +21,13 @@ app: registry
 name:
   zh-CN: 注册中心监控
   en-US: REGISTRY MONITORS
+  ja-JP: レジストリ
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat对注册中心的相关指标进行监测。
   en-US: HertzBeat monitors related indicators of REGISTRY.
   zh-TW: HertzBeat對注冊中心相關名額進行監測。
+  ja-JP: HertzBeatはレジストリのメトリクスを監視します。
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -34,6 +36,7 @@ params:
     name:
       zh-CN: Host
       en-US: Host
+      ja-JP: ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -55,6 +59,7 @@ params:
     name:
       zh-CN: 注册中心类型
       en-US: Discovery Client Type
+      ja-JP: ディスカバリークライアントのタイプ
     # type-param field type(most mapping the html input type)
     type: radio
     # required-true or false
@@ -71,6 +76,7 @@ metrics:
     i18n:
       zh-CN: 注册中心信息
       en-US: Discovery Client Info
+      ja-JP: ディスカバリークライアントの情報
     priority: 0
     fields:
       - field: address
@@ -78,17 +84,20 @@ metrics:
         i18n:
           zh-CN: 注册中心地址
           en-US: Address
+          ja-JP: アドレス
       - field: port
         type: 1
         i18n:
           zh-CN: 注册中心端口
           en-US: Port
+          ja-JP: ポート
       - field: responseTime
         type: 0
         unit: ms
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
     protocol: registry
     registry:
       host: ^_^host^_^
@@ -98,6 +107,7 @@ metrics:
     i18n:
       zh-CN: 服务实例
       en-US: Service Instance
+      ja-JP: サービスインスタンス
     priority: 1
     # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
     fields:
@@ -107,26 +117,31 @@ metrics:
         i18n:
           zh-CN: 服务实例id
           en-US: Service Id
+          ja-JP: サービスId
       - field: serviceName
         type: 1
         i18n:
           zh-CN: 服务实例名称
           en-US: Service Name
+          ja-JP: サービス名
       - field: address
         type: 1
         i18n:
           zh-CN: 主机地址
           en-US: Address
+          ja-JP: アドレス
       - field: port
         type: 0
         i18n:
           zh-CN: 端口
           en-US: Port
+          ja-JP: ポート
       - field: healthStatus
         type: 1
         i18n:
           zh-CN: 服务健康状态
           en-US: Health Status
+          ja-JP: 健全状態
     protocol: registry
     registry:
       host: ^_^host^_^

@@ -41,6 +41,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.JexlKeywordsEnum;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -211,7 +212,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
             var name = job.getName();
             var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
             if (i18nName != null) {
-                i18nMap.put("monitor.app." + job.getApp().toLowerCase(), i18nName);
+                i18nMap.put("monitor.app." + job.getApp(), i18nName);
             }
             var help = job.getHelp();
             var i18nHelp = CommonUtil.getLangMappingValueFromI18nMap(lang, help);
@@ -458,6 +459,10 @@ public class AppServiceImpl implements AppService, InitializingBean {
                     throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " " 
                             + field.getField() + " can not duplicated.");
                 }
+                if (JexlKeywordsEnum.match(field.getField())) {
+                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " "
+                            + field.getField() + " prohibited keywords.");
+                }
                 fieldsSet.add(field.getField());
             }
         }
@@ -518,16 +523,15 @@ public class AppServiceImpl implements AppService, InitializingBean {
         } else {
             if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
                 appDefineStore = new ObjectStoreAppDefineStoreImpl();
-            } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE){
+            } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE) {
                 appDefineStore = new DatabaseAppDefineStoreImpl();
             } else {
                 appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
-        var success = appDefineStore.loadAppDefines();
-        if (!success) {
-            new JarAppDefineStoreImpl().loadAppDefines();
-        }
+        jarAppDefineStore.loadAppDefines();
+        // merge define yml files inside jars
+        appDefineStore.loadAppDefines();
     }
 
     private interface AppDefineStore {
@@ -709,7 +713,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
                             }
                         }
                     });
-            return false;
+            return true;
         }
 
         @Override
@@ -769,8 +773,7 @@ public class AppServiceImpl implements AppService, InitializingBean {
                     appDefines.put(define.getApp().toLowerCase(), app);
                 }
             }
-            // merge define yml files inside jars
-            return false;
+            return true;
         }
 
         @Override
