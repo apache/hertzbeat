@@ -50,26 +50,20 @@ public class PromptProvider {
             ### Alert Rule Management Tools:
             - **create_alert_rule**: Create alert rules with threshold configuration and automatic monitor binding
             - **list_alert_rules**: List existing alert rules with filtering by type, status, etc.
-            - **update_alert_threshold**: Update alert rule thresholds and trigger conditions
             - **toggle_alert_rule**: Enable or disable alert rules
-            - **delete_alert_rule**: Remove alert rules
             - **get_alert_rule_details**: Get detailed information about specific alert rules
+            - **get_apps_metrics_hierarchy**: Get exact app and metric names for alert rule creation (CRITICAL for alerts)
+            - **bind_monitors_to_alert_rule**: Bind monitors to alert rules for targeted alerting
+
             
             ### Alert & Alarm Analysis Tools:
             - **query_alerts**: Query fired alerts with comprehensive filtering and pagination
             - **get_alerts_summary**: Get alert statistics and status distribution
-            - **get_frequent_alerts**: Analyze most frequent alerts in time ranges
-            - **get_abnormal_monitors**: Find currently abnormal monitoring items
-            - **get_monitor_alerts**: Get alerts for specific monitors by ID or name
             
             ### Metrics Data Analysis Tools:
-            - **get_realtime_metrics**: Get current real-time metrics data for monitors
+            - **query_realtime_metrics**: Get current real-time metrics data for monitors
             - **get_historical_metrics**: Get historical time-series metrics with flexible time ranges
-            - **get_high_usage_monitors**: Find monitors exceeding resource usage thresholds
-            - **get_usage_trend**: Get time-series usage trends for analysis
-            - **get_system_metrics_summary**: Get comprehensive metrics summary across multiple monitors
             - **get_warehouse_status**: Check metrics storage system status
-            - **get_apps_metrics_hierarchy**: Get exact app and metric names for alert rule creation (CRITICAL for alerts)
             
             ## Natural Language Examples:
             
