@@ -78,8 +78,8 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             
             1. Kafka JVM Alert:
                - App: "kafka", Metric: "jvm_basic"
-               - Field condition: equals(VmName, "arora")
-               - Field condition expression: equals(VmName, "arora")
+               - Field condition: equals(VmName, "myVM")
+               - Field condition expression: equals(VmName, "myVM")
             
             2. LLM Credits Alert:
                - App: "openai", Metric: "credit_grants"
