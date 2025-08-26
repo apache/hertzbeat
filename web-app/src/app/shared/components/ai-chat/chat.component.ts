@@ -22,9 +22,9 @@ import { I18NService } from '@core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
-import { AiChatService, ChatMessage, ConversationDto } from '../../service/ai-chat.service';
-import { OpenAiConfigService, OpenAiConfig, OpenAiConfigStatus } from '../../service/openai-config.service';
-import { ThemeService } from '../../service/theme.service';
+import { AiChatService, ChatMessage, ConversationDto } from '../../../service/ai-chat.service';
+import { OpenAiConfigService, OpenAiConfig, OpenAiConfigStatus } from '../../../service/openai-config.service';
+import { ThemeService } from '../../../service/theme.service';
 
 @Component({
   selector: 'app-chat',
