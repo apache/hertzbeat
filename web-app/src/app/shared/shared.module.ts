@@ -21,6 +21,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 const icons: IconDefinition[] = [RobotOutline, CloseOutline, SendOutline];
 
 import { AiBotComponent } from './components/ai-bot/ai-bot.component';
+import { AiChatModule } from './components/ai-chat/ai-chat.module';
 import { ConfigurableFieldComponent } from './components/configurable-field/configurable-field.component';
 import { FormFieldComponent } from './components/form-field/form-field.component';
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
@@ -68,7 +69,8 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     NzButtonModule,
     NzInputModule,
     NzIconModule.forChild(icons),
-    NzSpinModule
+    NzSpinModule,
+    AiChatModule
   ],
   declarations: [...COMPONENTS, ...DIRECTIVES, HelpMessageShowComponent],
   exports: [
@@ -83,7 +85,8 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     ...SHARED_ZORRO_MODULES,
     ...ThirdModules,
     ...COMPONENTS,
-    ...DIRECTIVES
+    ...DIRECTIVES,
+    AiChatModule
   ]
 })
 export class SharedModule {}

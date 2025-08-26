@@ -17,15 +17,39 @@
  * under the License.
  */
 
+import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { SharedModule } from '@shared';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DelonFormModule } from '@delon/form';
+import { AlainThemeModule } from '@delon/theme';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzFormModule } from 'ng-zorro-antd/form';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzMessageModule } from 'ng-zorro-antd/message';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { MarkdownPipe } from 'ngx-markdown';
 
-import { ChatRoutingModule } from './chat-routing.module';
 import { ChatComponent } from './chat.component';
 
 @NgModule({
   declarations: [ChatComponent],
-  imports: [SharedModule, ChatRoutingModule, MarkdownPipe]
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    AlainThemeModule.forChild(),
+    DelonFormModule,
+    NzButtonModule,
+    NzFormModule,
+    NzIconModule,
+    NzInputModule,
+    NzMessageModule,
+    NzModalModule,
+    NzSpinModule,
+    MarkdownPipe
+  ],
+  exports: [ChatComponent]
 })
-export class ChatModule {}
+export class AiChatModule {}
