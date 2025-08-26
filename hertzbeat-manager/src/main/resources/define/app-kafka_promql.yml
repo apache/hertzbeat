@@ -26,7 +26,7 @@ help:
   zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 Kafka 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 Kafka，需要从 Prometheus 服务器抓取 Kafka 的监控数据。<br>您可以点击 “<i>新建 Kafka-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses Prometheus PromQL query metrics data from Prometheus Server to monitoring Kafka. This solution is suitable for Prometheus to monitor Kafka, and it need to capture Kafka monitoring data from the Prometheus server. <br>You could click the "<i>New Kafka-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 使用 Prometheus PromQL 從 Prometheus 服務器中查詢到 Kafka 的通用指標數據來進行監控。此方案適用于 Prometheus 已監控 Kafka，需要從 Prometheus 服務器抓取 Kafka 的監控數據。<br>您可以點擊 “<i>新建 Kafka-PromQL</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
-  ja-JP: Hertzbeat は Prometheus PromQL を介して Prometheus サーバーに Kafka の一般的なパフォーマンスのメトリクスをクエリして監視します。このシナリオは、PrometheusがすでにKafkaを監視しており、PrometheusサーバーからKafkaの監視データを取得する必要がある場合に適用されます。。<br>「<i>新規 Kafka-PromQL</i>」をクリックして設定しましょう。
+  ja-JP: Hertzbeat は Prometheus PromQL を介して Prometheus サーバーに Kafka の一般的なパフォーマンスのメトリクスをクエリして監視します。このシナリオは、PrometheusがすでにKafkaを監視しており、PrometheusサーバーからKafkaの監視データを取得する必要がある場合に適用されます。<br>「<i>新規 Kafka-PromQL</i>」をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kafka_promql
   en-US: https://hertzbeat.apache.org/docs/help/kafka_promql
