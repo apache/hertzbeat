@@ -40,8 +40,17 @@ export class AiChatModalService {
       nzContent: ChatComponent,
       nzFooter: null,
       nzWidth: '90vw',
-      nzStyle: { top: '20px' },
-      nzBodyStyle: { padding: '0', height: '80vh' },
+      nzWrapClassName: 'ai-chat-modal',
+      nzCentered: true,
+      nzStyle: {
+        borderRadius: '16px',
+        overflow: 'hidden'
+      },
+      nzBodyStyle: {
+        padding: '0',
+        height: '80vh',
+        borderRadius: '16px'
+      },
       nzMaskClosable: false,
       nzClosable: true,
       nzOnCancel: () => {
