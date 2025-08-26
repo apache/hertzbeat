@@ -155,6 +155,7 @@ public class PromptProvider {
             - **Sort Options**: name, gmtCreate, gmtUpdate, status, startAt, triggerTimes
             - **Metric Types**: cpu, memory, disk, network, custom
             - **Collection Intervals**: 30s-3600s (recommend 60s-600s for most cases)
+
             
             ## Best Practices:
             - Never create alert rules without exact user input on app, metrics, and field conditions
