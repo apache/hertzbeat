@@ -94,7 +94,7 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
   `,
   styleUrls: ['./basic.component.less']
 })
-export class LayoutBasicComponent implements OnInit, OnDestroy {
+export class LayoutBasicComponent implements OnDestroy {
   options: LayoutDefaultOptions = {
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
@@ -126,9 +126,6 @@ export class LayoutBasicComponent implements OnInit, OnDestroy {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private aiChatModalService: AiChatModalService
   ) {}
-
-  ngOnInit(): void {
-  }
 
   ngOnDestroy(): void {
     this.destroy$.next();
