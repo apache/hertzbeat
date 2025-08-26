@@ -171,7 +171,16 @@ public final class CollectUtil {
      * assert prom field
      */
     public static Boolean assertPromRequireField(String aliasField) {
-        return CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField);
+        return CommonConstants.PROM_TIME.equals(aliasField)
+            || CommonConstants.PROM_VALUE.equals(aliasField)
+            || CommonConstants.PROM_METRIC_VALUE.equals(aliasField);
+    }
+
+    /**
+     * Check if "value" field should be treated as a label instead of special field
+     */
+    public static Boolean isValueAsLabel(String aliasField, JsonObject metric) {
+        return CommonConstants.PROM_VALUE.equals(aliasField) && null != metric && metric.has(aliasField);
     }
 
     /**
