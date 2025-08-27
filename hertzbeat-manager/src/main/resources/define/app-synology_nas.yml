@@ -29,8 +29,8 @@ help:
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 Synology NAS 的通用指标进行采集监控。<br><span class='help_module_span'>注意⚠️：Synology NAS 需要开启 SNMP 服务，<a class='help_module_content' href='https://kb.synology.com/zh-tw/DSM/help/DSM/AdminCenter/system_snmp'>点击查看开启步骤</a>。</span>您可以点击 “<i>新建 Synology NAS</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
   ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP プロトコルを介して</a> Synology NAS 一般的なメトリクスを監視します。<br><span class='help_module_span'>注意⚠️：Synology NAS で SNMP サービスを有効にする必要があります，<a class='help_module_content' href='https://kb.synology.com/ja-jp/DSM/help/DSM/AdminCenter/system_snmp'>クリックしてガイドを見ます</a>。<br>「<i>新規 Synology NAS</i>」をクリックしてSNMPなどのパラメタを設定した後、新規することができます。
 helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/synology
-  en-US: https://hertzbeat.apache.org/docs/help/synology
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/synology_nas
+  en-US: https://hertzbeat.apache.org/docs/help/synology_nas
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
