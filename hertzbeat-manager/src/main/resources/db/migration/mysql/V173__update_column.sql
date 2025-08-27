@@ -36,18 +36,6 @@ BEGIN
         UPDATE hzb_alert_define
         SET type = 'periodic_metric' 
         WHERE type = 'periodic';
-        
-        ALTER TABLE hzb_alert_define 
-        MODIFY COLUMN annotations VARCHAR(2048);
-        
-        SELECT COUNT(*) INTO column_exists 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_define' AND COLUMN_NAME = 'query_expr';
-        
-        IF column_exists = 0 THEN
-            ALTER TABLE hzb_alert_define 
-            ADD COLUMN query_expr VARCHAR(2048);
-        END IF;
     END IF;
 END //
 DELIMITER ;

@@ -20,8 +20,6 @@ package org.apache.hertzbeat.alert.calculate.periodic;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
-import org.apache.hertzbeat.alert.calculate.JexlExprCalculator;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
@@ -50,15 +48,10 @@ public class LogPeriodicAlertCalculator {
 
     private final DataSourceService dataSourceService;
     private final AlarmCommonReduce alarmCommonReduce;
-    private final AlarmCacheManager alarmCacheManager;
-    private final JexlExprCalculator jexlExprCalculator;
 
 
-    public LogPeriodicAlertCalculator(DataSourceService dataSourceService, AlarmCommonReduce alarmCommonReduce,
-                                      AlarmCacheManager alarmCacheManager, JexlExprCalculator jexlExprCalculator) {
+    public LogPeriodicAlertCalculator(DataSourceService dataSourceService, AlarmCommonReduce alarmCommonReduce) {
         this.alarmCommonReduce = alarmCommonReduce;
-        this.alarmCacheManager = alarmCacheManager;
-        this.jexlExprCalculator = jexlExprCalculator;
         this.dataSourceService = dataSourceService;
     }
 
@@ -77,11 +70,7 @@ public class LogPeriodicAlertCalculator {
     private void doCalculate(AlertDefine define) {
         try {
             // Log-based queries are SQL queries with log-specific expressions
-            List<Map<String, Object>> results = dataSourceService.query(define.getDatasource(), define.getQueryExpr());
-            results = this.calculateLogThreshold(results, define.getExpr());
-            
-            // If no match the expr threshold, the results item map {'value': null} should be null and others field keep
-            // If results has multi list, should trigger multi alert
+            List<Map<String, Object>> results = dataSourceService.query(define.getDatasource(), define.getExpr());
             if (CollectionUtils.isEmpty(results)) {
                 return;
             }
@@ -90,29 +79,6 @@ public class LogPeriodicAlertCalculator {
             // Ignore the query exception eg: no result, timeout, etc
         }
     }
-
-    /**
-     * Calculate log threshold evaluation
-     * @param results Query results from log datasource
-     * @param expression Alert expression for log analysis
-     * @return Filtered results that match the log threshold
-     */
-    private List<Map<String, Object>> calculateLogThreshold(List<Map<String, Object>> results, String expression) {
-        if (CollectionUtils.isEmpty(results)) {
-            return List.of();
-        }
-        List<Map<String, Object>> newResults = new ArrayList<>(results.size());
-        for (Map<String, Object> result : results) {
-            HashMap<String, Object> fieldMap = new HashMap<>(result);
-            fieldMap.put(ROWS, results.size());
-            boolean match = jexlExprCalculator.execAlertExpression(fieldMap, expression, true);
-            if (match) {
-                newResults.add(result);
-            }
-        }
-        return newResults;
-    }
-
 
     private String getAlertMode(AlertDefine alertDefine) {
         String mode = null;

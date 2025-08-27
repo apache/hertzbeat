@@ -88,7 +88,7 @@ public class AlertDefine {
 
     @Schema(title = "Annotations", example = "summary: High CPU usage")
     @Convert(converter = JsonMapAttributeConverter.class)
-    @Column(length = 2048)
+    @Column(length = 4096)
     private Map<String, String> annotations;
 
     @Schema(title = "Alert Content Template", example = "Instance {{ $labels.instance }} CPU usage is {{ $value }}%")
@@ -99,11 +99,6 @@ public class AlertDefine {
     @Schema(title = "Data Source Type", example = "PROMETHEUS")
     @Size(max = 100)
     private String datasource;
-
-    @Schema(title = "Query Expression", example = "SELECT * FROM metrics WHERE value > 90")
-    @Size(max = 2048)
-    @Column(length = 2048)
-    private String queryExpr;
 
     @Schema(title = "Is Enabled", example = "true")
     private boolean enable = true;

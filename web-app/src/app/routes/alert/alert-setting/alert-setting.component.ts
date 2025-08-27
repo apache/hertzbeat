@@ -1674,15 +1674,15 @@ export class AlertSettingComponent implements OnInit {
     });
   }
 
-  onPreviewLogQueryExpr(): void {
-    if (!this.define.queryExpr) {
+  onPreviewLogExpr(): void {
+    if (!this.define.expr) {
       this.clearPreview();
       this.previewTableLoading = false;
       return;
     }
     this.previewTableLoading = true;
 
-    this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.queryExpr).subscribe({
+    this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.expr).subscribe({
       next: res => {
         if (res.code === 15 || res.code === 1 || res.code === 4) {
           this.message.error(res.msg || 'Expression parsing exception');

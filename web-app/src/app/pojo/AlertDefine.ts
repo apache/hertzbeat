@@ -25,7 +25,6 @@ export class AlertDefine {
   // datasource when type is periodic, promql | sql
   datasource: string = 'promql';
   expr!: string;
-  queryExpr!: string;
   // unit second
   period: number = 300;
   times: number = 3;
