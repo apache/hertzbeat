@@ -21,6 +21,7 @@ package org.apache.hertzbeat.log.notice;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 @Slf4j
+@Getter
 public class LogSseManager {
     private final Map<Long, SseSubscriber> emitters = new ConcurrentHashMap<>();
 
@@ -93,14 +95,14 @@ public class LogSseManager {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    private static class SseSubscriber {
+    public static class SseSubscriber {
         /**
          * The SSE emitter for streaming log events
          */
-        SseEmitter emitter;
+        private SseEmitter emitter;
         /**
          * The filters for streaming log events
          */
-        LogSseFilterCriteria filters;
+        private LogSseFilterCriteria filters;
     }
 }

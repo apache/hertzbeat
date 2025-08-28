@@ -72,6 +72,7 @@ public class LogSseFilterCriteria {
      * @return boolean Whether the log entry matches the filter criteria
      */
     public boolean matches(LogEntry log) {
+        if (log == null) return false;
         // Check severity text match
         if (StringUtils.hasText(severityText) && !severityText.equalsIgnoreCase(log.getSeverityText())) {
             return false;
