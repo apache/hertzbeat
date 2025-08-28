@@ -62,6 +62,23 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   whichTabIndex = 0;
   showBasic = true;
 
+  // Lazy loading state for metrics list
+  displayedMetrics: string[] = [];
+  pageSize: number = 10;
+  currentPage: number = 0;
+  isLoadingMore: boolean = false;
+  hasMoreMetrics: boolean = true;
+
+  // Lazy loading state for chart metrics
+  displayedChartMetrics: any[] = [];
+  chartPageSize: number = 6;
+  currentChartPage: number = 0;
+  isLoadingMoreCharts: boolean = false;
+  hasMoreCharts: boolean = true;
+
+  private io?: IntersectionObserver;
+  private chartIo?: IntersectionObserver;
+
   ngOnInit(): void {
     this.countDownTime = this.deadline;
     this.loadRealTimeMetric();
@@ -113,11 +130,13 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
                       metric: field.field,
                       unit: field.unit
                     });
-                    this.cdr.detectChanges();
                   }
                 });
               }
             });
+            this.loadInitialCharts();
+            this.setupChartIntersectionObserver();
+            this.cdr.detectChanges();
           } else {
             console.warn(message.msg);
           }
@@ -155,9 +174,24 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
               }
             });
             this.metrics = [];
-            this.cdr.detectChanges();
-            this.metrics = message.data.metrics;
-            this.cdr.detectChanges();
+            this.displayedMetrics = [];
+            this.currentPage = 0;
+            this.hasMoreMetrics = true;
+            this.isLoadingMore = false;
+            this.displayedChartMetrics = [];
+            this.currentChartPage = 0;
+            this.hasMoreCharts = true;
+            this.isLoadingMoreCharts = false;
+
+            this.metrics = message.data.metrics || [];
+
+            setTimeout(() => {
+              this.cdr.detectChanges();
+              if (this.metrics && this.metrics.length > 0) {
+                this.loadInitialMetrics();
+                this.setupIntersectionObserver();
+              }
+            }, 0);
           } else {
             console.warn(message.msg);
           }
@@ -171,6 +205,150 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           console.error(error.msg);
         }
       );
+  }
+
+  private loadInitialCharts(): void {
+    const end = Math.min(this.chartPageSize, this.chartMetrics?.length || 0);
+    this.displayedChartMetrics = (this.chartMetrics || []).slice(0, end);
+    this.currentChartPage = 1;
+    this.hasMoreCharts = end < (this.chartMetrics?.length || 0);
+    this.cdr.detectChanges();
+  }
+
+  private loadMoreCharts(): void {
+    if (this.isLoadingMoreCharts || !this.hasMoreCharts) return;
+    this.isLoadingMoreCharts = true;
+    const start = this.currentChartPage * this.chartPageSize;
+    const end = Math.min(start + this.chartPageSize, this.chartMetrics.length);
+    const nextChunk = this.chartMetrics.slice(start, end);
+    this.displayedChartMetrics = this.displayedChartMetrics.concat(nextChunk);
+    this.currentChartPage++;
+    this.hasMoreCharts = end < this.chartMetrics.length;
+    this.isLoadingMoreCharts = false;
+    this.cdr.detectChanges();
+  }
+
+  private setupChartIntersectionObserver(): void {
+    if (this.chartIo) {
+      this.chartIo.disconnect();
+      this.chartIo = undefined;
+    }
+
+    setTimeout(() => {
+      this.initChartObserver();
+    }, 0);
+  }
+
+  private initChartObserver(retryCount: number = 0): void {
+    const maxRetries = 3;
+    const sentinel = document.getElementById('charts-load-sentinel');
+
+    if (!sentinel) {
+      if (retryCount < maxRetries) {
+        setTimeout(() => {
+          this.initChartObserver(retryCount + 1);
+        }, 100 * (retryCount + 1));
+      }
+      return;
+    }
+
+    try {
+      this.chartIo = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            if (entry.isIntersecting && !this.isLoadingMoreCharts) {
+              this.loadMoreCharts();
+            }
+          }
+        },
+        {
+          root: null,
+          rootMargin: '200px 0px 200px 0px',
+          threshold: 0.01
+        }
+      );
+
+      this.chartIo.observe(sentinel);
+    } catch (error) {
+      console.error('Failed to setup chart intersection observer:', error);
+      if (retryCount < maxRetries) {
+        setTimeout(() => {
+          this.initChartObserver(retryCount + 1);
+        }, 200 * (retryCount + 1));
+      }
+    }
+  }
+
+  private loadInitialMetrics(): void {
+    const end = Math.min(this.pageSize, this.metrics?.length || 0);
+    this.displayedMetrics = (this.metrics || []).slice(0, end);
+    this.currentPage = 1;
+    this.hasMoreMetrics = end < (this.metrics?.length || 0);
+    this.cdr.detectChanges();
+  }
+
+  private loadMoreMetrics(): void {
+    if (this.isLoadingMore || !this.hasMoreMetrics) return;
+    this.isLoadingMore = true;
+    const start = this.currentPage * this.pageSize;
+    const end = Math.min(start + this.pageSize, this.metrics.length);
+    const nextChunk = this.metrics.slice(start, end);
+    this.displayedMetrics = this.displayedMetrics.concat(nextChunk);
+    this.currentPage++;
+    this.hasMoreMetrics = end < this.metrics.length;
+    this.isLoadingMore = false;
+    this.cdr.detectChanges();
+  }
+
+  private setupIntersectionObserver(): void {
+    if (this.io) {
+      this.io.disconnect();
+      this.io = undefined;
+    }
+
+    setTimeout(() => {
+      this.initMetricsObserver();
+    }, 0);
+  }
+
+  private initMetricsObserver(retryCount: number = 0): void {
+    const maxRetries = 3;
+    const sentinel = document.getElementById('metrics-load-sentinel');
+
+    if (!sentinel) {
+      if (retryCount < maxRetries) {
+        setTimeout(() => {
+          this.initMetricsObserver(retryCount + 1);
+        }, 100 * (retryCount + 1));
+      }
+      return;
+    }
+
+    try {
+      this.io = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            if (entry.isIntersecting && !this.isLoadingMore) {
+              this.loadMoreMetrics();
+            }
+          }
+        },
+        {
+          root: null,
+          rootMargin: '200px 0px 200px 0px',
+          threshold: 0.01
+        }
+      );
+
+      this.io.observe(sentinel);
+    } catch (error) {
+      console.error('Failed to setup metrics intersection observer:', error);
+      if (retryCount < maxRetries) {
+        setTimeout(() => {
+          this.initMetricsObserver(retryCount + 1);
+        }, 200 * (retryCount + 1));
+      }
+    }
   }
 
   countDown() {
@@ -219,6 +397,38 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.interval$);
+    if (this.interval$) {
+      clearInterval(this.interval$);
+      this.interval$ = undefined;
+    }
+
+    if (this.io) {
+      try {
+        this.io.disconnect();
+      } catch (error) {
+        console.warn('Error disconnecting metrics observer:', error);
+      } finally {
+        this.io = undefined;
+      }
+    }
+
+    if (this.chartIo) {
+      try {
+        this.chartIo.disconnect();
+      } catch (error) {
+        console.warn('Error disconnecting chart observer:', error);
+      } finally {
+        this.chartIo = undefined;
+      }
+    }
+
+    this.isLoadingMore = false;
+    this.isLoadingMoreCharts = false;
+    this.isSpinning = false;
+
+    this.displayedMetrics = [];
+    this.displayedChartMetrics = [];
+    this.metrics = [];
+    this.chartMetrics = [];
   }
 }
