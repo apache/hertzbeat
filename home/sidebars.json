@@ -198,7 +198,8 @@
             "help/ipmi",
             "help/hikvision_isapi",
             "help/dahua",
-            "help/uniview"
+            "help/uniview",
+            "help/synology_nas"
           ]
         },
         {
