@@ -60,7 +60,7 @@ public class PrometheusMatrixParser extends AbstractPrometheusParse {
                 boolean setValueFlag = false;
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : aliasFields) {
-                    if (!CollectUtil.assertPromRequireField(aliasField)) {
+                    if (!CollectUtil.assertPromRequireField(aliasField) || CollectUtil.isValueAsLabel(aliasField, r.getMetric())) {
                         JsonElement jsonElement = r.getMetric().get(aliasField);
                         if (jsonElement != null) {
                             valueRowBuilder.addColumn(jsonElement.getAsString());
@@ -93,7 +93,6 @@ public class PrometheusMatrixParser extends AbstractPrometheusParse {
                 }
                 builder.addValueRow(valueRowBuilder.build());
             }
-
         }
     }
 }
