@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataReader;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -38,7 +39,6 @@ import org.springframework.data.domain.Sort;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataWriter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,10 +54,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class LogQueryController {
 
-    private final HistoryDataWriter historyDataWriter;
+    private final HistoryDataReader historyDataReader;
 
-    public LogQueryController(HistoryDataWriter historyDataWriter) {
-        this.historyDataWriter = historyDataWriter;
+    public LogQueryController(HistoryDataReader historyDataReader) {
+        this.historyDataReader = historyDataReader;
     }
 
     @GetMapping("/list")
@@ -201,7 +201,7 @@ public class LogQueryController {
     private List<LogEntry> getFilteredLogs(Long start, Long end, String traceId, String spanId, 
                                            Integer severityNumber, String severityText) {
         // Use the new multi-condition query method
-        return historyDataWriter.queryLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText);
+        return historyDataReader.queryLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText);
     }
 
     private Page<LogEntry> getPagedLogs(Long start, Long end, String traceId, String spanId, 
@@ -210,8 +210,8 @@ public class LogQueryController {
         int offset = pageIndex * pageSize;
         
         // Get total count and paginated data
-        long totalElements = historyDataWriter.countLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText);
-        List<LogEntry> pagedLogs = historyDataWriter.queryLogsByMultipleConditionsWithPagination(
+        long totalElements = historyDataReader.countLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText);
+        List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
             start, end, traceId, spanId, severityNumber, severityText, offset, pageSize);
         
         // Create PageRequest (sorted by timestamp descending)

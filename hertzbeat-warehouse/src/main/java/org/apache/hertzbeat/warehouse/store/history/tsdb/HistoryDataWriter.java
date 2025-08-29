@@ -47,56 +47,6 @@ public interface HistoryDataWriter {
     }
 
     /**
-     * Query logs with multiple filter conditions
-     * @param startTime start time in milliseconds
-     * @param endTime end time in milliseconds
-     * @param traceId trace ID filter
-     * @param spanId span ID filter
-     * @param severityNumber severity number filter
-     * @param severityText severity text filter
-     * @return filtered log entries
-     */
-    default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId, 
-                                                         String spanId, Integer severityNumber, 
-                                                         String severityText) {
-        throw new UnsupportedOperationException("query logs by multiple conditions is not supported");
-    }
-
-    /**
-     * Query logs with multiple filter conditions and pagination
-     * @param startTime start time in milliseconds
-     * @param endTime end time in milliseconds
-     * @param traceId trace ID filter
-     * @param spanId span ID filter
-     * @param severityNumber severity number filter
-     * @param severityText severity text filter
-     * @param offset pagination offset
-     * @param limit pagination limit
-     * @return filtered log entries with pagination
-     */
-    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId, 
-                                                                       String spanId, Integer severityNumber, 
-                                                                       String severityText, Integer offset, Integer limit) {
-        throw new UnsupportedOperationException("query logs by multiple conditions with pagination is not supported");
-    }
-
-    /**
-     * Count logs with multiple filter conditions
-     * @param startTime start time in milliseconds
-     * @param endTime end time in milliseconds
-     * @param traceId trace ID filter
-     * @param spanId span ID filter
-     * @param severityNumber severity number filter
-     * @param severityText severity text filter
-     * @return count of matching log entries
-     */
-    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId, 
-                                              String spanId, Integer severityNumber, 
-                                              String severityText) {
-        throw new UnsupportedOperationException("count logs by multiple conditions is not supported");
-    }
-
-    /**
      * Batch delete logs by time timestamps
      * @param timeUnixNanos list of time timestamps to delete
      * @return true if deletion is successful, false otherwise
