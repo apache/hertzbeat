@@ -354,8 +354,10 @@ export class AlertSettingComponent implements OnInit {
       this.updateLogQbConfig();
     } else if (this.alertType === 'periodic' && this.dataType === 'metric') {
       this.define.type = 'periodic_metric';
+      this.define.datasource = 'promql';
     } else if (this.alertType === 'periodic' && this.dataType === 'log') {
       this.define.type = 'periodic_log';
+      this.define.datasource = 'sql';
       this.updateLogQbConfig();
     }
 

@@ -664,9 +664,6 @@
               <label nz-radio-button [nzValue]="'promql'">
                 {{ 'PromQL' | i18n }}
               </label>
-              <label nz-radio-button [nzValue]="'sql'">
-                {{ 'SQL' | i18n }}
-              </label>
             </nz-radio-group>
           </ng-container>
         </nz-form-control>
@@ -725,9 +722,6 @@
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <ng-container *ngIf="cascadeValues[1] !== 'availability'">
             <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" name="datasource" id="datasource">
-              <label nz-radio-button [nzValue]="'promql'">
-                {{ 'PromQL' | i18n }}
-              </label>
               <label nz-radio-button [nzValue]="'sql'">
                 {{ 'SQL' | i18n }}
               </label>
