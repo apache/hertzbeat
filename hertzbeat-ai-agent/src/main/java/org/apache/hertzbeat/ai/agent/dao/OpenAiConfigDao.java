@@ -15,11 +15,23 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.agent.dao;
 
+import org.apache.hertzbeat.ai.agent.entity.OpenAiConfig;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+
 /**
- * Data Access Object interface for Message entities.
+ * OpenAI Agent Configuration Dao
  */
-public interface MessageDao {
+@Repository
+public interface OpenAiConfigDao extends JpaRepository<OpenAiConfig, String>, JpaSpecificationExecutor<OpenAiConfig> {
+    
+    /**
+     * Query by type
+     * @param type type
+     * @return Return the queried configuration information
+     */
+    OpenAiConfig findByType(String type);
 }
