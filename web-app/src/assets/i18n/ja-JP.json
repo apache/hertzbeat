@@ -630,6 +630,8 @@
   "log.manage.timestamp": "タイムスタンプ",
   "log.manage.title": "ログ管理と統計",
   "log.manage.trace-id": "Trace ID",
+  "log.stream.apply-filters": "フィルターを適用",
+  "log.stream.apply-filters-tooltip": "フィルターを適用",
   "log.stream.attributes": "属性",
   "log.stream.basic-information": "基本情報",
   "log.stream.clear": "クリア",

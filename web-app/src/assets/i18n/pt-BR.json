@@ -682,6 +682,8 @@
   "log.manage.timestamp": "Timestamp",
   "log.manage.title": "Gerenciamento e estatísticas de logs",
   "log.manage.trace-id": "Trace ID",
+  "log.stream.apply-filters": "Aplicar filtros",
+  "log.stream.apply-filters-tooltip": "Aplicar filtros",
   "log.stream.attributes": "atributos",
   "log.stream.basic-information": "Informações básicas",
   "log.stream.clear": "Limpar",

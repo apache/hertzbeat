@@ -84,7 +84,7 @@
 
     <!-- Filter Row -->
     <div *ngIf="showFilters" class="filter-content">
-      <nz-divider style="margin: 16px 0"></nz-divider>
+      <nz-divider class="filter-divider"></nz-divider>
       <div class="filter-controls">
         <div class="filter-item">
           <label class="filter-label">{{ 'log.stream.severity-number' | i18n }}</label>
@@ -93,7 +93,6 @@
               type="number"
               nz-input
               [(ngModel)]="filterSeverityNumber"
-              (ngModelChange)="onFilterChange()"
               [placeholder]="'log.stream.severity-number-placeholder' | i18n"
             />
           </nz-input-group>
@@ -109,7 +108,6 @@
               type="text"
               nz-input
               [(ngModel)]="filterSeverityText"
-              (ngModelChange)="onFilterChange()"
               [placeholder]="'log.stream.severity-text-placeholder' | i18n"
             />
           </nz-input-group>
@@ -125,7 +123,6 @@
               type="text"
               nz-input
               [(ngModel)]="filterTraceId"
-              (ngModelChange)="onFilterChange()"
               [placeholder]="'log.stream.trace-id-placeholder' | i18n"
             />
           </nz-input-group>
@@ -141,7 +138,6 @@
               type="text"
               nz-input
               [(ngModel)]="filterSpanId"
-              (ngModelChange)="onFilterChange()"
               [placeholder]="'log.stream.span-id-placeholder' | i18n"
             />
           </nz-input-group>
@@ -151,10 +147,18 @@
         </div>
 
         <div class="filter-actions">
+                    <button
+            nz-button
+            nzType="default"
+            (click)="onApplyFilters()"
+            [nz-tooltip]="'log.stream.apply-filters-tooltip' | i18n"
+          >
+            <i nz-icon nzType="filter"></i>
+            {{ 'log.stream.apply-filters' | i18n }}
+          </button>
           <button
             nz-button
             nzType="default"
-            nzSize="small"
             (click)="onClearFilters()"
             [nz-tooltip]="'log.stream.clear-filters-tooltip' | i18n"
           >

@@ -634,6 +634,8 @@
   "log.manage.timestamp": "時間戳",
   "log.manage.title": "日誌管理與統計",
   "log.manage.trace-id": "Trace ID",
+  "log.stream.apply-filters": "應用過濾器",
+  "log.stream.apply-filters-tooltip": "應用過濾器",
   "log.stream.attributes": "個屬性",
   "log.stream.basic-information": "基本資訊",
   "log.stream.clear": "清除",

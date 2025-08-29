@@ -300,11 +300,6 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     this.connectToLogStream(); // Reconnect with new filters
   }
 
-  onFilterChange(): void {
-    this.logEntries = []; // Clear existing logs
-    this.connectToLogStream(); // Reconnect with new filters
-  }
-
   onClearFilters(): void {
     this.filterSeverityNumber = '';
     this.filterSeverityText = '';
