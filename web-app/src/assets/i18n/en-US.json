@@ -609,6 +609,7 @@
   "log.manage.column-control": "Column Display Control",
   "log.manage.column-setting": "Column Setting",
   "log.manage.complete-json-data": "Complete JSON Data",
+  "log.manage.error.unsupported-db": "Database does not support log query!",
   "log.manage.hide-statistics": "Hide Statistics",
   "log.manage.log-entry-details": "Log Entry Details",
   "log.manage.overview.debug-logs": "Debug Logs",

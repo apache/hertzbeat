@@ -652,6 +652,7 @@
   "log.manage.column-control": "Controle de exibição de colunas",
   "log.manage.column-setting": "Configuração de colunas",
   "log.manage.complete-json-data": "Dados JSON completos",
+  "log.manage.error.unsupported-db": "Banco de dados não suporta consulta de logs!",
   "log.manage.hide-statistics": "Ocultar estatísticas",
   "log.manage.log-entry-details": "Detalhes da entrada de log",
   "log.manage.overview.debug-logs": "Logs de depuração",

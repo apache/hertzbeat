@@ -600,6 +600,7 @@
   "log.manage.column-control": "列表示コントロール",
   "log.manage.column-setting": "列設定",
   "log.manage.complete-json-data": "完全なJSONデータ",
+  "log.manage.error.unsupported-db": "データベースはログクエリをサポートしていません!",
   "log.manage.hide-statistics": "統計を非表示",
   "log.manage.log-entry-details": "ログエントリ詳細",
   "log.manage.overview.debug-logs": "デバッグログ",

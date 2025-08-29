@@ -150,7 +150,6 @@ export class LogManageComponent implements OnInit {
 
   ngOnInit(): void {
     this.initChartThemes();
-    this.query();
   }
 
   initChartThemes() {
@@ -320,7 +319,7 @@ export class LogManageComponent implements OnInit {
 
           this.loadStatsWithFilters();
         } else {
-          this.msg.warning(message.msg || this.i18n.fanyi('common.notify.query-fail'));
+          this.msg.warning(this.i18n.fanyi('log.manage.error.unsupported-db'));
         }
         this.loading = false;
       },

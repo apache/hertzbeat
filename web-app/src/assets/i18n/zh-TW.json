@@ -604,6 +604,7 @@
   "log.manage.column-control": "欄位顯示控制",
   "log.manage.column-setting": "欄位設定",
   "log.manage.complete-json-data": "完整JSON資料",
+  "log.manage.error.unsupported-db": "資料庫不支援日誌查詢!",
   "log.manage.hide-statistics": "隱藏統計",
   "log.manage.log-entry-details": "日誌條目詳情",
   "log.manage.overview.debug-logs": "除錯日誌",

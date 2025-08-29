@@ -232,6 +232,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.ok(message);
     }
 
+    /**
+     * handle unsupported operation exception
+     * @param exception UnsupportedOperationException
+     * @return response
+     */
+    @ExceptionHandler(UnsupportedOperationException.class)
+    @ResponseBody
+    ResponseEntity<Message<Void>> handleUnsupportedOperationException(UnsupportedOperationException exception) {
+        String errorMessage = "operation not supported";
+        if (exception != null && exception.getMessage() != null) {
+            errorMessage = exception.getMessage();
+        }
+        log.warn("[unsupported operation]-{}", errorMessage, exception);
+        Message<Void> message = Message.fail(FAIL_CODE, errorMessage);
+        return ResponseEntity.ok(message);
+    }
+
     @ExceptionHandler(NoResourceFoundException.class)
     void ignoreNoResourceFoundException(Exception ex) throws Exception {
         throw ex;

@@ -612,6 +612,7 @@
   "log.manage.column-control": "列显示控制",
   "log.manage.column-setting": "列设置",
   "log.manage.complete-json-data": "完整JSON数据",
+  "log.manage.error.unsupported-db": "数据库不支持日志查询!",
   "log.manage.hide-statistics": "隐藏统计",
   "log.manage.log-entry-details": "日志条目详情",
   "log.manage.overview.debug-logs": "调试日志",
