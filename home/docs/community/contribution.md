@@ -139,9 +139,9 @@ git checkout master
 git pull upstream master
 ```
 
-### 领取贡献者证书
+### Get Contributor Certificate
 
-在您的 PR 被合并后，您可以发送如下内容邮件到 `dev@hertzbeat.apache.org` 来申请领取属于您的 Apache HertzBeat 贡献者电子证书。
+After your pr is merged, you can send an email  `dev@hertzbeat.apache.org` to request your Apache HertzBeat contributor electronic certificate.
 
 ```
 Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
@@ -158,10 +158,10 @@ Best regards,
 <Your Name>
 ```
 
-在几个工作日内，您会收到携带电子证书的回复，您的名字也会出现在贡献者列表中。    
-注意贡献者的证书是电子的，待您成为 `Committer` 或者 `PMC` 的证书是实体的。
+You will receive a reply with an electronic certificate within a few working days, and your name will also appear in the list of contributors.
+Attention contributor certificates are electronic, and certificates for you to become a `Committer` or `PMC` are physical.
 
-证书样例：
+Certificate Sample:
 
 ![cert](/img/docs/hertzbeat-cert.png)
 
