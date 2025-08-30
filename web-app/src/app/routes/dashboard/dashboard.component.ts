@@ -186,13 +186,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       title: {
         text: `{a|${this.i18nSvc.fanyi('dashboard.monitors.title')}}`,
         subtext: `{b|${this.i18nSvc.fanyi('dashboard.monitors.sub-title')}}`,
+        show: false,
         left: 'center',
         textStyle: {
           rich: {
             a: {
               fontWeight: 'bolder',
               align: 'center',
-              fontSize: 26
+              fontSize: 14
             }
           }
         },
@@ -201,7 +202,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             b: {
               fontWeight: 'normal',
               align: 'center',
-              fontSize: 14
+              fontSize: 12
             }
           }
         }
@@ -246,34 +247,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
             length: 30
           },
           label: {
-            formatter: '{a|{a}}{abg|}\n{hr|}\n  {b|{b}}   {per|{d}%}  ',
-            backgroundColor: '#F6F8FC',
-            borderColor: '#8C8D8E',
-            borderWidth: 1,
+            formatter: '{b|{b}({c})}\n{hr|}\n{per|{d}%}',
+            backgroundColor: 'transparent',
+            borderColor: '#D9D9D9',
+            borderWidth: 0.5,
             borderRadius: 4,
             rich: {
-              a: {
+              b: {
                 color: '#6E7079',
-                lineHeight: 22,
-                align: 'center'
+                lineHeight: 30,
+                fontWeight: 'bold',
+                align: 'center',
+                padding: [4, 8]
               },
               hr: {
-                borderColor: '#8C8D8E',
+                borderColor: '#D9D9D9',
                 width: '100%',
                 borderWidth: 1,
                 height: 0
               },
-              b: {
-                color: '#4C5058',
-                fontSize: 14,
-                fontWeight: 'bold',
-                lineHeight: 33
-              },
               per: {
                 color: '#fff',
-                backgroundColor: '#4C5058',
-                padding: [3, 4],
-                borderRadius: 4
+                backgroundColor: '#3f51b5',
+                padding: [4, 8],
+                borderRadius: 4,
+                lineHeight: 30,
+                align: 'center'
               }
             }
           }
@@ -300,12 +299,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
           type: 'shadow'
         }
       },
+      grid:{
+        top: '20%',
+        right: 0,
+        bottom: '20%',
+        left:0
+      },
       xAxis: {
         type: 'category',
         data: [this.i18nSvc.fanyi('alert.severity.2'), this.i18nSvc.fanyi('alert.severity.1'), this.i18nSvc.fanyi('alert.severity.0')]
       },
       yAxis: {
-        type: 'value'
+        type: 'value',
+        show: false,
       },
       series: [
         {
