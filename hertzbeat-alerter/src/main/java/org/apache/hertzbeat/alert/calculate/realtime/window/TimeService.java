@@ -128,10 +128,7 @@ public class TimeService {
      * Update max timestamp from WindowedLogRealTimeAlertCalculator
      */
     public void updateMaxTimestamp(long timestamp) {
-        long currentMax = maxTimestamp.get();
-        if (timestamp > currentMax) {
-            maxTimestamp.compareAndSet(currentMax, timestamp);
-        }
+        maxTimestamp.getAndUpdate(current -> Math.max(current, timestamp));
     }
     
     /**
