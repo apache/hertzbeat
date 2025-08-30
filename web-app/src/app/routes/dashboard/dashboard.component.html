@@ -347,7 +347,7 @@
   <div nz-row nzGutter="16" style="margin-top: 20px; height: 500px">
     <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
       <nz-spin [nzSpinning]="wordCloudDataLoading">
-        <nz-card class="dashboard-chart-card" style="border-radius: 16px !important; height: 100%; overflow: hidden">
+        <nz-card class="dashboard-chart-card" style="border-radius: 16px !important; height: 100%;width:100%;">
           <angular-tag-cloud
             class="br-4"
             *ngIf="!wordCloudDataLoading"
