@@ -113,11 +113,17 @@
         <span>{{ data.name }}</span>
       </td>
       <td nzAlign="center">
-        <nz-tag *ngIf="data.type == 'realtime' || data.type == undefined">
-          <span>{{ 'alert.setting.type.realtime' | i18n }}</span>
+        <nz-tag *ngIf="data.type == 'realtime_metric' || data.type == undefined">
+          <span>{{ 'alert.setting.type.realtime.metric' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.type == 'periodic'">
-          <span>{{ 'alert.setting.type.periodic' | i18n }}</span>
+        <nz-tag *ngIf="data.type == 'periodic_metric'">
+          <span>{{ 'alert.setting.type.periodic.metric' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 'realtime_log'" nzColor="orange">
+          <span>{{ 'alert.setting.type.realtime.log' | i18n }}</span>
+        </nz-tag>
+        <nz-tag *ngIf="data.type == 'periodic_log'">
+          <span>{{ 'alert.setting.type.periodic.log' | i18n }}</span>
         </nz-tag>
       </td>
       <td nzAlign="center" nzEllipsis nz-tooltip [nzTooltipTitle]="data.expr">
@@ -141,7 +147,7 @@
             nz-tooltip
             nzType="primary"
             [nzLoading]="isLoadingEdit === data.id"
-            [nzTooltipTitle]="data.type == 'realtime' ? ('alert.setting.edit.realtime' | i18n) : ('alert.setting.edit.periodic' | i18n)"
+            [nzTooltipTitle]="getEditTooltipTitle(data) | i18n"
           >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
@@ -174,15 +180,7 @@
 <!-- new or update alert definition pop-up box -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="
-    isManageModalAdd
-      ? define.type == 'periodic'
-        ? ('alert.setting.new.periodic' | i18n)
-        : ('alert.setting.new.realtime' | i18n)
-      : define.type == 'periodic'
-      ? ('alert.setting.edit.periodic' | i18n)
-      : ('alert.setting.edit.realtime' | i18n)
-  "
+  [nzTitle]="modalTitle | i18n"
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
@@ -199,7 +197,32 @@
           <input [(ngModel)]="define.name" nz-input required type="text" name="name" id="name" />
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'realtime'">
+      <!-- Data Type Selection -->
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="dataType" [nzTooltipTitle]="'alert.setting.datatype.tip' | i18n">
+          {{ 'alert.setting.datatype' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-radio-group
+            [(ngModel)]="dataType"
+            (ngModelChange)="onDataTypeChange()"
+            nzButtonStyle="solid"
+            [required]="true"
+            name="dataType"
+            id="dataType"
+          >
+            <label nz-radio-button [nzValue]="'metric'">
+              <i nz-icon nzType="line-chart" nzTheme="outline"></i>
+              {{ 'alert.setting.datatype.metric' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="'log'">
+              <i nz-icon nzType="file-text" nzTheme="outline"></i>
+              {{ 'alert.setting.datatype.log' | i18n }}
+            </label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'realtime_metric'">
         <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true" [nzTooltipTitle]="'alert.setting.target.tip' | i18n">
           {{ 'alert.setting.target' | i18n }}
         </nz-form-label>
@@ -216,7 +239,7 @@
           ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0" [ngStyle]="{ marginBottom: '5px' }">
+      <nz-form-item *ngIf="define.type == 'realtime_metric' && cascadeValues.length > 0" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzFor="isExpr" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
@@ -247,7 +270,7 @@
           </ng-container>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && isExpr">
+      <nz-form-item *ngIf="define.type == 'realtime_metric' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
@@ -289,7 +312,7 @@
           </div>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'realtime' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && !isExpr">
+      <nz-form-item *ngIf="define.type == 'realtime_metric' && cascadeValues.length > 0 && cascadeValues[1] !== 'availability' && !isExpr">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
           <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl" [ngStyle]="{ borderRadius: '4px' }">
@@ -331,7 +354,7 @@
             <ng-container *queryField="let rule; let getFields = getFields; let onChange = onChange">
               <nz-select
                 [(ngModel)]="rule.field"
-                (ngModelChange)="onChange($event, rule)"
+                (ngModelChange)="onMetricsFieldChange($event, rule, onChange)"
                 [ngModelOptions]="{ standalone: true }"
                 [nzDropdownMatchSelectWidth]="false"
                 [nzPlaceHolder]="'alert.setting.rule.metric.place-holder' | i18n"
@@ -398,7 +421,7 @@
           </ngx-query-builder>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type === 'realtime'">
+      <nz-form-item *ngIf="define.type === 'realtime_metric'">
         <nz-form-label [nzSpan]="7" nzFor="monitors" [nzTooltipTitle]="'alert.setting.bind.monitors.tip' | i18n">
           {{ 'alert.setting.bind.monitors' | i18n }}
         </nz-form-label>
@@ -409,7 +432,7 @@
           </button>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'realtime'">
+      <nz-form-item *ngIf="define.type == 'realtime_metric'">
         <nz-form-label [nzSpan]="7" nzFor="previewExpr">
           {{ 'alert.setting.preview.expr' | i18n }}
         </nz-form-label>
@@ -419,7 +442,219 @@
           </nz-card>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'periodic'" [ngStyle]="{ marginBottom: '5px' }">
+      <!-- Log rule type selection -->
+      <nz-form-item *ngIf="define.type == 'realtime_log'" [ngStyle]="{ marginBottom: '5px' }">
+        <nz-form-label [nzSpan]="7" nzFor="logIsExpr" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
+          {{ 'alert.setting.rule' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-radio-group
+            [(ngModel)]="isExpr"
+            (ngModelChange)="switchAlertRuleShow()"
+            nzButtonStyle="solid"
+            [required]="'true'"
+            name="logIsExpr"
+            id="logIsExpr"
+          >
+            <label nz-radio-button [nzValue]="false">
+              {{ 'alert.setting.rule.switch-expr.0' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="true">
+              {{ 'alert.setting.rule.switch-expr.1' | i18n }}
+            </label>
+          </nz-radio-group>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- Log expression input -->
+      <nz-form-item *ngIf="define.type == 'realtime_log' && isExpr">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="logExpr"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <div class="template-input-wrapper">
+            <a nz-dropdown [nzDropdownMenu]="logExprMenu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
+              <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.log.expr.tip' | i18n">
+                <i nz-icon nzType="snippets" nzTheme="outline"></i>
+              </button>
+            </a>
+            <nz-dropdown-menu #logExprMenu="nzDropdownMenu">
+              <ul nz-menu class="env-vars-menu">
+                <li nz-menu-item *ngFor="let item of logFields" (click)="onExprVarClick(item)">
+                  <span class="env-var-name">{{ item.value }}</span>
+                  <span class="env-var-desc">{{ item.label }}</span>
+                  <nz-tag class="env-var-type" [nzColor]="item.type === 0 ? 'success' : item.type === 1 ? 'processing' : 'orange'">
+                    {{
+                      item.type === 0
+                        ? ('alert.setting.number' | i18n)
+                        : item.type === 1
+                        ? ('alert.setting.string' | i18n)
+                        : ('alert.setting.object' | i18n)
+                    }}
+                  </nz-tag>
+                </li>
+                <nz-divider></nz-divider>
+                <li nz-menu-item *ngFor="let op of commonOperators" (click)="onExprVarClick(op)">
+                  <span class="env-var-name">{{ op.value }}</span>
+                  <span class="env-var-desc">{{ op.description | i18n }}</span>
+                </li>
+              </ul>
+            </nz-dropdown-menu>
+
+            <nz-textarea-count [nzMaxCharacterCount]="200">
+              <textarea
+                [(ngModel)]="userExpr"
+                (ngModelChange)="updateLogFinalExpr()"
+                required
+                rows="3"
+                nz-input
+                name="logExpr"
+                id="logExpr"
+                [placeholder]="'alert.setting.log.expr.example' | i18n"
+              >
+              </textarea>
+            </nz-textarea-count>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- Log query builder -->
+      <nz-form-item *ngIf="define.type == 'realtime_log' && !isExpr">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
+          <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl" [ngStyle]="{ borderRadius: '4px' }">
+            <ng-container *querySwitchGroup="let rule; let onChange = onChange">
+              <nz-radio-group
+                style="white-space: nowrap"
+                [(ngModel)]="rule.condition"
+                (ngModelChange)="onChange(rule.condition)"
+                nzButtonStyle="solid"
+                [required]="true"
+                [ngModelOptions]="{ standalone: true }"
+              >
+                <label nz-radio-button [nzValue]="'and'">AND</label>
+                <label nz-radio-button [nzValue]="'or'">OR</label>
+              </nz-radio-group>
+            </ng-container>
+            <ng-container *queryRulesetAddRuleButton="let rule; let addRule = addRule">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRule()">
+                <i nz-icon nzType="plus"></i>
+                {{ 'Rule' }}
+              </button>
+            </ng-container>
+            <ng-container *queryRulesetAddRulesetButton="let rule; let addRuleSet = addRuleSet">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRuleSet()">
+                <i nz-icon nzType="plus"></i>
+                {{ 'Ruleset' }}
+              </button>
+            </ng-container>
+            <ng-container *queryRulesetRemoveButton="let rule; let removeRuleSet = removeRuleSet">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button nzDanger (click)="removeRuleSet(rule)">
+                <i nz-icon nzType="minus"></i>
+              </button>
+            </ng-container>
+            <ng-container *queryRuleRemoveButton="let rule; let removeRule = removeRule">
+              <button style="flex-shrink: 0" nz-button nzDanger (click)="removeRule(rule)">
+                <i nz-icon nzType="minus"></i>
+              </button>
+            </ng-container>
+            <ng-container *queryField="let rule; let getFields = getFields; let onChange = onChange">
+              <div style="display: flex; align-items: center; gap: 8px">
+                <nz-select
+                  [(ngModel)]="rule.field"
+                  (ngModelChange)="onLogFieldChange($event, rule, onChange)"
+                  [ngModelOptions]="{ standalone: true }"
+                  [nzDropdownMatchSelectWidth]="false"
+                  [nzPlaceHolder]="'alert.setting.log.field.place-holder' | i18n"
+                  style="width: auto; min-width: 180px"
+                >
+                  <nz-option
+                    *ngFor="let field of getFields(rule.entity || '')"
+                    [nzValue]="field.value"
+                    [nzLabel]="field.name ? field.name : field.value"
+                    nzCustomContent
+                  >
+                    {{ field.name ? field.name : field.value }}
+                    <nz-tag [nzColor]="field.type === 0 ? 'success' : field.type === 1 ? 'processing' : 'orange'">
+                      {{
+                        field.type === 0
+                          ? ('alert.setting.number' | i18n)
+                          : field.type === 1
+                          ? ('alert.setting.string' | i18n)
+                          : field.type === 2
+                          ? ('alert.setting.object' | i18n)
+                          : field.type === 3
+                          ? ('alert.setting.time' | i18n)
+                          : ('alert.setting.object' | i18n)
+                      }}
+                    </nz-tag>
+                    <nz-tag *ngIf="field.unit">
+                      {{ field.unit }}
+                    </nz-tag>
+                  </nz-option>
+                </nz-select>
+
+                <!-- Object attribute input for log.attributes, log.resource, etc. -->
+                <div *ngIf="isObjectField(rule.field)" style="display: flex; align-items: center; gap: 4px">
+                  <span style="color: #666">.</span>
+                  <input
+                    nz-input
+                    [(ngModel)]="rule.objectAttribute"
+                    (ngModelChange)="onObjectAttributeChange($event, rule, onChange)"
+                    [ngModelOptions]="{ standalone: true }"
+                    [placeholder]="'alert.setting.rule.object.attribute.placeholder' | i18n"
+                    style="width: 120px"
+                  />
+                </div>
+              </div>
+            </ng-container>
+            <ng-container *queryOperator="let rule; let operators = operators; let onChange = onChange">
+              <nz-select
+                [(ngModel)]="rule.operator"
+                (ngModelChange)="onChange(rule)"
+                [ngModelOptions]="{ standalone: true }"
+                [nzShowArrow]="false"
+                [nzDropdownMatchSelectWidth]="false"
+                style="text-align: center; font-weight: bolder; width: auto"
+                [nzDropdownStyle]="{ 'text-align': 'center', 'font-weight': 'bolder', 'font-size': 'larger' }"
+                [nzPlaceHolder]="'alert.setting.rule.operator' | i18n"
+              >
+                <nz-option
+                  *ngFor="let operator of operators"
+                  [nzValue]="operator"
+                  [nzLabel]="getOperatorLabelByType(operator) | i18n"
+                ></nz-option>
+              </nz-select>
+            </ng-container>
+            <ng-container *queryInput="let rule; let field = field; let onChange = onChange; type: 'custom'">
+              <input
+                nz-input
+                [disabled]="rule.operator == 'exists' || rule.operator == '!exists'"
+                [type]="field.type === 0 ? 'number' : 'text'"
+                [(ngModel)]="rule.value"
+                (ngModelChange)="onChange($event)"
+                [ngModelOptions]="{ standalone: true }"
+                [placeholder]="
+                  rule.operator == 'exists' || rule.operator == '!exists'
+                    ? ''
+                    : field.type === 0
+                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
+                    : ('alert.setting.rule.string-value.place-holder' | i18n)
+                "
+                style="flex: 1"
+              />
+            </ng-container>
+          </ngx-query-builder>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- Log preview expression -->
+      <nz-form-item *ngIf="define.type == 'realtime_log'">
+        <nz-form-label [nzSpan]="7" nzFor="logPreviewExpr">
+          {{ 'alert.setting.preview.expr' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-card [nzBordered]="false" class="preview-expr-card">
+            <pre>{{ define.expr }}</pre>
+          </nz-card>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type == 'periodic_metric'" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzFor="datasource" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
@@ -433,7 +668,8 @@
           </ng-container>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type == 'periodic'">
+      <!-- Metric query and alert expression -->
+      <nz-form-item *ngIf="define.type == 'periodic_metric'">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="100">
@@ -444,7 +680,7 @@
               nz-input
               name="periodic_expr"
               id="periodic_expr"
-              [placeholder]="'alert.setting.promql.tip' | i18n"
+              [placeholder]="define.datasource == 'promql' ? ('alert.setting.promql.tip' | i18n) : ('alert.setting.sql.tip' | i18n)"
             >
             </textarea>
           </nz-textarea-count>
@@ -458,12 +694,12 @@
               [nzData]="previewData"
               [nzSize]="'small'"
               [nzLoading]="previewTableLoading"
-              [nzScroll]="previewData.length > 3 ? { x: '1240px', y: '180px' } : { x: '1240px' }"
+              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
               [nzShowPagination]="false"
             >
               <thead>
                 <tr>
-                  <th *ngFor="let column of previewColumns" [nzWidth]="column.width || 'auto'">
+                  <th *ngFor="let column of previewColumns">
                     {{ column.title }}
                   </th>
                 </tr>
@@ -479,7 +715,68 @@
           </div>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="define.type === 'periodic'">
+      <nz-form-item *ngIf="define.type == 'periodic_log'" [ngStyle]="{ marginBottom: '5px' }">
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="periodic_expr" [nzTooltipTitle]="'alert.setting.log.query.tip' | i18n">
+          {{ 'alert.setting.log.query' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
+            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" name="datasource" id="datasource">
+              <label nz-radio-button [nzValue]="'sql'">
+                {{ 'SQL' | i18n }}
+              </label>
+            </nz-radio-group>
+          </ng-container>
+        </nz-form-control>
+      </nz-form-item>
+      <!-- Log query expression -->
+      <nz-form-item *ngIf="define.type == 'periodic_log'">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea
+              [(ngModel)]="define.expr"
+              required
+              rows="3"
+              nz-input
+              name="periodic_expr"
+              id="periodic_expr"
+              [placeholder]="'alert.setting.log.query.placeholder' | i18n"
+            >
+            </textarea>
+          </nz-textarea-count>
+          <button nz-button nzType="primary" style="width: 100%; margin-bottom: 10px" (click)="onPreviewLogExpr()">
+            <i nz-icon nzType="eye" nzTheme="outline"></i>
+            {{ 'common.preview.button' | i18n }}
+          </button>
+          <div *ngIf="previewData && previewColumns.length > 0" class="preview-table-container">
+            <nz-table
+              #previewTable
+              [nzData]="previewData"
+              [nzSize]="'small'"
+              [nzLoading]="previewTableLoading"
+              [nzScroll]="previewData.length > 3 ? { y: '180px' } : {}"
+              [nzShowPagination]="false"
+            >
+              <thead>
+                <tr>
+                  <th *ngFor="let column of previewColumns">
+                    {{ column.title }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let data of previewTable.data">
+                  <td *ngFor="let column of previewColumns">
+                    {{ data[column.key] }}
+                  </td>
+                </tr>
+              </tbody>
+            </nz-table>
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'periodic_metric' || define.type === 'periodic_log'">
         <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="period" [nzTooltipTitle]="'alert.setting.period.tip' | i18n">
           {{ 'alert.setting.period' | i18n }}
         </nz-form-label>
@@ -492,6 +789,24 @@
             name="period"
             id="period"
             [nzPlaceHolder]="'alert.setting.period.placeholder' | i18n"
+          >
+          </nz-input-number>
+          <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'realtime_log'">
+        <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="window" [nzTooltipTitle]="'alert.setting.window.tip' | i18n">
+          {{ 'alert.setting.window' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-input-number
+            [(ngModel)]="define.period"
+            required
+            [nzMin]="60"
+            [nzStep]="60"
+            name="window"
+            id="window"
+            [nzPlaceHolder]="'alert.setting.window.placeholder' | i18n"
           >
           </nz-input-number>
           <span class="ant-form-text">{{ 'common.time.unit.second' | i18n }}</span>
@@ -516,7 +831,25 @@
           </nz-select>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="define.type === 'realtime_log' || define.type === 'periodic_log'">
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="alertMode" [nzTooltipTitle]="'alert.setting.mode.tip' | i18n">
+          {{ 'alert.mode' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            [(ngModel)]="alertMode"
+            (ngModelChange)="onAlertModeChange()"
+            [nzPlaceHolder]="'alert.notice.rule.mode.placeholder' | i18n"
+            name="alertMode"
+            id="alertMode"
+            required
+          >
+            <nz-option [nzValue]="'group'" [nzLabel]="'alert.mode.group' | i18n"></nz-option>
+            <nz-option [nzValue]="'individual'" [nzLabel]="'alert.mode.individual' | i18n"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="define.type === 'periodic_metric' || define.type === 'realtime_metric' || define.type === 'realtime_log'">
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="duration" [nzTooltipTitle]="'alert.setting.times.tip' | i18n">
           {{ 'alert.setting.times' | i18n }}
         </nz-form-label>
@@ -531,18 +864,28 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
-            <div *ngIf="define.type === 'realtime'" class="draggable-vars-container">
-              <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
-                <div class="key-value-block">
-                  <span class="var-key">{{ env.name }}</span>
-                  <span class="var-value">{{ env.description | i18n }}</span>
+            <div *ngIf="define.type === 'realtime_metric' || define.type === 'realtime_log'" class="draggable-vars-container">
+              <div *ngIf="define.type === 'realtime_metric'">
+                <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
+                  <div class="key-value-block">
+                    <span class="var-key">{{ env.name }}</span>
+                    <span class="var-value">{{ env.description | i18n }}</span>
+                  </div>
+                </div>
+
+                <div *ngFor="let metric of currentMetrics" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, metric)">
+                  <div class="key-value-block">
+                    <span class="var-key">{{ '${' + metric.value + '}' }}</span>
+                    <span class="var-value">{{ metric.label }}</span>
+                  </div>
                 </div>
               </div>
-
-              <div *ngFor="let metric of currentMetrics" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, metric)">
-                <div class="key-value-block">
-                  <span class="var-key">{{ '${' + metric.value + '}' }}</span>
-                  <span class="var-value">{{ metric.label }}</span>
+              <div *ngIf="define.type === 'realtime_log'">
+                <div *ngFor="let field of logFields" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, field)">
+                  <div class="key-value-block">
+                    <span class="var-key">{{ '${' + field.value + '}' }}</span>
+                    <span class="var-value">{{ field.label }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -605,7 +948,6 @@
 </nz-modal>
 
 <!-- associate alert definition and monitoring pop-up box -->
-
 <nz-modal
   [(nzVisible)]="isConnectModalVisible"
   [nzTitle]="'alert.setting.connect' | i18n"
@@ -760,7 +1102,7 @@
   [nzTitle]="'alert.setting.new' | i18n"
   (nzOnCancel)="onSelectTypeModalCancel()"
   [nzFooter]="null"
-  nzWidth="460px"
+  nzWidth="500px"
 >
   <div *nzModalContent>
     <div class="alert-type-options">

@@ -59,7 +59,11 @@ export class AlertSettingComponent implements OnInit {
     this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
     this.qbFormCtrl.valueChanges.subscribe(() => {
       this.userExpr = this.ruleset2expr(this.qbFormCtrl.value);
-      this.updateFinalExpr();
+      if (this.define.type === 'realtime_log') {
+        this.updateLogFinalExpr();
+      } else {
+        this.updateFinalExpr();
+      }
     });
   }
   @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
@@ -126,12 +130,84 @@ export class AlertSettingComponent implements OnInit {
   ];
 
   isSelectTypeModalVisible = false;
+  dataType: string = 'metric'; // Default to metric
+  alertType: string = 'realtime'; // Default to realtime
 
   previewData: any[] = [];
   previewColumns: Array<{ title: string; key: string; width?: string }> = [];
   previewTableLoading = false;
 
+  /**
+   * Initialize log fields(todo: from backend api)
+   */
+  initLogFields() {
+    this.logFields = [
+      // Basic log fields
+      { value: 'log.timeUnixNano', label: 'Time (Unix Nano)', type: 0, unit: 'ns' },
+      { value: 'log.observedTimeUnixNano', label: 'Observed Time (Unix Nano)', type: 0, unit: 'ns' },
+      { value: 'log.severityNumber', label: 'Severity Number', type: 0 },
+      { value: 'log.severityText', label: 'Severity Text', type: 1 },
+      { value: 'log.body', label: 'Body', type: 1 },
+      { value: 'log.droppedAttributesCount', label: 'Dropped Attributes Count', type: 0 },
+      { value: 'log.traceId', label: 'Trace ID', type: 1 },
+      { value: 'log.spanId', label: 'Span ID', type: 1 },
+      { value: 'log.traceFlags', label: 'Trace Flags', type: 0 },
+      // Object fields - will be handled dynamically
+      { value: 'log.attributes', label: 'Attributes', type: 2, isObject: true },
+      { value: 'log.resource', label: 'Resource', type: 2, isObject: true },
+      { value: 'log.instrumentationScope.name', label: 'Instrumentation Scope Name', type: 1 },
+      { value: 'log.instrumentationScope.version', label: 'Instrumentation Scope Version', type: 1 },
+      { value: 'log.instrumentationScope.attributes', label: 'Instrumentation Scope Attributes', type: 2, isObject: true },
+      { value: 'log.instrumentationScope.droppedAttributesCount', label: 'Instrumentation Scope Dropped Attributes Count', type: 0 }
+    ];
+  }
+
+  updateLogQbConfig() {
+    if (this.define.type === 'realtime_log') {
+      let fields: any = {};
+      this.logFields.forEach(item => {
+        fields[item.value] = {
+          name: item.label,
+          type: item.type,
+          unit: item.unit,
+          operators: this.getOperatorsByType(item.type)
+        };
+      });
+      this.qbConfig = { ...this.qbConfig, fields };
+    }
+  }
+
+  updateLogFinalExpr(): void {
+    if (this.define.type === 'realtime_log') {
+      this.define.expr = this.userExpr;
+    }
+  }
+
+  onLogFieldChange(fieldValue: string, rule: any, onChange: any): void {
+    rule.field = fieldValue;
+    // Clear object attribute when field changes
+    rule.objectAttribute = '';
+    onChange(fieldValue, rule);
+  }
+
+  onMetricsFieldChange(fieldValue: string, rule: any, onChange: any): void {
+    rule.field = fieldValue;
+    onChange(fieldValue, rule);
+  }
+
+  isObjectField(fieldValue: string): boolean {
+    if (!fieldValue) return false;
+    const field = this.logFields.find(f => f.value === fieldValue);
+    return !!(field && field.isObject);
+  }
+
+  onObjectAttributeChange(attributeValue: string, rule: any, onChange: any): void {
+    rule.objectAttribute = attributeValue;
+    onChange(rule.field, rule);
+  }
+
   ngOnInit(): void {
+    this.initLogFields();
     this.loadAlertDefineTable();
     // query monitoring hierarchy
     const getHierarchy$ = this.appDefineSvc
@@ -247,9 +323,10 @@ export class AlertSettingComponent implements OnInit {
 
   onSelectAlertType(type: string) {
     this.isSelectTypeModalVisible = false;
+    this.alertType = type;
     this.define = new AlertDefine();
-    this.define.type = type;
     this.severity = '';
+    this.alertMode = '';
     this.userExpr = '';
     this.selectedMonitorIds = new Set<number>();
     this.selectedLabels = new Set<string>();
@@ -257,10 +334,38 @@ export class AlertSettingComponent implements OnInit {
     if (type === 'periodic') {
       this.define.period = 300;
     }
+    this.updateAlertDefineType();
     this.resetQbDataDefault();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
+  }
+
+  onDataTypeChange() {
+    this.updateAlertDefineType();
+  }
+
+  private updateAlertDefineType() {
+    // Combine main type with data type
+    if (this.alertType === 'realtime' && this.dataType === 'metric') {
+      this.define.type = 'realtime_metric';
+    } else if (this.alertType === 'realtime' && this.dataType === 'log') {
+      this.define.type = 'realtime_log';
+      this.updateLogQbConfig();
+    } else if (this.alertType === 'periodic' && this.dataType === 'metric') {
+      this.define.type = 'periodic_metric';
+      this.define.datasource = 'promql';
+    } else if (this.alertType === 'periodic' && this.dataType === 'log') {
+      this.define.type = 'periodic_log';
+      this.define.datasource = 'sql';
+      this.updateLogQbConfig();
+    }
+
+    // Reset form state when switching data source type
+    this.userExpr = '';
+    this.cascadeValues = [];
+    this.currentMetrics = [];
+    this.resetQbDataDefault();
   }
 
   onSelectTypeModalCancel() {
@@ -469,6 +574,8 @@ export class AlertSettingComponent implements OnInit {
   isExpr = false;
   userExpr!: string;
   severity!: string;
+  alertMode!: string;
+  logFields: any[] = [];
 
   editAlertDefine(alertDefineId: number) {
     if (this.isLoadingEdit !== -1) return;
@@ -482,6 +589,7 @@ export class AlertSettingComponent implements OnInit {
         finalize(() => {
           getDefine$.unsubscribe();
           this.isLoadingEdit = -1;
+          this.extractDataTypeAndAlertType(this.define.type);
           this.isManageModalVisible = true;
           this.clearPreview();
         })
@@ -493,15 +601,18 @@ export class AlertSettingComponent implements OnInit {
             if (this.define.labels && this.define.labels['severity']) {
               this.severity = this.define.labels['severity'];
             }
-            // Set default period for periodic alert if not set
-            if (this.define.type === 'periodic' && !this.define.period) {
+            if (this.define.labels && this.define.labels['alert_mode']) {
+              this.alertMode = this.define.labels['alert_mode'];
+            }
+            // Set default period for periodic_metric alert if not set
+            if (this.define.type === 'periodic_metric' && !this.define.period) {
               this.define.period = 300;
             }
-            // Set default type as realtime if not set
+            // Set default type as realtime_metric if not set
             if (!this.define.type) {
-              this.define.type = 'realtime';
+              this.define.type = 'realtime_metric';
             }
-            if (this.define.type == 'realtime') {
+            if (this.define.type == 'realtime_metric') {
               // Parse expression to cascade values
               this.cascadeValues = this.exprToCascadeValues(this.define.expr);
               this.userExpr = this.exprToUserExpr(this.define.expr);
@@ -516,6 +627,12 @@ export class AlertSettingComponent implements OnInit {
                   this.tryParseThresholdExpr(this.userExpr);
                 }
               });
+            } else if (this.define.type == 'realtime_log') {
+              // Initialize log fields and parse expression
+              this.updateLogQbConfig();
+              this.userExpr = this.define.expr || '';
+              // Try to parse expression as visual rules
+              this.tryParseLogThresholdExpr(this.userExpr);
             }
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.query-fail'), message.msg);
@@ -528,10 +645,19 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private getOperatorsByType(type: number): string[] {
+    let numericOperators = ['>', '<', '==', '!=', '<=', '>=', 'exists', '!exists'];
+    let stringOperators = ['equals', '!equals', 'contains', '!contains', 'matches', '!matches', 'exists', '!exists'];
+    let objectOperators = [...numericOperators, ...stringOperators];
+
     if (type === 0 || type === 3) {
-      return ['>', '<', '==', '!=', '<=', '>=', 'exists', '!exists'];
+      // Numeric and time types
+      return numericOperators;
     } else if (type === 1) {
-      return ['equals', '!equals', 'contains', '!contains', 'matches', '!matches', 'exists', '!exists'];
+      // String types
+      return stringOperators;
+    } else if (type === 2) {
+      // Object types (for log attributes, resource, etc.)
+      return objectOperators;
     }
     return [];
   }
@@ -539,10 +665,16 @@ export class AlertSettingComponent implements OnInit {
   private rule2expr(rule: Rule): string {
     if (!rule.field) return '';
 
+    // Get the effective field name (including object attributes for log fields)
+    let effectiveField = rule.field;
+    if (this.define.type === 'realtime_log' && (rule as any).objectAttribute) {
+      effectiveField = `${rule.field}.${(rule as any).objectAttribute}`;
+    }
+
     switch (rule.operator) {
       case 'exists':
       case '!exists':
-        return `${rule.operator}(${rule.field})`;
+        return `${rule.operator}(${effectiveField})`;
 
       case 'equals':
       case '!equals':
@@ -550,7 +682,7 @@ export class AlertSettingComponent implements OnInit {
       case '!contains':
       case 'matches':
       case '!matches':
-        return `${rule.operator}(${rule.field}, "${rule.value}")`;
+        return `${rule.operator}(${effectiveField}, "${rule.value}")`;
 
       case '>':
       case '>=':
@@ -559,10 +691,10 @@ export class AlertSettingComponent implements OnInit {
       case '==':
       case '!=':
         // 如果字段包含方法调用
-        if (rule.field.includes('.') && rule.field.includes('()')) {
-          return `${rule.field} ${rule.operator} ${rule.value}`;
+        if (effectiveField.includes('.') && effectiveField.includes('()')) {
+          return `${effectiveField} ${rule.operator} ${rule.value}`;
         }
-        return `${rule.field} ${rule.operator} ${rule.value}`;
+        return `${effectiveField} ${rule.operator} ${rule.value}`;
 
       default:
         return '';
@@ -734,10 +866,12 @@ export class AlertSettingComponent implements OnInit {
       const existsMatch = expr.match(/^(!)?exists\(([^)]+)\)$/);
       if (existsMatch) {
         const [_, not, field] = existsMatch;
+        const parsedRule = this.parseLogFieldAndAttribute(field);
         return {
-          field,
-          operator: not ? '!exists' : 'exists'
-        };
+          field: parsedRule.field,
+          operator: not ? '!exists' : 'exists',
+          ...(parsedRule.objectAttribute && { objectAttribute: parsedRule.objectAttribute })
+        } as any;
       }
 
       // Parse string functions (equals, contains, matches)
@@ -745,22 +879,26 @@ export class AlertSettingComponent implements OnInit {
       if (funcMatch) {
         const [_, not, field, value] = funcMatch;
         const func = expr.match(/equals|contains|matches/)?.[0] || '';
+        const parsedRule = this.parseLogFieldAndAttribute(field);
         return {
-          field,
+          field: parsedRule.field,
           operator: not ? `!${func}` : func,
-          value
-        };
+          value,
+          ...(parsedRule.objectAttribute && { objectAttribute: parsedRule.objectAttribute })
+        } as any;
       }
 
       // Parse numeric comparisons
-      const compareMatch = expr.match(/^(\w+(?:\.\w+)*)\s*([><=!]+)\s*(-?\d+(?:\.\d+)?)$/);
+      const compareMatch = expr.match(/^([\w.]+)\s*([><=!]+)\s*(-?\d+(?:\.\d+)?)$/);
       if (compareMatch) {
         const [_, field, operator, value] = compareMatch;
+        const parsedRule = this.parseLogFieldAndAttribute(field);
         return {
-          field,
+          field: parsedRule.field,
           operator,
-          value: Number(value)
-        };
+          value: Number(value),
+          ...(parsedRule.objectAttribute && { objectAttribute: parsedRule.objectAttribute })
+        } as any;
       }
 
       return null;
@@ -768,6 +906,24 @@ export class AlertSettingComponent implements OnInit {
       console.error('Failed to parse rule:', e);
       return null;
     }
+  }
+
+  private parseLogFieldAndAttribute(fullField: string): { field: string; objectAttribute?: string } {
+    if (this.define.type !== 'realtime_log') {
+      return { field: fullField };
+    }
+
+    // Check if this is an object field with attribute
+    const objectFields = ['log.attributes', 'log.resource', 'log.instrumentationScope.attributes'];
+
+    for (const objField of objectFields) {
+      if (fullField.startsWith(`${objField}.`)) {
+        const attribute = fullField.substring(objField.length + 1);
+        return { field: objField, objectAttribute: attribute };
+      }
+    }
+
+    return { field: fullField };
   }
 
   getOperatorLabelByType = (operator: string) => {
@@ -859,6 +1015,13 @@ export class AlertSettingComponent implements OnInit {
       this.define.labels = {};
     }
     this.define.labels = { ...this.define.labels, severity: this.severity };
+  }
+
+  onAlertModeChange() {
+    if (!this.define.labels) {
+      this.define.labels = {};
+    }
+    this.define.labels = { ...this.define.labels, alert_mode: this.alertMode };
   }
 
   onManageModalCancel() {
@@ -1210,6 +1373,30 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
+  private tryParseLogThresholdExpr(expr: string | undefined): void {
+    if (!expr || !expr.trim()) {
+      this.resetQbDataDefault();
+      this.isExpr = false;
+      return;
+    }
+
+    try {
+      // First try to parse as visual rules for log expressions
+      const ruleset = this.expr2ruleset(expr);
+      if (ruleset && ruleset.rules && ruleset.rules.length > 0) {
+        this.resetQbData(ruleset);
+        this.isExpr = false;
+        return;
+      }
+
+      // If cannot parse as visual rules, switch to expression mode
+      this.isExpr = true;
+    } catch (e) {
+      console.warn('Failed to parse log threshold expr:', e);
+      this.isExpr = true;
+    }
+  }
+
   public updateFinalExpr(): void {
     const baseExpr = this.cascadeValuesToExpr(this.cascadeValues);
     const monitorBindExpr = this.generateMonitorBindExpr();
@@ -1489,6 +1676,75 @@ export class AlertSettingComponent implements OnInit {
     });
   }
 
+  onPreviewLogExpr(): void {
+    if (!this.define.expr) {
+      this.clearPreview();
+      this.previewTableLoading = false;
+      return;
+    }
+    this.previewTableLoading = true;
+
+    this.alertDefineSvc.getMonitorsDefinePreview(this.define.datasource, this.define.type, this.define.expr).subscribe({
+      next: res => {
+        if (res.code === 15 || res.code === 1 || res.code === 4) {
+          this.message.error(res.msg || 'Expression parsing exception');
+          this.clearPreview();
+          this.previewTableLoading = false;
+          return;
+        }
+        if (res.code === 0 && Array.isArray(res.data)) {
+          // Process log data for table display
+          this.processLogPreviewData(res.data);
+        } else {
+          this.clearPreview();
+        }
+        this.previewTableLoading = false;
+      },
+      error: err => {
+        this.clearPreview();
+        this.previewTableLoading = false;
+        this.message.error('Failed to get preview data.');
+      }
+    });
+  }
+
+  private processLogPreviewData(data: any[]): void {
+    if (!data || data.length === 0) {
+      this.clearPreview();
+      return;
+    }
+
+    // Get all unique keys from the log data to create columns
+    const allKeys = new Set<string>();
+    data.forEach(item => {
+      Object.keys(item).forEach(key => allKeys.add(key));
+    });
+
+    // Create columns based on actual query result keys - use the key as both title and key
+    this.previewColumns = Array.from(allKeys).map(key => ({
+      title: key,
+      key: key
+    }));
+
+    // Process data for display
+    this.previewData = data.map(item => {
+      const processedItem: any = {};
+      for (const [key, value] of Object.entries(item)) {
+        if (value != null) {
+          // Format complex objects as JSON strings for display
+          if (typeof value === 'object') {
+            processedItem[key] = JSON.stringify(value);
+          } else {
+            processedItem[key] = String(value);
+          }
+        } else {
+          processedItem[key] = '';
+        }
+      }
+      return processedItem;
+    });
+  }
+
   private filterEmptyFields(mapData: Record<string, any>): Record<string, any> {
     return Object.entries(mapData).reduce<Record<string, any>>((acc, [key, value]) => {
       if (value == null) return acc;
@@ -1501,5 +1757,40 @@ export class AlertSettingComponent implements OnInit {
   private clearPreview(): void {
     this.previewData = [];
     this.previewColumns = [];
+  }
+
+  /**
+   * Get the edit tooltip title i18n key based on the data type.
+   */
+  getEditTooltipTitle(data: any): string {
+    if (data.type === 'realtime') {
+      return 'alert.setting.edit.realtime';
+    } else {
+      return 'alert.setting.edit.periodic';
+    }
+  }
+
+  /**
+   * Get the modal title i18n key based on the add/edit mode and data type.
+   * Similar to a computed property in Vue.
+   */
+  get modalTitle(): string {
+    if (this.isManageModalAdd) {
+      if (this.alertType === 'periodic') {
+        return 'alert.setting.new.periodic';
+      } else {
+        return 'alert.setting.new.realtime';
+      }
+    } else {
+      if (this.alertType === 'periodic') {
+        return 'alert.setting.edit.periodic';
+      } else {
+        return 'alert.setting.edit.realtime';
+      }
+    }
+  }
+  private extractDataTypeAndAlertType(type: string): void {
+    this.dataType = type.split('_')[1] || 'metric';
+    this.alertType = type.split('_')[0] || 'realtime';
   }
 }

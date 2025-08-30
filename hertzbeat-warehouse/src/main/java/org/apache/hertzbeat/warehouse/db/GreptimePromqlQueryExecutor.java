@@ -28,14 +28,14 @@ import org.springframework.web.client.RestTemplate;
 /**
  * query executor for victor metrics
  */
-@Component
+@Component("greptimePromqlQueryExecutor")
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
 @Slf4j
 public class GreptimePromqlQueryExecutor extends PromqlQueryExecutor {
 
     private static final String QUERY_PATH = "/v1/prometheus";
 
-    private static final String Datasource = "Greptime";
+    private static final String Datasource = "Greptime-promql";
 
     private final GreptimeProperties greptimeProperties;
 

@@ -1,0 +1,425 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+@import "~src/styles/theme";
+
+.log-stream-container {
+  background: @common-background-color;
+
+  .header-card {
+    margin-bottom: 16px;
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+
+      .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .status-tag {
+          font-weight: 500;
+          font-size: 14px;
+          padding: 4px 12px;
+          border-radius: 4px;
+
+          i {
+            margin-right: 6px;
+          }
+        }
+
+        .log-count {
+          color: #666;
+          font-size: 14px;
+          font-weight: 500;
+          background: #f0f0f0;
+          padding: 4px 12px;
+          border-radius: 4px;
+        }
+      }
+
+      .control-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        button {
+          border-radius: 4px;
+
+          i {
+            margin-right: 6px;
+          }
+        }
+
+        nz-switch {
+          margin-left: 8px;
+        }
+      }
+    }
+
+    .filter-content {
+      .filter-divider {
+        margin: 16px 0;
+      }
+      .filter-controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        .filter-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .filter-label {
+            font-weight: 500;
+            color: #666;
+            font-size: 14px;
+            white-space: nowrap;
+            margin-bottom: 0;
+          }
+
+          .filter-select {
+            width: 140px;
+          }
+
+          .filter-input {
+            width: 180px;
+          }
+        }
+
+        .filter-actions {
+          margin-left: auto;
+        }
+      }
+    }
+
+    .error-alert {
+      margin-top: 16px;
+      border-radius: 4px;
+    }
+  }
+    
+  .log-container {
+    max-height: 60vh;
+    overflow-y: auto;
+    background: @common-background-color;
+    position: relative;
+    margin-top: 24px;
+
+    &.paused {
+      opacity: 0.8;
+    }
+
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      color: #666;
+
+      .loading-text {
+        margin-top: 16px;
+        font-size: 16px;
+      }
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+    }
+
+    .log-entry {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 0px 12px;
+      background: @common-background-color;
+      cursor: pointer;
+
+      &.new-entry {
+        background: #e6f7ff;
+        border-left: 4px solid #1890ff;
+      }
+
+      &:hover {
+        background: #fafafa;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+        .log-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 4px 0;
+
+        .log-meta {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+
+          .severity-tag {
+            font-weight: 500;
+            font-size: 11px;
+            border-radius: 3px;
+            padding: 1px 6px;
+            min-width: 50px;
+            text-align: center;
+          }
+
+          .timestamp {
+            color: #666;
+            font-size: 12px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+          }
+        }
+
+        .log-message {
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          font-size: 13px;
+          line-height: 1.4;
+          color: #333;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          background: #f8f9fa;
+          padding: 6px 12px;
+          border-radius: 4px;
+          border-left: 3px solid #e9ecef;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .log-actions {
+          flex-shrink: 0;
+          
+          button {
+            border: none;
+            box-shadow: none;
+            color: #666;
+
+            &:hover {
+              color: #1890ff;
+              background: #e6f7ff;
+            }
+          }
+        }
+      }
+    }
+
+    .pause-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+
+      .pause-message {
+        text-align: center;
+        padding: 20px;
+        background: @common-background-color;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+
+        .pause-icon {
+          font-size: 32px;
+          color: #faad14;
+          margin-bottom: 12px;
+          display: block;
+        }
+
+        span {
+          display: block;
+          font-size: 16px;
+          color: #666;
+          margin-bottom: 16px;
+          font-weight: 500;
+        }
+
+        button {
+          border-radius: 4px;
+          height: 36px;
+          padding: 0 20px;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .log-stream-container {
+    padding: 12px;
+
+    .header-card {
+      .header-content {
+        flex-direction: column;
+        align-items: stretch;
+
+        .connection-status {
+          justify-content: center;
+        }
+
+        .control-buttons {
+          justify-content: center;
+        }
+      }
+
+      .filter-content .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+
+        .filter-item {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 4px;
+
+          .filter-label {
+            font-size: 12px;
+          }
+
+          .filter-select,
+          .filter-input {
+            width: 100%;
+          }
+        }
+
+        .filter-actions {
+          margin-left: 0;
+          text-align: center;
+        }
+      }
+    }
+
+    .log-container {
+      max-height: 60vh;
+      
+      .log-entry {
+        padding: 8px 12px;
+
+        .log-content {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+
+          .log-meta {
+            width: 100%;
+          }
+
+          .log-message {
+            width: 100%;
+            font-size: 12px;
+          }
+
+          .log-actions {
+            width: 100%;
+            text-align: right;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Modal styles
+.log-details-modal {
+  .basic-info {
+    .info-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .info-label {
+        font-weight: 500;
+        color: #666;
+        min-width: 100px;
+        margin-right: 12px;
+      }
+
+      span {
+        color: #333;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 13px;
+      }
+
+      nz-tag {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .message-content {
+    pre {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 0;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #333;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  }
+
+  .json-content {
+    pre {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 0;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  }
+}
+
