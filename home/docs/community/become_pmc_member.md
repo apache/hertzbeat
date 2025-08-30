@@ -58,8 +58,7 @@ and fair.
 PMC member candidates should have a decent amount of continuous
 engagements and contributions (fixing bugs, adding new features,
 writing documentation, maintaining issues boards, code review, or answering
-community questions) to HertzBeat either by contributing to the codebase
-of the main website or HertzBeat's GitHub repositories.
+community questions) to HertzBeat.
 
 - 12+ months with activity and engagement.
 
