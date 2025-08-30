@@ -367,7 +367,7 @@
   "app.login.notify": "Please Login!",
   "app.login.remember-me": "Remember me",
   "app.login.tab-login-credentials": "Sign In HertzBeat",
-  "app.passport.desc": "An Open Source Real-Time Monitoring System",
+  "app.passport.desc": "An Open Source Real-Time Observability System",
   "app.passport.intro-1": "Open Source、Distributed",
   "app.passport.intro-2": "Real-Time Monitoring",
   "app.role.admin": "administrator",
