@@ -15,22 +15,33 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.ai.agent.pojo.dto;
 
-package org.apache.hertzbeat.ai.agent.service;
-
-import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
-import reactor.core.publisher.Flux;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Service for interacting with LLM providers (like OpenAI, Anthropic, etc.)
+ * OpenAI Configuration DTO - simplified to handle only API key
  */
-public interface ChatClientProviderService {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Schema(description = "OpenAI configuration")
+public class OpenAiConfigDto {
 
     /**
-     * Stream chat response from the LLM
-     *
-     * @param context Chat request context containing message and conversation history
-     * @return Flux of string chunks from the LLM response
+     * Whether to enable OpenAI, default is false
      */
-    Flux<String> streamChat(ChatRequestContext context);
+    @Schema(title = "Enable OpenAI", description = "Whether OpenAI is enabled", example = "true")
+    private boolean enable = false;
+
+    /**
+     * OpenAI API key
+     */
+    @Schema(title = "API Key", description = "OpenAI API key", example = "sk-...")
+    @NotBlank(message = "API Key cannot be empty when enabled")
+    private String apiKey;
 }
