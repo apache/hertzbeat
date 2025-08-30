@@ -14,7 +14,7 @@
   "about.point.6": "Easily build powerful status page to communicate the real-time status to users.",
   "about.pr": "Contribute",
   "about.star": "Star",
-  "about.title": "An open source, real-time monitoring system with agentless, cluster, prometheus-compatible, custom and status page.",
+  "about.title": "An open source, real-time observability system with agentless, cluster, prometheus-compatible, custom and status page.",
   "about.upgrade": "Upgrade",
   "alert": "Alert",
   "alert.center.clear": "Clear All",

@@ -358,7 +358,7 @@ Hello HertzBeat Community:
 
 This is a call for vote to release Apache HertzBeat version release-1.6.0-RC1.
 
-Apache HertzBeat - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat - a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Release notes:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
@@ -451,7 +451,7 @@ Hello Incubator Community:
 This is a call for a vote to release Apache HertzBeat version 1.6.0-RC1.
 The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat version 1.6.0-RC1.
 We now kindly request the Incubator PPMC members review and vote on this incubator release.
-Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat, a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 HertzBeat community vote thread:
 https://lists.apache.org/thread/t01b2lbtqzyt7j4dsbdp5qjc3gngjsdq
@@ -594,7 +594,7 @@ Hi Community,
 We are glad to announce the release of Apache HertzBeat 1.6.0.
 Thanks again for your help. 
 
-Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Download Link: 
 https://hertzbeat.apache.org/docs/download/
