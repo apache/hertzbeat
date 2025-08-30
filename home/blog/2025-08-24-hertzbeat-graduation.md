@@ -7,7 +7,7 @@ tags: [opensource, apache]
 
 > **A Milestone Moment for Our Open-Source Project**
 >
-> On August 21, 2025 (Beijing Time), the Apache Software Foundation (ASF), the world's largest open-source software foundation, officially announced that Apache HertzBeat has graduated to become an Apache Top-Level Project (TLP).
+> On August 21, 2025, the Apache Software Foundation (ASF), the world's largest open-source software foundation, officially announced that Apache HertzBeat has graduated to become an Apache Top-Level Project (TLP).
 >
 > Apache HertzBeat applied to join the Apache Incubator in April 2024 and released its first Apache version two months later. On August 21, 2025, the Apache Board of Directors approved the resolution for Apache HertzBeat's graduation, ending a 17-month incubation period and officially establishing Apache HertzBeat as an Apache Top-Level Project.
 >
