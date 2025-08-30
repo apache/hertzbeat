@@ -9,7 +9,7 @@ keywords: [monitoring, observability, collector, metrics]
 
 ## Introduction
 
-HertzBeat Collector is a versatile and lightweight metrics collection module within the Apache HertzBeat monitoring system. It's designed to gather monitoring data from various targets and send the collected metrics to the main HertzBeat server for processing, alerting, and visualization.
+HertzBeat Collector is a versatile and lightweight metrics collection module within the Apache HertzBeat™ monitoring system. It's designed to gather monitoring data from various targets and send the collected metrics to the main HertzBeat server for processing, alerting, and visualization.
 
 With the collector module, you can implement:
 

@@ -281,7 +281,7 @@ module.exports = {
         `
         <div style="text-align: left;margin-top:30px">
           <div style="align-items: center; display: flex">
-            <div style="width: 40%; margin-left: 30%; background-color: #282c77; padding: 10px; border-radius: 6px">
+            <div style="width: 26%; margin-left: 37%; margin-bottom: 20px; background-color: #282c77; padding: 10px; border-radius: 6px">
               <a href="https://apache.org/">
                 <img src="/img/icons/asf_logo.svg" alt="Apache logo">
               </a>
@@ -290,7 +290,7 @@ module.exports = {
 
           <div style="border-top: 1px solid #525252;min-height: 60px;line-height: 25px;text-align: left;font-size: 14px;display: flex;align-items: center;">
             <span>
-              Copyright © ${new Date().getFullYear()} The Apache Software Foundation. Apache HertzBeat, HertzBeat, and its feather logo are trademarks of The Apache Software Foundation.
+              Copyright © ${new Date().getFullYear()} The Apache Software Foundation. Apache HertzBeat™, HertzBeat™, and its feather logo are trademarks of The Apache Software Foundation.
             </span>
           </div>
         </div>`,
@@ -321,7 +321,7 @@ module.exports = {
           postsPerPage: 1,
           feedOptions: {
             type: 'all',
-            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat™.`,
           },
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
