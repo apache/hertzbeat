@@ -19,7 +19,6 @@
 
 package org.apache.hertzbeat.manager.nativex;
 
-import java.lang.reflect.Constructor;
 import java.util.Set;
 import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.forward.PortForwardingEventListener;
@@ -28,7 +27,6 @@ import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory;
 import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.common.util.security.bouncycastle.BouncyCastleSecurityProviderRegistrar;
 import org.apache.sshd.common.util.security.eddsa.EdDSASecurityProviderRegistrar;
-import org.springframework.aot.hint.ExecutableMode;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
@@ -58,13 +56,6 @@ public class HertzbeatRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
                             MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.DECLARED_FIELDS));
             hints.proxies().registerJdkProxy(TypeReference.of(ChannelListener.class),
                     TypeReference.of(PortForwardingEventListener.class), TypeReference.of(SessionListener.class));
-        }
-    }
-
-    private void registerConstructor(RuntimeHints hints, Class<?> clazz) {
-        Constructor<?>[] declaredConstructors = clazz.getDeclaredConstructors();
-        for (Constructor<?> declaredConstructor : declaredConstructors) {
-            hints.reflection().registerConstructor(declaredConstructor, ExecutableMode.INVOKE);
         }
     }
 }

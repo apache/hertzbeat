@@ -52,10 +52,10 @@ import org.springframework.util.StringUtils;
 public class SchedulerInit implements CommandLineRunner {
     
     @Autowired
-    private CollectorScheduling collectorScheduling;
+    private CollectorOperationReceiver collectorOperationReceiver;
     
     @Autowired
-    private CollectJobScheduling collectJobScheduling;
+    private JobOperation jobOperation;
    
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
     private static final String DEFAULT_COLLECTOR_VERSION = "DEBUG";
@@ -91,7 +91,7 @@ public class SchedulerInit implements CommandLineRunner {
                 .ip(MAIN_COLLECTOR_NODE_IP)
                 .version(DEFAULT_COLLECTOR_VERSION)
                 .build();
-        collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
+        collectorOperationReceiver.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
         List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndJobIdNotNull(List.of(CommonConstants.MONITOR_PAUSED_CODE));
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findAll();
@@ -136,7 +136,7 @@ public class SchedulerInit implements CommandLineRunner {
                 });
                 appDefine.setConfigmap(configmaps);
                 String collector = monitorIdCollectorMap.get(monitor.getId());
-                long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+                long jobId = jobOperation.addAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(jobId);
                 monitorDao.save(monitor);
             } catch (Exception e) {
