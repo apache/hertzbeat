@@ -24,7 +24,7 @@ I have been engaged in Java backend development since 2022. Currently, I am work
 
 Last year, I came across the Apache HertzBeat™ project by chance. After reading the documentation, I found that this monitoring tool is easy to use, does not require an Agent, and can be operated entirely through a web page. So, I quickly set it up within the company based on Docker and put it into use.
 
-Due to the `All in one` design architecture of Apache HertzBeat, it has greatly reduced my mental burden, and I was able to quickly integrate various internal company services into the monitoring system.
+Due to the `All in one` design architecture of Apache HertzBeat™, it has greatly reduced my mental burden, and I was able to quickly integrate various internal company services into the monitoring system.
 
 ## Participate and Contribute
 

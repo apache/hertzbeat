@@ -290,7 +290,7 @@ module.exports = {
 
           <div style="border-top: 1px solid #525252;min-height: 60px;line-height: 25px;text-align: left;font-size: 14px;display: flex;align-items: center;">
             <span>
-              Copyright © ${new Date().getFullYear()} The Apache Software Foundation. Apache HertzBeat, HertzBeat, and its feather logo are trademarks of The Apache Software Foundation.
+              Copyright © ${new Date().getFullYear()} The Apache Software Foundation. Apache HertzBeat™, HertzBeat™, and its feather logo are trademarks of The Apache Software Foundation.
             </span>
           </div>
         </div>`,

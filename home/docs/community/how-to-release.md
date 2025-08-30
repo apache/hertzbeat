@@ -4,7 +4,7 @@ title: How to Release
 sidebar_position: 4
 ---
 
-This tutorial describes in detail how to release Apache HertzBeat, take the release of version 1.6.0 as an example.
+This tutorial describes in detail how to release Apache HertzBeat™, take the release of version 1.6.0 as an example.
 
 ## 1. Environmental requirements
 
@@ -450,7 +450,7 @@ Hello Incubator Community:
 This is a call for a vote to release Apache HertzBeat™ version 1.6.0-RC1.
 The Apache HertzBeat™ community has voted on and approved a proposal to release Apache HertzBeat™ version 1.6.0-RC1.
 We now kindly request the Incubator PPMC members review and vote on this incubator release.
-Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat™, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 HertzBeat community vote thread:
 https://lists.apache.org/thread/t01b2lbtqzyt7j4dsbdp5qjc3gngjsdq
