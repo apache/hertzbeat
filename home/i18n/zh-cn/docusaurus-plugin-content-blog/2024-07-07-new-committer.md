@@ -9,7 +9,7 @@ keywords: [open source monitoring system, alerting system]
 
 ![hertzBeat](/img/blog/new-committer.png)
 
-> 🎉非常高兴成为 Apache HertzBeat 项目的 Committer，受社区邀请来做一个自我介绍🥰。
+> 🎉非常高兴成为 Apache HertzBeat™ 项目的 Committer，受社区邀请来做一个自我介绍🥰。
 
 15 年参与工作至今一直在从事后端研发工作，做过业务开发、基础架构和技术管理；现在在一家互联网公司从事基础架构工程师；
 
