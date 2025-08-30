@@ -35,4 +35,4 @@ After several months of contributing to open source, I have reaped a lot. I have
 
 ## Conclusion
 
-Becoming a Committer of Apache Hertzbeat is a very meaningful thing for me. In the future, I will continue to contribute to the Apache Hertzbeat community. I also hope that Apache Hertzbeat can successfully graduate from the incubator and that the community will become better and better.
+Becoming a Committer of Apache HertzBeat™ is a very meaningful thing for me. In the future, I will continue to contribute to the Apache HertzBeat™ community. I also hope that Apache HertzBeat™ can successfully graduate from the incubator and that the community will become better and better.

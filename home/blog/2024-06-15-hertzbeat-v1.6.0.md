@@ -7,9 +7,9 @@ tags: [opensource, practice]
 keywords: [open source, monitoring, alerting]
 ---
 
-**Hi guys, We are excited to announce that Apache HertzBeat has released its first Apache version v1.6.0! 🎉.**
+**Hi guys, We are excited to announce that Apache HertzBeat™ has released its first Apache version v1.6.0! 🎉.**
 
-Through nearly five months of community development iteration and two months of Apache Incubator incubation process, Apache HertzBeat v1.6.0 is finally out.  
+Through nearly five months of community development iteration and two months of Apache Incubator incubation process, Apache HertzBeat™ v1.6.0 is finally out.  
 In this version, we added monitoring for OpenAi, Redfish protocol servers, plugin mechanism, and support for NebulaGraph, Apache Yarn, HDFS, Hbase, Storm, and more functional features.  
 Due to license compatibility issues, we replaced multiple dependencies at the bottom layer, Hibernate -> EclipseLink, which is also a rare migration pitfall practice in the JPA ecosystem.  
 At the same time, some bugs were fixed and some functions were optimized, and more complete documents. Welcome everyone to try to use, put forward valuable opinions and suggestions, and promote the development of HertzBeat together.
@@ -22,7 +22,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 
 ## What is HertzBeat?
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.
+[Apache HertzBeat](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time observability system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.
 
 ## Features
 
@@ -116,7 +116,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 * bugfix npe monitor jobid may be null by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1701>
 * support custom main menus in monitor template by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1703>
 * update home website doc by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1712>
-* [Improve] change package group to org apache hertzbeat by @vinci-897 in <https://github.com/apache/hertzbeat/pull/1724>
+* [Improve] change package group to org Apache HertzBeat™ by @vinci-897 in <https://github.com/apache/hertzbeat/pull/1724>
 * [improve] initial license clean up by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1725>
 * update manager and collector logback config(#1704) by @handy-git in <https://github.com/apache/hertzbeat/pull/1723>
 * fix(sec): upgrade com.h2database:h2 to  by @WinterKi1ler in <https://github.com/apache/hertzbeat/pull/1718>
@@ -388,4 +388,4 @@ Have Fun!
 
 HertzBeat, Make Monitoring Easier!
 
-Apache HertzBeat Team
+Apache HertzBeat™ Team

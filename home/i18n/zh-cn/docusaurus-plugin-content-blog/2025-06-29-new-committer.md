@@ -14,7 +14,7 @@ keywords:
   ]
 ---
 
-> 大家好，非常荣幸收到社区邀请，成为 Apache HertzBeat Committer。
+> 大家好，非常荣幸收到社区邀请，成为 Apache HertzBeat™ Committer。
 
 ## 自我介绍
 
@@ -38,4 +38,4 @@ keywords:
 
 ## 结语
 
-非常感谢 [@tomsun28](https://github.com/tomsun28) 提名和指导，希望这份鼓励能驱使我为社区做出更有价值的贡献，最后祝 Apache HertzBeat 能早日从孵化器顺利毕业，社区越来越好！
+非常感谢 [@tomsun28](https://github.com/tomsun28) 提名和指导，希望这份鼓励能驱使我为社区做出更有价值的贡献，最后祝 Apache HertzBeat™ 能早日从孵化器顺利毕业，社区越来越好！

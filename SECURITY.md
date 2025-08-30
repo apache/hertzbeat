@@ -1,6 +1,6 @@
 # Security Policy
 
-Apache HertzBeat follows the [ASF vulnerability handling process](https://apache.org/security/#vulnerability-handling)
+Apache HertzBeat™ follows the [ASF vulnerability handling process](https://apache.org/security/#vulnerability-handling)
 
 ## Supported Versions
 
@@ -17,6 +17,6 @@ To report a new vulnerability you have discovered please follow the [ASF vulnera
 
 ## Extra Information  
 
-- [Apache HertzBeat Security Model](https://hertzbeat.apache.org/docs/help/security_model)
+- [Apache HertzBeat™ Security Model](https://hertzbeat.apache.org/docs/help/security_model)
 - [ASF Security](https://www.apache.org/security/)
-- [Apache HertzBeat Document](https://hertzbeat.apache.org/docs/)
+- [Apache HertzBeat™ Document](https://hertzbeat.apache.org/docs/)
