@@ -48,6 +48,10 @@ public class TimeService {
     private static final long DEFAULT_WATERMARK_DELAY_MS = 30_000; // 30 seconds
     private static final long WATERMARK_BROADCAST_INTERVAL_MS = 5_000; // 5 seconds
     
+    // Define acceptable timestamp range to filter abnormal timestamps
+    private static final long MAX_FUTURE_TIME_MS = 60_000; // Allow 1 minute future time
+    private static final long MAX_PAST_TIME_MS = 24 * 60 * 60 * 1000; // Allow 24 hours past time
+    
     private final AtomicLong maxTimestamp = new AtomicLong(0);
     private final AtomicLong currentWatermark = new AtomicLong(0);
     private final CopyOnWriteArrayList<WatermarkListener> listeners = new CopyOnWriteArrayList<>();
@@ -106,6 +110,21 @@ public class TimeService {
     }
     
     /**
+     * Check if timestamp is within acceptable range
+     */
+    public boolean isValidTimestamp(long timestamp) {
+        long currentTime = System.currentTimeMillis();
+        return timestamp >= (currentTime - MAX_PAST_TIME_MS) && timestamp <= (currentTime + MAX_FUTURE_TIME_MS);
+    }
+    
+    /**
+     * Check if data is late based on current watermark
+     */
+    public boolean isLateData(long timestamp) {
+        return timestamp < getCurrentWatermark();
+    }
+    
+    /**
      * Update max timestamp from WindowedLogRealTimeAlertCalculator
      */
     public void updateMaxTimestamp(long timestamp) {
@@ -143,7 +162,7 @@ public class TimeService {
         
         try {
             long maxTs = maxTimestamp.get();
-            if (maxTs < 0) {
+            if (maxTs <= 0) {
                 return;
             }
             // Calculate watermark: maxTimestamp - delay

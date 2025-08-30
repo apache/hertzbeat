@@ -78,7 +78,20 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
         // Extract event timestamp
         long eventTimestamp = extractEventTimestamp(logEntry);
         
-        // Update max timestamp
+        // Check if timestamp is within reasonable range
+        if (!timeService.isValidTimestamp(eventTimestamp)) {
+            log.warn("Dropping log with invalid timestamp: {}", eventTimestamp);
+            return;
+        }
+        
+        // Check if this is late data based on current watermark
+        if (timeService.isLateData(eventTimestamp)) {
+            log.warn("Dropping late data, timestamp: {}, watermark: {}", 
+                     eventTimestamp, timeService.getCurrentWatermark());
+            return;
+        }
+        
+        // Update max timestamp (only validated timestamps can update watermark)
         timeService.updateMaxTimestamp(eventTimestamp);
         logWorker.reduceAndSendLogTask(logEntry);
     }
