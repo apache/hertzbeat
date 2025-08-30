@@ -53,15 +53,15 @@ Under the guidance of the Apache Foundation Incubator, three major transformatio
 During the incubation period, Hertzbeat maintained an active pace of research, development, and iteration, releasing multiple versions to bring users richer features, more stable performance, and a better experience.
 
 - Released 5 ASF-compliant versions (1.6.0 - 1.7.2)
-- Key feature breakthroughs:
+- Key feature enhancements include:
     - **Multi-protocol expansion** - Added support for key components or protocols such as Ipmi, PLC, NVIDIA, Redfish.
-    - **Intelligent alert center** - Implemented multi-expression alerts, periodic thresholds, and alert suppression/silencing functions.
+    - **Intelligent alert center** - Implemented multi-expression alerts, periodic thresholds, and alert suppression/silencing/dispatch functions.
     - **Dynamic service discovery** - Achieved automatic task discovery through http_sd and Zookeeper/Nacos.
     - **Cloud service integration** - Supported integration with alert sources from Alibaba Cloud SLS, Huawei Cloud, and Volcano Engine.
     - **AI capability enhancement** - Integrated AI platforms such as OpenAI.
     - **Storage optimization** - Upgraded storage performance for VictoriaMetrics and GreptimeDB.
     - **Internationalization support** - Added multi-language interfaces, including Japanese/Traditional Chinese.
-    - **Data processing enhancement** - Supported SQL/PromQL expression syntax analysis.
+    - **Data processing enhancement** - Supported SQL/PromQL expression syntax analysis, refactoring data flow with Apache Arrow.
 
 The continuous iteration of these versions fully demonstrates Hertzbeat's dedication to technology and its high regard for user needs. Each version release is a solid step in Hertzbeat's growth, bringing users a more powerful and user-friendly monitoring experience.
 
@@ -70,7 +70,6 @@ The continuous iteration of these versions fully demonstrates Hertzbeat's dedica
 During the Apache incubation period, Hertzbeat strictly adhered to the Apache Way:
 
 - **Equal contribution and authority accumulation**: All developers participate equally, gradually building a reputation and gaining access, such as code repository submission rights, through code contributions, documentation improvements, and issue resolution.
-- **Flat architecture for efficient collaboration**: A flat organizational structure with no hierarchy among members allows for equal communication and joint decision-making. When discussing the implementation of new features, for example, members can quickly reach a consensus, accelerating project progress.
 - **Open and transparent communication**: Technical selections, version planning, and other discussions are conducted openly via mailing lists, with communication records archived and searchable. Members can participate anytime, anywhere, and new members can quickly integrate by reviewing these records.
 - **Consensus-driven decision-making**: For key decisions such as adding or removing features and choosing technical routes, the community engages in thorough discussions, weighing various factors. If a complete consensus cannot be reached, voting is used to assist, ensuring that the project's direction aligns with the overall interests of the community.
 
