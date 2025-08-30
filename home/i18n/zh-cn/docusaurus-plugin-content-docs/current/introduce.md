@@ -5,7 +5,7 @@ sidebar_label: 介绍
 slug: /
 ---
 
-> 实时监控系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
+> 实时观测系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
 
 **官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
