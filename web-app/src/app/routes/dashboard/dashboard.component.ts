@@ -299,11 +299,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           type: 'shadow'
         }
       },
-      grid:{
+      grid: {
         top: '20%',
         right: 0,
         bottom: '20%',
-        left:0
+        left: 0
       },
       xAxis: {
         type: 'category',
@@ -311,7 +311,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       yAxis: {
         type: 'value',
-        show: false,
+        show: false
       },
       series: [
         {
