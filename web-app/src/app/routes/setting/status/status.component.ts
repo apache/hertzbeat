@@ -23,6 +23,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { switchMap } from 'rxjs';
 
 import { Message } from '../../../pojo/Message';
@@ -67,6 +68,9 @@ export class StatusComponent implements OnInit {
   isIncidentModalAdd: boolean = true;
 
   search!: string;
+  pageIndex: number = 1;
+  pageSize: number = 8;
+  total: number = 0;
 
   ngOnInit(): void {
     this.loadStatusPageConfig();
@@ -99,12 +103,31 @@ export class StatusComponent implements OnInit {
     );
   }
 
+  onTablePageChange(params: NzTableQueryParams) {
+    const { pageSize, pageIndex } = params;
+    this.pageIndex = pageIndex;
+    this.pageSize = pageSize;
+    this.loadIncidenceInfo();
+  }
+
+  onPageIndexChange(pageIndex: number) {
+    this.pageIndex = pageIndex;
+    this.loadIncidenceInfo();
+  }
+
   loadIncidenceInfo() {
     this.incidentLoading = true;
-    let incidenceLoad$ = this.statusPageService.getStatusPageIncidents().subscribe(
+    let trimSearch = '';
+    if (this.search && this.search.trim() !== '') {
+      trimSearch = this.search.trim();
+    }
+    let incidenceLoad$ = this.statusPageService.getStatusPageIncidents(trimSearch, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         if (message.code === 0) {
-          this.statusIncidences = message.data;
+          let page = message.data;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+          this.statusIncidences = page.content;
         } else {
           console.log(message.msg);
         }
