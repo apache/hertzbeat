@@ -321,7 +321,7 @@ module.exports = {
           postsPerPage: 1,
           feedOptions: {
             type: 'all',
-            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat™.`,
           },
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
