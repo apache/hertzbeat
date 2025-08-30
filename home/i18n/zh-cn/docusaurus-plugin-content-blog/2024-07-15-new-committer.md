@@ -9,7 +9,7 @@ keywords: [open source monitoring system, alerting system]
 
 ![hertzBeat](/img/blog/new-committer.png)
 
-大家好，非常荣幸可以收到社区邀请被提名为 Apache HertzBeat 的 Committer。我先做一个简单的自我介绍，从2019年工作开始，一直从事后端开发工作，主要使用Java语言，目前在一家网络安全公司从事网络安全相关产品后端开发工作。
+大家好，非常荣幸可以收到社区邀请被提名为 Apache HertzBeat™ 的 Committer。我先做一个简单的自我介绍，从2019年工作开始，一直从事后端开发工作，主要使用Java语言，目前在一家网络安全公司从事网络安全相关产品后端开发工作。
 
 ### 遇见
 
@@ -29,4 +29,4 @@ keywords: [open source monitoring system, alerting system]
 
 ### 结语
 
-非常荣幸可以参与到这个项目中并被社区认可，感谢帮我review代码，给我指导和帮助的 @tomsun28，@TJxiaobao，@zqr10159，@tuohai666，@yuluo-yx，@crossoverJie，@zhangshenghang，@pwallk。最后祝 Apache HertzBeat 茁壮成长，有越来越多的贡献者参与其中。
+非常荣幸可以参与到这个项目中并被社区认可，感谢帮我review代码，给我指导和帮助的 @tomsun28，@TJxiaobao，@zqr10159，@tuohai666，@yuluo-yx，@crossoverJie，@zhangshenghang，@pwallk。最后祝 Apache HertzBeat™ 茁壮成长，有越来越多的贡献者参与其中。

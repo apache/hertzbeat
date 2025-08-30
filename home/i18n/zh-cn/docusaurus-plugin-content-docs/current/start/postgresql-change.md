@@ -4,7 +4,7 @@ title: 关系型数据库使用 PostgreSQL 替换依赖的 H2 存储系统元数
 sidebar_label: 元数据存储PostgreSQL(推荐)
 ---
 
-PostgreSQL 是一个功能强大，开源的关系型数据库管理系统（RDBMS）。Apache HertzBeat 除了支持使用默认内置的 H2 数据库外，还可以切换为使用 PostgreSQL 存储监控信息，告警信息，配置信息等结构化关系数据。
+PostgreSQL 是一个功能强大，开源的关系型数据库管理系统（RDBMS）。Apache HertzBeat™ 除了支持使用默认内置的 H2 数据库外，还可以切换为使用 PostgreSQL 存储监控信息，告警信息，配置信息等结构化关系数据。
 
 注意⚠️ 使用外置 PostgreSQL 数据库替换内置 H2 数据库为可选项，但建议生产环境配置，以提供更好的性能
 

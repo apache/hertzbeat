@@ -1,5 +1,5 @@
 ---
-title: Apache HertzBeat 毕业成为 Apache 顶级项目！
+title: Apache HertzBeat™ 毕业成为 Apache 顶级项目！
 author: 铁甲小宝
 author_url: https://github.com/TJxiaobao
 tags: [opensource, apache]
@@ -7,11 +7,11 @@ tags: [opensource, apache]
 
 > **我们的开源项目的里程碑时刻**
 >
-> 北京时间 2025 年 8 月 21 日，全球最大的开源软件基金会 Apache Software Foundation（以下简称 ASF）正式宣布 Apache HertzBeat 毕业成为 Apache 顶级项目 (TLP, Top Level Project)。
+> 北京时间 2025 年 8 月 21 日，全球最大的开源软件基金会 Apache Software Foundation（以下简称 ASF）正式宣布 Apache HertzBeat™ 毕业成为 Apache 顶级项目 (TLP, Top Level Project)。
 >
-> Apache HertzBeat 于 2024 年 4 月申请加入 Apache 孵化器，在 2 个月后发布了其第一个 Apache 版本。2025 年 8 月 21 日，Apache 董事会通过 Apache HertzBeat 毕业决议，结束了为期 17 个月的孵化，正式确定 Apache HertzBeat 成为 Apache 顶级项目。
+> Apache HertzBeat™ 于 2024 年 4 月申请加入 Apache 孵化器，在 2 个月后发布了其第一个 Apache 版本。2025 年 8 月 21 日，Apache 董事会通过 Apache HertzBeat™ 毕业决议，结束了为期 17 个月的孵化，正式确定 Apache HertzBeat™ 成为 Apache 顶级项目。
 >
-> 这一成就标志着 Apache HertzBeat 在监控领域的技术创新、社区治理和生态成熟度已全面达到Apache基金会的严格标准，成为全球开源监控基础设施的重要选择。
+> 这一成就标志着 Apache HertzBeat™ 在监控领域的技术创新、社区治理和生态成熟度已全面达到Apache基金会的严格标准，成为全球开源监控基础设施的重要选择。
 
 ## 1、什么是Apache HertzBeat
 
@@ -50,7 +50,7 @@ tags: [opensource, apache]
 
 - **治理结构化：** 建立 PMC 主导的开放治理模型，社区决策通过邮件列表公开进行
 - **流程标准化：** 采用 Apache 发布流程，所有版本经过 IPMC 投票批准
-- **协作全球化：** 吸引来自全世界的开发者和用户，一起为 Apache HertzBeat 尽一分力
+- **协作全球化：** 吸引来自全世界的开发者和用户，一起为 Apache HertzBeat™ 尽一分力
 
 #### **二、技术里程碑**
 
@@ -81,7 +81,7 @@ tags: [opensource, apache]
     - 孵化期间新增 **13 位 Committer** 其中提名 **3 位 PPMC 成员** 且贡献者达到275人，同时核心团队覆盖中美欧多时区。
     - GitHub **Star 数突破 6K+**，月均活跃开发者达 **30+**。
 - **用户生态**：
-    - **使用领域**: 自孵化以来，Apache HertzBeat 因其轻量、无代理和高度可扩展的特性，已在多个行业场景中成功落地，成为企业监控基础设施的新选择。
+    - **使用领域**: 自孵化以来，Apache HertzBeat™ 因其轻量、无代理和高度可扩展的特性，已在多个行业场景中成功落地，成为企业监控基础设施的新选择。
     - **开发者生态**：社区贡献了大量的监控模板，覆盖 Kubernetes、Docker、Redis、MySQL 等主流技术栈，极大降低了监控配置成本。
 
 
@@ -114,7 +114,7 @@ tags: [opensource, apache]
 
 ## 4、致谢
 
-Apache HertzBeat 能够成功从孵化器毕业，离不开所有社区成员与支持者的共同努力。在此，我们谨致以最诚挚的感谢：
+Apache HertzBeat™ 能够成功从孵化器毕业，离不开所有社区成员与支持者的共同努力。在此，我们谨致以最诚挚的感谢：
 
 - **Apache 基金会 & 孵化器**
 
@@ -140,4 +140,4 @@ Apache HertzBeat 能够成功从孵化器毕业，离不开所有社区成员与
 
 欢迎更多开发者加入我们，玩得开心！
 
-—— Apache HertzBeat 社区 敬上 
+—— Apache HertzBeat™ 社区 敬上 

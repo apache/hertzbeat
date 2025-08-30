@@ -24,7 +24,7 @@ limitations under the License.
 ## Become A PPMC member of Apache HertzBeat
 
 Anyone being supportive of the community and working in any of the
-CoPDoC areas can become an Apache HertzBeat PPMC member. The CoPDoC is an
+CoPDoC areas can become an Apache HertzBeat™ PPMC member. The CoPDoC is an
 acronym from ASF to describe how we recognize your contributions not
 only by code.
 
@@ -36,10 +36,10 @@ only by code.
   of the authors
 - **Code** - discussion goes nowhere without code
 
-Apache HertzBeat community strives to be meritocratic. Thus, once someone
+Apache HertzBeat™ community strives to be meritocratic. Thus, once someone
 has contributed sufficiently to any area of CoPDoC they can be a
 candidate for PPMC membership and at last voted in as a HertzBeat
-PMC member. Being an Apache HertzBeat PPMC member does not necessarily mean
+PMC member. Being an Apache HertzBeat™ PPMC member does not necessarily mean
 you must commit code with your commit privilege to the codebase; it
 means you are committed to the HertzBeat project and are productively
 contributing to our community's success.
@@ -65,7 +65,7 @@ community questions) to HertzBeat.
 ### Quality of contributions
 
 - A solid general understanding of the project
-- Well tested, well-designed, following Apache HertzBeat coding
+- Well tested, well-designed, following Apache HertzBeat™ coding
   standards, and simple patches.
 - Well-organized and detailed user-oriented documentation.
 

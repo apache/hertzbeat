@@ -25,7 +25,7 @@ limitations under the License.
 
 ### 贡献方式
 
-> 在 Apache HertzBeat 社区，贡献方式有很多:
+> 在 Apache HertzBeat™ 社区，贡献方式有很多:
 
 - 💻**代码**：可以帮助社区完成一些任务、编写新的 feature 或者是修复一些 bug；
 
@@ -145,13 +145,13 @@ git pull upstream master
 
 ### 领取贡献者证书
 
-在您的 PR 被合并后，您可以发送如下内容邮件到 `dev@hertzbeat.apache.org` 来申请领取属于您的 Apache HertzBeat 贡献者电子证书。
+在您的 PR 被合并后，您可以发送如下内容邮件到 `dev@hertzbeat.apache.org` 来申请领取属于您的 Apache HertzBeat™ 贡献者电子证书。
 
 ```
 Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
 Body:
 Hello,
-I would like to request a Contributor Certificate for my contributions to the Apache HertzBeat project.
+I would like to request a Contributor Certificate for my contributions to the Apache HertzBeat™ project.
 
 - Full Name: <Your Full Name> # The Full Name will be printed on the certificate, any name you want.
 - GitHub Username: <Your GitHub Username>

@@ -141,13 +141,13 @@ git pull upstream master
 
 ### Get Contributor Certificate
 
-After your pr is merged, you can send an email  `dev@hertzbeat.apache.org` to request your Apache HertzBeat contributor electronic certificate.
+After your pr is merged, you can send an email  `dev@hertzbeat.apache.org` to request your Apache HertzBeat™ contributor electronic certificate.
 
 ```
 Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
 Body:
 Hello,
-I would like to request a Contributor Certificate for my contributions to the Apache HertzBeat project.
+I would like to request a Contributor Certificate for my contributions to the Apache HertzBeat™ project.
 
 - Full Name: <Your Full Name> # The Full Name will be printed on the certificate, any name you want.
 - GitHub Username: <Your GitHub Username>

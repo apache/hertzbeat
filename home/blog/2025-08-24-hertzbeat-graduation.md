@@ -1,5 +1,5 @@
 ---
-title: Apache HertzBeat Graduates as an Apache Top-Level Project!
+title: Apache HertzBeat™ Graduates as an Apache Top-Level Project!
 author: TJxiaobao
 author_url: https://github.com/TJxiaobao
 tags: [opensource, apache]
@@ -7,9 +7,9 @@ tags: [opensource, apache]
 
 > **A Milestone Moment for Our Open-Source Project**
 >
-> On August 21, 2025, the Apache Software Foundation (ASF), the world's largest open-source software foundation, officially announced that Apache HertzBeat has graduated to become an Apache Top-Level Project (TLP).
+> On August 21, 2025, the Apache Software Foundation (ASF), the world's largest open-source software foundation, officially announced that Apache HertzBeat™ has graduated to become an Apache Top-Level Project (TLP).
 >
-> Apache HertzBeat applied to join the Apache Incubator in April 2024 and released its first Apache version two months later. On August 21, 2025, the Apache Board of Directors approved the resolution for Apache HertzBeat's graduation, ending a 17-month incubation period and officially establishing Apache HertzBeat as an Apache Top-Level Project.
+> Apache HertzBeat™ applied to join the Apache Incubator in April 2024 and released its first Apache version two months later. On August 21, 2025, the Apache Board of Directors approved the resolution for Apache HertzBeat's graduation, ending a 17-month incubation period and officially establishing Apache HertzBeat™ as an Apache Top-Level Project.
 >
 > This achievement signifies that Apache HertzBeat's technological innovation, community governance, and ecosystem maturity in the monitoring field have fully met the stringent standards of the Apache Foundation, making it a key choice for global open-source monitoring infrastructure.
 
@@ -77,12 +77,12 @@ During the Apache incubation period, Hertzbeat strictly adhered to the Apache Wa
     - During the incubation period, **13 new Committers** were added, including **3 nominated PPMC members**, and the number of contributors reached 275. The core team also covers multiple time zones in China, the US, and Europe.
     - GitHub **Stars surpassed 6K+**, with an average of **30+** monthly active developers.
 - **User Ecosystem**:
-    - **Application Areas**: Since its incubation, Apache HertzBeat has been successfully implemented in various industry scenarios due to its lightweight, agentless, and highly scalable features, becoming a new choice for enterprise monitoring infrastructure.
+    - **Application Areas**: Since its incubation, Apache HertzBeat™ has been successfully implemented in various industry scenarios due to its lightweight, agentless, and highly scalable features, becoming a new choice for enterprise monitoring infrastructure.
     - **Developer Ecosystem**: The community has contributed a large number of monitoring templates covering mainstream technology stacks such as Kubernetes, Docker, Redis, and MySQL, significantly reducing the cost of monitoring configuration.
 
 ## 3. Future Outlook and Plans
 
-Becoming an Apache Top-Level Project is a milestone, but it is also a new beginning. The Apache HertzBeat community will continue to uphold the Apache Foundation's "community over code" philosophy and evolve around the following core directions, striving to become a world-leading open-source observability platform:
+Becoming an Apache Top-Level Project is a milestone, but it is also a new beginning. The Apache HertzBeat™ community will continue to uphold the Apache Foundation's "community over code" philosophy and evolve around the following core directions, striving to become a world-leading open-source observability platform:
 
 1. AI and Intelligent Capabilities
 - Explore the application of AI in monitoring data analysis, anomaly detection, and intelligent alerting.
@@ -102,7 +102,7 @@ Becoming an Apache Top-Level Project is a milestone, but it is also a new beginn
 
 ## 4. Acknowledgments
 
-The successful graduation of Apache HertzBeat from the incubator would not have been possible without the collective efforts of all community members and supporters. We would like to express our sincerest gratitude to:
+The successful graduation of Apache HertzBeat™ from the incubator would not have been possible without the collective efforts of all community members and supporters. We would like to express our sincerest gratitude to:
 
 - **The Apache Foundation & Incubator**
   Thank you to the Apache Foundation for providing a neutral collaboration platform, a comprehensive incubation process, and the help of incubator members in project governance, version releases, and community building.
@@ -123,4 +123,4 @@ Finally, we have always believed that: **Community Achieves Greatness**. A tribu
 
 We welcome more developers to join us and have fun!
 
-—— The Apache HertzBeat Community
+—— The Apache HertzBeat™ Community
