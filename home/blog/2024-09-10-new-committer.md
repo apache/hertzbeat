@@ -16,7 +16,7 @@ keywords:
 
 ## Self-Introduction
 
-Hello everyone, I'm Yuxuan Zhang, a graduate student from Beijing University of Technology. I am deeply honored to become a Committer for the Apache HertzBeat project.
+Hello everyone, I'm Yuxuan Zhang, a graduate student from Beijing University of Technology. I am deeply honored to become a Committer for the Apache HertzBeat™ project.
 
 ## My Journey with Apache HertzBeat
 
@@ -42,6 +42,6 @@ Once you've found a project that meets the above criteria, you can pull the proj
 
 ## Conclusion
 
-I'm very happy to become a Committer for the community. This is an important milestone for me, and I will continue contributing to the Apache HertzBeat community in the future. I also hope that Apache HertzBeat will successfully graduate from the incubator and that the community will continue to grow.
+I'm very happy to become a Committer for the community. This is an important milestone for me, and I will continue contributing to the Apache HertzBeat™ community in the future. I also hope that Apache HertzBeat™ will successfully graduate from the incubator and that the community will continue to grow.
 
 I want to extend my heartfelt thanks to [TJxiaobao](https://github.com/TJxiaobao) for guiding me in getting started with the project and for always supporting my contributions. I also want to thank [Tom](https://github.com/tomsun28) for the prompt and detailed reviews of my PRs.

@@ -35,4 +35,4 @@ During the reading of Hertzbeat source code, I learned a lot of code writing and
 
 ## Conclusion
 
-It's an interesting experience for me to become a Committer of Apache Hertzbeat and it motivates me day by day. I will continue to contribute to the Apache Hertzbeat community in the future, and I hope that Apache Hertzbeat can successfully graduate from the Apache incubator.
+It's an interesting experience for me to become a Committer of Apache HertzBeat™ and it motivates me day by day. I will continue to contribute to the Apache HertzBeat™ community in the future, and I hope that Apache HertzBeat™ can successfully graduate from the Apache incubator.

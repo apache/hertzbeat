@@ -13,7 +13,7 @@ keywords: [open source monitoring system, alerting system]
 
 ## Becoming Part of a Stronger Team: My Contributions and Growth
 
-In the open-source community, every contribution not only pushes the project forward but also signifies personal growth. Recently, in the Apache HertzBeat project, I have contributed through a series of optimizations and feature enhancements, which have not only advanced the project but also improved my skills. Today, I would like to share my contribution experience and insights into my growth.
+In the open-source community, every contribution not only pushes the project forward but also signifies personal growth. Recently, in the Apache HertzBeat™ project, I have contributed through a series of optimizations and feature enhancements, which have not only advanced the project but also improved my skills. Today, I would like to share my contribution experience and insights into my growth.
 
 ## Starting from the Details: Optimizing Visuals and Interactions
 
@@ -36,4 +36,4 @@ In this process, I realized the importance of a user-centric approach. Only by g
 
 ## Looking Ahead: Continuous Contribution and Growth
 
-Reflecting on my past contributions, I feel a profound sense of pride and satisfaction. However, I am also acutely aware of the many areas where I still have room for improvement and need to continue learning and growing. Moving forward, I will uphold the spirit of rigor, innovation, and user-centricity, continuously exploring and practicing to contribute even more to the Apache HertzBeat project. I eagerly anticipate the opportunity to grow and progress alongside my fellow team members, jointly driving the project towards prosperity and success.
+Reflecting on my past contributions, I feel a profound sense of pride and satisfaction. However, I am also acutely aware of the many areas where I still have room for improvement and need to continue learning and growing. Moving forward, I will uphold the spirit of rigor, innovation, and user-centricity, continuously exploring and practicing to contribute even more to the Apache HertzBeat™ project. I eagerly anticipate the opportunity to grow and progress alongside my fellow team members, jointly driving the project towards prosperity and success.

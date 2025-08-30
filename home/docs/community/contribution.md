@@ -139,6 +139,33 @@ git checkout master
 git pull upstream master
 ```
 
+### Get Contributor Certificate
+
+After your pr is merged, you can send an email  `dev@hertzbeat.apache.org` to request your Apache HertzBeat™ contributor electronic certificate.
+
+```
+Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
+Body:
+Hello,
+I would like to request a Contributor Certificate for my contributions to the Apache HertzBeat™ project.
+
+- Full Name: <Your Full Name> # The Full Name will be printed on the certificate, any name you want.
+- GitHub Username: <Your GitHub Username>
+- Pull Request Links: <List the URLs of the pull requests you have submitted>
+- Email Address: <Your Email Address>
+
+Best regards,
+<Your Name>
+```
+
+You will receive a reply with an electronic certificate within a few working days, and your name will also appear in the list of contributors.
+Attention contributor certificates are electronic, and certificates for you to become a `Committer` or `PMC` are physical.
+
+Certificate Sample:
+
+![cert](/img/docs/hertzbeat-cert.png)
+
+
 ### HertzBeat Improvement Proposal (HIP)
 
 If you have major new features(e.g., support metrics push gateway, support logs monitoring), you need to write a design document known as a HertzBeat Improvement Proposal (HIP). Before starting to write a HIP, make sure you follow the process [guide](https://github.com/apache/hertzbeat/tree/master/hip).
@@ -149,23 +176,5 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion
 
-[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
+[Discussion](contact) 
 
-Add WeChat account `ahertzbeat` to pull you into the WeChat group.
-
-## 🥐 Architecture
-
-- **[manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager)** Provide monitoring management, system management basic services.
-
-> Provides monitoring management, monitoring configuration management, system user management, etc.
->
-> - **[collector](https://github.com/apache/hertzbeat/tree/master/hertzbeat-collector)** Provide metrics data collection services.
-> Use common protocols to remotely collect and obtain peer-to-peer metrics data.
-> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/hertzbeat-warehouse)** Provide monitoring data warehousing services.
-> Metrics data management, data query, calculation and statistics.
-> - **[alerter](https://github.com/apache/hertzbeat/tree/master/hertzbeat-alerter)** Provide alert service.
-> Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
-> - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
-> Angular Web UI.
-
-![hertzBeat](/img/docs/hertzbeat-arch.png)

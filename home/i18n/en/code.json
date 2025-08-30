@@ -263,10 +263,10 @@
     "message": "Makes protocols such as Http, Jmx, Ssh, Snmp, Jdbc configurable, you can collect any metrics by simply configuring the yml online. {br} High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration. {br} Flexible threshold rules and timely notifications delivered via discord slack email webhook more."
   },
   "opensource-content": {
-    "message": "Apache HertzBeat is open source, has an inclusive and open community. Unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a code document or a typo, respect everyone and grow together. {br} Our code is being deployed on thousands of machines worldwide.{github}"
+    "message": "Apache HertzBeat™ is open source, has an inclusive and open community. Unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a code document or a typo, respect everyone and grow together. {br} Our code is being deployed on thousands of machines worldwide."
   },
   "slogan": {
-    "message": "Open Source Real-time Monitoring System"
+    "message": "Open Source Real-time Observability System"
   },
   "Who uses HertzBeat?": {
     "message": "Who uses Apache HertzBeat?"
@@ -490,7 +490,7 @@
     "description": "The title of the tag list page"
   },
   "team.name": {
-    "message": "Apache HertzBeat Team"
+    "message": "Apache HertzBeat™ Team"
   },
   "team.desc": {
     "message": "The HertzBeat team is composed of contributors from various fields around the world. We embrace the community philosophy of openness and collaboration, welcoming👏 more people to join us and grow together with the community."

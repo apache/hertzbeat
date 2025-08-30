@@ -16,7 +16,7 @@ keywords:
 
 ## 自我介绍
 
-大家好，我是张宇轩，是来自北京工业大学的一名研究生，非常荣幸能够成为 Apache Hertzbeat 项目的 Committer。
+大家好，我是张宇轩，是来自北京工业大学的一名研究生，非常荣幸能够成为 Apache HertzBeat™ 项目的 Committer。
 
 ## 我与 Apache Hertzbeat
 
@@ -42,6 +42,6 @@ keywords:
 
 ## 结语
 
-非常开心能够成为社区的 Committer，这对于我来说也是一个重要的里程碑，今后我也会持续对 Apache Hertzbeat 社区贡献下去，也希望 Apache Hertzbeat 能顺利从孵化器毕业，希望社区越来越好。
+非常开心能够成为社区的 Committer，这对于我来说也是一个重要的里程碑，今后我也会持续对 Apache HertzBeat™ 社区贡献下去，也希望 Apache HertzBeat™ 能顺利从孵化器毕业，希望社区越来越好。
 
 在此非常感谢[小宝](https://github.com/TJxiaobao)大佬对我上手项目的指导以及对我贡献项目一直以来的帮助。非常感谢 [Tom 哥](https://github.com/tomsun28)对我的 PR 的迅速、细致的 Review。
