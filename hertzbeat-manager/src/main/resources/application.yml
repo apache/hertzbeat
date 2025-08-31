@@ -160,6 +160,8 @@ common:
       metrics-data-topic: async-metrics-data
       service-discovery-data-topic: service-discovery-data
       alerts-data-topic: async-alerts-data
+      log-entry-data-topic: async-log-entry-data
+      log-entry-data-to-storage-topic: log-entry-data-to-storage-topic
 
 warehouse:
   store:
