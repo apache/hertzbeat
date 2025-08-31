@@ -76,6 +76,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToStorageConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> serviceDiscoveryDataConsumer;
     private KafkaConsumer<Long, LogEntry> logEntryConsumer;
+    private KafkaConsumer<Long, LogEntry> logEntryToStorageConsumer;
 
     public KafkaCommonDataQueue(CommonProperties properties) {
         if (properties == null || properties.getQueue() == null || properties.getQueue().getKafka() == null) {
@@ -128,6 +129,11 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             logEntryConsumerConfig.put("group.id", "log-entry-consumer");
             logEntryConsumer = new KafkaConsumer<>(logEntryConsumerConfig, new LongDeserializer(), new KafkaLogEntryDeserializer());
             logEntryConsumer.subscribe(Collections.singletonList(kafka.getLogEntryDataTopic()));
+
+            Map<String, Object> logEntryToStorageConsumerConfig = new HashMap<>(consumerConfig);
+            logEntryToStorageConsumerConfig.put("group.id", "log-entry-storage-consumer");
+            logEntryToStorageConsumer = new KafkaConsumer<>(logEntryToStorageConsumerConfig, new LongDeserializer(), new KafkaLogEntryDeserializer());
+            logEntryToStorageConsumer.subscribe(Collections.singletonList(kafka.getLogEntryDataToStorageTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);
             throw e;
@@ -250,7 +256,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public LogEntry pollLogEntryToStorage() throws InterruptedException {
-        return genericPollDataFunction(logEntryToStorageQueue, logEntryConsumer, logEntryToStorageLock);
+        return genericPollDataFunction(logEntryToStorageQueue, logEntryToStorageConsumer, logEntryToStorageLock);
     }
 
     @Override
