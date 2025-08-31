@@ -35,7 +35,5 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record QuestdbProperties(@DefaultValue("false") boolean enabled,
                                 String url,
                                 String username,
-                                String password,
-                                @DefaultValue("30d") String expireTime,
-                                @DefaultValue("1") int replication) {
+                                String password) {
 }

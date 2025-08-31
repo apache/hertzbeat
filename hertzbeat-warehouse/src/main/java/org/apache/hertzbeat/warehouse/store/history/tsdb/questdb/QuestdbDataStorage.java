@@ -83,9 +83,6 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
 
     public void initQuestDb(QuestdbProperties questdbProperties) {
         String ilpAddress =  questdbProperties.url(); // e.g., "localhost:9009"
-//        StringBuilder sb = new StringBuilder(ilpAddress);
-//        sb.append(";username=").append(questdbProperties.username())
-//                .append(";password=").append(questdbProperties.password()).append(';');
         this.sender = Sender.builder(Sender.Transport.HTTP)
                 .address(ilpAddress)
                 .httpUsernamePassword(questdbProperties.username(), questdbProperties.password())
@@ -109,8 +106,6 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
                 .hostnameVerifier(noopHostnameVerifier())
                 .retryOnConnectionFailure(true)
                 .build();
-
-        // TODO: If username and password are provided, add basic auth to requests if configured
 
         this.serverAvailable = this.checkConnection();
     }
