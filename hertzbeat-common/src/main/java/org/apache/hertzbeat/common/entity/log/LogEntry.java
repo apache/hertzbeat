@@ -22,7 +22,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -140,33 +139,5 @@ public class LogEntry {
          * Number of attributes that were discarded due to limits being exceeded.
          */
         private Integer droppedAttributesCount;
-    }
-
-    /**
-     * Convenience method to get timestamp as Instant.
-     */
-    public Instant getTimestamp() {
-        return timeUnixNano != null ? Instant.ofEpochSecond(timeUnixNano / 1_000_000_000L, timeUnixNano % 1_000_000_000L) : null;
-    }
-
-    /**
-     * Convenience method to get observed timestamp as Instant.
-     */
-    public Instant getObservedTimestamp() {
-        return observedTimeUnixNano != null ? Instant.ofEpochSecond(observedTimeUnixNano / 1_000_000_000L, observedTimeUnixNano % 1_000_000_000L) : null;
-    }
-
-    /**
-     * Convenience method to set timestamp from Instant.
-     */
-    public void setTimestamp(Instant timestamp) {
-        this.timeUnixNano = timestamp != null ? timestamp.getEpochSecond() * 1_000_000_000L + timestamp.getNano() : null;
-    }
-
-    /**
-     * Convenience method to set observed timestamp from Instant.
-     */
-    public void setObservedTimestamp(Instant timestamp) {
-        this.observedTimeUnixNano = timestamp != null ? timestamp.getEpochSecond() * 1_000_000_000L + timestamp.getNano() : null;
     }
 }
