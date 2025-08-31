@@ -21,9 +21,12 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
@@ -40,8 +43,12 @@ import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * status page service implement.
@@ -257,9 +264,28 @@ public class StatusPageServiceImpl implements StatusPageService {
     }
 
     @Override
-    public List<StatusPageIncident> queryStatusPageIncidents() {
+    public Page<StatusPageIncident> queryStatusPageIncidents(String search, Long startTime, Long endTime, int pageIndex, int pageSize) {
+        // build search condition
+        Specification<StatusPageIncident> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (StringUtils.hasText(search)) {
+                Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + search.toLowerCase() + "%");
+                andList.add(predicateName);
+            }
+            if (startTime != null) {
+                andList.add(criteriaBuilder.greaterThanOrEqualTo(root.get("startTime"), startTime));
+            }
+            if (endTime != null) {
+                andList.add(criteriaBuilder.lessThanOrEqualTo(root.get("endTime"), endTime));
+            }
+
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
+        };
+
         Sort sort = Sort.by(Sort.Direction.DESC, "startTime");
-        return statusPageIncidentDao.findAll(sort);
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sort);
+        return statusPageIncidentDao.findAll(specification, pageRequest);
     }
 
     @Override

@@ -4,7 +4,7 @@ title: 依赖时序数据库服务IoTDB安装初始化(可选)
 sidebar_label: 指标数据存储IoTDB
 ---
 
-Apache HertzBeat 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+Apache HertzBeat™ 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
 
 > 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
 

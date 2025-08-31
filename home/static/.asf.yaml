@@ -16,7 +16,7 @@
 #
 
 github:
-  description: HertzBeat is a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+  description: HertzBeat is a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
   homepage: https://hertzbeat.apache.org/
   labels:
     - monitoring

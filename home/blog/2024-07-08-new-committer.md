@@ -11,7 +11,7 @@ keywords: [open source monitoring system, alerting system]
 
 ### First acquaintance with Apache Hertzbeat
 
-I first came into contact with the Apache Hertzbeat project by chance. At that time, I was looking for an open source project to monitor our company's related services. As a general monitoring project, Apache Hertzbeat naturally came into my sight. I began to understand its architecture and functions by reading official documents and browsing the project's code base.
+I first came into contact with the Apache HertzBeat™ project by chance. At that time, I was looking for an open source project to monitor our company's related services. As a general monitoring project, Apache HertzBeat™ naturally came into my sight. I began to understand its architecture and functions by reading official documents and browsing the project's code base.
 
 ### Start contributing
 
@@ -40,11 +40,11 @@ In this process, I also received help and support from many people. The predeces
 
 ### Personal feelings
 
-Becoming a Committer of Apache Hertzbeat is an important milestone in my career. This is not only a recognition of my technical ability, but also an affirmation of my contribution to the open source community. Becoming a Committer is not an end, but a new beginning. I still have a lot to learn and improve.
+Becoming a Committer of Apache HertzBeat™ is an important milestone in my career. This is not only a recognition of my technical ability, but also an affirmation of my contribution to the open source community. Becoming a Committer is not an end, but a new beginning. I still have a lot to learn and improve.
 
-This process made me understand the importance of cooperation and made me feel the charm of the open source spirit. Open source is not only a way to share technology, but also a concept of collaboration and common progress. I am very honored to be a member of the Apache Hertzbeat community and hope to continue to contribute to the development of the project in the future.
+This process made me understand the importance of cooperation and made me feel the charm of the open source spirit. Open source is not only a way to share technology, but also a concept of collaboration and common progress. I am very honored to be a member of the Apache HertzBeat™ community and hope to continue to contribute to the development of the project in the future.
 
 ### Conclusion
 
-Becoming a Committer of the Apache Hertzbeat project is a challenging and rewarding journey. Through continuous learning and contribution, I have not only improved my technical ability, but also found a sense of belonging and accomplishment in the community.  
+Becoming a Committer of the Apache HertzBeat™ project is a challenging and rewarding journey. Through continuous learning and contribution, I have not only improved my technical ability, but also found a sense of belonging and accomplishment in the community.  
 I hope that my experience can inspire more people to participate in the open source community and jointly promote the progress and development of technology. To borrow the words of Tom: Participating in open source should not affect everyone's work and life, otherwise it will go against the original intention. Everyone should participate in the free time after get off work.

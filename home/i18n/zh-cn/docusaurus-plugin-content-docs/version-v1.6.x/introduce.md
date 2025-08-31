@@ -1,11 +1,11 @@
 ---
 id: introduce  
-title: Apache HertzBeat     
+title: Apache HertzBeat™     
 sidebar_label: 介绍
 slug: /
 ---
 
-> 实时监控系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
+> 实时观测系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)

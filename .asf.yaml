@@ -16,7 +16,7 @@
 #
 
 github:
-  description: Real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+  description: Real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
   homepage: https://hertzbeat.apache.org/
   labels:
     - monitoring

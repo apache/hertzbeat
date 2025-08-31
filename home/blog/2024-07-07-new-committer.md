@@ -9,7 +9,7 @@ keywords: [open source monitoring system, alerting system]
 
 ![HertzBeat](/img/blog/new-committer.png)
 
-> 🎉 I am very pleased to become a Committer for the Apache HertzBeat project, and I have been invited by the community to introduce myself 🥰.
+> 🎉 I am very pleased to become a Committer for the Apache HertzBeat™ project, and I have been invited by the community to introduce myself 🥰.
 
 I have been working in backend development since I started my career in 2015, engaging in business development, infrastructure, and technical management. Currently, I am working as an infrastructure engineer at an internet company.
 
