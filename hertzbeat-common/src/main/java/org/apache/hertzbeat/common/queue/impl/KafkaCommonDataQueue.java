@@ -279,5 +279,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         if (logEntryConsumer != null) {
             logEntryConsumer.close();
         }
+        if (logEntryToStorageConsumer != null) {
+            logEntryToStorageConsumer.close();
+        }
     }
 }

@@ -27,10 +27,13 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 import java.lang.reflect.Field;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.config.CommonProperties;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -54,6 +57,15 @@ class KafkaCommonDataQueueTest {
 
     @Mock(lenient = true)
     private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
+
+    @Mock(lenient = true)
+    private KafkaProducer<Long, LogEntry> logEntryProducer;
+
+    @Mock(lenient = true)
+    private KafkaConsumer<Long, LogEntry> logEntryConsumer;
+
+    @Mock(lenient = true)
+    private KafkaConsumer<Long, LogEntry> logEntryToStorageConsumer;
 
     private KafkaCommonDataQueue kafkaCommonDataQueue;
 
@@ -79,12 +91,17 @@ class KafkaCommonDataQueueTest {
 
         // Simulate the subscribe method for consumers
         doNothing().when(metricsDataToAlertConsumer).subscribe(anyCollection());
+        doNothing().when(logEntryConsumer).subscribe(anyCollection());
+        doNothing().when(logEntryToStorageConsumer).subscribe(anyCollection());
 
         kafkaCommonDataQueue = new KafkaCommonDataQueue(commonProperties);
         
         // Use reflection to set private fields
         setPrivateField(kafkaCommonDataQueue, "metricsDataProducer", metricsDataProducer);
         setPrivateField(kafkaCommonDataQueue, "metricsDataToAlertConsumer", metricsDataToAlertConsumer);
+        setPrivateField(kafkaCommonDataQueue, "logEntryProducer", logEntryProducer);
+        setPrivateField(kafkaCommonDataQueue, "logEntryConsumer", logEntryConsumer);
+        setPrivateField(kafkaCommonDataQueue, "logEntryToStorageConsumer", logEntryToStorageConsumer);
     }
 
     @Test
@@ -125,10 +142,114 @@ class KafkaCommonDataQueueTest {
     }
 
     @Test
+    void testSendLogEntry() {
+        // Create a test log entry with comprehensive data
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("service.name", "hertzbeat");
+        attributes.put("service.version", "1.0.0");
+        
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(9) // INFO level
+                .severityText("INFO")
+                .body("Test log message for Kafka queue")
+                .attributes(attributes)
+                .traceId("1234567890abcdef1234567890abcdef")
+                .spanId("1234567890abcdef")
+                .build();
+
+        // Test sending log entry
+        kafkaCommonDataQueue.sendLogEntry(logEntry);
+
+        // Verify that the producer was called
+        verify(logEntryProducer).send(any());
+    }
+
+    @Test
+    void testSendLogEntryToStorage() {
+        // Create a test log entry for storage
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(17) // ERROR level
+                .severityText("ERROR")
+                .body("Error log message for storage via Kafka")
+                .build();
+
+        // Test sending log entry to storage
+        kafkaCommonDataQueue.sendLogEntryToStorage(logEntry);
+
+        // Verify that the producer was called
+        verify(logEntryProducer).send(any());
+    }
+
+    @Test
+    void testPollLogEntry() throws InterruptedException {
+        // Create test log entry
+        LogEntry expectedLogEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(13) // WARN level
+                .severityText("WARN")
+                .body("Test warning log message")
+                .build();
+        
+        // Create a ConsumerRecord containing test log entry
+        ConsumerRecord<Long, LogEntry> record = 
+                new ConsumerRecord<>("logEntryDataTopic", 0, 0L, 1L, expectedLogEntry);
+        
+        // Create ConsumerRecords containing the log entry record
+        Map<TopicPartition, List<ConsumerRecord<Long, LogEntry>>> recordsMap = 
+                Collections.singletonMap(
+                        new TopicPartition("logEntryDataTopic", 0), 
+                        Collections.singletonList(record));
+        ConsumerRecords<Long, LogEntry> records = new ConsumerRecords<>(recordsMap);
+        
+        when(logEntryConsumer.poll(any(Duration.class))).thenReturn(records);
+
+        LogEntry result = kafkaCommonDataQueue.pollLogEntry();
+        
+        assertEquals(expectedLogEntry, result);
+        verify(logEntryConsumer).commitAsync();
+    }
+
+    @Test
+    void testPollLogEntryToStorage() throws InterruptedException {
+        // Create test log entry for storage
+        LogEntry expectedLogEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(21) // FATAL level
+                .severityText("FATAL")
+                .body("Critical error log for storage")
+                .build();
+        
+        // Create a ConsumerRecord containing test log entry
+        ConsumerRecord<Long, LogEntry> record = 
+                new ConsumerRecord<>("logEntryDataToStorageTopic", 0, 0L, 1L, expectedLogEntry);
+        
+        // Create ConsumerRecords containing the log entry record
+        Map<TopicPartition, List<ConsumerRecord<Long, LogEntry>>> recordsMap = 
+                Collections.singletonMap(
+                        new TopicPartition("logEntryDataToStorageTopic", 0), 
+                        Collections.singletonList(record));
+        ConsumerRecords<Long, LogEntry> records = new ConsumerRecords<>(recordsMap);
+        
+        when(logEntryToStorageConsumer.poll(any(Duration.class))).thenReturn(records);
+
+        LogEntry result = kafkaCommonDataQueue.pollLogEntryToStorage();
+        
+        assertEquals(expectedLogEntry, result);
+        verify(logEntryToStorageConsumer).commitAsync();
+    }
+
+    @Test
     void testDestroy() throws Exception {
         kafkaCommonDataQueue.destroy();
+        
+        // Verify that all producers and consumers are closed
         verify(metricsDataToAlertConsumer).close();
         verify(metricsDataProducer).close();
+        verify(logEntryProducer).close();
+        verify(logEntryConsumer).close();
+        verify(logEntryToStorageConsumer).close();
     }
 
     private void setPrivateField(Object object, String fieldName, Object value) throws Exception {
