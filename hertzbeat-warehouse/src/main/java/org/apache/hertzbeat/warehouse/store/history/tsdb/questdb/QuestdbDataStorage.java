@@ -24,7 +24,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -336,10 +342,18 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         int count = Integer.parseInt(history.substring(0, history.length() - 1));
         String unit;
         switch (unitChar) {
-            case 'd': unit = "d"; break;
-            case 'h': unit = "h"; break;
-            case 'm': unit = "m"; break; // minute
-            case 's': unit = "s"; break;
+            case 'd': 
+                unit = "d"; 
+                break;
+            case 'h': 
+                unit = "h"; 
+                break;
+            case 'm': // minute
+                unit = "m"; 
+                break;
+            case 's': 
+                unit = "s"; 
+                break;
             default: throw new IllegalArgumentException("Invalid history unit: " + unitChar);
         }
         return String.format("dateadd('%s', %d, now())", unit, -count);
