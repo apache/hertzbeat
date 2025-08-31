@@ -12,7 +12,7 @@ sidebar_label: SSL 证书过期监控案例
 
 ## HertzBeat 是什么
 
-Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
+Apache HertzBeat™ 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
 
 github: <https://github.com/apache/hertzbeat>
 
@@ -32,7 +32,7 @@ github: <https://github.com/apache/hertzbeat>
 
 1. 新增 SSL 证书监控
 
-    > 系统页面 -> 监控菜单 -> 新增监控 -> 服务监控 -> SSL 证书 -> 新增 SSL 证书
+    > 系统页面 -> 监控中心 -> 新增监控 -> 应用服务监控 -> SSL 证书 -> 新增 SSL 证书
 
     ![HertzBeat](/img/docs/start/ssl_1.png)
 

@@ -3,7 +3,6 @@ title: 恭喜 HertzBeat 又迎来了两位新晋社区 Committer
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
 tags: [opensource]
 ---
 

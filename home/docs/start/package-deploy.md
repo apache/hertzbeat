@@ -5,7 +5,7 @@ sidebar_label: Install via Package
 ---
 
 :::tip
-You can install and run Apache HertzBeat (incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.
+You can install and run Apache HertzBeat™ on Linux Windows Mac system, and CPU supports X86/ARM64.
 Since version 1.6.0 uses `Java 17` and the installation package no longer provides a built-in JDK version, use the new Hertzbeat according to the following situations:
 
 - When the default environment variable on your server is `Java 17`, you do not need to take any action for this step.
@@ -18,7 +18,7 @@ Since version 1.6.0 uses `Java 17` and the installation package no longer provid
 
 1. Download installation package
 
-   Download installation package `apache-hertzbeat-xxx-incubating-bin.tar.gz` corresponding to your system environment
+   Download installation package `apache-hertzbeat-xxx-bin.tar.gz` corresponding to your system environment
    - [Download Page](/docs/download)
 
 2. Configure HertzBeat's configuration file(optional)
@@ -26,7 +26,7 @@ Since version 1.6.0 uses `Java 17` and the installation package no longer provid
    Unzip the installation package to the host eg: /opt/hertzbeat
 
    ```shell
-   tar zxvf apache-hertzbeat-xxx-incubating-bin.tar.gz
+   tar zxvf apache-hertzbeat-xxx-bin.tar.gz
    ```
 
    :::tip
@@ -68,7 +68,7 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 
 1. Download installation package
 
-   Download installation package `apache-hertzbeat-collector-xxx-incubating-bin.tar.gz` corresponding to your system environment
+   Download installation package `apache-hertzbeat-collector-xxx-bin.tar.gz` corresponding to your system environment
    - [Download Page](/docs/download)
 
 2. Configure the collector configuration file
@@ -76,7 +76,7 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
    Unzip the installation package to the host eg: /opt/hertzbeat-collector
 
    ```shell
-   tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
+   tar zxvf apache-hertzbeat-collector-xxx-bin.tar.gz
    ```
 
    Configure the collector configuration yml file `config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`

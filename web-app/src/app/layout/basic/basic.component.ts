@@ -66,9 +66,9 @@ import { AiBotService, ChatMessage } from '../../shared/services/ai-bot.service'
     </layout-default>
     <global-footer>
       <div style="margin-top: 30px">
-        Apache HertzBeat (incubating) {{ version }}<br />
+        Apache HertzBeat™ {{ version }}<br />
         Copyright &copy; {{ currentYear }}
-        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat</a>
+        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat™</a>
         <br />
         Licensed under the Apache License, Version 2.0
       </div>

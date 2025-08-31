@@ -34,7 +34,7 @@
     <url>https://hertzbeat.apache.org/</url>
 
     <description>
-        Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, 
+        Apache HertzBeat™, a real-time observability system with agentless, performance cluster, prometheus-compatible, 
         custom monitoring and status page building capabilities.
     </description>
 
@@ -59,7 +59,7 @@
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/apache/incubator-hertzbeat/issues</url>
+        <url>https://github.com/apache/hertzbeat/issues</url>
     </issueManagement>
 
     <mailingLists>
@@ -76,8 +76,8 @@
             <unsubscribe>notifications-unsubscribe@hertzbeat.apache.org</unsubscribe>
         </mailingList>
     </mailingLists>
-    
-    
+
+
     <modules>
         <module>hertzbeat-manager</module>
         <module>hertzbeat-alerter</module>
@@ -97,14 +97,14 @@
     </modules>
 
     <properties>
-        <hzb.version>1.7.2</hzb.version>
-        
+        <hzb.version>1.7.3</hzb.version>
+
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
-        
+
 
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -149,7 +149,7 @@
         <commons-compress.version>1.27.1</commons-compress.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <spotless.version>2.40.0</spotless.version>
-        
+
         <easy-poi.version>4.3.0</easy-poi.version>
         <poi.version>4.1.2</poi.version>
         <concurrentlinkedhashmap-lru.version>1.4.2</concurrentlinkedhashmap-lru.version>
@@ -168,7 +168,7 @@
         <huawei.obs.version>3.23.5</huawei.obs.version>
         <commons-net>3.8.0</commons-net>
         <zookeeper.version>3.9.3</zookeeper.version>
-        
+
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>

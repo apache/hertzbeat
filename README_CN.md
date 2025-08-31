@@ -9,7 +9,7 @@
 <a href="README.md">English</a> | <b><a href="README_CN.md">中文</a></b> | <a href="README_JP.md">日本語</a>
 </p>
 
-> 实时监控系统，无需 Agent，性能集群，兼容 Prometheus，自定义监控和状态页构建能力。
+> 实时观测系统，无需 Agent，性能集群，兼容 Prometheus，自定义监控和状态页构建能力。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -28,7 +28,7 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) （incubating）是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 

@@ -72,7 +72,8 @@
           "items": [
             "start/usecase/ssl-cert-practice",
             "start/usecase/springboot-auto-practice",
-            "start/usecase/linux-os-practice"
+            "start/usecase/linux-os-practice",
+            "start/usecase/tdengine-practice"
           ]
         },
         {
@@ -186,7 +187,8 @@
             "help/euleros",
             "help/fedora",
             "help/linux_script",
-            "help/windows_script"
+            "help/windows_script",
+            "help/macos"
           ]
         },
         {
@@ -196,7 +198,8 @@
             "help/ipmi",
             "help/hikvision_isapi",
             "help/dahua",
-            "help/uniview"
+            "help/uniview",
+            "help/synology_nas"
           ]
         },
         {
@@ -268,7 +271,7 @@
         {
           "type": "category",
           "label": "custom",
-          "items": ["help/kafka_promql", "help/influxdb_promql"]
+          "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
         "help/bulletin",
         "help/plugin",

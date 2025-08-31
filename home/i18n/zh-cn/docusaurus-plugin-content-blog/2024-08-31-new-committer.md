@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: aias00
 author_title: Hongyu Liu
 author_url: https://github.com/Aias00
-author_image_url: https://avatars.githubusercontent.com/u/25810623
 tags: [opensource, practice]
 keywords:
   [
@@ -17,11 +16,11 @@ keywords:
 
 ## 自我介绍
 
-大家好，非常荣幸能够受邀成为 Apache Hertzbeat 的 Committer。
+大家好，非常荣幸能够受邀成为 Apache HertzBeat™ 的 Committer。
 
 本人从事软件研发行业多年，目前在公司主要担任后端开发工程师的职位，主要负责公司核心业务系统的开发和维护工作。在日常工作中，我不仅关注代码质量和系统性能，还积极参与技术方案的设计和优化。
 
-除了工作之外，我也热衷于开源社区。参与开源项目不仅让我能够不断学习新的技术和最佳实践，还能结识志同道合的开发者，共同推动技术的发展。成为 Apache HertzBeat 的 Committer 是我开源之路上的一个重要里程碑，我会继续努力为项目和社区做出更多贡献。
+除了工作之外，我也热衷于开源社区。参与开源项目不仅让我能够不断学习新的技术和最佳实践，还能结识志同道合的开发者，共同推动技术的发展。成为 Apache HertzBeat™ 的 Committer 是我开源之路上的一个重要里程碑，我会继续努力为项目和社区做出更多贡献。
 
 ## 参与 Apache 社区
 
@@ -31,7 +30,7 @@ keywords:
 
 ## 接触 HertzBeat 并开始贡献
 
-在参与 Apache ShenYu 项目后，我对开源社区的运作有了更深入的了解。这时，我偶然接触到了 Apache HertzBeat 项目，它的目标是打造一款易用、高性能的开源实时监控告警系统。
+在参与 Apache ShenYu 项目后，我对开源社区的运作有了更深入的了解。这时，我偶然接触到了 Apache HertzBeat™ 项目，它的目标是打造一款易用、高性能的开源实时监控告警系统。
 
 HertzBeat 的理念和功能立即引起了我的兴趣。作为一名后端开发工程师，我深知监控系统在现代软件架构中的重要性。HertzBeat 不仅提供了丰富的监控功能，还注重用户体验和可扩展性，这与我的技术理念非常契合。
 
@@ -43,4 +42,4 @@ HertzBeat 的理念和功能立即引起了我的兴趣。作为一名后端开�
 
 ## 总结
 
-成为 Apache HertzBeat 的 Committer 是我开源之路上的一个重要里程碑。我将继续努力为项目和社区做出更多贡献，同时也期待与更多的团队成员一起共同成长和进步，共同推动项目的繁荣发展。
+成为 Apache HertzBeat™ 的 Committer 是我开源之路上的一个重要里程碑。我将继续努力为项目和社区做出更多贡献，同时也期待与更多的团队成员一起共同成长和进步，共同推动项目的繁荣发展。

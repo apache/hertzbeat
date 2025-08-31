@@ -17,14 +17,15 @@
  * under the License.
  */
 
-import { Component, Inject, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { EChartsOption } from 'echarts';
+import { InViewportAction } from 'ng-in-viewport';
 import { finalize } from 'rxjs/operators';
-import { getRandomGradientTriple } from 'src/app/shared/utils/common-util';
 
 import { MonitorService } from '../../../service/monitor.service';
+import { createWorker, WorkerResult } from './monitor-data-chart.worker';
 
 @Component({
   selector: 'app-monitor-data-chart',
@@ -36,9 +37,11 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   get monitorId(): number {
     return this._monitorId;
   }
+
   set monitorId(monitorId: number) {
     this._monitorId = monitorId;
   }
+
   private _monitorId!: number;
   @Input()
   app!: string;
@@ -50,12 +53,30 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   unit!: string;
   eChartOption!: EChartsOption;
   lineHistoryTheme!: EChartsOption;
-  loading: boolean = true;
+  loading: string | null = null;
   echartsInstance!: any;
-  // Default historical data period is last 6 hours
-  timePeriod: string = '6h';
+  // Default historical data period is last 30 minutes
+  timePeriod: string = '30m';
+  isInViewport = false;
+  private debounceTimer: any = undefined;
+  private worker$: any = null;
 
   constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+
+  handleViewportAction(event: InViewportAction) {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    this.debounceTimer = setTimeout(() => {
+      const wasVisible = this.isInViewport;
+      const curVisible = event.visible;
+      if (curVisible && !wasVisible) {
+        this.isInViewport = curVisible;
+        this.loadData();
+      }
+    }, 200);
+  }
 
   ngOnInit(): void {
     let metricsI18n = this.i18nSvc.fanyi(`monitor.app.${this.app}.metrics.${this.metrics}`);
@@ -223,7 +244,6 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
       // @ts-ignore
       this.lineHistoryTheme.title.subtext = `${this.i18nSvc.fanyi('monitor.detail.chart.unit')}  ${this.unit}`;
     }
-    this.loadData();
   }
 
   loadData(timePeriod?: string, isInterval?: boolean) {
@@ -234,170 +254,40 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
       isInterval = false;
     }
     // load historical metrics data
-    this.loading = true;
+    this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-loading')}`;
     let metricData$ = this.monitorSvc
       .getMonitorMetricHistoryData(this.monitorId, this.app, this.metrics, this.metric, this.timePeriod, isInterval)
       .pipe(
         finalize(() => {
-          this.loading = false;
+          if (!this.worker$) {
+            this.loading = null;
+          }
           metricData$.unsubscribe();
         })
       )
       .subscribe(
-        message => {
+        (message: any) => {
+          this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-processing')}`;
           if (message.code === 0 && message.data.values != undefined) {
-            let values: Record<string, any> = message.data.values;
-            let legend: string[] = [];
-            Object.keys(values).forEach(key => {
-              legend.push(key);
-            });
-            if (!isInterval || legend.length > 1) {
-              if (legend.length > 1) {
-                this.lineHistoryTheme.legend = {
-                  type: 'scroll',
-                  orient: 'horizontal',
-                  align: 'auto',
-                  bottom: 40,
-                  pageIconSize: 10,
-                  pageButtonGap: 10,
-                  pageButtonPosition: 'end',
-                  data: legend
-                };
-              }
-              this.lineHistoryTheme.series = [];
-              const usedColors = new Set<string>();
-              let valueKeyArr = Object.keys(values);
-              for (let index = 0; index < valueKeyArr.length; index++) {
-                let key = valueKeyArr[index];
-                let seriesData: Array<{ value: any }> = [];
-                values[key].forEach((item: { time: number; origin: any }) => {
-                  seriesData.push({
-                    value: [item.time, item.origin]
+            this.worker$ = createWorker({
+              values: message.data.values,
+              isInterval
+            }).subscribe((rsp: WorkerResult) => {
+              if (rsp.progress === 100 && rsp.data) {
+                this.lineHistoryTheme = { ...this.lineHistoryTheme, ...rsp.data };
+                this.eChartOption = this.lineHistoryTheme;
+                if (this.echartsInstance != undefined) {
+                  this.echartsInstance.setOption(this.eChartOption, {
+                    replaceMerge: ['xAxis', 'yAxis', 'series']
                   });
-                });
-
-                // Define line color based on number of series
-                let lineStyle: any;
-                if (valueKeyArr.length === 1) {
-                  // Single line - use gradient color
-                  lineStyle = {
-                    color: {
-                      type: 'linear',
-                      x: 0,
-                      y: 0,
-                      x2: 1,
-                      y2: 0,
-                      colorStops: [
-                        // start color, middle color, end color
-                        { offset: 0, color: 'rgba(86, 204, 242, 0.8)' },
-                        { offset: 0.5, color: 'rgba(47, 128, 237, 0.6)' },
-                        { offset: 1, color: 'rgba(26, 86, 184, 0.4)' }
-                      ]
-                    }
-                  };
-                } else {
-                  // Multiple lines - use random gradient
-                  let gradientColors: [string, string, string];
-                  do {
-                    gradientColors = getRandomGradientTriple();
-                  } while (usedColors.has(gradientColors[0]));
-                  usedColors.add(gradientColors[0]);
-
-                  lineStyle = {
-                    color: {
-                      type: 'linear',
-                      x: 0,
-                      y: 0,
-                      x2: 1,
-                      y2: 0,
-                      colorStops: [
-                        { offset: 0, color: gradientColors[0] },
-                        { offset: 0.5, color: gradientColors[1] },
-                        { offset: 1, color: gradientColors[2] }
-                      ]
-                    }
-                  };
                 }
-
-                this.lineHistoryTheme.series.push({
-                  name: key,
-                  type: 'line',
-                  smooth: true,
-                  showSymbol: false,
-                  emphasis: {
-                    focus: 'series'
-                  },
-                  lineStyle: lineStyle,
-                  // Add itemStyle to match the line color in the legend
-                  itemStyle: {
-                    color: valueKeyArr.length === 1 ? '#2F80ED' : lineStyle.color.colorStops[0].color
-                  },
-                  data: seriesData
-                });
+                this.worker$.unsubscribe();
+                this.worker$ = null;
+                this.loading = null;
+              } else if (rsp.progress > 0) {
+                this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-processing')} ${rsp.progress}%`;
               }
-            } else {
-              legend = ['Max', 'Min', 'Mean'];
-              this.lineHistoryTheme.legend = {
-                orient: 'vertical',
-                align: 'auto',
-                right: '10%',
-                top: '10%',
-                data: legend
-              };
-              let maxSeriesData: Array<{ value: any }> = [];
-              let minSeriesData: Array<{ value: any }> = [];
-              let meanSeriesData: Array<{ value: any }> = [];
-              this.lineHistoryTheme.series = [];
-              if (values != undefined && Object.keys(values).length > 0) {
-                values[Object.keys(values)[0]].forEach((item: { time: number; mean: any; max: any; min: any }) => {
-                  maxSeriesData.push({
-                    value: [item.time, item.max]
-                  });
-                  minSeriesData.push({
-                    value: [item.time, item.min]
-                  });
-                  meanSeriesData.push({
-                    value: [item.time, item.mean]
-                  });
-                });
-              }
-              this.lineHistoryTheme.series.push({
-                name: 'Max',
-                type: 'line',
-                smooth: true,
-                showSymbol: false,
-                emphasis: {
-                  focus: 'series'
-                },
-                data: maxSeriesData
-              });
-              this.lineHistoryTheme.series.push({
-                name: 'Min',
-                type: 'line',
-                smooth: true,
-                showSymbol: false,
-                emphasis: {
-                  focus: 'series'
-                },
-                data: minSeriesData
-              });
-              this.lineHistoryTheme.series.push({
-                name: 'Mean',
-                type: 'line',
-                smooth: true,
-                showSymbol: false,
-                emphasis: {
-                  focus: 'series'
-                },
-                data: meanSeriesData
-              });
-            }
-            this.eChartOption = this.lineHistoryTheme;
-            if (this.echartsInstance != undefined) {
-              this.echartsInstance.setOption(this.eChartOption, {
-                replaceMerge: ['xAxis', 'yAxis', 'series']
-              });
-            }
+            });
           } else {
             this.eChartOption = this.lineHistoryTheme;
             this.eChartOption.title = {
@@ -432,6 +322,9 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
     if (this.echartsInstance) {
       this.echartsInstance.dispose();
       this.echartsInstance = null;
+    }
+    if (this.worker$) {
+      this.worker$.unsubscribe();
     }
   }
 }

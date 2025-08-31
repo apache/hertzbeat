@@ -3,7 +3,6 @@ title: Warmly Welcome HertzBeat's New Community Committer!
 author: yunfan24
 author_title: Lixin Diao
 author_url: https://github.com/yunfan24
-author_image_url: https://avatars.githubusercontent.com/u/91836599?v=4
 tags: [opensource, practice]
 keywords:
   [
@@ -14,7 +13,7 @@ keywords:
     Hertzbeat,
   ]
 ---
-🎉 Hello everyone. I'm very glad to receive an invitation from the Apache HertzBeat community and officially become a Committer of the project!
+🎉 Hello everyone. I'm very glad to receive an invitation from the Apache HertzBeat™ community and officially become a Committer of the project!
 
 ## My Open Source Journey
 
@@ -45,4 +44,4 @@ Most importantly, I've connected with experts from diverse regions and industrie
 
 ## Closing Thoughts
 
-Thank you to the community and everyone who reviewed my code! Wishing Apache HertzBeat a successful graduation from the Apache Incubator and continued growth! 🚀  
+Thank you to the community and everyone who reviewed my code! Wishing Apache HertzBeat™ a successful graduation from the Apache Incubator and continued growth! 🚀  

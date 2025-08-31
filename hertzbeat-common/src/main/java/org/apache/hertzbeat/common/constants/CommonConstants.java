@@ -198,6 +198,11 @@ public interface CommonConstants {
     String PROM_VALUE = "value";
 
     /**
+     * prometheus metric value alias
+     */
+    String PROM_METRIC_VALUE = "metric_value";
+
+    /**
      * Parameter Type Number
      */
     byte PARAM_TYPE_NUMBER = 0;

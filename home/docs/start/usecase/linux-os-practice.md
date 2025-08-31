@@ -8,7 +8,7 @@ This article describes how to use the Hertzbeat monitoring system to collect and
 
 ## What's HertzBeat
 
-Apache HertzBeat (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring,  port availability, database, operating system, threshold alarms, alarm notification (email, WeChat, DingTalk, Feishu).
+Apache HertzBeat™ (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring,  port availability, database, operating system, threshold alarms, alarm notification (email, WeChat, DingTalk, Feishu).
 
 github: <https://github.com/apache/hertzbeat>
 
@@ -30,7 +30,7 @@ The production environment recommends a complete deployment method, refer [Insta
 
 ### 1. Click Add Linux Operating System Monitor
 
-> HertzBeat Page -> Monitors Menu -> New Monitor -> OS Monitor -> Add OS Linux
+> HertzBeat Page -> Monitors -> New Monitor -> OS Monitor -> Add OS Linux
 
 ![HertzBeat](/img/docs/start/linux-os-practice-1.png)
 
