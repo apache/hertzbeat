@@ -247,7 +247,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             length: 30
           },
           label: {
-            formatter: '{b|{b}({c})}\n{hr|}\n{per|{d}%}',
+            formatter: '{b|{b}}{per|({d}%)}',
             backgroundColor: 'transparent',
             borderColor: '#D9D9D9',
             borderWidth: 0.5,
@@ -258,21 +258,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 lineHeight: 30,
                 fontWeight: 'bold',
                 align: 'center',
-                padding: [4, 8]
-              },
-              hr: {
-                borderColor: '#D9D9D9',
-                width: '100%',
-                borderWidth: 1,
-                height: 0
+                padding: [4, 4]
               },
               per: {
-                color: '#fff',
-                backgroundColor: '#3f51b5',
-                padding: [4, 8],
-                borderRadius: 4,
-                lineHeight: 30,
-                align: 'center'
+                color: '#6E7079',
+                align: 'center',
+                padding: [4, 4]
               }
             }
           }

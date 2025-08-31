@@ -411,7 +411,7 @@
               </nz-tabset>
             </nz-card-tab>
             <ng-container *ngIf="collectorsTabSelectedIndex === 0">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #d8dcf0; padding: 2%">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
                   {{
                     item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
@@ -420,7 +420,7 @@
               </div>
             </ng-container>
             <ng-container *ngIf="collectorsTabSelectedIndex === 1">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #d8dcf0; padding: 2%">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: xxx-large; font-weight: bolder">
                   {{ item.pinMonitorNum + item.dispatchMonitorNum }}
                 </span>
@@ -432,19 +432,19 @@
               </div>
             </ng-container>
             <ng-container *ngIf="collectorsTabSelectedIndex === 2">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #d8dcf0; padding: 2%">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: x-large; font-weight: bolder">{{
                   (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
                 }}</span>
               </div>
             </ng-container>
             <ng-container *ngIf="collectorsTabSelectedIndex === 3">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #d8dcf0; padding: 2%">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: x-large; font-weight: bolder">{{ item.collector.ip }}</span>
               </div>
             </ng-container>
             <ng-container *ngIf="collectorsTabSelectedIndex === 4">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #d8dcf0; padding: 2%">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: x-large; font-weight: bolder">{{ item.collector.name }}</span>
               </div>
             </ng-container>
