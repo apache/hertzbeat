@@ -77,7 +77,6 @@
         </mailingList>
     </mailingLists>
 
-
     <modules>
         <module>hertzbeat-manager</module>
         <module>hertzbeat-alerter</module>
@@ -93,7 +92,6 @@
         <module>hertzbeat-base</module>
         <module>hertzbeat-mcp</module>
         <module>hertzbeat-ai-agent</module>
-
     </modules>
 
     <properties>
