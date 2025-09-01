@@ -65,8 +65,11 @@ public interface MetricsFavoriteDao extends JpaRepository<MetricsFavorite, Long>
                                                    @Param("metricsName") String metricsName);
 
     /**
+     * Delete metrics favorites by monitor ids
      *
      * @param monitorIds monitor ids
      */
-    void deleteFavoritesByMonitorIdIn(Set<Long> monitorIds);
+    @Modifying
+    @Query("DELETE FROM MetricsFavorite mf WHERE mf.monitorId IN :monitorIds")
+    void deleteFavoritesByMonitorIdIn(@Param("monitorIds") Set<Long> monitorIds);
 }

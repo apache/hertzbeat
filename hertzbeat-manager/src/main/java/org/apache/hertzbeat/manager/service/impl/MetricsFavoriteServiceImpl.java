@@ -67,6 +67,9 @@ public class MetricsFavoriteServiceImpl implements MetricsFavoriteService {
     @Override
     @Transactional(readOnly = true)
     public Set<String> getUserFavoritedMetrics(String userId, Long monitorId) {
+        if (null == userId || null == monitorId) {
+            return Set.of();
+        }
         List<MetricsFavorite> favorites = metricsFavoriteDao.findByCreatorAndMonitorId(userId, monitorId);
         if (null == favorites || favorites.isEmpty()) {
             return Set.of();
@@ -79,6 +82,9 @@ public class MetricsFavoriteServiceImpl implements MetricsFavoriteService {
 
     @Override
     public void deleteFavoritesByMonitorIdIn(Set<Long> monitorIds) {
+        if (null == monitorIds || monitorIds.isEmpty()) {
+            return;
+        }
         metricsFavoriteDao.deleteFavoritesByMonitorIdIn(monitorIds);
     }
 
