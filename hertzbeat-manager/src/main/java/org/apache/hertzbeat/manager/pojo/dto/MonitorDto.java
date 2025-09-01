@@ -47,8 +47,6 @@ public class MonitorDto {
     private List<Param> params;
     
     @Schema(description = "Monitor Metrics", accessMode = READ_ONLY)
-    private List<String> metricsNames;
-
     private List<MetricsInfo> metrics;
     
     @Schema(description = "pinned collector, default null if system dispatch", accessMode = READ_WRITE)

@@ -37,5 +37,5 @@ public class MetricsInfo {
     private String name;
 
     @Schema(description = "Whether the metrics is favorited by current user")
-    private Boolean isFavorited;
+    private Boolean favorited;
 }

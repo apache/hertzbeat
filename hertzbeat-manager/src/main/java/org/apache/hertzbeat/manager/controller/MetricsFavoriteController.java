@@ -84,7 +84,7 @@ public class MetricsFavoriteController {
             return ResponseEntity.ok(Message.success("Metrics removed from favorites successfully"));
         } catch (Exception e) {
             log.error("Failed to remove metrics favorite: monitorId={}, metricsName={}", monitorId, metricsName, e);
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Remove failed! " + e.getMessage()));
         }
     }
 

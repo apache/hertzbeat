@@ -596,27 +596,6 @@ public class MonitorServiceImpl implements MonitorService {
     public MonitorDto getMonitorDto(long id) throws RuntimeException {
         Optional<Monitor> monitorOptional = monitorDao.findById(id);
         if (monitorOptional.isPresent()) {
-            Monitor monitor = monitorOptional.get();
-            MonitorDto monitorDto = new MonitorDto();
-            List<Param> params = paramDao.findParamsByMonitorId(id);
-            monitorDto.setParams(params);
-            
-            List<String> metricsNames;
-            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp()) || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {
-                List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
-                metricsNames = metricsDataList.stream().map(CollectRep.MetricsData::getMetrics).collect(Collectors.toList());
-                monitorDto.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
-            } else {
-                boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
-                String type = isStatic ? monitor.getApp() : monitor.getScrape();
-                Job job = appService.getAppDefine(type);
-                metricsNames = job.getMetrics().stream()
-                        .filter(Metrics::isVisible)
-                        .map(Metrics::getName).collect(Collectors.toList());
-            }
-            // Set backward compatibility field
-            monitorDto.setMetricsNames(metricsNames);
-            
             // Get current user ID for favorite status
             String currentUserId = null;
             try {
@@ -625,32 +604,29 @@ public class MonitorServiceImpl implements MonitorService {
             } catch (Exception e) {
                 log.debug("No user context found, favorites will be disabled");
             }
-            
-            // Build metrics info with favorite status
-            List<MetricsInfo> metricsInfoList = new ArrayList<>();
-            if (currentUserId != null && !metricsNames.isEmpty()) {
-                Set<String> favoritedMetrics = metricsFavoriteService.getUserFavoritedMetrics(currentUserId, id);
-                // Add all metrics with appropriate favorite status
-                metricsInfoList.addAll(
-                        metricsNames.stream()
-                                .map(name -> MetricsInfo.builder()
-                                        .name(name)
-                                        .isFavorited(favoritedMetrics.contains(name))
-                                        .build())
-                                .toList()
-                );
+            Set<String> favoritedMetrics = metricsFavoriteService.getUserFavoritedMetrics(currentUserId, id);
+
+            Monitor monitor = monitorOptional.get();
+            MonitorDto monitorDto = new MonitorDto();
+            List<Param> params = paramDao.findParamsByMonitorId(id);
+            monitorDto.setParams(params);
+            List<MetricsInfo> metricsInfos;
+            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp()) || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {
+                List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
+                metricsInfos = metricsDataList.stream()
+                        .map(t -> MetricsInfo.builder().name(t.getMetrics()).favorited(favoritedMetrics.contains(t.getMetrics())).build())
+                        .collect(Collectors.toList());
+                monitorDto.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
             } else {
-                // If no user context, add all metrics as not favorited
-                metricsInfoList.addAll(
-                        metricsNames.stream()
-                                .map(name -> MetricsInfo.builder()
-                                        .name(name)
-                                        .isFavorited(Boolean.FALSE)
-                                        .build())
-                                .toList()
-                );
+                boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
+                String type = isStatic ? monitor.getApp() : monitor.getScrape();
+                Job job = appService.getAppDefine(type);
+                metricsInfos = job.getMetrics().stream()
+                        .filter(Metrics::isVisible)
+                        .map(t -> MetricsInfo.builder().name(t.getName()).favorited(favoritedMetrics.contains(t.getName())).build())
+                        .collect(Collectors.toList());
             }
-            monitorDto.setMetrics(metricsInfoList);
+            monitorDto.setMetrics(metricsInfos);
             monitorDto.setMonitor(monitor);
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
