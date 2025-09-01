@@ -457,7 +457,7 @@ impl BashServer {
                     continue;
                 }
                 validator
-                    .is_unsafe_command(line.split(" ").map(OsStr::new).collect::<Vec<&OsStr>>())?;
+                    .is_unsafe_command(line)?;
             }
         }
 
