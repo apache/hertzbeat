@@ -240,7 +240,7 @@ mod tests {
         let dangerous_commands = vec!["rm", "dd", "shutdown", "kill"];
         for cmd in dangerous_commands {
             let result = validator.is_unsafe_command(cmd);
-            assert!(result.is_err(), "Command '{}' should be blocked", cmd);
+            assert!(result.is_err(), "Command '{cmd}' should be blocked");
         }
     }
 
@@ -250,12 +250,11 @@ mod tests {
 
         let dangerous_ops = vec!["|", "&", ";", ">"];
         for op in dangerous_ops {
-            let cmd = format!("echo test {}", op);
+            let cmd = format!("echo test {op}");
             let result = validator.is_unsafe_command(&cmd);
             assert!(
                 result.is_err(),
-                "Operation '{}' should be blocked by regex",
-                op
+                "Operation '{op}' should be blocked by regex"
             );
         }
     }

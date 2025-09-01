@@ -95,7 +95,7 @@ regex = [".*[|&].*", "^sudo .*"]
 "#;
 
         let mut temp_file = NamedTempFile::new().unwrap();
-        write!(temp_file, "{}", config_content).unwrap();
+        write!(temp_file, "{config_content}").unwrap();
         let temp_path = temp_file.path().to_str().unwrap();
 
         let config = Config::read_config(temp_path).unwrap();
@@ -140,7 +140,7 @@ port = 4000
 "#;
 
         let mut temp_file = NamedTempFile::new().unwrap();
-        write!(temp_file, "{}", invalid_config).unwrap();
+        write!(temp_file, "{invalid_config}").unwrap();
         let temp_path = temp_file.path().to_str().unwrap();
 
         let result = Config::read_config(temp_path);

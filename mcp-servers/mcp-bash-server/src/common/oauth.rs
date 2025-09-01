@@ -964,7 +964,7 @@ mod tests {
                         "mcp-client".to_string(),
                         Some("profile".to_string()),
                         None,
-                        format!("concurrent_session_{}", i),
+                        format!("concurrent_session_{i}"),
                     )
                     .await
             });

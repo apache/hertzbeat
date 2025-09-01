@@ -264,7 +264,6 @@ mod tests {
     #[test]
     fn test_index_html_constant() {
         // Test that INDEX_HTML is not empty and contains expected content
-        assert!(!INDEX_HTML.is_empty());
         assert!(INDEX_HTML.contains("html") || INDEX_HTML.contains("HTML"));
     }
 
@@ -295,17 +294,6 @@ mod tests {
         // Test config module
         let config_result = config::Config::read_config("nonexistent.toml");
         assert!(config_result.is_err()); // Should fail gracefully
-    }
-
-    #[test]
-    fn test_constants_and_statics() {
-        // Test that our constants and statics are properly defined
-        assert!(!INDEX_HTML.is_empty());
-
-        // BIND_ADDRESS should be a valid OnceLock
-        // We can't test the value without potentially interfering with other tests,
-        // but we can verify the type is correct by using it
-        let _bind_addr_ref = &BIND_ADDRESS;
     }
 
     #[test]
@@ -606,7 +594,7 @@ mod tests {
         // Add auth tokens to both sessions
         for (i, session_id) in [&session1_id, &session2_id].iter().enumerate() {
             let auth_token = oauth2::StandardTokenResponse::new(
-                oauth2::AccessToken::new(format!("security-token-{}", i)),
+                oauth2::AccessToken::new(format!("security-token-{i}")),
                 oauth2::basic::BasicTokenType::Bearer,
                 oauth2::EmptyExtraTokenFields {},
             );

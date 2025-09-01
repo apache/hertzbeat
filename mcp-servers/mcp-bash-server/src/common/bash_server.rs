@@ -418,7 +418,7 @@ impl BashServer {
             system_commands.join(" ; ")
         );
 
-        format!(r#"bash -c '{}'"#, combined_command)
+        format!(r#"bash -c '{combined_command}'"#)
     }
 
     /// Build top CPU processes gathering command
@@ -1167,7 +1167,7 @@ subprocess.run(["ls", "-l"], cwd="/root")
     #[test]
     fn test_bash_server_debug_trait() {
         let server = create_test_bash_server();
-        let debug_str = format!("{:?}", server);
+        let debug_str = format!("{server:?}");
         assert!(debug_str.contains("BashServer"));
     }
 
