@@ -208,20 +208,21 @@ impl BashServer {
         let timeout_duration =
             std::time::Duration::from_secs(request.timeout_seconds.unwrap_or(30));
 
-        let mut cmd = if cfg!(target_os = "linux") {
-            let mut cmd = Command::new("bash");
-            cmd.arg("-c");
-            cmd
-        } else if cfg!(target_os = "windows") {
-            let mut cmd = Command::new("powershell");
-            cmd.arg("-c");
-            cmd
-        } else {
-            let mut cmd = Command::new("sh");
-            cmd.arg("-c");
-            cmd
-        };
-        cmd.arg(&request.command);
+        // Parse command using shlex to split into command and arguments
+        let command_parts = shlex::split(&request.command)
+            .ok_or_else(|| ErrorData::invalid_params("Failed to parse command", None))?;
+
+        if command_parts.is_empty() {
+            return Err(ErrorData::invalid_params("Empty command", None));
+        }
+
+        let program = &command_parts[0];
+        let args = &command_parts[1..];
+
+        info!("Executing command: {} {:?}", program, args);
+
+        let mut cmd = Command::new(program);
+        cmd.args(args);
 
         // Set working directory if provided
         if let Some(working_dir) = &request.working_dir {
@@ -388,6 +389,64 @@ impl BashServer {
         Ok(CallToolResult::success(vec![Content::json(response)?]))
     }
 
+    /// Build CPU information gathering command
+    /// Combines multiple shell commands to collect comprehensive CPU data
+    fn build_cpu_info_command() -> String {
+        let cpu_commands = [
+            r#"LANG=C lscpu | awk -F: '$1=="Model name" {print $2}'"#, // CPU model
+            r#"awk '/processor/{core++} END{print core}' /proc/cpuinfo"#, // Core count
+            r#"uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs"#, // Load averages
+            r#"vmstat 1 1 | awk 'NR==3{print $11}'"#, // Interrupts
+            r#"vmstat 1 1 | awk 'NR==3{print $12}'"#, // Context switches
+            r#"vmstat 1 2 | awk 'NR==4{print $15}'"#, // CPU idle percentage
+        ];
+
+        format!(r#"bash -c "{}""#, cpu_commands.join(";"))
+    }
+
+    /// Build system information gathering command
+    /// Collects kernel version, hostname, and uptime in structured format
+    fn build_system_info_command() -> String {
+        let system_commands = [
+            "uname -r",                                           // Kernel version
+            "hostname",                                           // Hostname
+            r#"uptime | awk -F "," '{print $1}' | sed "s/ //g""#, // Uptime (first part)
+        ];
+
+        let combined_command = format!(
+            "({}) | sed \":a;N;s/\\n/^/g;ta\" | awk -F \"^\" 'BEGIN{{print \"version hostname uptime\"}} {{print $1, $2, $3}}'",
+            system_commands.join(" ; ")
+        );
+
+        format!(r#"bash -c '{}'"#, combined_command)
+    }
+
+    /// Build top CPU processes gathering command
+    /// Gets top 10 processes sorted by CPU usage
+    fn build_top_cpu_processes_command() -> String {
+        let process_commands = [
+            "ps aux",     // Get all processes
+            "sort -k3nr", // Sort by CPU usage (descending)
+            r#"awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}'"#, // Format output
+            "head -n 11", // Get top 10 + header
+        ];
+
+        format!(r#"bash -c "{}""#, process_commands.join(" | "))
+    }
+
+    /// Build top memory processes gathering command  
+    /// Gets top 10 processes sorted by memory usage
+    fn build_top_mem_processes_command() -> String {
+        let process_commands = [
+            "ps aux",     // Get all processes
+            "sort -k4nr", // Sort by memory usage (descending)
+            r#"awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}'"#, // Format output
+            "head -n 11", // Get top 10 + header
+        ];
+
+        format!(r#"bash -c "{}""#, process_commands.join(" | "))
+    }
+
     /// Execute a python script on Unix-like systems
     #[cfg(unix)]
     async fn unix_execute_python(
@@ -456,8 +515,7 @@ impl BashServer {
                 if line.is_empty() || line.starts_with('#') {
                     continue;
                 }
-                validator
-                    .is_unsafe_command(line)?;
+                validator.is_unsafe_command(line)?;
             }
         }
 
@@ -568,45 +626,13 @@ impl BashServer {
         res
     }
 
-    /// Get comprehensive system information including OS, kernel, memory, and disk usage
-    /// Uses a multi-line shell command to gather various system details
-    #[tool(description = "Get system information using bash commands")]
-    async fn unix_get_system_info_via_default_shell(&self) -> Result<CallToolResult, ErrorData> {
-        let command = r#"
-echo "=== System Information ==="
-echo "Hostname: $(hostname)"
-echo "OS: $(uname -s)"
-echo "Kernel: $(uname -r)"
-echo "Architecture: $(uname -m)"
-echo "Uptime: $(uptime)"
-echo "Current User: $(whoami)"
-echo "Current Directory: $(pwd)"
-echo "Date: $(date)"
-echo "Memory Usage:"
-free -h 2>/dev/null || echo "free command not available"
-echo "Disk Usage:"
-df -h / 2>/dev/null || echo "df command not available"
-        "#;
-
-        self._all_execute_via_default_shell(
-            false,
-            DefaultExecuteRequest {
-                command: command.to_string(),
-                working_dir: None,
-                env_vars: None,
-                timeout_seconds: Some(10),
-            },
-        )
-        .await
-    }
-
     /// Get formatted system information in a structured format
     /// Returns version, hostname, and uptime in a single line format
     #[tool(description = "Get system information using bash commands")]
     async fn unix_preset_get_system_info_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
-        let command = r#"(uname -r ; hostname ; uptime | awk -F "," '{print $1}' | sed  "s/ //g") | sed ":a;N;s/\n/^/g;ta" | awk -F '^' 'BEGIN{print "version hostname uptime"} {print $1, $2, $3}'"#;
+        let command = Self::build_system_info_command();
 
         self._all_execute_via_default_shell(
             false,
@@ -659,7 +685,7 @@ df -h / 2>/dev/null || echo "df command not available"
     async fn unix_preset_get_nic_info_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
-        let command = r#"cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'"#;
+        let command = r#"bash -c "cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print \"interface_name receive_bytes transmit_bytes\"} {print $1,$2,$10}'""#;
         let result = self
             ._all_execute_via_default_shell(
                 false,
@@ -682,7 +708,7 @@ df -h / 2>/dev/null || echo "df command not available"
     async fn unix_preset_get_cpu_info_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
-        let command = r#"LANG=C lscpu | awk -F: '$1=="Model name" {print $2}';awk '/processor/{core++} END{print core}' /proc/cpuinfo;uptime | sed 's/,/ /g' | awk '{for(i=NF-2;i<=NF;i++)print $i }' | xargs;vmstat 1 1 | awk 'NR==3{print $11}';vmstat 1 1 | awk 'NR==3{print $12}';vmstat 1 2 | awk 'NR==4{print $15}'"#;
+        let command = Self::build_cpu_info_command();
         let mut result = self
             ._all_execute_via_default_shell(
                 false,
@@ -752,7 +778,7 @@ df -h / 2>/dev/null || echo "df command not available"
     async fn unix_preset_get_disk_free_info_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
-        let command = r#"df -mP | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'"#;
+        let command = r#"bash -c "df -mP | tail -n +2 | awk 'BEGIN{ print \"filesystem used available usage mounted\"} {print $1,$3,$4,$5,$6}'""#;
         let result = self
             ._all_execute_via_default_shell(
                 false,
@@ -773,7 +799,7 @@ df -h / 2>/dev/null || echo "df command not available"
     async fn unix_preset_get_top10_cpu_processes_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
-        let command = r#"ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
+        let command = Self::build_top_cpu_processes_command();
         let result = self
             ._all_execute_via_default_shell(
                 false,
@@ -794,7 +820,7 @@ df -h / 2>/dev/null || echo "df command not available"
     async fn unix_preset_get_top10_mem_processes_via_default_shell(
         &self,
     ) -> Result<CallToolResult, ErrorData> {
-        let command = r#"ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11"#;
+        let command = Self::build_top_mem_processes_command();
         let result = self
             ._all_execute_via_default_shell(
                 false,
@@ -1119,11 +1145,11 @@ subprocess.run(["ls", "-l"], cwd="/root")
         // Test with a very short timeout to ensure timeout behavior
         let cmd = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("powershell");
-            cmd.arg("Start-Sleep -Seconds 5"); // 5 seconds on Windows
+            cmd.arg("Start-Sleep -Seconds 2"); // sleep 2s
             cmd
         } else {
             let mut cmd = Command::new("sleep");
-            cmd.arg("10"); // 10 seconds on Unix
+            cmd.arg("2"); // sleep 2s
             cmd
         };
 
