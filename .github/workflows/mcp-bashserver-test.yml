@@ -1,0 +1,80 @@
+name: MCP Bash Server CI
+
+on:
+  push:
+    paths:
+      - 'mcp-servers/mcp-bash-server/**'
+      - '.github/workflows/mcp-bashserver-test.yml'
+  pull_request:
+    paths:
+      - 'mcp-servers/mcp-bash-server/**'
+      - '.github/workflows/mcp-bashserver-test.yml'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: 1.88.0
+
+jobs:
+  test:
+    name: Test MCP Bash Server
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile: [dev, release]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target/
+          key: ${{ runner.os }}-cargo-build-${{ matrix.profile }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-${{ matrix.profile }}-
+            ${{ runner.os }}-cargo-build-
+
+      - name: Check code format
+        run: cargo fmt --manifest-path ./mcp-servers/mcp-bash-server/Cargo.toml --check
+
+      - name: Run cargo check
+        run: |
+          if [ "${{ matrix.profile }}" = "release" ]; then
+            cargo check --release --manifest-path ./mcp-servers/mcp-bash-server/Cargo.toml
+          else
+            cargo check --manifest-path ./mcp-servers/mcp-bash-server/Cargo.toml
+          fi
+
+      - name: Run clippy
+        run: |
+          if [ "${{ matrix.profile }}" = "release" ]; then
+            cargo clippy --release --manifest-path ./mcp-servers/mcp-bash-server/Cargo.toml -- -D warnings
+          else
+            cargo clippy --manifest-path ./mcp-servers/mcp-bash-server/Cargo.toml -- -D warnings
+          fi
+
+      - name: Run tests
+        run: |
+          if [ "${{ matrix.profile }}" = "release" ]; then
+            cargo test --release --manifest-path ./mcp-servers/mcp-bash-server/Cargo.toml
+          else
+            cargo test --manifest-path ./mcp-servers/mcp-bash-server/Cargo.toml
+          fi
