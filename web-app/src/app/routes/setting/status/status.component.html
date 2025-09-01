@@ -251,11 +251,33 @@
           </a>
         </button>
       </ng-template>
+      <ng-template #right>
+        <app-multi-func-input
+          groupStyle="width: 180px;"
+          class="mobile-hide"
+          [placeholder]="'status.incident.name' | i18n"
+          [(value)]="search"
+          (keydown.enter)="onPageIndexChange(1)"
+          (cleared)="onPageIndexChange(1)"
+        />
+        <button class="mobile-hide" nz-button nzType="primary" (click)="onPageIndexChange(1)">
+          {{ 'common.search' | i18n }}
+        </button>
+      </ng-template>
     </app-toolbar>
     <nz-table
       #incidentTable
       [nzData]="statusIncidences"
+      [nzPageIndex]="pageIndex"
+      [nzPageSize]="pageSize"
+      [nzTotal]="total"
       nzFrontPagination="false"
+      [nzShowTotal]="rangeTemplate"
+      [nzPageSizeOptions]="[8, 15, 25]"
+      (nzPageIndexChange)="onPageIndexChange($event)"
+      (nzQueryParams)="onTablePageChange($event)"
+      nzShowPagination="true"
+      nzShowSizeChanger
       [nzLoading]="incidentLoading"
       [nzScroll]="{ x: '1240px' }"
     >
@@ -263,15 +285,15 @@
         <tr>
           <th nzAlign="center" nzWidth="15%">{{ 'status.incident.name' | i18n }}</th>
           <th nzAlign="center" nzWidth="10%">{{ 'status.incident.state' | i18n }}</th>
-          <th nzAlign="center" nzWidth="25%">{{ 'status.incident.message-latest' | i18n }}</th>
+          <th nzAlign="center" nzWidth="40%">{{ 'status.incident.message-latest' | i18n }}</th>
           <th nzAlign="center" nzWidth="15%">{{ 'status.incident.component' | i18n }}</th>
-          <th nzAlign="center" nzWidth="15%">{{ 'common.new-time' | i18n }}</th>
-          <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
+          <th nzAlign="center" nzWidth="10%">{{ 'common.new-time' | i18n }}</th>
+          <th nzAlign="center" nzWidth="10%">{{ 'common.edit' | i18n }}</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let data of incidentTable.data">
-          <td nzAlign="center">{{ data.name }}</td>
+          <td nzAlign="left" nzEllipsis nz-tooltip [nzTooltipTitle]="data.name">{{ data.name }}</td>
           <td nzAlign="center">
             <nz-tag *ngIf="data.state == 0" [nzColor]="'#ff2f2f'">
               {{ 'status.incident.state.0' | i18n }}
@@ -286,7 +308,7 @@
               {{ 'status.incident.state.3' | i18n }}
             </nz-tag>
           </td>
-          <td nzAlign="center">
+          <td nzAlign="left" nzEllipsis nz-tooltip [nzTooltipTitle]="getLatestIncidentContentMsg(data.contents)">
             {{ getLatestIncidentContentMsg(data.contents) }}
           </td>
           <td nzAlign="center">
@@ -329,6 +351,7 @@
         </tr>
       </tbody>
     </nz-table>
+    <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
   </nz-tab>
 </nz-tabset>
 

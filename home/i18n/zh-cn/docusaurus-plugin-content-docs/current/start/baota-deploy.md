@@ -4,7 +4,7 @@ title: 使用 宝塔面板 部署 HertzBeat
 sidebar_label: 基于宝塔面板部署
 ---
 
-Apache HertzBeat 支持在宝塔面板的 `Docker` 应用商店一键部署。
+Apache HertzBeat™ 支持在宝塔面板的 `Docker` 应用商店一键部署。
 
 ## 前提
 

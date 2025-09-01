@@ -4,7 +4,7 @@ title: 下载 Apache HertzBeat
 sidebar_label: Download
 ---
 
-> **这里是 Apache HertzBeat 官方下载页面。**
+> **这里是 Apache HertzBeat™ 官方下载页面。**
 > **请在下方表中选择版本下载，推荐使用最新版本。**
 
 :::tip
@@ -26,7 +26,7 @@ sidebar_label: Download
 
 ## Docker 镜像版本
 
-> Apache HertzBeat 为每个版本制作了 Docker 镜像. 你可以从 [Docker Hub](https://hub.docker.com/r/apache/hertzbeat) 拉取使用.
+> Apache HertzBeat™ 为每个版本制作了 Docker 镜像. 你可以从 [Docker Hub](https://hub.docker.com/r/apache/hertzbeat) 拉取使用.
 
 - HertzBeat <https://hub.docker.com/r/apache/hertzbeat>
 - HertzBeat Collector <https://hub.docker.com/r/apache/hertzbeat-collector>

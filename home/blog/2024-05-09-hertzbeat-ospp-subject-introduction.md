@@ -100,6 +100,6 @@ Some of you may wonder what can be gained by participating in Open Source Summer
 2. **【 Win the maximum 12000 bonus 】 The total bonus is divided into advanced 12000 Yuan and basic 8000 Yuan according to the difficulty of the project (Note: the bonus amount is RMB before tax)**
 3. **【 Community core staff counseling rapid growth 】 As long as you sign up and are selected, the tutor of each topic will carefully teach you to integrate into the community, and help you complete the design of the topic and the final landing.**
 4. **【Recommended Entry/Internship】 Students with excellent performance in this Programming Summer project can be recommended to work in your preferred company.**
-5. **【Additional community surprise】 All students participating in this Summer of Programming project have the opportunity to become Apache HertzBeat committer and have their own apache email.**
+5. **【Additional community surprise】 All students participating in this Summer of Programming project have the opportunity to become Apache HertzBeat™ committer and have their own apache email.**
 
 **There are 100% prizes to take oh**, now the only problem is that time is running out, hurry up to sign up! The deadline for registration is June 4, so hurry up and sign up for 2023 Summer of Programming.

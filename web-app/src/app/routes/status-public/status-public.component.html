@@ -150,57 +150,27 @@
 
 <nz-spin *ngIf="showMode == 'incident'" [nzSpinning]="incidentLoading" [nzTip]="'Loading...'" nzSize="large">
   <div class="status-content">
-    <div class="status-container" style="padding: 20px 0">
-      <h3 style="margin: 0; padding: 0">{{ statusOrg.name }}</h3>
-      <a
-        *ngIf="statusOrg.feedback"
-        [href]="statusOrg.feedback.includes('@') ? 'mailto:' + statusOrg.feedback : statusOrg.feedback"
-        target="_blank"
-      >
-        <button nzType="primary" nz-button>
-          {{ 'status.public.feedback' | i18n }}
-          <span nz-icon nzType="question-circle"></span>
+    <div class="status-container" style="padding: 0 0">
+      <h3 style="margin: 0; padding: 0">{{ 'status.public.to-incident' | i18n }} </h3>
+      <div>
+        <nz-date-picker
+          nzAllowClear="false"
+          nzMode="year"
+          [(ngModel)]="incidentYear"
+          (ngModelChange)="loadStatusPageIncident()"
+          [nzDisabledDate]="disabledDatePick"
+        ></nz-date-picker>
+        <button
+          nz-button
+          nzType="primary"
+          nz-tooltip
+          (click)="loadStatusPageIncident()"
+          [nzTooltipTitle]="'common.refresh' | i18n"
+          style="margin-left: 4px"
+        >
+          <i nz-icon nzType="sync" nzTheme="outline"></i>
         </button>
-      </a>
-    </div>
-    <div
-      *ngIf="statusOrg.state == 0"
-      class="org-status br-8"
-      style="background-color: #28a745; display: flex; justify-content: space-between"
-    >
-      <div>
-        <span nz-icon style="color: #f0f0f0" nzType="check-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.0' | i18n }} </span>
       </div>
-      <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
-        <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
-      </span>
-    </div>
-    <div
-      *ngIf="statusOrg.state == 1"
-      class="org-status br-8"
-      style="background-color: #e56c23; display: flex; justify-content: space-between"
-    >
-      <div>
-        <span nz-icon style="color: #f0f0f0" nzType="exclamation-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.1' | i18n }} </span>
-      </div>
-      <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
-        <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
-      </span>
-    </div>
-    <div
-      *ngIf="statusOrg.state == 2"
-      class="org-status br-8"
-      style="background-color: #ff2f2f; display: flex; justify-content: space-between"
-    >
-      <div>
-        <span nz-icon style="color: #f0f0f0" nzType="close-circle" nzTheme="outline"></span>
-        <span style="color: #f0f0f0; margin-left: 5px"> {{ 'status.public.org.state.2' | i18n }} </span>
-      </div>
-      <span style="color: #f0f0f0; margin-right: 4px; font-size: 1rem">
-        <i nz-icon nzType="field-time"></i> {{ statusOrg.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}
-      </span>
     </div>
     <div class="status-incident">
       <nz-collapse>

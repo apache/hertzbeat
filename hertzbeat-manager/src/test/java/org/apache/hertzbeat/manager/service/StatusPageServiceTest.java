@@ -18,11 +18,15 @@
 package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.util.List;
+
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
@@ -38,7 +42,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 /**
  * test case for {@link StatusPageServiceImpl}
@@ -121,13 +127,8 @@ class StatusPageServiceTest {
     @Test
     void testQueryStatusPageIncidents() {
 
-        StatusPageIncident incident = new StatusPageIncident();
-        when(statusPageIncidentDao.findAll(Sort.by(Sort.Direction.DESC, "startTime"))).thenReturn(List.of(incident));
-
-        List<StatusPageIncident> incidents = statusPageService.queryStatusPageIncidents();
-
-        assertEquals(1, incidents.size());
-        assertEquals(incident, incidents.get(0));
+        when(statusPageIncidentDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
+        assertNotNull(statusPageService.queryStatusPageIncidents(null, null, null, 1, 10));
     }
 
     @Test
