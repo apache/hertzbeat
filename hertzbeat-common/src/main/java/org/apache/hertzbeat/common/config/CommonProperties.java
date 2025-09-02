@@ -120,6 +120,11 @@ public class CommonProperties {
          */
         private String logEntryQueueName;
 
+        /**
+         * Queue name for log entry data to storage
+         */
+        private String logEntryToStorageQueueName;
+
     }
 
     /**

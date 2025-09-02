@@ -82,7 +82,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.metricsDataQueueNameForServiceDiscovery = redisProperties.getMetricsDataQueueNameForServiceDiscovery();
         this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
         this.logEntryQueueName = redisProperties.getLogEntryQueueName();
-        this.logEntryToStorageQueueName = redisProperties.getLogEntryQueueName() + "_storage";
+        this.logEntryToStorageQueueName = redisProperties.getLogEntryToStorageQueueName();
     }
 
     @Override
