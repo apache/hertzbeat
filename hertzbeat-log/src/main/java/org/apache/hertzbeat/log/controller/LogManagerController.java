@@ -37,7 +37,7 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
  * Controller for managing log entries in HertzBeat.
  */
 @RestController
-@RequestMapping("/api/logs")
+@RequestMapping(path = "/api/logs", produces = "application/json")
 @Tag(name = "Log Management Controller")
 @Slf4j
 public class LogManagerController {

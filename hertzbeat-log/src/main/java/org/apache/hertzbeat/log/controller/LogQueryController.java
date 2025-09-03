@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Log query and statistics APIs for UI consumption
  */
 @RestController
-@RequestMapping("/api/logs")
+@RequestMapping(path = "/api/logs", produces = "application/json")
 @Tag(name = "Log Query Controller")
 @Slf4j
 public class LogQueryController {
