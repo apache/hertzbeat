@@ -105,4 +105,186 @@ class OnlineParserTest {
             });
         });
     }
+
+    @Test
+    void testParseMetricsWithCrLf() throws Exception {
+        String str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\r\n"
+                + "# TYPE go_gc_duration_seconds summary\r\n"
+                + "jvm_gc_pause_seconds_count{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 1.0\r\n"
+                + "jvm_gc_pause_seconds_sum{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 0.139\r\n";
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        MetricFamily metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        MetricFamily metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+
+        str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\r\n"
+                + "# TYPE go_gc_duration_seconds summary\r\n"
+                + "jvm_gc_pause_seconds_count{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 1.0 1234567890\r\n"
+                + "jvm_gc_pause_seconds_sum{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 0.139 1234567890\r\n";
+        inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+    }
+
+    @Test
+    void testParseMetricsWithLf() throws Exception {
+        String str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\n"
+                + "# TYPE go_gc_duration_seconds summary\n"
+                + "jvm_gc_pause_seconds_count{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 1.0\n"
+                + "jvm_gc_pause_seconds_sum{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 0.139\n";
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        MetricFamily metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        MetricFamily metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+
+        str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\n"
+                + "# TYPE go_gc_duration_seconds summary\n"
+                + "jvm_gc_pause_seconds_count{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 1.0 1234567890\n"
+                + "jvm_gc_pause_seconds_sum{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 0.139 1234567890\n";
+        inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+    }
+
+    @Test
+    void testParseMetricsWithoutFinalNewline() throws Exception {
+        String str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\r\n"
+                + "# TYPE go_gc_duration_seconds summary\r\n"
+                + "jvm_gc_pause_seconds_count{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 1.0\r\n"
+                + "jvm_gc_pause_seconds_sum{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 0.139";
+
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        MetricFamily metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        MetricFamily metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+
+        str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\n"
+                + "# TYPE go_gc_duration_seconds summary\n"
+                + "jvm_gc_pause_seconds_count{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 1.0\n"
+                + "jvm_gc_pause_seconds_sum{action=\"end of major GC\",cause=\"Metadata GC Threshold\",} 0.139";
+
+        inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+    }
+
+    @Test
+    void testParseMetricsWithEmptyLabelsAndCrLf() throws Exception {
+        String str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\r\n"
+                + "# TYPE go_gc_duration_seconds summary\r\n"
+                + "jvm_gc_pause_seconds_count 1.0\r\n"
+                + "jvm_gc_pause_seconds_sum{} 0.139";
+
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        MetricFamily metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        MetricFamily metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+
+    }
+
+    @Test
+    void testParseMetricsWithEmptyLabelsAndLf() throws Exception {
+        String str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\n"
+                + "# TYPE go_gc_duration_seconds summary\n"
+                + "jvm_gc_pause_seconds_count 1.0\n"
+                + "jvm_gc_pause_seconds_sum{} 0.139";
+
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        MetricFamily metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        MetricFamily metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+    }
+
+    @Test
+    void testParseMetricsWithMixedLineEndings() throws Exception {
+        String str = "# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.\r\n"
+                + "# TYPE go_gc_duration_seconds summary\n"
+                + "jvm_gc_pause_seconds_count 1.0\n"
+                + "jvm_gc_pause_seconds_sum{} 0.139\r\n";
+
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(inputStream);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(2, metricFamilyMap.values().size());
+
+        MetricFamily metricFamily = metricFamilyMap.get("jvm_gc_pause_seconds_count");
+        assertEquals("jvm_gc_pause_seconds_count", metricFamily.getName());
+        assertEquals(1.0, metricFamily.getMetricList().get(0).getValue());
+
+        MetricFamily metricFamily1 = metricFamilyMap.get("jvm_gc_pause_seconds_sum");
+        assertEquals("jvm_gc_pause_seconds_sum", metricFamily1.getName());
+        assertEquals(0.139, metricFamily1.getMetricList().get(0).getValue());
+    }
 }
