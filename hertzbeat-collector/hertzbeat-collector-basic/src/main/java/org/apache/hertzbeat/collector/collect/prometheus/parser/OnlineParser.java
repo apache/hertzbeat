@@ -185,12 +185,20 @@ public class OnlineParser {
             stringBuilder.append((char) i);
             i = getChar(inputStream);
         }
+        // Skip \r character to handle Windows line endings
+        if (i == '\r') {
+            i = getChar(inputStream);
+        }
         return new CharChecker(i);
     }
 
     private static CharChecker skipOneLong(InputStream inputStream) throws IOException, FormatException {
         int i = getChar(inputStream);
         while (i >= '0' && i <= '9') {
+            i = getChar(inputStream);
+        }
+        // Skip \r character to handle Windows line endings
+        if (i == '\r') {
             i = getChar(inputStream);
         }
         return new CharChecker(i);
