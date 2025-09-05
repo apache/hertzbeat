@@ -9,7 +9,7 @@ sidebar_label: Download
 
 :::tip
 
-- 验证下载版本，请使用相应的哈希（sha512）、签名和[项目发布KEYS](https://downloads.apache.org/incubator/hertzbeat/KEYS)。
+- 验证下载版本，请使用相应的哈希（sha512）、签名和[项目发布KEYS](https://downloads.apache.org/hertzbeat/KEYS)。
 - 检查哈希和签名的方法参考 [如何验证](https://www.apache.org/dyn/closer.cgi#verify)。
 
 :::
