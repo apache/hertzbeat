@@ -139,7 +139,7 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
 - 基于 HertzBeat 二次开发需保留版权。
 
-**HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category) 收录**
+**HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/?view-mode=card&classify=category&sort-by=name&sort-direction=asc#observability-and-analysis--observability) 收录**
 
 ![cncf](/img/home/cncf-landscape-left-logo.svg)
 
