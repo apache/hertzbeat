@@ -42,9 +42,9 @@ import java.util.Map;
 public class LogPeriodicAlertCalculator {
     
     private static final String ROWS = "__rows__";
-    private static final String ALERT_MODE_LABEL = "alert_mode";
-    private static final String ALERT_MODE_GROUP = "group";
-    private static final String ALERT_MODE_INDIVIDUAL = "individual";
+    static final String ALERT_MODE_LABEL = "alert_mode";
+    static final String ALERT_MODE_GROUP = "group";
+    static final String ALERT_MODE_INDIVIDUAL = "individual";
 
     private final DataSourceService dataSourceService;
     private final AlarmCommonReduce alarmCommonReduce;
@@ -80,7 +80,7 @@ public class LogPeriodicAlertCalculator {
         }
     }
 
-    private String getAlertMode(AlertDefine alertDefine) {
+    String getAlertMode(AlertDefine alertDefine) {
         String mode = null;
         if (alertDefine.getLabels() != null) {
             mode = alertDefine.getLabels().get(ALERT_MODE_LABEL);
