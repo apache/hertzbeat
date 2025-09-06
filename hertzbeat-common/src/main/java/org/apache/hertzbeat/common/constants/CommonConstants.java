@@ -382,4 +382,6 @@ public interface CommonConstants {
      * JEXL custom function `json`
      */
     String JEXL_CUSTOM_JSON_FUNCTION = "json";
+
+    byte AVAILABLE_METRICS = 0;
 }
