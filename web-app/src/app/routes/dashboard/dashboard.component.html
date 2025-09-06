@@ -18,428 +18,504 @@
 -->
 
 <div class="mobile-hide">
-  <ngx-slick-carousel nz-row class="carousel" [config]="slideConfig">
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountService.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="cloud" nzTheme="outline"></i>
-              {{ 'monitor.category.service' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
-            </nz-tag>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountProgram.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="code" nzTheme="outline"></i>
-              {{ 'monitor.category.program' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountProgram.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountProgram.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountProgram.unManageSize }}</span>
-            </nz-tag>
+  <div nz-row nzGutter="16">
+    <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 24 }" style="height: 100%">
+      <ngx-slick-carousel nz-row class="carousel" [config]="slideConfig">
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountService.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="cloud" nzTheme="outline"></i>
+                  {{ 'monitor.category.service' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountService.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountService.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountService.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountDb.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="database" nzTheme="outline"></i>
-              {{ 'monitor.category.db' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
-            </nz-tag>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountCache.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="group" nzTheme="outline"></i>
-              {{ 'monitor.category.cache' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountCache.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountCache.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountCache.unManageSize }}</span>
-            </nz-tag>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountProgram.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="code" nzTheme="outline"></i>
+                  {{ 'monitor.category.program' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountProgram.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountProgram.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountProgram.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountOs.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="windows" nzTheme="outline"></i>
-              {{ 'monitor.category.os' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
-            </nz-tag>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountMid.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="merge-cells" nzTheme="outline"></i>
-              {{ 'monitor.category.mid' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
-            </nz-tag>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountDb.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="database" nzTheme="outline"></i>
+                  {{ 'monitor.category.db' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountDb.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountDb.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountDb.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountBigdata.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="dot-chart" nzTheme="outline"></i>
-              {{ 'monitor.category.bigdata' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountBigdata.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountBigdata.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountBigdata.unManageSize }}</span>
-            </nz-tag>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountWebserver.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="database" nzTheme="outline"></i>
-              {{ 'monitor.category.webserver' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountWebserver.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span
-              ><span style="font-weight: bolder">{{ appCountWebserver.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span
-              ><span style="font-weight: bolder">{{ appCountWebserver.unManageSize }}</span>
-            </nz-tag>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountCache.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="group" nzTheme="outline"></i>
+                  {{ 'monitor.category.cache' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCache.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCache.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCache.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountCn.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="cloud-server" nzTheme="outline"></i>
-              {{ 'monitor.category.cn' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountCn.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountCn.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountCn.unManageSize }}</span>
-            </nz-tag>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountNetwork.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="global" nzTheme="outline"></i>
-              {{ 'monitor.category.network' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountNetwork.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountNetwork.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountNetwork.unManageSize }}</span>
-            </nz-tag>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountOs.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="windows" nzTheme="outline"></i>
+                  {{ 'monitor.category.os' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountOs.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountOs.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountOs.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
-      <div class="mb-md hoverCard">
-        <div nz-row nzAlign="middle" class="bg-primary rounded-lg">
-          <div nz-col nzSpan="9" class="p-md text-white">
-            <div class="h2 mt0 font-weight-bold">{{ appCountCustom.size }}</div>
-            <p class="h5 text-nowrap mb0">
-              <i nz-icon nzType="project" nzTheme="outline"></i>
-              {{ 'monitor.category.custom' | i18n }}
-            </p>
-          </div>
-          <div nz-col nzSpan="15">
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.up' | i18n }} </span><span style="font-weight: bolder">{{ appCountCustom.availableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.down' | i18n }} </span><span style="font-weight: bolder">{{ appCountCustom.unAvailableSize }}</span>
-            </nz-tag>
-            <nz-tag class="mb-xs">
-              <span>{{ 'monitor.status.paused' | i18n }} </span><span style="font-weight: bolder">{{ appCountCustom.unManageSize }}</span>
-            </nz-tag>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountMid.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="merge-cells" nzTheme="outline"></i>
+                  {{ 'monitor.category.mid' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountMid.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountMid.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountMid.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountBigdata.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="dot-chart" nzTheme="outline"></i>
+                  {{ 'monitor.category.bigdata' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountBigdata.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountBigdata.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountBigdata.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountWebserver.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="database" nzTheme="outline"></i>
+                  {{ 'monitor.category.webserver' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountWebserver.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span
+                    ><span style="font-weight: bolder">{{ appCountWebserver.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span
+                    ><span style="font-weight: bolder">{{ appCountWebserver.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountCn.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="cloud-server" nzTheme="outline"></i>
+                  {{ 'monitor.category.cn' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCn.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCn.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCn.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountNetwork.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="global" nzTheme="outline"></i>
+                  {{ 'monitor.category.network' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountNetwork.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountNetwork.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountNetwork.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="width: 25%; margin: 3px" ngxSlickItem class="slide">
+          <div class="hoverCard">
+            <div nz-row nzAlign="middle" class="bg-primary dashboard-rounded">
+              <div nz-col nzSpan="9" class="p-md text-white">
+                <div class="h2 mt0 font-weight-bold">{{ appCountCustom.size }}</div>
+                <p class="h5 text-nowrap mb0">
+                  <i nz-icon nzType="project" nzTheme="outline"></i>
+                  {{ 'monitor.category.custom' | i18n }}
+                </p>
+              </div>
+              <div nz-col nzSpan="15">
+                <div class="dashboard-slider-tag">
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.up' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCustom.availableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.down' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCustom.unAvailableSize }}</span>
+                  </nz-tag>
+                  <nz-tag [nzBordered]="false" class="mb-xs">
+                    <span>{{ 'monitor.status.paused' | i18n }} </span>
+                    <span style="font-weight: bolder">{{ appCountCustom.unManageSize }}</span>
+                  </nz-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ngx-slick-carousel>
     </div>
-  </ngx-slick-carousel>
-</div>
+  </div>
 
-<div nz-row nzGutter="16" style="margin-top: 25px; height: 500px">
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
-    <nz-spin [nzSpinning]="wordCloudDataLoading">
-      <angular-tag-cloud
-        class="br-4"
-        *ngIf="!wordCloudDataLoading"
-        (clicked)="onLabelCloudClick($event)"
-        [font]="'italic bold 6px monospace'"
-        [data]="wordCloudData"
-        [width]="1"
-        [height]="1"
-        [step]="2"
-        [strict]="true"
-        [randomizeAngle]="true"
-        [realignOnResize]="true"
-        [delay]="300"
-        [zoomOnHover]="{ scale: 1.4, transitionTime: 0.6, delay: 0.4 }"
-        [overflow]="false"
-        [background]="theme == 'dark' ? '#141414' : 'white'"
-      >
-      </angular-tag-cloud>
-    </nz-spin>
-  </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" style="height: 100%">
-    <nz-spin [nzSpinning]="appsCountLoading">
-      <div
-        echarts
-        [options]="appsCountEChartOption"
-        theme="default"
-        [autoResize]="true"
-        [loading]="appsCountLoading"
-        (chartClick)="onChartClick($event)"
-        (chartInit)="onAppsCountChartInit($event)"
-        style="width: 100%; height: inherit"
-      ></div>
-    </nz-spin>
-  </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
-    <nz-spin [nzSpinning]="collectorsLoading">
-      <div style="overflow-y: auto; height: inherit">
-        <nz-card
-          *ngFor="let item of collectors; let i = index"
-          class="rounded-lg collectors"
-          nzBordered="false"
-          [nzTitle]="collectorCardTitle"
-        >
-          <ng-template #collectorCardTitle>
-            <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="item.collector.name">
-              <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
-              <span>{{ 'collector' | i18n }} : {{ item.collector.name }}</span>
-            </span>
-          </ng-template>
-          <nz-card-tab>
-            <nz-tabset nzSize="small" [(nzSelectedIndex)]="collectorsTabSelectedIndex">
-              <nz-tab [nzTitle]="'collector.status' | i18n" />
-              <nz-tab [nzTitle]="'collector.task' | i18n" />
-              <nz-tab [nzTitle]="'collector.start-time' | i18n" />
-              <nz-tab [nzTitle]="'collector.ip' | i18n" />
-              <nz-tab [nzTitle]="'collector.node' | i18n" />
-            </nz-tabset>
-          </nz-card-tab>
-          <ng-container *ngIf="collectorsTabSelectedIndex === 0">
-            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-              <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
-                {{ item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
-              </span>
-            </div>
-          </ng-container>
-          <ng-container *ngIf="collectorsTabSelectedIndex === 1">
-            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-              <span style="font-size: xxx-large; font-weight: bolder; color: white">
-                {{ item.pinMonitorNum + item.dispatchMonitorNum }}
-              </span>
-              <br />
-              <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
-              <nz-tag style="margin-bottom: 4%; font-weight: bolder"
-                >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
-              >
-            </div>
-          </ng-container>
-          <ng-container *ngIf="collectorsTabSelectedIndex === 2">
-            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-              <span style="font-size: x-large; font-weight: bolder; color: white">{{
-                (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
-              }}</span>
-            </div>
-          </ng-container>
-          <ng-container *ngIf="collectorsTabSelectedIndex === 3">
-            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-              <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.ip }}</span>
-            </div>
-          </ng-container>
-          <ng-container *ngIf="collectorsTabSelectedIndex === 4">
-            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-              <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.name }}</span>
-            </div>
-          </ng-container>
+  <div nz-row nzGutter="16" style="margin-top: 20px; height: 500px">
+    <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
+      <nz-spin [nzSpinning]="wordCloudDataLoading">
+        <nz-card class="dashboard-chart-card" style="border-radius: 16px !important; height: 100%; width: 100%">
+          <angular-tag-cloud
+            class="br-4"
+            *ngIf="!wordCloudDataLoading"
+            (clicked)="onLabelCloudClick($event)"
+            [font]="'italic bold 6px monospace'"
+            [data]="wordCloudData"
+            [width]="1"
+            [height]="1"
+            [step]="2"
+            [strict]="true"
+            [randomizeAngle]="true"
+            [realignOnResize]="true"
+            [delay]="300"
+            [zoomOnHover]="{ scale: 1.2, transitionTime: 0.6, delay: 0.4 }"
+            [overflow]="false"
+            [background]="'transparent'"
+          >
+          </angular-tag-cloud>
         </nz-card>
-      </div>
-    </nz-spin>
+      </nz-spin>
+    </div>
+    <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" style="height: 100%">
+      <nz-spin [nzSpinning]="appsCountLoading">
+        <nz-card class="dashboard-chart-card" style="border-radius: 16px !important; height: inherit; overflow: hidden">
+          <div
+            echarts
+            [options]="appsCountEChartOption"
+            theme="default"
+            [autoResize]="true"
+            [loading]="appsCountLoading"
+            (chartClick)="onChartClick($event)"
+            (chartInit)="onAppsCountChartInit($event)"
+            style="width: 100%; height: inherit"
+          ></div>
+        </nz-card>
+      </nz-spin>
+    </div>
+    <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
+      <nz-spin [nzSpinning]="collectorsLoading">
+        <div style="overflow-y: auto; height: inherit">
+          <nz-card
+            *ngFor="let item of collectors; let i = index"
+            class="dashboard-chart-card"
+            nzBordered="false"
+            [nzTitle]="collectorCardTitle"
+            style="border-radius: 16px !important"
+          >
+            <ng-template #collectorCardTitle>
+              <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="item.collector.name">
+                <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
+                <span>{{ 'collector' | i18n }} : {{ item.collector.name }}</span>
+              </span>
+            </ng-template>
+            <nz-card-tab>
+              <nz-tabset nzSize="small" [(nzSelectedIndex)]="collectorsTabSelectedIndex">
+                <nz-tab [nzTitle]="'collector.status' | i18n" />
+                <nz-tab [nzTitle]="'collector.task' | i18n" />
+                <nz-tab [nzTitle]="'collector.start-time' | i18n" />
+                <nz-tab [nzTitle]="'collector.ip' | i18n" />
+                <nz-tab [nzTitle]="'collector.node' | i18n" />
+              </nz-tabset>
+            </nz-card-tab>
+            <ng-container *ngIf="collectorsTabSelectedIndex === 0">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
+                <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
+                  {{
+                    item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+                  }}
+                </span>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="collectorsTabSelectedIndex === 1">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
+                <span style="font-size: xxx-large; font-weight: bolder">
+                  {{ item.pinMonitorNum + item.dispatchMonitorNum }}
+                </span>
+                <br />
+                <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
+                <nz-tag style="margin-bottom: 4%; font-weight: bolder"
+                  >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
+                >
+              </div>
+            </ng-container>
+            <ng-container *ngIf="collectorsTabSelectedIndex === 2">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
+                <span style="font-size: x-large; font-weight: bolder">{{
+                  (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
+                }}</span>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="collectorsTabSelectedIndex === 3">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
+                <span style="font-size: x-large; font-weight: bolder">{{ item.collector.ip }}</span>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="collectorsTabSelectedIndex === 4">
+              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
+                <span style="font-size: x-large; font-weight: bolder">{{ item.collector.name }}</span>
+              </div>
+            </ng-container>
+          </nz-card>
+        </div>
+      </nz-spin>
+    </div>
   </div>
-</div>
 
-<div nz-row nzGutter="16" style="margin-top: 25px; height: 420px">
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 15 }" class="mb-md timeline-card" style="height: 100%">
-    <nz-spin [nzSpinning]="alertContentLoading">
-      <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow: hidden">
-        <nz-timeline nzMode="left">
-          <nz-timeline-item *ngFor="let alert of alerts; let i = index" [nzLabel]="(alert.activeAt | date : 'YYYY-MM-dd HH:mm:ss')?.trim()">
-            <p style="font-weight: 400">
-              <nz-tag *ngIf="alert.labels.severity == 'emergency'" nzColor="red">
-                <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.severity.0' | i18n }}</span>
-              </nz-tag>
-              <nz-tag *ngIf="alert.labels.severity == 'critical'" nzColor="orange">
-                <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.severity.1' | i18n }}</span>
-              </nz-tag>
-              <nz-tag *ngIf="alert.labels.severity == 'warning'" nzColor="yellow">
-                <i nz-icon nzType="bell" nzTheme="outline"></i>
-                <span>{{ 'alert.severity.2' | i18n }}</span>
-              </nz-tag>
-              <nz-tag *ngIf="alert.labels.alertname">
-                <span>{{ alert.labels.alertname }}</span>
-              </nz-tag>
-              {{ alert.content }}
-            </p>
-          </nz-timeline-item>
-        </nz-timeline>
+  <div nz-row nzGutter="16" style="margin-top: 20px; height: 420px">
+    <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 24 }" class="timeline-card" style="height: 100%">
+      <nz-card
+        nzHoverable
+        [nzTitle]="alertCardTitleTemplate"
+        [nzExtra]="extraTemplate"
+        class="dashboard-card-alert"
+        style="border-radius: 16px !important; height: inherit; overflow: hidden"
+      >
+        <div nz-row nzGutter="16" style="margin: 0; height: 100%">
+          <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 15 }" class="timeline-card" style="height: 100%">
+            <nz-spin [nzSpinning]="alertContentLoading">
+              <nz-timeline nzMode="left">
+                <nz-timeline-item
+                  *ngFor="let alert of alerts; let i = index"
+                  [nzLabel]="(alert.activeAt | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
+                >
+                  <p style="font-weight: 400">
+                    <nz-tag *ngIf="alert.labels.severity == 'emergency'" nzColor="red">
+                      <i nz-icon nzType="bell" nzTheme="outline"></i>
+                      <span>{{ 'alert.severity.0' | i18n }}</span>
+                    </nz-tag>
+                    <nz-tag *ngIf="alert.labels.severity == 'critical'" nzColor="orange">
+                      <i nz-icon nzType="bell" nzTheme="outline"></i>
+                      <span>{{ 'alert.severity.1' | i18n }}</span>
+                    </nz-tag>
+                    <nz-tag *ngIf="alert.labels.severity == 'warning'" nzColor="yellow">
+                      <i nz-icon nzType="bell" nzTheme="outline"></i>
+                      <span>{{ 'alert.severity.2' | i18n }}</span>
+                    </nz-tag>
+                    <nz-tag *ngIf="alert.labels.alertname">
+                      <span>{{ alert.labels.alertname }}</span>
+                    </nz-tag>
+                    {{ alert.content }}
+                  </p>
+                </nz-timeline-item>
+              </nz-timeline>
+            </nz-spin>
+          </div>
+          <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 9 }" class="timeline-card" style="height: 100%">
+            <nz-spin [nzSpinning]="alertsLoading">
+              <div
+                echarts
+                [options]="alertsEChartOption"
+                theme="default"
+                [autoResize]="true"
+                [loading]="alertsLoading"
+                (chartInit)="onAlertNumChartInit($event)"
+                style="width: 100%; height: inherit"
+              ></div>
+            </nz-spin>
+          </div>
+        </div>
       </nz-card>
-    </nz-spin>
+    </div>
   </div>
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 9 }" class="mb-md" style="height: 100%">
-    <nz-spin [nzSpinning]="alertsLoading">
-      <div
-        echarts
-        [options]="alertsEChartOption"
-        theme="default"
-        [autoResize]="true"
-        [loading]="alertsLoading"
-        (chartInit)="onAlertNumChartInit($event)"
-        style="width: 100%; height: inherit; padding-left: 30px"
-        class="ant-card ant-card-bordered ant-card-hoverable"
-      ></div>
-    </nz-spin>
-  </div>
+
+  <ng-template #extraTemplate>
+    <a [routerLink]="['/alert/center']" style="font-weight: bold">{{ 'dashboard.alerts.enter' | i18n }}</a>
+  </ng-template>
+
+  <ng-template #alertCardTitleTemplate>
+    <span style="font-size: 14px; font-weight: bold">{{ 'dashboard.alerts.title' | i18n }}</span>
+  </ng-template>
 </div>
-
-<ng-template #extraTemplate>
-  <a [routerLink]="['/alert/center']" style="font-weight: bold">{{ 'dashboard.alerts.enter' | i18n }}</a>
-</ng-template>
-
-<ng-template #alertCardTitleTemplate>
-  <span style="font-size: 14px; font-weight: bold">{{ 'dashboard.alerts.title' | i18n }}</span>
-</ng-template>
