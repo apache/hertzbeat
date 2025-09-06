@@ -22,13 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.constants.ContextKey;
 import org.apache.hertzbeat.collector.context.impl.DefaultContext;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
-import org.apache.hertzbeat.collector.dispatch.unit.UnitConverter;
 import org.apache.hertzbeat.collector.handler.ChainBootstrap;
-import org.apache.hertzbeat.collector.handler.CollectMetricsDataHandler;
+import org.apache.hertzbeat.collector.handler.CollectMetricsDataDataStream;
 import org.apache.hertzbeat.collector.listener.CalculateFieldsListener;
 import org.apache.hertzbeat.collector.listener.MetricsDataDeliveryListener;
 import org.apache.hertzbeat.collector.listener.RemoveTimeoutMonitorListener;
-import org.apache.hertzbeat.collector.listener.RerunHandler;
+import org.apache.hertzbeat.collector.listener.RerunDataStream;
 import org.apache.hertzbeat.collector.listener.ResponseJobDataListener;
 import org.apache.hertzbeat.collector.listener.ValidateResponseListener;
 import org.apache.hertzbeat.collector.metrics.HertzBeatMetricsCollector;
@@ -168,14 +167,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         bootstrap.addContext(ContextKey.META_DATA, metaData)
                 .addContext(ContextKey.JOB, job)
                 .addContext(ContextKey.TIMEOUT, timeout)
-                .addListener(new CalculateFieldsListener(new UnitConverter(unitConvertList)))
+                .addListener(new CalculateFieldsListener(unitConvertList))
                 .addListener(new ValidateResponseListener())
-                .addOnCompleteListener(new RemoveTimeoutMonitorListener(collectTaskTimeoutMonitor));
+                .onEachDataStreamComplete(new RemoveTimeoutMonitorListener(collectTaskTimeoutMonitor));
 
         if (job.isCyclic()) {
             bootstrap.withWorkerPool(workerPool)
                     .addListener(new MetricsDataDeliveryListener(commonDataQueue))
-                    .onComplete(new RerunHandler(timerDispatch));
+                    .onComplete(new RerunDataStream(timerDispatch));
         } else {
             bootstrap.addListener(new ResponseJobDataListener(timerDispatch));
         }
@@ -223,12 +222,12 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 .forEach(priority -> {
                     if (job.isCyclic() || isOneTimeJobAndIsAvailableMetrics(job, priority)) {
                         List<Metrics> metricsList = currentCollectMetrics.get(priority);
-                        CollectMetricsDataHandler collectHandler = CollectMetricsDataHandler.builder()
+                        CollectMetricsDataDataStream collectHandler = CollectMetricsDataDataStream.builder()
                                 .collectTaskTimeoutMonitor(collectTaskTimeoutMonitor)
                                 .build();
                         collectHandler.setSourceDataList(metricsList);
 
-                        chainBootstrap.handler(collectHandler);
+                        chainBootstrap.addDataStream(collectHandler);
                     }
                 });
 

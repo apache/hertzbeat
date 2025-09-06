@@ -1,7 +1,6 @@
 package org.apache.hertzbeat.collector.handler.impl;
 
 import lombok.Setter;
-import org.apache.hertzbeat.collector.constants.ContextKey;
 import org.apache.hertzbeat.collector.context.Context;
 
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.List;
 /**
  *
  */
-public abstract class AbstractBatchDataBoundHandler<T, R> extends AbstractListenerBoundHandler<T, R> {
+public abstract class AbstractBatchDataStream<T, R> extends AbstractListenerBoundDataStream<T, R> {
     @Setter
     protected List<T> sourceDataList;
 

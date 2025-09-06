@@ -3,7 +3,7 @@ package org.apache.hertzbeat.collector.listener;
 import lombok.AllArgsConstructor;
 import org.apache.hertzbeat.collector.constants.ContextKey;
 import org.apache.hertzbeat.collector.context.Context;
-import org.apache.hertzbeat.collector.handler.ContextBoundHandler;
+import org.apache.hertzbeat.collector.handler.ContextBoundDataStream;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.collector.timer.WheelTimerTask;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * 周期任务专用
  */
 @AllArgsConstructor
-public class RerunHandler implements ContextBoundHandler<Object> {
+public class RerunDataStream implements ContextBoundDataStream<Object> {
     private TimerDispatch timerDispatch;
 
     @Override

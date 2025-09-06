@@ -5,7 +5,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.collector.constants.ContextKey;
 import org.apache.hertzbeat.collector.constants.ContextStatus;
 import org.apache.hertzbeat.collector.context.Context;
-import org.apache.hertzbeat.collector.handler.ContextBoundHandler;
+import org.apache.hertzbeat.collector.handler.ContextBoundDataStream;
 import org.apache.hertzbeat.collector.handler.ContextBoundListener;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.List;
 /**
  *
  */
-public abstract class AbstractListenerBoundHandler<T, R> implements ContextBoundHandler<T> {
+public abstract class AbstractListenerBoundDataStream<T, R> implements ContextBoundDataStream<T> {
     @Getter
     private final List<? extends ContextBoundListener<R>> dataListenerList = new ArrayList<>();
     @Getter

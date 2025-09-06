@@ -6,7 +6,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.collector.constants.HandlerType;
 import org.apache.hertzbeat.collector.context.Context;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
-import org.apache.hertzbeat.collector.handler.impl.AbstractListenerBoundHandler;
+import org.apache.hertzbeat.collector.handler.impl.AbstractListenerBoundDataStream;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +20,8 @@ public class ChainBootstrap {
     private Context context;
     private TaskChain<?> taskChain;
     private WorkerPool workerPool;
-    private final List<ContextBoundHandler> contextBoundHandlerList = new ArrayList<>();
-    private final List<ContextBoundHandler> onCompleteContextBoundHandlerList = new ArrayList<>();
+    private final List<ContextBoundDataStream> contextBoundDataStreamList = new ArrayList<>();
+    private final List<ContextBoundDataStream> onCompleteContextBoundDataStreamList = new ArrayList<>();
     private final List<ContextBoundListener> dataListenerList = new ArrayList<>();
     private final List<ContextBoundListener> onCompleteListenerList = new ArrayList<>();
 
@@ -46,13 +46,13 @@ public class ChainBootstrap {
         return this;
     }
 
-    public ChainBootstrap handler(ContextBoundHandler contextBoundHandler) {
-        contextBoundHandlerList.add(contextBoundHandler);
+    public ChainBootstrap addDataStream(ContextBoundDataStream contextBoundDataStream) {
+        contextBoundDataStreamList.add(contextBoundDataStream);
         return this;
     }
 
-    public ChainBootstrap onComplete(ContextBoundHandler contextBoundHandler) {
-        onCompleteContextBoundHandlerList.add(contextBoundHandler);
+    public ChainBootstrap onComplete(ContextBoundDataStream contextBoundDataStream) {
+        onCompleteContextBoundDataStreamList.add(contextBoundDataStream);
         return this;
     }
 
@@ -61,7 +61,7 @@ public class ChainBootstrap {
         return this;
     }
 
-    public ChainBootstrap addOnCompleteListener(ContextBoundListener dataListener) {
+    public ChainBootstrap onEachDataStreamComplete(ContextBoundListener dataListener) {
         onCompleteListenerList.add(dataListener);
         return this;
     }
@@ -72,8 +72,8 @@ public class ChainBootstrap {
             return;
         }
 
-        for (ContextBoundHandler contextBoundHandler : contextBoundHandlerList) {
-            if (contextBoundHandler instanceof AbstractListenerBoundHandler listenerBoundHandler) {
+        for (ContextBoundDataStream contextBoundDataStream : contextBoundDataStreamList) {
+            if (contextBoundDataStream instanceof AbstractListenerBoundDataStream listenerBoundHandler) {
                 if (CollectionUtils.isNotEmpty(dataListenerList)) {
                     listenerBoundHandler.getDataListenerList().addAll(dataListenerList);
                 }
@@ -82,10 +82,10 @@ public class ChainBootstrap {
                 }
             }
 
-            taskChain.addLast(HandlerType.NORMAL, contextBoundHandler);
+            taskChain.addLast(HandlerType.NORMAL, contextBoundDataStream);
         }
 
-        onCompleteContextBoundHandlerList.forEach(handler -> taskChain.addLast(HandlerType.ON_COMPLETE, handler));
+        onCompleteContextBoundDataStreamList.forEach(handler -> taskChain.addLast(HandlerType.ON_COMPLETE, handler));
 
         if (workerPool != null) {
             workerPool.executeJob(() -> taskChain.execute(context));

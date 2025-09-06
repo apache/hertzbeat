@@ -11,5 +11,5 @@ public interface TaskChain<T> {
 
     void execute(Context context, T data);
 
-    void addLast(HandlerType handlerType, ContextBoundHandler<T> handler);
+    void addLast(HandlerType handlerType, ContextBoundDataStream<T> handler);
 }

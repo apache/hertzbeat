@@ -12,7 +12,7 @@ import org.apache.hertzbeat.collector.constants.ContextKey;
 import org.apache.hertzbeat.collector.constants.ContextStatus;
 import org.apache.hertzbeat.collector.context.Context;
 import org.apache.hertzbeat.collector.dispatch.CollectTaskTimeoutMonitor;
-import org.apache.hertzbeat.collector.handler.impl.AbstractBatchDataBoundHandler;
+import org.apache.hertzbeat.collector.handler.impl.AbstractBatchDataStream;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -26,7 +26,7 @@ import org.apache.hertzbeat.common.timer.Timeout;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class CollectMetricsDataHandler extends AbstractBatchDataBoundHandler<Metrics, CollectRep.MetricsData.Builder> {
+public class CollectMetricsDataDataStream extends AbstractBatchDataStream<Metrics, CollectRep.MetricsData.Builder> {
     private CollectTaskTimeoutMonitor collectTaskTimeoutMonitor;
 
     @Override

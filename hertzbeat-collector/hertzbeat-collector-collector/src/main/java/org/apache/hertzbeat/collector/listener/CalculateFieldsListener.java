@@ -6,7 +6,6 @@ import org.apache.commons.jexl3.JexlExpression;
 import org.apache.hertzbeat.collector.constants.ContextKey;
 import org.apache.hertzbeat.collector.context.Context;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
-import org.apache.hertzbeat.collector.dispatch.unit.UnitConverter;
 import org.apache.hertzbeat.collector.handler.ContextBoundListener;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -32,13 +31,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @AllArgsConstructor
 public class CalculateFieldsListener implements ContextBoundListener<CollectRep.MetricsData.Builder> {
-    private UnitConverter unitConverter;
+    private List<UnitConvert> unitConvertList;
 
     @Override
     public void execute(Context context, CollectRep.MetricsData.Builder data) {
         Metrics metrics = context.get(ContextKey.METRICS);
 
-        this.calculateFields(metrics, unitConverter.getUnitConvertList(), data);
+        this.calculateFields(metrics, unitConvertList, data);
     }
 
     /**
