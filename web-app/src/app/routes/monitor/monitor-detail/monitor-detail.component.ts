@@ -55,6 +55,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   options: any;
   port: number | undefined;
   metrics!: string[];
+  metricsInfo: any[] = [];
   chartMetrics: any[] = [];
   deadline = 90;
   countDownTime: number = 0;
@@ -76,13 +77,32 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   isLoadingMoreCharts: boolean = false;
   hasMoreCharts: boolean = true;
 
+  favoriteMetricsSet: Set<string> = new Set();
+
+  favoriteMetrics: any[] = [];
+  favoriteChartMetrics: any[] = [];
+  displayedFavoriteMetrics: any[] = [];
+  displayedFavoriteChartMetrics: any[] = [];
+
+  favoritePageSize: number = 6;
+  favoriteChartPageSize: number = 6;
+  hasMoreFavorites: boolean = true;
+  hasMoreFavoriteCharts: boolean = true;
+  isLoadingMoreFavorites: boolean = false;
+  isLoadingMoreFavoriteCharts: boolean = false;
+
+  favoriteTabIndex: number = 0;
+
   private io?: IntersectionObserver;
   private chartIo?: IntersectionObserver;
+  private favoriteIo: IntersectionObserver | undefined;
+  private favoriteChartIo: IntersectionObserver | undefined;
 
   ngOnInit(): void {
     this.countDownTime = this.deadline;
     this.loadRealTimeMetric();
     this.getGrafana();
+    this.loadFavoriteMetricsFromBackend();
   }
 
   loadMetricChart() {
@@ -183,15 +203,13 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
             this.hasMoreCharts = true;
             this.isLoadingMoreCharts = false;
 
-            this.metrics = message.data.metrics || [];
+            this.metricsInfo = message.data.metrics || [];
+            this.metrics = this.metricsInfo.map((metric: any) => metric.name);
 
-            setTimeout(() => {
-              this.cdr.detectChanges();
-              if (this.metrics && this.metrics.length > 0) {
-                this.loadInitialMetrics();
-                this.setupIntersectionObserver();
-              }
-            }, 0);
+            if (this.metrics && this.metrics.length > 0) {
+              this.loadInitialMetrics();
+              this.setupIntersectionObserver();
+            }
           } else {
             console.warn(message.msg);
           }
@@ -237,6 +255,67 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       this.initChartObserver();
     }, 0);
+  }
+
+  private setupFavoriteObserver(type: 'metrics' | 'charts') {
+    const isMetrics = type === 'metrics';
+    const observer = isMetrics ? this.favoriteIo : this.favoriteChartIo;
+    const selector = isMetrics ? '#favoriteMetricsLoadSentinel' : '#favoriteChartsLoadSentinel';
+    const hasMore = isMetrics ? this.hasMoreFavorites : this.hasMoreFavoriteCharts;
+    const isLoading = isMetrics ? this.isLoadingMoreFavorites : this.isLoadingMoreFavoriteCharts;
+    const loadMore = isMetrics ? () => this.loadMoreFavorites() : () => this.loadMoreFavoriteCharts();
+
+    if (observer) {
+      observer.disconnect();
+    }
+
+    setTimeout(() => {
+      const sentinel = document.querySelector(selector);
+      if (sentinel) {
+        const newObserver = new IntersectionObserver(
+          entries => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting && hasMore && !isLoading) {
+                loadMore();
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+
+        if (isMetrics) {
+          this.favoriteIo = newObserver;
+        } else {
+          this.favoriteChartIo = newObserver;
+        }
+
+        newObserver.observe(sentinel);
+      }
+    }, 100);
+  }
+
+  loadMoreFavorites() {
+    if (this.isLoadingMoreFavorites || !this.hasMoreFavorites) return;
+    this.isLoadingMoreFavorites = true;
+    const start = this.displayedFavoriteMetrics.length;
+    const end = Math.min(start + this.favoritePageSize, this.favoriteMetrics.length);
+    const nextChunk = this.favoriteMetrics.slice(start, end);
+    this.displayedFavoriteMetrics = this.displayedFavoriteMetrics.concat(nextChunk);
+    this.hasMoreFavorites = end < this.favoriteMetrics.length;
+    this.isLoadingMoreFavorites = false;
+    this.cdr.detectChanges();
+  }
+
+  loadMoreFavoriteCharts() {
+    if (this.isLoadingMoreFavoriteCharts || !this.hasMoreFavoriteCharts) return;
+    this.isLoadingMoreFavoriteCharts = true;
+    const start = this.displayedFavoriteChartMetrics.length;
+    const end = Math.min(start + this.favoriteChartPageSize, this.favoriteChartMetrics.length);
+    const nextChunk = this.favoriteChartMetrics.slice(start, end);
+    this.displayedFavoriteChartMetrics = this.displayedFavoriteChartMetrics.concat(nextChunk);
+    this.hasMoreFavoriteCharts = end < this.favoriteChartMetrics.length;
+    this.isLoadingMoreFavoriteCharts = false;
+    this.cdr.detectChanges();
   }
 
   private initChartObserver(retryCount: number = 0): void {
@@ -370,6 +449,8 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   refreshMetrics() {
     if (this.whichTabIndex == 1) {
       this.loadMetricChart();
+    } else if (this.whichTabIndex == 2) {
+      this.loadFavoriteMetrics();
     } else {
       this.loadRealTimeMetric();
     }
@@ -393,6 +474,155 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
       error => {
         console.error(error.msg);
       }
+    );
+  }
+
+  loadFavoriteMetrics() {
+    this.whichTabIndex = 2;
+
+    this.favoriteMetrics = [];
+    this.favoriteChartMetrics = [];
+    this.displayedFavoriteMetrics = [];
+    this.displayedFavoriteChartMetrics = [];
+    this.hasMoreFavorites = false;
+    this.hasMoreFavoriteCharts = false;
+
+    if (this.favoriteMetricsSet.size === 0) {
+      return;
+    }
+
+    // Convert favorites indicator to array
+    this.favoriteMetrics = Array.from(this.favoriteMetricsSet);
+    this.displayedFavoriteMetrics = this.favoriteMetrics.slice(0, this.favoritePageSize);
+    this.hasMoreFavorites = this.favoriteMetrics.length > this.favoritePageSize;
+
+    this.loadFavoriteChartDefinitions();
+
+    setTimeout(() => this.onFavoriteTabChange(this.favoriteTabIndex), 100);
+  }
+
+  private loadFavoriteChartDefinitions() {
+    // Chart definition for the independent request collection metric, completely decoupled from the History tab
+    const favoriteMetricsList = Array.from(this.favoriteMetricsSet);
+
+    this.monitorSvc.getWarehouseStorageServerStatus()
+      .pipe(
+        switchMap((message: Message<any>) => {
+          if (message.code == 0) {
+            if (this.app == 'push') {
+              return this.appDefineSvc.getPushDefine(this.monitorId);
+            } else if (this.app == 'prometheus') {
+              return this.appDefineSvc.getAppDynamicDefine(this.monitorId);
+            } else {
+              return this.appDefineSvc.getAppDefine(this.app);
+            }
+          } else {
+            return throwError(message.msg);
+          }
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0 && message.data != undefined) {
+            this.favoriteChartMetrics = [];
+            let metrics = message.data.metrics;
+
+            metrics.forEach((metric: { name: any; fields: any; visible: boolean }) => {
+              let fields = metric.fields;
+              if (fields != undefined && metric.visible) {
+                fields.forEach((field: { type: number; field: any; unit: any }) => {
+                  if (field.type == 0) {
+                    const fullPath = `${metric.name}.${field.field}`;
+                    if (favoriteMetricsList.includes(fullPath) ||
+                        favoriteMetricsList.includes(metric.name) ||
+                        favoriteMetricsList.includes(field.field)) {
+                      this.favoriteChartMetrics.push({
+                        metrics: metric.name,
+                        metric: field.field,
+                        unit: field.unit
+                      });
+                    }
+                  }
+                });
+              }
+            });
+
+            this.displayedFavoriteChartMetrics = this.favoriteChartMetrics.slice(0, this.favoriteChartPageSize);
+            this.hasMoreFavoriteCharts = this.favoriteChartMetrics.length > this.favoriteChartPageSize;
+          }
+        },
+        error => {
+          console.warn('Failed to load favorite chart definitions:', error);
+        }
+      );
+  }
+
+  onFavoriteTabChange(index: number) {
+    this.favoriteTabIndex = index;
+    if (index === 0) {
+      this.setupFavoriteObserver('metrics');
+    } else if (index === 1) {
+      this.setupFavoriteObserver('charts');
+    }
+  }
+
+  toggleFavorite(metric: string) {
+    if (this.favoriteMetricsSet.has(metric)) {
+      this.removeFavoriteMetric(metric);
+    } else {
+      this.addFavoriteMetric(metric);
+    }
+  }
+
+  private addFavoriteMetric(metric: string) {
+    this.monitorSvc.addMetricsFavorite(this.monitorId, metric).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.favoriteMetricsSet.add(metric);
+          this.notifySvc.success(this.i18nSvc.fanyi('monitor.favorite.add.success'), '');
+          if (this.whichTabIndex === 2) {
+            this.loadFavoriteMetrics();
+          }
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.favorite.add.failed'), message.msg || '');
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('monitor.favorite.add.failed'), error.message || '');
+      }
+    );
+  }
+
+  private removeFavoriteMetric(metric: string) {
+    this.monitorSvc.removeMetricsFavorite(this.monitorId, metric).subscribe(
+      message => {
+        if (message.code === 0) {
+          this.favoriteMetricsSet.delete(metric);
+          this.notifySvc.success(this.i18nSvc.fanyi('monitor.favorite.remove.success'), '');
+          if (this.whichTabIndex === 2) {
+            this.loadFavoriteMetrics();
+          }
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.favorite.remove.failed'), message.msg || '');
+        }
+      },
+      error => {
+        this.notifySvc.error(this.i18nSvc.fanyi('monitor.favorite.remove.failed'), error.message || '');
+      }
+    );
+  }
+
+  private loadFavoriteMetricsFromBackend() {
+    this.monitorSvc.getUserFavoritedMetrics(this.monitorId).subscribe(
+      message => {
+        if (message.code === 0 && message.data) {
+          const favoritedMetrics = Array.isArray(message.data) ? message.data : Array.from(message.data);
+          favoritedMetrics.forEach(metric => {
+            this.favoriteMetricsSet.add(metric);
+          });
+        }
+      },
+      error => {}
     );
   }
 
@@ -422,13 +652,40 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
       }
     }
 
+    if (this.favoriteIo) {
+      try {
+        this.favoriteIo.disconnect();
+      } catch (error) {
+        console.warn('Error disconnecting favorite metrics observer:', error);
+      } finally {
+        this.favoriteIo = undefined;
+      }
+    }
+
+    if (this.favoriteChartIo) {
+      try {
+        this.favoriteChartIo.disconnect();
+      } catch (error) {
+        console.warn('Error disconnecting favorite chart observer:', error);
+      } finally {
+        this.favoriteChartIo = undefined;
+      }
+    }
+
     this.isLoadingMore = false;
     this.isLoadingMoreCharts = false;
+    this.isLoadingMoreFavorites = false;
+    this.isLoadingMoreFavoriteCharts = false;
     this.isSpinning = false;
 
     this.displayedMetrics = [];
     this.displayedChartMetrics = [];
+    this.displayedFavoriteMetrics = [];
+    this.displayedFavoriteChartMetrics = [];
     this.metrics = [];
     this.chartMetrics = [];
+    this.favoriteMetrics = [];
+    this.favoriteChartMetrics = [];
+    this.favoriteMetricsSet.clear();
   }
 }
