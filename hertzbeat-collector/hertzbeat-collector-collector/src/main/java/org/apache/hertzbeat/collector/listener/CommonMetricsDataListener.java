@@ -15,25 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch;
+package org.apache.hertzbeat.collector.listener;
 
+import org.apache.hertzbeat.collector.constants.ContextKey;
+import org.apache.hertzbeat.collector.constants.ContextStatus;
+import org.apache.hertzbeat.collector.context.Context;
+import org.apache.hertzbeat.collector.handler.ContextBoundListener;
 import org.apache.hertzbeat.common.timer.Timeout;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.List;
 
 /**
- * Collection data scheduler interface
+ *
  */
-public interface CollectDataDispatch {
+public class CommonMetricsDataListener<T> implements ContextBoundListener<T> {
+    @Override
+    public void execute(Context context, T data) {
+        Timeout timeout = context.get(ContextKey.TIMEOUT);
 
-    /**
-     * Processing and distributing collection result data
-     * @param timeout     time wheel timeout        
-     * @param metrics     The following metrics collection tasks   
-     * @param metricsData Collect result data       
-     */
-    void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
-
+        if (timeout == null || timeout.isCancelled()) {
+            context.setStatus(ContextStatus.STOP);
+        }
+    }
 }
