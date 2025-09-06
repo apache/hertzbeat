@@ -18,11 +18,39 @@
 
 package org.apache.hertzbeat.ai.agent.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.ai.agent.config.CustomSseServerTransport;
+import org.springframework.ai.mcp.server.autoconfigure.McpServerProperties;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.servlet.function.ServerResponse;
 
 /**
  * Service interface for MCP server operations.
  */
 public interface McpServerService {
+    
+    /**
+     * Provides the HertzBeat tools for the MCP server
+     * @return ToolCallbackProvider with all HertzBeat monitoring tools
+     */
     ToolCallbackProvider hertzbeatTools();
+
+    /**
+     * Provides a custom SSE server transport for the MCP server
+     * @param objectMapper the ObjectMapper instance for JSON serialization
+     * @param serverProperties the properties for the MCP server configuration
+     * @return a CustomSseServerTransport instance configured with the provided properties
+     */
+    CustomSseServerTransport webMvcSseServerTransportProvider(
+            ObjectMapper objectMapper,
+            McpServerProperties serverProperties
+    );
+
+    /**
+     * Provides the MCP server router function for web MVC
+     * @param transport Custom SSE server transport
+     * @return RouterFunction for handling MCP server requests
+     */
+    RouterFunction<ServerResponse> mvcMcpRouterFunction(CustomSseServerTransport transport);
 }

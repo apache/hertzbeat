@@ -20,15 +20,18 @@ package org.apache.hertzbeat.ai.agent.service.impl;
 
 import org.apache.hertzbeat.ai.agent.config.CustomSseServerTransport;
 import org.apache.hertzbeat.ai.agent.service.McpServerService;
+import org.apache.hertzbeat.ai.agent.tools.AlertDefineTools;
+import org.apache.hertzbeat.ai.agent.tools.AlertTools;
+import org.apache.hertzbeat.ai.agent.tools.MetricsTools;
+import org.apache.hertzbeat.ai.agent.tools.MonitorTools;
 import org.springframework.ai.mcp.server.autoconfigure.McpServerProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.apache.hertzbeat.ai.agent.tools.impl.MonitorToolsImpl;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -41,11 +44,17 @@ import org.springframework.web.servlet.function.ServerResponse;
 @Configuration
 public class McpServerServiceImpl implements McpServerService {
     @Autowired
-    private MonitorToolsImpl monitorTools;
+    private MonitorTools monitorTools;
+    @Autowired
+    private AlertTools alertTools;
+    @Autowired
+    private MetricsTools metricsTools;
+    @Autowired
+    private AlertDefineTools alertDefineTools;
 
     @Bean
     public ToolCallbackProvider hertzbeatTools() {
-        return MethodToolCallbackProvider.builder().toolObjects(monitorTools).build();
+        return MethodToolCallbackProvider.builder().toolObjects(monitorTools, alertTools, alertDefineTools, metricsTools).build();
     }
     /**
      * Provides a custom SSE server transport for the MCP server.
