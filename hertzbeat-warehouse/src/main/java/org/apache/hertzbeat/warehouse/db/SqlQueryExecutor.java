@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.entity.dto.query.DatasourceQueryData;
 
 import static org.apache.hertzbeat.warehouse.constants.WarehouseConstants.SQL;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -36,11 +37,23 @@ import java.util.Map;
 public abstract class SqlQueryExecutor implements QueryExecutor {
 
     private static final String supportQueryLanguage = SQL;
+    protected final RestTemplate restTemplate;
+    protected final SqlQueryExecutor.HttpSqlProperties httpSqlProperties;
+
+    SqlQueryExecutor(RestTemplate restTemplate, SqlQueryExecutor.HttpSqlProperties httpSqlProperties) {
+        this.restTemplate = restTemplate;
+        this.httpSqlProperties = httpSqlProperties;
+    }
 
     /**
-     * record class for sql connection
+     * record class for sql http connection
      */
-    protected record ConnectorSqlProperties () {}
+    protected record HttpSqlProperties(
+            String url,
+            String username,
+            String password
+    ) {
+    }
 
     @Override
     public List<Map<String, Object>> execute(String query) {

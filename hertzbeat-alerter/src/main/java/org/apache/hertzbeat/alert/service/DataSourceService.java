@@ -32,4 +32,12 @@ public interface DataSourceService {
      * @return result
      */
     List<Map<String, Object>> calculate(String datasource, String expr);
+
+    /**
+     * query result set from db
+     * @param datasource sql or promql
+     * @param expr query expr
+     * @return result
+     */
+    List<Map<String, Object>> query(String datasource, String expr);
 } 

@@ -65,7 +65,7 @@ public class AlertDefine {
     @NotNull
     private String name;
 
-    @Schema(title = "Rule Type: realtime, periodic", example = "0")
+    @Schema(title = "Rule Type: realtime_metric, periodic_metric, realtime_log, periodic_log", example = "realtime_metric")
     private String type;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
@@ -73,7 +73,7 @@ public class AlertDefine {
     @Column(length = 2048)
     private String expr;
 
-    @Schema(title = "Execution Period (seconds) - For periodic rules", example = "300")
+    @Schema(title = "Execution Period/ Window Size (seconds) - For periodic rules/ For log realtime", example = "300")
     private Integer period;
     
     @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",
