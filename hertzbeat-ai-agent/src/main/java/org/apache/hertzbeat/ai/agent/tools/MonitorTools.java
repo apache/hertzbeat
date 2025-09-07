@@ -18,8 +18,6 @@
 
 package org.apache.hertzbeat.ai.agent.tools;
 
-import org.springframework.ai.chat.model.ToolContext;
-
 import java.util.List;
 
 /**
@@ -27,13 +25,43 @@ import java.util.List;
  */
 public interface MonitorTools {
 
-    String addMonitor(String name, ToolContext context);
+    /**
+     * Add a new monitor with comprehensive configuration
+     *
+     * @param name Monitor name
+     * @param app Monitor type/application (e.g., 'linux', 'mysql', 'http')
+     * @param host Target host (IP address or domain name)
+     * @param port Target port (optional, depends on monitor type)
+     * @param intervals Collection interval in seconds (default: 600)
+     * @param username Username for authentication (optional)
+     * @param password Password for authentication (optional)
+     * @param description Monitor description (optional)
+     * @return Result message with monitor ID if successful
+     */
+    String addMonitor(
+            String name,
+            String app,
+            String host,
+            Integer port,
+            Integer intervals,
+            String username,
+            String password,
+            String description
+    );
+
+    /**
+     * List all available monitor types that can be added
+     *
+     * @param language Language code for localized names (e.g., 'en-US', 'zh-CN')
+     * @return Formatted string list of available monitor types with descriptions
+     */
+    String listMonitorTypes(String language);
 
     /**
      * Query monitor information with flexible filtering and pagination.
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
      * pagination.
-     * Returns results as plain JSON.
+     * Returns results as plain JSON string for AI tool.
      */
     String listMonitors(
             List<Long> ids,
@@ -44,7 +72,15 @@ public interface MonitorTools {
             String sort,
             String order,
             Integer pageIndex,
-            Integer pageSize,
-            ToolContext context);
+            Integer pageSize);
+
+    /**
+     * Get parameter definitions required for a specific monitor type
+     *
+     * @param app Monitor type/application name (e.g., 'linux', 'mysql', 'redis')
+     * @return Formatted string with parameter definitions including field names, types, and requirements
+     */
+    String getMonitorParamDefines(String app);
+
 
 }
