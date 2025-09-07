@@ -294,6 +294,171 @@ class HttpCollectImplTest {
     }
 
     @Test
+    void testParsePromQlLabelValue() throws Exception {
+        // Create Prometheus format test data
+        String prometheusData = """
+                {
+                  "status": "success",
+                  "data": {
+                    "resultType": "vector",
+                    "result": [
+                      {
+                        "metric": {
+                          "__name__": "taos_cluster_info_first_ep",
+                          "cluster_id": "590779086215866783",
+                          "instance": "host.docker.internal:6043",
+                          "job": "tdengine",
+                          "value": "localhost:6030"
+                        },
+                        "value": [
+                          1756233177.048,
+                          "1"
+                        ]
+                      }
+                    ]
+                  }
+                }""";
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+
+            @Override
+            public String getMetrics() {
+                return "jvm_memory_used_bytes";
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByPromQl",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, prometheusData, Lists.newArrayList("cluster_id", "value"), new HttpProtocol(), builder);
+
+        // Verify the results
+        assertEquals(1, capturedRows.size());
+        CollectRep.ValueRow firstRow = capturedRows.get(0);
+        assertEquals("590779086215866783", firstRow.getColumns(0));
+        assertEquals("localhost:6030", firstRow.getColumns(1));
+    }
+
+    @Test
+    void testParsePromQlMetricValue() throws Exception {
+        // Create Prometheus format test data
+        String prometheusData = """
+                {
+                  "status": "success",
+                  "data": {
+                    "resultType": "vector",
+                    "result": [
+                      {
+                        "metric": {
+                          "__name__": "taos_cluster_info_first_ep",
+                          "cluster_id": "590779086215866783",
+                          "instance": "host.docker.internal:6043",
+                          "job": "tdengine",
+                          "value": "localhost:6030"
+                        },
+                        "value": [
+                          1756233177.048,
+                          "1"
+                        ]
+                      }
+                    ]
+                  }
+                }""";
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+
+            @Override
+            public String getMetrics() {
+                return "jvm_memory_used_bytes";
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByPromQl",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, prometheusData, Lists.newArrayList("cluster_id", "value", "metric_value"), new HttpProtocol(), builder);
+
+        // Verify the results
+        assertEquals(1, capturedRows.size());
+        CollectRep.ValueRow firstRow = capturedRows.get(0);
+        assertEquals("590779086215866783", firstRow.getColumns(0));
+        assertEquals("localhost:6030", firstRow.getColumns(1));
+        assertEquals("1", firstRow.getColumns(2));
+    }
+
+    @Test
+    void testParsePromQlValue() throws Exception {
+        // Create Prometheus format test data
+        String prometheusData = """
+                {
+                  "status": "success",
+                  "data": {
+                    "resultType": "vector",
+                    "result": [
+                      {
+                        "metric": {
+                          "__name__": "taos_cluster_info_first_ep",
+                          "cluster_id": "590779086215866783",
+                          "instance": "host.docker.internal:6043",
+                          "job": "tdengine"
+                        },
+                        "value": [
+                          1756233177.048,
+                          "1"
+                        ]
+                      }
+                    ]
+                  }
+                }""";
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+
+            @Override
+            public String getMetrics() {
+                return "jvm_memory_used_bytes";
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByPromQl",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class);
+        parseMethod.setAccessible(true);
+
+        parseMethod.invoke(httpCollectImpl, prometheusData, Lists.newArrayList("cluster_id", "value"), new HttpProtocol(), builder);
+
+        // Verify the results
+        assertEquals(1, capturedRows.size());
+        CollectRep.ValueRow firstRow = capturedRows.get(0);
+        assertEquals("590779086215866783", firstRow.getColumns(0));
+        assertEquals("1", firstRow.getColumns(1));
+    }
+
+    @Test
     void testParsePrometheusLabelValue() throws Exception {
         // Create Prometheus format test data
         String prometheusData = """
