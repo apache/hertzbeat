@@ -1,5 +1,5 @@
 ---
-title: Announcement of Apache Hertzbeat 1.7.1 Release
+title: Announcement of Apache HertzBeat™ 1.7.1 Release
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
@@ -9,12 +9,12 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 
 Dear Community Members,
 
-We are thrilled to announce the official release of Apache Hertzbeat version 1.7.1!
+We are thrilled to announce the official release of Apache HertzBeat™ version 1.7.1!
 
 ## Downloads and Documentation
 
-- **Apache Hertzbeat 1.7.1 Download Link**: <https://hertzbeat.apache.org/docs/download>
-- **Apache Hertzbeat Documentation**: <https://hertzbeat.apache.org/docs/>
+- **Apache HertzBeat™ 1.7.1 Download Link**: <https://hertzbeat.apache.org/docs/download>
+- **Apache HertzBeat™ Documentation**: <https://hertzbeat.apache.org/docs/>
 
 ## Major Updates
 
@@ -209,17 +209,17 @@ Special thanks to the following community members for their collaborative effort
 
 <https://hertzbeat.apache.org/>
 
-**Apache Hertzbeat Download Link:**
+**Apache HertzBeat™ Download Link:**
 
 <https://hertzbeat.apache.org/docs/download>
 
-**Apache Hertzbeat Docker Images:**
+**Apache HertzBeat™ Docker Images:**
 
-Apache Hertzbeat provides Docker images for each release, available on Docker Hub:
+Apache HertzBeat™ provides Docker images for each release, available on Docker Hub:
 
 - HertzBeat: <https://hub.docker.com/r/apache/hertzbeat>
 - HertzBeat Collector: <https://hub.docker.com/r/apache/hertzbeat-collector>
 
-**How to Contribute to the Apache Hertzbeat Open Source Community?**
+**How to Contribute to the Apache HertzBeat™ Open Source Community?**
 
 <https://hertzbeat.apache.org/docs/community/contribution>

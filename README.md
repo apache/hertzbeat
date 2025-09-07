@@ -9,7 +9,7 @@
 <b><a href="README.md">English</a></b> | <a href="README_CN.md">中文</a> | <a href="README_JP.md">日本語</a>
 </p>
 
-> A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+> A real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -28,7 +28,7 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time observability system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
 
 ### Features
 
@@ -572,8 +572,8 @@ HertzBeat is built on so many great open source projects, thanks to them!
 <p align="left">
 <img src="./home/static/img/home/cncf-landscape-left-logo.svg" width="300">&nbsp;&nbsp;<img src="./home/static/img/home/cncf-right-logo.svg" width="345" />
 <br /><br />
-HertzBeat has been included in the <a href="https://landscape.cncf.io/guide?item=observability-and-analysis--monitoring--hertzbeat#observability-and-analysis--monitoring">
-CNCF Observability And Analysis - Monitoring Landscape.</a>
+HertzBeat has been included in the <a href="https://landscape.cncf.io/?item=observability-and-analysis--observability--hertzbeat">
+CNCF Observability And Analysis - Observability Landscape.</a>
 </p>
 
 ## 🛡️ License
