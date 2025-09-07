@@ -69,6 +69,10 @@ public class OnlineParser {
                     parseMetric(inputStream, metricFamilyMap, stringBuilder);
                 }
                 i = getChar(inputStream);
+                // To address the `\n\r` scenario, it is necessary to skip
+                if (i == '\r') {
+                    i = getChar(inputStream);
+                }
             }
         } catch (FormatException e) {
             log.error("prometheus parser failed because of wrong input format. {}", e.getMessage());
@@ -185,12 +189,20 @@ public class OnlineParser {
             stringBuilder.append((char) i);
             i = getChar(inputStream);
         }
+        // Skip \r character to handle Windows line endings
+        if (i == '\r') {
+            i = getChar(inputStream);
+        }
         return new CharChecker(i);
     }
 
     private static CharChecker skipOneLong(InputStream inputStream) throws IOException, FormatException {
         int i = getChar(inputStream);
         while (i >= '0' && i <= '9') {
+            i = getChar(inputStream);
+        }
+        // Skip \r character to handle Windows line endings
+        if (i == '\r') {
             i = getChar(inputStream);
         }
         return new CharChecker(i);
@@ -215,20 +227,27 @@ public class OnlineParser {
     }
 
     private static CharChecker parseLabelValue(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
-        int i = getChar(inputStream);
+        int i = inputStream.read();
         while (i != '"' && i != -1) {
             if (i == '\\') {
-                i = getChar(inputStream);
+                i = inputStream.read();
                 switch (i) {
                     case 'n' -> stringBuilder.append('\n');
                     case '\\' -> stringBuilder.append('\\');
                     case '\"' -> stringBuilder.append('\"');
-                    default -> throw new FormatException();
+                    default -> {
+                        // Unknown escape, keep as-is
+                        // https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/protoparser/prometheus/parser.go#L419
+                        stringBuilder.append('\\');
+                        if (i != -1) {
+                            stringBuilder.append((char) i);
+                        }
+                    }
                 }
             } else {
                 stringBuilder.append((char) i);
             }
-            i = getChar(inputStream);
+            i = inputStream.read();
         }
         return new CharChecker(i);
     }
