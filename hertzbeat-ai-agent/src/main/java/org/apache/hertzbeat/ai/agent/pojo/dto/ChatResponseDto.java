@@ -15,35 +15,33 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.agent.pojo.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
- * Chat request context for AI chat endpoint.
+ * Chat response DTO for AI responses.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatRequestContext {
-    /**
-     * The user's message (required)
-     */
-    private String message;
-    /**
-     * Optional conversation ID for context
-     */
+@Schema(description = "Chat response")
+public class ChatResponseDto {
+
+    @Schema(description = "Conversation ID", example = "conv-123")
     private String conversationId;
 
-    /**
-     * Conversation history messages for context
-     */
-    private List<MessageDto> conversationHistory;
+    @Schema(description = "AI response message", example = "Here are your monitors...")
+    private String response;
+
+    @Schema(description = "User message ID", example = "msg-user-123")
+    private String userMessageId;
+
+    @Schema(description = "Assistant message ID", example = "msg-assistant-123")
+    private String assistantMessageId;
 }
