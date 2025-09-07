@@ -63,9 +63,11 @@ After saving, reload MCP in Cursor or restart the editor.
 
 ### Tools available
 
-- list_monitors: Returns the list of names of all configured monitors.
+- **list_monitors**: Query monitor information with flexible filtering and pagination. Supports filtering by monitor IDs, type, status, host, labels, sorting, and pagination.
+- **add_monitor**: Add a new monitor to HertzBeat with comprehensive configuration. Creates monitors for various types like linux, mysql, http, redis, etc.
+- **list_monitor_types**: List all available monitor types that can be added to HertzBeat. Shows all supported monitor types with their display names.
+- **get_monitor_param_defines**: Get the parameter definitions required for a specific monitor type. Shows what parameters are needed when adding a monitor.
 
-More tools are coming soon to expand management and query capabilities.
 
 ### Notes
 

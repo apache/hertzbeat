@@ -15,11 +15,17 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.ai.agent.event;
 
-package org.apache.hertzbeat.ai.agent.dao;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * Data Access Object interface for Conversation entities.
+ * OpenAI configuration change event
  */
-public interface ConversationDao {
+public class OpenAiConfigChangeEvent extends ApplicationEvent {
+
+    public OpenAiConfigChangeEvent(ApplicationContext source) {
+        super(source);
+    }
 }
