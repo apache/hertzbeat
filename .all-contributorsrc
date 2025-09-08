@@ -2573,6 +2573,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "rowankid",
+      "name": "Wenqi Luo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18652781?v=4",
+      "profile": "https://github.com/rowankid",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
