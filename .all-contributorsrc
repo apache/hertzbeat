@@ -2582,6 +2582,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "tuzuy",
+      "name": "tuzuy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95274591?v=4",
+      "profile": "https://github.com/tuzuy",
+      "contributions": [
+        "code",
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
