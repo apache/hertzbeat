@@ -2552,6 +2552,18 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "delei",
+      "name": "DeleiGuo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17263766?v=4",
+      "profile": "https://github.com/delei",
+      "contributions": [
+        "doc",
+        "code",
+        "test",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
