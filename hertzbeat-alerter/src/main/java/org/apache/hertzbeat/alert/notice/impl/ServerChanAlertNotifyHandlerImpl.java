@@ -60,7 +60,7 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             String webHookUrl = String.format(alerterProperties.getServerChanWebhookUrl(), sanitizedToken);
             
             // Validate the constructed URL against a whitelist
-            List<String> allowedBaseUrls = List.of("https://api.serverchan.com", "https://serverchan.example.com");
+            List<String> allowedBaseUrls = List.of("https://api.serverchan.com", "https://serverchan.example.com", "https://sctapi.ftqq.com");
             boolean isValidUrl = allowedBaseUrls.stream().anyMatch(webHookUrl::startsWith);
             if (!isValidUrl) {
                 throw new AlertNoticeException("Invalid webhook URL: " + webHookUrl);

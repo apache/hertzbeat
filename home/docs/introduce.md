@@ -137,7 +137,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 * Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
 * Dev based on HertzBeat need retain copyright.
 
-**HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
+**HertzBeat has been included in the [CNCF Observability And Analysis - Observability Landscape](https://landscape.cncf.io/?view-mode=card&classify=category&sort-by=name&sort-direction=asc#observability-and-analysis--observability)**
 
 ![cncf](/img/home/cncf-landscape-left-logo.svg)
 
