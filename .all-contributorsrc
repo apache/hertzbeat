@@ -2534,6 +2534,15 @@
         "test",
         "design"
       ]
+    },
+    {
+      "login": "cto-huhang",
+      "name": "cto-huhang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53338629?v=4",
+      "profile": "https://github.com/cto-huhang",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
