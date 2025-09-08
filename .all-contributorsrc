@@ -2523,6 +2523,17 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yy549159265",
+      "name": "yy549159265",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40821310?v=4",
+      "profile": "https://github.com/yy549159265",
+      "contributions": [
+        "code",
+        "test",
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
