@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class TimeService {
     
-    private static final long DEFAULT_WATERMARK_DELAY_MS = 30_000; // 30 seconds
+    static final long DEFAULT_WATERMARK_DELAY_MS = 30_000; // 30 seconds
     private static final long WATERMARK_BROADCAST_INTERVAL_MS = 5_000; // 5 seconds
     
     // Define acceptable timestamp range to filter abnormal timestamps
@@ -150,6 +150,13 @@ public class TimeService {
      */
     public long getCurrentWatermark() {
         return currentWatermark.get();
+    }
+
+    /**
+     * Get max timestamp
+     */
+    public long getMaxTimestamp() {
+        return maxTimestamp.get();
     }
     
     /**
