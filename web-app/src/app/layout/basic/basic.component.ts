@@ -65,9 +65,9 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
     </layout-default>
     <global-footer>
       <div style="margin-top: 30px">
-        Apache HertzBeat {{ version }}<br />
+        Apache HertzBeat™ {{ version }}<br />
         Copyright &copy; {{ currentYear }}
-        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat</a>
+        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat™</a>
         <br />
         Licensed under the Apache License, Version 2.0
       </div>

@@ -30,4 +30,4 @@ Due to my continuous writing of documents and contributing code, I started to be
 
 ### Conclusion
 
-I am very honored to be able to participate in this project and be recognized by the community. I would like to thank @tomsun28, @TJxiaobao, @zqr10159, @tuohai666, @yuluo-yx, @crossoverJie, @zhangshenghang, and @pwallk for reviewing my code, providing guidance, and helping me. Finally, I wish Apache HertzBeat to grow strong and have more and more contributors participating.
+I am very honored to be able to participate in this project and be recognized by the community. I would like to thank @tomsun28, @TJxiaobao, @zqr10159, @tuohai666, @yuluo-yx, @crossoverJie, @zhangshenghang, and @pwallk for reviewing my code, providing guidance, and helping me. Finally, I wish Apache HertzBeat™ to grow strong and have more and more contributors participating.

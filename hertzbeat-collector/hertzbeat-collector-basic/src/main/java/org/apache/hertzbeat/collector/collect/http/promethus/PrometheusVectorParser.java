@@ -59,7 +59,7 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
         for (PromVectorOrMatrix.Result r : result) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String aliasField : aliasFields) {
-                if (!CollectUtil.assertPromRequireField(aliasField)) {
+                if (!CollectUtil.assertPromRequireField(aliasField) || CollectUtil.isValueAsLabel(aliasField, r.getMetric())) {
                     JsonElement jsonElement = r.getMetric().get(aliasField);
                     if (jsonElement != null) {
                         valueRowBuilder.addColumn(jsonElement.getAsString());

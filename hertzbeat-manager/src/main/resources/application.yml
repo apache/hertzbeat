@@ -208,6 +208,11 @@ warehouse:
       database: public
       username: greptime
       password: greptime
+    questdb:
+      enabled: false
+      url: localhost:9000
+      username: admin
+      password: quest
     iot-db:
       enabled: false
       host: 127.0.0.1

@@ -20,10 +20,12 @@ app: tdengine_promql
 name:
   zh-CN: TDengine-PromQL
   en-US: TDengine-PromQL
+  ja-JP: TDengine-PromQL
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 TDengine 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 TDengine，需要从 Prometheus 服务器抓取 TDengine 的监控数据。<br>您可以点击 “<i>新建 TDengine-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat uses Prometheus PromQL to query general metric data from the Prometheus server for TDengine monitoring. This solution is suitable for Prometheus that has already monitored TDengine and needs to retrieve TDengine monitoring data from the Prometheus server. <br>You can click "<i>New TDengine-PromQL</i>" and configure it, or select "<i>More Actions</i>" to import an existing configuration.
+  ja-JP: Hertzbeat は Prometheus PromQL を介して Prometheus サーバーに TDengine の一般的なパフォーマンスのメトリクスをクエリして監視します。このシナリオは、PrometheusがすでにTDengineを監視しており、PrometheusサーバーからTDengineの監視データを取得する必要がある場合に適用されます。<br>「<i>新規 TDengine-PromQL</i>」をクリックして設定しましょう。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/tdengine_promql
   en-US: https://hertzbeat.apache.org/docs/help/tdengine_promql
@@ -152,6 +154,7 @@ metrics:
     i18n:
       zh-CN: 第一个端点信息
       en-US: First Endpoint Info
+      ja-JP: 最初のエンドポイント情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -163,12 +166,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 1
         i18n:
           zh-CN: 端点值
           en-US: Endpoint Value
+          ja-JP: エンドポイント値
         label: true
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -201,13 +206,13 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
-      # todo xmlPath-xmlPath script, PromQL-PromQL data rule
       parseType: PromQL
 
   - name: taos_cluster_info_version
     i18n:
       zh-CN: 版本信息
       en-US: Version Info
+      ja-JP: バージョン情報
     priority: 1
     fields:
       - field: cluster_id
@@ -215,12 +220,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 1
         i18n:
           zh-CN: 版本号
           en-US: Version Number
+          ja-JP: バージョン番号
         label: true
     protocol: http
     http:
@@ -247,6 +254,7 @@ metrics:
     i18n:
       zh-CN: 主节点运行时间(天)
       en-US: Master Node Runtime
+      ja-JP: マスターノードのランタイム(日)
     priority: 2
     fields:
       - field: cluster_id
@@ -254,12 +262,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 天
           en-US: Day
+          ja-JP: 日
     protocol: http
     http:
       host: ^_^host^_^
@@ -286,6 +296,7 @@ metrics:
     i18n:
       zh-CN: Dnode 总数
       en-US: Total Of Dnodes
+      ja-JP: Dnode総数
     priority: 3
     fields:
       - field: cluster_id
@@ -293,12 +304,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -324,6 +337,7 @@ metrics:
     i18n:
       zh-CN: Dnode 存活数
       en-US: Dnode Survival Count
+      ja-JP: Dnodeのサバイバル数
     priority: 4
     fields:
       - field: cluster_id
@@ -331,12 +345,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 数量
           en-US: value
+          ja-JP: 数量
     protocol: http
     http:
       host: ^_^host^_^
@@ -362,6 +378,7 @@ metrics:
     i18n:
       zh-CN: Mnode 总数
       en-US: Total Of Mnodes
+      ja-JP: Mnode総数
     priority: 5
     fields:
       - field: cluster_id
@@ -369,12 +386,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -400,6 +419,7 @@ metrics:
     i18n:
       zh-CN: Mnode 存活数
       en-US: Mnode Survival Count
+      ja-JP: Mnodeのサバイバル数
     priority: 6
     fields:
       - field: cluster_id
@@ -407,12 +427,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 数量
           en-US: value
+          ja-JP: 数量
     protocol: http
     http:
       host: ^_^host^_^
@@ -438,6 +460,7 @@ metrics:
     i18n:
       zh-CN: VGroup总数
       en-US: Total Of Virtual Groups
+      ja-JP: 仮想グループの総数
     priority: 7
     fields:
       - field: cluster_id
@@ -445,12 +468,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -476,6 +501,7 @@ metrics:
     i18n:
       zh-CN: 存活的虚拟组数量
       en-US: Virtual Groups Survival Count
+      ja-JP: 仮想グループのサバイバル数
     priority: 8
     fields:
       - field: cluster_id
@@ -483,12 +509,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 数量
           en-US: value
+          ja-JP: 数量
     protocol: http
     http:
       host: ^_^host^_^
@@ -514,6 +542,7 @@ metrics:
     i18n:
       zh-CN: VNode 总数
       en-US: Total Virtual Nodes
+      ja-JP: 仮想ノードの総数
     priority: 9
     fields:
       - field: cluster_id
@@ -521,12 +550,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -552,6 +583,7 @@ metrics:
     i18n:
       zh-CN: VNode 存活数
       en-US: VNodes Survival Count
+      ja-JP: 仮想ノードのサバイバル数
     priority: 10
     fields:
       - field: cluster_id
@@ -559,12 +591,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 数量
           en-US: value
+          ja-JP: 数量
     protocol: http
     http:
       host: ^_^host^_^
@@ -591,6 +625,7 @@ metrics:
     i18n:
       zh-CN: 数据库总数
       en-US: Total Databases
+      ja-JP: データベース総数
     priority: 11
     fields:
       - field: cluster_id
@@ -598,12 +633,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -629,6 +666,7 @@ metrics:
     i18n:
       zh-CN: 表总数
       en-US: Total Tables
+      ja-JP: テーブル総数
     priority: 12
     fields:
       - field: cluster_id
@@ -636,12 +674,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -667,6 +707,7 @@ metrics:
     i18n:
       zh-CN: 连接总数
       en-US: Total Connections
+      ja-JP: 接続総数
     priority: 13
     fields:
       - field: cluster_id
@@ -674,12 +715,14 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -706,6 +749,7 @@ metrics:
     i18n:
       zh-CN: Dnode 状态
       en-US: Dnode Status
+      ja-JP: Dnode状態
     priority: 14
     fields:
       - field: cluster_id
@@ -713,24 +757,28 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: 状態
         label: true
     protocol: http
     http:
@@ -757,6 +805,7 @@ metrics:
     i18n:
       zh-CN: Dnode 的启动时间(秒)
       en-US: Dnode uptime(seconds)
+      ja-JP: Dnodeのアップタイム(秒)
     priority: 15
     fields:
       - field: cluster_id
@@ -764,24 +813,28 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 启动时间
           en-US: uptime
+          ja-JP: アップタイム
     protocol: http
     http:
       host: ^_^host^_^
@@ -807,6 +860,7 @@ metrics:
     i18n:
       zh-CN: Dnode 的进程所使用的 CPU 百分比
       en-US: Dnode Process CPU Usage (%)
+      ja-JP: DnodeプロセスのCPU使用率(%)
     priority: 16
     fields:
       - field: cluster_id
@@ -814,18 +868,21 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
@@ -833,6 +890,7 @@ metrics:
         i18n:
           zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
     aliasFields:
       - cluster_id
       - dnode_ep
@@ -868,6 +926,7 @@ metrics:
     i18n:
       zh-CN: Dnode 节点的系统使用的 CPU 百分比
       en-US: Dnode System CPU Usage (%)
+      ja-JP: DnodeシステムのCPU使用率(%)
     priority: 17
     fields:
       - field: cluster_id
@@ -875,18 +934,21 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
@@ -894,6 +956,7 @@ metrics:
         i18n:
           zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
     aliasFields:
       - cluster_id
       - dnode_ep
@@ -929,6 +992,7 @@ metrics:
     i18n:
       zh-CN: Dnode 进程所使用的内存
       en-US: Memory Usage of Dnode Processes
+      ja-JP: Dnodeプロセスのメモリ使用率
     priority: 18
     fields:
       - field: cluster_id
@@ -936,25 +1000,29 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
         unit: MB
         i18n:
-          zh-CN: 总数
+          zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
     aliasFields:
       - cluster_id
       - dnode_ep
@@ -990,6 +1058,7 @@ metrics:
     i18n:
       zh-CN: Dnode 节点的系统使用的内存
       en-US: Dnode System Memory Usage
+      ja-JP: Dnodeシステムのメモリ使用率
     priority: 19
     fields:
       - field: cluster_id
@@ -997,25 +1066,29 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
         unit: KB
         i18n:
-          zh-CN: 总数
+          zh-CN: 使用率
           en-US: Usage
+          ja-JP: 使用率
     aliasFields:
       - cluster_id
       - dnode_ep
@@ -1051,6 +1124,7 @@ metrics:
     i18n:
       zh-CN: Dnode 所在节点的磁盘总容量（单位 Byte）
       en-US: Dnode Total Disk Capacity (Byte)
+      ja-JP: Dnodeディスク容量合計(Byte)
     priority: 20
     fields:
       - field: cluster_id
@@ -1058,18 +1132,21 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
@@ -1077,6 +1154,7 @@ metrics:
         i18n:
           zh-CN: 总数
           en-US: total
+          ja-JP: 合計
     protocol: http
     http:
       host: ^_^host^_^
@@ -1102,6 +1180,7 @@ metrics:
     i18n:
       zh-CN: Dnode 所在节点的磁盘已使用的容量（单位 Byte）
       en-US: Dnode Used Disk Capacity (Byte)
+      ja-JP: Dnodeが使用したディスク容量合計(Byte)
     priority: 21
     fields:
       - field: cluster_id
@@ -1109,18 +1188,21 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
@@ -1128,6 +1210,7 @@ metrics:
         i18n:
           zh-CN: 总数
           en-US: total
+          ja-JP: 合計
     protocol: http
     http:
       host: ^_^host^_^
@@ -1153,6 +1236,7 @@ metrics:
     i18n:
       zh-CN: Dnode 所在节点的磁盘 io 写入速率（单位 Byte/s）
       en-US: Dnode Node Disk I/O Write Rate (Byte/s)
+      ja-JP: DnodeのディスクIO書き込み率(Byte/s)
     priority: 22
     fields:
       - field: cluster_id
@@ -1160,24 +1244,28 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 速率
           en-US: value
+          ja-JP: 書き込み率
         label: true
     protocol: http
     http:
@@ -1204,6 +1292,7 @@ metrics:
     i18n:
       zh-CN: Dnode 所在节点的磁盘 io 读取速率（单位 Byte/s）
       en-US: Dnode Disk I/O Read Rate (Byte/s)
+      ja-JP: DnodeのディスクIO読み込み率(Byte/s)
     priority: 23
     fields:
       - field: cluster_id
@@ -1211,24 +1300,28 @@ metrics:
         i18n:
           zh-CN: 集群ID
           en-US: Cluster Id
+          ja-JP: クラスター Id
         label: true
       - field: dnode_ep
         type: 1
         i18n:
           zh-CN: Dnode 端点
           en-US: Dnode Endpoint
+          ja-JP: Dnodeのエンドポイント
         label: true
       - field: dnode_id
         type: 1
         i18n:
           zh-CN: Dnode Id
           en-US: Dnode Id
+          ja-JP: Dnode Id
         label: true
       - field: value
         type: 0
         i18n:
-          zh-CN: 总数
+          zh-CN: 速率
           en-US: value
+          ja-JP: 読み込み率
     protocol: http
     http:
       host: ^_^host^_^
@@ -1255,6 +1348,7 @@ metrics:
     i18n:
       zh-CN: 总请求数
       en-US: Total Requests
+      ja-JP: リクエスト総数
     priority: 24
     fields:
       - field: endpoint
@@ -1262,18 +1356,21 @@ metrics:
         i18n:
           zh-CN: 端点
           en-US: Endpoint
+          ja-JP: エンドポイント
         label: true
       - field: req_type
         type: 1
         i18n:
           zh-CN: 请求类型
           en-US: Req Type
+          ja-JP: リクエストタイプ
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -1299,6 +1396,7 @@ metrics:
     i18n:
       zh-CN: 成功的请求数
       en-US: Successful Requests
+      ja-JP: 成功したリクエスト総数
     priority: 25
     fields:
       - field: endpoint
@@ -1306,18 +1404,21 @@ metrics:
         i18n:
           zh-CN: 端点
           en-US: Endpoint
+          ja-JP: エンドポイント
         label: true
       - field: req_type
         type: 1
         i18n:
           zh-CN: 请求类型
           en-US: Req Type
+          ja-JP: リクエストタイプ
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -1343,6 +1444,7 @@ metrics:
     i18n:
       zh-CN: 失败的请求数
       en-US: Failed Requests
+      ja-JP: 失敗したリクエスト総数
     priority: 26
     fields:
       - field: endpoint
@@ -1350,18 +1452,21 @@ metrics:
         i18n:
           zh-CN: 端点
           en-US: Endpoint
+          ja-JP: エンドポイント
         label: true
       - field: req_type
         type: 1
         i18n:
           zh-CN: 请求类型
           en-US: Req Type
+          ja-JP: リクエストタイプ
         label: true
       - field: value
         type: 0
         i18n:
-          zh-CN: Total
-          en-US: value
+          zh-CN: 总数
+          en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^
@@ -1387,6 +1492,7 @@ metrics:
     i18n:
       zh-CN: 查询请求数
       en-US: Query Requests
+      ja-JP: クエリのリクエスト総数
     priority: 27
     fields:
       - field: endpoint
@@ -1394,18 +1500,21 @@ metrics:
         i18n:
           zh-CN: 端点
           en-US: Endpoint
+          ja-JP: エンドポイント
         label: true
       - field: req_type
         type: 1
         i18n:
           zh-CN: 请求类型
           en-US: Req Type
+          ja-JP: リクエストタイプ
         label: true
       - field: value
         type: 0
         i18n:
           zh-CN: 总数
           en-US: Total
+          ja-JP: 総数
     protocol: http
     http:
       host: ^_^host^_^

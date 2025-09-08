@@ -4,7 +4,7 @@ title: Download Apache HertzBeat
 sidebar_label: Download
 ---
 
-> **Here is the Apache HertzBeat official download page.**
+> **Here is the Apache HertzBeat™ official download page.**
 > **Please choose version to download from the following tables. It is recommended use the latest.**
 
 :::tip
@@ -28,7 +28,7 @@ Previous releases of HertzBeat may be affected by security issues, please use th
 
 ## Release Docker Image
 
-> Apache HertzBeat provides a docker image for each release. You can pull the image from the [Docker Hub](https://hub.docker.com/r/apache/hertzbeat).
+> Apache HertzBeat™ provides a docker image for each release. You can pull the image from the [Docker Hub](https://hub.docker.com/r/apache/hertzbeat).
 
 - HertzBeat <https://hub.docker.com/r/apache/hertzbeat>
 - HertzBeat Collector <https://hub.docker.com/r/apache/hertzbeat-collector>

@@ -94,5 +94,4 @@ public interface MonitorTools {
      * @return Formatted string with parameter definitions including field names, types, and requirements
      */
     String getMonitorAdditionalParams(String app);
-
 }

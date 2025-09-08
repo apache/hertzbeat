@@ -259,7 +259,7 @@ Would you like me to apply this configuration or modify any settings?
 #### Real-time Responses
 
 - Streaming responses for immediate feedback
-- Typing indicators show when the AI Agent is processing
+- Typing indicators show when the assistant is processing
 - Cancel ongoing requests if needed
 
 #### Conversation Management
