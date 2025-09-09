@@ -55,7 +55,7 @@ export class MonitorDataTableComponent implements OnInit {
   @Input()
   favoriteStatus: boolean = false;
   @Output()
-  favoriteToggle = new EventEmitter<string>();
+  readonly favoriteToggle = new EventEmitter<string>();
 
   showModal!: boolean;
   time!: any;

@@ -158,9 +158,14 @@
 <ng-template #metrics_card_extra>
   <div style="display: flex; gap: 10px; align-items: center">
     <div style="cursor: pointer" (click)="toggleFavorite()">
-      <i nz-icon nzType="star" [nzTheme]="isFavorite() ? 'fill' : 'outline'" 
-         [style.color]="isFavorite() ? '#faad14' : '#8c8c8c'"
-         nz-tooltip [nzTooltipTitle]="isFavorite() ? ('monitor.favorite.remove' | i18n) : ('monitor.favorite.add' | i18n)"></i>
+      <i
+        nz-icon
+        nzType="star"
+        [nzTheme]="isFavorite() ? 'fill' : 'outline'"
+        [style.color]="isFavorite() ? '#faad14' : '#8c8c8c'"
+        nz-tooltip
+        [nzTooltipTitle]="isFavorite() ? ('monitor.favorite.remove' | i18n) : ('monitor.favorite.add' | i18n)"
+      ></i>
     </div>
     <div nz-popover [nzPopoverContent]="('monitor.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
       <a><i nz-icon nzType="field-time" nzTheme="outline"></i></a>

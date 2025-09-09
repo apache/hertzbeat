@@ -505,7 +505,8 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     // Chart definition for the independent request collection metric, completely decoupled from the History tab
     const favoriteMetricsList = Array.from(this.favoriteMetricsSet);
 
-    this.monitorSvc.getWarehouseStorageServerStatus()
+    this.monitorSvc
+      .getWarehouseStorageServerStatus()
       .pipe(
         switchMap((message: Message<any>) => {
           if (message.code == 0) {
@@ -533,9 +534,11 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
                 fields.forEach((field: { type: number; field: any; unit: any }) => {
                   if (field.type == 0) {
                     const fullPath = `${metric.name}.${field.field}`;
-                    if (favoriteMetricsList.includes(fullPath) ||
-                        favoriteMetricsList.includes(metric.name) ||
-                        favoriteMetricsList.includes(field.field)) {
+                    if (
+                      favoriteMetricsList.includes(fullPath) ||
+                      favoriteMetricsList.includes(metric.name) ||
+                      favoriteMetricsList.includes(field.field)
+                    ) {
                       this.favoriteChartMetrics.push({
                         metrics: metric.name,
                         metric: field.field,
