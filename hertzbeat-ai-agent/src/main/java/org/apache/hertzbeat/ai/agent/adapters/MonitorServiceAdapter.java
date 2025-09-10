@@ -67,5 +67,5 @@ public interface MonitorServiceAdapter {
      * @return List of parameter definitions for the monitor type
      */
     List<ParamDefine> getMonitorParamDefines(String app);
+}
 
-} 

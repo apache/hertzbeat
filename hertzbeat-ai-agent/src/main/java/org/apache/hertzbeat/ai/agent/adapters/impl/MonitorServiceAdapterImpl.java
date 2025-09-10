@@ -211,5 +211,4 @@ public class MonitorServiceAdapterImpl implements MonitorServiceAdapter {
             throw new RuntimeException("Failed to invoke getAppParamDefines via adapter: " + e.getMessage(), e);
         }
     }
-
 }
