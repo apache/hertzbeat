@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import {Component, Input, forwardRef, Output, EventEmitter, OnInit, Inject} from '@angular/core';
+import { Component, Input, forwardRef, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { LabelService } from '../../../service/label.service';
@@ -34,16 +34,14 @@ import { LabelService } from '../../../service/label.service';
     }
   ]
 })
-export class LabelSelectorComponent implements ControlValueAccessor,OnInit {
+export class LabelSelectorComponent implements ControlValueAccessor, OnInit {
   @Input() name!: string;
   @Input() id!: string;
   @Input() labelKeys: string[] = [];
   @Input() labelMap: { [key: string]: string[] } = {};
   @Input() labelIsCustom: boolean = false;
 
-  constructor(
-    private labelSvc: LabelService,
-  ) {}
+  constructor(private labelSvc: LabelService) {}
 
   value: Array<{ key: string; value: string }> = [];
   customInputKey: string = '';
@@ -108,7 +106,7 @@ export class LabelSelectorComponent implements ControlValueAccessor,OnInit {
   }
 
   ngOnInit(): void {
-    if(!this.labelKeys || this.labelKeys.length == 0){
+    if (!this.labelKeys || this.labelKeys.length == 0) {
       this.labelMap = {};
       this.labelKeys = [];
       this.loadLabels();

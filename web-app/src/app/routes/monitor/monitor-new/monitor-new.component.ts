@@ -67,7 +67,7 @@ export class MonitorNewComponent implements OnInit {
     private notifySvc: NzNotificationService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private titleSvc: TitleService,
-    private collectorSvc: CollectorService,
+    private collectorSvc: CollectorService
   ) {
     this.monitor = new Monitor();
     this.grafanaDashboard = new GrafanaDashboard();
