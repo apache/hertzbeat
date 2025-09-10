@@ -1,0 +1,704 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: server
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: idrac
+# The monitoring i18n name
+name:
+  zh-CN: Dell iDRAC
+  en-US: Dell iDRAC
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 Dell iDRAC 的通用指标(可用性，系统信息，传感器状态等)进行采集监控。<br>您可以点击 “<i>新建 Dell iDRAC</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring Dell iDRAC general performance metrics. <br>You can click the "<i>New Dell iDRAC</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/idrac
+  en-US: https://hertzbeat.apache.org/docs/help/idrac
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 161
+  # field-param field key
+  - field: snmpVersion
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP 版本
+      en-US: SNMP Version
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: SNMPv1
+        value: 0
+      - label: SNMPv2c
+        value: 1
+      - label: SNMPv3
+        value: 3
+  # field-param field key
+  - field: community
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP 团体字
+      en-US: SNMP Community
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp community for v1 v2c'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 0
+        - 1
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP username
+      en-US: SNMP username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp username for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+  # field-param field key
+  - field: contextName
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP contextName
+      en-US: SNMP contextName
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp contextName for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: authPassphrase
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP authPassword
+      en-US: SNMP authPassword
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: authPasswordEncryption
+    # name-param field display i18n name
+    name:
+      zh-CN: authPassword 加密方式
+      en-US: authPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: MD5
+        value: 0
+      - label: SHA1
+        value: 1
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: privPassphrase
+    # name-param field display i18n name
+    name:
+      zh-CN: SNMP privPassphrase
+      en-US: SNMP privPassphrase
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: false
+    # param field input placeholder
+    placeholder: 'Snmp authPassword for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: privPasswordEncryption
+    # name-param field display i18n name
+    name:
+      zh-CN: privPassword 加密方式
+      en-US: privPassword Encryption
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: false
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: DES
+        value: 0
+      - label: AES128
+        value: 1
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
+    # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    hide: true
+    # default value
+    # 默认值
+    defaultValue: 6000
+# collect metrics config list
+metrics:
+  # metrics - system
+  - name: system
+    i18n:
+      zh-CN: 系统信息
+      en-US: System Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: globalSystemStatus
+        type: 1
+        i18n:
+          zh-CN: 全局系统状态
+          en-US: Global System Status
+      - field: systemLCDStatus
+        type: 1
+        i18n:
+          zh-CN: 系统前面板状态
+          en-US: System LCD Status
+      - field: globalStorageStatus
+        type: 1
+        i18n:
+          zh-CN: 全局存储状态
+          en-US: Global Storage Status
+      - field: systemPowerState
+        type: 1
+        i18n:
+          zh-CN: 系统电源状态
+          en-US: System Power State
+      - field: systemPowerUpTime
+        type: 0
+        unit: day
+        i18n:
+          zh-CN: 系统运行时间
+          en-US: System Power Up Time
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - globalSystemStatusEnum
+      - systemLCDStatusEnum
+      - globalStorageStatusEnum
+      - systemPowerStateEnum
+      - systemPowerUpTime
+
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - "globalSystemStatus=(globalSystemStatusEnum == 1) ? 'other' : (globalSystemStatusEnum == 2) ? 'unknown' : (globalSystemStatusEnum == 3) ? 'ok' : (globalSystemStatusEnum == 4) ? 'nonCritical' : (globalSystemStatusEnum == 5) ? 'critical' : (globalSystemStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "systemLCDStatus=(systemLCDStatusEnum == 1) ? 'other' : (systemLCDStatusEnum == 2) ? 'unknown' : (systemLCDStatusEnum == 3) ? 'ok' : (systemLCDStatusEnum == 4) ? 'nonCritical' : (systemLCDStatusEnum == 5) ? 'critical' : (systemLCDStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "globalStorageStatus=(globalStorageStatusEnum == 1) ? 'other' : (globalStorageStatusEnum == 2) ? 'unknown' : (globalStorageStatusEnum == 3) ? 'ok' : (globalStorageStatusEnum == 4) ? 'nonCritical' : (globalStorageStatusEnum == 5) ? 'critical' : (globalStorageStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "systemPowerState=(systemPowerStateEnum == 1) ? 'other' : (systemPowerStateEnum == 2) ? 'unknown' : (systemPowerStateEnum == 3) ? 'off' : (systemPowerStateEnum == 4) ? 'ok' : 'unknown'"
+      - systemPowerUpTime=systemPowerUpTime/60/60/24
+
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: snmp
+    # the config content when protocol is snmp
+    snmp:
+      # server host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # server port
+      port: ^_^port^_^
+      # snmp username
+      username: ^_^username^_^
+      # snmp authPassphrase
+      authPassphrase: ^_^authPassphrase^_^
+      # snmp privPassphrase
+      privPassphrase: ^_^privPassphrase^_^
+      # snmp privPasswordEncryption
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      # snmp authPasswordEncryption
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      # contextName
+      contextName: ^_^contextName^_^
+      # snmp connect timeout
+      timeout: ^_^timeout^_^
+      # snmp community
+      community: ^_^community^_^
+      # snmp version
+      version: ^_^snmpVersion^_^
+      # snmp operation: get, walk
+      operation: get
+      # metrics oids: metric_name - oid_value
+      oids:
+        globalSystemStatusEnum: 1.3.6.1.4.1.674.10892.5.2.1.0
+        systemLCDStatusEnum: 1.3.6.1.4.1.674.10892.5.2.2.0
+        globalStorageStatusEnum: 1.3.6.1.4.1.674.10892.5.2.3.0
+        systemPowerStateEnum: 1.3.6.1.4.1.674.10892.5.2.4.0
+        systemPowerUpTime: 1.3.6.1.4.1.674.10892.5.2.5.0
+
+  - name: power_supply
+    i18n:
+      zh-CN: 电源供应器
+      en-US: Power Supply
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 索引
+          en-US: Index
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+      - field: wattage
+        type: 0
+        unit: W
+        i18n:
+          zh-CN: 功率
+          en-US: Wattage
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+    aliasFields:
+      - powerSupplyIndex
+      - powerSupplyLocationName
+      - powerSupplyStatusEnum
+      - powerSupplyOutputWatts
+      - powerSupplyTypeEnum
+    calculates:
+      - "index=powerSupplyIndex"
+      - "name=powerSupplyLocationName"
+      - "status=(powerSupplyStatusEnum == 1) ? 'other' : (powerSupplyStatusEnum == 2) ? 'unknown' : (powerSupplyStatusEnum == 3) ? 'ok' : (powerSupplyStatusEnum == 4) ? 'nonCritical' : (powerSupplyStatusEnum == 5) ? 'critical' : (powerSupplyStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "location=powerSupplyLocationName"
+      - "wattage=powerSupplyOutputWatts / 10"
+      - "type=(powerSupplyTypeEnum == 1) ? 'other' : (powerSupplyTypeEnum == 2) ? 'unknown' : (powerSupplyTypeEnum == 3) ? 'Linear' : (powerSupplyTypeEnum == 4) ? 'Switching' : (powerSupplyTypeEnum == 5) ? 'Battery' : (powerSupplyTypeEnum == 6) ? 'UPS' : (powerSupplyTypeEnum == 7) ? 'Converter' : (powerSupplyTypeEnum == 8) ? 'Regulator' : (powerSupplyTypeEnum == 9) ? 'AC' : (powerSupplyTypeEnum == 10) ? 'DC' : (powerSupplyTypeEnum == 11) ? 'VRM' : 'unknown'"
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^snmpVersion^_^
+      operation: walk
+      oids:
+        powerSupplyIndex: 1.3.6.1.4.1.674.10892.5.4.600.12.1.2
+        powerSupplyLocationName: 1.3.6.1.4.1.674.10892.5.4.600.12.1.8
+        powerSupplyStatusEnum: 1.3.6.1.4.1.674.10892.5.4.600.12.1.5
+        powerSupplyOutputWatts: 1.3.6.1.4.1.674.10892.5.4.600.12.1.6
+        powerSupplyTypeEnum: 1.3.6.1.4.1.674.10892.5.4.600.12.1.7
+
+  - name: cooling
+    i18n:
+      zh-CN: 冷却设备
+      en-US: Cooling Devices
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 索引
+          en-US: Index
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
+      - field: reading
+        type: 0
+        unit: RPM
+        i18n:
+          zh-CN: 转速
+          en-US: Reading
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+    aliasFields:
+      - coolingDeviceIndex
+      - coolingDeviceLocationName
+      - coolingDeviceStatusEnum
+      - coolingDeviceReading
+      - coolingDeviceTypeEnum
+    calculates:
+      - "index=coolingDeviceIndex"
+      - "name=coolingDeviceLocationName"
+      - "status=(coolingDeviceStatusEnum == 1) ? 'other' : (coolingDeviceStatusEnum == 2) ? 'unknown' : (coolingDeviceStatusEnum == 3) ? 'ok' : (coolingDeviceStatusEnum == 4) ? 'nonCriticalUpper' : (coolingDeviceStatusEnum == 5) ? 'criticalUpper' : (coolingDeviceStatusEnum == 6) ? 'nonRecoverableUpper' : (coolingDeviceStatusEnum == 7) ? 'noncriticalLower' : (coolingDeviceStatusEnum == 8) ? 'criticalLower' : (coolingDeviceStatusEnum == 9) ? 'nonRecoverableLower' : (coolingDeviceStatusEnum == 10) ? 'failed' : 'unknown'"
+      - "reading=coolingDeviceReading"
+      - "type=(coolingDeviceTypeEnum == 1) ? 'other' : (coolingDeviceTypeEnum == 2) ? 'unknown' : (coolingDeviceTypeEnum == 3) ? 'AFan' : (coolingDeviceTypeEnum == 4) ? 'ABlower' : (coolingDeviceTypeEnum == 5) ? 'AChipFan' : (coolingDeviceTypeEnum == 6) ? 'ACabinetFan' : (coolingDeviceTypeEnum == 7) ? 'APowerSupplyFan' : (coolingDeviceTypeEnum == 8) ? 'AHeatPipe' : (coolingDeviceTypeEnum == 9) ? 'Refrigeration' : (coolingDeviceTypeEnum == 10) ? 'ActiveCooling' : (coolingDeviceTypeEnum == 11) ? 'PassiveCooling' : 'unknown'"
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^snmpVersion^_^
+      operation: walk
+      oids:
+        coolingDeviceIndex: 1.3.6.1.4.1.674.10892.5.4.700.12.1.2
+        coolingDeviceLocationName: 1.3.6.1.4.1.674.10892.5.4.700.12.1.8
+        coolingDeviceStatusEnum: 1.3.6.1.4.1.674.10892.5.4.700.12.1.5
+        coolingDeviceReading: 1.3.6.1.4.1.674.10892.5.4.700.12.1.6
+        coolingDeviceTypeEnum: 1.3.6.1.4.1.674.10892.5.4.700.12.1.7
+
+  - name: temperature
+    i18n:
+      zh-CN: 温度传感器
+      en-US: Temperature Sensors
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 索引
+          en-US: Index
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+      - field: reading
+        type: 0
+        unit: °C
+        i18n:
+          zh-CN: 温度
+          en-US: Temperature
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+    aliasFields:
+      - temperatureProbeIndex
+      - temperatureProbeLocationName
+      - temperatureProbeStatusEnum
+      - temperatureProbeReading
+    calculates:
+      - "index=temperatureProbeIndex"
+      - "name=temperatureProbeLocationName"
+      - "status=(temperatureProbeStatusEnum == 1) ? 'other' : (temperatureProbeStatusEnum == 2) ? 'unknown' : (temperatureProbeStatusEnum == 3) ? 'ok' : (temperatureProbeStatusEnum == 4) ? 'nonCriticalUpper' : (temperatureProbeStatusEnum == 5) ? 'criticalUpper' : (temperatureProbeStatusEnum == 6) ? 'nonRecoverableUpper' : (temperatureProbeStatusEnum == 7) ? 'noncriticalLower' : (temperatureProbeStatusEnum == 8) ? 'criticalLower' : (temperatureProbeStatusEnum == 9) ? 'nonRecoverableLower' : (temperatureProbeStatusEnum == 10) ? 'failed' : 'unknown'"
+      - "reading=temperatureProbeReading / 10"
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^snmpVersion^_^
+      operation: walk
+      oids:
+        temperatureProbeIndex: 1.3.6.1.4.1.674.10892.5.4.700.20.1.2
+        temperatureProbeLocationName: 1.3.6.1.4.1.674.10892.5.4.700.20.1.8
+        temperatureProbeStatusEnum: 1.3.6.1.4.1.674.10892.5.4.700.20.1.5
+        temperatureProbeReading: 1.3.6.1.4.1.674.10892.5.4.700.20.1.6
+
+  - name: voltage
+    i18n:
+      zh-CN: 电压传感器
+      en-US: Voltage Sensors
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 索引
+          en-US: Index
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+      - field: reading
+        type: 0
+        unit: V
+        i18n:
+          zh-CN: 电压
+          en-US: Voltage
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+    aliasFields:
+      - voltageProbeIndex
+      - voltageProbeLocationName
+      - voltageProbeStatusEnum
+      - voltageProbeReading
+      - voltageProbeTypeEnum
+    calculates:
+      - "index=voltageProbeIndex"
+      - "name=voltageProbeLocationName"
+      - "status=(voltageProbeStatusEnum == 1) ? 'other' : (voltageProbeStatusEnum == 2) ? 'unknown' : (voltageProbeStatusEnum == 3) ? 'ok' : (voltageProbeStatusEnum == 4) ? 'nonCriticalUpper' : (voltageProbeStatusEnum == 5) ? 'criticalUpper' : (voltageProbeStatusEnum == 6) ? 'nonRecoverableUpper' : (voltageProbeStatusEnum == 7) ? 'nonCriticalLower' : (voltageProbeStatusEnum == 8) ? 'criticalLower' : (voltageProbeStatusEnum == 9) ? 'nonRecoverableLower' : (voltageProbeStatusEnum == 10) ? 'failed' : 'unknown'"
+      - "reading=voltageProbeReading / 1000"
+      - "type=(voltageProbeTypeEnum == 1) ? 'other' : (voltageProbeTypeEnum == 2) ? 'unknown' : (voltageProbeTypeEnum == 3) ? '1.5V' : (voltageProbeTypeEnum == 4) ? '3.3V' : (voltageProbeTypeEnum == 5) ? '5V' : (voltageProbeTypeEnum == 6) ? '-5V' : (voltageProbeTypeEnum == 7) ? '12V' : (voltageProbeTypeEnum == 8) ? '-12V' : (voltageProbeTypeEnum == 9) ? 'IO' : (voltageProbeTypeEnum == 10) ? 'Core' : (voltageProbeTypeEnum == 11) ? 'FLEA' : (voltageProbeTypeEnum == 12) ? 'Battery' : (voltageProbeTypeEnum == 13) ? 'Terminator' : (voltageProbeTypeEnum == 14) ? '2.5V' : (voltageProbeTypeEnum == 15) ? 'GTL' : (voltageProbeTypeEnum == 16) ? 'Discrete' : (voltageProbeTypeEnum == 17) ? 'GenericDiscrete' : (voltageProbeTypeEnum == 18) ? 'PSVoltage' : (voltageProbeTypeEnum == 19) ? 'MemoryStatus' : 'unknown'"
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^snmpVersion^_^
+      operation: walk
+      oids:
+        voltageProbeIndex: 1.3.6.1.4.1.674.10892.5.4.600.20.1.2
+        voltageProbeLocationName: 1.3.6.1.4.1.674.10892.5.4.600.20.1.8
+        voltageProbeStatusEnum: 1.3.6.1.4.1.674.10892.5.4.600.20.1.5
+        voltageProbeReading: 1.3.6.1.4.1.674.10892.5.4.600.20.1.6
+        voltageProbeTypeEnum: 1.3.6.1.4.1.674.10892.5.4.600.20.1.7
+
+
+  - name: memory
+    i18n:
+      zh-CN: 内存设备
+      en-US: Memory Devices
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 索引
+          en-US: Index
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
+      - field: size
+        type: 0
+        unit: G
+        i18n:
+          zh-CN: 容量
+          en-US: Size
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+    aliasFields:
+      - memoryDeviceIndex
+      - memoryDeviceLocationName
+      - memoryDeviceStatusEnum
+      - memoryDeviceSize
+      - memoryDeviceTypeEnum
+    calculates:
+      - "index=memoryDeviceIndex"
+      - "name=memoryDeviceLocationName"
+      - "status=(memoryDeviceStatusEnum == 1) ? 'other' : (memoryDeviceStatusEnum == 2) ? 'unknown' : (memoryDeviceStatusEnum == 3) ? 'ok' : (memoryDeviceStatusEnum == 4) ? 'nonCritical' : (memoryDeviceStatusEnum == 5) ? 'critical' : (memoryDeviceStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "size=memoryDeviceSize/1024/1024"
+      - "type=(memoryDeviceTypeEnum == 1) ? 'other' : (memoryDeviceTypeEnum == 2) ? 'unknown' : (memoryDeviceTypeEnum == 3) ? 'DRAM' : (memoryDeviceTypeEnum == 4) ? 'EDRAM' : (memoryDeviceTypeEnum == 5) ? 'VRAM' : (memoryDeviceTypeEnum == 6) ? 'SRAM' : (memoryDeviceTypeEnum == 7) ? 'RAM' : (memoryDeviceTypeEnum == 8) ? 'ROM' : (memoryDeviceTypeEnum == 9) ? 'FLASH' : (memoryDeviceTypeEnum == 10) ? 'EEPROM' : (memoryDeviceTypeEnum == 11) ? 'FEPROM' : (memoryDeviceTypeEnum == 12) ? 'EPROM' : (memoryDeviceTypeEnum == 13) ? 'CDRAM' : (memoryDeviceTypeEnum == 14) ? '3DRAM' : (memoryDeviceTypeEnum == 15) ? 'SDRAM' : (memoryDeviceTypeEnum == 16) ? 'SGRAM' : (memoryDeviceTypeEnum == 17) ? 'RDRAM' : (memoryDeviceTypeEnum == 18) ? 'DDR' : (memoryDeviceTypeEnum == 19) ? 'DDR2' : (memoryDeviceTypeEnum == 20) ? 'DDR2FBDIMM' : (memoryDeviceTypeEnum == 24) ? 'DDR3' : (memoryDeviceTypeEnum == 25) ? 'FBD2' : (memoryDeviceTypeEnum == 26) ? 'DDR4' : 'unknown'"
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^snmpVersion^_^
+      operation: walk
+      oids:
+        memoryDeviceIndex: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.2
+        memoryDeviceLocationName: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.8
+        memoryDeviceStatusEnum: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.5
+        memoryDeviceSize: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.14
+        memoryDeviceTypeEnum: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.7
+
+  - name: processor
+    i18n:
+      zh-CN: 处理器
+      en-US: Processors
+    priority: 1
+    fields:
+      - field: index
+        type: 1
+        i18n:
+          zh-CN: 索引
+          en-US: Index
+      - field: name
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+      - field: speed
+        type: 0
+        unit: MHz
+        i18n:
+          zh-CN: 频率
+          en-US: Speed
+      - field: family
+        type: 1
+        i18n:
+          zh-CN: 家族
+          en-US: Family
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+    aliasFields:
+      - processorDeviceIndex
+      - processorDeviceLocationName
+      - processorDeviceStatusEnum
+      - processorDeviceSpeed
+      - processorDeviceFamilyEnum
+    calculates:
+      - "index=processorDeviceIndex"
+      - "name=processorDeviceLocationName"
+      - "status=(processorDeviceStatusEnum == 1) ? 'other' : (processorDeviceStatusEnum == 2) ? 'unknown' : (processorDeviceStatusEnum == 3) ? 'ok' : (processorDeviceStatusEnum == 4) ? 'nonCritical' : (processorDeviceStatusEnum == 5) ? 'critical' : (processorDeviceStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "location=processorDeviceLocationName"
+      - "speed=processorDeviceSpeed"
+      - "family=(processorDeviceFamilyEnum == 1) ? 'other' : (processorDeviceFamilyEnum == 2) ? 'unknown' : (processorDeviceFamilyEnum == 3) ? '8086' : (processorDeviceFamilyEnum == 4) ? '80286' : (processorDeviceFamilyEnum == 5) ? 'Intel386' : (processorDeviceFamilyEnum == 6) ? 'Intel486' : (processorDeviceFamilyEnum == 11) ? 'Pentium' : (processorDeviceFamilyEnum == 12) ? 'PentiumPro' : (processorDeviceFamilyEnum == 13) ? 'PentiumII' : (processorDeviceFamilyEnum == 14) ? 'PentiumMMX' : (processorDeviceFamilyEnum == 15) ? 'Celeron' : (processorDeviceFamilyEnum == 16) ? 'PentiumIIXeon' : (processorDeviceFamilyEnum == 17) ? 'PentiumIII' : (processorDeviceFamilyEnum == 18) ? 'PentiumIIIXeon' : (processorDeviceFamilyEnum == 19) ? 'PentiumIIISpeedStep' : (processorDeviceFamilyEnum == 20) ? 'Itanium' : (processorDeviceFamilyEnum == 21) ? 'IntelXeon' : (processorDeviceFamilyEnum == 22) ? 'Pentium4' : (processorDeviceFamilyEnum == 23) ? 'IntelXeonMP' : (processorDeviceFamilyEnum == 24) ? 'IntelItanium2' : (processorDeviceFamilyEnum == 40) ? 'IntelCoreDuo' : (processorDeviceFamilyEnum == 41) ? 'IntelCoreDuoMobile' : (processorDeviceFamilyEnum == 42) ? 'IntelCoreSoloMobile' : (processorDeviceFamilyEnum == 43) ? 'IntelAtom' : (processorDeviceFamilyEnum == 131) ? 'AMDAthlon64' : (processorDeviceFamilyEnum == 132) ? 'AMDOpteron' : (processorDeviceFamilyEnum == 134) ? 'AMDTurion64Mobile' : (processorDeviceFamilyEnum == 190) ? 'IntelCore2' : (processorDeviceFamilyEnum == 191) ? 'IntelCore2Duo' : (processorDeviceFamilyEnum == 194) ? 'IntelCore2Quad' : (processorDeviceFamilyEnum == 198) ? 'IntelCorei7' : (processorDeviceFamilyEnum == 205) ? 'IntelCorei5' : (processorDeviceFamilyEnum == 206) ? 'IntelCorei3' : 'unknown'"
+    protocol: snmp
+    snmp:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      authPassphrase: ^_^authPassphrase^_^
+      privPassphrase: ^_^privPassphrase^_^
+      privPasswordEncryption: ^_^privPasswordEncryption^_^
+      authPasswordEncryption: ^_^authPasswordEncryption^_^
+      contextName: ^_^contextName^_^
+      timeout: ^_^timeout^_^
+      community: ^_^community^_^
+      version: ^_^snmpVersion^_^
+      operation: walk
+      oids:
+        processorDeviceIndex: 1.3.6.1.4.1.674.10892.5.4.1100.30.1.2
+        processorDeviceLocationName: 1.3.6.1.4.1.674.10892.5.4.1100.30.1.8
+        processorDeviceStatusEnum: 1.3.6.1.4.1.674.10892.5.4.1100.30.1.5
+        processorDeviceSpeed: 1.3.6.1.4.1.674.10892.5.4.1100.30.1.12
+        processorDeviceFamilyEnum: 1.3.6.1.4.1.674.10892.5.4.1100.30.1.10
