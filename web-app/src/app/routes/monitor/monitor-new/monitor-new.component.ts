@@ -215,7 +215,6 @@ export class MonitorNewComponent implements OnInit {
           this.isSpinning = false;
         }
       );
-    this.loadLabels();
   }
 
   onScrapeChange(scrapeValue: string) {
@@ -333,35 +332,5 @@ export class MonitorNewComponent implements OnInit {
 
   onCancel() {
     this.router.navigateByUrl(`/monitors`);
-  }
-
-  loadLabels() {
-    let labelsInit$ = this.labelSvc.loadLabels(undefined, undefined, 0, 9999).subscribe(
-      message => {
-        if (message.code === 0) {
-          let page = message.data;
-          this.labelKeys = [...new Set(page.content.map(label => label.name))];
-
-          this.labelMap = {};
-
-          page.content.forEach(label => {
-            if (!this.labelMap[label.name]) {
-              this.labelMap[label.name] = [];
-            }
-
-            if (label.tagValue && !this.labelMap[label.name].includes(label.tagValue)) {
-              this.labelMap[label.name].push(label.tagValue);
-            }
-          });
-        } else {
-          console.warn(message.msg);
-        }
-        labelsInit$.unsubscribe();
-      },
-      error => {
-        labelsInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
   }
 }
