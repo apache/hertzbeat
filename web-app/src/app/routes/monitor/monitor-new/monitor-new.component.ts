@@ -59,6 +59,7 @@ export class MonitorNewComponent implements OnInit {
   spinningTip: string = 'Loading...';
   labelKeys: string[] = [];
   labelMap: { [key: string]: string[] } = {};
+  labelIsCustom: boolean = true;
   constructor(
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
