@@ -47,8 +47,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doAnswer;
 
 /**
@@ -117,7 +122,7 @@ public class LogPeriodicAlertE2eTest {
         vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
                 .withExposedPorts(VECTOR_PORT)
                 .withCopyFileToContainer(MountableFile.forClasspathResource("vector.yml"), VECTOR_CONFIG_PATH)
-                .withCommand("--config", "/etc/vector/vector.yml", "--verbose")
+                .withCommand("--config", VECTOR_CONFIG_PATH, "--verbose")
                 .withLogConsumer(outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()))
                 .withNetwork(Network.newNetwork())
                 .withEnv(ENV_HERTZBEAT_PORT, String.valueOf(port))
@@ -151,8 +156,8 @@ public class LogPeriodicAlertE2eTest {
         assertNotNull(firstAlert, "First periodic alert should not be null");
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, firstAlert.getStatus(), "Alert should be in firing status");
         assertNotNull(firstAlert.getLabels(), "Alert should have labels");
-        assertTrue(firstAlert.getLabels().containsKey("severity"), "Alert should have severity label");
-        assertEquals("critical", firstAlert.getLabels().get("severity"), "Alert should have critical severity");
+        assertTrue(firstAlert.getLabels().containsKey(CommonConstants.LABEL_ALERT_SEVERITY), "Alert should have severity label");
+        assertEquals(CommonConstants.ALERT_SEVERITY_CRITICAL, firstAlert.getLabels().get(CommonConstants.LABEL_ALERT_SEVERITY), "Alert should have critical severity");
     }
 
     @Test
@@ -182,7 +187,7 @@ public class LogPeriodicAlertE2eTest {
         SingleAlert anyAlert = groupAlerts.get(0);
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, anyAlert.getStatus(), "Alert should be in firing status");
         assertNotNull(anyAlert.getLabels(), "Alert should have labels");
-        assertEquals("critical", anyAlert.getLabels().get("severity"), "Alert should have critical severity");
+        assertEquals(CommonConstants.ALERT_SEVERITY_CRITICAL, anyAlert.getLabels().get(CommonConstants.LABEL_ALERT_SEVERITY), "Alert should have critical severity");
         assertTrue(anyAlert.getTriggerTimes() >= 1, "Alert should indicate aggregated trigger times");
     }
 
@@ -194,7 +199,7 @@ public class LogPeriodicAlertE2eTest {
         errorCountAlertByGroup = AlertDefine.builder()
                 .id(10L)
                 .name("periodic_error_count_alert_group")
-                .type("periodic_log")
+                .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC)
                 .expr("SELECT COUNT(*) as error_count FROM hertzbeat_logs WHERE time_unix_nano > NOW() - INTERVAL '10 minute'")
                 .period(10) // Faster schedule for tests
                 .template("High error count detected: {{ error_count }} errors in last period")
@@ -203,8 +208,8 @@ public class LogPeriodicAlertE2eTest {
                 .build();
 
         Map<String, String> errorLabelsByGroup = new HashMap<>();
-        errorLabelsByGroup.put("severity", "critical");
-        errorLabelsByGroup.put("alert_mode", "group");
+        errorLabelsByGroup.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL);
+        errorLabelsByGroup.put(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP);
         errorLabelsByGroup.put("type", "error_count");
         errorCountAlertByGroup.setLabels(errorLabelsByGroup);
 
@@ -212,8 +217,9 @@ public class LogPeriodicAlertE2eTest {
         errorCountAlertByIndividual = AlertDefine.builder()
                 .id(11L)
                 .name("periodic_error_count_alert_individual")
-                .type("periodic_log")
-                .expr("SELECT COUNT(*) as error_count, severity_text FROM hertzbeat_logs WHERE severity_text = 'ERROR' AND time_unix_nano > NOW() - INTERVAL '5 minute' GROUP BY severity_text HAVING COUNT(*) > 2")
+                .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC)
+                .expr("SELECT COUNT(*) as error_count, severity_text FROM hertzbeat_logs "
+                        + "WHERE severity_text = 'ERROR' AND time_unix_nano > NOW() - INTERVAL '5 minute' GROUP BY severity_text HAVING COUNT(*) > 2")
                 .period(10) // Faster schedule for tests
                 .template("High error count detected: {{ error_count }} errors in last period")
                 .datasource("sql")
@@ -221,8 +227,8 @@ public class LogPeriodicAlertE2eTest {
                 .build();
 
         Map<String, String> errorLabelsByIndividual = new HashMap<>();
-        errorLabelsByIndividual.put("severity", "critical");
-        errorLabelsByIndividual.put("alert_mode", "individual");
+        errorLabelsByIndividual.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL);
+        errorLabelsByIndividual.put(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL);
         errorLabelsByIndividual.put("type", "error_count");
         errorCountAlertByIndividual.setLabels(errorLabelsByIndividual);
     }

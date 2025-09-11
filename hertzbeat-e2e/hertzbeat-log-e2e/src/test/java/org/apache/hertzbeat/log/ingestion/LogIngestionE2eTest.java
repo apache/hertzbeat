@@ -37,8 +37,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * E2E tests for log ingestion.
@@ -71,7 +72,7 @@ public class LogIngestionE2eTest {
                 .withCommand("--config", "/etc/vector/vector.yml", "--verbose")
                 .withLogConsumer(outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()))
                 .withNetwork(Network.newNetwork())
-                .withEnv(ENV_HERTZBEAT_PORT,String.valueOf(port))
+                .withEnv(ENV_HERTZBEAT_PORT, String.valueOf(port))
                 .waitingFor(Wait.forListeningPort())
                 .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
         vector.start();

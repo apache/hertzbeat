@@ -43,8 +43,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doAnswer;
 
 /**
@@ -85,7 +90,7 @@ public class LogRealTimeAlertE2eTest {
                 .withCommand("--config", "/etc/vector/vector.yml", "--verbose")
                 .withLogConsumer(outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()))
                 .withNetwork(Network.newNetwork())
-                .withEnv(ENV_HERTZBEAT_PORT,String.valueOf(port))
+                .withEnv(ENV_HERTZBEAT_PORT, String.valueOf(port))
                 .waitingFor(Wait.forListeningPort())
                 .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
         vector.start();
@@ -155,7 +160,7 @@ public class LogRealTimeAlertE2eTest {
         AlertDefine errorLogAlert = AlertDefine.builder()
                 .id(1L)
                 .name("error_log_alert")
-                .type("realtime_log")
+                .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME)
                 .expr("log.severityText == 'ERROR'")
                 .period(10) // 10 seconds window
                 .times(1)   // Trigger on first occurrence
@@ -165,7 +170,7 @@ public class LogRealTimeAlertE2eTest {
 
         Map<String, String> errorLabels = new HashMap<>();
         errorLabels.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL);
-        errorLabels.put("alert_mode", "individual");
+        errorLabels.put(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL);
         errorLogAlert.setLabels(errorLabels);
 
         alertDefines.add(errorLogAlert);
@@ -174,7 +179,7 @@ public class LogRealTimeAlertE2eTest {
         AlertDefine highFrequencyWarning = AlertDefine.builder()
                 .id(2L)
                 .name("high_frequency_warning")
-                .type("realtime_log")
+                .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME)
                 .expr("log.severityText == 'ERROR'")
                 .period(60) // 60 seconds window
                 .times(5)   // Trigger after 5 occurrences
@@ -183,8 +188,8 @@ public class LogRealTimeAlertE2eTest {
                 .build();
 
         Map<String, String> warningLabels = new HashMap<>();
-        warningLabels.put("severity", "warning");
-        warningLabels.put("alert_mode", "group");
+        warningLabels.put(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_WARNING);
+        warningLabels.put(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP);
         highFrequencyWarning.setLabels(warningLabels);
 
         alertDefines.add(highFrequencyWarning);

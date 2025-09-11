@@ -110,7 +110,7 @@ public class GreptimeLogStorageE2eTest {
                 .withCommand("--config", "/etc/vector/vector.yml", "--verbose")
                 .withLogConsumer(outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()))
                 .withNetwork(Network.newNetwork())
-                .withEnv(ENV_HERTZBEAT_PORT,String.valueOf(port))
+                .withEnv(ENV_HERTZBEAT_PORT, String.valueOf(port))
                 .waitingFor(Wait.forListeningPort())
                 .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
         vector.start();

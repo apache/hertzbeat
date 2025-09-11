@@ -78,7 +78,7 @@ class AlarmEvaluatorTest {
                 .expr("log.severityText == 'ERROR'")
                 .times(1)
                 .template("Alert: {{log.body}}")
-                .labels(Map.of("alert_mode", "individual", "severity", "high"))
+                .labels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL, CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL))
                 .annotations(Map.of("summary", "Test alert summary"))
                 .enable(true)
                 .build();
@@ -101,7 +101,7 @@ class AlarmEvaluatorTest {
     @Test
     void testProcessWindowDataWithIndividualMode() throws InterruptedException {
         // Given - alert define with individual mode
-        alertDefine.setLabels(Map.of("alert_mode", "individual"));
+        alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL));
         
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
@@ -117,7 +117,7 @@ class AlarmEvaluatorTest {
     @Test
     void testProcessWindowDataWithGroupMode() throws InterruptedException {
         // Given - alert define with group mode
-        alertDefine.setLabels(Map.of("alert_mode", "group"));
+        alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP));
         
         // When
         alarmEvaluator.sendAndProcessWindowData(windowData);
@@ -167,7 +167,7 @@ class AlarmEvaluatorTest {
     @Test
     void testIndividualAlertGeneration() throws InterruptedException {
         // Given
-        alertDefine.setLabels(Map.of("alert_mode", "individual", "severity", "critical"));
+        alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL, CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_CRITICAL));
         alertDefine.setAnnotations(Map.of("summary", "Test summary", "description", "Test description"));
         
         // When
@@ -194,7 +194,7 @@ class AlarmEvaluatorTest {
         
         // Verify labels contain alert define info and log entry data
         Map<String, String> labels = capturedAlert.getLabels();
-        assertTrue(labels.containsKey("severity"));
+        assertTrue(labels.containsKey(CommonConstants.LABEL_ALERT_SEVERITY));
         assertTrue(labels.containsKey("severityText"));
         assertTrue(labels.containsKey("body"));
     }
@@ -202,13 +202,13 @@ class AlarmEvaluatorTest {
     @Test
     void testGroupAlertGeneration() throws InterruptedException {
         // Given
-        alertDefine.setLabels(Map.of("alert_mode", "group", "severity", "warning"));
+        alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP, CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_WARNING));
         
         // Add more matching logs to test group functionality
         MatchingLogEvent secondEvent = MatchingLogEvent.builder()
                 .logEntry(LogEntry.builder()
                     .timeUnixNano((System.currentTimeMillis() + 1000) * 1_000_000L)
-                    .severityText("ERROR")
+                    .severityText("ERROR") 
                     .body("Second error message")
                     .build())
                 .alertDefine(alertDefine)
@@ -241,7 +241,7 @@ class AlarmEvaluatorTest {
             () -> assertTrue(groupLabels.containsKey("window_start_time")),
             () -> assertTrue(groupLabels.containsKey("window_end_time")),
             () -> assertTrue(groupLabels.containsKey("matching_logs_count")),
-            () -> assertEquals("group", groupLabels.get("alert_mode")),
+            () -> assertEquals(CommonConstants.ALERT_MODE_GROUP, groupLabels.get(CommonConstants.ALERT_MODE_LABEL)),
             () -> assertEquals("2", groupLabels.get("matching_logs_count"))
         );
         
@@ -280,7 +280,7 @@ class AlarmEvaluatorTest {
             alertDefine);
         detailedWindowData.addMatchingLog(detailedEvent);
 
-        alertDefine.setLabels(Map.of("alert_mode", "individual"));
+        alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL));
         
         // When
         alarmEvaluator.sendAndProcessWindowData(detailedWindowData);
@@ -313,7 +313,7 @@ class AlarmEvaluatorTest {
     void testMultipleMatchingLogsInWindow() throws InterruptedException {
         // Given - multiple matching logs in the same window
         alertDefine.setTimes(2); // Require at least 2 occurrences
-        alertDefine.setLabels(Map.of("alert_mode", "group"));
+        alertDefine.setLabels(Map.of(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP));
         
         // Add second matching log
         MatchingLogEvent secondEvent = MatchingLogEvent.builder()

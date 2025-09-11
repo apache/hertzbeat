@@ -72,7 +72,7 @@ class LogPeriodicAlertCalculatorTest {
                 .name("log_error_alert")
                 .type("periodic_log")
                 .expr("SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' AND time_unix_nano >= ? AND time_unix_nano <= ?")
-                .labels(Map.of("severity", "warning", "team", "backend", LogPeriodicAlertCalculator.ALERT_MODE_LABEL, LogPeriodicAlertCalculator.ALERT_MODE_GROUP))
+                .labels(Map.of(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_WARNING, "team", "backend", CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP))
                 .annotations(Map.of("summary", "Error logs detected", "description", "Multiple error logs found"))
                 .template("Found ${severity_text} log: ${body} from ${service_name}")
                 .datasource("sql")
@@ -85,7 +85,8 @@ class LogPeriodicAlertCalculatorTest {
                 .name("log_error_alert")
                 .type("periodic_log")
                 .expr("SELECT * FROM hertzbeat_logs WHERE severity_text = 'ERROR' AND time_unix_nano >= ? AND time_unix_nano <= ?")
-                .labels(Map.of("severity", "warning", "team", "backend", LogPeriodicAlertCalculator.ALERT_MODE_LABEL, LogPeriodicAlertCalculator.ALERT_MODE_INDIVIDUAL))
+                .labels(Map.of(CommonConstants.LABEL_ALERT_SEVERITY, CommonConstants.ALERT_SEVERITY_WARNING, "team", "backend",
+                        CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_INDIVIDUAL))
                 .annotations(Map.of("summary", "Error logs detected", "description", "Multiple error logs found"))
                 .template("Found ${severity_text} log: ${body} from ${service_name}")
                 .datasource("sql")
@@ -209,7 +210,7 @@ class LogPeriodicAlertCalculatorTest {
 
             assertAll(
                 () -> assertEquals("2", groupLabels.get("__rows__")),
-                () -> assertEquals("group", groupLabels.get("alert_mode")),
+                () -> assertEquals(CommonConstants.ALERT_MODE_GROUP, groupLabels.get(CommonConstants.ALERT_MODE_LABEL)),
                 () -> assertEquals("log_error_alert", groupLabels.get("alertname")),
                 () -> assertEquals("1", groupLabels.get("defineid")),
                 () -> assertEquals(2, alerts.size()),
