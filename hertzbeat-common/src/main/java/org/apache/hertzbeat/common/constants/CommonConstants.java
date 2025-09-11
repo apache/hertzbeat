@@ -173,6 +173,21 @@ public interface CommonConstants {
     String LOG_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_log";
 
     /**
+     * Alert mode label key
+     */
+    String ALERT_MODE_LABEL = "alert_mode";
+
+    /**
+     * Alert mode: group
+     */
+    String ALERT_MODE_GROUP = "group";
+
+    /**
+     * Alert mode: individual
+     */
+    String ALERT_MODE_INDIVIDUAL = "individual";
+
+    /**
      * Field parameter type: number
      */
     byte TYPE_NUMBER = 0;

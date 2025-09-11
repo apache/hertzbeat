@@ -49,12 +49,9 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class AlarmEvaluator {
 
-    private static final String ALERT_MODE_LABEL = "alert_mode";
     private static final String WINDOW_START_TIME = "window_start_time";
     private static final String WINDOW_END_TIME = "window_end_time";
     private static final String MATCHING_LOGS_COUNT = "matching_logs_count";
-    private static final String ALERT_MODE_GROUP = "group";
-    private static final String ALERT_MODE_INDIVIDUAL = "individual";
     
     private final AlarmCommonReduce alarmCommonReduce;
     private ThreadPoolExecutor workerExecutor;
@@ -109,14 +106,14 @@ public class AlarmEvaluator {
             long currentTime = System.currentTimeMillis();
 
             switch (alertMode) {
-                case ALERT_MODE_INDIVIDUAL:
+                case CommonConstants.ALERT_MODE_INDIVIDUAL:
                     // Generate individual alerts for each matching log
                     for (MatchingLogEvent matchingLog : matchingLogs) {
                         generateIndividualAlert(matchingLog, currentTime);
                     }
                     break;
 
-                case ALERT_MODE_GROUP:
+                case CommonConstants.ALERT_MODE_GROUP:
                     // Generate a single alert group for all matching logs
                     generateGroupAlert(windowData, matchingLogs, currentTime);
                     break;
@@ -168,7 +165,7 @@ public class AlarmEvaluator {
         // Add window information to fingerprints
         commonFingerPrints.put(WINDOW_START_TIME, String.valueOf(windowData.getStartTime()));
         commonFingerPrints.put(WINDOW_END_TIME, String.valueOf(windowData.getEndTime()));
-        commonFingerPrints.put(ALERT_MODE_LABEL, ALERT_MODE_GROUP);
+        commonFingerPrints.put(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP);
         commonFingerPrints.put(MATCHING_LOGS_COUNT, String.valueOf(matchingLogs.size()));
 
         for (MatchingLogEvent event: matchingLogs) {
@@ -203,10 +200,10 @@ public class AlarmEvaluator {
     private String getAlertMode(AlertDefine alertDefine) {
         String mode = null;
         if (alertDefine.getLabels() != null) {
-            mode = alertDefine.getLabels().get(ALERT_MODE_LABEL);
+            mode = alertDefine.getLabels().get(CommonConstants.ALERT_MODE_LABEL);
         }
         if (mode == null || mode.isEmpty()) {
-            return ALERT_MODE_GROUP; // Default to group mode if not specified
+            return CommonConstants.ALERT_MODE_GROUP; // Default to group mode if not specified
         } else {
             return mode;
         }

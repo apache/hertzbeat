@@ -42,9 +42,6 @@ import java.util.Map;
 public class LogPeriodicAlertCalculator {
     
     private static final String ROWS = "__rows__";
-    static final String ALERT_MODE_LABEL = "alert_mode";
-    static final String ALERT_MODE_GROUP = "group";
-    static final String ALERT_MODE_INDIVIDUAL = "individual";
 
     private final DataSourceService dataSourceService;
     private final AlarmCommonReduce alarmCommonReduce;
@@ -83,10 +80,10 @@ public class LogPeriodicAlertCalculator {
     String getAlertMode(AlertDefine alertDefine) {
         String mode = null;
         if (alertDefine.getLabels() != null) {
-            mode = alertDefine.getLabels().get(ALERT_MODE_LABEL);
+            mode = alertDefine.getLabels().get(CommonConstants.ALERT_MODE_LABEL);
         }
         if (mode == null || mode.isEmpty()) {
-            return ALERT_MODE_GROUP; // Default to group mode if not specified
+            return CommonConstants.ALERT_MODE_GROUP; // Default to group mode if not specified
         } else {
             return mode;
         }
@@ -102,14 +99,14 @@ public class LogPeriodicAlertCalculator {
         long currentTime = System.currentTimeMillis();
 
         switch (alertMode) {
-            case ALERT_MODE_INDIVIDUAL:
+            case CommonConstants.ALERT_MODE_INDIVIDUAL:
                 // Generate individual alerts for each matching log
                 for (Map<String, Object> context : alertContext) {
                     generateIndividualAlert(define, context, currentTime);
                 }
                 break;
 
-            case ALERT_MODE_GROUP:
+            case CommonConstants.ALERT_MODE_GROUP:
                 // Generate a single alert group for all matching logs
                 generateGroupAlert(define, alertContext, currentTime);
                 break;
@@ -161,7 +158,7 @@ public class LogPeriodicAlertCalculator {
 
         // Add context information to fingerprints
         commonFingerPrints.put(ROWS, String.valueOf(alertContext.size()));
-        commonFingerPrints.put(ALERT_MODE_LABEL, ALERT_MODE_GROUP);
+        commonFingerPrints.put(CommonConstants.ALERT_MODE_LABEL, CommonConstants.ALERT_MODE_GROUP);
 
         for (Map<String, Object> context : alertContext) {
 
