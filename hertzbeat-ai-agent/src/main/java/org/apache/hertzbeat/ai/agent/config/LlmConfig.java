@@ -22,6 +22,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,6 +32,9 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class LlmConfig {
+
+    @Value("${spring.ai.openai.chat.options.model}")
+    private String model;
 
     /**
      * Create OpenAI API instance with dynamic API key
@@ -48,7 +52,7 @@ public class LlmConfig {
     @Bean
     public OpenAiChatOptions openAiChatOptions() {
         return OpenAiChatOptions.builder()
-                .model("gpt-4.1-nano-2025-04-14")
+                .model(model)
                 .temperature(0.3)
                 .build();
     }
