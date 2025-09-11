@@ -254,7 +254,7 @@ metrics:
           zh-CN: 系统电源状态
           en-US: System Power State
       - field: systemPowerUpTime
-        type: 0
+        type: 1
         unit: day
         i18n:
           zh-CN: 系统运行时间
