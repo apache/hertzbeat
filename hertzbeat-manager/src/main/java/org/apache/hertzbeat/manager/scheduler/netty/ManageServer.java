@@ -28,7 +28,7 @@ import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
-import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
+import org.apache.hertzbeat.manager.properties.SchedulerProperties;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectCyclicDataResponseProcessor;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectCyclicServiceDiscoveryDataResponseProcessor;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectOneTimeDataResponseProcessor;
@@ -44,6 +44,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PreDestroy;
 
 /**
  * manage server
@@ -112,6 +114,7 @@ public class ManageServer implements CommandLineRunner {
         }, 10, 3, TimeUnit.SECONDS);
     }
 
+    @PreDestroy
     public void shutdown() {
         this.remotingServer.shutdown();
 
