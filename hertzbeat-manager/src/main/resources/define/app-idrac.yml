@@ -225,35 +225,35 @@ metrics:
   # metrics - system
   - name: system
     i18n:
-      zh-CN: 系统信息
-      en-US: System Info
+      zh-CN: 系统状态
+      en-US: System Status
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      - field: globalSystemStatus
+      - field: global
         type: 1
         i18n:
           zh-CN: 全局系统状态
           en-US: Global System Status
-      - field: systemLCDStatus
+      - field: lcd
         type: 1
         i18n:
           zh-CN: 系统前面板状态
           en-US: System LCD Status
-      - field: globalStorageStatus
+      - field: storage
         type: 1
         i18n:
           zh-CN: 全局存储状态
           en-US: Global Storage Status
-      - field: systemPowerState
+      - field: power
         type: 1
         i18n:
           zh-CN: 系统电源状态
           en-US: System Power State
-      - field: systemPowerUpTime
+      - field: up_time
         type: 1
         unit: day
         i18n:
@@ -270,11 +270,11 @@ metrics:
     # mapping and conversion expressions, use these and aliasField above to calculate metrics value
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
-      - "globalSystemStatus=(globalSystemStatusEnum == 1) ? 'other' : (globalSystemStatusEnum == 2) ? 'unknown' : (globalSystemStatusEnum == 3) ? 'ok' : (globalSystemStatusEnum == 4) ? 'nonCritical' : (globalSystemStatusEnum == 5) ? 'critical' : (globalSystemStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
-      - "systemLCDStatus=(systemLCDStatusEnum == 1) ? 'other' : (systemLCDStatusEnum == 2) ? 'unknown' : (systemLCDStatusEnum == 3) ? 'ok' : (systemLCDStatusEnum == 4) ? 'nonCritical' : (systemLCDStatusEnum == 5) ? 'critical' : (systemLCDStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
-      - "globalStorageStatus=(globalStorageStatusEnum == 1) ? 'other' : (globalStorageStatusEnum == 2) ? 'unknown' : (globalStorageStatusEnum == 3) ? 'ok' : (globalStorageStatusEnum == 4) ? 'nonCritical' : (globalStorageStatusEnum == 5) ? 'critical' : (globalStorageStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
-      - "systemPowerState=(systemPowerStateEnum == 1) ? 'other' : (systemPowerStateEnum == 2) ? 'unknown' : (systemPowerStateEnum == 3) ? 'off' : (systemPowerStateEnum == 4) ? 'ok' : 'unknown'"
-      - systemPowerUpTime=systemPowerUpTime/60/60/24
+      - "global=(globalSystemStatusEnum == 1) ? 'other' : (globalSystemStatusEnum == 2) ? 'unknown' : (globalSystemStatusEnum == 3) ? 'ok' : (globalSystemStatusEnum == 4) ? 'nonCritical' : (globalSystemStatusEnum == 5) ? 'critical' : (globalSystemStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "lcd=(systemLCDStatusEnum == 1) ? 'other' : (systemLCDStatusEnum == 2) ? 'unknown' : (systemLCDStatusEnum == 3) ? 'ok' : (systemLCDStatusEnum == 4) ? 'nonCritical' : (systemLCDStatusEnum == 5) ? 'critical' : (systemLCDStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "storage=(globalStorageStatusEnum == 1) ? 'other' : (globalStorageStatusEnum == 2) ? 'unknown' : (globalStorageStatusEnum == 3) ? 'ok' : (globalStorageStatusEnum == 4) ? 'nonCritical' : (globalStorageStatusEnum == 5) ? 'critical' : (globalStorageStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
+      - "power=(systemPowerStateEnum == 1) ? 'other' : (systemPowerStateEnum == 2) ? 'unknown' : (systemPowerStateEnum == 3) ? 'off' : (systemPowerStateEnum == 4) ? 'ok' : 'unknown'"
+      - up_time=systemPowerUpTime/60/60/24
 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: snmp
@@ -330,11 +330,23 @@ metrics:
           zh-CN: 名称
           en-US: Name
       - field: wattage
+        type: 1
+        unit: W
+        i18n:
+          zh-CN: 额定功率
+          en-US: Wattage
+      - field: input_wattage
         type: 0
         unit: W
         i18n:
-          zh-CN: 功率
-          en-US: Wattage
+          zh-CN: 输入功率
+          en-US: Input Wattage
+      - field: max_input_voltage
+        type: 1
+        unit: V
+        i18n:
+          zh-CN: 最大输入电压
+          en-US: Max Input Voltage
       - field: type
         type: 1
         i18n:
@@ -351,6 +363,8 @@ metrics:
       - powerSupplyStatusEnum
       - powerSupplyOutputWatts
       - powerSupplyTypeEnum
+      - powerSupplyRatedInputWattage
+      - powerSupplyMaximumInputVoltage
     calculates:
       - "index=powerSupplyIndex"
       - "name=powerSupplyLocationName"
@@ -358,6 +372,8 @@ metrics:
       - "location=powerSupplyLocationName"
       - "wattage=powerSupplyOutputWatts / 10"
       - "type=(powerSupplyTypeEnum == 1) ? 'other' : (powerSupplyTypeEnum == 2) ? 'unknown' : (powerSupplyTypeEnum == 3) ? 'Linear' : (powerSupplyTypeEnum == 4) ? 'Switching' : (powerSupplyTypeEnum == 5) ? 'Battery' : (powerSupplyTypeEnum == 6) ? 'UPS' : (powerSupplyTypeEnum == 7) ? 'Converter' : (powerSupplyTypeEnum == 8) ? 'Regulator' : (powerSupplyTypeEnum == 9) ? 'AC' : (powerSupplyTypeEnum == 10) ? 'DC' : (powerSupplyTypeEnum == 11) ? 'VRM' : 'unknown'"
+      - "input_wattage=powerSupplyRatedInputWattage / 10"
+      - "max_input_voltage=powerSupplyMaximumInputVoltage"
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -376,8 +392,10 @@ metrics:
         powerSupplyIndex: 1.3.6.1.4.1.674.10892.5.4.600.12.1.2
         powerSupplyLocationName: 1.3.6.1.4.1.674.10892.5.4.600.12.1.8
         powerSupplyStatusEnum: 1.3.6.1.4.1.674.10892.5.4.600.12.1.5
-        powerSupplyOutputWatts: 1.3.6.1.4.1.674.10892.5.4.600.12.1.6
         powerSupplyTypeEnum: 1.3.6.1.4.1.674.10892.5.4.600.12.1.7
+        powerSupplyOutputWatts: 1.3.6.1.4.1.674.10892.5.4.600.12.1.6
+        powerSupplyRatedInputWattage: 1.3.6.1.4.1.674.10892.5.4.600.12.1.14
+        powerSupplyMaximumInputVoltage: 1.3.6.1.4.1.674.10892.5.4.600.12.1.9
 
   - name: cooling
     i18n:
@@ -592,12 +610,24 @@ metrics:
         i18n:
           zh-CN: 类型
           en-US: Type
-      - field: size
-        type: 0
+      - field: sizes
+        type: 1
         unit: G
         i18n:
           zh-CN: 容量
           en-US: Size
+      - field: speed
+        type: 1
+        unit: MHz
+        i18n:
+          zh-CN: 频率
+          en-US: Speed
+      - field: current_speed
+        type: 0
+        unit: MHz
+        i18n:
+          zh-CN: 运行频率
+          en-US: Current Speed
       - field: status
         type: 1
         i18n:
@@ -609,12 +639,17 @@ metrics:
       - memoryDeviceStatusEnum
       - memoryDeviceSize
       - memoryDeviceTypeEnum
+      - memoryDeviceSpeed
+      - memoryDeviceCurrentOperatingSpeed
     calculates:
       - "index=memoryDeviceIndex"
       - "name=memoryDeviceLocationName"
       - "status=(memoryDeviceStatusEnum == 1) ? 'other' : (memoryDeviceStatusEnum == 2) ? 'unknown' : (memoryDeviceStatusEnum == 3) ? 'ok' : (memoryDeviceStatusEnum == 4) ? 'nonCritical' : (memoryDeviceStatusEnum == 5) ? 'critical' : (memoryDeviceStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
-      - "size=memoryDeviceSize/1024/1024"
+      - "sizes=memoryDeviceSize/1024/1024"
       - "type=(memoryDeviceTypeEnum == 1) ? 'other' : (memoryDeviceTypeEnum == 2) ? 'unknown' : (memoryDeviceTypeEnum == 3) ? 'DRAM' : (memoryDeviceTypeEnum == 4) ? 'EDRAM' : (memoryDeviceTypeEnum == 5) ? 'VRAM' : (memoryDeviceTypeEnum == 6) ? 'SRAM' : (memoryDeviceTypeEnum == 7) ? 'RAM' : (memoryDeviceTypeEnum == 8) ? 'ROM' : (memoryDeviceTypeEnum == 9) ? 'FLASH' : (memoryDeviceTypeEnum == 10) ? 'EEPROM' : (memoryDeviceTypeEnum == 11) ? 'FEPROM' : (memoryDeviceTypeEnum == 12) ? 'EPROM' : (memoryDeviceTypeEnum == 13) ? 'CDRAM' : (memoryDeviceTypeEnum == 14) ? '3DRAM' : (memoryDeviceTypeEnum == 15) ? 'SDRAM' : (memoryDeviceTypeEnum == 16) ? 'SGRAM' : (memoryDeviceTypeEnum == 17) ? 'RDRAM' : (memoryDeviceTypeEnum == 18) ? 'DDR' : (memoryDeviceTypeEnum == 19) ? 'DDR2' : (memoryDeviceTypeEnum == 20) ? 'DDR2FBDIMM' : (memoryDeviceTypeEnum == 24) ? 'DDR3' : (memoryDeviceTypeEnum == 25) ? 'FBD2' : (memoryDeviceTypeEnum == 26) ? 'DDR4' : 'unknown'"
+      - "speed=memoryDeviceSpeed"
+      - "current_speed=memoryDeviceCurrentOperatingSpeed"
+
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -635,6 +670,8 @@ metrics:
         memoryDeviceStatusEnum: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.5
         memoryDeviceSize: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.14
         memoryDeviceTypeEnum: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.7
+        memoryDeviceSpeed: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.15
+        memoryDeviceCurrentOperatingSpeed: 1.3.6.1.4.1.674.10892.5.4.1100.50.1.27
 
   - name: processor
     i18n:
@@ -657,8 +694,8 @@ metrics:
         type: 0
         unit: MHz
         i18n:
-          zh-CN: 频率
-          en-US: Speed
+          zh-CN: 当前频率
+          en-US: Current Speed
       - field: family
         type: 1
         i18n:
@@ -679,7 +716,6 @@ metrics:
       - "index=processorDeviceIndex"
       - "name=processorDeviceLocationName"
       - "status=(processorDeviceStatusEnum == 1) ? 'other' : (processorDeviceStatusEnum == 2) ? 'unknown' : (processorDeviceStatusEnum == 3) ? 'ok' : (processorDeviceStatusEnum == 4) ? 'nonCritical' : (processorDeviceStatusEnum == 5) ? 'critical' : (processorDeviceStatusEnum == 6) ? 'nonRecoverable' : 'unknown'"
-      - "location=processorDeviceLocationName"
       - "speed=processorDeviceSpeed"
       - "family=(processorDeviceFamilyEnum == 1) ? 'other' : (processorDeviceFamilyEnum == 2) ? 'unknown' : (processorDeviceFamilyEnum == 3) ? '8086' : (processorDeviceFamilyEnum == 4) ? '80286' : (processorDeviceFamilyEnum == 5) ? 'Intel386' : (processorDeviceFamilyEnum == 6) ? 'Intel486' : (processorDeviceFamilyEnum == 11) ? 'Pentium' : (processorDeviceFamilyEnum == 12) ? 'PentiumPro' : (processorDeviceFamilyEnum == 13) ? 'PentiumII' : (processorDeviceFamilyEnum == 14) ? 'PentiumMMX' : (processorDeviceFamilyEnum == 15) ? 'Celeron' : (processorDeviceFamilyEnum == 16) ? 'PentiumIIXeon' : (processorDeviceFamilyEnum == 17) ? 'PentiumIII' : (processorDeviceFamilyEnum == 18) ? 'PentiumIIIXeon' : (processorDeviceFamilyEnum == 19) ? 'PentiumIIISpeedStep' : (processorDeviceFamilyEnum == 20) ? 'Itanium' : (processorDeviceFamilyEnum == 21) ? 'IntelXeon' : (processorDeviceFamilyEnum == 22) ? 'Pentium4' : (processorDeviceFamilyEnum == 23) ? 'IntelXeonMP' : (processorDeviceFamilyEnum == 24) ? 'IntelItanium2' : (processorDeviceFamilyEnum == 40) ? 'IntelCoreDuo' : (processorDeviceFamilyEnum == 41) ? 'IntelCoreDuoMobile' : (processorDeviceFamilyEnum == 42) ? 'IntelCoreSoloMobile' : (processorDeviceFamilyEnum == 43) ? 'IntelAtom' : (processorDeviceFamilyEnum == 131) ? 'AMDAthlon64' : (processorDeviceFamilyEnum == 132) ? 'AMDOpteron' : (processorDeviceFamilyEnum == 134) ? 'AMDTurion64Mobile' : (processorDeviceFamilyEnum == 190) ? 'IntelCore2' : (processorDeviceFamilyEnum == 191) ? 'IntelCore2Duo' : (processorDeviceFamilyEnum == 194) ? 'IntelCore2Quad' : (processorDeviceFamilyEnum == 198) ? 'IntelCorei7' : (processorDeviceFamilyEnum == 205) ? 'IntelCorei5' : (processorDeviceFamilyEnum == 206) ? 'IntelCorei3' : 'unknown'"
     protocol: snmp

@@ -34,7 +34,7 @@ These are basic checks you can follow, and for further details on enabling and c
 
 ### Collected Metrics
 
-#### Metric Set: System Info
+#### Metric Set: System Status
 
 | Metric Name             | Unit | Metric Description                                           |
 | ----------------------- | ---- | ------------------------------------------------------------ |
