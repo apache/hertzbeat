@@ -72,6 +72,7 @@ export class MonitorEditComponent implements OnInit {
   spinningTip: string = 'Loading...';
   labelKeys: string[] = [];
   labelMap: { [key: string]: string[] } = {};
+  labelIsCustom: boolean = true;
 
   ngOnInit(): void {
     this.route.paramMap

@@ -50,6 +50,7 @@ export class MonitorFormComponent implements OnChanges {
   @Input() sdParams!: Param[];
   @Input() labelKeys!: string[];
   @Input() labelMap!: { [key: string]: string[] };
+  @Input() labelIsCustom!: boolean;
 
   @Output() readonly formSubmit = new EventEmitter<any>();
   @Output() readonly formCancel = new EventEmitter<any>();
