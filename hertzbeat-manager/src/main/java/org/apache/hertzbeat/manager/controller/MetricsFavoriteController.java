@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Set;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.LOGIN_FAILED_CODE;
 
 /**
@@ -60,13 +59,8 @@ public class MetricsFavoriteController {
         if (user == null) {
             return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "User not authenticated"));
         }
-        try {
-            metricsFavoriteService.addMetricsFavorite(user, monitorId, metricsName);
-            return ResponseEntity.ok(Message.success("Metrics added to favorites successfully"));
-        } catch (Exception e) {
-            log.error("Failed to add metrics favorite: monitorId={}, metricsName={}", monitorId, metricsName, e);
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
-        }
+        metricsFavoriteService.addMetricsFavorite(user, monitorId, metricsName);
+        return ResponseEntity.ok(Message.success("Metrics added to favorites successfully"));
     }
 
     @DeleteMapping("/{monitorId}/{metricsName}")
@@ -79,13 +73,8 @@ public class MetricsFavoriteController {
         if (user == null) {
             return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "User not authenticated"));
         }
-        try {
-            metricsFavoriteService.removeMetricsFavorite(user, monitorId, metricsName);
-            return ResponseEntity.ok(Message.success("Metrics removed from favorites successfully"));
-        } catch (Exception e) {
-            log.error("Failed to remove metrics favorite: monitorId={}, metricsName={}", monitorId, metricsName, e);
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Remove failed! " + e.getMessage()));
-        }
+        metricsFavoriteService.removeMetricsFavorite(user, monitorId, metricsName);
+        return ResponseEntity.ok(Message.success("Metrics removed from favorites successfully"));
     }
 
     @GetMapping("/{monitorId}")
@@ -95,13 +84,8 @@ public class MetricsFavoriteController {
         if (user == null) {
             return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "User not authenticated"));
         }
-        try {
-            Set<String> favoritedMetrics = metricsFavoriteService.getUserFavoritedMetrics(user, monitorId);
-            return ResponseEntity.ok(Message.success(favoritedMetrics));
-        } catch (Exception e) {
-            log.error("Failed to get user favorited metrics", e);
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Failed to get favorited metrics!"));
-        }
+        Set<String> favoritedMetrics = metricsFavoriteService.getUserFavoritedMetrics(user, monitorId);
+        return ResponseEntity.ok(Message.success(favoritedMetrics));
     }
 
     /**
