@@ -19,7 +19,28 @@
 package org.apache.hertzbeat.ai.agent.tools;
 
 /**
- * Tools for alert operations
+ * Tools for alert operations and alarm data queries
  */
 public interface AlertTools {
+
+    /**
+     * Query alerts with comprehensive filtering and pagination
+     * @param alertType Alert type (single, group, both)
+     * @param status Alert status (firing, resolved, all)
+     * @param search Search term for alert content or labels
+     * @param sort Sort field (startAt, triggerTimes, status)
+     * @param order Sort order (asc, desc)
+     * @param pageIndex Page index
+     * @param pageSize Page size
+     * @return Formatted string with alert information
+     */
+    String queryAlerts(String alertType, String status, String search, String sort, String order, Integer pageIndex, Integer pageSize);
+
+    /**
+     * Get alerts summary statistics
+     * @return Alert summary information including counts by status
+     */
+    String getAlertsSummary();
+
+
 }

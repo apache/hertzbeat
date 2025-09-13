@@ -58,6 +58,10 @@
 			<artifactId>hertzbeat-common</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.hertzbeat</groupId>
+			<artifactId>hertzbeat-alerter</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.usthe.sureness</groupId>
 			<artifactId>spring-boot3-starter-sureness</artifactId>
 		</dependency>
