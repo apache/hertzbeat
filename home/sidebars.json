@@ -199,7 +199,8 @@
             "help/hikvision_isapi",
             "help/dahua",
             "help/uniview",
-            "help/synology_nas"
+            "help/synology_nas",
+            "help/idrac"
           ]
         },
         {

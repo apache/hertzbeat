@@ -85,11 +85,10 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             return this.chatClient.prompt()
                     .messages(messages)
-                    .system(PromptProvider.HERTZBEAT_MONITORING_PROMPT)
+                    .system(PromptProvider.HERTZBEAT_SYSTEM_PROMPT)
                     .toolCallbacks(toolCallbackProvider)
                     .stream()
                     .content()
-                    .doOnNext(chunk -> log.debug("Received chunk: {}", chunk))
                     .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
                     .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
 
