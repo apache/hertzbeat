@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.calculate;
+package org.apache.hertzbeat.alert.calculate.periodic;
 
+import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -50,10 +51,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * Test case for {@link PeriodicAlertCalculator}
+ * Test case for {@link MetricsPeriodicAlertCalculator}
  */
 @ExtendWith(MockitoExtension.class)
-class PeriodicAlertCalculatorTest {
+class MetricsPeriodicAlertCalculatorTest {
 
     @Mock
     private DataSourceService dataSourceService;
@@ -65,7 +66,7 @@ class PeriodicAlertCalculatorTest {
     private AlarmCacheManager alarmCacheManager;
 
     @InjectMocks
-    private PeriodicAlertCalculator periodicAlertCalculator;
+    private MetricsPeriodicAlertCalculator periodicAlertCalculator;
 
     private AlertDefine rule;
 

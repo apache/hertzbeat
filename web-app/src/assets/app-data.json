@@ -137,6 +137,32 @@
       ]
     },
     {
+      "text": "Log",
+      "i18n": "menu.log",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
+        {
+          "text": "Integration",
+          "i18n": "menu.log.integration",
+          "icon": "anticon-api",
+          "link": "/log/integration/otlp"
+        },
+        {
+          "text": "Stream",
+          "i18n": "menu.log.stream",
+          "icon": "anticon-file-text",
+          "link": "/log/stream"
+        },
+        {
+          "text": "Manage",
+          "i18n": "menu.log.manage",
+          "icon": "anticon-database",
+          "link": "/log/manage"
+        }
+      ]
+    },
+    {
       "text": "Alarm",
       "i18n": "menu.alert",
       "group": true,

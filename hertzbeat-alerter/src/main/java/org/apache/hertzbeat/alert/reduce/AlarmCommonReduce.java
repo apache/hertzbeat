@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -65,6 +67,22 @@ public class AlarmCommonReduce {
 
     public void reduceAndSendAlarm(SingleAlert alert) {
         workerExecutor.execute(reduceAlarmTask(alert));
+    }
+
+    public void reduceAndSendAlarmGroup(Map<String, String> groupLabels, List<SingleAlert> alerts) {
+        workerExecutor.execute(() -> {
+            try {
+                // Generate alert fingerprint
+                for (SingleAlert alert : alerts) {
+                    String fingerprint = generateAlertFingerprint(alert.getLabels());
+                    alert.setFingerprint(fingerprint);
+                }
+                // Process the group alert
+                alarmGroupReduce.processGroupAlert(groupLabels, alerts);
+            } catch (Exception e) {
+                log.error("Reduce alarm group failed: {}", e.getMessage());
+            }
+        });
     }
     
     Runnable reduceAlarmTask(SingleAlert alert) {
