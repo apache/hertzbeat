@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.ai.agent.service;
 
+import org.apache.hertzbeat.ai.agent.event.OpenAiConfigChangeEvent;
 import org.apache.hertzbeat.ai.agent.pojo.dto.OpenAiConfigDto;
 
 /**
@@ -61,6 +62,12 @@ public interface OpenAiConfigService {
      * This method is typically called when configuration changes
      */
     void reloadConfig();
+
+    /**
+     * Handle OpenAI configuration change events
+     * @param event OpenAI configuration change event
+     */
+    void onOpenAiConfigChange(OpenAiConfigChangeEvent event);
 
     /**
      * Validation result class
