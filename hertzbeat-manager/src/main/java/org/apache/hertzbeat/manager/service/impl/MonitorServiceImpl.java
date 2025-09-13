@@ -270,7 +270,8 @@ public class MonitorServiceImpl implements MonitorService {
     public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
         // The request monitoring parameter matches the monitoring parameter definition mapping check
         Monitor monitor = monitorDto.getMonitor();
-        monitor.setHost(monitor.getHost().trim());
+        // The Service Discovery host field may be null
+        monitor.setHost(monitor.getHost() != null ? monitor.getHost().trim() : "");
         monitor.setName(monitor.getName().trim());
         Map<String, Param> paramMap = monitorDto.getParams()
                 .stream()
@@ -310,9 +311,14 @@ public class MonitorServiceImpl implements MonitorService {
         // Parameter definition structure verification
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
         if (!CollectionUtils.isEmpty(paramDefines)) {
+            boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
             for (ParamDefine paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 Param param = paramMap.get(field);
+                // Get the host from service discovery
+                if (!isStatic && "host".equals(field)) {
+                    continue;
+                }
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
