@@ -122,13 +122,12 @@ public class LogPeriodicAlertE2eTest {
         vector = new GenericContainer<>(DockerImageName.parse(VECTOR_IMAGE))
                 .withExposedPorts(VECTOR_PORT)
                 .withCopyFileToContainer(MountableFile.forClasspathResource("vector.yml"), VECTOR_CONFIG_PATH)
-                .withCommand("--config", VECTOR_CONFIG_PATH, "--verbose")
+                .withCommand("--config", "/etc/vector/vector.yml", "--verbose")
                 .withLogConsumer(outputFrame -> log.info("Vector: {}", outputFrame.getUtf8String()))
                 .withNetwork(Network.newNetwork())
                 .withEnv(ENV_HERTZBEAT_PORT, String.valueOf(port))
                 .waitingFor(Wait.forListeningPort())
                 .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
-
         vector.start();
     }
 
