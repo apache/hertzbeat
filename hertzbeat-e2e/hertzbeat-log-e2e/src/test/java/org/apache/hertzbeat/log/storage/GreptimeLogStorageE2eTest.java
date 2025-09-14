@@ -33,7 +33,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.Testcontainers;
-import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
@@ -80,10 +79,7 @@ public class GreptimeLogStorageE2eTest {
                 .withCommand("standalone", "start",
                         "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
                         "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
-                .waitingFor(new WaitAllStrategy()
-                        .withStrategy(Wait.forLogMessage(".*Service HTTP_SERVER is started.*", 1))
-                        .withStrategy(Wait.forLogMessage(".*Service GRPC_SERVER is started.*", 1))
-                )
+                .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
                 .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
         greptimedb.start();
     }
