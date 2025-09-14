@@ -81,7 +81,8 @@
           "label": "log",
           "items": [
             "help/log_integration",
-            "help/log_stream"
+            "help/log_stream",
+            "help/log_manage"
           ]
         },
         {
