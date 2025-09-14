@@ -80,7 +80,8 @@
           "type": "category",
           "label": "log",
           "items": [
-            "help/log_integration"
+            "help/log_integration",
+            "help/log_stream"
           ]
         },
         {
