@@ -107,7 +107,7 @@ public class LogRealTimeAlertE2eTest {
         capturedAlerts.clear();
 
         // Wait for real alert to be generated through AlarmCommonReduce
-        await().atMost(Duration.ofSeconds(120))
+        await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(2))
                 .untilAsserted(() -> assertFalse(capturedAlerts.isEmpty(),
                         "Should have generated at least one alert for error logs"));
@@ -134,7 +134,7 @@ public class LogRealTimeAlertE2eTest {
         capturedGroupAlerts.clear();
 
         // Wait for group alert to be generated via AlarmCommonReduce
-        await().atMost(Duration.ofSeconds(180))
+        await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertFalse(capturedGroupAlerts.isEmpty(),
                         "Should have generated high frequency warning group alert"));
@@ -181,7 +181,7 @@ public class LogRealTimeAlertE2eTest {
                 .name("high_frequency_warning")
                 .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME)
                 .expr("log.severityText == 'ERROR'")
-                .period(60) // 60 seconds window
+                .period(20) // 60 seconds window
                 .times(5)   // Trigger after 5 occurrences
                 .template("High frequency warnings detected: {{ __rows__ }} warnings in 30 seconds")
                 .enable(true)

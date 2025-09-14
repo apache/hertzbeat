@@ -122,7 +122,7 @@ public class GreptimeLogStorageE2eTest {
         List<LogEntry> capturedLogs = new ArrayList<>();
         
         // Wait for Vector to generate and send logs to HertzBeat
-        await().atMost(Duration.ofSeconds(90))
+        await().atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> {
                     // Poll log entries from the queue (non-blocking)

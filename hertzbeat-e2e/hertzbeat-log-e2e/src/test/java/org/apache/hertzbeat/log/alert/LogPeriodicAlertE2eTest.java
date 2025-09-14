@@ -145,7 +145,7 @@ public class LogPeriodicAlertE2eTest {
         periodicAlertRuleScheduler.updateSchedule(errorCountAlertByIndividual);
 
         // Wait for periodic individual alert to be generated through AlarmCommonReduce
-        await().atMost(Duration.ofSeconds(300))
+        await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertFalse(capturedAlerts.isEmpty(),
                         "Should have generated at least one periodic individual alert"));
@@ -173,7 +173,7 @@ public class LogPeriodicAlertE2eTest {
 
         periodicAlertRuleScheduler.updateSchedule(errorCountAlertByGroup);
 
-        await().atMost(Duration.ofSeconds(300))
+        await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> assertFalse(capturedGroupAlerts.isEmpty(),
                         "Should have generated periodic error count group alert"));
