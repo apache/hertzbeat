@@ -61,7 +61,7 @@ class LogSseControllerTest {
     @Test
     void testSubscribeWithoutFilters() throws Exception {
         // When: A request is made to the subscribe endpoint without any parameters
-        mockMvc.perform(get("/api/log/sse/subscribe")
+        mockMvc.perform(get("/api/logs/sse/subscribe")
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().isOk());
 
@@ -84,7 +84,7 @@ class LogSseControllerTest {
         String spanId = "abcdef1234567890";
 
         // When: A request is made with all filter parameters
-        mockMvc.perform(get("/api/log/sse/subscribe")
+        mockMvc.perform(get("/api/logs/sse/subscribe")
                         .param("severityText", severityText)
                         .param("severityNumber", severityNumber)
                         .param("traceId", traceId)
@@ -105,7 +105,7 @@ class LogSseControllerTest {
     @Test
     void testSubscribeWithInvalidSeverityNumber() throws Exception {
         // When: A request is made with a non-integer value for severityNumber
-        mockMvc.perform(get("/api/log/sse/subscribe")
+        mockMvc.perform(get("/api/logs/sse/subscribe")
                         .param("severityNumber", "not-a-number")
                         .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(status().is4xxClientError());
