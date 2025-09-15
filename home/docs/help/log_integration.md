@@ -48,6 +48,7 @@ POST /api/logs/ingest
 #### Request Headers
 
 - `Content-Type`: `application/json`
+- `Authorization`: `Bearer {token}`
 
 #### Request Body Format
 
@@ -118,6 +119,8 @@ exporters:
     logs_endpoint: http://{hertzbeat_host}:1157/api/logs/ingest/otlp
     compression: none
     encoding: json
+    headers:
+      Authorization: "Bearer {token}"
 
 service:
   pipelines:

@@ -70,6 +70,7 @@ resourceRole:
   - /api/sse/**===post===[admin,user]
   - /api/chat/**===get===[admin,user]
   - /api/chat/**===post===[admin,user]
+  - /api/logs/ingest/**===post===[admin,user]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
@@ -83,7 +84,6 @@ excludedResource:
   - /api/push/**===*
   - /api/status/page/public/**===*
   - /api/manager/sse/**===*
-  - /api/logs/ingest/**===*
   # web ui resource
   - /===get
   - /assets/**===get
