@@ -34,7 +34,7 @@ import io.swagger.v3.oas.annotations.Operation;
  * SSE controller for log streaming with filtering support
  */
 @RestController
-@RequestMapping(path = "/api/log/sse", produces = {TEXT_EVENT_STREAM_VALUE})
+@RequestMapping(path = "/api/logs/sse", produces = {TEXT_EVENT_STREAM_VALUE})
 public class LogSseController {
 
     private final LogSseManager emitterManager;

@@ -127,7 +127,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Build filter parameters
     const filterParams = this.buildFilterParams();
-    const url = `/api/log/sse/subscribe${filterParams ? `?${filterParams}` : ''}`;
+    const url = `/api/logs/sse/subscribe${filterParams ? `?${filterParams}` : ''}`;
 
     try {
       this.eventSource = new EventSource(url);
