@@ -110,3 +110,8 @@ sinks:
         method: newline_delimited
       headers:
         content-type: application/json
+      auth:
+        strategy: basic
+        user: admin
+        password: hertzbeat
+
