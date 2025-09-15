@@ -23,10 +23,10 @@ QuestDB is an open-source time-series database that stands out in the field of t
 > If you already have an existing QuestDB environment, you can skip directly to the YML configuration step.
 
 ### Install QuestDB
-
+<!-- markdownlint-disable MD029 -->
 1. Download the installation package
 
-​	Download the latest version for your operating system from the official GitHub repository:
+​ Download the latest version for your operating system from the official GitHub repository:
 
 ```shell
 # For Linux/macOS (taking v7.3.9 as an example; replace with the latest version number)
@@ -37,9 +37,9 @@ tar -zxvf questdb-7.3.9-no-jre-bin.tar.gz
 mv questdb-7.3.9 /opt/questdb  # Move to a common directory
 ```
 
-​	For Windows users:
+​ For Windows users:
 
-​	Download the zip package and extract it to C:\questdb or a custom directory.
+​ Download the zip package and extract it to C:\questdb or a custom directory.
 
 2. Start QuestDB
 
@@ -55,9 +55,9 @@ questdb.exe start
 
 3. Set up access password
 
-​	QuestDB enables authentication through a configuration file, which needs to be modified manually.
+​ QuestDB enables authentication through a configuration file, which needs to be modified manually.
 
-​	Edit the configuration file:
+​ Edit the configuration file:
 
 ```shell
 # For Linux/macOS
@@ -67,7 +67,7 @@ vi /opt/questdb/conf/server.conf
 notepad C:\questdb\conf\server.conf
 ```
 
-​	Enable authentication and configure the password:
+​ Enable authentication and configure the password:
 
 ```shell
 # Enable authentication (disabled by default)
@@ -82,7 +82,7 @@ http.security.admin.password=YourStrongPassword123!
 http.bind.to=127.0.0.1:9000
 ```
 
-​	Restart QuestDB for the changes to take effect:
+​ Restart QuestDB for the changes to take effect:
 
 ```shell
 # For Linux/macOS
@@ -96,13 +96,13 @@ questdb.exe start
 
 4. Configure QuestDB connection in HertzBeat's application.yml file
 
-​	Modify HertzBeat's configuration file
+​ Modify HertzBeat's configuration file
 
-​	Locate and edit the configuration file at hertzbeat/config/application.yml
+​ Locate and edit the configuration file at hertzbeat/config/application.yml
 
-​	⚠️ Note: For Docker container deployment, you need to mount the application.yml file to the host machine. For the installation package deployment, simply extract the package and modify the file at hertzbeat/config/application.yml.
+​ ⚠️ Note: For Docker container deployment, you need to mount the application.yml file to the host machine. For the installation package deployment, simply extract the package and modify the file at hertzbeat/config/application.yml.
 
-​	**Set the** **warehouse.store.jpa.enabled** **parameter to** **false****, configure the** **warehouse.store.questdb** **data source parameters (HOST, username, password, etc.), and set** **enabled** **to** **true** **to enable QuestDB.**
+​ **Set the** **warehouse.store.jpa.enabled** **parameter to** **false****, configure the** **warehouse.store.questdb** **data source parameters (HOST, username, password, etc.), and set** **enabled** **to** **true** **to enable QuestDB.**
 
 ```yaml
 warehouse:
@@ -134,3 +134,4 @@ cairo.default.ttl=30d
 ```
 
 5. Restart HertzBeat
+<!-- markdownlint-enable MD029 -->

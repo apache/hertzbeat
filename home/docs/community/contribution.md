@@ -143,7 +143,7 @@ git pull upstream master
 
 After your pr is merged, you can send an email  `dev@hertzbeat.apache.org` to request your Apache HertzBeat™ contributor electronic certificate.
 
-```
+```text
 Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
 Body:
 Hello,
@@ -165,7 +165,6 @@ Certificate Sample:
 
 ![cert](/img/docs/hertzbeat-cert.png)
 
-
 ### HertzBeat Improvement Proposal (HIP)
 
 If you have major new features(e.g., support metrics push gateway, support logs monitoring), you need to write a design document known as a HertzBeat Improvement Proposal (HIP). Before starting to write a HIP, make sure you follow the process [guide](https://github.com/apache/hertzbeat/tree/master/hip).
@@ -176,5 +175,4 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion
 
-[Discussion](contact) 
-
+[Discussion](contact)
