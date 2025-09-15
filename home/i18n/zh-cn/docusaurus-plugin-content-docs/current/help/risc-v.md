@@ -11,14 +11,14 @@ keywords: [ 开源监控系统, RISC-V架构, RISC-V 运行 HertzBeat ]
 
 确保你的 RISC-V 开发环境已正确配置，包括拥有兼容 RISC-V 的设备或模拟器。这里采用在 Ubuntu 环境上搭建 QEMU 模拟器的方式，来模拟 RISC-V 架构。
 
-** 1. 安装 QEMU 以及软件包 **
+**1. 安装 QEMU 以及软件包**
 
 ```shell
 sudo apt update
 sudo apt install opensbi qemu-system-misc u-boot-qemu
 ```
 
-** 2. 下载 RISC-V 架构的 Ubuntu 镜像 **
+**2. 下载 RISC-V 架构的 Ubuntu 镜像**
 
 下载地址：```https://ubuntu.com/download/risc-v```
 选择 `QEMU模拟器` ， 下载需要的版本。
@@ -47,11 +47,11 @@ qemu-system-riscv64 \
 
 > 在启动的镜像中配置支持 RISC-V 架构的 JDK，这里选用 Temurin JDK 17。
 
-** 1. 下载 Temurin JDK **
+**1. 下载 Temurin JDK**
 
 下载地址：```https://adoptium.net/zh-CN/temurin/releases```
 
-** 2. 配置 JDK 环境 **
+**2. 配置 JDK 环境**
 
 > 根据下载的版本不同，做适当更改
 
@@ -87,6 +87,7 @@ cd apache-hertzbeat-1.7.2-incubating-bin/bin/
 ```
 
 > 注意事项：
+>
 > 1. 请将 `OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.15_6.tar.gz` 替换为您实际下载的 JDK 文件名。
 > 2. 确保模拟器具备网络访问能力，以下载 HertzBeat。
 > 3. 若遇到问题，请检查磁盘权限和 Java 环境路径配置。
