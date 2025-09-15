@@ -1,11 +1,11 @@
 ---
 id: log_stream
-title: Log Stream Query
-sidebar_label: Log Stream Query  
+title: Log Stream
+sidebar_label: Log Stream
 keywords: [open source monitoring, log stream, real-time logs, log filtering]
 ---
 
-> HertzBeat's log stream feature provides real-time log viewing and filtering capabilities, allowing users to monitor system logs in real-time and perform precise filtering based on different conditions to quickly locate issues and analyze system status.
+> HertzBeat's log stream feature provides real-time log viewing and filtering capabilities, including real-time log monitoring, multi-dimensional filtering, and log detail viewing. Users can monitor system logs in real-time and perform precise filtering based on different conditions to quickly locate issues and analyze system status.
 
 ## Feature Overview
 
@@ -27,78 +27,42 @@ In the HertzBeat interface, navigate to "Log" -> "Log Stream" page, where you wi
   - Red: ERROR (17-20)
   - Volcano Red: FATAL (21-24)
 
-### Operation Controls
-
-#### Basic Controls
+### Display Controls
 
 - **Pause/Resume**: Click the pause button to pause new log display, click again to resume
 - **Clear Logs**: Clear all currently displayed log entries
 - **Scroll to Top**: Quickly return to the latest log position
+- **Auto Scroll**: System automatically scrolls to the latest logs by default. When users manually scroll to other positions, auto scroll will pause. Click "Scroll to Top" button or scroll to the top to re-enable auto scroll
 
-#### Auto Scroll
-
-- System automatically scrolls to the latest logs by default
-- When users manually scroll to other positions, auto scroll will pause
-- Click "Scroll to Top" to re-enable auto scroll
-
-## Log Filtering Features
-
-### Filter Configuration
+## Log Filtering
 
 Click the "Show Filters" button to expand the filter configuration area, supporting the following filter conditions:
 
-#### Severity Number
+| Filter Condition | Field Name | Data Type | Purpose | Example Value | Use Case |
+|------------------|------------|-----------|---------|---------------|----------|
+| **Severity Number** | `severityNumber` | Number | OpenTelemetry standard level | `9` | Filter by numeric level precisely |
+| **Severity Text** | `severityText` | String | Human-readable log level | `ERROR`, `WARN`, `INFO` | Quick filtering by level |
+| **Trace ID** | `traceId` | String | Distributed system request chain tracking | `1234567890abcdef` | Trace analysis, request flow analysis |
+| **Span ID** | `spanId` | String | Specific operation identifier within traces | `abcdef1234567890` | Microservice call analysis |
 
-- **Field Name**: `severityNumber`
-- **Data Type**: Number
-- **Value Range**: 1-24 (compliant with OpenTelemetry specifications)
-- **Usage Example**: Enter `9` to filter INFO level logs
+## Log Detail Viewing Features
 
-#### Severity Text
-
-- **Field Name**: `severityText`  
-- **Data Type**: String
-- **Common Values**: TRACE, DEBUG, INFO, WARN, ERROR, FATAL
-- **Usage Example**: Enter `ERROR` to filter error level logs
-
-#### Trace ID
-
-- **Field Name**: `traceId`
-- **Data Type**: String
-- **Purpose**: Track request chains in distributed systems
-
-#### Span ID
-
-- **Field Name**: `spanId`
-- **Data Type**: String
-- **Purpose**: Identify specific operations within traces
-
-### Filter Operations
-
-#### Combined Filtering
-
-- Supports setting multiple filter conditions simultaneously
-- Multiple conditions have an AND relationship (must all be satisfied)
-- Empty fields do not participate in filtering
-
-## Log Detail Viewing
-
-Click any log entry to open the detail modal, containing:
+Click any log entry to open the detail modal, providing complete log information display:
 
 ![log_entry_details](/img/docs/help/log_stream_log_entry_details.png)
 
-### Basic Information
+### Basic Information Area
 
 - **Severity Level**: Display level label and color identification
-- **Timestamp**: Formatted readable time
-- **Trace ID**: Complete trace identifier (if available)
-- **Span ID**: Complete span identifier (if available)
+- **Timestamp**: Formatted detailed time display
+- **Trace ID**: Complete distributed trace identifier
+- **Span ID**: Complete operation span identifier
 
 ### Complete JSON Data
 
-- Display complete JSON format of the original log entry
-- Contains all attributes and metadata information
-- Supports copying to clipboard
+- **Raw Data**: Display complete JSON format of the log entry
+- **Copy Function**: Support one-click copy to clipboard
+- **Formatted Display**: JSON data is formatted for easy reading
 
 ## Troubleshooting
 
