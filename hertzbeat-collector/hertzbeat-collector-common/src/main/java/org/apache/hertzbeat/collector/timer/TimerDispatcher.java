@@ -20,13 +20,11 @@ package org.apache.hertzbeat.collector.timer;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.ctc.wstx.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
@@ -36,7 +34,6 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.Timer;
-import org.apache.hertzbeat.common.util.StrUtil;
 import org.quartz.CronExpression;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
@@ -175,7 +172,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         this.wheelTimer.stop();
     }
 
-    private Long getNextExecutionInterval(Job job) {
+    public Long getNextExecutionInterval(Job job) {
         if (ScheduleTypeEnum.CRON.getType().equals(job.getScheduleType()) && job.getCronExpression() != null && !job.getCronExpression().isEmpty()) {
             try {
                 CronExpression cronExpression = new CronExpression(job.getCronExpression());
