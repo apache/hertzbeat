@@ -11,19 +11,19 @@ keywords: [ Open Source Monitoring System, RISC-V Architecture, RISC-V Running H
 
 Ensure your RISC-V development environment is properly configured, including compatible hardware or emulators. This guide uses the QEMU emulator on Ubuntu to simulate RISC-V architecture.
 
-** 1. Install QEMU and Required Packages **
+**1. Install QEMU and Required Packages**
 
 ```shell
 sudo apt update
 sudo apt install opensbi qemu-system-misc u-boot-qemu
 ```
 
-** 2. Download Ubuntu Image for RISC-V Architecture **
+**2. Download Ubuntu Image for RISC-V Architecture**
 
-Download link: https://ubuntu.com/download/risc-v
+Download link: <https://ubuntu.com/download/risc-v>
 Select the `QEMU Emulator` version and download your preferred release.
 
-** 3. Install Ubuntu on QEMU **
+**3. Install Ubuntu on QEMU**
 
 > Use QEMU to boot Ubuntu and emulate RISC-V architecture. Parameters (e.g., boot settings, disk size) can be customized.
 
@@ -50,10 +50,10 @@ Reference: [Ubuntu Official Documentation](https://canonical-ubuntu-boards.readt
 
 > Configure a JDK that supports RISC-V architecture. Here we use Temurin JDK 17.
 
-** 1. Download Temurin JDK **
-Download link: https://adoptium.net/temurin/releases
+**1. Download Temurin JDK**
+Download link: <https://adoptium.net/temurin/releases>
 
-** 2. Configure JDK Environment **
+**2. Configure JDK Environment**
 
 > Adjust commands based on your downloaded JDK version.
 
@@ -90,6 +90,7 @@ cd apache-hertzbeat-1.7.2-incubating-bin/bin/
 ```
 
 > Notes:
+>
 > 1. Replace `OpenJDK17U-jdk_riscv64_linux_hotspot_17.0.15_6.tar.gz` with your actual JDK filename.
 > 2. Ensure the emulator has internet access to download HertzBeat.
 > 3. If issues arise, verify disk permissions and Java environment paths.
