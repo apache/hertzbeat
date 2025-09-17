@@ -19,6 +19,7 @@ package org.apache.hertzbeat.common.entity.manager;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -89,6 +90,14 @@ public class Monitor {
     @Schema(title = "Monitoring of the acquisition interval time in seconds", example = "600", accessMode = READ_WRITE)
     @Min(10)
     private Integer intervals;
+    
+    @Schema(title = "Schedule type: interval | cron", example = "interval", accessMode = READ_WRITE)
+    @Size(max = 20)
+    private String scheduleType = "interval";
+    
+    @Schema(title = "Cron expression when scheduleType is cron", example = "0/5 * * * * ?", accessMode = READ_WRITE)
+    @Size(max = 100)
+    private String cronExpression;
     
     @Schema(title = "Task status 0: Paused, 1: Up, 2: Down", accessMode = READ_WRITE)
     @Min(0)

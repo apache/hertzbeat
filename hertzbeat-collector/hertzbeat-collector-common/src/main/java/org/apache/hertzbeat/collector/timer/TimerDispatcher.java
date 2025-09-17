@@ -17,13 +17,18 @@
 
 package org.apache.hertzbeat.collector.timer;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.ctc.wstx.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.constants.ScheduleTypeEnum;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -31,6 +36,8 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.Timer;
+import org.apache.hertzbeat.common.util.StrUtil;
+import org.quartz.CronExpression;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
@@ -58,12 +65,12 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
      * jobId - listener
      */
     private final Map<Long, CollectResponseEventListener> eventListeners;
-    
+
     /**
      * is dispatcher online running
      */
     private final AtomicBoolean started;
-    
+
     public TimerDispatcher() {
         this.wheelTimer = new HashedWheelTimer(r -> {
             Thread ret = new Thread(r, "wheelTimer");
@@ -76,6 +83,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         this.started = new AtomicBoolean(true);
     }
 
+
     @Override
     public void addJob(Job addJob, CollectResponseEventListener eventListener) {
         if (!this.started.get()) {
@@ -84,7 +92,8 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         }
         WheelTimerTask timerJob = new WheelTimerTask(addJob);
         if (addJob.isCyclic()) {
-            Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
+            Long nextExecutionTime = getNextExecutionInterval(addJob);
+            Timeout timeout = wheelTimer.newTimeout(timerJob, nextExecutionTime, TimeUnit.SECONDS);
             currentCyclicTaskMap.put(addJob.getId(), timeout);
         } else {
             for (Metrics metric : addJob.getMetrics()) {
@@ -112,6 +121,13 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
     }
 
     @Override
+    public void cyclicJob(WheelTimerTask timerTask) {
+        Job job = timerTask.getJob();
+        Long nextExecutionTime = getNextExecutionInterval(job);
+        cyclicJob(timerTask, nextExecutionTime, TimeUnit.SECONDS);
+    }
+
+    @Override
     public void deleteJob(long jobId, boolean isCyclic) {
         if (isCyclic) {
             Timeout timeout = currentCyclicTaskMap.remove(jobId);
@@ -125,7 +141,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             }
         }
     }
-    
+
     @Override
     public void goOnline() {
         currentCyclicTaskMap.forEach((key, value) -> value.cancel());
@@ -134,7 +150,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         currentTempTaskMap.clear();
         started.set(true);
     }
-    
+
     @Override
     public void goOffline() {
         started.set(false);
@@ -143,8 +159,8 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         currentTempTaskMap.forEach((key, value) -> value.cancel());
         currentTempTaskMap.clear();
     }
-    
-    
+
+
     @Override
     public void responseSyncJobData(long jobId, List<CollectRep.MetricsData> metricsDataTemps) {
         currentTempTaskMap.remove(jobId);
@@ -153,9 +169,36 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             eventListener.response(metricsDataTemps);
         }
     }
-    
+
     @Override
     public void destroy() throws Exception {
         this.wheelTimer.stop();
     }
+
+    private Long getNextExecutionInterval(Job job) {
+        if (ScheduleTypeEnum.CRON.getType().equals(job.getScheduleType()) && job.getCronExpression() != null && !job.getCronExpression().isEmpty()) {
+            try {
+                CronExpression cronExpression = new CronExpression(job.getCronExpression());
+                Date nextExecutionTime = cronExpression.getNextValidTimeAfter(new Date());
+                long delay = nextExecutionTime.getTime() - System.currentTimeMillis();
+                // Convert to seconds and ensure non-negative
+                return Math.max(0, delay / 1000);
+            } catch (Exception e) {
+                log.error("Invalid cron expression: {}", job.getCronExpression(), e);
+                // Fall back to interval scheduling if cron is invalid
+                return job.getInterval();
+            }
+        } else {
+            if (job.getDispatchTime() > 0) {
+                long spendTime = System.currentTimeMillis() - job.getDispatchTime();
+                // Calculate remaining interval in seconds, preserving millisecond precision
+                long intervalMs = job.getInterval() * 1000 - spendTime;
+                // Ensure non-negative
+                return Math.max(0, intervalMs / 1000);
+            }
+            return job.getInterval();
+        }
+    }
+
+
 }
