@@ -87,8 +87,6 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    questdb.exe start
    ```
 
-   
-
 4. 在hertzbeat的`application.yml`配置文件配置QuestDB数据库连接
 
    配置HertzBeat的配置文件
@@ -111,8 +109,6 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
          password: quest
    ```
 
-   
-
    参数说明：
 
    | 参数名称 | 参数说明         |
@@ -129,4 +125,3 @@ QuestDB 是一款开源的时序数据库，因其高性能和低延迟等特点
    > ```
 
 5. 重启 HertzBeat
-

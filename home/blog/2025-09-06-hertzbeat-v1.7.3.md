@@ -57,7 +57,6 @@ We are thrilled to announce the official release of Apache HertzBeat™ 1.7.3. T
 
 Special thanks to the following community members for their collaborative efforts:
 
-
 > @pjfanning @chingjustwe @delei @rowankid @MasamiYui @tomsun28 @Aias00 @zhangshenghang @zqr10159 @LiuTianyou @yy549159265 @lx1229 @VampireAchao
 > @cto-huhang @pwallk @bigcyy @sarthakeash @Carpe-Wang @YxYL6125 @tuzuy @lynx009 @Duansg @carlpinto25 @Calvin979 @Cyanty @Saramanda9988
 
