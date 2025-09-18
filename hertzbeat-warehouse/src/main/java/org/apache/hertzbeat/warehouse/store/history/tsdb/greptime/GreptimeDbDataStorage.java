@@ -26,6 +26,26 @@ import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import io.greptime.options.GreptimeOptions;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
+import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.Base64Util;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.*;
+import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,29 +64,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataConstants;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
-import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.Base64Util;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 /**
  * GreptimeDB data storage, only supports GreptimeDB version >= v0.5
@@ -201,48 +200,15 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(greptimeProperties.username())
-                    && StringUtils.hasText(greptimeProperties.password())) {
-                String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
-                String encodedAuth = Base64Util.encode(authStr);
-                headers.add(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth);
-            }
-            Instant now = Instant.now();
-            long start;
-            try {
-                if (NumberUtils.isParsable(history)) {
-                    start = NumberUtils.toLong(history);
-                    start = (ZonedDateTime.now().toEpochSecond() - start);
-                } else {
-                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                    assert temporalAmount != null;
-                    Instant dateTime = now.minus(temporalAmount);
-                    start = dateTime.getEpochSecond();
+            HttpEntity<Void> httpEntity = getHttpEntity();
+            String finalTimeSeriesSelector = timeSeriesSelector;
+            URI uri = getURI(history, uriComponents -> {
+                MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
+                if (!queryParams.isEmpty()) {
+                    return "{" + finalTimeSeriesSelector + "}";
                 }
-            } catch (Exception e) {
-                log.error("history time error: {}. use default: 6h", e.getMessage());
-                start = now.minus(6, ChronoUnit.HOURS).getEpochSecond();
-            }
-
-            long end = now.getEpochSecond();
-            String step = "60s";
-            if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
-                step = "1h";
-            } else if (end - start >= Duration.ofDays(7).getSeconds()) {
-                step = "4h";
-            }
-
-            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromUriString(greptimeProperties.httpEndpoint() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
-                    .queryParam("start", start)
-                    .queryParam("end", end)
-                    .queryParam("step", step)
-                    .queryParam("db", greptimeProperties.database())
-                    .build(true).toUri();
+                return null;
+            });
 
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
                     HttpMethod.GET, httpEntity, PromQlQueryContent.class);
@@ -282,9 +248,163 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
-        return getHistoryMetricData(monitorId, app, metrics, metric, label, history);
+        Map<String, List<Value>> instanceValuesMap = getHistoryMetricData(monitorId, app, metrics, metric, label, history);
+
+        String name = getTableName(metrics);
+        String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
+        if (!CommonConstants.PROMETHEUS.equals(app)) {
+            timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"}";
+        }
+
+        try {
+            // max
+            String finalTimeSeriesSelector = timeSeriesSelector;
+            URI uri = getURI(history, uriComponents -> {
+                MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
+                if (!queryParams.isEmpty()) {
+                    String step = queryParams.getFirst("step");
+                    return "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])";
+                }
+                return null;
+            });
+            requestAndPutValue(uri, instanceValuesMap, Value::setMax);
+            // min
+            uri = getURI(history, uriComponents -> {
+                MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
+                if (!queryParams.isEmpty()) {
+                    String step = queryParams.getFirst("step");
+                    return "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])";
+                }
+                return null;
+            });
+            requestAndPutValue(uri, instanceValuesMap, Value::setMin);
+            // avg
+            uri = getURI(history, uriComponents -> {
+                MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
+                if (!queryParams.isEmpty()) {
+                    String step = queryParams.getFirst("step");
+                    return "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])";
+                }
+                return null;
+            });
+            requestAndPutValue(uri, instanceValuesMap, Value::setMean);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+
+        return instanceValuesMap;
     }
-    
+
+    /**
+     * Get HTTP instance
+     *
+     * @return HTTP instance
+     */
+    private HttpEntity<Void> getHttpEntity() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        if (StringUtils.hasText(greptimeProperties.username())
+                && StringUtils.hasText(greptimeProperties.password())) {
+            String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
+            String encodedAuth = Base64Util.encode(authStr);
+            headers.add(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth);
+        }
+        return new HttpEntity<>(headers);
+    }
+
+    /**
+     * Get Request URI
+     *
+     * @param history       history range
+     * @param queryFunction Request parameters
+     * @return URI
+     */
+    private URI getURI(String history, Function<UriComponents, String> queryFunction) {
+        Instant now = Instant.now();
+        long start;
+        try {
+            if (NumberUtils.isParsable(history)) {
+                start = NumberUtils.toLong(history);
+                start = (ZonedDateTime.now().toEpochSecond() - start);
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
+                assert temporalAmount != null;
+                Instant dateTime = now.minus(temporalAmount);
+                start = dateTime.getEpochSecond();
+            }
+        } catch (Exception e) {
+            log.error("history time error: {}. use default: 6h", e.getMessage());
+            start = now.minus(6, ChronoUnit.HOURS).getEpochSecond();
+        }
+
+        long end = now.getEpochSecond();
+        String step = "60s";
+        if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
+            step = "1h";
+        } else if (end - start >= Duration.ofDays(7).getSeconds()) {
+            step = "4h";
+        }
+
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(greptimeProperties.httpEndpoint() + QUERY_RANGE_PATH)
+                .queryParam("start", start)
+                .queryParam("end", end)
+                .queryParam("step", step)
+                .queryParam("db", greptimeProperties.database());
+        UriComponents cloneUriComponents = uriComponentsBuilder.cloneBuilder().build(true);
+        String queryValue = queryFunction.apply(cloneUriComponents);
+        if (!StringUtils.hasText(queryValue)) {
+            return null;
+        }
+        UriComponents uriComponents = uriComponentsBuilder
+                .queryParam(
+                        URLEncoder.encode("query", StandardCharsets.UTF_8),
+                        URLEncoder.encode(queryValue, StandardCharsets.UTF_8)
+                ).build(true);
+        return uriComponents.toUri();
+    }
+
+    /**
+     * Request Greptime and assign a value
+     *
+     * @param uri               Request URI
+     * @param instanceValuesMap metrics data
+     * @param valueConsumer     Consumer used for assigning values
+     */
+    private void requestAndPutValue(URI uri, Map<String, List<Value>> instanceValuesMap, BiConsumer<Value, String> valueConsumer) {
+        HttpEntity<Void> httpEntity = getHttpEntity();
+        ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            log.error("query metrics data from greptime failed. {}", responseEntity);
+            return;
+        }
+        log.debug("query metrics data from greptime success. {}", uri);
+        PromQlQueryContent body = responseEntity.getBody();
+        if (body == null || body.getData() == null || body.getData().getResult() == null) {
+            return;
+        }
+        List<PromQlQueryContent.ContentData.Content> contents = body.getData().getResult();
+        for (PromQlQueryContent.ContentData.Content content : contents) {
+            Map<String, String> labels = content.getMetric();
+            labels.remove(LABEL_KEY_NAME);
+            labels.remove(LABEL_KEY_INSTANCE);
+            String labelStr = JsonUtil.toJson(labels);
+            if (content.getValues() == null || content.getValues().isEmpty()) {
+                continue;
+            }
+            List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
+            if (valueList.size() == content.getValues().size()) {
+                for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
+                    Value value = valueList.get(timestampIndex);
+                    Object[] valueArr = content.getValues().get(timestampIndex);
+                    String avgValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                    valueConsumer.accept(value, avgValue);
+                }
+            }
+        }
+    }
+
     @Override
     public void destroy() {
         if (this.greptimeDb != null) {
