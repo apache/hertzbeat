@@ -3,7 +3,6 @@ title: Becoming an Apache Committer is a recognition of my participation in open
 author: yuluo-yx
 author_title: Shown Ji
 author_url: https://github.com/yuluo-yx
-author_image_url: https://avatars.githubusercontent.com/u/77964041
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
 ---
@@ -36,7 +35,7 @@ The first contribution in the Apache community should be to delete a `{@link}` c
 
 ### Get nominated and become a Committer
 
-This nomination was recommended by PPMC Member [Logic](https://github.com/zqr10159) of Apache HertzbeatP(Incubating). Thanks to the Apache Hertzbeat Team. I was successfully nominated to become a Hertzbeat Committer and got my own Apache mailbox.
+This nomination was recommended by PPMC Member [Logic](https://github.com/zqr10159) of Apache HertzbeatP(Incubating). Thanks to the Apache HertzBeat™ Team. I was successfully nominated to become a Hertzbeat Committer and got my own Apache mailbox.
 
 ![Apache ID Email](/img/blog/committer/yuluo-yx/3.jpg)
 
@@ -70,9 +69,9 @@ Before contributing to the community, it is important to understand the communit
 
 #### Project Committer Nomination Criteria
 
-The conditions for a Project PPMC Team to nominate a Committer are different. Take Apache Hertzbeat for example:
+The conditions for a Project PPMC Team to nominate a Committer are different. Take Apache HertzBeat™ for example:
 
-! [Apache Hertzbeat becoming committer](/img/blog/committer/yuluo-yx/7.jpg)
+! [Apache HertzBeat™ becoming committer](/img/blog/committer/yuluo-yx/7.jpg)
 
 Each project has its own standards, and these standards are not set in stone and will be adjusted at each stage of the project.
 
@@ -96,5 +95,5 @@ Project communities tend to welcome contributions in all ways: be it code, docum
 
 ## Random Thoughts
 
-I'm writing this post to commemorate the special occasion of becoming an Apache Hertzbeat Committer, and to motivate me to get involved in open source in the future.
+I'm writing this post to commemorate the special occasion of becoming an Apache HertzBeat™ Committer, and to motivate me to get involved in open source in the future.
 Keep up the enthusiasm, keep up the coding, and thank you for all the people who have helped me while I've been involved in open source. I wish Hertzbeat the best of luck in its incubation and graduation to become a top Apache project! 🎉

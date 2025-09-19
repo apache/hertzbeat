@@ -1,21 +1,20 @@
 ---
-title: Announcement of Apache Hertzbeat 1.6.1 Release
+title: Announcement of Apache HertzBeat™ 1.6.1 Release
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-author_image_url: https://avatars.githubusercontent.com/u/29418975?s=400&v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
 Dear Community Members,
 
-We are thrilled to announce the official release of Apache Hertzbeat version 1.6.1! This release incorporates 468 pull requests, introducing numerous new features and enhancements. In this post, we’ll delve into the key updates of version 1.6.1. We warmly welcome more developers and users to join our open-source community!
+We are thrilled to announce the official release of Apache HertzBeat™ version 1.6.1! This release incorporates 468 pull requests, introducing numerous new features and enhancements. In this post, we’ll delve into the key updates of version 1.6.1. We warmly welcome more developers and users to join our open-source community!
 
 ## Downloads and Documentation
 
-- **Apache Hertzbeat 1.6.1 Download Link**: <https://hertzbeat.apache.org/zh-cn/docs/download>
-- **Apache Hertzbeat Documentation**: <https://hertzbeat.apache.org/zh-cn/docs/>
+- **Apache HertzBeat™ 1.6.1 Download Link**: <https://hertzbeat.apache.org/zh-cn/docs/download>
+- **Apache HertzBeat™ Documentation**: <https://hertzbeat.apache.org/zh-cn/docs/>
 
 ## Major Updates
 
@@ -75,17 +74,17 @@ Special thanks to **@zqr10159** for supporting this release and to the following
 
 <https://hertzbeat.apache.org/>
 
-**Apache Hertzbeat Download Link:**
+**Apache HertzBeat™ Download Link:**
 
 <https://hertzbeat.apache.org/zh-cn/docs/download>
 
-**Apache Hertzbeat Docker Images:**
+**Apache HertzBeat™ Docker Images:**
 
-Apache Hertzbeat provides Docker images for each release, available on Docker Hub:
+Apache HertzBeat™ provides Docker images for each release, available on Docker Hub:
 
 - HertzBeat: <https://hub.docker.com/r/apache/hertzbeat>
 - HertzBeat Collector: <https://hub.docker.com/r/apache/hertzbeat-collector>
 
-**How to Contribute to the Apache Hertzbeat Open Source Community?**
+**How to Contribute to the Apache HertzBeat™ Open Source Community?**
 
 <https://hertzbeat.apache.org/zh-cn/docs/community/contribution>

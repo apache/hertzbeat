@@ -21,11 +21,13 @@ app: process
 name:
   zh-CN: Linux进程
   en-US: Linux Process
+  ja-JP: Linuxプロセス
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 Linux系统进程进行监控，支持根据进程名称(或部分名称)匹配进行监控，支持进程的 CPU使用率、内存使用率、物理内存、IO 等监控。<br>您可以点击“<i>新建 Linux进程</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH protocol</a> to monitor Linux system processes. It supports monitoring based on process names (or partial names), and provides monitoring for CPU usage, memory usage, physical memory, IO, and more. <br> You can click on "<i>New Linux Process</i>" and configure HOST port, account, and other related parameters for addition. It supports SSH account password or key authentication. Alternatively, you can choose "<i>More Actions</i>" to import existing configurations.
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH 協議</a> 對 Linux 系統進程進行監控，支持根據進程名稱（或部分名稱）匹配進行監控，支持進程的 CPU 使用率、內存使用率、物理內存、IO 等監控。<br>您可以點擊“新建 Linux 进程”，並配置 HOST 端口、帳戶等相關參數進行添加，支持 SSH 帳戶密碼或金鑰認證。或者選擇“更多操作”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> Linux システムの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 Linuxプロセス</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/process/
   en-US: https://hertzbeat.apache.org/docs/help/process/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -54,7 +58,6 @@ params:
     # required-true or false
     required: true
     # default value
-    # 默认值
     defaultValue: 22
   # field-param field key
   - field: timeout
@@ -62,6 +65,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -76,6 +80,7 @@ params:
     name:
       zh-CN: 复用连接
       en-US: Reuse Connection
+      ja-JP: 接続再利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -87,6 +92,7 @@ params:
     name:
       zh-CN: 使用代理
       en-US: Use Proxy Connection
+      ja-JP: プロキシ接続利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -98,6 +104,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -110,6 +117,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -120,6 +128,7 @@ params:
     name:
       zh-CN: 私钥
       en-US: PrivateKey
+      ja-JP: 秘密鍵
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -132,6 +141,7 @@ params:
     name:
       zh-CN: 进程名称
       en-US: process_name
+      ja-JP: プロセス名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -144,6 +154,7 @@ params:
     name:
       zh-CN: 代理主机
       en-US: Proxy Host
+      ja-JP: プロキシホスト
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -155,6 +166,7 @@ params:
     name:
       zh-CN: 代理端口
       en-US: Proxy Port
+      ja-JP: プロキシポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -171,6 +183,7 @@ params:
     name:
       zh-CN: 代理用户名
       en-US: Proxy Username
+      ja-JP: プロキシユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -185,6 +198,7 @@ params:
     name:
       zh-CN: 代理密码
       en-US: Proxy Password
+      ja-JP: プロキシパスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -197,6 +211,7 @@ params:
     name:
       zh-CN: 代理主机私钥
       en-US: proxyPrivateKey
+      ja-JP: プロキシ秘密鍵
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -211,6 +226,7 @@ metrics:
     i18n:
       zh-CN: 进程基本信息
       en-US: Basic Info
+      ja-JP: プロセス情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -224,33 +240,39 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
+          ja-JP: プロセスID
       - field: user
         type: 1
         label: true
         i18n:
           zh-CN: 用户
           en-US: User
+          ja-JP: ユーザー
       - field: cpu
         type: 0
         i18n:
           zh-CN: CPU使用率
           en-US: CPU
+          ja-JP: CPU使用率
       - field: mem
         type: 0
         i18n:
           zh-CN: 内存使用率
           en-US: MEM
+          ja-JP: メモリ使用率
       - field: rss
         type: 0
         unit: MB
         i18n:
           zh-CN: 物理内存
           en-US: rss
+          ja-JP: 物理メモリ
       - field: cmd
         type: 1
         i18n:
           zh-CN: 运行命令
           en-US: cmd
+          ja-JP: コマンド
     units:
       - rss=KB->MB
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -289,6 +311,7 @@ metrics:
     i18n:
       zh-CN: 内存使用信息
       en-US: MEM
+      ja-JP: メモリ情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
 
@@ -304,12 +327,14 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
+          ja-JP: プロセスID
       - field: VmPeak
         type: 1
         label: true
         i18n:
           zh-CN: 虚拟内存峰值
           en-US: VmPeak
+          ja-JP: 仮想メモリの最大値
         unit: kB
       - field: VmSize
         type: 1
@@ -317,6 +342,7 @@ metrics:
         i18n:
           zh-CN: 虚拟内存
           en-US: VmSize
+          ja-JP: 仮想メモリ
         unit: kB
       - field: VmLck
         type: 1
@@ -324,6 +350,7 @@ metrics:
         i18n:
           zh-CN: 锁定内存
           en-US: VmLck
+          ja-JP: 物理メモリのロック
         unit: kB
       - field: VmPin
         type: 1
@@ -331,6 +358,7 @@ metrics:
         i18n:
           zh-CN: 固定内存
           en-US: VmPin
+          ja-JP: 物理メモリの固定値
         unit: kB
       - field: VmHWM
         type: 1
@@ -338,6 +366,7 @@ metrics:
         i18n:
           zh-CN: 物理内存峰值
           en-US: VmHWM
+          ja-JP: 物理メモリの最大値
         unit: kB
       - field: VmRSS
         type: 1
@@ -345,6 +374,7 @@ metrics:
         i18n:
           zh-CN: 物理内存使用
           en-US: VmRSS
+          ja-JP: 使用した物理メモリ
         unit: kB
       - field: VmData
         type: 1
@@ -352,6 +382,7 @@ metrics:
         i18n:
           zh-CN: 数据段大小
           en-US: VmData
+          ja-JP: 仮想メモリのページ
         unit: kB
       - field: VmStk
         type: 1
@@ -359,6 +390,7 @@ metrics:
         i18n:
           zh-CN: 堆栈大小
           en-US: VmStk
+          ja-JP: スタック領域のサイズ
         unit: kB
       - field: VmExe
         type: 1
@@ -366,6 +398,7 @@ metrics:
         i18n:
           zh-CN: 代码大小
           en-US: VmExe
+          ja-JP: 実行可能な仮想メモリ
         unit: kB
       - field: VmLib
         type: 1
@@ -373,6 +406,7 @@ metrics:
         i18n:
           zh-CN: 共享库大小
           en-US: VmLib
+          ja-JP: ライブラリのサイズ
         unit: kB
       - field: VmPTE
         type: 1
@@ -380,6 +414,7 @@ metrics:
         i18n:
           zh-CN: 页表项大小
           en-US: VmPTE
+          ja-JP: ページテーブルエントリのサイズ
         unit: kB
       - field: VmSwap
         type: 1
@@ -387,6 +422,7 @@ metrics:
         i18n:
           zh-CN: 交换空间
           en-US: VmSwap
+          ja-JP: スワップ領域
         unit: kB
 
 
@@ -427,6 +463,7 @@ metrics:
     i18n:
       zh-CN: 其他监控信息
       en-US: Other
+      ja-JP: その他の情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -439,21 +476,25 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
+          ja-JP: プロセスID
       - field: path
         type: 1
         i18n:
           zh-CN: 执行路径
           en-US: path
+          ja-JP: 実行パス
       - field: date
         type: 1
         i18n:
           zh-CN: 启动时间
           en-US: date
+          ja-JP: 起動時間
       - field: fd_count
         type: 1
         i18n:
           zh-CN: 打开文件描述符数量
           en-US: fd_count
+          ja-JP: ファイル記述子数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh
@@ -491,6 +532,7 @@ metrics:
     i18n:
       zh-CN: IO
       en-US: IO
+      ja-JP: IO
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -503,41 +545,49 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
+          ja-JP: プロセスID
       - field: rchar
         type: 1
         i18n:
           zh-CN: 字符读取数
           en-US: rchar
+          ja-JP: チャーの読み取り数
       - field: wchar
         type: 1
         i18n:
           zh-CN: 字符写入数
           en-US: wchar
+          ja-JP: チャーの書き込み数
       - field: syscr
         type: 1
         i18n:
           zh-CN: 系统读取次数
           en-US: syscr
+          ja-JP: システムの読み取り回数
       - field: syscw
         type: 1
         i18n:
           zh-CN: 系统写入次数
           en-US: syscw
+          ja-JP: システムの書き込み回数
       - field: read_bytes
         type: 1
         i18n:
           zh-CN: 读取字节数
           en-US: read_bytes
+          ja-JP: 読み取りバイト数
       - field: write_bytes
         type: 1
         i18n:
           zh-CN: 写入字节数
           en-US: write_bytes
+          ja-JP: 書き込みバイト数
       - field: cancelled_write_bytes
         type: 1
         i18n:
           zh-CN: 取消写入字节数
           en-US: cancelled_write_bytes
+          ja-JP: 書き込みをキャンセルするバイト数
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh

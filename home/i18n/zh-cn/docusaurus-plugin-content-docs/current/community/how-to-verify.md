@@ -110,9 +110,7 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 
 进行如下检查：
 
-- [ ] 文件夹包含单词`incubating`
 - [ ] 存在`LICENSE`和`NOTICE`文件
-- [ ] 存在`DISCLAIMER`或`DISCLAIMER-WIP`文件
 - [ ] `NOTICE`文件中的年份正确
 - [ ] 所有文本文件开头都有ASF许可证
 - [ ] 检查第三方依赖许可证：
@@ -136,9 +134,7 @@ cd apache-hertzbeat-${release_version}-incubating-src
 进行如下检查:
 
 - [ ] 检查源码包是否包含由于包含不必要文件，致使tar包过于庞大
-- [ ] 文件夹包含单词`incubating`
 - [ ] 存在`LICENSE`和`NOTICE`文件
-- [ ] 存在`DISCLAIMER`或`DISCLAIMER-WIP`文件
 - [ ] `NOTICE`文件中的年份正确
 - [ ] 只存在文本文件，不存在二进制文件
 - [ ] 所有文件的开头都有ASF许可证

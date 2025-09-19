@@ -6,7 +6,7 @@ sidebar_label: Update Account Secret
 
 ## Update Account
 
-Apache HertzBeat (incubating) default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat
+Apache HertzBeat™ default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat
 If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.
 Modify the following **part parameters** in sureness.yml：**[Note⚠️Other default sureness configuration parameters should be retained]**
 
@@ -56,7 +56,6 @@ resourceRole:
 # rule: api===method 
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
-  - /api/alerts/report/**===*
   - /api/account/auth/**===*
   - /api/i18n/**===get
   - /api/apps/hierarchy===get

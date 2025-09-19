@@ -3,7 +3,6 @@ title: Welcome to HertzBeat Community Committer!
 author: Calvin979
 author_title: Calvin979
 author_url: https://github.com/Calvin979
-author_image_url: https://avatars.githubusercontent.com/u/131688897?v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
@@ -36,4 +35,4 @@ During the reading of Hertzbeat source code, I learned a lot of code writing and
 
 ## Conclusion
 
-It's an interesting experience for me to become a Committer of Apache Hertzbeat and it motivates me day by day. I will continue to contribute to the Apache Hertzbeat community in the future, and I hope that Apache Hertzbeat can successfully graduate from the Apache incubator.
+It's an interesting experience for me to become a Committer of Apache HertzBeat™ and it motivates me day by day. I will continue to contribute to the Apache HertzBeat™ community in the future, and I hope that Apache HertzBeat™ can successfully graduate from the Apache incubator.

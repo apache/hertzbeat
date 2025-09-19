@@ -1,21 +1,20 @@
 ---
-title: Apache Hertzbeat 1.7.0 发布公告
+title: Apache HertzBeat™ 1.7.0 发布公告
 author: tomsun28
 author_title: tomsun28
 author_url: https://github.com/zhangshenghang
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, release]
 keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 ---
 
 亲爱的社区小伙伴们，
 
-我们很高兴地宣布 Apache Hertzbeat 1.7.0 版本正式发布！
+我们很高兴地宣布 Apache HertzBeat™ 1.7.0 版本正式发布！
 
 ## Downloads and Documentation
 
-- **Apache Hertzbeat 1.7.0 Download Link**: <https://hertzbeat.apache.org/zh-cn/docs/download>
-- **Apache Hertzbeat Documentation**: <https://hertzbeat.apache.org/zh-cn/docs/>
+- **Apache HertzBeat™ 1.7.0 Download Link**: <https://hertzbeat.apache.org/zh-cn/docs/download>
+- **Apache HertzBeat™ Documentation**: <https://hertzbeat.apache.org/zh-cn/docs/>
 
 ## Major Updates
 
@@ -300,17 +299,17 @@ keywords: [open source monitoring system, alerting system, Hertzbeat, release]
 
 <https://hertzbeat.apache.org/>
 
-**Apache Hertzbeat 下载地址：**
+**Apache HertzBeat™ 下载地址：**
 
 <https://hertzbeat.apache.org/zh-cn/docs/download>
 
-**Apache Hertzbeat Docker 镜像版本：**
+**Apache HertzBeat™ Docker 镜像版本：**
 
-> Apache HertzBeat 为每个版本制作了 Docker 镜像. 你可以从 Docker Hub 拉取使用.
+> Apache HertzBeat™ 为每个版本制作了 Docker 镜像. 你可以从 Docker Hub 拉取使用.
 
 - HertzBeat <https://hub.docker.com/r/apache/hertzbeat>
 - HertzBeat Collector <https://hub.docker.com/r/apache/hertzbeat-collector>
 
-**Apache Hertzbeat 开源社区如何参与？**
+**Apache HertzBeat™ 开源社区如何参与？**
 
 <https://hertzbeat.apache.org/zh-cn/docs/community/contribution>

@@ -22,10 +22,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
+
 import java.util.Collections;
 import java.util.List;
+
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.apache.hertzbeat.manager.service.StatusPageService;
@@ -110,11 +111,7 @@ class StatusPagePublicControllerTest {
     @Test
     public void testQueryStatusPageIncident() throws Exception {
 
-        List<StatusPageIncident> incidents = Collections.singletonList(new StatusPageIncident());
-        when(statusPageService.queryStatusPageIncidents()).thenReturn(incidents);
-
-        mockMvc.perform(get("/api/status/page/public/incident")
-                        .accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/status/page/public/incident"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
     }
