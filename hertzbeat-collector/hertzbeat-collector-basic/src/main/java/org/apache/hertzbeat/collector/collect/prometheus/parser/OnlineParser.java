@@ -81,8 +81,18 @@ public class OnlineParser {
         return metricFamilyMap;
     }
 
+    /**
+     * Parses Prometheus metrics from the given {@link InputStream}, but only for the specified metric name.
+     * <p>
+     * This method differs from {@link #parseMetrics(InputStream)} in that it filters and parses only the metric
+     * with the given name, rather than parsing all available metrics from the input stream.
+     *
+     * @param inputStream the input stream containing Prometheus metrics data
+     * @param metric the name of the metric to filter and parse (case-insensitive)
+     * @return a map of metric family names to {@link MetricFamily} objects, or {@code null} if parsing fails
+     * @throws IOException if an I/O error occurs while reading from the input stream
+     */
     public static Map<String, MetricFamily> parseMetrics(InputStream inputStream, String metric) throws IOException {
-        Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
         try {
             int i = getChar(inputStream);
             while (i != -1) {
