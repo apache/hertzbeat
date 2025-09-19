@@ -60,20 +60,6 @@ class CommonUtilTest {
     }
 
     @Test
-    void testParseIsLong() {
-        assertTrue(CommonUtil.isLong("1234"));
-        assertTrue(CommonUtil.isLong("0"));
-        assertFalse(CommonUtil.isLong(null));
-        assertFalse(CommonUtil.isLong(""));
-        assertFalse(CommonUtil.isLong("   "));
-        assertFalse(CommonUtil.isLong("12.34"));
-        assertFalse(CommonUtil.isLong("1,234"));
-        assertFalse(CommonUtil.isLong("1234L"));
-        assertFalse(CommonUtil.isLong("296.347%"));
-        assertFalse(CommonUtil.isLong("445_126"));
-    }
-
-    @Test
     void testParseTimeStrToSecond() {
         assertEquals(36000, CommonUtil.parseTimeStrToSecond("10:00"));
         assertEquals(43800, CommonUtil.parseTimeStrToSecond("12:10:00"));

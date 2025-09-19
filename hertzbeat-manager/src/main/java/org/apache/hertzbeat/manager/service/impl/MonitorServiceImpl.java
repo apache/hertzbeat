@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,7 +45,6 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.AesUtil;
-import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
@@ -642,9 +642,9 @@ public class MonitorServiceImpl implements MonitorService {
             if (StringUtils.hasText(search)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + search + "%");
                 Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + search.toLowerCase() + "%");
-                if (CommonUtil.isLong(search)){
-                    Predicate predicateId = criteriaBuilder.equal(root.get("id"), Long.parseLong(search));
-                    orList.add(predicateId);
+                Long id = Longs.tryParse(search);
+                if (id != null) {
+                    orList.add(criteriaBuilder.equal(root.get("id"), id));
                 }
                 orList.add(predicateHost);
                 orList.add(predicateName);
