@@ -21,7 +21,7 @@ keywords: [ open-source, monitoring system, CI/CD, DevOps, Jenkins monitoring ]
 | Parameter Name    | Parameter Help Description                                                                                            |
 |-------------------|-----------------------------------------------------------------------------------------------------------------------|
 | Target Host       | The monitored peer's IPv4, IPv6, or domain name. Note⚠️: Do not include protocol headers (e.g., https://, http://).   |
-| Port              | Pulsar's webServicePort value, defaulting to 8080.                                                                    |
+| Port              | Jenkins port value, default is 8080.                                                                                  |
 | Task Name         | The name identifying this monitoring task. The name must be unique.                                                   |
 | Query Timeout     | Set the connection timeout in milliseconds (ms). Default is 3000 ms.                                                  |
 | Monitoring Cycle  | The interval time for periodic data collection, measured in seconds. The minimum configurable interval is 30 seconds. |
