@@ -732,6 +732,8 @@
   "monitor.import": "導入監控",
   "monitor.intervals": "監控周期",
   "monitor.intervals.tip": "周期性采集數據的時間間隔,單位秒",
+  "monitor.period": "監控周期",
+  "monitor.period.tip": "監控執行的周期表達式或時間間隔",
   "monitor.scheduleType": "調度類型",
   "monitor.scheduleType.tip": "選擇監控的調度類型",
   "monitor.scheduleType.interval": "秒間隔",

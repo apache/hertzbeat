@@ -93,7 +93,7 @@ public class Monitor {
     
     @Schema(title = "Schedule type: interval | cron", example = "interval", accessMode = READ_WRITE)
     @Size(max = 20)
-    private String scheduleType = "interval";
+    private String scheduleType;
     
     @Schema(title = "Cron expression when scheduleType is cron", example = "0/5 * * * * ?", accessMode = READ_WRITE)
     @Size(max = 100)

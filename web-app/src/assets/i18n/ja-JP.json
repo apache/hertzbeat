@@ -733,6 +733,8 @@
   "monitor.import": "モニターをインポート",
   "monitor.intervals": "間隔",
   "monitor.intervals.tip": "周期的なデータ収集の間隔時間（秒単位）",
+  "monitor.period": "監視期間",
+  "monitor.period.tip": "監視実行期間式または時間間隔",
   "monitor.scheduleType": "スケジュールタイプ",
   "monitor.scheduleType.tip": "モニタースケジュールタイプを選択",
   "monitor.scheduleType.interval": "秒間隔",

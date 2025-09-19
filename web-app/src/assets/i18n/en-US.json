@@ -735,6 +735,8 @@
   "monitor.import": "Import Monitor",
   "monitor.intervals": "Intervals",
   "monitor.intervals.tip": "Monitor the interval time of periodic collection of data, unit second",
+  "monitor.period": "Monitor Period",
+  "monitor.period.tip": "Monitor execution period expression or time interval",
   "monitor.scheduleType": "Schedule Type",
   "monitor.scheduleType.tip": "Select the monitor scheduling type",
   "monitor.scheduleType.interval": "Second Interval",

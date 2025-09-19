@@ -815,6 +815,8 @@
   "monitor.import": "Importar monitor",
   "monitor.intervals": "Intervalo de monitoramento",
   "monitor.intervals.tip": "Intervalo de tempo para coleta periódica de dados (em segundos)",
+  "monitor.period": "Período de Monitoramento",
+  "monitor.period.tip": "Expressão de período ou intervalo de tempo da execução do monitor",
   "monitor.scheduleType": "Tipo de agendamento",
   "monitor.scheduleType.tip": "Selecione o tipo de agendamento do monitor",
   "monitor.scheduleType.interval": "Intervalo em segundos",
