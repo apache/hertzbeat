@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -105,7 +106,45 @@ class WebHookAlertNotifyHandlerImplTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
 
 
-        assertThrows(AlertNoticeException.class, 
+        assertThrows(AlertNoticeException.class,
                 () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertWithQueryParametersSuccess() {
+        receiver.setHookUrl("https://prod-12.chinaeast2.logic.azure.cn:443/workflows/test/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=testSignature123");
+
+        ResponseEntity<String> responseEntity =
+            new ResponseEntity<>("null", HttpStatus.OK);
+
+        when(restTemplate.postForEntity(eq(receiver.getHookUrl()), any(), eq(String.class))).thenReturn(responseEntity);
+
+        webHookAlertNotifyHandler.send(receiver, template, groupAlert);
+    }
+
+    @Test
+    public void testNotifyAlertWithTruncatedUrlFailure() {
+        receiver.setHookUrl("https://prod-12.chinaeast2.logic.azure.cn:443/workflows/test/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0");
+
+        assertThrows(AlertNoticeException.class,
+                () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertWithLongUrlSuccess() {
+        StringBuilder longUrl = new StringBuilder("https://prod-12.chinaeast2.logic.azure.cn:443/workflows/test/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=");
+        for (int i = 0; i < 200; i++) {
+            longUrl.append("x");
+        }
+        receiver.setHookUrl(longUrl.toString());
+
+        ResponseEntity<String> responseEntity =
+            new ResponseEntity<>("null", HttpStatus.OK);
+
+        when(restTemplate.postForEntity(eq(receiver.getHookUrl()), any(), eq(String.class))).thenReturn(responseEntity);
+
+        webHookAlertNotifyHandler.send(receiver, template, groupAlert);
+
+        assertTrue(receiver.getHookUrl().length() > 300);
     }
 }

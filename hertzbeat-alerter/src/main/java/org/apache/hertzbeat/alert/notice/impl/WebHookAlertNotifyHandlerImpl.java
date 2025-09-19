@@ -39,6 +39,23 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         try {
+            String hookUrl = receiver.getHookUrl();
+
+            // Validate URL completeness and add debug logging
+            if (hookUrl == null || hookUrl.trim().isEmpty()) {
+                throw new AlertNoticeException("Webhook URL is null or empty");
+            }
+
+            // Check if URL is truncated (missing required query parameters)
+            if (hookUrl.contains("logic.azure.cn") && !hookUrl.contains("sig=")) {
+                log.warn("Webhook URL appears to be truncated. Original URL might have been longer than 300 characters. URL: {}", hookUrl);
+                throw new AlertNoticeException("Webhook URL appears to be truncated - missing required signature parameter");
+            }
+
+            // Log complete URL for debugging
+            log.debug("Sending webhook to URL: {}", hookUrl);
+            log.debug("URL length: {} characters", hookUrl.length());
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             //  alert.setContent(escapeJsonStr(alert.getContent()));
@@ -46,11 +63,11 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             webhookJson = webhookJson.replace(",\n  }", "\n }");
 
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
-            ResponseEntity<String> entity = restTemplate.postForEntity(receiver.getHookUrl(), alertHttpEntity, String.class);
+            ResponseEntity<String> entity = restTemplate.postForEntity(hookUrl, alertHttpEntity, String.class);
             if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
-                log.debug("Send WebHook: {} Success", receiver.getHookUrl());
+                log.debug("Send WebHook: {} Success", hookUrl);
             } else {
-                log.warn("Send WebHook: {} Failed: {}", receiver.getHookUrl(), entity.getBody());
+                log.warn("Send WebHook: {} Failed: {}", hookUrl, entity.getBody());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {
