@@ -80,6 +80,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
+    private static final String LABEL_KEY_START_TIME = "start";
+    private static final String LABEL_KEY_END_TIME = "end";
 
     private GreptimeDB greptimeDb;
 
@@ -192,37 +194,134 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
                                                          String label, String history) {
+        Map<String, Long> timeRange = getTimeRange(history);
+        Long start = timeRange.get(LABEL_KEY_START_TIME);
+        Long end = timeRange.get(LABEL_KEY_END_TIME);
+
+        String step = getTimeStep(start, end);
+
+        return getHistoryData(start, end, step, monitorId, app, metrics, metric);
+    }
+
+    private String getTableName(String metrics) {
+        return metrics;
+    }
+
+    @Override
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
+                                                                 String metric, String label, String history) {
+        Map<String, Long> timeRange = getTimeRange(history);
+        Long start = timeRange.get(LABEL_KEY_START_TIME);
+        Long end = timeRange.get(LABEL_KEY_END_TIME);
+
+        String step = getTimeStep(start, end);
+
+        Map<String, List<Value>> instanceValuesMap = getHistoryData(start, end, step, monitorId, app, metrics, metric);
+
+        // Queries below this point may yield inconsistent results due to exceeding the valid data range.
+        // Therefore, we restrict the valid range by obtaining the post-query timeframe.
+        // Since `gretime`'s `end` excludes the specified time, we add 4 hours.
+        List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().stream().toList().get(0));
+        // effective time
+        long effectiveStart = values.get(0).getTime() / 1000;
+        long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + 60 * 60 * 4;
+
+        String name = getTableName(metrics);
+        String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
+        if (!CommonConstants.PROMETHEUS.equals(app)) {
+            timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"}";
+        }
+
+        try {
+            // max
+            String finalTimeSeriesSelector = timeSeriesSelector;
+            URI uri = getURI(effectiveStart, effectiveEnd, step, uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMax);
+            // min
+            uri = getURI(effectiveStart, effectiveEnd, step, uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMin);
+            // avg
+            uri = getURI(effectiveStart, effectiveEnd, step, uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMean);
+        } catch (Exception e) {
+            log.error("query interval metrics data from greptime error. {}", e.getMessage(), e);
+        }
+
+        return instanceValuesMap;
+    }
+
+    /**
+     * Get time range
+     *
+     * @param history history range
+     * @return time range
+     */
+    private Map<String, Long> getTimeRange(String history) {
+        // Build start and end times
+        Instant now = Instant.now();
+        long start;
+        try {
+            if (NumberUtils.isParsable(history)) {
+                start = NumberUtils.toLong(history);
+                start = (ZonedDateTime.now().toEpochSecond() - start);
+            } else {
+                TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
+                assert temporalAmount != null;
+                Instant dateTime = now.minus(temporalAmount);
+                start = dateTime.getEpochSecond();
+            }
+        } catch (Exception e) {
+            log.error("history time error: {}. use default: 6h", e.getMessage());
+            start = now.minus(6, ChronoUnit.HOURS).getEpochSecond();
+        }
+        long end = now.getEpochSecond();
+        return Map.of("start", start, "end", end);
+    }
+
+    /**
+     * Get time step
+     *
+     * @param start start time
+     * @param end   end time
+     * @return step
+     */
+    private String getTimeStep(long start, long end) {
+        // get step
+        String step = "60s";
+        if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
+            step = "1h";
+        } else if (end - start >= Duration.ofDays(7).getSeconds()) {
+            step = "4h";
+        }
+        return step;
+    }
+
+    /**
+     * Get history metric data
+     *
+     * @param start     start time
+     * @param end       end time
+     * @param step      step
+     * @param monitorId monitor id
+     * @param app       monitor type
+     * @param metrics   metrics
+     * @param metric    metric
+     * @return history metric data
+     */
+    private Map<String, List<Value>> getHistoryData(long start, long end, String step, Long monitorId, String app, String metrics, String metric) {
         String name = getTableName(metrics);
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + name + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
             timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
         }
+
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpEntity<Void> httpEntity = getHttpEntity();
+
             String finalTimeSeriesSelector = timeSeriesSelector;
-
-            // Build start and end times
-            Instant now = Instant.now();
-            long start;
-            try {
-                if (NumberUtils.isParsable(history)) {
-                    start = NumberUtils.toLong(history);
-                    start = (ZonedDateTime.now().toEpochSecond() - start);
-                } else {
-                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
-                    assert temporalAmount != null;
-                    Instant dateTime = now.minus(temporalAmount);
-                    start = dateTime.getEpochSecond();
-                }
-            } catch (Exception e) {
-                log.error("history time error: {}. use default: 6h", e.getMessage());
-                start = now.minus(6, ChronoUnit.HOURS).getEpochSecond();
-            }
-            long end = now.getEpochSecond();
-
-            URI uri = getURI(start, end, uriComponents -> {
+            URI uri = getURI(start, end, step, uriComponents -> {
                 MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
                 if (!queryParams.isEmpty()) {
                     return "{" + finalTimeSeriesSelector + "}";
@@ -259,69 +358,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 log.error("query metrics data from greptime failed. {}", responseEntity);
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error("query metrics data from greptime error. {}", e.getMessage(), e);
         }
-        return instanceValuesMap;
-    }
-
-    private String getTableName(String metrics) {
-        return metrics;
-    }
-
-    @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String label, String history) {
-        Map<String, List<Value>> instanceValuesMap = getHistoryMetricData(monitorId, app, metrics, metric, label, history);
-
-        // Queries below this point may yield inconsistent results due to exceeding the valid data range.
-        // Therefore, we restrict the valid range by obtaining the post-query timeframe.
-        // Since `gretime`'s `end` excludes the specified time, we add 4 hours.
-        List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().stream().toList().get(0));
-        long startTime = values.get(0).getTime() / 1000;
-        long endTime = (values.get(values.size() - 1).getTime() + 1000 * 60 * 60 * 4) / 1000;
-
-        String name = getTableName(metrics);
-        String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
-        if (!CommonConstants.PROMETHEUS.equals(app)) {
-            timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"}";
-        }
-
-        try {
-            // max
-            String finalTimeSeriesSelector = timeSeriesSelector;
-            URI uri = getURI(startTime, endTime, uriComponents -> {
-                MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
-                if (!queryParams.isEmpty()) {
-                    String step = queryParams.getFirst("step");
-                    return "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])";
-                }
-                return null;
-            });
-            requestAndPutValue(uri, instanceValuesMap, Value::setMax);
-            // min
-            uri = getURI(startTime, endTime, uriComponents -> {
-                MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
-                if (!queryParams.isEmpty()) {
-                    String step = queryParams.getFirst("step");
-                    return "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])";
-                }
-                return null;
-            });
-            requestAndPutValue(uri, instanceValuesMap, Value::setMin);
-            // avg
-            uri = getURI(startTime, endTime, uriComponents -> {
-                MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
-                if (!queryParams.isEmpty()) {
-                    String step = queryParams.getFirst("step");
-                    return "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])";
-                }
-                return null;
-            });
-            requestAndPutValue(uri, instanceValuesMap, Value::setMean);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
-
         return instanceValuesMap;
     }
 
@@ -348,16 +386,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      *
      * @param start         start time
      * @param end           end time
-     * @param queryFunction Request parameters
+     * @param step          interval
+     * @param queryFunction request parameters
      * @return URI
      */
-    private URI getURI(long start, long end, Function<UriComponents, String> queryFunction) {
-        String step = "60s";
-        if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
-            step = "1h";
-        } else if (end - start >= Duration.ofDays(7).getSeconds()) {
-            step = "4h";
-        }
+    private URI getURI(long start, long end, String step, Function<UriComponents, String> queryFunction) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(greptimeProperties.httpEndpoint() + QUERY_RANGE_PATH)
                 .queryParam("start", start)
                 .queryParam("end", end)
@@ -377,13 +410,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * Request Greptime and assign a value
+     * Request greptime and assign a value
      *
-     * @param uri               Request URI
+     * @param uri               request URI
      * @param instanceValuesMap metrics data
-     * @param valueConsumer     Consumer used for assigning values
+     * @param valueConsumer     consumer used for assigning values
      */
-    private void requestAndPutValue(URI uri, Map<String, List<Value>> instanceValuesMap, BiConsumer<Value, String> valueConsumer) {
+    private void requestIntervalMetricAndPutValue(URI uri, Map<String, List<Value>> instanceValuesMap, BiConsumer<Value, String> valueConsumer) {
         if (uri == null) {
             return;
         }
@@ -391,10 +424,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
                 HttpMethod.GET, httpEntity, PromQlQueryContent.class);
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            log.error("query metrics data from greptime failed. {}", responseEntity);
+            log.error("query interval metrics data from greptime failed. {}", responseEntity);
             return;
         }
-        log.debug("query metrics data from greptime success. {}", uri);
+        log.debug("query interval metrics data from greptime success. {}", uri);
         PromQlQueryContent body = responseEntity.getBody();
         if (body == null || body.getData() == null || body.getData().getResult() == null) {
             return;
