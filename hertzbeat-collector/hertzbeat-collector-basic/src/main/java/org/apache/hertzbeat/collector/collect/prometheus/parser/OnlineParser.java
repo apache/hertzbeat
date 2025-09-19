@@ -129,6 +129,15 @@ public class OnlineParser {
 
     /**
      * Start parsing the complete metric from the already parsed metric name.
+     *
+     * @param inputStream      the input stream containing the metric data
+     * @param stringBuilder    the StringBuilder used for parsing and temporary storage
+     * @param metricFamilyMap  the map to store parsed MetricFamily objects, keyed by metric name
+     * @param metricName       the name of the metric to parse
+     * @param next             the next character to process from the input stream
+     * @return a CharChecker containing the next character after parsing the metric
+     * @throws IOException     if an I/O error occurs while reading the input stream
+     * @throws FormatException if the input format is invalid
      */
     private static CharChecker parseMetricFromName(InputStream inputStream, StringBuilder stringBuilder,
                                                    Map<String, MetricFamily> metricFamilyMap,
