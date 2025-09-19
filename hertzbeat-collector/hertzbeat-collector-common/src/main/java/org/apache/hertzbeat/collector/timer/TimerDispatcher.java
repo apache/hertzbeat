@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.collector.timer;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +36,8 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.timer.HashedWheelTimer;
 import org.apache.hertzbeat.common.timer.Timeout;
 import org.apache.hertzbeat.common.timer.Timer;
-import org.quartz.CronExpression;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Component;
 
 /**
@@ -175,9 +177,9 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
     public Long getNextExecutionInterval(Job job) {
         if (ScheduleTypeEnum.CRON.getType().equals(job.getScheduleType()) && job.getCronExpression() != null && !job.getCronExpression().isEmpty()) {
             try {
-                CronExpression cronExpression = new CronExpression(job.getCronExpression());
-                Date nextExecutionTime = cronExpression.getNextValidTimeAfter(new Date());
-                long delay = nextExecutionTime.getTime() - System.currentTimeMillis();
+                CronExpression cronExpression = CronExpression.parse(job.getCronExpression());
+                ZonedDateTime nextExecutionTime = cronExpression.next(ZonedDateTime.now());
+                long delay = Duration.between(ZonedDateTime.now(), nextExecutionTime).toMillis();
                 // Convert to seconds and ensure non-negative
                 return Math.max(0, delay / 1000);
             } catch (Exception e) {
