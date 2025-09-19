@@ -21,10 +21,12 @@ app: idrac
 name:
   zh-CN: Dell iDRAC
   en-US: Dell iDRAC
+  ja-JP: Dell iDRAC
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 Dell iDRAC 的通用指标(可用性，系统信息，传感器状态等)进行采集监控。<br>您可以点击 “<i>新建 Dell iDRAC</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring Dell iDRAC general performance metrics. <br>You can click the "<i>New Dell iDRAC</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP プロトコルを介して</a> Dell iDRACの一般的なメトリクスを監視します。<br>「<i>新規 Dell iDRAC</i>」をクリックしてSNMPなどのパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/idrac
   en-US: https://hertzbeat.apache.org/docs/help/idrac
@@ -36,6 +38,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -46,6 +49,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -60,6 +64,7 @@ params:
     name:
       zh-CN: SNMP 版本
       en-US: SNMP Version
+      ja-JP: SNMPバージョン
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -78,6 +83,7 @@ params:
     name:
       zh-CN: SNMP 团体字
       en-US: SNMP Community
+      ja-JP: SNMPコミュニティ
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -97,6 +103,7 @@ params:
     name:
       zh-CN: SNMP username
       en-US: SNMP username
+      ja-JP: SNMPユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -115,6 +122,7 @@ params:
     name:
       zh-CN: SNMP contextName
       en-US: SNMP contextName
+      ja-JP: SNMPコンテキスト名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -133,6 +141,7 @@ params:
     name:
       zh-CN: SNMP authPassword
       en-US: SNMP authPassword
+      ja-JP: SNMP認証パスワード
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -151,6 +160,7 @@ params:
     name:
       zh-CN: authPassword 加密方式
       en-US: authPassword Encryption
+      ja-JP: 認証暗号
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -171,6 +181,7 @@ params:
     name:
       zh-CN: SNMP privPassphrase
       en-US: SNMP privPassphrase
+      ja-JP: SNMPパスワードフレーズ
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -189,6 +200,7 @@ params:
     name:
       zh-CN: privPassword 加密方式
       en-US: privPassword Encryption
+      ja-JP: パスワードの暗号
     # type-param field type(radio mapping the html radio tag)
     type: radio
     # required-true or false
@@ -209,6 +221,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -218,7 +231,6 @@ params:
     # hide-is hide this field and put it in advanced layout
     hide: true
     # default value
-    # 默认值
     defaultValue: 6000
 # collect metrics config list
 metrics:
@@ -227,6 +239,7 @@ metrics:
     i18n:
       zh-CN: 系统状态
       en-US: System Status
+      ja-JP: システム情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -238,27 +251,32 @@ metrics:
         i18n:
           zh-CN: 全局系统状态
           en-US: Global System Status
+          ja-JP: システム状態
       - field: lcd
         type: 1
         i18n:
           zh-CN: 系统前面板状态
           en-US: System LCD Status
+          ja-JP: システムLCDの状態
       - field: storage
         type: 1
         i18n:
           zh-CN: 全局存储状态
           en-US: Global Storage Status
+          ja-JP: ストレージ状態
       - field: power
         type: 1
         i18n:
           zh-CN: 系统电源状态
           en-US: System Power State
+          ja-JP: システム電源状態
       - field: up_time
         type: 1
         unit: day
         i18n:
           zh-CN: 系统运行时间
           en-US: System Power Up Time
+          ja-JP: アップタイム
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - globalSystemStatusEnum
@@ -316,6 +334,7 @@ metrics:
     i18n:
       zh-CN: 电源供应器
       en-US: Power Supply
+      ja-JP: 電源供給ユニット
     priority: 1
     fields:
       - field: index
@@ -323,40 +342,47 @@ metrics:
         i18n:
           zh-CN: 索引
           en-US: Index
+          ja-JP: 番号
       - field: name
         type: 1
         label: true
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: wattage
         type: 1
         unit: W
         i18n:
           zh-CN: 额定功率
           en-US: Wattage
+          ja-JP: ワット数
       - field: input_wattage
         type: 0
         unit: W
         i18n:
           zh-CN: 输入功率
           en-US: Input Wattage
+          ja-JP: 入力ワット数
       - field: max_input_voltage
         type: 1
         unit: V
         i18n:
           zh-CN: 最大输入电压
           en-US: Max Input Voltage
+          ja-JP: 最大入力電圧
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: 状態
     aliasFields:
       - powerSupplyIndex
       - powerSupplyLocationName
@@ -401,6 +427,7 @@ metrics:
     i18n:
       zh-CN: 冷却设备
       en-US: Cooling Devices
+      ja-JP: クーリング情報
     priority: 1
     fields:
       - field: index
@@ -408,28 +435,33 @@ metrics:
         i18n:
           zh-CN: 索引
           en-US: Index
+          ja-JP: 番号
       - field: name
         type: 1
         label: true
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: reading
         type: 0
         unit: RPM
         i18n:
           zh-CN: 转速
           en-US: Reading
+          ja-JP: 回転数
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: 状態
     aliasFields:
       - coolingDeviceIndex
       - coolingDeviceLocationName
@@ -467,6 +499,7 @@ metrics:
     i18n:
       zh-CN: 温度传感器
       en-US: Temperature Sensors
+      ja-JP: 内部温度情報
     priority: 1
     fields:
       - field: index
@@ -474,23 +507,27 @@ metrics:
         i18n:
           zh-CN: 索引
           en-US: Index
+          ja-JP: 番号
       - field: name
         type: 1
         label: true
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: reading
         type: 0
         unit: °C
         i18n:
           zh-CN: 温度
           en-US: Temperature
+          ja-JP: 温度
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: 状態
     aliasFields:
       - temperatureProbeIndex
       - temperatureProbeLocationName
@@ -525,6 +562,7 @@ metrics:
     i18n:
       zh-CN: 电压传感器
       en-US: Voltage Sensors
+      ja-JP: 電圧情報
     priority: 1
     fields:
       - field: index
@@ -532,28 +570,33 @@ metrics:
         i18n:
           zh-CN: 索引
           en-US: Index
+          ja-JP: 番号
       - field: name
         type: 1
         label: true
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: reading
         type: 0
         unit: V
         i18n:
           zh-CN: 电压
           en-US: Voltage
+          ja-JP: 電圧
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: 状態
     aliasFields:
       - voltageProbeIndex
       - voltageProbeLocationName
@@ -592,6 +635,7 @@ metrics:
     i18n:
       zh-CN: 内存设备
       en-US: Memory Devices
+      ja-JP: メモリ情報
     priority: 1
     fields:
       - field: index
@@ -599,40 +643,47 @@ metrics:
         i18n:
           zh-CN: 索引
           en-US: Index
+          ja-JP: 番号
       - field: name
         type: 1
         label: true
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: type
         type: 1
         i18n:
           zh-CN: 类型
           en-US: Type
+          ja-JP: タイプ
       - field: sizes
         type: 1
         unit: G
         i18n:
           zh-CN: 容量
           en-US: Size
+          ja-JP: メモリ容量
       - field: speed
         type: 1
         unit: MHz
         i18n:
           zh-CN: 频率
           en-US: Speed
+          ja-JP: メモリの最大速度
       - field: current_speed
         type: 0
         unit: MHz
         i18n:
           zh-CN: 运行频率
           en-US: Current Speed
+          ja-JP: 現在のメモリ速度
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: 状態
     aliasFields:
       - memoryDeviceIndex
       - memoryDeviceLocationName
@@ -677,6 +728,7 @@ metrics:
     i18n:
       zh-CN: 处理器
       en-US: Processors
+      ja-JP: プロセッサ情報
     priority: 1
     fields:
       - field: index
@@ -684,28 +736,33 @@ metrics:
         i18n:
           zh-CN: 索引
           en-US: Index
+          ja-JP: 番号
       - field: name
         type: 1
         label: true
         i18n:
           zh-CN: 名称
           en-US: Name
+          ja-JP: 名前
       - field: speed
         type: 0
         unit: MHz
         i18n:
           zh-CN: 当前频率
           en-US: Current Speed
+          ja-JP: プロセッサ速度
       - field: family
         type: 1
         i18n:
           zh-CN: 家族
           en-US: Family
+          ja-JP: ファミリー
       - field: status
         type: 1
         i18n:
           zh-CN: 状态
           en-US: Status
+          ja-JP: 状態
     aliasFields:
       - processorDeviceIndex
       - processorDeviceLocationName
