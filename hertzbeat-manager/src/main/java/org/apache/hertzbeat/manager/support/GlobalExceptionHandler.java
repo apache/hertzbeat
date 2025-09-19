@@ -251,6 +251,6 @@ public class GlobalExceptionHandler {
         }
         log.error("[monitor]-[unknown error happen]-{}", errorMessage, exception);
         Message<Void> message = Message.fail(MONITOR_CONFLICT_CODE, errorMessage);
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
     }
 }
