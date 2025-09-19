@@ -108,7 +108,7 @@ public class OnlineParser {
                     stringBuilder.delete(0, stringBuilder.length());
 
                     // step2: Determine whether this metric should be parsed.
-                    if (metric.equalsIgnoreCase(metricName)) {
+                    if (metric.equals(metricName)) {
                         parseMetricFromName(inputStream, stringBuilder, metricFamilyMap, metricName, next);
                     } else {
                         skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
