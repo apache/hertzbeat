@@ -67,11 +67,15 @@
             <app-monitor-data-table
               class="card"
               [height]="'400px'"
-              *ngFor="let metric of metrics; let i = index"
+              *ngFor="let metric of displayedMetrics; let i = index"
               [metrics]="metric"
               [monitorId]="monitorId"
               [app]="app"
+              [favoriteStatus]="favoriteMetricsSet.has(metric)"
+              (favoriteToggle)="toggleFavorite($event)"
             ></app-monitor-data-table>
+            <!-- IO sentinel for lazy loading -->
+            <div id="metrics-load-sentinel" style="width: 100%; height: 1px"></div>
           </div>
         </nz-tab>
         <nz-tab [nzTitle]="title2Template" (nzClick)="loadMetricChart()">
@@ -82,13 +86,94 @@
           <div class="cards">
             <app-monitor-data-chart
               class="card"
-              *ngFor="let item of chartMetrics; let i = index"
+              *ngFor="let item of displayedChartMetrics; let i = index"
               [app]="app"
               [metrics]="item.metrics"
               [metric]="item.metric"
               [unit]="item.unit"
               [monitorId]="monitorId"
             ></app-monitor-data-chart>
+            <!-- IO sentinel for lazy loading charts -->
+            <div id="charts-load-sentinel" style="width: 100%; height: 1px"></div>
+          </div>
+        </nz-tab>
+        <nz-tab [nzTitle]="favoriteTabTemplate" (nzClick)="loadFavoriteMetrics()">
+          <ng-template #favoriteTabTemplate>
+            <i nz-icon nzType="star" nzTheme="outline"></i>
+            {{ 'monitor.detail.favorite' | i18n }}
+          </ng-template>
+          <div class="favorite-content">
+            <div class="favorite-selector">
+              <nz-select
+                [(ngModel)]="favoriteTabIndex"
+                (ngModelChange)="onFavoriteTabChange($event)"
+                style="width: 200px; margin-bottom: 16px"
+              >
+                <nz-option [nzValue]="0" [nzLabel]="'monitor.detail.realtime' | i18n">
+                  <i nz-icon nzType="pic-right"></i>
+                  {{ 'monitor.detail.realtime' | i18n }}
+                </nz-option>
+                <nz-option [nzValue]="1" [nzLabel]="'monitor.detail.history' | i18n">
+                  <i nz-icon nzType="line-chart"></i>
+                  {{ 'monitor.detail.history' | i18n }}
+                </nz-option>
+              </nz-select>
+            </div>
+
+            <!-- realtime -->
+            <div *ngIf="favoriteTabIndex === 0">
+              <div class="cards lists" *ngIf="displayedFavoriteMetrics.length > 0">
+                <app-monitor-data-table
+                  class="card"
+                  [height]="'400px'"
+                  *ngFor="let metric of displayedFavoriteMetrics; let i = index"
+                  [metrics]="metric"
+                  [monitorId]="monitorId"
+                  [app]="app"
+                  [favoriteStatus]="favoriteMetricsSet.has(metric)"
+                  (favoriteToggle)="toggleFavorite($event)"
+                ></app-monitor-data-table>
+                <div
+                  id="favoriteMetricsLoadSentinel"
+                  style="width: 100%; height: 1px"
+                  *ngIf="hasMoreFavorites && !isLoadingMoreFavorites"
+                ></div>
+              </div>
+              <div class="empty-favorite" *ngIf="favoriteMetrics.length === 0">
+                <nz-empty [nzNotFoundContent]="emptyRealtimeTemplate">
+                  <ng-template #emptyRealtimeTemplate>
+                    <p style="margin-top: 16px; color: #999">{{ 'monitor.favorite.empty.realtime' | i18n }}</p>
+                  </ng-template>
+                </nz-empty>
+              </div>
+            </div>
+
+            <!-- history -->
+            <div *ngIf="favoriteTabIndex === 1">
+              <div class="cards" *ngIf="displayedFavoriteChartMetrics.length > 0">
+                <app-monitor-data-chart
+                  class="card"
+                  *ngFor="let metric of displayedFavoriteChartMetrics"
+                  [app]="app"
+                  [metrics]="metric.metrics"
+                  [metric]="metric.metric"
+                  [unit]="metric.unit"
+                  [monitorId]="monitorId"
+                ></app-monitor-data-chart>
+              </div>
+              <div
+                id="favoriteChartsLoadSentinel"
+                style="width: 100%; height: 1px"
+                *ngIf="hasMoreFavoriteCharts && !isLoadingMoreFavoriteCharts"
+              ></div>
+              <div class="empty-favorite" *ngIf="favoriteChartMetrics.length === 0">
+                <nz-empty [nzNotFoundContent]="emptyHistoryTemplate">
+                  <ng-template #emptyHistoryTemplate>
+                    <p style="margin-top: 16px; color: #999">{{ 'monitor.favorite.empty.history' | i18n }}</p>
+                  </ng-template>
+                </nz-empty>
+              </div>
+            </div>
           </div>
         </nz-tab>
         <nz-tab *ngIf="grafanaDashboard.enabled" [nzTitle]="title3Template">

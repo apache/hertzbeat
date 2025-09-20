@@ -20,10 +20,12 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgModule, Type } from '@angular/core';
 import { SharedModule } from '@shared';
+import { InViewportModule } from 'ng-in-viewport';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
@@ -60,6 +62,7 @@ const COMPONENTS: Array<Type<void>> = [
     MonitorRoutingModule,
     NzBreadCrumbModule,
     NzDividerModule,
+    NzEmptyModule,
     NzSwitchModule,
     NzTagModule,
     NzRadioModule,
@@ -72,7 +75,8 @@ const COMPONENTS: Array<Type<void>> = [
     SafePipe,
     NzListModule,
     NzDescriptionsModule,
-    NzPaginationModule
+    NzPaginationModule,
+    InViewportModule
   ],
   declarations: COMPONENTS
 })

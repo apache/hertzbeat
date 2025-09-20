@@ -20,11 +20,13 @@ app: starrocks_fe
 name:
   zh-CN: StarRocks FE
   en-US: StarRocks FE
+  ja-JP: StarRocks FE
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 对 StarRocks 数据库FE的核心监控指标（JVM内存、线程、查询响应时间、编辑日志、加载任务、作业状态、事务状态、连接数等）进行测量监控。<br>您可以点击 "<i>新建 StarRocks FE</i>" 并进行配置，或者选择"<i>更多操作</i>"，导入已有配置。
   en-US: Hertzbeat monitoring StarRocks FE through core performance metrics such as JVM memory, threads, query response time, edit logs, load jobs, job status, transaction status and connections. You could click the "<i>New StarRocks FE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 StarRocks 資料庫FE的核心監控指標（JVM記憶體、執行緒、查詢響應時間、編輯日誌、載入任務、作業狀態、事務狀態、連接數等）進行量測監控。<br>您可以點擊"<i>新建 StarRocks FE</i>"並進行配寘，或者選擇"<i>更多操作</i>"，導入已有配寘。
+  ja-JP: Hertzbeat は StarRocks FEの一般的なメトリクスを監視します。<br>「<i>新規 StarRocks FE</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/starrocks_fe/
   en-US: https://hertzbeat.apache.org/docs/help/starrocks_fe/
@@ -36,6 +38,7 @@ params:
     name:
       zh-CN: 目标 Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -55,6 +59,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     # hide param-true or false
@@ -65,6 +70,7 @@ metrics:
     i18n:
       zh-CN: JVM堆内存
       en-US: JVM Heap Size
+      ja-JP: Java仮想マシンのヒープサイズ
     priority: 0
     fields:
       - field: type
@@ -88,6 +94,7 @@ metrics:
     i18n:
       zh-CN: JVM非堆内存
       en-US: JVM Non-Heap Size
+      ja-JP: Java仮想マシンのノンヒープサイズ
     priority: 1
     fields:
       - field: type
@@ -111,6 +118,7 @@ metrics:
     i18n:
       zh-CN: JVM线程
       en-US: JVM Thread
+      ja-JP: Java仮想マシンのスレッド
     priority: 2
     fields:
       - field: type
@@ -131,6 +139,7 @@ metrics:
     i18n:
       zh-CN: 查询失败数
       en-US: Failed Queries
+      ja-JP: クエリの失敗数
     priority: 3
     fields:
       - field: value
@@ -149,6 +158,7 @@ metrics:
     i18n:
       zh-CN: 查询响应时间(ms)
       en-US: Query Response Time(ms)
+      ja-JP: クエリの応答時間(ms)
     priority: 4
     fields:
       - field: quantile
@@ -171,6 +181,7 @@ metrics:
     i18n:
       zh-CN: 编辑日志写入速率
       en-US: Edit Log Write Rate
+      ja-JP: 編集ログの書き込み率
     priority: 5
     fields:
       - field: value
@@ -189,6 +200,7 @@ metrics:
     i18n:
       zh-CN: 新增加载任务数
       en-US: New Load Jobs
+      ja-JP: ロードタスクの新規数
     priority: 6
     fields:
       - field: value
@@ -207,6 +219,7 @@ metrics:
     i18n:
       zh-CN: 完成加载任务数
       en-US: Finished Load Jobs
+      ja-JP: ロードタスクの完了数
     priority: 7
     fields:
       - field: value
@@ -225,6 +238,7 @@ metrics:
     i18n:
       zh-CN: FE作业状态
       en-US: FE Job Status
+      ja-JP: FEタスク状態
     priority: 8
     fields:
       - field: job
@@ -251,6 +265,7 @@ metrics:
     i18n:
       zh-CN: 节点上最高的 Compaction Score
       en-US: Max Compaction Score on Node
+      ja-JP: ノードの圧縮スコアの最大値
     priority: 9
     fields:
       - field: backend
@@ -271,6 +286,7 @@ metrics:
     i18n:
       zh-CN: 未做 Checkpoint 的 Edit Log 数量
       en-US: Edit Log Count without Checkpoint
+      ja-JP: チェックポイント無しの編集ログ数
     priority: 10
     fields:
       - field: value
@@ -288,6 +304,7 @@ metrics:
     i18n:
       zh-CN: 查询总数
       en-US: Total Queries
+      ja-JP: クエリ総数
     priority: 11
     fields:
       - field: value
@@ -305,6 +322,7 @@ metrics:
     i18n:
       zh-CN: 请求总数
       en-US: Total Requests
+      ja-JP: リクエスト総数
     priority: 12
     fields:
       - field: value
@@ -322,6 +340,7 @@ metrics:
     i18n:
       zh-CN: 事务拒绝数
       en-US: Rejected Transactions
+      ja-JP: 拒否されたトランザクション数
     priority: 13
     fields:
       - field: value
@@ -339,6 +358,7 @@ metrics:
     i18n:
       zh-CN: 事务开始数
       en-US: Beginning Transactions
+      ja-JP: 開かれたトランザクション数
     priority: 14
     fields:
       - field: value
@@ -356,6 +376,7 @@ metrics:
     i18n:
       zh-CN: 事务成功数
       en-US: Successful Transactions
+      ja-JP: 成功したトランザクション数
     priority: 15
     fields:
       - field: value
@@ -373,6 +394,7 @@ metrics:
     i18n:
       zh-CN: 事务失败数
       en-US: Failed Transactions
+      ja-JP: 失敗したトランザクション数
     priority: 16
     fields:
       - field: value
@@ -390,6 +412,7 @@ metrics:
     i18n:
       zh-CN: 连接总数
       en-US: Total Connections
+      ja-JP: 接続総数
     priority: 17
     fields:
       - field: user

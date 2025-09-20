@@ -22,7 +22,7 @@ CURRENT_DIR=`pwd`
 # cd dist dir
 cd ../../../dist
 # auto detect hertzbeat version
-VERSION=`ls apache-hertzbeat-*-incubating-docker-compose.tar.gz| awk -F"-" '{print $3}'`
+VERSION=`ls apache-hertzbeat-*-docker-compose.tar.gz| awk -F"-" '{print $3}'`
 
 # compile context dir
 CONTEXT_DIR=`pwd`

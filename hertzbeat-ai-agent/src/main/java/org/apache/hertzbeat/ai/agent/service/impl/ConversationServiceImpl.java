@@ -1,0 +1,276 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.hertzbeat.ai.agent.service.impl;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ChatResponseDto;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
+import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
+import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
+import org.apache.hertzbeat.ai.agent.service.ConversationService;
+import org.apache.hertzbeat.ai.agent.service.OpenAiConfigService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+/**
+ * Implementation of the ConversationService interface for managing chat conversations.
+ */
+@Slf4j
+@Service
+public class ConversationServiceImpl implements ConversationService {
+
+    private final Map<String, Map<String, Object>> conversations = new ConcurrentHashMap<>();
+    private final Map<String, List<Map<String, Object>>> conversationMessages = new ConcurrentHashMap<>();
+
+    @Autowired
+    private ChatClientProviderService chatClientProviderService;
+
+    @Autowired
+    private OpenAiConfigService openAiConfigService;
+
+    @Override
+    public ConversationDto createConversation() {
+        String conversationId = createNewConversation();
+        return getConversation(conversationId);
+    }
+
+    @Override
+    public Flux<ServerSentEvent<ChatResponseDto>> streamChat(String message, String conversationId) {
+        // Validate conversation exists
+        if (!conversationExists(conversationId)) {
+            ChatResponseDto errorResponse = ChatResponseDto.builder()
+                    .conversationId(conversationId)
+                    .response("Error: Conversation not found: " + conversationId)
+                    .build();
+            return Flux.just(ServerSentEvent.builder(errorResponse)
+                    .event("error")
+                    .build());
+        }
+
+        // Check if OpenAI is properly configured
+        if (!openAiConfigService.isConfigured()) {
+            ChatResponseDto errorResponse = ChatResponseDto.builder()
+                    .conversationId(conversationId)
+                    .response("OpenAI is not configured. Please configure your OpenAI API key in the settings or application.yml file.")
+                    .build();
+            return Flux.just(ServerSentEvent.builder(errorResponse)
+                    .event("error")
+                    .build());
+        }
+
+        log.info("Starting streaming conversation: {}", conversationId);
+
+        // Add user message to conversation
+        String userMessageId = addMessageToConversation(conversationId, message, "user");
+
+        // Get conversation history for context
+        List<Map<String, Object>> messagesList = conversationMessages.get(conversationId);
+        List<MessageDto> conversationHistory = new ArrayList<>();
+
+        if (messagesList != null && messagesList.size() > 1) {
+            // Get all messages except the last one (which is the current user message we just added)
+            for (int i = 0; i < messagesList.size() - 1; i++) {
+                Map<String, Object> msgMap = messagesList.get(i);
+                conversationHistory.add(mapToMessageDto(msgMap));
+            }
+        }
+
+        ChatRequestContext context = ChatRequestContext.builder()
+                .message(message)
+                .conversationId(conversationId)
+                .conversationHistory(conversationHistory)
+                .build();
+
+        // Stream response from AI service
+        StringBuilder fullResponse = new StringBuilder();
+        return chatClientProviderService.streamChat(context)
+                .map(chunk -> {
+                    fullResponse.append(chunk);
+                    ChatResponseDto responseDto = ChatResponseDto.builder()
+                            .conversationId(conversationId)
+                            .response(chunk)
+                            .userMessageId(userMessageId)
+                            .build();
+
+                    return ServerSentEvent.builder(responseDto)
+                            .event("message")
+                            .build();
+                })
+                .concatWith(Flux.defer(() -> {
+                    // Add the complete AI response to conversation
+                    String assistantMessageId = addMessageToConversation(conversationId, fullResponse.toString(), "assistant");
+
+                    ChatResponseDto finalResponse = ChatResponseDto.builder()
+                            .conversationId(conversationId)
+                            .response("")
+                            .userMessageId(userMessageId)
+                            .assistantMessageId(assistantMessageId)
+                            .build();
+
+                    return Flux.just(ServerSentEvent.builder(finalResponse)
+                            .event("complete")
+                            .build());
+                }))
+                .doOnComplete(() -> log.info("Streaming completed for conversation: {}", conversationId))
+                .doOnError(error -> log.error("Error in streaming chat for conversation {}: {}", conversationId, error.getMessage(), error))
+                .onErrorResume(error -> {
+                    ChatResponseDto errorResponse = ChatResponseDto.builder()
+                            .conversationId(conversationId)
+                            .response("An error occurred: " + error.getMessage())
+                            .userMessageId(userMessageId)
+                            .build();
+                    return Flux.just(ServerSentEvent.builder(errorResponse)
+                            .event("error")
+                            .build());
+                });
+    }
+
+    @Override
+    public ConversationDto getConversation(String conversationId) {
+        if (conversationId == null || conversationId.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> conversation = conversations.get(conversationId);
+        if (conversation == null) {
+            return null;
+        }
+
+        List<Map<String, Object>> messagesList = conversationMessages.get(conversationId);
+        List<MessageDto> messages = messagesList != null
+                ? messagesList.stream().map(this::mapToMessageDto).collect(Collectors.toList()) :
+                new ArrayList<>();
+
+        return ConversationDto.builder()
+                .conversationId((String) conversation.get("conversationId"))
+                .createdAt((LocalDateTime) conversation.get("createdAt"))
+                .updatedAt((LocalDateTime) conversation.get("updatedAt"))
+                .messages(messages)
+                .build();
+    }
+
+    @Override
+    public List<ConversationDto> getAllConversations() {
+        List<ConversationDto> result = new ArrayList<>();
+
+        for (Map.Entry<String, Map<String, Object>> entry : conversations.entrySet()) {
+            Map<String, Object> conv = entry.getValue();
+            List<Map<String, Object>> messages = conversationMessages.get(entry.getKey());
+
+            ConversationDto dto = ConversationDto.builder()
+                    .conversationId((String) conv.get("conversationId"))
+                    .createdAt((LocalDateTime) conv.get("createdAt"))
+                    .updatedAt((LocalDateTime) conv.get("updatedAt"))
+                    .messages(new ArrayList<>()) // Don't include messages in list view for performance
+                    .build();
+            result.add(dto);
+        }
+
+        result.sort((a, b) -> b.getUpdatedAt().compareTo(a.getUpdatedAt()));
+
+        return result;
+    }
+
+    @Override
+    public boolean deleteConversation(String conversationId) {
+        if (conversationId == null || conversationId.isEmpty()) {
+            return false;
+        }
+
+        boolean existed = conversations.containsKey(conversationId);
+        if (existed) {
+            conversations.remove(conversationId);
+            conversationMessages.remove(conversationId);
+            log.info("Deleted conversation: {}", conversationId);
+        }
+        return existed;
+    }
+
+    @Override
+    public boolean conversationExists(String conversationId) {
+        return conversationId != null && !conversationId.isEmpty() && conversations.containsKey(conversationId);
+    }
+
+    private String createNewConversation() {
+        String conversationId = "conv-" + UUID.randomUUID().toString().substring(0, 8);
+        LocalDateTime now = LocalDateTime.now();
+
+        Map<String, Object> conversation = new HashMap<>();
+        conversation.put("conversationId", conversationId);
+        conversation.put("createdAt", now);
+        conversation.put("updatedAt", now);
+
+        conversations.put(conversationId, conversation);
+        conversationMessages.put(conversationId, new ArrayList<>());
+
+        log.info("Created new conversation: {}", conversationId);
+        return conversationId;
+    }
+
+    private MessageDto mapToMessageDto(Map<String, Object> messageMap) {
+        return MessageDto.builder()
+                .messageId((String) messageMap.get("messageId"))
+                .conversationId((String) messageMap.get("conversationId"))
+                .content((String) messageMap.get("content"))
+                .role((String) messageMap.get("role"))
+                .timestamp((LocalDateTime) messageMap.get("timestamp"))
+                .build();
+    }
+
+    private String addMessageToConversation(String conversationId, String content, String role) {
+        List<Map<String, Object>> messages = conversationMessages.computeIfAbsent(conversationId, k -> new ArrayList<>());
+
+        String messageId = "msg-" + UUID.randomUUID().toString().substring(0, 8);
+        Map<String, Object> message = new HashMap<>();
+        message.put("messageId", messageId);
+        message.put("conversationId", conversationId);
+        message.put("content", content);
+        message.put("role", role);
+        message.put("timestamp", LocalDateTime.now());
+
+        messages.add(message);
+
+        // Update conversation timestamp
+        Map<String, Object> conversation = conversations.get(conversationId);
+        if (conversation != null) {
+            conversation.put("updatedAt", LocalDateTime.now());
+            // Auto-generate title from first user message
+            if ("user".equals(role) && messages.stream().filter(m -> "user".equals(m.get("role"))).count() == 1) {
+                String title = content.length() > 30 ? content.substring(0, 27) + "..." : content;
+                conversation.put("title", title);
+            }
+        }
+
+        return messageId;
+    }
+
+
+
+}

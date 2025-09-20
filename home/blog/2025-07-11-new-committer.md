@@ -3,7 +3,6 @@ title: Welcome HertzBeat's New Community Committer!
 author: bigcyy
 author_title: Yang Chen
 author_url: https://github.com/bigcyy
-author_image_url: https://avatars.githubusercontent.com/u/73413979
 tags: [opensource, practice]
 keywords:
   [
@@ -15,7 +14,7 @@ keywords:
   ]
 ---
 
-Hello everyone, I'm Yang Chen, currently a graduate student at Chongqing University of Posts and Telecommunications. I'm deeply honored to receive recognition and invitation from the Apache HertzBeat community to officially become a project Committer. This marks the true beginning of my open-source journey!
+Hello everyone, I'm Yang Chen, currently a graduate student at Chongqing University of Posts and Telecommunications. I'm deeply honored to receive recognition and invitation from the Apache HertzBeat™ community to officially become a project Committer. This marks the true beginning of my open-source journey!
 
 ## My Open Source Exploration
 
@@ -41,8 +40,8 @@ Participating in open source has indeed significantly improved my abilities. By 
 
 My experience has convinced me that open source is not just about writing code, but an excellent platform for learning, growing, and contributing.
 
-If you're also passionate about technology, eager to improve yourself through practice, and want to experience true community collaboration, then the Apache HertzBeat community is definitely your best choice!
+If you're also passionate about technology, eager to improve yourself through practice, and want to experience true community collaboration, then the Apache HertzBeat™ community is definitely your best choice!
 
 ## Finally
 
-I sincerely thank [Tom](https://github.com/tomsun28), [Shenghang](https://github.com/zhangshenghang), [Logic](https://github.com/zqr10159), and other community members for their meticulous code reviews and patient guidance. I hope Apache HertzBeat continues to thrive!
+I sincerely thank [Tom](https://github.com/tomsun28), [Shenghang](https://github.com/zhangshenghang), [Logic](https://github.com/zqr10159), and other community members for their meticulous code reviews and patient guidance. I hope Apache HertzBeat™ continues to thrive!

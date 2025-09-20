@@ -2,7 +2,7 @@ const path = require('path')
 
 const organizationName = 'apache' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
-const deploymentBranch = 'asf-site' 
+const deploymentBranch = 'asf-site'
 const branch = 'master'
 const repoUrl = `https://github.com/apache/${projectName}`
 const cdnUrl = null
@@ -16,8 +16,8 @@ module.exports = {
   onBrokenMarkdownLinks: 'throw',
   favicon: '/img/hertzbeat-logo.svg',
   organizationName,
-  projectName, 
-  deploymentBranch,  
+  projectName,
+  deploymentBranch,
   customFields: {
     repoUrl,
     cdnUrl,
@@ -206,22 +206,22 @@ module.exports = {
         {
           type: 'localeDropdown',
           position: 'right',
-        }, 
+        },
         {
           href: repoUrl,
           position: 'right',
           className: 'header-github-link'
-        }, 
+        },
         {
           href: 'https://x.com/hertzbeat1024',
           position: 'right',
           className: 'header-twitter-link'
-        }, 
+        },
         {
           href: 'https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow',
           position: 'right',
           className: 'header-youtube-link'
-        }, 
+        },
         {
           href: 'https://discord.gg/Fb6M73htGr',
           position: 'right',
@@ -279,23 +279,13 @@ module.exports = {
       },
       copyright:
         `
-        <div style="text-align: left;margin-top:30px">
-          <div style="align-items: center; display: flex">
-            <div style="width: 1200px; background-color: #282c77; padding: 10px; border-radius: 6px">
-              <a href="https://incubator.apache.org/">
-                <img src="/img/icons/apache-incubator.svg" alt="Apache Incubator logo">
-              </a>
-            </div>
-            <div style="margin-left: 40px">
-              <p style="font-size: 14px;line-height: 25px;">
-              Apache HertzBeat is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.
-              </p>
-            </div>
-          </div>
-
-          <div style="border-top: 1px solid #525252;min-height: 60px;line-height: 25px;text-align: left;font-size: 14px;display: flex;align-items: center;">
+        <div style="text-align: left;margin-top:20px">         
+          <a href="https://apache.org/" style="display: flex; align-items: center; justify-content:center">
+            <img src="/img/icons/asf_logo.svg" alt="Apache logo" style="width:auto;height:140px">
+          </a>
+          <div style="margin-top:20px;border-top: 1px solid #525252;min-height: 60px;line-height: 25px;text-align: left;font-size: 14px;display: flex;align-items: center;">
             <span>
-              Copyright © ${new Date().getFullYear()} The Apache Software Foundation. Apache HertzBeat, HertzBeat, and its feather logo are trademarks of The Apache Software Foundation.
+              Copyright © ${new Date().getFullYear()} The Apache Software Foundation. Apache HertzBeat™, HertzBeat™, and its feather logo are trademarks of The Apache Software Foundation.
             </span>
           </div>
         </div>`,
@@ -326,7 +316,7 @@ module.exports = {
           postsPerPage: 1,
           feedOptions: {
             type: 'all',
-            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat™.`,
           },
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,

@@ -83,13 +83,10 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
         </dependency>
-
     </dependencies>
 
     <build>
         <finalName>apache-${project.artifactId}-${hzb.version}</finalName>
     </build>
-
-
 
 </project>

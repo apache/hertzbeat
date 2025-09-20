@@ -1,17 +1,17 @@
 ---
 id: introduce  
-title: Apache HertzBeat (incubating)     
+title: Apache HertzBeat™     
 sidebar_label: 介绍
 slug: /
 ---
 
-> 实时监控系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
+> 实时观测系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
 
 **官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) (incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。
+[Apache HertzBeat](https://github.com/apache/hertzbeat) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。
 
 ### 特点
 
@@ -139,7 +139,7 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
 - 基于 HertzBeat 二次开发需保留版权。
 
-**HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category) 收录**
+**HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/?view-mode=card&classify=category&sort-by=name&sort-direction=asc#observability-and-analysis--observability) 收录**
 
 ![cncf](/img/home/cncf-landscape-left-logo.svg)
 

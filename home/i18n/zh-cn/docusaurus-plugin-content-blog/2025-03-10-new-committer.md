@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: yunfan24
 author_title: Lixin Diao
 author_url: https://github.com/yunfan24
-author_image_url: https://avatars.githubusercontent.com/u/91836599?v=4
 tags: [opensource, practice]
 keywords:
   [
@@ -14,7 +13,7 @@ keywords:
     Hertzbeat,
   ]
 ---
-🎉 大家好，很高兴收到 Apache HertzBeat 社区的邀请，正式成为项目的 Committer！
+🎉 大家好，很高兴收到 Apache HertzBeat™ 社区的邀请，正式成为项目的 Committer！
 
 ## 我的开源之旅
 
@@ -45,4 +44,4 @@ HertzBeat 的贡献指南详细清晰，极大降低了上手难度。前人栽�
 
 ## 写在最后
 
-感谢社区的支持，感谢每一位 Review 代码的小伙伴！最后祝 Apache HertzBeat 顺利毕业，越来越好！🚀
+感谢社区的支持，感谢每一位 Review 代码的小伙伴！最后祝 Apache HertzBeat™ 顺利毕业，越来越好！🚀

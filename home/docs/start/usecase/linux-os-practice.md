@@ -4,14 +4,11 @@ title: Linux Operating System Monitoring Practice
 sidebar_label: Linux Operating System Monitoring Practice
 ---
 
-This article describes how to use the Hertzbeat monitoring system to collect and monitor general performance metrics 
-for Linux operating systems, and send us alert messages when file system usage is too high.
+This article describes how to use the Hertzbeat monitoring system to collect and monitor general performance metrics for Linux operating systems, and send us alert messages when file system usage is too high.
 
 ## What's HertzBeat
 
-Apache HertzBeat (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without 
-Agent. Website monitoring,  port availability, database, operating system, threshold alarms, 
-alarm notification (email, WeChat, DingTalk, Feishu).
+Apache HertzBeat™ (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring,  port availability, database, operating system, threshold alarms, alarm notification (email, WeChat, DingTalk, Feishu).
 
 github: <https://github.com/apache/hertzbeat>
 
@@ -23,19 +20,17 @@ github: <https://github.com/apache/hertzbeat>
    docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
    ```
 
-2. After the installation is successful, the browser can access `http://ip:1157` to start, the default account 
-password is `admin/hertzbeat`.
+2. After the installation is successful, the browser can access `http://ip:1157` to start, the default account password is `admin/hertzbeat`.
 
 :::note
-The production environment recommends a complete deployment method,
-refer [Install HertzBeat via Docker Compose](https://hertzbeat.apache.org/docs/start/docker-compose-deploy)
+The production environment recommends a complete deployment method, refer [Install HertzBeat via Docker Compose](https://hertzbeat.apache.org/docs/start/docker-compose-deploy)
 :::
 
 ## Monitoring Linux Operating System
 
 ### 1. Click Add Linux Operating System Monitor
 
-> HertzBeat Page -> Monitors Menu -> New Monitor -> OS Monitor -> Add OS Linux
+> HertzBeat Page -> Monitors -> New Monitor -> OS Monitor -> Add OS Linux
 
 ![HertzBeat](/img/docs/start/linux-os-practice-1.png)
 
