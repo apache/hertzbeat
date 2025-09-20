@@ -125,6 +125,9 @@ class MonitorServiceTest {
     @Mock
     private ApplicationContext applicationContext;
 
+    @Mock
+    private MetricsFavoriteService metricsFavoriteService;
+
     /**
      * Properties cannot be directly mock, test execution before - manual assignment
      */
