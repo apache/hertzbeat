@@ -17,7 +17,7 @@
 
 FROM openjdk:21-slim-bullseye
 
-MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
+LABEL maintainer="dev@hertzbeat.apache.org"
 
 # Install SSH And Locales
 RUN apt-get update && apt-get install -y openssh-server && apt-get install -y locales

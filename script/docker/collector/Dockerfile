@@ -17,7 +17,7 @@
 
 FROM openjdk:21-slim-bullseye
 
-MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
+LABEL maintainer="dev@hertzbeat.apache.org"
 
 ARG VERSION
 
@@ -27,7 +27,7 @@ RUN mkdir /var/run/sshd
 
 ADD apache-hertzbeat-collector-*-bin.tar.gz /opt/
 
-ENV JAVA_OPTS ""
+ENV JAVA_OPTS=""
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
