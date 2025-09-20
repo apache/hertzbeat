@@ -158,5 +158,9 @@
   "sidebar.docs.category.extern-deploy": {
     "message": "集成平台部署",
     "description": "The label for category extern-deploy in sidebar docs"
+  },
+  "sidebar.docs.category.log": {
+    "message": "日志监控",
+    "description": "The label for category log in sidebar docs"
   }
 }

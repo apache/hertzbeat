@@ -52,4 +52,36 @@ class AlerterWorkerPoolTest {
 
         assertEquals(NUMBER_OF_THREADS, counter.get());
     }
+
+    @Test
+    void executeNotify() throws InterruptedException {
+        counter = new AtomicInteger();
+        latch = new CountDownLatch(NUMBER_OF_THREADS);
+        
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+            pool.executeNotify(() -> {
+                counter.incrementAndGet();
+                latch.countDown();
+            });
+        }
+        latch.await();
+
+        assertEquals(NUMBER_OF_THREADS, counter.get());
+    }
+
+    @Test
+    void executeLogJob() throws InterruptedException {
+        counter = new AtomicInteger();
+        latch = new CountDownLatch(NUMBER_OF_THREADS);
+        
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+            pool.executeLogJob(() -> {
+                counter.incrementAndGet();
+                latch.countDown();
+            });
+        }
+        latch.await();
+
+        assertEquals(NUMBER_OF_THREADS, counter.get());
+    }
 }
