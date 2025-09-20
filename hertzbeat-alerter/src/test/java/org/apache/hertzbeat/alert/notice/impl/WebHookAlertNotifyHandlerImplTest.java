@@ -124,10 +124,45 @@ class WebHookAlertNotifyHandlerImplTest {
 
     @Test
     public void testNotifyAlertWithTruncatedUrlFailure() {
+        // Test Azure Logic Apps URL missing signature
         receiver.setHookUrl("https://prod-12.chinaeast2.logic.azure.cn:443/workflows/test/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0");
 
         assertThrows(AlertNoticeException.class,
                 () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertWithTruncatedUrlPatterns() {
+        // Test URL ending with incomplete query parameters
+        receiver.setHookUrl("https://example.com/webhook?param=");
+        assertThrows(AlertNoticeException.class,
+                () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+
+        receiver.setHookUrl("https://example.com/webhook?");
+        assertThrows(AlertNoticeException.class,
+                () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+
+        receiver.setHookUrl("https://example.com/webhook&");
+        assertThrows(AlertNoticeException.class,
+                () -> webHookAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    public void testNotifyAlertWithValidUrlPatterns() {
+        ResponseEntity<String> responseEntity =
+            new ResponseEntity<>("null", HttpStatus.OK);
+
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class))).thenReturn(responseEntity);
+
+        // Test complete URLs that should pass validation
+        receiver.setHookUrl("https://hooks.slack.com/services/T123/B456/complete-token");
+        webHookAlertNotifyHandler.send(receiver, template, groupAlert);
+
+        receiver.setHookUrl("https://discord.com/api/webhooks/123456789/complete-token");
+        webHookAlertNotifyHandler.send(receiver, template, groupAlert);
+
+        receiver.setHookUrl("https://example.com/webhook?complete=true&valid=yes");
+        webHookAlertNotifyHandler.send(receiver, template, groupAlert);
     }
 
     @Test

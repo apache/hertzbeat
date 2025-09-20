@@ -46,10 +46,10 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                 throw new AlertNoticeException("Webhook URL is null or empty");
             }
 
-            // Check if URL is truncated (missing required query parameters)
-            if (hookUrl.contains("logic.azure.cn") && !hookUrl.contains("sig=")) {
-                log.warn("Webhook URL appears to be truncated. Original URL might have been longer than 300 characters. URL: {}", hookUrl);
-                throw new AlertNoticeException("Webhook URL appears to be truncated - missing required signature parameter");
+            // Check if URL is truncated by detecting common patterns of incomplete URLs
+            if (isUrlTruncated(hookUrl)) {
+                log.warn("Webhook URL appears to be truncated. Original URL might have been longer than database field limit. URL: {}", hookUrl);
+                throw new AlertNoticeException("Webhook URL appears to be truncated - URL may be incomplete");
             }
 
             // Log complete URL for debugging
@@ -73,6 +73,44 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         } catch (Exception e) {
             throw new AlertNoticeException("[WebHook Notify Error] " + e.getMessage());
         }
+    }
+
+    /**
+     * Detect if a webhook URL appears to be truncated based on common patterns
+     * @param url the webhook URL to check
+     * @return true if the URL appears to be truncated
+     */
+    private boolean isUrlTruncated(String url) {
+        if (url == null || url.trim().isEmpty()) {
+            return false;
+        }
+
+        // Check for common truncation patterns in webhook URLs
+        String lowerUrl = url.toLowerCase();
+
+        // Pattern 1: URL ends with incomplete query parameters
+        if (url.endsWith("&") || url.endsWith("?") || url.endsWith("=")) {
+            return true;
+        }
+
+        // Pattern 2: Azure Logic Apps URLs missing signature
+        if (lowerUrl.contains("logic.azure") && lowerUrl.contains("api-version") && !lowerUrl.contains("sig=")) {
+            return true;
+        }
+
+        // Pattern 3: AWS API Gateway URLs missing stage or path
+        if (lowerUrl.contains("amazonaws.com") && lowerUrl.contains("execute-api")
+            && (url.endsWith("/") || url.matches(".*\\.amazonaws\\.com$"))) {
+            return true;
+        }
+
+        // Pattern 4: Generic webhook services with incomplete paths
+        if ((lowerUrl.contains("webhook") || lowerUrl.contains("trigger"))
+            && (url.endsWith("/workflows") || url.endsWith("/triggers"))) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override
