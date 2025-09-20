@@ -12,7 +12,7 @@ This article introduces how to use the Hertzbeat monitoring system to collect an
 
 ## What is HertzBeat?
 
-Apache HertzBeat is a real-time monitoring tool with powerful customization capabilities that does not require an agent. It monitors websites, PING connectivity, port availability, databases, operating systems, middleware, APIs, threshold alerts, and alert notifications (email, WeChat, DingTalk, Feishu).
+Apache HertzBeat™ is a real-time monitoring tool with powerful customization capabilities that does not require an agent. It monitors websites, PING connectivity, port availability, databases, operating systems, middleware, APIs, threshold alerts, and alert notifications (email, WeChat, DingTalk, Feishu).
 
 > **github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 

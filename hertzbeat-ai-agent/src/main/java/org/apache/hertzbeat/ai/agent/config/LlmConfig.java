@@ -20,6 +20,9 @@ package org.apache.hertzbeat.ai.agent.config;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,9 +32,45 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class LlmConfig {
+
+    @Value("${spring.ai.openai.chat.options.model}")
+    private String model;
+
+    /**
+     * Create OpenAI API instance with dynamic API key
+     */
     @Bean
-    public ChatClient openAiChatClient(OpenAiChatModel chatModel) {
-        return ChatClient.create(chatModel);
+    public OpenAiApi openAiApi(DynamicOpenAiApiKey dynamicApiKey) {
+        return OpenAiApi.builder()
+                .apiKey(dynamicApiKey)
+                .build();
+    }
+
+    /**
+     * Create OpenAI Chat Options with custom settings
+     */
+    @Bean
+    public OpenAiChatOptions openAiChatOptions() {
+        return OpenAiChatOptions.builder()
+                .model(model)
+                .temperature(0.3)
+                .build();
+    }
+
+    /**
+     * Create OpenAI Chat Model with custom API configuration
+     */
+    @Bean
+    public OpenAiChatModel openAiChatModel(OpenAiApi openAiApi, OpenAiChatOptions openAiChatOptions) {
+        return OpenAiChatModel.builder()
+                .openAiApi(openAiApi)
+                .defaultOptions(openAiChatOptions)
+                .build();
+    }
+
+    @Bean
+    public ChatClient openAiChatClient(OpenAiChatModel openAiChatModel) {
+        return ChatClient.create(openAiChatModel);
     }
 
 }

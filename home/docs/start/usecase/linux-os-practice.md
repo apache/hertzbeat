@@ -8,7 +8,7 @@ This article describes how to use the Hertzbeat monitoring system to collect and
 
 ## What's HertzBeat
 
-Apache HertzBeat (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring,  port availability, database, operating system, threshold alarms, alarm notification (email, WeChat, DingTalk, Feishu).
+Apache HertzBeat™ (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring,  port availability, database, operating system, threshold alarms, alarm notification (email, WeChat, DingTalk, Feishu).
 
 github: <https://github.com/apache/hertzbeat>
 

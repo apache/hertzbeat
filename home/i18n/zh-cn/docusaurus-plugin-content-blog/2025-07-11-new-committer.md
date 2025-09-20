@@ -14,7 +14,7 @@ keywords:
   ]
 ---
 
-大家好，我是陈阳，目前是重庆邮电大学的一名研究生。非常荣幸能得到 Apache HertzBeat 社区的认可与邀请，正式成为项目的 Committer，这标志着我真正意义上的开源之旅的开启！
+大家好，我是陈阳，目前是重庆邮电大学的一名研究生。非常荣幸能得到 Apache HertzBeat™ 社区的认可与邀请，正式成为项目的 Committer，这标志着我真正意义上的开源之旅的开启！
 
 ## 我的开源初探
 
@@ -38,8 +38,8 @@ keywords:
 
 我的经历让我深信，开源不仅仅是编写代码，更是一个学习、成长和贡献的绝佳平台。
 
-如果你也对技术充满热情，渴望在实践中提升自我，并希望体验真正意义上的社区协作，那么 Apache HertzBeat 社区绝对是你的不二选择！
+如果你也对技术充满热情，渴望在实践中提升自我，并希望体验真正意义上的社区协作，那么 Apache HertzBeat™ 社区绝对是你的不二选择！
 
 ## 最后
 
-我衷心感谢 [Tom](https://github.com/tomsun28)、[Shenghang](https://github.com/zhangshenghang)、[Logic](https://github.com/zqr10159) 等社区的小伙伴们，感谢你们对我的代码进行细致的 Review 与悉心指导。希望 Apache HertzBeat 能够越来越好！
+我衷心感谢 [Tom](https://github.com/tomsun28)、[Shenghang](https://github.com/zhangshenghang)、[Logic](https://github.com/zqr10159) 等社区的小伙伴们，感谢你们对我的代码进行细致的 Review 与悉心指导。希望 Apache HertzBeat™ 能够越来越好！

@@ -1,0 +1,438 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category: service-application service monitoring, db-database monitoring, custom-custom monitoring.
+category: mid
+# The monitoring application type name (consistent with the file name)
+app: apollo
+# The monitoring i18n name
+name:
+  zh-CN: Apollo配置中心
+  en-US: Apollo Configuration Center
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 对 Apollo 配置中心的通用指标进行测量监控。<br>您可以点击 “<i>新建 Apollo 配置中心</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。<br>⚠️注意：adminservice、configservice、portal目前需要分别配置，只需要更改地址+端口即可。
+  en-US: HertzBeat monitors common metrics for Apollo Configuration Centers.<br>You can click "<i>Create New Apollo Configuration Center</i>" to configure it, or select "<i>More Actions</i>" to import an existing configuration. <br>⚠️Note:adminservice, configservice, and portal currently require separate configuration. Simply modify the address and port.
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/apollo
+  en-US: https://hertzbeat.apache.org/docs/help/apollo
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+      ja-JP: 目標ホスト
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+      ja-JP: ポート
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    required: true
+    defaultValue: 8080
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+      ja-JP: クエリタイムアウト
+    type: number
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 6000
+
+# collect metrics config list
+metrics:
+  # Basic information indicators
+  - name: application_ready_time_seconds
+    i18n:
+      zh-CN: 应用启动耗时
+      en-US: Application ready time
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: main_application_class
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 主应用类
+          en-US: Main class
+      - field: metric_value
+        type: 0
+        unit: 's'
+        i18n:
+          zh-CN: 耗时
+          en-US: Time Consuming
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: /prometheus
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: prometheus
+
+  - name: process_uptime_seconds
+    i18n:
+      zh-CN: 进程已运行时间
+      en-US: Process uptime
+    priority: 1
+    fields:
+      - field: metric_value
+        type: 0
+        unit: 's'
+        i18n:
+          zh-CN: 运行时间
+          en-US: uptime
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: process_cpu_usage
+    i18n:
+      zh-CN: 进程 CPU 使用率
+      en-US: Process CPU usage
+    priority: 2
+    fields:
+      - field: metric_value
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+    aliasFields:
+      - metric_value
+    calculates:
+      - metric_value=metric_value*100
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: system_cpu_usage
+    i18n:
+      zh-CN: 系统 CPU 使用率
+      en-US: System CPU usage
+    priority: 3
+    fields:
+      - field: metric_value
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+    aliasFields:
+      - metric_value
+    calculates:
+      - metric_value=metric_value*100
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: system_load_average_1m
+    i18n:
+      zh-CN: 系统最近一分钟平均负载
+      en-US: System load average (1m)
+    priority: 4
+    fields:
+      - field: metric_value
+        type: 0
+        i18n:
+          zh-CN: 负载
+          en-US: load
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_committed_bytes
+    i18n:
+      zh-CN: JVM 已提交内存数
+      en-US: JVM memory committed bytes
+    priority: 5
+    fields:
+      - field: area
+        label: true
+        i18n:
+          zh-CN: 区域
+          en-US: Area
+        type: 1
+      - field: id
+        label: true
+        i18n:
+          zh-CN: 内存块Id
+          en-US: Memory Block Id
+        type: 1
+      - field: metric_value
+        i18n:
+          zh-CN: JVM请求内存大小(当前)
+          en-US: JVM requests memory size (current)
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_used_bytes
+    i18n:
+      zh-CN: JVM 已使用内存数
+      en-US: JVM memory used bytes
+    priority: 6
+    fields:
+      - field: area
+        label: true
+        i18n:
+          zh-CN: 区域
+          en-US: Area
+        type: 1
+      - field: id
+        label: true
+        i18n:
+          zh-CN: 内存块Id
+          en-US: Memory Block Id
+        type: 1
+      - field: metric_value
+        i18n:
+          zh-CN: JVM已使用内存大小
+          en-US: JVM used memory size
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_max_bytes
+    i18n:
+      zh-CN: JVM 最大内存数
+      en-US: JVM memory max bytes
+    priority: 7
+    fields:
+      - field: area
+        label: true
+        i18n:
+          zh-CN: 区域
+          en-US: Area
+        type: 1
+      - field: id
+        label: true
+        i18n:
+          zh-CN: 内存块Id
+          en-US: Memory Block Id
+        type: 1
+      - field: metric_value
+        i18n:
+          zh-CN: JVM 最大内存大小
+          en-US: JVM used memory size
+        type: 0
+        unit: MB
+    units:
+      - value=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_gc_pause_seconds_count
+    i18n:
+      zh-CN: JVM GC 暂停次数
+      en-US: Number of JVM GC pause events
+    priority: 8
+    fields:
+      - field: action
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 行为
+          en-US: action
+      - field: cause
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 原因
+          en-US: cause
+      - field: metric_value
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: count
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_gc_pause_seconds_sum
+    i18n:
+      zh-CN: JVM GC 暂停耗时
+      en-US: Total JVM GC pause time
+    priority: 9
+    fields:
+      - field: action
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 行为
+          en-US: action
+      - field: cause
+        label: true
+        type: 1
+        i18n:
+          zh-CN: 原因
+          en-US: cause
+      - field: metric_value
+        type: 0
+        i18n:
+          zh-CN: 耗时
+          en-US: time-consuming
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: jvm_memory_usage_after_gc_percent
+    i18n:
+      zh-CN: GC 执行后 JVM 内存使用率百分比
+      en-US: JVM heap usage after garbage collection (%)
+    priority: 10
+    fields:
+      - field: area
+        label: true
+        i18n:
+          zh-CN: 区域
+          en-US: Area
+        type: 1
+      - field: pool
+        label: true
+        i18n:
+          zh-CN: 内存池
+          en-US: Heap pool
+        type: 1
+      - field: metric_value
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
+    aliasFields:
+      - area
+      - pool
+      - metric_value
+    calculates:
+      - area
+      - pool
+      - metric_value=metric_value*100
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: process_files_max_files
+    i18n:
+      zh-CN: 允许进程打开的最大文件描述符数
+      en-US: Process maximum open files
+    priority: 11
+    fields:
+      - field: metric_value
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: quantity
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus
+
+  - name: process_files_open_files
+    i18n:
+      zh-CN: 进程打开的文件描述符数量
+      en-US: Process open files
+    priority: 12
+    fields:
+      - field: metric_value
+        type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: quantity
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /prometheus
+      method: GET
+      parseType: prometheus

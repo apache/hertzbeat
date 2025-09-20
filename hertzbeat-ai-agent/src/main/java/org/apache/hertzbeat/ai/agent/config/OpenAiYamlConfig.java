@@ -15,11 +15,29 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.ai.agent.config;
 
-package org.apache.hertzbeat.ai.agent.dao;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
- * Data Access Object interface for Message entities.
+ * OpenAI YAML Configuration - reads from spring.ai.openai.api-key
  */
-public interface MessageDao {
+@Data
+@Component
+@ConfigurationProperties(prefix = "spring.ai.openai")
+public class OpenAiYamlConfig {
+
+    /**
+     * OpenAI API key from spring.ai.openai.api-key
+     */
+    private String apiKey;
+
+    /**
+     * Check if OpenAI is enabled (has API key)
+     */
+    public boolean isEnable() {
+        return apiKey != null && !apiKey.trim().isEmpty();
+    }
 }
