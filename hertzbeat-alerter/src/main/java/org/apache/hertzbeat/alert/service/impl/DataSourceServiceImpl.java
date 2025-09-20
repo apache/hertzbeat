@@ -87,7 +87,7 @@ public class DataSourceServiceImpl implements DataSourceService {
         try {
             return evaluate(expr, executor);
         } catch (AlertExpressionException ae) {
-            log.error("Calculate query parse error {}: {}", datasource, ae.getMessage());
+            log.error("Calculate query parse error, datasource: {}, expr: {}, msg: {}", datasource, expr, ae.getMessage(), ae);
             throw ae;
         } catch (Exception e) {
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());

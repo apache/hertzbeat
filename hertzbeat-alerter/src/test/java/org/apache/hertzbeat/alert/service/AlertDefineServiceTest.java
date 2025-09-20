@@ -106,17 +106,17 @@ class AlertDefineServiceTest {
     @Test
     void addAlertDefine() {
         assertDoesNotThrow(() -> alertDefineService.addAlertDefine(alertDefine));
-        when(alertDefineDao.save(alertDefine)).thenThrow(new RuntimeException());
+        when(alertDefineDao.saveAndFlush(alertDefine)).thenThrow(new RuntimeException());
         assertThrows(RuntimeException.class, () -> alertDefineService.addAlertDefine(alertDefine));
     }
 
     @Test
     void modifyAlertDefine() {
         AlertDefine alertDefine = AlertDefine.builder().id(1L).build();
-        when(alertDefineDao.save(alertDefine)).thenReturn(alertDefine);
+        when(alertDefineDao.saveAndFlush(alertDefine)).thenReturn(alertDefine);
         assertDoesNotThrow(() -> alertDefineService.modifyAlertDefine(alertDefine));
         reset();
-        when(alertDefineDao.save(alertDefine)).thenThrow(new RuntimeException());
+        when(alertDefineDao.saveAndFlush(alertDefine)).thenThrow(new RuntimeException());
         assertThrows(RuntimeException.class, () -> alertDefineService.modifyAlertDefine(alertDefine));
     }
 
