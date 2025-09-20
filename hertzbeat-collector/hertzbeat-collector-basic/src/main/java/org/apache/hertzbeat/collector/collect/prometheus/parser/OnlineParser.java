@@ -93,6 +93,7 @@ public class OnlineParser {
      * @throws IOException if an I/O error occurs while reading from the input stream
      */
     public static Map<String, MetricFamily> parseMetrics(InputStream inputStream, String metric) throws IOException {
+        Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
         try {
             int i = getChar(inputStream);
             while (i != -1) {
