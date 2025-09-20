@@ -58,6 +58,10 @@ public class HertzBeatMetricsCollector {
         Map<String, String> metadata = job.getMetadata();
         String monitorName = metadata != null ? metadata.get("instancename") : "unknown";
         String monitorTarget = metadata != null ? metadata.get("instancehost") : "unknown";
+        // todo can not get the host from service discovery
+        if (monitorTarget == null) {
+            monitorTarget = "unknown";
+        }
 
         // Record collection count
         Counter.builder("hertzbeat.collect.total")
