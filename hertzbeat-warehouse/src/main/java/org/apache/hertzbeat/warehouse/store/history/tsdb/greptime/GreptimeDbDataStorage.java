@@ -224,7 +224,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().stream().toList().get(0));
         // effective time
         long effectiveStart = values.get(0).getTime() / 1000;
-        long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + 60 * 60 * 4;
+        long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + Duration.ofHours(4).getSeconds();
 
         String name = getTableName(metrics);
         String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
