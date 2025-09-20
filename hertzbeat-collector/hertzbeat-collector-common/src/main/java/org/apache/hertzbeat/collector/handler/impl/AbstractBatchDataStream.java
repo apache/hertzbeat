@@ -15,25 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch;
+package org.apache.hertzbeat.collector.handler.impl;
 
-import org.apache.hertzbeat.common.timer.Timeout;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+import lombok.Setter;
+import org.apache.hertzbeat.collector.context.Context;
 
 import java.util.List;
 
 /**
- * Collection data scheduler interface
+ *
  */
-public interface CollectDataDispatch {
+public abstract class AbstractBatchDataStream<T, R> extends AbstractListenerBoundDataStream<T, R> {
+    @Setter
+    protected List<T> sourceDataList;
 
-    /**
-     * Processing and distributing collection result data
-     * @param timeout     time wheel timeout        
-     * @param metrics     The following metrics collection tasks   
-     * @param metricsData Collect result data       
-     */
-    void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
-
+    @Override
+    public void execute(Context context, T data) {
+        for (T t : sourceDataList) {
+            super.execute(context, t);
+        }
+    }
 }
