@@ -57,7 +57,7 @@ items:
         "credential": "hertzbeat"
       }
   expect:
-    statusCode: 409
+    statusCode: 500
 - name: monitorList
   request:
     api: /api/monitors?pageIndex=0&pageSize=8
