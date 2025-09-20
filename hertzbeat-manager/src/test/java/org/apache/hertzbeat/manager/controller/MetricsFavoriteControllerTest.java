@@ -21,6 +21,7 @@ import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.service.MetricsFavoriteService;
+import org.apache.hertzbeat.manager.support.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Set;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_CONFLICT_CODE;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -70,6 +72,7 @@ class MetricsFavoriteControllerTest {
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(metricsFavoriteController)
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter())
                 .build();
     }
@@ -80,7 +83,7 @@ class MetricsFavoriteControllerTest {
         when(subjectSum.getPrincipal()).thenReturn(testUserId);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-        
+
             doNothing().when(metricsFavoriteService).addMetricsFavorite(testUserId, testMonitorId, testMetricsName);
 
             mockMvc.perform(post("/api/metrics/favorite/{monitorId}/{metricsName}", testMonitorId, testMetricsName)
@@ -99,15 +102,15 @@ class MetricsFavoriteControllerTest {
         when(subjectSum.getPrincipal()).thenReturn(testUserId);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-        
+
             doThrow(new RuntimeException("Metrics favorite already exists: " + testMetricsName))
                     .when(metricsFavoriteService).addMetricsFavorite(testUserId, testMonitorId, testMetricsName);
 
             mockMvc.perform(post("/api/metrics/favorite/{monitorId}/{metricsName}", testMonitorId, testMetricsName)
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                    .andExpect(jsonPath("$.msg").value("Add failed! Metrics favorite already exists: " + testMetricsName));
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
+                    .andExpect(jsonPath("$.msg").value("Metrics favorite already exists: " + testMetricsName));
 
             verify(metricsFavoriteService).addMetricsFavorite(testUserId, testMonitorId, testMetricsName);
         }
@@ -117,7 +120,7 @@ class MetricsFavoriteControllerTest {
     void testAddMetricsFavoriteMissingParameters() throws Exception {
         mockMvc.perform(post("/api/metrics/favorite")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(status().is5xxServerError());
 
         verify(metricsFavoriteService, never()).addMetricsFavorite(anyString(), anyLong(), anyString());
     }
@@ -128,7 +131,7 @@ class MetricsFavoriteControllerTest {
         when(subjectSum.getPrincipal()).thenReturn(testUserId);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-        
+
             // Given
             doNothing().when(metricsFavoriteService).removeMetricsFavorite(testUserId, testMonitorId, testMetricsName);
 
@@ -149,15 +152,15 @@ class MetricsFavoriteControllerTest {
         when(subjectSum.getPrincipal()).thenReturn(testUserId);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-        
+
             doThrow(new RuntimeException("Database error"))
                     .when(metricsFavoriteService).removeMetricsFavorite(testUserId, testMonitorId, testMetricsName);
 
             mockMvc.perform(delete("/api/metrics/favorite/{monitorId}/{metricsName}", testMonitorId, testMetricsName)
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                    .andExpect(jsonPath("$.msg").value("Remove failed! Database error"));
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
+                    .andExpect(jsonPath("$.msg").value("Database error"));
 
             verify(metricsFavoriteService).removeMetricsFavorite(testUserId, testMonitorId, testMetricsName);
         }
@@ -169,7 +172,7 @@ class MetricsFavoriteControllerTest {
         when(subjectSum.getPrincipal()).thenReturn(testUserId);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-        
+
             Set<String> favoriteMetrics = Set.of("cpu", "memory", "disk");
             when(metricsFavoriteService.getUserFavoritedMetrics(testUserId, testMonitorId))
                     .thenReturn(favoriteMetrics);
@@ -191,7 +194,7 @@ class MetricsFavoriteControllerTest {
         when(subjectSum.getPrincipal()).thenReturn(testUserId);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-        
+
             Set<String> favoriteMetrics = Set.of();
             when(metricsFavoriteService.getUserFavoritedMetrics(testUserId, testMonitorId))
                     .thenReturn(favoriteMetrics);
@@ -213,15 +216,15 @@ class MetricsFavoriteControllerTest {
         when(subjectSum.getPrincipal()).thenReturn(testUserId);
         try (var mockedStatic = mockStatic(SurenessContextHolder.class)) {
             mockedStatic.when(SurenessContextHolder::getBindSubject).thenReturn(subjectSum);
-        
+
             when(metricsFavoriteService.getUserFavoritedMetrics(testUserId, testMonitorId))
                     .thenThrow(new RuntimeException("Service error"));
 
             mockMvc.perform(get("/api/metrics/favorite/{monitorId}", testMonitorId)
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                    .andExpect(jsonPath("$.msg").value("Failed to get favorited metrics!"));
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.code").value((int) MONITOR_CONFLICT_CODE))
+                    .andExpect(jsonPath("$.msg").value("Service error"));
 
             verify(metricsFavoriteService).getUserFavoritedMetrics(testUserId, testMonitorId);
         }
@@ -231,7 +234,7 @@ class MetricsFavoriteControllerTest {
     void testGetUserFavoritedMetricsMissingMonitorId() throws Exception {
         mockMvc.perform(get("/api/metrics/favorite")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(status().is5xxServerError());
 
         verify(metricsFavoriteService, never()).getUserFavoritedMetrics(anyString(), anyLong());
     }
