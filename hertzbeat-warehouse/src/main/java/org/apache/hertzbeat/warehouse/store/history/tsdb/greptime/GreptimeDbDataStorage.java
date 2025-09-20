@@ -229,8 +229,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         String name = getTableName(metrics);
         String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
-            timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"}";
+            timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
         }
+        timeSeriesSelector = timeSeriesSelector + "}";
 
         try {
             // max
