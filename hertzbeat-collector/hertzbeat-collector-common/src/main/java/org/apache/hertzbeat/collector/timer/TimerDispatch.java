@@ -46,6 +46,12 @@ public interface TimerDispatch {
     void cyclicJob(WheelTimerTask timerTask, long interval, TimeUnit timeUnit);
 
     /**
+     * Cyclic job
+     * @param timerTask timerTask
+     */
+    void cyclicJob(WheelTimerTask timerTask);
+
+    /**
      * Delete existing job
      * @param jobId    jobId
      * @param isCyclic Whether it is a periodic task, true is, false is a temporary task

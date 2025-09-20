@@ -508,6 +508,8 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setDefaultInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
+            appDefine.setScheduleType(monitor.getScheduleType());
+            appDefine.setCronExpression(monitor.getCronExpression());
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
                     CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
             appDefine.setMetadata(metadata);
@@ -755,6 +757,8 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setDefaultInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
+            appDefine.setScheduleType(monitor.getScheduleType());
+            appDefine.setCronExpression(monitor.getCronExpression());
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
                     CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
             appDefine.setMetadata(metadata);

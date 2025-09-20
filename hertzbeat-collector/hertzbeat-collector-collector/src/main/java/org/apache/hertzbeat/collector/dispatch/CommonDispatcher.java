@@ -257,10 +257,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // The periodic task pushes the task to the time wheel again.
                 // First, determine the execution time of the task and the task collection interval.
                 if (!timeout.isCancelled()) {
-                    long spendTime = System.currentTimeMillis() - job.getDispatchTime();
-                    long interval = job.getInterval() - spendTime / 1000;
-                    interval = interval <= 0 ? 0 : interval;
-                    timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
+                    timerDispatch.cyclicJob(timerJob);
                 }
             } else if (!metricsSet.isEmpty()) {
                 // The execution of the current level metrics is completed, and the execution of the next level metrics starts
@@ -360,10 +357,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             // The periodic task pushes the task to the time wheel again.
             // First, determine the execution time of the task and the task collection interval.
             if (!timeout.isCancelled()) {
-                long spendTime = System.currentTimeMillis() - job.getDispatchTime();
-                long interval = job.getInterval() - spendTime / 1000;
-                interval = interval <= 0 ? 0 : interval;
-                timerDispatch.cyclicJob(timerJob, interval, TimeUnit.SECONDS);
+                timerDispatch.cyclicJob(timerJob);
             }
             // it is an asynchronous periodic cyclic task, directly response the collected data
             metricsDataList.forEach(commonDataQueue::sendMetricsData);
