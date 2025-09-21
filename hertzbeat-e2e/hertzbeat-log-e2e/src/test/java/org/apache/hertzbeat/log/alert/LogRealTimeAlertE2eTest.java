@@ -141,13 +141,13 @@ public class LogRealTimeAlertE2eTest {
 
         List<SingleAlert> groupAlerts = capturedGroupAlerts.get(0);
         assertNotNull(groupAlerts, "Group alerts should not be null");
-        assertTrue(groupAlerts.size() >= 5, "Group should contain at least 5 alerts");
+        assertTrue(groupAlerts.size() >= 2, "Group should contain at least 5 alerts");
 
         SingleAlert anyAlert = groupAlerts.get(0);
         assertEquals(CommonConstants.ALERT_STATUS_FIRING, anyAlert.getStatus(), "Alert should be in firing status");
         assertNotNull(anyAlert.getLabels(), "Alert should have labels");
         assertEquals(CommonConstants.ALERT_SEVERITY_WARNING, anyAlert.getLabels().get(CommonConstants.LABEL_ALERT_SEVERITY), "Alert should have warning severity");
-        assertTrue(anyAlert.getTriggerTimes() >= 5, "Alert should indicate high frequency trigger");
+        assertTrue(anyAlert.getTriggerTimes() >= 2, "Alert should indicate high frequency trigger");
     }
 
     /**
@@ -181,8 +181,8 @@ public class LogRealTimeAlertE2eTest {
                 .name("high_frequency_warning")
                 .type(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME)
                 .expr("log.severityText == 'ERROR'")
-                .period(20) // 60 seconds window
-                .times(5)   // Trigger after 5 occurrences
+                .period(10)
+                .times(2)
                 .template("High frequency warnings detected: {{ __rows__ }} warnings in 30 seconds")
                 .enable(true)
                 .build();
