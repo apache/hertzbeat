@@ -40,7 +40,7 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
-import org.apache.hertzbeat.manager.config.StatusProperties;
+import org.apache.hertzbeat.manager.properties.StatusProperties;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.apache.hertzbeat.manager.dao.StatusPageHistoryDao;
