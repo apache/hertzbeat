@@ -15,25 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch;
+package org.apache.hertzbeat.collector.context.impl;
 
-import org.apache.hertzbeat.common.timer.Timeout;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.List;
+import org.apache.hertzbeat.collector.context.AbstractInmemoryContext;
 
 /**
- * Collection data scheduler interface
+ *
  */
-public interface CollectDataDispatch {
+public class DefaultContext extends AbstractInmemoryContext {
+    private DefaultContext() {
+    }
 
-    /**
-     * Processing and distributing collection result data
-     * @param timeout     time wheel timeout        
-     * @param metrics     The following metrics collection tasks   
-     * @param metricsData Collect result data       
-     */
-    void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
-
+    public static DefaultContext newInstance() {
+        return new DefaultContext();
+    }
 }

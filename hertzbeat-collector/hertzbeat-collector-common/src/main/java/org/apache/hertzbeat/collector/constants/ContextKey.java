@@ -15,25 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch;
+package org.apache.hertzbeat.collector.constants;
 
-import org.apache.hertzbeat.common.timer.Timeout;
+import lombok.Getter;
+import org.apache.hertzbeat.common.entity.collector.CollectorMetaData;
+import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.timer.Timeout;
 
-import java.util.List;
+public enum ContextKey {
+    META_DATA(CollectorMetaData.class),
+    JOB(Job.class),
+    TIMEOUT(Timeout.class),
+    METRICS_COLLECT_START_TIME(Long.class),
+    METRICS(Metrics.class),
+    METRICS_KEY(String.class),
+    ;
 
-/**
- * Collection data scheduler interface
- */
-public interface CollectDataDispatch {
+    @Getter
+    private final Class<?> clazz;
 
-    /**
-     * Processing and distributing collection result data
-     * @param timeout     time wheel timeout        
-     * @param metrics     The following metrics collection tasks   
-     * @param metricsData Collect result data       
-     */
-    void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
-
+    ContextKey(Class<?> clazz) {
+        this.clazz = clazz;
+    }
 }
