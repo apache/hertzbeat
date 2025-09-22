@@ -15,12 +15,17 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.ai.agent.event;
 
-package org.apache.hertzbeat.ai.agent.controller;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * Controller for managing conversations.
+ * OpenAI configuration change event
  */
-public class ConversationController {
+public class OpenAiConfigChangeEvent extends ApplicationEvent {
 
+    public OpenAiConfigChangeEvent(ApplicationContext source) {
+        super(source);
+    }
 }

@@ -147,7 +147,7 @@ git pull upstream master
 
 在您的 PR 被合并后，您可以发送如下内容邮件到 `dev@hertzbeat.apache.org` 来申请领取属于您的 Apache HertzBeat™ 贡献者电子证书。
 
-```
+```text
 Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
 Body:
 Hello,
@@ -162,7 +162,7 @@ Best regards,
 <Your Name>
 ```
 
-在几个工作日内，您会收到携带电子证书的回复，您的名字也会出现在贡献者列表中。    
+在几个工作日内，您会收到携带电子证书的回复，您的名字也会出现在贡献者列表中。
 注意贡献者的证书是电子的，待您成为 `Committer` 或者 `PMC` 的证书是实体的。
 
 证书样例：
