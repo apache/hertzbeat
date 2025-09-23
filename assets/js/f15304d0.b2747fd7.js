@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkhertzbeat=self.webpackChunkhertzbeat||[]).push([[97804],{50709:(e,t,a)=>{a.r(t),a.d(t,{default:()=>n});var r=a(96540);function n(e){let{children:t}=e;return r.createElement("section",{style:{padding:"4rem 0",width:"100%"}},r.createElement("div",{className:"container"},r.createElement("div",{className:"row"},t)))}}}]);
