@@ -271,7 +271,7 @@ public class MonitorServiceImpl implements MonitorService {
         // The request monitoring parameter matches the monitoring parameter definition mapping check
         Monitor monitor = monitorDto.getMonitor();
         // The Service Discovery host field may be null
-        monitor.setHost(monitor.getHost() != null ? monitor.getHost().trim() : "");
+        monitor.setHost(StringUtils.hasText(monitor.getHost()) ? monitor.getHost().trim() : null);
         monitor.setName(monitor.getName().trim());
         Map<String, Param> paramMap = monitorDto.getParams()
                 .stream()
