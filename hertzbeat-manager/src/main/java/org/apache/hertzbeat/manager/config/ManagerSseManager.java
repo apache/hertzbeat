@@ -26,10 +26,12 @@ import org.apache.hertzbeat.common.entity.dto.ManagerMessage;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -57,14 +59,22 @@ public class ManagerSseManager {
                         .name(eventName)
                         .data(data));
             } catch (IOException | IllegalStateException e) {
-                emitter.complete();
-                removeEmitter(clientId);
+                tryCompleteAndClean(clientId, emitter);
             } catch (Exception exception) {
                 log.error("Failed to broadcast manager message data to client: {}", exception.getMessage());
-                emitter.complete();
-                removeEmitter(clientId);
+                tryCompleteAndClean(clientId, emitter);
             }
         });
+    }
+
+    private void tryCompleteAndClean(Long clientId, SseEmitter emitter) {
+        try {
+            Optional.ofNullable(emitter).ifPresent(ResponseBodyEmitter::complete);
+        } catch (Throwable e) {
+            log.debug("Failed to complete emitter for client {}: {}", clientId, e.getMessage());
+        }
+        // execute clear
+        removeEmitter(clientId);
     }
 
     public void broadcastImportTaskInProgress(String taskName, Integer progress){

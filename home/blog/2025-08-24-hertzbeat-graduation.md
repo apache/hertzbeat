@@ -31,7 +31,7 @@ tags: [opensource, apache]
 
 ## 2. Incubation Journey and Milestones
 
-#### **I. Incubation Journey**
+### **I. Incubation Journey**
 
 - **April 2024**:
   HertzBeat officially applied to join the Apache Incubator and became an Apache Incubator project.
@@ -54,14 +54,14 @@ During the incubation period, Hertzbeat maintained an active pace of research, d
 
 - Released 5 ASF-compliant versions (1.6.0 - 1.7.2)
 - Key feature enhancements include:
-    - **Multi-protocol expansion** - Added support for key components or protocols such as Ipmi, PLC, NVIDIA, Redfish.
-    - **Intelligent alert center** - Implemented multi-expression alerts, periodic thresholds, and alert suppression/silencing/dispatch functions.
-    - **Dynamic service discovery** - Achieved automatic task discovery through http_sd and Zookeeper/Nacos.
-    - **Cloud service integration** - Supported integration with alert sources from Alibaba Cloud SLS, Huawei Cloud, and Volcano Engine.
-    - **AI capability enhancement** - Integrated AI platforms such as OpenAI.
-    - **Storage optimization** - Upgraded storage performance for VictoriaMetrics and GreptimeDB.
-    - **Internationalization support** - Added multi-language interfaces, including Japanese/Traditional Chinese.
-    - **Data processing enhancement** - Supported SQL/PromQL expression syntax analysis, refactoring data flow with Apache Arrow.
+  - **Multi-protocol expansion** - Added support for key components or protocols such as Ipmi, PLC, NVIDIA, Redfish.
+  - **Intelligent alert center** - Implemented multi-expression alerts, periodic thresholds, and alert suppression/silencing/dispatch functions.
+  - **Dynamic service discovery** - Achieved automatic task discovery through http_sd and Zookeeper/Nacos.
+  - **Cloud service integration** - Supported integration with alert sources from Alibaba Cloud SLS, Huawei Cloud, and Volcano Engine.
+  - **AI capability enhancement** - Integrated AI platforms such as OpenAI.
+  - **Storage optimization** - Upgraded storage performance for VictoriaMetrics and GreptimeDB.
+  - **Internationalization support** - Added multi-language interfaces, including Japanese/Traditional Chinese.
+  - **Data processing enhancement** - Supported SQL/PromQL expression syntax analysis, refactoring data flow with Apache Arrow.
 
 The continuous iteration of these versions fully demonstrates Hertzbeat's dedication to technology and its high regard for user needs. Each version release is a solid step in Hertzbeat's growth, bringing users a more powerful and user-friendly monitoring experience.
 
@@ -74,31 +74,31 @@ During the Apache incubation period, Hertzbeat strictly adhered to the Apache Wa
 - **Consensus-driven decision-making**: For key decisions such as adding or removing features and choosing technical routes, the community engages in thorough discussions, weighing various factors. If a complete consensus cannot be reached, voting is used to assist, ensuring that the project's direction aligns with the overall interests of the community.
 
 - **Contributor Growth**:
-    - During the incubation period, **13 new Committers** were added, including **3 nominated PPMC members**, and the number of contributors reached 275. The core team also covers multiple time zones in China, the US, and Europe.
-    - GitHub **Stars surpassed 6K+**, with an average of **30+** monthly active developers.
+  - During the incubation period, **13 new Committers** were added, including **3 nominated PPMC members**, and the number of contributors reached 275. The core team also covers multiple time zones in China, the US, and Europe.
+  - GitHub **Stars surpassed 6K+**, with an average of **30+** monthly active developers.
 - **User Ecosystem**:
-    - **Application Areas**: Since its incubation, Apache HertzBeat™ has been successfully implemented in various industry scenarios due to its lightweight, agentless, and highly scalable features, becoming a new choice for enterprise monitoring infrastructure.
-    - **Developer Ecosystem**: The community has contributed a large number of monitoring templates covering mainstream technology stacks such as Kubernetes, Docker, Redis, and MySQL, significantly reducing the cost of monitoring configuration.
+  - **Application Areas**: Since its incubation, Apache HertzBeat™ has been successfully implemented in various industry scenarios due to its lightweight, agentless, and highly scalable features, becoming a new choice for enterprise monitoring infrastructure.
+  - **Developer Ecosystem**: The community has contributed a large number of monitoring templates covering mainstream technology stacks such as Kubernetes, Docker, Redis, and MySQL, significantly reducing the cost of monitoring configuration.
 
 ## 3. Future Outlook and Plans
 
 Becoming an Apache Top-Level Project is a milestone, but it is also a new beginning. The Apache HertzBeat™ community will continue to uphold the Apache Foundation's "community over code" philosophy and evolve around the following core directions, striving to become a world-leading open-source observability platform:
 
 1. AI and Intelligent Capabilities
-- Explore the application of AI in monitoring data analysis, anomaly detection, and intelligent alerting.
-- Integrate more AI models and services to enhance the user experience.
+   - Explore the application of AI in monitoring data analysis, anomaly detection, and intelligent alerting.
+   - Integrate more AI models and services to enhance the user experience.
 
 2. Enhance Product Performance and Scalability
-- Continuously optimize collection scheduling algorithms and cluster architecture to support larger-scale monitoring scenarios.
-- Improve system stability, reduce resource consumption, and enhance data processing efficiency.
+   - Continuously optimize collection scheduling algorithms and cluster architecture to support larger-scale monitoring scenarios.
+   - Improve system stability, reduce resource consumption, and enhance data processing efficiency.
 
 3. Improve Functionality and User Experience
-- Simplify the monitoring configuration process and provide a more intuitive and user-friendly interface.
-- Enhance the status page functionality and support more customization options.
+   - Simplify the monitoring configuration process and provide a more intuitive and user-friendly interface.
+   - Enhance the status page functionality and support more customization options.
 
 4. Strengthen Community Building and Internationalization
-- Expand the community size and attract more contributors to participate in project development.
-- Improve multi-language support, including document internationalization and interface localization.
+   - Expand the community size and attract more contributors to participate in project development.
+   - Improve multi-language support, including document internationalization and interface localization.
 
 ## 4. Acknowledgments
 
