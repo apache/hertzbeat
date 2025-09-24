@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -46,7 +47,6 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.AesUtil;
-import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
@@ -276,7 +276,8 @@ public class MonitorServiceImpl implements MonitorService {
     public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
         // The request monitoring parameter matches the monitoring parameter definition mapping check
         Monitor monitor = monitorDto.getMonitor();
-        monitor.setHost(monitor.getHost().trim());
+        // The Service Discovery host field may be null
+        monitor.setHost(StringUtils.hasText(monitor.getHost()) ? monitor.getHost().trim() : null);
         monitor.setName(monitor.getName().trim());
         Map<String, Param> paramMap = monitorDto.getParams()
                 .stream()
@@ -316,9 +317,14 @@ public class MonitorServiceImpl implements MonitorService {
         // Parameter definition structure verification
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
         if (!CollectionUtils.isEmpty(paramDefines)) {
+            boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
             for (ParamDefine paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 Param param = paramMap.get(field);
+                // Get the host from service discovery
+                if (!isStatic && "host".equals(field)) {
+                    continue;
+                }
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
@@ -664,9 +670,9 @@ public class MonitorServiceImpl implements MonitorService {
             if (StringUtils.hasText(search)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + search + "%");
                 Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + search.toLowerCase() + "%");
-                if (CommonUtil.isNumeric(search)){
-                    Predicate predicateId = criteriaBuilder.equal(root.get("id"), Long.parseLong(search));
-                    orList.add(predicateId);
+                Long id = Longs.tryParse(search);
+                if (id != null) {
+                    orList.add(criteriaBuilder.equal(root.get("id"), id));
                 }
                 orList.add(predicateHost);
                 orList.add(predicateName);
