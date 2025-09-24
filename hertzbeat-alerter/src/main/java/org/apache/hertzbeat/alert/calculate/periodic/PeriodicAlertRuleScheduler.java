@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.calculate;
+package org.apache.hertzbeat.alert.calculate.periodic;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,13 +42,15 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 @Component
 public class PeriodicAlertRuleScheduler implements CommandLineRunner {
 
-    private final PeriodicAlertCalculator calculator;
+    private final MetricsPeriodicAlertCalculator metricsCalculator;
+    private final LogPeriodicAlertCalculator logCalculator;
     private final AlertDefineDao alertDefineDao;
     private final ScheduledExecutorService scheduledExecutor;
     private final Map<Long, ScheduledFuture<?>> scheduledFutures;
 
-    public PeriodicAlertRuleScheduler(PeriodicAlertCalculator calculator, AlertDefineDao alertDefineDao) {
-        this.calculator = calculator;
+    public PeriodicAlertRuleScheduler(MetricsPeriodicAlertCalculator metricsCalculator, LogPeriodicAlertCalculator logCalculator, AlertDefineDao alertDefineDao) {
+        this.metricsCalculator = metricsCalculator;
+        this.logCalculator = logCalculator;
         this.alertDefineDao = alertDefineDao;
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
@@ -76,9 +81,14 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner {
             return;
         }
         cancelSchedule(rule.getId());
-        if (rule.getType().equals(ALERT_THRESHOLD_TYPE_PERIODIC)) {
+        if (rule.getType().equals(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC)
+                || rule.getType().equals(LOG_ALERT_THRESHOLD_TYPE_PERIODIC)) {
             ScheduledFuture<?> future = scheduledExecutor.scheduleAtFixedRate(() -> {
-                calculator.calculate(rule);
+                if (rule.getType().equals(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC)) {
+                    metricsCalculator.calculate(rule);
+                } else if (rule.getType().equals(LOG_ALERT_THRESHOLD_TYPE_PERIODIC)) {
+                    logCalculator.calculate(rule);
+                }
             }, 0, rule.getPeriod(), java.util.concurrent.TimeUnit.SECONDS);
             scheduledFutures.put(rule.getId(), future);
         }
@@ -87,7 +97,11 @@ public class PeriodicAlertRuleScheduler implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         log.info("Starting periodic alert rule scheduler...");
-        List<AlertDefine> periodicRules = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(ALERT_THRESHOLD_TYPE_PERIODIC);
+        List<AlertDefine> metricsPeriodicRules = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC);
+        List<AlertDefine> logPeriodicRules = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(LOG_ALERT_THRESHOLD_TYPE_PERIODIC);
+        List<AlertDefine> periodicRules = new ArrayList<>(metricsPeriodicRules.size() + logPeriodicRules.size());
+        periodicRules.addAll(metricsPeriodicRules);
+        periodicRules.addAll(logPeriodicRules);
         for (AlertDefine rule : periodicRules) {
             updateSchedule(rule);
         }

@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.calculate;
+package org.apache.hertzbeat.alert.calculate.periodic;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
@@ -34,12 +35,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Periodic Alert Calculator
+ * Metrics Periodic Alert Calculator
  */
-
 @Slf4j
 @Component
-public class PeriodicAlertCalculator {
+public class MetricsPeriodicAlertCalculator {
     
     private static final String VALUE = "__value__";
     private static final String TIMESTAMP = "__timestamp__";
@@ -48,71 +48,82 @@ public class PeriodicAlertCalculator {
     private final AlarmCommonReduce alarmCommonReduce;
     private final AlarmCacheManager alarmCacheManager;
 
-    public PeriodicAlertCalculator(DataSourceService dataSourceService, AlarmCommonReduce alarmCommonReduce,
-                                   AlarmCacheManager alarmCacheManager) {
-        this.dataSourceService = dataSourceService;
+    public MetricsPeriodicAlertCalculator(DataSourceService dataSourceService, AlarmCommonReduce alarmCommonReduce,
+                                          AlarmCacheManager alarmCacheManager) {
         this.alarmCommonReduce = alarmCommonReduce;
         this.alarmCacheManager = alarmCacheManager;
+        this.dataSourceService = dataSourceService;
     }
-    
+
+    /**
+     * Calculate alerts for the given alert definition
+     * @param define The alert definition to calculate
+     */
     public void calculate(AlertDefine define) {
         if (!define.isEnable() || StringUtils.isEmpty(define.getExpr())) {
             log.error("Periodic define {} is disabled or expression is empty", define.getName());
             return;
         }
+
         long currentTimeMilli = System.currentTimeMillis();
         try {
-            // for prometheus is instant promql query, for db is sql query
-            // result: [{'value': 100, 'timestamp': 1343554, 'instance': 'node1'},{'value': 200, 'timestamp': 1343555, 'instance': 'node2'}]
-            // the return result should be matched with threshold
-            try {
-                List<Map<String, Object>> results = dataSourceService.calculate(
-                        define.getDatasource(),
-                        define.getExpr()
-                );
-                // if no match the expr threshold, the results item map {'value': null} should be null and others field keep
-                // if results has multi list, should trigger multi alert
-                if (CollectionUtils.isEmpty(results)) {
-                    return;
-                }
-                for (Map<String, Object> result : results) {
-                    Map<String, String> fingerPrints = new HashMap<>(8);
-                    // here use the alert name as finger, not care the alert name may be changed
-                    fingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
-                    fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
-                    fingerPrints.putAll(define.getLabels());
-                    for (Map.Entry<String, Object> entry : result.entrySet()) {
-                        if (entry.getValue() != null && !VALUE.equals(entry.getKey())
-                                && !TIMESTAMP.equals(entry.getKey())) {
-                            fingerPrints.put(entry.getKey(), entry.getValue().toString());
-                        }
-                    }
-                    if (result.get(VALUE) == null) {
-                        // recovery the alert
-                        handleRecoveredAlert(define.getId(), fingerPrints);
-                        continue;
-                    }
-                    Map<String, Object> fieldValueMap = new HashMap<>(8);
-                    fieldValueMap.putAll(define.getLabels());
-                    fieldValueMap.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
-                    for (Map.Entry<String, Object> entry : result.entrySet()) {
-                        if (entry.getValue() != null) {
-                            fieldValueMap.put(entry.getKey(), entry.getValue());
-                        }
-                    }
-                    afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define);
-                }
-            } catch (Exception ignored) {
-                // ignore the query exception eg: no result, timeout, etc
-                return;
-            }
+            doCalculate(define, currentTimeMilli);
         } catch (Exception e) {
             log.error("Calculate periodic define {} failed: {}", define.getName(), e.getMessage());
         }
     }
 
+    private void doCalculate(AlertDefine define, long currentTimeMilli) {
+        try {
+            List<Map<String, Object>> results = dataSourceService.calculate(
+                define.getDatasource(),
+                define.getExpr()
+            );
+            // If no match the expr threshold, the results item map {'value': null} should be null and others field keep
+            // If results has multi list, should trigger multi alert
+            if (CollectionUtils.isEmpty(results)) {
+                return;
+            }
+            
+            for (Map<String, Object> result : results) {
+                Map<String, String> fingerPrints = new HashMap<>(8);
+                // Here use the alert name as finger, not care the alert name may be changed
+                fingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
+                fingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
+                fingerPrints.putAll(define.getLabels());
+                for (Map.Entry<String, Object> entry : result.entrySet()) {
+                    if (entry.getValue() != null && !VALUE.equals(entry.getKey())
+                            && !TIMESTAMP.equals(entry.getKey())) {
+                        fingerPrints.put(entry.getKey(), entry.getValue().toString());
+                    }
+                }
+                
+                if (result.get(VALUE) == null) {
+                    // Recovery the alert
+                    handleRecoveredAlert(define.getId(), fingerPrints);
+                    continue;
+                }
+                
+                Map<String, Object> fieldValueMap = new HashMap<>(8);
+                fieldValueMap.putAll(define.getLabels());
+                fieldValueMap.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
+                for (Map.Entry<String, Object> entry : result.entrySet()) {
+                    if (entry.getValue() != null) {
+                        fieldValueMap.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                afterThresholdRuleMatch(currentTimeMilli, fingerPrints, fieldValueMap, define);
+            }
+        } catch (Exception ignored) {
+            // Ignore the query exception eg: no result, timeout, etc
+        }
+    }
+
+    /**
+     * Handle alert after threshold rule match
+     */
     private void afterThresholdRuleMatch(long currentTimeMilli, Map<String, String> fingerPrints,
-                                         Map<String, Object> fieldValueMap, AlertDefine define) {
+                                           Map<String, Object> fieldValueMap, AlertDefine define) {
         Long defineId = define.getId();
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
         SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
@@ -124,7 +135,6 @@ public class PeriodicAlertCalculator {
             // First time triggering alert, create new alert and set to pending status
             SingleAlert newAlert = SingleAlert.builder()
                     .labels(labels)
-                    // todo render var content in annotations
                     .annotations(define.getAnnotations())
                     .content(AlertTemplateUtil.render(define.getTemplate(), fieldValueMap))
                     .status(CommonConstants.ALERT_STATUS_PENDING)
@@ -158,11 +168,13 @@ public class PeriodicAlertCalculator {
         }
     }
 
+    /**
+     * Handle recovered alert
+     */
     private void handleRecoveredAlert(Long defineId, Map<String, String> fingerprints) {
         String fingerprint = AlertUtil.calculateFingerprint(fingerprints);
         SingleAlert firingAlert = alarmCacheManager.removeFiring(defineId, fingerprint);
         if (firingAlert != null) {
-            // todo consider multi times to tig for resolved alert
             firingAlert.setTriggerTimes(1);
             firingAlert.setEndAt(System.currentTimeMillis());
             firingAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
@@ -171,4 +183,4 @@ public class PeriodicAlertCalculator {
         alarmCacheManager.removePending(defineId, fingerprint);
     }
 
-} 
+}

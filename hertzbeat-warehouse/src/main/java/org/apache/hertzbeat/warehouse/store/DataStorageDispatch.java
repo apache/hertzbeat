@@ -22,6 +22,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
@@ -62,6 +63,7 @@ public class DataStorageDispatch {
         this.historyDataWriter = historyDataWriter;
         this.pluginRunner = pluginRunner;
         startPersistentDataStorage();
+        startLogDataStorage();
     }
 
     protected void startPersistentDataStorage() {
@@ -84,6 +86,32 @@ public class DataStorageDispatch {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                }
+            }
+        };
+        workerPool.executeJob(runnable);
+    }
+
+    protected void startLogDataStorage() {
+        Runnable runnable = () -> {
+            Thread.currentThread().setName("warehouse-log-data-storage");
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    LogEntry logEntry = commonDataQueue.pollLogEntryToStorage();
+                    if (logEntry == null) {
+                        continue;
+                    }
+                    historyDataWriter.ifPresent(dataWriter -> {
+                        try {
+                            dataWriter.saveLogData(logEntry);
+                        } catch (Exception e) {
+                            log.error("Failed to save log entry: {}", e.getMessage(), e);
+                        }
+                    });
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    log.error("Error in log data storage thread: {}", e.getMessage(), e);
                 }
             }
         };

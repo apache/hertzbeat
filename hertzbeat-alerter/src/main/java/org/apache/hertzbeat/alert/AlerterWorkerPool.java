@@ -35,10 +35,12 @@ public class AlerterWorkerPool {
 
     private ThreadPoolExecutor workerExecutor;
     private ThreadPoolExecutor notifyExecutor;
+    private ThreadPoolExecutor logWorkerExecutor;
 
     public AlerterWorkerPool() {
         initWorkExecutor();
         initNotifyExecutor();
+        initLogWorkerExecutor();
     }
 
     private void initWorkExecutor() {
@@ -77,6 +79,21 @@ public class AlerterWorkerPool {
                 new ThreadPoolExecutor.AbortPolicy());
     }
 
+    private void initLogWorkerExecutor() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("Alerter logWorkerExecutor has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .setDaemon(true)
+                .setNameFormat("log-worker-%d")
+                .build();
+        logWorkerExecutor = new ThreadPoolExecutor(10, 10, 10, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),
+                threadFactory,
+                new ThreadPoolExecutor.AbortPolicy());
+    }
+
     /**
      * Run the alerter task
      * @param runnable task
@@ -96,4 +113,13 @@ public class AlerterWorkerPool {
         notifyExecutor.execute(runnable);
     }
 
+    /**
+     * Executes the given runnable task using the logWorkerExecutor.
+     *
+     * @param runnable the task to be executed
+     * @throws RejectedExecutionException if the task cannot be accepted for execution
+     */
+    public void executeLogJob(Runnable runnable) throws RejectedExecutionException {
+        logWorkerExecutor.execute(runnable);
+    }
 }
