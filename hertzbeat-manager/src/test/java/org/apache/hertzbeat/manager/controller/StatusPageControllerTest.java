@@ -25,8 +25,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
+
 import java.util.Collections;
 import java.util.List;
+
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
@@ -219,14 +221,10 @@ class StatusPageControllerTest {
 
     @Test
     public void testQueryStatusPageIncident() throws Exception {
-
-        List<StatusPageIncident> incidents = Collections.singletonList(new StatusPageIncident());
-        when(statusPageService.queryStatusPageIncidents()).thenReturn(incidents);
-
-        mockMvc.perform(get("/api/status/page/incident")
-                        .accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/status/page/incident?pageIndex=0&pageSize=10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
     }
 
 }

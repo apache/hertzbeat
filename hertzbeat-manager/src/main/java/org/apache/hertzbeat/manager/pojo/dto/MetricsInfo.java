@@ -15,11 +15,27 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.manager.pojo.dto;
 
-package org.apache.hertzbeat.ai.agent.dao;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Data Access Object interface for UserPreference entities.
+ * Metrics Information with favorite status
  */
-public interface UserPreferenceDao {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Schema(description = "Metrics information with favorite status")
+public class MetricsInfo {
+
+    @Schema(description = "Metrics name", example = "cpu")
+    private String name;
+
+    @Schema(description = "Whether the metrics is favorited by current user")
+    private Boolean favorited;
 }

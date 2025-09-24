@@ -17,11 +17,12 @@
  * under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
+import { Page } from '../pojo/Page';
 import { StatusPageComponent } from '../pojo/StatusPageComponent';
 import { StatusPageIncident } from '../pojo/StatusPageIncident';
 import { StatusPageOrg } from '../pojo/StatusPageOrg';
@@ -78,8 +79,24 @@ export class StatusPageService {
     return this.http.delete<Message<void>>(`${status_page_incident_uri}/${componentId}`);
   }
 
-  public getStatusPageIncidents(): Observable<Message<StatusPageIncident[]>> {
-    return this.http.get<Message<StatusPageIncident[]>>(status_page_incident_uri);
+  public getStatusPageIncidents(
+    search: string | undefined,
+    pageIndex: number,
+    pageSize: number
+  ): Observable<Message<Page<StatusPageIncident>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    // HttpParams is unmodifiable, so we need to save the return value of append/set
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      pageIndex: pageIndex,
+      pageSize: pageSize
+    });
+    if (search != undefined && search != '' && search.trim() != '') {
+      httpParams = httpParams.append('search', search);
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<StatusPageIncident>>>(status_page_incident_uri, options);
   }
 
   public getStatusPageIncident(incidentId: number): Observable<Message<StatusPageIncident>> {

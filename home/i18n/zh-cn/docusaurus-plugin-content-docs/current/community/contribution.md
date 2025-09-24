@@ -25,7 +25,7 @@ limitations under the License.
 
 ### 贡献方式
 
-> 在 HertzBeat 社区，贡献方式有很多:
+> 在 Apache HertzBeat™ 社区，贡献方式有很多:
 
 - 💻**代码**：可以帮助社区完成一些任务、编写新的 feature 或者是修复一些 bug；
 
@@ -143,29 +143,36 @@ git checkout master
 git pull upstream master
 ```
 
+### 领取贡献者证书
+
+在您的 PR 被合并后，您可以发送如下内容邮件到 `dev@hertzbeat.apache.org` 来申请领取属于您的 Apache HertzBeat™ 贡献者电子证书。
+
+```text
+Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
+Body:
+Hello,
+I would like to request a Contributor Certificate for my contributions to the Apache HertzBeat™ project.
+
+- Full Name: <Your Full Name> # The Full Name will be printed on the certificate, any name you want.
+- GitHub Username: <Your GitHub Username>
+- Pull Request Links: <List the URLs of the pull requests you have submitted>
+- Email Address: <Your Email Address>
+
+Best regards,
+<Your Name>
+```
+
+在几个工作日内，您会收到携带电子证书的回复，您的名字也会出现在贡献者列表中。
+注意贡献者的证书是电子的，待您成为 `Committer` 或者 `PMC` 的证书是实体的。
+
+证书样例：
+
+![cert](/img/docs/hertzbeat-cert.png)
+
 ### 如何成为 Committer？
 
 通过上述步骤，您就是 HertzBeat 的贡献者了。重复前面的步骤，在社区中保持活跃，坚持下去，您就能成为 Committer！
 
 ### 加入讨论交流
 
-[Github Discussion](https://github.com/apache/hertzbeat/discussions)
-
-加微信号 `ahertzbeat` 拉您进微信交流群
-
-### 模块
-
-- **[manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager)** 提供监控管理,系统管理基础服务
-
-> 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
->
-> - **[collector](https://github.com/apache/hertzbeat/tree/master/hertzbeat-collector)** 提供监控数据采集服务
-> 使用通用协议远程采集获取对端指标数据。
-> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/hertzbeat-warehouse)** 提供监控数据仓储服务
-> 采集指标结果数据管理，数据落盘，查询，计算统计。
-> - **[alerter](https://github.com/apache/hertzbeat/tree/master/hertzbeat-alerter)** 提供告警服务
-> 告警计算触发，任务状态联动，告警配置，告警通知。
-> - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
-> 监控告警系统可视化控制台前端
-
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+[讨论交流](contact)

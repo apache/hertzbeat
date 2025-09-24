@@ -18,11 +18,12 @@
 
 package org.apache.hertzbeat.ai.agent.service;
 
-
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ChatResponseDto;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Service for managing chat conversations and interactions with LLM providers.
@@ -30,22 +31,21 @@ import java.util.Map;
 public interface ConversationService {
 
     /**
+     * Create a new conversation
+     *
+     * @return Created conversation data
+     */
+    ConversationDto createConversation();
+
+    /**
      * Send a message and receive a streaming response
      *
      * @param message The user's message
      * @param conversationId Optional conversation ID for continuing a chat
-     * @return SseEmitter for streaming the response
+     * @return Flux of ServerSentEvent for streaming the response
      */
-    SseEmitter streamChat(String message, String conversationId);
+    Flux<ServerSentEvent<ChatResponseDto>> streamChat(String message, String conversationId);
 
-    /**
-     * Send a message and get a complete response
-     *
-     * @param message The user's message
-     * @param conversationId Optional conversation ID for continuing a chat
-     * @return Response object containing the AI's response and conversation metadata
-     */
-    Map<String, Object> chat(String message, String conversationId);
 
     /**
      * Get conversation history for a specific conversation
@@ -53,19 +53,28 @@ public interface ConversationService {
      * @param conversationId Conversation ID
      * @return Conversation data including messages
      */
-    Map<String, Object> getConversation(String conversationId);
+    ConversationDto getConversation(String conversationId);
 
     /**
      * Get all conversations for the current user
      *
      * @return List of conversations
      */
-    List<Map<String, Object>> getAllConversations();
+    List<ConversationDto> getAllConversations();
 
     /**
      * Delete a conversation
      *
      * @param conversationId Conversation ID to delete
+     * @return true if deleted, false if conversation not found
      */
-    void deleteConversation(String conversationId);
+    boolean deleteConversation(String conversationId);
+
+    /**
+     * Check if a conversation exists
+     *
+     * @param conversationId Conversation ID to check
+     * @return true if conversation exists, false otherwise
+     */
+    boolean conversationExists(String conversationId);
 }

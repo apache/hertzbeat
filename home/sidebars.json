@@ -187,7 +187,8 @@
             "help/euleros",
             "help/fedora",
             "help/linux_script",
-            "help/windows_script"
+            "help/windows_script",
+            "help/macos"
           ]
         },
         {
@@ -197,7 +198,9 @@
             "help/ipmi",
             "help/hikvision_isapi",
             "help/dahua",
-            "help/uniview"
+            "help/uniview",
+            "help/synology_nas",
+            "help/idrac"
           ]
         },
         {
@@ -277,7 +280,9 @@
         "help/grafana_dashboard",
         "help/mcp_sse_server",
         "help/collector",
+        "help/ai_agent_chat",
         "help/ai_config",
+        "help/risc-v",
         "help/issue"
       ]
     },

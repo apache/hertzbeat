@@ -15,12 +15,17 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.ai.agent.event;
 
-package org.apache.hertzbeat.ai.agent.service;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * Service interface for agent operations.
+ * OpenAI configuration change event
  */
-public interface AgentService {
+public class OpenAiConfigChangeEvent extends ApplicationEvent {
 
+    public OpenAiConfigChangeEvent(ApplicationContext source) {
+        super(source);
+    }
 }

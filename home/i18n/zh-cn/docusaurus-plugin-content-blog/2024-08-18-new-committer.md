@@ -33,7 +33,7 @@ Apache 软件基金会起初是由开发 [Apache HTTPd](https://httpd.apache.org
 
 ### 获得提名，成为 Committer
 
-此次提名是 Apache HertzbeatP(Incubating) 的 PPMC Member [Logic](https://github.com/zqr10159) 举荐的，感谢 Apache Hertzbeat Team。顺利提名成为了 Hertzbeat Committer，有了自己的 Apache 邮箱。
+此次提名是 Apache HertzbeatP(Incubating) 的 PPMC Member [Logic](https://github.com/zqr10159) 举荐的，感谢 Apache HertzBeat™ Team。顺利提名成为了 Hertzbeat Committer，有了自己的 Apache 邮箱。
 
 ![Apache ID Email](/img/blog/committer/yuluo-yx/3.jpg)
 
@@ -65,9 +65,9 @@ Apache Community 奉行的 [The Apache Way](https://www.apache.org/theapacheway/
 
 #### 项目 Committer 提名条件
 
-项目 PPMC Team 提名 Committer 的条件是不一样的。以 Apache Hertzbeat 为例：
+项目 PPMC Team 提名 Committer 的条件是不一样的。以 Apache HertzBeat™ 为例：
 
-![Apache Hertzbeat becoming committer](/img/blog/committer/yuluo-yx/7.jpg)
+![Apache HertzBeat™ becoming committer](/img/blog/committer/yuluo-yx/7.jpg)
 
 每个项目都有自己的标准，这些标准也不是一成不变，在项目的每个阶段会进行调整。
 
@@ -91,5 +91,5 @@ Apache Community 奉行的 [The Apache Way](https://www.apache.org/theapacheway/
 
 ## 随想
 
-写下此文，是为了纪念成为 Apache Hertzbeat Committer 这个特殊的事情, 同时也是对我之后参与开源的激励。
+写下此文，是为了纪念成为 Apache HertzBeat™ Committer 这个特殊的事情, 同时也是对我之后参与开源的激励。
 保持热情，保持 Coding。感谢在参与开源的时候给与我帮助的各位。也祝 Hertzbeat 顺利孵化毕业，成为 Apache 顶级项目！🎉

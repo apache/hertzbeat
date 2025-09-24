@@ -83,6 +83,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- QuestDB  -->
+        <dependency>
+            <groupId>org.questdb</groupId>
+            <artifactId>questdb</artifactId>
+            <version>${questdb.version}</version>
+        </dependency>
         <!-- influxdb Here, support for version 1.7, use influxdb-java, Full support for version 2.x requires influxdb-client-java -->
         <dependency>
             <groupId>org.influxdb</groupId>
