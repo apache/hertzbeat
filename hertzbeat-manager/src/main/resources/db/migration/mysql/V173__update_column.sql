@@ -18,6 +18,7 @@
 -- ensure every sql can rerun without error
 
 -- Modify hzb_status_page_incident_content table columns to TEXT type to resolve MySQL row size limit issue
+
 DELIMITER //
 CREATE PROCEDURE ModifyStatusIncidentContentColumns()
 BEGIN
@@ -43,6 +44,7 @@ BEGIN
         END IF;
     END IF;
 END //
+
 DELIMITER ;
 
 CALL ModifyStatusIncidentContentColumns();
