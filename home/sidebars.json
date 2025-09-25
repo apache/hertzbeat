@@ -78,6 +78,15 @@
         },
         {
           "type": "category",
+          "label": "log",
+          "items": [
+            "help/log_integration",
+            "help/log_stream",
+            "help/log_manage"
+          ]
+        },
+        {
+          "type": "category",
           "label": "alert",
           "items": [
             "help/alarm_center",
