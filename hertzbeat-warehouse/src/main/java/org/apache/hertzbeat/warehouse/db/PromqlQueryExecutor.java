@@ -79,8 +79,13 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
     protected record HttpPromqlProperties(
             String url,
             String username,
-            String password
+            String password,
+            String queryPath,
+            String queryRangePath
     ) {
+        public HttpPromqlProperties(String url, String username, String password) {
+            this(url, username, password, QUERY_PATH, QUERY_RANGE_PATH);
+        }
     }
 
     @Override
@@ -98,7 +103,7 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
-            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(httpPromqlProperties.url + QUERY_PATH);
+            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(httpPromqlProperties.url + httpPromqlProperties.queryPath);
             uriComponentsBuilder.queryParam(HTTP_QUERY_PARAM, queryString);
             URI uri = uriComponentsBuilder.build().toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
@@ -150,14 +155,14 @@ public abstract class PromqlQueryExecutor implements QueryExecutor {
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri;
             if (datasourceQuery.getTimeType().equals(RANGE)) {
-                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_RANGE_PATH)
+                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + httpPromqlProperties.queryRangePath)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .queryParam(HTTP_START_PARAM, datasourceQuery.getStart())
                         .queryParam(HTTP_END_PARAM, datasourceQuery.getEnd())
                         .queryParam(HTTP_STEP_PARAM, datasourceQuery.getStep())
                         .build().toUri();
             } else if (datasourceQuery.getTimeType().equals(INSTANT)) {
-                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + QUERY_PATH)
+                uri = UriComponentsBuilder.fromUriString(httpPromqlProperties.url() + httpPromqlProperties.queryPath)
                         .queryParam(HTTP_QUERY_PARAM, datasourceQuery.getExpr())
                         .build().toUri();
             } else {
