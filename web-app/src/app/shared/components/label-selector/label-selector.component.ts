@@ -17,8 +17,10 @@
  * under the License.
  */
 
-import { Component, Input, forwardRef, Output, EventEmitter } from '@angular/core';
+import { Component, Input, forwardRef, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+import { LabelService } from '../../../service/label.service';
 
 @Component({
   selector: 'app-label-selector',
@@ -32,11 +34,14 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     }
   ]
 })
-export class LabelSelectorComponent implements ControlValueAccessor {
+export class LabelSelectorComponent implements ControlValueAccessor, OnInit {
   @Input() name!: string;
   @Input() id!: string;
   @Input() labelKeys: string[] = [];
   @Input() labelMap: { [key: string]: string[] } = {};
+  @Input() labelIsCustom: boolean = false;
+
+  constructor(private labelSvc: LabelService) {}
 
   value: Array<{ key: string; value: string }> = [];
   customInputKey: string = '';
@@ -98,5 +103,43 @@ export class LabelSelectorComponent implements ControlValueAccessor {
 
   registerOnTouched(fn: any): void {
     this._onTouched = fn;
+  }
+
+  ngOnInit(): void {
+    if (!this.labelKeys || this.labelKeys.length == 0) {
+      this.labelMap = {};
+      this.labelKeys = [];
+      this.loadLabels();
+    }
+  }
+
+  loadLabels() {
+    let labelsInit$ = this.labelSvc.loadLabels(undefined, undefined, 0, 9999).subscribe(
+      message => {
+        if (message.code === 0) {
+          let page = message.data;
+          this.labelKeys = [...new Set(page.content.map(label => label.name))];
+
+          this.labelMap = {};
+
+          page.content.forEach(label => {
+            if (!this.labelMap[label.name]) {
+              this.labelMap[label.name] = [];
+            }
+
+            if (label.tagValue && !this.labelMap[label.name].includes(label.tagValue)) {
+              this.labelMap[label.name].push(label.tagValue);
+            }
+          });
+        } else {
+          console.warn(message.msg);
+        }
+        labelsInit$.unsubscribe();
+      },
+      error => {
+        labelsInit$.unsubscribe();
+        console.error(error.msg);
+      }
+    );
   }
 }
