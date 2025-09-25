@@ -18,30 +18,14 @@
 package org.apache.hertzbeat.warehouse.store.history.tsdb.greptime;
 
 import io.greptime.GreptimeDB;
-import io.greptime.models.*;
+import io.greptime.models.AuthInfo;
+import io.greptime.models.DataType;
+import io.greptime.models.Err;
+import io.greptime.models.Result;
+import io.greptime.models.Table;
+import io.greptime.models.TableSchema;
+import io.greptime.models.WriteOk;
 import io.greptime.options.GreptimeOptions;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataConstants;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
-import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.Base64Util;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.*;
-import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -53,13 +37,44 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
+import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.Base64Util;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
+import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * GreptimeDB data storage, only supports GreptimeDB version >= v0.5
@@ -235,13 +250,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         try {
             // max
             String finalTimeSeriesSelector = timeSeriesSelector;
-            URI uri = getURI(effectiveStart, effectiveEnd, step, uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            URI uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMax);
             // min
-            uri = getURI(effectiveStart, effectiveEnd, step, uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMin);
             // avg
-            uri = getURI(effectiveStart, effectiveEnd, step, uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
+            uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMean);
         } catch (Exception e) {
             log.error("query interval metrics data from greptime error. {}", e.getMessage(), e);
@@ -321,7 +336,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             HttpEntity<Void> httpEntity = getHttpEntity();
 
             String finalTimeSeriesSelector = timeSeriesSelector;
-            URI uri = getURI(start, end, step, uriComponents -> {
+            URI uri = getUri(start, end, step, uriComponents -> {
                 MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
                 if (!queryParams.isEmpty()) {
                     return "{" + finalTimeSeriesSelector + "}";
@@ -390,7 +405,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      * @param queryFunction request parameters
      * @return URI
      */
-    private URI getURI(long start, long end, String step, Function<UriComponents, String> queryFunction) {
+    private URI getUri(long start, long end, String step, Function<UriComponents, String> queryFunction) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(greptimeProperties.httpEndpoint() + QUERY_RANGE_PATH)
                 .queryParam("start", start)
                 .queryParam("end", end)
