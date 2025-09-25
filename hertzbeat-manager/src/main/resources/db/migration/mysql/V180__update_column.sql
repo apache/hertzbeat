@@ -17,12 +17,28 @@
 
 -- ensure every sql can rerun without error
 
--- Update type from 'realtime' to 'realtime_metric'
-UPDATE HZB_ALERT_DEFINE 
+-- Update hzb_alert_define table type column to support log monitoring
+DELIMITER //
+CREATE PROCEDURE UpdateAlertDefineColumns()
+BEGIN
+    DECLARE table_exists INT;
+
+SELECT COUNT(*) INTO table_exists
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_alert_define';
+
+IF table_exists = 1 THEN
+UPDATE hzb_alert_define
 SET type = 'realtime_metric'
 WHERE type = 'realtime';
 
--- Update type from 'periodic' to 'periodic_metric'
-UPDATE HZB_ALERT_DEFINE 
+UPDATE hzb_alert_define
 SET type = 'periodic_metric'
 WHERE type = 'periodic';
+END IF;
+END //
+DELIMITER ;
+
+CALL UpdateAlertDefineColumns();
+DROP PROCEDURE IF EXISTS UpdateAlertDefineColumns;
+COMMIT;
