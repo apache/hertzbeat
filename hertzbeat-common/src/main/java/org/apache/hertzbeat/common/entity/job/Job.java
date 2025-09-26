@@ -144,6 +144,16 @@ public class Job {
     private boolean prometheusProxyMode = false;
 
     /**
+     * Scheduling type: interval or cron
+     */
+    private String scheduleType = "interval";
+
+    /**
+     * Cron expression for scheduling, used when scheduleType is "cron"
+     */
+    private String cronExpression = null;
+
+    /**
      * the collect data response metrics as env configmap for other collect use. ^o^xxx^o^
      */
     @JsonIgnore
