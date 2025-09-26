@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.DisposableBean;
@@ -46,17 +47,23 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
+    private final LinkedBlockingQueue<LogEntry> logEntryQueue;
+    private final LinkedBlockingQueue<LogEntry> logEntryToStorageQueue;
 
     public InMemoryCommonDataQueue() {
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToStorageQueue = new LinkedBlockingQueue<>();
         serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
+        logEntryQueue = new LinkedBlockingQueue<>();
+        logEntryToStorageQueue = new LinkedBlockingQueue<>();
     }
 
     public Map<String, Integer> getQueueSizeMetricsInfo() {
         Map<String, Integer> metrics = new HashMap<>(8);
         metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
         metrics.put("metricsDataToStorageQueue", metricsDataToStorageQueue.size());
+        metrics.put("logEntryQueue", logEntryQueue.size());
+        metrics.put("logEntryToStorageQueue", logEntryToStorageQueue.size());
         return metrics;
     }
 
@@ -91,9 +98,31 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     @Override
+    public void sendLogEntry(LogEntry logEntry) {
+        logEntryQueue.offer(logEntry);
+    }
+
+    @Override
+    public LogEntry pollLogEntry() throws InterruptedException {
+        return logEntryQueue.take();
+    }
+
+    @Override
+    public void sendLogEntryToStorage(LogEntry logEntry) {
+        logEntryToStorageQueue.offer(logEntry);
+    }
+
+    @Override
+    public LogEntry pollLogEntryToStorage() throws InterruptedException {
+        return logEntryToStorageQueue.take();
+    }
+
+    @Override
     public void destroy() {
         metricsDataToAlertQueue.clear();
         metricsDataToStorageQueue.clear();
         serviceDiscoveryDataQueue.clear();
+        logEntryQueue.clear();
+        logEntryToStorageQueue.clear();
     }
 }

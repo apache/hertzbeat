@@ -24,7 +24,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.calculate.PeriodicAlertRuleScheduler;
+import org.apache.hertzbeat.alert.calculate.periodic.PeriodicAlertRuleScheduler;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
@@ -87,7 +87,8 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void validate(AlertDefine alertDefine, boolean isModify) throws IllegalArgumentException {
         if (StringUtils.hasText(alertDefine.getExpr())) {
-            if (CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
+            if (CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())
+                    || CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME.equals(alertDefine.getType())) {
                 try {
                     JexlExpressionRunner.compile(alertDefine.getExpr());
                 } catch (Exception e) {
@@ -214,11 +215,21 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public List<AlertDefine> getRealTimeAlertDefines() {
-        List<AlertDefine> alertDefines = CacheFactory.getAlertDefineCache();
+    public List<AlertDefine> getMetricsRealTimeAlertDefines() {
+        List<AlertDefine> alertDefines = CacheFactory.getMetricsAlertDefineCache();
         if (alertDefines == null) {
-            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.ALERT_THRESHOLD_TYPE_REALTIME);
-            CacheFactory.setAlertDefineCache(alertDefines);
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME);
+            CacheFactory.setMetricsAlertDefineCache(alertDefines);
+        }
+        return alertDefines;
+    }
+
+    @Override
+    public List<AlertDefine> getLogRealTimeAlertDefines() {
+        List<AlertDefine> alertDefines = CacheFactory.getLogAlertDefineCache();
+        if (alertDefines == null) {
+            alertDefines = alertDefineDao.findAlertDefinesByTypeAndEnableTrue(CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME);
+            CacheFactory.setLogAlertDefineCache(alertDefines);
         }
         return alertDefines;
     }
@@ -229,11 +240,35 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             return Collections.emptyList();
         }
         switch (type) {
-            case CommonConstants.ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
                 return dataSourceService.calculate(datasource, expr);
+            case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
+                // todo support alert expr preview
+                return dataSourceService.query(datasource, expr);
             default:
                 log.error("Get define preview unsupported type: {}", type);
                 return Collections.emptyList();
         }
+    }
+
+    @Override
+    public List<AlertDefine> getAlertDefinesByType(String type) {
+        if (!StringUtils.hasText(type)) {
+            throw new IllegalArgumentException("Alert definition type cannot be null or empty");
+        }
+        
+        switch (type) {
+            case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME:
+            case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
+            case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME:
+            case CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC:
+                // Valid type, proceed with query
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported alert definition type: " + type);
+        }
+        
+        // Query enabled alert definitions by type
+        return alertDefineDao.findAlertDefinesByTypeAndEnableTrue(type);
     }
 }

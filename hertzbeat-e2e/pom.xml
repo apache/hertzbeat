@@ -31,6 +31,7 @@
         <module>hertzbeat-collector-common-e2e</module>
         <module>hertzbeat-collector-kafka-e2e</module>
         <module>hertzbeat-collector-basic-e2e</module>
+        <module>hertzbeat-log-e2e</module>
     </modules>
 
     <properties>

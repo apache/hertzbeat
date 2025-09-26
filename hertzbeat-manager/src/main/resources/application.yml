@@ -152,7 +152,7 @@ spring:
 
 common:
   queue:
-    # memory or kafka
+    # memory, kafka, redis
     type: memory
     # properties when queue type is kafka
     kafka:
@@ -160,6 +160,18 @@ common:
       metrics-data-topic: async-metrics-data
       service-discovery-data-topic: service-discovery-data
       alerts-data-topic: async-alerts-data
+      log-entry-data-topic: async-log-entry-data
+      log-entry-data-to-storage-topic: log-entry-data-to-storage-topic
+    redis:
+      redis-host: 127.0.0.1
+      redis-port: 6379
+      metrics-data-queue-name-for-service-discovery: service_discovery
+      metrics-data-queue-name-to-persistent-storage: metrics:to_persistent_storage
+      metrics-data-queue-name-to-alerter: metrics:to_alerter
+      metrics-data-queue-name-to-real-time-storage: metrics:to_realtime_storage
+      alerts-data-queue-name: alerts
+      log-entry-queue-name: log:to_alerter
+      log-entry-to-storage-queue-name: log:to_storage
 
 warehouse:
   store:
