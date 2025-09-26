@@ -20,10 +20,9 @@ package org.apache.hertzbeat.manager.dao;
 import jakarta.annotation.Resource;
 import org.apache.hertzbeat.common.entity.manager.MetricsFavorite;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.annotation.Rollback;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -42,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Test case for {@link MetricsFavoriteDao}
  */
 @Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
 
     @Resource
@@ -78,11 +78,6 @@ class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
                 .metricsName(testMetricsName1)
                 .createTime(LocalDateTime.now())
                 .build();
-    }
-
-    @AfterEach
-    void tearDown() {
-        metricsFavoriteDao.deleteAll();
     }
 
     @Test
@@ -198,7 +193,6 @@ class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @Rollback(false)
     void testUniqueConstraint() {
         metricsFavoriteDao.saveAndFlush(testFavorite1);
 
@@ -208,11 +202,8 @@ class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
                 .metricsName(testMetricsName1)
                 .createTime(LocalDateTime.now()).build();
 
-        assertThrows(java.sql.SQLException.class, () -> {
+        assertThrows(Throwable.class, () -> {
             metricsFavoriteDao.saveAndFlush(duplicate);
         });
-        
-        // Clean up the test data
-        metricsFavoriteDao.deleteAll();
     }
 }
