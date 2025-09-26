@@ -162,7 +162,7 @@
           >{{ 'monitor.scheduleType' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-          <nz-select [(ngModel)]="monitor.scheduleType" name="scheduleType" nzPlaceHolder="选择调度类型">
+          <nz-select [(ngModel)]="monitor.scheduleType" name="scheduleType" nzPlaceHolder="{{ 'monitor.scheduleType.tip' | i18n }}">
             <nz-option nzValue="interval" [nzLabel]="'monitor.scheduleType.interval' | i18n"></nz-option>
             <nz-option nzValue="cron" [nzLabel]="'monitor.scheduleType.cron' | i18n"></nz-option>
           </nz-select>

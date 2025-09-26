@@ -82,7 +82,6 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         this.started = new AtomicBoolean(true);
     }
 
-
     @Override
     public void addJob(Job addJob, CollectResponseEventListener eventListener) {
         if (!this.started.get()) {
@@ -198,6 +197,5 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             return job.getInterval();
         }
     }
-
 
 }
