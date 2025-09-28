@@ -444,6 +444,27 @@ public class OnlineParserSingleTest {
         assertEquals("NT AUTHORITY\nLocalService", metricFamily.getMetricList().get(0).getLabels().get(3).getValue());
     }
 
+    @Test
+    void testParseMetricsWithChineseLabels() throws Exception {
+        String str = "ST22{Dump_Name=\"Dump总数\",HostName=\"SAP_DEV\",instance_hostname=\"sapdev\"} 2\n";
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "ST22");
+
+        assertNotNull(metricFamilyMap);
+        MetricFamily metricFamily = metricFamilyMap.get("ST22");
+        assertNotNull(metricFamily);
+        assertEquals("ST22", metricFamily.getName());
+        assertEquals(1, metricFamily.getMetricList().size());
+        assertEquals(2.0, metricFamily.getMetricList().get(0).getValue());
+
+        // Verify Chinese label value is correctly parsed
+        MetricFamily.Label dumpNameLabel = metricFamily.getMetricList().get(0).getLabels().stream()
+            .filter(label -> "Dump_Name".equals(label.getName()))
+            .findFirst().orElse(null);
+        assertNotNull(dumpNameLabel);
+        assertEquals("Dump总数", dumpNameLabel.getValue());
+    }
+
     private Map<String, MetricFamily> parseMetrics(InputStream inputStream, String metric) throws IOException {
         return OnlineParser.parseMetrics(inputStream, metric);
     }
