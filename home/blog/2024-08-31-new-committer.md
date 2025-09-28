@@ -3,7 +3,6 @@ title: Welcome to HertzBeat Community Committer!
 author: aias00
 author_title: Hongyu Liu
 author_url: https://github.com/Aias00
-author_image_url: https://avatars.githubusercontent.com/u/25810623
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
 ---
@@ -14,7 +13,7 @@ Hello everyone, I am deeply honored to be invited as a Committer for Apache Hert
 
 I have been in the software development industry for many years, currently working as a backend development engineer in my company, mainly responsible for the development and maintenance of core business systems. In my daily work, I not only focus on code quality and system performance but also actively participate in the design and optimization of technical solutions.
 
-Besides work, I am also passionate about the open-source community. Participating in open-source projects not only allows me to continuously learn new technologies and best practices but also helps me meet like-minded developers and jointly promote technological advancement. Becoming a Committer for Apache HertzBeat is an important milestone in my open-source journey, and I will continue to strive to make more contributions to the project and community.
+Besides work, I am also passionate about the open-source community. Participating in open-source projects not only allows me to continuously learn new technologies and best practices but also helps me meet like-minded developers and jointly promote technological advancement. Becoming a Committer for Apache HertzBeat™ is an important milestone in my open-source journey, and I will continue to strive to make more contributions to the project and community.
 
 ## Participating in the Apache Community
 
@@ -24,7 +23,7 @@ This experience gave me a deeper understanding of the Apache community and laid 
 
 ## Encountering HertzBeat and Starting to Contribute
 
-After participating in the Apache ShenYu project, I gained a deeper understanding of how open-source communities operate. At this time, I came across the Apache HertzBeat project by chance, which aims to create an easy-to-use, high-performance open-source real-time monitoring and alerting system.
+After participating in the Apache ShenYu project, I gained a deeper understanding of how open-source communities operate. At this time, I came across the Apache HertzBeat™ project by chance, which aims to create an easy-to-use, high-performance open-source real-time monitoring and alerting system.
 
 HertzBeat's philosophy and functionality immediately caught my interest. As a backend development engineer, I deeply understand the importance of monitoring systems in modern software architecture. HertzBeat not only provides rich monitoring features but also focuses on user experience and scalability, which aligns very well with my technical philosophy.
 
@@ -36,4 +35,4 @@ Through continuous contributions and interactions with community members, I grad
 
 ## Conclusion
 
-Becoming a Committer for Apache HertzBeat is an important milestone in my open-source journey. I will continue to strive to make more contributions to the project and community, while also looking forward to growing and progressing together with more team members, jointly promoting the prosperity and development of the project.
+Becoming a Committer for Apache HertzBeat™ is an important milestone in my open-source journey. I will continue to strive to make more contributions to the project and community, while also looking forward to growing and progressing together with more team members, jointly promoting the prosperity and development of the project.

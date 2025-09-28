@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
@@ -31,9 +31,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
@@ -120,6 +124,9 @@ class MonitorServiceTest {
 
     @Mock
     private ApplicationContext applicationContext;
+
+    @Mock
+    private MetricsFavoriteService metricsFavoriteService;
 
     /**
      * Properties cannot be directly mock, test execution before - manual assignment
@@ -650,8 +657,16 @@ class MonitorServiceTest {
 
     @Test
     void getMonitors() {
-        doReturn(Page.empty()).when(monitorDao).findAll(any(Specification.class), any(PageRequest.class));
-        assertNotNull(monitorService.getMonitors(null, null, null, null, "gmtCreate", "desc", 1, 1, null));
+        when(monitorDao.findAll(any(Specification.class), any(PageRequest.class))).thenAnswer((invocation)->{
+            Specification<Monitor> spec = invocation.getArgument(0);
+            CriteriaBuilder cb = mock(CriteriaBuilder.class);
+            CriteriaQuery<?> query = mock(CriteriaQuery.class);
+            Root<Monitor> root = mock(Root.class);
+            spec.toPredicate(root, query, cb);
+            return Page.empty();
+        });
+        assertNotNull(monitorService.getMonitors(null, null, "9.111", null, "gmtCreate", "desc", 1, 1, null));
+        assertNotNull(monitorService.getMonitors(null, null, "9", null, "gmtCreate", "desc", 1, 1, null));
     }
 
     @Test
@@ -773,5 +788,32 @@ class MonitorServiceTest {
         
         // Test the exportAll method
         assertDoesNotThrow(() -> monitorService.exportAll("JSON", mockResponse));
+    }
+
+    @Test
+    void jexlKeyword() {
+
+        List<Metrics.Field> fields = new ArrayList<>();
+        fields.add(Metrics.Field.builder().field("size").build());
+
+        List<Metrics> metrics = new ArrayList<>();
+        metrics.add(Metrics.builder().name("metricsName").fields(fields).build());
+
+        Job job = new Job();
+        job.setApp("testJob");
+        job.setMetrics(metrics);
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app(job.getApp()).name(job.getApp()).host("host").build();
+
+
+        List<Param> params = new ArrayList<>();
+        params.add(Param.builder().field("field").paramValue("value").build());
+
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(params);
+
+        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, null));
+        assertEquals("testJob metricsName size prohibited keywords, please modify the template information.", exception.getMessage());
     }
 }

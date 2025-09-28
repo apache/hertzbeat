@@ -21,11 +21,13 @@ app: websocket
 name:
   zh-CN: WebSocket
   en-US: WebSocket
+  ja-JP: WebSocket
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 对 WebSocket 服务的首次握手的响应等相关指标进行监测。<br>您可以点击 “<i>新建 WebSocket监控</i>” 并配置路径进行添加，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors metrics such as the response of the WebSocket service's first handshake. <br>You can click "<i>New WebSocket</i>" and configure the uri to add it, or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 對 WebSocket 服務的首次握手的響應等相關指標進行監測。<br>您可以點擊 “<i>新建 WebSocket監控</i>” 並配置路徑進行添加，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は WebSocketサービスの一般的なメトリクスを監視します。<br>「<i>新規 WebSocket</i>」をクリックしてパラメタを設定した後、新規することができます。
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -34,6 +36,7 @@ params:
     name:
       zh-CN: WebSocket服务的Host
       en-US: Host of WebSocket service
+      ja-JP: WebSocketサービスのホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -44,6 +47,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -51,18 +55,15 @@ params:
     # required-true or false
     required: true
   # field-param field key
-  # field-字段名称标识符
   - field: path
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: WebSocket服务的路径
       en-US: Path of WebSocket service
+      ja-JP: WebSocketサービスのパス
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
     # required-true or false
-    # 是否是必输项 true-必填 false-可选
     required: true
     defaultValue: /
 # collect metrics config list
@@ -72,6 +73,7 @@ metrics:
     i18n:
       zh-CN: 概要
       en-US: Summary
+      ja-JP: 概要
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -83,32 +85,38 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: httpVersion
         type: 1
         i18n:
           zh-CN: Http 版本
           en-US: Http Version
+          ja-JP: Httpバージョン
       - field: responseCode
         type: 1
         i18n:
           zh-CN: 响应状态码
           en-US: Response Code
+          ja-JP: 応答コード
       - field: statusMessage
         type: 1
         i18n:
           zh-CN: 状态消息
           en-US: Status Message
+          ja-JP: 状態メッセージ
       - field: connection
         type: 1
         i18n:
           # Whether to support the upgrade (If no, the http request is normal; if yes, the upgrade is supported)
           zh-CN: 是否升级
           en-US: Connection
+          ja-JP: 接続
       - field: upgrade
         type: 1
         i18n:
           zh-CN: 升级(协议)
           en-US: Upgrade
+          ja-JP: アップグレード
 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: websocket

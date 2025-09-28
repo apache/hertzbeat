@@ -350,15 +350,15 @@ svn commit -m "release for HertzBeat 1.6.0"
 Send a voting email in the community requires at least three `+1` and no `-1`.
 
 > `Send to`: <dev@hertzbeat.apache.org> <br />
-> `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
+> `Title`: [VOTE] Release Apache HertzBeat 1.6.0 rc1 <br />
 > `Body`:
 
 ```text
 Hello HertzBeat Community:
 
-This is a call for vote to release Apache HertzBeat (incubating) version release-1.6.0-RC1.
+This is a call for vote to release Apache HertzBeat version release-1.6.0-RC1.
 
-Apache HertzBeat - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat - a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Release notes:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
@@ -406,13 +406,13 @@ Thanks!
 After 72 hours, the voting results will be counted, and the voting result email will be sent, as follows.
 
 > `Send to`: <dev@hertzbeat.apache.org> <br />
-> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
+> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat 1.6.0-rc1 <br />
 > `Body`:
 
 ```text
 Dear HertzBeat community,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
+Thanks for your review and vote for "Release Apache HertzBeat 1.6.0-rc1"
 I'm happy to announce the vote has passed:
 ---
 4 binding +1, from:
@@ -442,16 +442,16 @@ Send a voting email in the incubator community requires at least three `+1` and 
 
 > `Send to`: <general@incubator.apache.org> <br />
 > `cc`: <dev@hertzbeat.apache.org>、<private@hertzbeat.apache.org> <br />
-> `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
+> `Title`: [VOTE] Release Apache HertzBeat 1.6.0-rc1 <br />
 > `Body`:
 
 ```text
 Hello Incubator Community:
 
-This is a call for a vote to release Apache HertzBeat (incubating) version 1.6.0-RC1.
-The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat (incubating) version 1.6.0-RC1.
+This is a call for a vote to release Apache HertzBeat version 1.6.0-RC1.
+The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat version 1.6.0-RC1.
 We now kindly request the Incubator PPMC members review and vote on this incubator release.
-Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat, a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 HertzBeat community vote thread:
 https://lists.apache.org/thread/t01b2lbtqzyt7j4dsbdp5qjc3gngjsdq
@@ -487,7 +487,7 @@ https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-
 ---
 Thanks,
 
-On behalf of Apache HertzBeat (incubating) community
+On behalf of Apache HertzBeat community
 ---
 Best,
 ChunJin Mu
@@ -508,13 +508,13 @@ Chunjin Mu
 Then the voting results will be counted, and the voting result email will be sent, as follows.
 
 > `Send to`: <general@incubator.apache.org> <br />
-> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
+> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat 1.6.0-rc1 <br />
 > `Body`:
 
 ```text
 Hi Incubator Community,
 
-The vote to release Apache HertzBeat (incubating) 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
+The vote to release Apache HertzBeat 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
 
 3 binding votes, no +0 or -1 votes.
 
@@ -585,16 +585,16 @@ The rename the release-1.6.0-rc1 branch to release-1.6.0.
 
 > `Send to`: <general@incubator.apache.org> <br />
 > `cc`: <dev@hertzbeat.apache.org> <br />
-> `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
+> `Title`: [ANNOUNCE] Apache HertzBeat 1.6.0 released <br />
 > `Body`:
 
 ```text
 Hi Community,
 
-We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
+We are glad to announce the release of Apache HertzBeat 1.6.0.
 Thanks again for your help. 
 
-Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Download Link: 
 https://hertzbeat.apache.org/docs/download/

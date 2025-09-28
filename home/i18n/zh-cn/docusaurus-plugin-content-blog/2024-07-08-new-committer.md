@@ -3,7 +3,6 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: zhangshenghang
 author_title: zhangshenghang
 author_url: https://github.com/zhangshenghang
-author_image_url: https://avatars.githubusercontent.com/u/29418975?s=400&v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
@@ -12,7 +11,7 @@ keywords: [open source monitoring system, alerting system]
 
 ### 初识 Apache Hertzbeat
 
-我第一次接触 Apache Hertzbeat 项目是因为一个偶然的机会。当时，我正在寻找一个开源项目来监控我们公司相关服务。Apache Hertzbeat 作为一个通用监控的项目，自然进入了我的视野。我开始通过阅读官方文档和浏览项目的代码库，来了解它的架构和功能。
+我第一次接触 Apache HertzBeat™ 项目是因为一个偶然的机会。当时，我正在寻找一个开源项目来监控我们公司相关服务。Apache HertzBeat™ 作为一个通用监控的项目，自然进入了我的视野。我开始通过阅读官方文档和浏览项目的代码库，来了解它的架构和功能。
 
 ### 开始贡献
 
@@ -40,10 +39,10 @@ keywords: [open source monitoring system, alerting system]
 
 ### 个人感受
 
-成为 Apache Hertzbeat 的 Committer 是我职业生涯中的一个重要里程碑。这不仅是对我技术能力的认可，也是对我在开源社区中贡献的肯定。成为 Committer 不是一个结束，而是一个新的开始，我还有很多需要学习和提升的地方。
+成为 Apache HertzBeat™ 的 Committer 是我职业生涯中的一个重要里程碑。这不仅是对我技术能力的认可，也是对我在开源社区中贡献的肯定。成为 Committer 不是一个结束，而是一个新的开始，我还有很多需要学习和提升的地方。
 
-这个过程让我明白了合作的重要性，也让我感受到了开源精神的魅力。开源不仅是一种技术分享的方式，更是一种协作和共同进步的理念。我非常荣幸能够成为 Apache Hertzbeat 社区的一员，并希望在未来继续为项目的发展做出贡献。
+这个过程让我明白了合作的重要性，也让我感受到了开源精神的魅力。开源不仅是一种技术分享的方式，更是一种协作和共同进步的理念。我非常荣幸能够成为 Apache HertzBeat™ 社区的一员，并希望在未来继续为项目的发展做出贡献。
 
 ### 结语
 
-成为 Apache Hertzbeat 项目的 Committer 是一个充满挑战和收获的旅程。通过不断的学习和贡献，我不仅提升了自己的技术能力，也在社区中找到了归属感和成就感。我希望我的经历能够激励更多的人参与到开源社区中来，共同推动技术的进步和发展。借用tom老哥的话：参与开源不要影响大家的工作和生活，那就违背初衷啦，大家利用下班后空闲时间参与哦。
+成为 Apache HertzBeat™ 项目的 Committer 是一个充满挑战和收获的旅程。通过不断的学习和贡献，我不仅提升了自己的技术能力，也在社区中找到了归属感和成就感。我希望我的经历能够激励更多的人参与到开源社区中来，共同推动技术的进步和发展。借用tom老哥的话：参与开源不要影响大家的工作和生活，那就违背初衷啦，大家利用下班后空闲时间参与哦。

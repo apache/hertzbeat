@@ -438,6 +438,8 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-spring-boot-starter-2.15.0 Apache-2.0
     https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-logback-appender-1.0 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper/3.9.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.opentelemetry.proto/opentelemetry-proto/1.7.0-alpha Apache-2.0
+    https://mvnrepository.com/artifact/org.questdb/questdb Apache-2.0
 
 ========================================================================
 BSD-2-Clause licenses

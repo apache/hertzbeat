@@ -21,11 +21,13 @@ app: nebula_graph
 name:
   zh-CN: NebulaGraph
   en-US: NebulaGraph
+  ja-JP: NebulaGraph
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 将调用NebulaGraph提供的 HTTP API 监控接口，对nebulaGraph及存储数据的rocksdb的指标进行监测。
   en-US: Hertzbeat will call the HTTP API monitoring interface provided by NebulaGraph to monitor the indicators of NebulaGraph and the Rocksdb that stores data.
   zh-TW: Hertzbeat將調用NebulaGraph提供的HTTP API監控介面，對nebulaGraph及存儲數據的rocksdb的名額進行監測。
+  ja-JP: Hertzbeatは、NebulaGraphが提供されたHTTP APIを呼び出してnebulaGraphとrocksdbのメトリクスを監視します。
 # The description and help of this monitoring type
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulaGraph
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -48,6 +51,7 @@ params:
     name:
       zh-CN: graph端口
       en-US: graphPort
+      ja-JP: graphポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: graph指标统计的时间范围(s)
       en-US: graph indicator statistics time range (s)
+      ja-JP: graph統計情報の時間範囲(s)
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -74,6 +79,7 @@ params:
     name:
       zh-CN: storage端口
       en-US: storagePort
+      ja-JP: ストレージポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -88,6 +94,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -105,6 +112,7 @@ metrics:
     i18n:
       zh-CN: nebulaGraph 统计信息
       en-US: nebulaGraph stats
+      ja-JP: nebulaGraph統計情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -115,282 +123,337 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: num_queries_hit_memory_watermark_rate
         type: 0
         i18n:
           zh-CN: 达到内存水位线的语句的数量(rate)
           en-US: num_queries_hit_memory_watermark.rate
+          ja-JP: メモリーウォーターマークに達したクエリ数(rate)
       - field: num_queries_hit_memory_watermark_sum
         type: 0
         i18n:
           zh-CN: 达到内存水位线的语句的数量(sum)
           en-US: num_queries_hit_memory_watermark.sum
+          ja-JP: メモリーウォーターマークに達したクエリ数(sum)
       - field: num_reclaimed_expired_sessions_rate
         type: 0
         i18n:
           zh-CN: 服务端主动回收的过期的会话数量(rate)
           en-US: num_reclaimed_expired_sessions.rate
+          ja-JP: 期限切れセッションのリサイクル数(rate)
       - field: num_reclaimed_expired_sessions_sum
         type: 0
         i18n:
           zh-CN: 服务端主动回收的过期的会话数量(sum)
           en-US: num_reclaimed_expired_sessions.sum
+          ja-JP: 期限切れセッションのリサイクル数(sum)
       - field: slow_query_latency_us_avg
         type: 0
         i18n:
           zh-CN: 慢查询延迟时间(avg)
           en-US: slow_query_latency_us.avg
+          ja-JP: スロークエリーの平均レイテンシー
       - field: slow_query_latency_us_p75
         type: 0
         i18n:
           zh-CN: 慢查询延迟时间(p75)
           en-US: slow_query_latency_us.p75
+          ja-JP: スロークエリーのレイテンシー(p75)
       - field: slow_query_latency_us_p95
         type: 0
         i18n:
           zh-CN: 慢查询延迟时间(p95)
           en-US: slow_query_latency_us.p95
+          ja-JP: スロークエリーのレイテンシー(p95)
       - field: slow_query_latency_us_p99
         type: 0
         i18n:
           zh-CN: 慢查询延迟时间(p99)
           en-US: slow_query_latency_us.p99
+          ja-JP: スロークエリーのレイテンシー(p99)
       - field: slow_query_latency_us_p999
         type: 0
         i18n:
           zh-CN: 慢查询延迟时间(p999)
           en-US: slow_query_latency_us.p999
+          ja-JP: スロークエリーのレイテンシー(p999)
       - field: query_latency_us_avg
         type: 0
         i18n:
           zh-CN: 查询延迟时间(avg)
           en-US: query_latency_us.avg
+          ja-JP: クエリーの平均レイテンシー
       - field: query_latency_us_p75
         type: 0
         i18n:
           zh-CN: 查询延迟时间(p75)
           en-US: query_latency_us.p75
+          ja-JP: クエリーのレイテンシー(p75)
       - field: query_latency_us_p95
         type: 0
         i18n:
           zh-CN: 查询延迟时间(p95)
           en-US: query_latency_us.p95
+          ja-JP: クエリーのレイテンシー(p95)
       - field: query_latency_us_p99
         type: 0
         i18n:
           zh-CN: 查询延迟时间(p99)
           en-US: query_latency_us.p99
+          ja-JP: クエリーのレイテンシー(p99)
       - field: query_latency_us_p999
         type: 0
         i18n:
           zh-CN: 查询延迟时间(p999)
           en-US: query_latency_us_p999
+          ja-JP: クエリーのレイテンシー(p999)
       - field: num_auth_failed_sessions_bad_username_password_rate
         type: 0
         i18n:
           zh-CN: 因用户名密码错误导验证失败的会话数量(rate)
           en-US: num_auth_failed_sessions_bad_username_password.rate
+          ja-JP: ユーザー名とパスワードのエラーにより認証に失敗したセッション数(rate)
       - field: num_auth_failed_sessions_bad_username_password_sum
         type: 0
         i18n:
           zh-CN: 因用户名密码错误导验证失败的会话数量(sum)
           en-US: num_auth_failed_sessions_bad_username_password.sum
+          ja-JP: ユーザー名とパスワードのエラーにより認証に失敗したセッション数(sum)
       - field: num_queries_rate
         type: 0
         i18n:
           zh-CN: 查询次数(rate)
           en-US: num_queries.rate
+          ja-JP: クエリ回数(rate)
       - field: num_queries_sum
         type: 0
         i18n:
           zh-CN: 查询次数(sum)
           en-US: num_queries.sum
+          ja-JP: クエリ回数(sum)
       - field: num_sort_executors_rate
         type: 0
         i18n:
           zh-CN: 排序（Sort）算子执行时间(rate)
           en-US: num_sort_executors.rate
+          ja-JP: ソート実行時間(rate)
       - field: num_sort_executors_sum
         type: 0
         i18n:
           zh-CN: 排序（Sort）算子执行时间(sum)
           en-US: num_sort_executors.sum
+          ja-JP: ソート実行時間(sum)
       - field: num_rpc_sent_to_storaged_failed_rate
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Storaged 服务的 RPC 请求失败的数量(rate)
           en-US: num_rpc_sent_to_storaged_failed.rate
+          ja-JP: GraphdサービスからStoragedサービスへのRPCリクエスト失敗数(rate)
       - field: num_rpc_sent_to_storaged_failed_sum
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Storaged 服务的 RPC 请求失败的数量(sum)
           en-US: num_rpc_sent_to_storaged_failed.sum
+          ja-JP: GraphdサービスからStoragedサービスへのRPCリクエスト失敗数(sum)
       - field: num_auth_failed_sessions_rate
         type: 0
         i18n:
           zh-CN: 登录验证失败的会话数量(rate)
           en-US: num_auth_failed_sessions.rate
+          ja-JP: 権限認証に失敗したセッション数(rate)
       - field: num_auth_failed_sessions_sum
         type: 0
         i18n:
           zh-CN: 登录验证失败的会话数量(sum)
           en-US: num_auth_failed_sessions.sum
+          ja-JP: 権限認証に失敗したセッション数(sum)
       - field: num_query_errors_rate
         type: 0
         i18n:
           zh-CN: 查询报错语句数量(rate)
           en-US: num_query_errors_rate
+          ja-JP: クエリエラー数(rate)
       - field: num_query_errors_sum
         type: 0
         i18n:
           zh-CN: 查询报错语句数量(sum)
           en-US: num_query_errors.sum
+          ja-JP: クエリエラー数(sum)
       - field: num_killed_queries_rate
         type: 0
         i18n:
           zh-CN: 被终止的查询数量(rate)
           en-US: num_killed_queries.rate
+          ja-JP: 終了したクエリ数(rate)
       - field: num_killed_queries_sum
         type: 0
         i18n:
           zh-CN: 被终止的查询数量(sum)
           en-US: num_killed_queries.sum
+          ja-JP: 終了したクエリ数(sum)
       - field: num_query_errors_leader_changes_rate
         type: 0
         i18n:
           zh-CN: 因查询错误而导致的 Leader 变更的次数(rate)
           en-US: num_query_errors_leader_changes.rate
+          ja-JP: クエリーエラーによるリーダーの変更数(rate)
       - field: num_query_errors_leader_changes_sum
         type: 0
         i18n:
           zh-CN: 因查询错误而导致的 Leader 变更的次数(sum)
           en-US: num_query_errors_leader_changes.sum
+          ja-JP: クエリーエラーによるリーダーの変更数(sum)
       - field: num_rpc_sent_to_metad_rate
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Metad 服务的 RPC 请求数量(rate)
           en-US: num_rpc_sent_to_metad.rate
+          ja-JP: GraphdサービスがMetadサービスへのRPCリクエスト数(rate)
       - field: num_rpc_sent_to_metad_sum
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Metad 服务的 RPC 请求数量(sum)
           en-US: num_rpc_sent_to_metad.sum
+          ja-JP: GraphdサービスがMetadサービスへのRPCリクエスト数(sum)
       - field: num_slow_queries_rate
         type: 0
         i18n:
           zh-CN: 慢查询次数(rate)
           en-US: num_slow_queries.rate
+          ja-JP: スロークエリ回数(rate)
       - field: num_slow_queries_sum
         type: 0
         i18n:
           zh-CN: 慢查询次数(sum)
           en-US: num_slow_queries.sum
+          ja-JP: スロークエリ回数(sum)
       - field: num_active_sessions_sum
         type: 0
         i18n:
-          zh-CN: 活跃的会话数的变化数(sum)
-          en-US: num_active_sessions.sum
+          zh-CN: 活跃的会话数的变化数(rate)
+          en-US: num_active_sessions.rate
+          ja-JP: アクティブなセッション数(rate)
       - field: num_active_queries_sum
         type: 0
         i18n:
           zh-CN: 活跃的查询语句数的变化数(sum)
           en-US: num_active_queries.sum
+          ja-JP: アクティブなセッション数(sum)
       - field: num_sentences_rate
         type: 0
         i18n:
           zh-CN: Graphd 服务接收的语句数(rate)
           en-US: num_sentences.rate
+          ja-JP: 文数(rate)
       - field: num_sentences_sum
         type: 0
         i18n:
           zh-CN: Graphd 服务接收的语句数(sum)
           en-US: num_sentences.sum
+          ja-JP: 文数(sum)
       - field: num_aggregate_executors_rate
         type: 0
         i18n:
           zh-CN: 聚合（Aggregate）算子执行时间(rate)
           en-US: num_aggregate_executors.rate
+          ja-JP: アグリゲート実行時間(rate)
       - field: num_aggregate_executors_sum
         type: 0
         i18n:
           zh-CN: 聚合（Aggregate）算子执行时间(sum)
           en-US: num_aggregate_executors.sum
+          ja-JP: アグリゲート実行時間(sum)
       - field: optimizer_latency_us_avg
         type: 0
         i18n:
           zh-CN: 优化器阶段延迟时间(avg)
           en-US: optimizer_latency_us.avg
+          ja-JP: オプティマイザの平均レイテンシー
       - field: optimizer_latency_us_p75
         type: 0
         i18n:
           zh-CN: 优化器阶段延迟时间(p75)
           en-US: optimizer_latency_us.p75
+          ja-JP: オプティマイザのレイテンシー(p75)
       - field: optimizer_latency_us_p95
         type: 0
         i18n:
           zh-CN: 优化器阶段延迟时间(p95)
           en-US: optimizer_latency_us.p95
+          ja-JP: オプティマイザのレイテンシー(p95)
       - field: optimizer_latency_us_p99
         type: 0
         i18n:
           zh-CN: 优化器阶段延迟时间(p99)
           en-US: optimizer_latency_us.p99
+          ja-JP: オプティマイザのレイテンシー(p99)
       - field: optimizer_latency_us_p999
         type: 0
         i18n:
           zh-CN: 优化器阶段延迟时间(p999)
           en-US: optimizer_latency_us.p999
+          ja-JP: オプティマイザのレイテンシー(p999)
       - field: num_rpc_sent_to_metad_failed_rate
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Metad 的 RPC 请求失败的数量(rate)
           en-US: num_rpc_sent_to_metad_failed.rate
+          ja-JP: GraphdサービスがMetadサービスへのRPCリクエスト失敗数(rate)
       - field: num_rpc_sent_to_metad_failed_sum
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Metad 的 RPC 请求失败的数量(sum)
           en-US: num_rpc_sent_to_metad_failed.sum
+          ja-JP: GraphdサービスがMetadサービスへのRPCリクエスト失敗数(sum)
       - field: num_indexscan_executors_rate
         type: 0
         i18n:
           zh-CN: 索引扫描（IndexScan）算子执行时间(rate)
           en-US: num_indexscan_executors.rate
+          ja-JP: 索引スキャン実行時間(rate)
       - field: num_indexscan_executors_sum
         type: 0
         i18n:
           zh-CN: 索引扫描（IndexScan）算子执行时间(sum)
           en-US: num_indexscan_executors.sum
+          ja-JP: 索引スキャン実行時間(sum)
       - field: num_opened_sessions_rate
         type: 0
         i18n:
           zh-CN: 服务端建立过的会话数量(rate)
           en-US: num_opened_sessions.rate
+          ja-JP: 開かれたセッション数(rate)
       - field: num_opened_sessions_sum
         type: 0
         i18n:
           zh-CN: 服务端建立过的会话数量(sum)
           en-US: num_opened_sessions.sum
+          ja-JP: 開かれたセッション数(sum)
       - field: num_auth_failed_sessions_out_of_max_allowed_rate
         type: 0
         i18n:
-          zh-CN: 因为超过FLAG_OUT_OF_MAX_ALLOWED_CONNECTIONS参数导致的验证登录的失败的会话数量(rate)
+          zh-CN: 因为超过FLAG_OUT_OF_MAX_ALLOWED_CONNECTIONS参数导致的验证登录失败的会话数量(rate)
           en-US: num_auth_failed_sessions_out_of_max_allowed.rate
+          ja-JP: FLAG_OUT_OF_MAX_ALLOWED_CONNECTIONSが超過したため、認証ログインに失敗したセッション数(rate)
       - field: num_auth_failed_sessions_out_of_max_allowed_sum
         type: 0
         i18n:
-          zh-CN: 因为超过FLAG_OUT_OF_MAX_ALLOWED_CONNECTIONS参数导致的验证登录的失败的会话数量(sum)
+          zh-CN: 因为超过FLAG_OUT_OF_MAX_ALLOWED_CONNECTIONS参数导致的验证登录失败的会话数量(sum)
           en-US: num_auth_failed_sessions_out_of_max_allowed.sum
+          ja-JP: FLAG_OUT_OF_MAX_ALLOWED_CONNECTIONSが超過したため、認証ログインに失敗したセッション数(sum)
       - field: num_rpc_sent_to_storaged_rate
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Storaged 服务的 RPC 请求数量(rate)
           en-US: num_rpc_sent_to_storaged.rate
+          ja-JP: GraphdサービスがStoragedサービスへのRPCリクエスト数(rate)
       - field: num_rpc_sent_to_storaged_sum
         type: 0
         i18n:
           zh-CN: Graphd 服务发给 Storaged 服务的 RPC 请求数量(sum)
           en-US: num_rpc_sent_to_storaged.sum
-    # 指标别名列表，用于在查询结果中识别指标
+          ja-JP: GraphdサービスがStoragedサービスへのRPCリクエスト数(sum)
     aliasFields:
       - responseTime
       - num_queries_hit_memory_watermark.rate
@@ -448,7 +511,7 @@ metrics:
       - num_auth_failed_sessions_out_of_max_allowed.sum
       - num_rpc_sent_to_storaged.rate
       - num_rpc_sent_to_storaged.sum
-      # mapping and conversion expressions, use thesand aliasField above to calculate metrics value# (可选)指标映射转换计算表达式，与上面的别名一起作用，计算出最终需要的指标值# eg: cores=core1+core2, usage=usage, waitTimeallTime-runningTime
+      # mapping and conversion expressions, use thesand aliasField above to calculate metrics value# eg: cores=core1+core2, usage=usage, waitTimeallTime-runningTime
     calculates:
       - responseTime=responseTime
       - num_queries_hit_memory_watermark_rate=num_queries_hit_memory_watermark.rate
@@ -523,6 +586,7 @@ metrics:
     i18n:
       zh-CN: rocksdb 统计数据
       en-US: rocksdb stats
+      ja-JP: rocksdb統計
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -533,6 +597,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
       - field: rocksdb.backup.read.bytes
       - field: rocksdb.backup.write.bytes
       - field: rocksdb.blobdb.blob.file.bytes.read

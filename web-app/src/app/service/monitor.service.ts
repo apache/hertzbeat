@@ -34,6 +34,7 @@ const export_all_monitors_uri = '/monitors/export/all';
 const summary_uri = '/summary';
 const warehouse_storage_status_uri = '/warehouse/storage/status';
 const grafana_dashboard_uri = '/grafana/dashboard';
+const metrics_favorite_uri = '/metrics/favorite';
 
 @Injectable({
   providedIn: 'root'
@@ -198,5 +199,17 @@ export class MonitorService {
 
   copyMonitor(id: number): Observable<any> {
     return this.http.post<Message<any>>(`${monitor_uri}/copy/${id}`, null);
+  }
+
+  public addMetricsFavorite(monitorId: number, metricsName: string): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${metrics_favorite_uri}/${monitorId}/${metricsName}`, null);
+  }
+
+  public removeMetricsFavorite(monitorId: number, metricsName: string): Observable<Message<any>> {
+    return this.http.delete<Message<any>>(`${metrics_favorite_uri}/${monitorId}/${metricsName}`);
+  }
+
+  public getUserFavoritedMetrics(monitorId: number): Observable<Message<Set<string>>> {
+    return this.http.get<Message<Set<string>>>(`${metrics_favorite_uri}/${monitorId}`);
   }
 }

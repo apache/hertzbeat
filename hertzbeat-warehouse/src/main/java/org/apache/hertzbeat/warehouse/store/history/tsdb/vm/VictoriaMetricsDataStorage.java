@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.vm;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -35,6 +36,8 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.GZIPOutputStream;
 
 import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
@@ -66,6 +69,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -91,6 +95,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_JOB = "job";
     private static final String LABEL_KEY_INSTANCE = "instance";
+    private static final String LABEL_KEY_HOST = "host";
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
@@ -102,8 +107,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
     
     private HashedWheelTimer metricsFlushTimer = null;
-    private MetricsFlushTask metricsFlushtask = null;
     private final VictoriaMetricsProperties.InsertConfig insertConfig;
+    private final AtomicBoolean draining = new AtomicBoolean(false);
 
     public VictoriaMetricsDataStorage(VictoriaMetricsProperties victoriaMetricsProperties, RestTemplate restTemplate) {
         if (victoriaMetricsProperties == null) {
@@ -113,8 +118,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         this.restTemplate = restTemplate;
         victoriaMetricsProp = victoriaMetricsProperties;
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
-        serverAvailable = checkVictoriaMetricsDatasourceAvailable();
-        insertConfig = victoriaMetricsProperties.insert() == null ? new VictoriaMetricsProperties.InsertConfig(100, 3) : victoriaMetricsProperties.insert();
+        insertConfig = victoriaMetricsProperties.insert() == null ? new VictoriaMetricsProperties.InsertConfig(100, 3,
+                new VictoriaMetricsProperties.Compression(false)) : victoriaMetricsProperties.insert();
         metricsBufferQueue = new LinkedBlockingQueue<>(insertConfig.bufferSize());
         initializeFlushTimer();
     }
@@ -125,8 +130,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             thread.setDaemon(true);
             return thread;
         }, 1, TimeUnit.SECONDS, 512);
-        metricsFlushtask = new MetricsFlushTask();
-        this.metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.SECONDS);
+        // start flush interval timer
+        this.metricsFlushTimer.newTimeout(new MetricsFlushTask(null), insertConfig.flushInterval(), TimeUnit.SECONDS);
     }
 
     private boolean checkVictoriaMetricsDatasourceAvailable() {
@@ -219,6 +224,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                             labels.put(LABEL_KEY_NAME, labelName);
                             if (!isPrometheusAuto) {
                                 labels.put(MONITOR_METRIC_KEY, entry.getKey());
+                            }
+                            labels.put(LABEL_KEY_HOST, metricsData.getInstanceHost());
+                            // add customized labels as identifier
+                            var customizedLabels = metricsData.getLabels();
+                            if (!ObjectUtils.isEmpty(customizedLabels)) {
+                                labels.putAll(customizedLabels);
                             }
                             VictoriaMetricsContent content = VictoriaMetricsContent.builder()
                                     .metric(new HashMap<>(labels))
@@ -581,33 +592,61 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             }
         }
         // Refresh in advance to avoid waiting
-        if (metricsBufferQueue.size() >= insertConfig.bufferSize() * 0.8) {
+        if (metricsBufferQueue.size() >= insertConfig.bufferSize() * 0.8
+                && draining.compareAndSet(false, true)) {
             triggerImmediateFlush();
         }
     }
 
     private void triggerImmediateFlush() {
-        metricsFlushTimer.newTimeout(metricsFlushtask, 0, TimeUnit.MILLISECONDS);
+        List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch = new ArrayList<>(insertConfig.bufferSize());
+        metricsBufferQueue.drainTo(batch, insertConfig.bufferSize());
+        draining.set(false);
+        if (!batch.isEmpty()) {
+            metricsFlushTimer.newTimeout(new MetricsFlushTask(batch), 0, TimeUnit.MILLISECONDS);
+        }
     }
 
     /**
      * Regularly refresh the buffer queue to the vm
      */
     private class MetricsFlushTask implements TimerTask {
+        private final List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch;
+
+        public MetricsFlushTask(List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch) {
+            this.batch = batch;
+        }
+
         @Override
         public void run(Timeout timeout) {
             try {
-                List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batch = new ArrayList<>(insertConfig.bufferSize());
-                metricsBufferQueue.drainTo(batch, insertConfig.bufferSize());
-                if (!batch.isEmpty()) {
-                    doSaveData(batch);
-                    log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
-                }
-                if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
-                    metricsFlushTimer.newTimeout(this, insertConfig.flushInterval(), TimeUnit.SECONDS);
+                if (batch == null) {
+                    // If the batch is null, it means that the timer is triggered by flush interval timer
+                    List<VictoriaMetricsDataStorage.VictoriaMetricsContent> batchT = new ArrayList<>(insertConfig.bufferSize());
+                    metricsBufferQueue.drainTo(batchT, insertConfig.bufferSize());
+                    triggerDoSaveData(batchT);
+                    // Reschedule the next flush task
+                    triggerIntervalFlushTimer();
+                } else {
+                    // If the batch is not null, it means that the timer is triggered by the immediate flush
+                    triggerDoSaveData(batch);
                 }
             } catch (Exception e) {
                 log.error("[VictoriaMetrics] flush task error: {}", e.getMessage(), e);
+            }
+        }
+
+        private void triggerDoSaveData(List<VictoriaMetricsContent> batch) {
+            if (!batch.isEmpty()) {
+                doSaveData(batch);
+                log.debug("[Victoria Metrics] Flushed {} metrics items", batch.size());
+            }
+        }
+
+        private void triggerIntervalFlushTimer() {
+            if (metricsFlushTimer != null && !metricsFlushTimer.isStop()) {
+                metricsFlushTimer.newTimeout(new MetricsFlushTask(null), insertConfig.flushInterval(), TimeUnit.SECONDS);
+                log.debug("[Victoria Metrics] Rescheduled next flush task in {} seconds.", insertConfig.flushInterval());
             }
         }
     }
@@ -625,11 +664,29 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                 String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
+
             StringBuilder stringBuilder = new StringBuilder();
             for (VictoriaMetricsContent content : contentList) {
                 stringBuilder.append(JsonUtil.toJson(content)).append("\n");
             }
-            HttpEntity<String> httpEntity = new HttpEntity<>(stringBuilder.toString(), headers);
+            String payload = stringBuilder.toString();
+
+            Object httpEntity;
+            if (insertConfig.compression().enabled()) {
+                // enable compression
+                headers.set(HttpHeaders.CONTENT_ENCODING, "gzip");
+                // compress the payload using gzip
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream(payload.length());
+                     GZIPOutputStream gzip = new GZIPOutputStream(bos)) {
+                    gzip.write(payload.getBytes(StandardCharsets.UTF_8));
+                    // finishes writing compressed data before the gzip stream is closed.
+                    gzip.finish();
+                    httpEntity = new HttpEntity<>(bos.toByteArray(), headers);
+                }
+            } else {
+                httpEntity = new HttpEntity<>(payload, headers);
+            }
+
             ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.url() + IMPORT_PATH,
                     httpEntity, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {

@@ -52,7 +52,14 @@ export class StatusPublicComponent implements OnInit {
   // component or incident
   showMode: string = 'component';
 
+  pageIndex: number = 1;
+  pageSize: number = 9999;
+  incidentYear: Date = new Date();
+  incidentStartTime: number = new Date(this.incidentYear.getFullYear(), 0, 1).getTime();
+  incidentEndTime: number = new Date().getTime();
+
   ngOnInit(): void {
+    this.incidentYear = new Date();
     this.loadStatusPageOrg();
   }
 
@@ -103,26 +110,36 @@ export class StatusPublicComponent implements OnInit {
   }
 
   loadStatusPageIncident() {
+    const incidentYear = this.incidentYear.getFullYear();
+    this.incidentStartTime = new Date(this.incidentYear.getFullYear(), 0, 1).getTime();
+    if (incidentYear != new Date().getFullYear()) {
+      this.incidentEndTime = new Date(this.incidentYear.getFullYear(), 11, 31).getTime();
+    } else {
+      this.incidentEndTime = -1;
+    }
     this.incidentLoading = true;
-    this.statusPagePublicService.getStatusPageIncidents().subscribe(
-      (message: Message<StatusPageIncident[]>) => {
-        if (message.code !== 0) {
-          this.notifySvc.error(message.msg, '');
-        } else {
-          this.incidentStatus = message.data;
+    this.statusPagePublicService
+      .getStatusPageIncidents(this.incidentStartTime, this.incidentEndTime, this.pageIndex - 1, this.pageSize)
+      .subscribe(
+        message => {
+          if (message.code !== 0) {
+            this.notifySvc.error(message.msg, '');
+          } else {
+            let page = message.data;
+            this.incidentStatus = page.content;
+          }
+          this.incidentLoading = false;
+        },
+        error => {
+          this.notifySvc.error(error.msg, '');
+          this.incidentLoading = false;
         }
-        this.incidentLoading = false;
-      },
-      error => {
-        this.notifySvc.error(error.msg, '');
-        this.incidentLoading = false;
-      }
-    );
+      );
   }
 
   calculateHistoryBlockRgb(history: StatusPageHistory): string {
     if (history.state == 0) {
-      return 'green';
+      return '#28a745';
     } else if (history.state == 2) {
       return 'rgb(200 200 200)';
     } else {
@@ -172,8 +189,12 @@ export class StatusPublicComponent implements OnInit {
     } else if (status === 2) {
       return '#19a7e7';
     } else {
-      return '#34be8f';
+      return '#28a745';
     }
+  }
+
+  disabledDatePick(current: Date): boolean {
+    return current && current > new Date();
   }
 
   protected readonly Array = Array;

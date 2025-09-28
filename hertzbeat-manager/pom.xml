@@ -89,10 +89,15 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-grafana</artifactId>
         </dependency>
-        <!-- log -->
+        <!-- log otel -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-otel</artifactId>
+        </dependency>
+        <!-- log -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-log</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>
@@ -210,6 +215,15 @@
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory-netty</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-ai-agent</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -281,6 +295,21 @@
                                     <outputDirectory>../dist</outputDirectory>
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-docker-zip</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>../dist</outputDirectory>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-docker.xml</descriptor>
                                     </descriptors>
                                 </configuration>
                             </execution>

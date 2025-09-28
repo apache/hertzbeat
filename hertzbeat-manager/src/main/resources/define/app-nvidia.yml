@@ -21,11 +21,13 @@ app: nvidia
 name:
   zh-CN: NVIDIA
   en-US: NVIDIA
+  ja-JP: NVIDIA
 # The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 NVIDIA GPU显卡的通用性能指标进行采集监控。<br>您可以点击“<i>新建 NVIDIA</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat uses the <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH protocol</a> to collect and monitor general performance metrics of NVIDIA GPUs. <br> You can click " <i>Create NVIDIA</i> " to add and configure parameters such as HOST, port, account, etc., supporting SSH account password or key authentication. Alternatively, you can select " <i>More Actions</i> " to import an existing configuration.
   zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH 協議</a> 對 NVIDIA GPU 顯卡的通用性能指標進行採集監控。<br>您可以點擊“<i>新建 NVIDIA</i>”並配置 HOST、端口、帳戶等相關參數進行添加，支持 SSH 帳戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: Hertzbeat は <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSHプロトコルを介して</a> NVIDIAの一般的なパフォーマンスのメトリクスを監視します。<br>「<i>新規 NVIDIA</i>」をクリックしてホストなどのパラメタを設定した後、新規することができます。SSHまたはキー認証をサポートします。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nvidia/
   en-US: https://hertzbeat.apache.org/docs/help/nvidia/
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -68,7 +73,6 @@ params:
     # required-true or false
     required: false
     # default value
-    # 默认值
     defaultValue: 6000
   # field-param field key
   - field: reuseConnection
@@ -76,6 +80,7 @@ params:
     name:
       zh-CN: 复用连接
       en-US: Reuse Connection
+      ja-JP: 接続再利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -87,6 +92,7 @@ params:
     name:
       zh-CN: 使用代理
       en-US: Use Proxy Connection
+      ja-JP: プロキシ接続利用
     # type-param field type(most mapping the html input type)
     type: boolean
     # required-true or false
@@ -98,6 +104,7 @@ params:
     name:
       zh-CN: 用户名
       en-US: Username
+      ja-JP: ユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -110,6 +117,7 @@ params:
     name:
       zh-CN: 密码
       en-US: Password
+      ja-JP: パスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -120,6 +128,7 @@ params:
     name:
       zh-CN: 私钥
       en-US: PrivateKey
+      ja-JP: 秘密鍵
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -134,6 +143,7 @@ params:
     name:
       zh-CN: 代理主机
       en-US: Proxy Host
+      ja-JP: プロキシホスト
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -145,6 +155,7 @@ params:
     name:
       zh-CN: 代理端口
       en-US: Proxy Port
+      ja-JP: プロキシポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -161,6 +172,7 @@ params:
     name:
       zh-CN: 代理用户名
       en-US: Proxy Username
+      ja-JP: プロキシユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -175,6 +187,7 @@ params:
     name:
       zh-CN: 代理密码
       en-US: Proxy Password
+      ja-JP: プロキシパスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -187,6 +200,7 @@ params:
     name:
       zh-CN: 代理主机私钥
       en-US: proxyPrivateKey
+      ja-JP: プロキシ秘密鍵
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -200,6 +214,7 @@ params:
     name:
       zh-CN: 代理主机
       en-US: Proxy Host
+      ja-JP: プロキシホスト
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -211,6 +226,7 @@ params:
     name:
       zh-CN: 代理端口
       en-US: Proxy Port
+      ja-JP: プロキシポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -227,6 +243,7 @@ params:
     name:
       zh-CN: 代理用户名
       en-US: Proxy Username
+      ja-JP: プロキシユーザー名
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
@@ -241,6 +258,7 @@ params:
     name:
       zh-CN: 代理密码
       en-US: Proxy Password
+      ja-JP: プロキシパスワード
     # type-param field type(most mapping the html input tag)
     type: password
     # required-true or false
@@ -253,6 +271,7 @@ params:
     name:
       zh-CN: 代理主机私钥
       en-US: proxyPrivateKey
+      ja-JP: プロキシ秘密鍵
     # type-param field type(most mapping the html input type)
     type: textarea
     placeholder: -----BEGIN RSA PRIVATE KEY-----
@@ -267,6 +286,7 @@ metrics:
     i18n:
       zh-CN: 显卡基本信息
       en-US: Basic Information
+      ja-JP: 基礎情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -279,47 +299,55 @@ metrics:
         i18n:
           zh-CN: 显卡索引
           en-US: Host Name
+          ja-JP: 番号
       - field: name
         type: 1
         i18n:
           zh-CN: 显卡名称
           en-US: System Version
+          ja-JP: 名前
       - field: utilization.gpu [%]
         type: 0
         unit: '%'
         i18n:
           zh-CN: GPU利用率
           en-US: GPU Utilization
+          ja-JP: GPU使用率
       - field: utilization.memory [%]
         type: 0
         unit: '%'
         i18n:
           zh-CN: 显存利用率
           en-US: Memory Utilization
+          ja-JP: メモリ使用率
       - field: memory.total [MiB]
         type: 1
         unit: 'MiB'
         i18n:
           zh-CN: 总显存
           en-US: Total Memory
+          ja-JP: メモリ容量
       - field: memory.used [MiB]
         type: 0
         unit: 'MiB'
         i18n:
           zh-CN: 已用显存
           en-US: Used Memory
+          ja-JP: 使用したメモリ
       - field: memory.free [MiB]
         type: 0
         unit: 'MiB'
         i18n:
           zh-CN: 空闲显存
           en-US: Free Memory
+          ja-JP: 利用可能メモリ
       - field: temperature.gpu
         type: 1
         unit: '°C'
         i18n:
           zh-CN: 显卡温度
           en-US: GPU Temperature
+          ja-JP: GPU温度
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh

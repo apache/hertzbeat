@@ -54,7 +54,8 @@
           "label": "use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
-            "start/usecase/springboot-auto-practice"
+            "start/usecase/springboot-auto-practice",
+            "start/usecase/linux-os-practice"
           ]
         }
       ]
@@ -70,7 +71,18 @@
           "label": "use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
-            "start/usecase/springboot-auto-practice"
+            "start/usecase/springboot-auto-practice",
+            "start/usecase/linux-os-practice",
+            "start/usecase/tdengine-practice"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "log",
+          "items": [
+            "help/log_integration",
+            "help/log_stream",
+            "help/log_manage"
           ]
         },
         {
@@ -184,7 +196,8 @@
             "help/euleros",
             "help/fedora",
             "help/linux_script",
-            "help/windows_script"
+            "help/windows_script",
+            "help/macos"
           ]
         },
         {
@@ -194,7 +207,9 @@
             "help/ipmi",
             "help/hikvision_isapi",
             "help/dahua",
-            "help/uniview"
+            "help/uniview",
+            "help/synology_nas",
+            "help/idrac"
           ]
         },
         {
@@ -239,7 +254,8 @@
             "help/presto",
             "help/seatunnel",
             "help/spark",
-            "help/yarn"
+            "help/yarn",
+            "help/dolphinscheduler"
           ]
         },
         {
@@ -265,14 +281,17 @@
         {
           "type": "category",
           "label": "custom",
-          "items": ["help/kafka_promql", "help/influxdb_promql"]
+          "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
         "help/bulletin",
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
+        "help/mcp_sse_server",
         "help/collector",
+        "help/ai_agent_chat",
         "help/ai_config",
+        "help/risc-v",
         "help/issue"
       ]
     },

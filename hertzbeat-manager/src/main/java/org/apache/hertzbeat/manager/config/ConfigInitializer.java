@@ -20,14 +20,15 @@ package org.apache.hertzbeat.manager.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import jakarta.annotation.Resource;
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-import java.util.Random;
 import java.util.TimeZone;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.TimeZoneUtil;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.MuteConfig;
@@ -61,6 +62,9 @@ public class ConfigInitializer implements SmartLifecycle {
 
     @Value("${sureness.jwt.secret:" + DEFAULT_JWT_SECRET + "}")
     private String currentJwtSecret;
+
+    @Value("${common.secret:" + AesUtil.DEFAULT_ENCODE_RULES + "}")
+    private String currentAesSecret;
 
     @Resource
     private SystemGeneralConfigServiceImpl systemGeneralConfigService;
@@ -110,30 +114,41 @@ public class ConfigInitializer implements SmartLifecycle {
         // for template config, flush the template config in db to memory
         TemplateConfig templateConfig = templateConfigService.getConfig();
         appService.updateCustomTemplateConfig(templateConfig);
-        // for system secrets
+        // for system jwt secrets and aes secret
+        boolean needUpdate = false;
+        SystemSecret.SystemSecretBuilder systemSecretBuilder = SystemSecret.builder();
+        SystemSecret systemSecret = systemSecretService.getConfig();
+        if (systemSecret != null) {
+            systemSecretBuilder.jwtSecret(systemSecret.getJwtSecret());
+            systemSecretBuilder.aesSecret(systemSecret.getAesSecret());
+        }
         if (DEFAULT_JWT_SECRET.equals(currentJwtSecret)) {
             // use the random jwt secret
-            SystemSecret systemSecret = systemSecretService.getConfig();
             if (systemSecret == null || StringUtils.isBlank(systemSecret.getJwtSecret())) {
-                char[] chars = DEFAULT_JWT_SECRET.toCharArray();
-                Random rand = new Random();
-                for (int i = 0; i < chars.length; i++) {
-                    int index = rand.nextInt(chars.length);
-                    char temp = chars[i];
-                    chars[i] = chars[index];
-                    chars[index] = temp;
-                }
-                currentJwtSecret = new String(chars);
-                systemSecret = SystemSecret.builder().jwtSecret(currentJwtSecret).build();
-                systemSecretService.saveConfig(systemSecret);
+                currentJwtSecret = randomizeSecret(DEFAULT_JWT_SECRET);
+                systemSecretBuilder.jwtSecret(currentJwtSecret);
+                needUpdate = true;
             } else {
                 currentJwtSecret = systemSecret.getJwtSecret();
             }
         }
-        // else use the user custom jwt secret
-        // set the jwt secret token in util
+        // else use the user custom jwt secret, set the jwt secret token in util
         JsonWebTokenUtil.setDefaultSecretKey(currentJwtSecret);
-
+        // Aes secret config
+        if (AesUtil.DEFAULT_ENCODE_RULES.equals(currentAesSecret)) {
+            // use the random aes secret
+            if (systemSecret == null || StringUtils.isBlank(systemSecret.getAesSecret())) {
+                currentAesSecret = randomizeSecret(AesUtil.DEFAULT_ENCODE_RULES);
+                systemSecretBuilder.aesSecret(currentAesSecret);
+                needUpdate = true;
+            } else {
+                currentAesSecret = systemSecret.getAesSecret();
+            }
+        }
+        AesUtil.setDefaultSecretKey(currentAesSecret);
+        if (needUpdate) {
+            systemSecretService.saveConfig(systemSecretBuilder.build());
+        }
         // init web-app mute config
         MuteConfig muteConfig = muteGeneralConfigService.getConfig();
         if (muteConfig == null) {
@@ -161,5 +176,19 @@ public class ConfigInitializer implements SmartLifecycle {
     @Override
     public int getPhase() {
         return Ordered.HIGHEST_PRECEDENCE;
+    }
+
+    private String randomizeSecret(String secret) {
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(secret.length());
+        for (int i = 0; i < secret.length(); i++) {
+            char ch;
+            do {
+                int codePoint = random.nextInt('z' - '0' + 1) + '0';
+                ch = (char) codePoint;
+            } while (!Character.isLetterOrDigit(ch));
+            sb.append(ch);
+        }
+        return sb.toString();
     }
 }

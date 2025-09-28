@@ -10,7 +10,7 @@ import 'aos/dist/aos.css';
 import Translate from '@docusaurus/Translate'
 
 /**
- * Derived from https://github.com/apache/incubator-streampark-website/tree/dev/src/pages/team 
+ * Derived from https://github.com/apache/streampark-website/tree/dev/src/pages/team 
  */
 export default function () {
   const dataSource = config;
@@ -39,35 +39,9 @@ export default function () {
             <h3><Translate>team.name</Translate></h3>
             <hr style={{maxWidth: "10rem"}}></hr>
             <p className="team_desc team_indent"><Translate>team.desc</Translate></p>
-            <h3 className="team_title">
-              Mentor
-              <span className="desc"><Translate>team.tip</Translate></span>
-            </h3>
-            <div className="team-row">
-              {
-                dataSource.mentor.map((item, i) => (
-                  <div className='team-box' key={i} data-aos="fade-up" data-aos-delay={i * 100}>
-                    <div style={{textAlign: "center"}}>
-                      <div style={{overflow: "hidden", zIndex: 1}}>
-                        <img className="team-user-img" src={avatarUrl(item.githubId)} title="" alt=""/>
-                      </div>
-                      <div className="bg-team">
-                        <h6 className="team-name">{item.name}</h6>
-                        <small>{getGitName(item.gitUrl)}</small>
-                        <div>
-                          <a className="team-link" href={item.gitUrl}>
-                            <Github className="github-icon"/>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              }
-            </div>
 
             <h3 className="team_title">
-              PPMC
+              PMC
               <span className="desc"><Translate>team.tip</Translate></span>
             </h3>
             <div className="team-row">
@@ -120,7 +94,7 @@ export default function () {
               }
             </div>
             <h3 className="team_title">
-              Contributors
+              Contributor
             </h3>
             <span className="desc"><Translate>team.thanks</Translate></span>
 
@@ -297,7 +271,7 @@ export default function () {
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/lisongning"><img src="https://avatars.githubusercontent.com/u/93140178?v=4?s=100" width="100px;" alt="lisongning"/><br /><sub><b>lisongning</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lisongning" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/YutingNie"><img src="https://avatars.githubusercontent.com/u/104416402?v=4?s=100" width="100px;" alt="YutingNie"/><br /><sub><b>YutingNie</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=YutingNie" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=YutingNie" title="Documentation">📖</a> <a href="#design-YutingNie" title="Design">🎨</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/mikezzb"><img src="https://avatars.githubusercontent.com/u/23418428?v=4?s=100" width="100px;" alt="Mike Zhou"/><br /><sub><b>Mike Zhou</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mikezzb" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=mikezzb" title="Documentation">📖</a> <a href="#design-mikezzb" title="Design">🎨</a></td>
-                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/a-little-fool"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="小笨蛋"/><br /><sub><b>小笨蛋</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=a-little-fool" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=a-little-fool" title="Documentation">📖</a> <a href="#blog-a-little-fool" title="Blogposts">📝</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3Aa-little-fool" title="Bug reports">🐛</a> <a href="#design-a-little-fool" title="Design">🎨</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/lynx009"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="lynx009"/><br /><sub><b>lynx009</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lynx009" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=lynx009" title="Documentation">📖</a> <a href="#blog-lynx009" title="Blogposts">📝</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3Alynx009" title="Bug reports">🐛</a> <a href="#design-lynx009" title="Design">🎨</a></td>
                 </tr>
                 <tr>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/littlezhongzer"><img src="https://avatars.githubusercontent.com/u/33685289?v=4?s=100" width="100px;" alt="littlezhongzer"/><br /><sub><b>littlezhongzer</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=littlezhongzer" title="Code">💻</a></td>
@@ -321,7 +295,7 @@ export default function () {
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/1036664317"><img src="https://avatars.githubusercontent.com/u/7696697?v=4?s=100" width="100px;" alt="moghn"/><br /><sub><b>moghn</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=1036664317" title="Documentation">📖</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaoguolong"><img src="https://avatars.githubusercontent.com/u/33684988?v=4?s=100" width="100px;" alt="xiaoguolong"/><br /><sub><b>xiaoguolong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xiaoguolong" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/Clownsw"><img src="https://avatars.githubusercontent.com/u/28394742?v=4?s=100" width="100px;" alt="Smliexx"/><br /><sub><b>Smliexx</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Clownsw" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3AClownsw" title="Bug reports">🐛</a></td>
-                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Naruse"/><br /><sub><b>Naruse</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Code">💻</a> <a href="#design-Calvin979" title="Design">🎨</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3ACalvin979" title="Bug reports">🐛</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Tests">⚠️</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Calvin"/><br /><sub><b>Calvin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Code">💻</a> <a href="#design-Calvin979" title="Design">🎨</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3ACalvin979" title="Bug reports">🐛</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Tests">⚠️</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/bbelide2"><img src="https://avatars.githubusercontent.com/u/26840796?v=4?s=100" width="100px;" alt="Bala Sukesh"/><br /><sub><b>Bala Sukesh</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=bbelide2" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/jinyaoMa"><img src="https://avatars.githubusercontent.com/u/25066570?v=4?s=100" width="100px;" alt="Jinyao Ma"/><br /><sub><b>Jinyao Ma</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jinyaoMa" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://linuxsuren.github.io/open-source-best-practice/"><img src="https://avatars.githubusercontent.com/u/1450685?v=4?s=100" width="100px;" alt="Rick"/><br /><sub><b>Rick</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=LinuxSuRen" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=LinuxSuRen" title="Tests">⚠️</a></td>
@@ -463,6 +437,18 @@ export default function () {
                 </tr>
                 <tr>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaomizhou2"><img src="https://avatars.githubusercontent.com/u/47807926?v=4?s=100" width="100px;" alt="zhangyaxi"/><br /><sub><b>zhangyaxi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Tests">⚠️</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/RainBondsongyg"><img src="https://avatars.githubusercontent.com/u/94501396?v=4?s=100" width="100px;" alt="songyg"/><br /><sub><b>songyg</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=RainBondsongyg" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/lx1229"><img src="https://avatars.githubusercontent.com/u/44620005?v=4?s=100" width="100px;" alt="Liuxin"/><br /><sub><b>Liuxin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lx1229" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/yy549159265"><img src="https://avatars.githubusercontent.com/u/40821310?v=4?s=100" width="100px;" alt="yy549159265"/><br /><sub><b>yy549159265</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yy549159265" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=yy549159265" title="Tests">⚠️</a> <a href="#design-yy549159265" title="Design">🎨</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/cto-huhang"><img src="https://avatars.githubusercontent.com/u/53338629?v=4?s=100" width="100px;" alt="cto-huhang"/><br /><sub><b>cto-huhang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cto-huhang" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/Saramanda9988"><img src="https://avatars.githubusercontent.com/u/176664901?v=4?s=100" width="100px;" alt="LunaRain_079"/><br /><sub><b>LunaRain_079</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Saramanda9988" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/delei"><img src="https://avatars.githubusercontent.com/u/17263766?v=4?s=100" width="100px;" alt="DeleiGuo"/><br /><sub><b>DeleiGuo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=delei" title="Documentation">📖</a> <a href="https://github.com/apache/hertzbeat/commits?author=delei" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=delei" title="Tests">⚠️</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3Adelei" title="Bug reports">🐛</a></td>
+                </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/chingjustwe"><img src="https://avatars.githubusercontent.com/u/13643747?v=4?s=100" width="100px;" alt="Rocky, Chi"/><br /><sub><b>Rocky, Chi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=chingjustwe" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/rowankid"><img src="https://avatars.githubusercontent.com/u/18652781?v=4?s=100" width="100px;" alt="Wenqi Luo"/><br /><sub><b>Wenqi Luo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/issues?q=author%3Arowankid" title="Bug reports">🐛</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/tuzuy"><img src="https://avatars.githubusercontent.com/u/95274591?v=4?s=100" width="100px;" alt="tuzuy"/><br /><sub><b>tuzuy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tuzuy" title="Code">💻</a> <a href="#design-tuzuy" title="Design">🎨</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/carlpinto25"><img src="https://avatars.githubusercontent.com/u/117299909?v=4?s=100" width="100px;" alt="carl pinto"/><br /><sub><b>carl pinto</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=carlpinto25" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

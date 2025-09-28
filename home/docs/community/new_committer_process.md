@@ -273,7 +273,7 @@ Subject: [ANNOUNCE] New committer: ${NEW_COMMITTER_NAME}
 ```text
 Hello Community,
 
-The Podling Project Management Committee (PPMC) for Apache HertzBeat (incubating)
+The Podling Project Management Committee (PPMC) for Apache HertzBeat
 has invited ${NEW_COMMITTER_NAME} to become a committer and we are pleased to
 announce that he has accepted.
 

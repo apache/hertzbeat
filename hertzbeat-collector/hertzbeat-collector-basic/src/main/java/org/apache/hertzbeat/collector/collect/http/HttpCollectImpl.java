@@ -604,6 +604,18 @@ public class HttpCollectImpl extends AbstractCollect {
                     }
                 }
                 builder.addValueRow(valueRowBuilder.build());
+            } else if (objectValue instanceof Number numberValue) {
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String alias : aliasFields) {
+                    if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(responseTime.toString());
+                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+                        valueRowBuilder.addColumn(Integer.toString(keywordNum));
+                    } else {
+                        valueRowBuilder.addColumn(numberValue.toString());
+                    }
+                }
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
@@ -615,30 +627,34 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private void parseResponseByPrometheusExporter(InputStream content, List<String> aliasFields, CollectRep.MetricsData.Builder builder) throws IOException {
-        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(content);
+        String metrics = builder.getMetrics();
+        Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(content, metrics);
         if (metricFamilyMap == null || metricFamilyMap.isEmpty()) {
             return;
         }
-        String metrics = builder.getMetrics();
-        if (metricFamilyMap.containsKey(metrics)) {
-            MetricFamily metricFamily = metricFamilyMap.get(metrics);
-            for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
-                Map<String, String> labelMap = metric.getLabels()
-                        .stream()
-                        .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                for (String aliasField : aliasFields) {
-                    if ("value".equals(aliasField)) {
-                        valueRowBuilder.addColumn(String.valueOf(metric.getValue()));
-                    } else {
-                        String columnValue = labelMap.get(aliasField);
-                        valueRowBuilder.addColumn(columnValue == null ? CommonConstants.NULL_VALUE : columnValue);
-                    }
+        MetricFamily metricFamily = metricFamilyMap.get(metrics);
+        if (null == metricFamily || CollectionUtils.isEmpty(metricFamily.getMetricList())) {
+            return;
+        }
+        for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
+            Map<String, String> labelMap = metric.getLabels()
+                    .stream()
+                    .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String aliasField : aliasFields) {
+                String columnValue = labelMap.get(aliasField);
+                if (columnValue != null) {
+                    valueRowBuilder.addColumn(columnValue);
+                } else if (CommonConstants.PROM_VALUE.equals(aliasField) || CommonConstants.PROM_METRIC_VALUE.equals(aliasField)) {
+                    valueRowBuilder.addColumn(String.valueOf(metric.getValue()));
+                } else {
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
-                builder.addValueRow(valueRowBuilder.build());
             }
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
+
 
     private void parseResponseByDefault(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {

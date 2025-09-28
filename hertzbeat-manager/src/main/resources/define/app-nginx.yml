@@ -21,11 +21,13 @@ app: nginx
 name:
   zh-CN: Nginx服务器
   en-US: Nginx Server
+  ja-JP: Nginxサーバー
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> 通过配置 ngx_http_stub_status_module 对 nginx 的通用性能指标(nginx_status、req_status等)进行采集监控。<br>您可以点击“<i>新建 nginx</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> to configure ngx_http_stub_status_module for collecting general metrics of Nginx (nginx_status, req_status.). <br>You can click "<i>New Nginx</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> 通過配置 ngx_http_stub_status_module 對 Nginx 數據庫的通用性能指標(nginx信息、请求信息等)進行采集監控。<br>您可以點擊“<i>新建 Nginx</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  ja-JP: HertzBeat は、<a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'>Nginx</a> の ngx_http_stub_status_module を設定することで、nginx_status や req_status などの一般的なパフォーマンス指標を収集・監視します。<br>「<i>新規 nginx 作成</i>」をクリックして設定を行うか、「<i>その他の操作</i>」から既存の設定をインポートすることができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nginx
   en-US: https://hertzbeat.apache.org/docs/help/nginx
@@ -37,6 +39,7 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     # type-param field type(most mapping the html input type)
     type: host
     # required-true or false
@@ -47,6 +50,7 @@ params:
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -61,6 +65,7 @@ params:
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
+      ja-JP: 接続タイムアウト（ｍｓ）
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
@@ -75,6 +80,7 @@ params:
     name:
       zh-CN: 启动SSL
       en-US: SSL
+      ja-JP: SSL利用
     # When the type is boolean, the frontend will display a switch for it.
     type: boolean
     # required-true or false
@@ -87,6 +93,7 @@ metrics:
     i18n:
       zh-CN: 可用性
       en-US: Available
+      ja-JP: 可用性
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -99,6 +106,7 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
+          ja-JP: 応答時間
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: nginx
     # Specific collection configuration when protocol is http protocol
@@ -116,6 +124,7 @@ metrics:
     i18n:
       zh-CN: Nginx 状态信息
       en-US: Nginx Status
+      ja-JP: Nginx 状態情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -125,41 +134,49 @@ metrics:
         i18n:
           zh-CN: 接受连接数
           en-US: Accepts
+          ja-JP: 受けたクライアント接続の総数
       - field: handled
         type: 0
         i18n:
           zh-CN: 成功处理连接数
           en-US: Handled
+          ja-JP: 処理された接続の総数
       - field: active
         type: 0
         i18n:
           zh-CN: 当前活跃连接数
           en-US: Active
+          ja-JP: 現在アクティブなクライアント接続数
       - field: dropped
         type: 0
         i18n:
           zh-CN: 已丢弃连接数
           en-US: Dropped
+          ja-JP: 中断したクライアント接続数
       - field: requests
         type: 0
         i18n:
           zh-CN: 客户端请求数
           en-US: Requests
+          ja-JP: クライアントリクエストの総数
       - field: reading
         type: 0
         i18n:
           zh-CN: 正在执行读操作的连接数
           en-US: Reading
+          ja-JP: 読み込み中の接続数
       - field: writing
         type: 0
         i18n:
           zh-CN: 正在执行写操作的连接数
           en-US: Writing
+          ja-JP: 書き込み中の接続数
       - field: waiting
         type: 0
         i18n:
           zh-CN: 正在等待的连接数
           en-US: Waiting
+          ja-JP: 待機中の接続数
     # Alias field list, used to identify metrics in the query result
     aliasFields:
       - accepts
@@ -192,6 +209,7 @@ metrics:
     i18n:
       zh-CN: 请求详细信息
       en-US: Req Status
+      ja-JP: リクエストの詳細情報
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -201,44 +219,52 @@ metrics:
         i18n:
           zh-CN: 分组类别
           en-US: Zone Name
+          ja-JP: ゾーン名
       - field: key
         type: 1
         i18n:
           zh-CN: 分组名称
           en-US: Key
+          ja-JP: グループの識別名
       - field: max_active
         type: 0
         i18n:
           zh-CN: 最大并发连接数
           en-US: Max Active
+          ja-JP: 最大の同時実行の接続数
       - field: max_bw
         type: 0
         unit: KB
         i18n:
           zh-CN: 最大带宽
           en-US: Max BW
+          ja-JP: 最大帯域幅
       - field: traffic
         type: 0
         unit: KB
         i18n:
           zh-CN: 总流量
           en-US: Traffic
+          ja-JP: 通信量
       - field: requests
         type: 0
         i18n:
           zh-CN: 总请求数
           en-US: Requests
+          ja-JP: 累積したリクエストの合計
       - field: active
         type: 0
         i18n:
           zh-CN: 当前并发连接数
           en-US: Active
+          ja-JP: 現在のアクティブな同時実行接続数
       - field: bandwidth
         type: 0
         unit: KB
         i18n:
           zh-CN: 当前带宽
           en-US: Bandwidth
+          ja-JP: 現在の帯域幅
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: nginx
     # the config content when protocol is http

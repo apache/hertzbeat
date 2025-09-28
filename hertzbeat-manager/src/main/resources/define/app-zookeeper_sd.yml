@@ -21,6 +21,7 @@ app: zookeeper_sd
 name:
   zh-CN: Zookeeper Service Discovery
   en-US: Zookeeper Service Discovery
+  ja-JP: Zookeeper サービスディスカバリー
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
@@ -29,6 +30,7 @@ params:
     name:
       zh-CN: 服务发现地址
       en-US: Service Discovery Url
+      ja-JP: サービスディスカバリー Url
     # type-param field type(most mapping the html input type)
     type: text
     # required-true or false
@@ -38,6 +40,7 @@ params:
     name:
       zh-CN: 服务发现路径前缀
       en-US: Service Discovery Path Prefix
+      ja-JP: サービスディスカバリーのパスプレフィックス
     type: text
     required: true
 
@@ -46,6 +49,7 @@ metrics:
     i18n:
       zh-CN: 监控目标
       en-US: Monitor Target
+      ja-JP: 監視対象
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -57,11 +61,13 @@ metrics:
         i18n:
           zh-CN: Host
           en-US: Host
+          ja-JP: ホスト
       - field: port
         type: 1
         i18n:
           zh-CN: Port
           en-US: Port
+          ja-JP: ポート
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: zookeeper_sd
     # the config content when protocol is zookeeper_sd

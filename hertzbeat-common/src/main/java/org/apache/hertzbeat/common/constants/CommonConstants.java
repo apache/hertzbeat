@@ -153,14 +153,39 @@ public interface CommonConstants {
     String ALERT_STATUS_PENDING = "pending";
 
     /**
-     * alert threshold type: realtime
+     * metric alert threshold type: realtime
      */
-    String ALERT_THRESHOLD_TYPE_REALTIME = "realtime";
+    String METRIC_ALERT_THRESHOLD_TYPE_REALTIME = "realtime_metric";
 
     /**
-     * alert threshold type: periodic
+     * metric alert threshold type: periodic
      */
-    String ALERT_THRESHOLD_TYPE_PERIODIC = "periodic";
+    String METRIC_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_metric";
+
+    /**
+     * log alert threshold type: realtime
+     */
+    String LOG_ALERT_THRESHOLD_TYPE_REALTIME = "realtime_log";
+
+    /**
+     * log alert threshold type: periodic
+     */
+    String LOG_ALERT_THRESHOLD_TYPE_PERIODIC = "periodic_log";
+
+    /**
+     * Alert mode label key
+     */
+    String ALERT_MODE_LABEL = "alert_mode";
+
+    /**
+     * Alert mode: group
+     */
+    String ALERT_MODE_GROUP = "group";
+
+    /**
+     * Alert mode: individual
+     */
+    String ALERT_MODE_INDIVIDUAL = "individual";
 
     /**
      * Field parameter type: number
@@ -198,6 +223,11 @@ public interface CommonConstants {
     String PROM_VALUE = "value";
 
     /**
+     * prometheus metric value alias
+     */
+    String PROM_METRIC_VALUE = "metric_value";
+
+    /**
      * Parameter Type Number
      */
     byte PARAM_TYPE_NUMBER = 0;
@@ -233,9 +263,14 @@ public interface CommonConstants {
     String CACHE_ALERT_SILENCE = "alert_silence";
 
     /**
-     * cache key alert define
+     * cache key metric alert define
      */
-    String CACHE_ALERT_DEFINE = "alert_define";
+    String METRIC_CACHE_ALERT_DEFINE = "metric_alert_define";
+
+    /**
+     * cache key log alert define
+     */
+    String LOG_CACHE_ALERT_DEFINE = "log_alert_define";
 
     /**
      * cache key alert converge
@@ -372,4 +407,9 @@ public interface CommonConstants {
      * status page incident state resolved
      */
     byte MONITOR_TYPE_DISCOVERY_AUTO_CREATE = 2;
+
+    /**
+     * JEXL custom function `json`
+     */
+    String JEXL_CUSTOM_JSON_FUNCTION = "json";
 }

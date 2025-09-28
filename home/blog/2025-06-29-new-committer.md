@@ -3,7 +3,6 @@ title: Welcome HertzBeat's New Community Committer!
 author: MasamiYui
 author_title: Yijun Yin
 author_url: https://github.com/MasamiYui
-author_image_url: https://avatars.githubusercontent.com/u/22274133
 tags: [opensource, practice]
 keywords:
   [
@@ -15,7 +14,7 @@ keywords:
   ]
 ---
 
-> Hello everyone, it's a great honor to be invited by the community to become Apache HertzBeat Committer.
+> Hello everyone, it's a great honor to be invited by the community to become Apache HertzBeat™ Committer.
 
 ## Self-Introduction
 
@@ -39,4 +38,4 @@ For me, open source is a vessel for technical passion; growing alongside the com
 
 ## Conclusion
 
-A heartfelt thank you to [@tomsun28](https://github.com/tomsun28) for the nomination and guidance. I hope this encouragement drives me to make even more valuable contributions to the community. Finally, wishing Apache HertzBeat a smooth graduation from the Apache Incubator and may the community continue to grow and thrive!
+A heartfelt thank you to [@tomsun28](https://github.com/tomsun28) for the nomination and guidance. I hope this encouragement drives me to make even more valuable contributions to the community. Finally, wishing Apache HertzBeat™ a smooth graduation from the Apache Incubator and may the community continue to grow and thrive!

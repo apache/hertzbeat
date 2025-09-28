@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
@@ -39,6 +40,13 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         try {
+            String hookUrl = receiver.getHookUrl();
+
+            // Basic URL validation
+            if (StringUtils.isBlank(hookUrl)) {
+                throw new AlertNoticeException("Webhook URL is null or empty");
+            }
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             //  alert.setContent(escapeJsonStr(alert.getContent()));
@@ -46,11 +54,11 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             webhookJson = webhookJson.replace(",\n  }", "\n }");
 
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
-            ResponseEntity<String> entity = restTemplate.postForEntity(receiver.getHookUrl(), alertHttpEntity, String.class);
+            ResponseEntity<String> entity = restTemplate.postForEntity(hookUrl, alertHttpEntity, String.class);
             if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
-                log.debug("Send WebHook: {} Success", receiver.getHookUrl());
+                log.debug("Send WebHook: {} Success", hookUrl);
             } else {
-                log.warn("Send WebHook: {} Failed: {}", receiver.getHookUrl(), entity.getBody());
+                log.warn("Send WebHook: {} Failed: {}", hookUrl, entity.getBody());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
         } catch (Exception e) {

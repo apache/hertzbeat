@@ -18,10 +18,12 @@ app: starrocks_be
 name:
   zh-CN: StarRocks BE
   en-US: StarRocks BE
+  ja-JP: StarRocks BE
 help:
   zh-CN: Hertzbeat 对 StarRocks 数据库BE的核心监控指标（CPU使用率、磁盘状态、Compaction分数、请求数、磁盘IO利用率、磁盘容量、内存使用、网络流量等）进行测量监控。<br>您可以点击 "<i>新建 StarRocks BE</i>" 并进行配置，或者选择"<i>更多操作</i>"，导入已有配置。
   en-US: Hertzbeat monitoring StarRocks BE through core performance metrics such as CPU usage, disk state, compaction score, request count, disk IO utilization, disk capacity, memory usage and network traffic. You could click the "<i>New StarRocks BE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 StarRocks 資料庫BE的核心監控指標（CPU使用率、磁碟狀態、Compaction分數、請求數、磁碟IO利用率、磁碟容量、記憶體使用、網路流量等）進行量測監控。<br>您可以點擊"<i>新建 StarRocks BE</i>"並進行配寘，或者選擇"<i>更多操作</i>"，導入已有配寘。
+  ja-JP: Hertzbeat は StarRocks BEの一般的なメトリクスを監視します。<br>「<i>新規 StarRocks BE</i>」をクリックしてパラメタを設定した後、新規することができます。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/starrocks_be/
   en-US: https://hertzbeat.apache.org/docs/help/starrocks_be/
@@ -30,12 +32,14 @@ params:
     name:
       zh-CN: 目标Host
       en-US: Target Host
+      ja-JP: 目標ホスト
     type: host
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+      ja-JP: ポート
     type: number
     range: '[0,65535]'
     defaultValue: 8040
@@ -44,6 +48,7 @@ params:
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
+      ja-JP: クエリタイムアウト
     type: number
     required: false
     hide: true
@@ -54,6 +59,7 @@ metrics:
     i18n:
       zh-CN: /proc/stat中的CPU使用信息
       en-US: CPU Usage in /proc/stat
+      ja-JP: /proc/stat内のCPU使用率
     priority: 0
     fields:
       - field: mode
@@ -74,6 +80,7 @@ metrics:
     i18n:
       zh-CN: 磁盘状态
       en-US: Disk State
+      ja-JP: ディスク状態
     priority: 1
     fields:
       - field: path
@@ -94,6 +101,7 @@ metrics:
     i18n:
       zh-CN: Base Compaction分数
       en-US: Base Compaction Score
+      ja-JP: ベースの圧縮スコア
     priority: 2
     fields:
       - field: value
@@ -111,6 +119,7 @@ metrics:
     i18n:
       zh-CN: Cumulative Compaction分数
       en-US: Cumulative Compaction Score
+      ja-JP: 累計圧縮スコア
     priority: 3
     fields:
       - field: value
@@ -128,6 +137,7 @@ metrics:
     i18n:
       zh-CN: 总请求数
       en-US: Total Requests
+      ja-JP: リクエスト総数
     priority: 4
     fields:
       - field: status
@@ -151,6 +161,7 @@ metrics:
     i18n:
       zh-CN: 最大磁盘IO利用率(%)
       en-US: Max Disk IO Utilization Rate(%)
+      ja-JP: ディスクIOの最大使用率
     priority: 5
     fields:
       - field: value
@@ -169,6 +180,7 @@ metrics:
     i18n:
       zh-CN: 磁盘可用容量
       en-US: Disk Available Capacity
+      ja-JP: 利用可能なディスク容量
     priority: 6
     fields:
       - field: path
@@ -192,6 +204,7 @@ metrics:
     i18n:
       zh-CN: 磁盘已用容量
       en-US: Disk Used Capacity
+      ja-JP: 使用したディスク容量
     priority: 7
     fields:
       - field: path
@@ -215,6 +228,7 @@ metrics:
     i18n:
       zh-CN: 总导入字节数
       en-US: Total Load Bytes
+      ja-JP: ロードバイト総数
     priority: 8
     fields:
       - field: value
@@ -233,6 +247,7 @@ metrics:
     i18n:
       zh-CN: 导入行数
       en-US: Load Rows
+      ja-JP: ロード行数
     priority: 9
     fields:
       - field: value
@@ -250,6 +265,7 @@ metrics:
     i18n:
       zh-CN: 进程内存使用
       en-US: Process Memory Usage
+      ja-JP: プロセスメモリ使用率
     priority: 10
     fields:
       - field: value
@@ -271,6 +287,7 @@ metrics:
     i18n:
       zh-CN: 已分配的内存
       en-US: Allocated Memory
+      ja-JP: 割り当てられたメモリ
     priority: 11
     fields:
       - field: value
@@ -292,6 +309,7 @@ metrics:
     i18n:
       zh-CN: 网络接收字节数
       en-US: Network Received Bytes
+      ja-JP: ネットワークの受信されたバイト
     priority: 12
     fields:
       - field: device
@@ -313,6 +331,7 @@ metrics:
     i18n:
       zh-CN: 网络发送字节数
       en-US: Network Sent Bytes
+      ja-JP: ネットワークの転送されたバイト
     priority: 13
     fields:
       - field: device

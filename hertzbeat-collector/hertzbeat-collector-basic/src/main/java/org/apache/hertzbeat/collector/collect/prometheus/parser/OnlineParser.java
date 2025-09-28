@@ -69,12 +69,124 @@ public class OnlineParser {
                     parseMetric(inputStream, metricFamilyMap, stringBuilder);
                 }
                 i = getChar(inputStream);
+                // To address the `\n\r` scenario, it is necessary to skip
+                if (i == '\r') {
+                    i = getChar(inputStream);
+                }
             }
         } catch (FormatException e) {
             log.error("prometheus parser failed because of wrong input format. {}", e.getMessage());
             return null;
         }
         return metricFamilyMap;
+    }
+
+    /**
+     * Parses Prometheus metrics from the given {@link InputStream}, but only for the specified metric name.
+     * <p>
+     * This method differs from {@link #parseMetrics(InputStream)} in that it filters and parses only the metric
+     * with the given name, rather than parsing all available metrics from the input stream.
+     *
+     * @param inputStream the input stream containing Prometheus metrics data
+     * @param metric the name of the metric to filter and parse (case-insensitive)
+     * @return a map of metric family names to {@link MetricFamily} objects, or {@code null} if parsing fails
+     * @throws IOException if an I/O error occurs while reading from the input stream
+     */
+    public static Map<String, MetricFamily> parseMetrics(InputStream inputStream, String metric) throws IOException {
+        Map<String, MetricFamily> metricFamilyMap = new ConcurrentHashMap<>(10);
+        try {
+            int i = getChar(inputStream);
+            while (i != -1) {
+                if (i == '#' || i == '\n') {
+                    skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
+                } else {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    stringBuilder.append((char) i);
+
+                    // parse the metricName to filter.
+                    int next = parseMetricName(inputStream, stringBuilder).maybeSpace().maybeLeftBracket().noElse();
+                    String metricName = stringBuilder.toString();
+                    stringBuilder.delete(0, stringBuilder.length());
+
+                    // step2: Determine whether this metric should be parsed.
+                    if (metric.equals(metricName)) {
+                        parseMetricFromName(inputStream, stringBuilder, metricFamilyMap, metricName, next);
+                    } else {
+                        skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
+                    }
+                }
+                i = getChar(inputStream);
+                // To address the `\n\r` scenario, it is necessary to skip
+                if (i == '\r') {
+                    i = getChar(inputStream);
+                }
+            }
+        } catch (FormatException e) {
+            log.error("prometheus parser failed because of wrong input format. {}", e.getMessage());
+            return null;
+        }
+        return metricFamilyMap;
+    }
+
+    /**
+     * Start parsing the complete metric from the already parsed metric name.
+     *
+     * @param inputStream      the input stream containing the metric data
+     * @param stringBuilder    the StringBuilder used for parsing and temporary storage
+     * @param metricFamilyMap  the map to store parsed MetricFamily objects, keyed by metric name
+     * @param metricName       the name of the metric to parse
+     * @param next             the next character to process from the input stream
+     * @return a CharChecker containing the next character after parsing the metric
+     * @throws IOException     if an I/O error occurs while reading the input stream
+     * @throws FormatException if the input format is invalid
+     */
+    private static CharChecker parseMetricFromName(InputStream inputStream, StringBuilder stringBuilder,
+                                                   Map<String, MetricFamily> metricFamilyMap,
+                                                   String metricName, int next) throws IOException, FormatException {
+        MetricFamily metricFamily;
+        MetricFamily.Metric metric = new MetricFamily.Metric();
+
+        if (!metricFamilyMap.containsKey(metricName)) {
+            metricFamily = new MetricFamily();
+            metricFamily.setMetricList(new ArrayList<>());
+            metricFamily.setName(metricName);
+            metricFamilyMap.put(metricName, metricFamily);
+        } else {
+            metricFamily = metricFamilyMap.get(metricName);
+        }
+        int i = next;
+        if (i == ' ') {
+            i = skipSpaces(inputStream).getInt();
+        }
+
+        List<MetricFamily.Label> labelList = new LinkedList<>();
+        metric.setLabels(labelList);
+        if (i == '{') {
+            parseLabels(inputStream, stringBuilder, labelList);
+            i = skipSpaces(inputStream).getInt();
+        }
+
+        stringBuilder.delete(0, stringBuilder.length());
+        stringBuilder.append((char) i);
+        i = parseOneDouble(inputStream, stringBuilder).maybeSpace().maybeEol().maybeEof().noElse();
+        metric.setValue(toDouble(stringBuilder.toString()));
+        if (i == '\n' || i == -1) {
+            metricFamily.getMetricList().add(metric);
+            return new CharChecker(i);
+        }
+
+        i = skipSpaces(inputStream).getInt();
+        stringBuilder.delete(0, stringBuilder.length());
+        stringBuilder.append((char) i);
+        i = skipOneLong(inputStream).maybeSpace().maybeEol().maybeEof().noElse();
+        if (i == '\n' || i == -1) {
+            metricFamily.getMetricList().add(metric);
+            return new CharChecker(i);
+        }
+        i = skipSpaces(inputStream).maybeEol().maybeEof().noElse();
+
+        metricFamily.getMetricList().add(metric);
+        return new CharChecker(i);
     }
 
     private static class FormatException extends Exception {
@@ -185,12 +297,20 @@ public class OnlineParser {
             stringBuilder.append((char) i);
             i = getChar(inputStream);
         }
+        // Skip \r character to handle Windows line endings
+        if (i == '\r') {
+            i = getChar(inputStream);
+        }
         return new CharChecker(i);
     }
 
     private static CharChecker skipOneLong(InputStream inputStream) throws IOException, FormatException {
         int i = getChar(inputStream);
         while (i >= '0' && i <= '9') {
+            i = getChar(inputStream);
+        }
+        // Skip \r character to handle Windows line endings
+        if (i == '\r') {
             i = getChar(inputStream);
         }
         return new CharChecker(i);
@@ -215,20 +335,27 @@ public class OnlineParser {
     }
 
     private static CharChecker parseLabelValue(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
-        int i = getChar(inputStream);
+        int i = inputStream.read();
         while (i != '"' && i != -1) {
             if (i == '\\') {
-                i = getChar(inputStream);
+                i = inputStream.read();
                 switch (i) {
                     case 'n' -> stringBuilder.append('\n');
                     case '\\' -> stringBuilder.append('\\');
                     case '\"' -> stringBuilder.append('\"');
-                    default -> throw new FormatException();
+                    default -> {
+                        // Unknown escape, keep as-is
+                        // https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/lib/protoparser/prometheus/parser.go#L419
+                        stringBuilder.append('\\');
+                        if (i != -1) {
+                            stringBuilder.append((char) i);
+                        }
+                    }
                 }
             } else {
                 stringBuilder.append((char) i);
             }
-            i = getChar(inputStream);
+            i = inputStream.read();
         }
         return new CharChecker(i);
     }

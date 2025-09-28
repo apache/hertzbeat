@@ -17,11 +17,12 @@
  * under the License.
  */
 
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
+import { Page } from '../pojo/Page';
 import { StatusPageComponentStatus } from '../pojo/StatusPageComponentStatus';
 import { StatusPageIncident } from '../pojo/StatusPageIncident';
 import { StatusPageOrg } from '../pojo/StatusPageOrg';
@@ -50,7 +51,24 @@ export class StatusPagePublicService {
     return this.http.get<Message<StatusPageComponentStatus>>(`${status_page_component_public_uri}/${componentId}`);
   }
 
-  public getStatusPageIncidents(): Observable<Message<StatusPageIncident[]>> {
-    return this.http.get<Message<StatusPageIncident[]>>(status_page_incident_public_uri);
+  public getStatusPageIncidents(
+    startTime: number,
+    endTime: number,
+    pageIndex: number,
+    pageSize: number
+  ): Observable<Message<Page<StatusPageIncident>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      pageIndex: pageIndex,
+      pageSize: pageSize,
+      startTime: startTime
+    });
+    if (endTime != undefined && endTime > 0) {
+      httpParams = httpParams.append('endTime', endTime);
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<Page<StatusPageIncident>>>(status_page_incident_public_uri, options);
   }
 }
