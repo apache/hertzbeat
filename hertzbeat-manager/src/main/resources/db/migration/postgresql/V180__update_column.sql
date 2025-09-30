@@ -18,13 +18,13 @@
 -- ensure every sql can rerun without error
 
 -- Update type from 'realtime' to 'realtime_metric'
-UPDATE HZB_ALERT_DEFINE 
-SET type = 'realtime_metric' 
+UPDATE HZB_ALERT_DEFINE
+SET type = 'realtime_metric'
 WHERE type = 'realtime';
 
 -- Update type from 'periodic' to 'periodic_metric'
-UPDATE HZB_ALERT_DEFINE 
-SET type = 'periodic_metric' 
+UPDATE HZB_ALERT_DEFINE
+SET type = 'periodic_metric'
 WHERE type = 'periodic';
 
 commit;
