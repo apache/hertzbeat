@@ -94,8 +94,8 @@ public class NoticeReceiver {
     @Schema(title = "URL address: The notification method is valid for webhook",
             description = "URL address: The notification method is valid for webhook",
             example = "https://www.tancloud.cn", accessMode = READ_WRITE)
-    @Size(max = 300)
-    @Column(length = 300)
+    @Size(max = 1000)
+    @Column(length = 1000)
     private String hookUrl;
 
     @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",

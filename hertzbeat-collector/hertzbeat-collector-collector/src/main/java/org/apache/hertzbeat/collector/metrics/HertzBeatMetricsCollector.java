@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.Map;
@@ -58,6 +59,10 @@ public class HertzBeatMetricsCollector {
         Map<String, String> metadata = job.getMetadata();
         String monitorName = metadata != null ? metadata.get("instancename") : "unknown";
         String monitorTarget = metadata != null ? metadata.get("instancehost") : "unknown";
+        // todo can not get the host from service discovery
+        if (!StringUtils.hasText(monitorTarget)) {
+            monitorTarget = "unknown";
+        }
 
         // Record collection count
         Counter.builder("hertzbeat.collect.total")
