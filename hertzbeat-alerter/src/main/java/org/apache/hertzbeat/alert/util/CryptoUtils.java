@@ -88,7 +88,7 @@ public class CryptoUtils {
      * @return lowercase hexadecimal string
      */
     public static String hmacSha256Hex(String key, String data) {
-        return hmacSha256Hex(hmac256(key.getBytes(UTF8), data), data);
+        return hmacSha256Hex(key.getBytes(UTF8), data);
     }
 
     /**
