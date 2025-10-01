@@ -158,7 +158,7 @@ public class DnsCollectImpl extends AbstractCollect {
         responseTimeStopWatch.start();
 
         Name name = Name.fromString(dns.getAddress(), Name.root);
-        Message query = Message.newQuery(Record.newRecord(name, Type.ANY, DClass.value(dns.getQueryClass())));
+        Message query = Message.newQuery(Record.newRecord(name, Integer.parseInt(dns.getRecordType()), DClass.value(dns.getQueryClass())));
         Resolver res = new SimpleResolver(dns.getDnsServerIP());
         res.setTimeout(Duration.of(Long.parseLong(dns.getTimeout()), ChronoUnit.MILLIS));
         res.setTCP(Boolean.parseBoolean(dns.getTcp()));
