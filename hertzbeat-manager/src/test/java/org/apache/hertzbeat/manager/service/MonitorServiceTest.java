@@ -49,7 +49,7 @@ import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
-import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
+import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
@@ -108,7 +108,7 @@ class MonitorServiceTest {
     private LabelService tagService;
 
     @Mock
-    private CollectJobScheduling collectJobScheduling;
+    private CollectorJobScheduler jobOperation;
 
     @Mock
     private AlertDefineBindDao alertDefineBindDao;
@@ -149,7 +149,7 @@ class MonitorServiceTest {
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
 
         List<CollectRep.MetricsData> collectRep = new ArrayList<>();
-        when(collectJobScheduling.collectSyncJobData(job)).thenReturn(collectRep);
+        when(jobOperation.collectSyncJobData(job, null)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
         assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params, null));
@@ -176,7 +176,7 @@ class MonitorServiceTest {
         CollectRep.MetricsData failCode = CollectRep.MetricsData.newBuilder()
                 .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
         collectRep.add(failCode);
-        when(collectJobScheduling.collectSyncJobData(job)).thenReturn(collectRep);
+        when(jobOperation.collectSyncJobData(job, null)).thenReturn(collectRep);
 
         List<Param> params = Collections.singletonList(new Param());
         assertThrows(MonitorDetectException.class, () -> monitorService.detectMonitor(monitor, params, null));
@@ -192,7 +192,7 @@ class MonitorServiceTest {
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(jobOperation.addAsyncCollectJob(job, null)).thenReturn(1L);
         when(monitorDao.save(monitor)).thenReturn(monitor);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.saveAll(params)).thenReturn(params);
@@ -209,7 +209,7 @@ class MonitorServiceTest {
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
+        when(jobOperation.addAsyncCollectJob(job, null)).thenReturn(1L);
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
         assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params, null, null));
