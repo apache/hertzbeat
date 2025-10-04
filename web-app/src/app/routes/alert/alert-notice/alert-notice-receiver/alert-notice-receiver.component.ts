@@ -159,6 +159,7 @@ export class AlertNoticeReceiverComponent implements OnInit {
 
   onNewNoticeReceiver() {
     this.receiver = new NoticeReceiver();
+    this.receiver.hookAuthType = 'None';
     this.isManageReceiverModalVisible = true;
     this.isManageReceiverModalAdd = true;
   }

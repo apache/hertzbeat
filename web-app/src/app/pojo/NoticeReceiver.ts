@@ -33,6 +33,8 @@ export class NoticeReceiver {
   discordChannelId!: string;
   discordBotToken!: string;
   hookUrl!: string;
+  hookAuthType!: string;
+  hookAuthToken!: string;
   wechatId!: string;
   accessToken!: string;
   corpId!: string;
