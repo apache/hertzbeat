@@ -352,12 +352,47 @@ public class OnlineParser {
                         }
                     }
                 }
-            } else {
+            } else if (i <= 127) {
                 stringBuilder.append((char) i);
+            } else {
+                handleUtf8Character(i, inputStream, stringBuilder);
             }
             i = inputStream.read();
         }
         return new CharChecker(i);
+    }
+
+    private static void handleUtf8Character(int firstByte, InputStream inputStream, StringBuilder stringBuilder) throws IOException {
+        List<Integer> bytes = new ArrayList<>();
+        bytes.add(firstByte);
+
+        int additionalBytes = getUtf8AdditionalByteCount(firstByte);
+
+        for (int j = 0; j < additionalBytes; j++) {
+            int nextByte = inputStream.read();
+            if (nextByte == -1) break;
+            bytes.add(nextByte);
+        }
+
+        byte[] byteArray = new byte[bytes.size()];
+        for (int j = 0; j < bytes.size(); j++) {
+            byteArray[j] = (byte) bytes.get(j).intValue();
+        }
+
+        try {
+            String utf8Chars = new String(byteArray, StandardCharsets.UTF_8);
+            stringBuilder.append(utf8Chars);
+        } catch (Exception e) {
+            stringBuilder.append((char) firstByte);
+        }
+    }
+
+    private static int getUtf8AdditionalByteCount(int firstByte) {
+        if ((firstByte & 0x80) == 0) return 0; // 0xxxxxxx - ASCII (shouldn't reach here)
+        if ((firstByte & 0xE0) == 0xC0) return 1; // 110xxxxx - 2 bytes total, 1 additional
+        if ((firstByte & 0xF0) == 0xE0) return 2; // 1110xxxx - 3 bytes total, 2 additional
+        if ((firstByte & 0xF8) == 0xF0) return 3; // 11110xxx - 4 bytes total, 3 additional
+        return 0;
     }
 
     private static CharChecker skipSpaces(InputStream inputStream) throws IOException, FormatException {
@@ -416,9 +451,10 @@ public class OnlineParser {
         skipSpaces(inputStream).maybeQuotationMark().noElse();
         parseLabelValue(inputStream, stringBuilder).maybeQuotationMark().noElse();
         String labelValue = stringBuilder.toString();
-        if (!labelValue.equals(new String(labelValue.getBytes(StandardCharsets.UTF_8)))) {
+        if (!isValidLabelValue(labelValue)) {
             throw new FormatException();
         }
+
         label.setValue(labelValue);
         stringBuilder.delete(0, stringBuilder.length());
         labelList.add(label);
@@ -490,5 +526,33 @@ public class OnlineParser {
 
         metricFamily.getMetricList().add(metric);
         return new CharChecker(i);
+    }
+
+    private static boolean isValidLabelValue(String labelValue) {
+        if (labelValue == null) {
+            return false;
+        }
+
+        //Check if all characters are ASCII (0-127)
+        boolean isAscii = true;
+        for (int i = 0; i < labelValue.length(); i++) {
+            char c = labelValue.charAt(i);
+            if (c > 127) {
+                isAscii = false;
+                break;
+            }
+        }
+
+        if (isAscii) {
+            return true;
+        }
+
+        try {
+            byte[] bytes = labelValue.getBytes(StandardCharsets.UTF_8);
+            String reconstructed = new String(bytes, StandardCharsets.UTF_8);
+            return labelValue.equals(reconstructed);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
