@@ -15,25 +15,15 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch;
+package org.apache.hertzbeat.collector.context;
 
-import org.apache.hertzbeat.common.timer.Timeout;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.List;
+import org.apache.hertzbeat.collector.constants.ContextStatus;
 
 /**
- * Collection data scheduler interface
+ * 只维护与上下文的元数据
  */
-public interface CollectDataDispatch {
+public interface Context extends ContextView, ContextOperation {
+    ContextStatus getStatus();
 
-    /**
-     * Processing and distributing collection result data
-     * @param timeout     time wheel timeout        
-     * @param metrics     The following metrics collection tasks   
-     * @param metricsData Collect result data       
-     */
-    void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
-
+    void setStatus(ContextStatus status);
 }
