@@ -18,6 +18,7 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 | Monitoring port     | The port for DNS service provided to the outside,default is 53.                                                          |
 | Address For DNS     | The address for domain name resolution.                                                                                  |
 | Connect Timeout     | Set the timeout for connecting to the DNS server, default is 6000 milliseconds.                                          |
+| Record Type         | The type of DNS record to query. Optional values include `A`, `AAAA`, `MX`, `NS`, `SRV`, and `ANY`.                       |
 | Query Class         | Resource class for DNS query. Optional values include `IN`, `CHAOS`, `HESIOD`, `NONE`, and `ANY`,default is IN.          |
 | Use TCP Protocol    | DNS queries use the TCP protocol.                                                                                        |
 | Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds. |
