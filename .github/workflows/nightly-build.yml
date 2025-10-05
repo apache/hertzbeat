@@ -31,6 +31,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: ./script/ci/github-actions/setup-deps
+    - uses: pnpm/action-setup@v4
         
     - name: Build the Frontend
       run: |
