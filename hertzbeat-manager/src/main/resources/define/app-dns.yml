@@ -94,6 +94,30 @@ params:
     # default value false
     # 默认值 false
     defaultValue: false
+  - field: recordType
+    # name-param field display i18n name
+    name:
+      zh-CN: 记录类型
+      en-US: Record Type
+      ja-JP: レコードタイプ
+    # type-param field type(radio mapping the html radio tag)
+    type: radio
+    # required-true or false
+    required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    options:
+      - label: SRV
+        value: SRV
+      - label: A
+        value: A
+      - label: AAAA
+        value: AAAA
+      - label: MX
+        value: MX
+      - label: NS
+        value: NS
+      - label: ANY
+        value: ANY
   - field: queryClass
     # name-param field display i18n name
     name:
@@ -194,6 +218,8 @@ metrics:
       tcp: ^_^tcp^_^
       # Query Class
       queryClass: ^_^queryClass^_^
+      # Record Type
+      recordType: ^_^recordType^_^
 
   # metrics - question
   - name: question
@@ -228,6 +254,8 @@ metrics:
       tcp: ^_^tcp^_^
       # Query Class
       queryClass: ^_^queryClass^_^
+      # Record Type
+      recordType: ^_^recordType^_^
 
   # metrics - answer
   - name: answer
@@ -316,6 +344,8 @@ metrics:
       tcp: ^_^tcp^_^
       # Query Class
       queryClass: ^_^queryClass^_^
+      # Record Type
+      recordType: ^_^recordType^_^
 
   # metrics - authority
   - name: authority
@@ -404,6 +434,8 @@ metrics:
       tcp: ^_^tcp^_^
       # Query Class
       queryClass: ^_^queryClass^_^
+      # Record Type
+      recordType: ^_^recordType^_^
 
   # metrics - additional
   - name: additional
@@ -492,3 +524,5 @@ metrics:
       tcp: ^_^tcp^_^
       # Query Class
       queryClass: ^_^queryClass^_^
+      # Record Type
+      recordType: ^_^recordType^_^

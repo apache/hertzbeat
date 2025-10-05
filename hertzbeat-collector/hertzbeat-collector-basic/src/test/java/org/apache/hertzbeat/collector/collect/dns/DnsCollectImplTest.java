@@ -46,6 +46,7 @@ public class DnsCollectImplTest {
                 .queryClass("IN")
                 .address("www.google.com")
                 .timeout("3000")
+                .recordType("A")
                 .port("53")
                 .tcp("tcp")
                 .build();
