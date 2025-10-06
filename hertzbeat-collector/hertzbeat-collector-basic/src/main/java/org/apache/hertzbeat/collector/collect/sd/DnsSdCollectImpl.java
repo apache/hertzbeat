@@ -43,7 +43,7 @@ import java.util.Arrays;
 @Slf4j
 public class DnsSdCollectImpl extends AbstractCollect {
 
-    private static final int DEFAULT_TIME_OUT = 3;
+    private static final int DEFAULT_TIME_OUT = 3000;
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
