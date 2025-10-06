@@ -31,12 +31,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: ./script/ci/github-actions/setup-deps
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
         
     - name: Build the Frontend
       run: |
         cd web-app
-        yarn install
-        yarn package
+        pnpm install
+        pnpm package
         
     - name: Build the Backend
       run: |
