@@ -24,6 +24,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { SharedModule } from '@shared';
 import { EChartsOption } from 'echarts';
+import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
@@ -43,7 +44,6 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NgxEchartsModule } from 'ngx-echarts';
-import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 
 import { LogEntry } from '../../../pojo/LogEntry';
 import { LogService } from '../../../service/log.service';
