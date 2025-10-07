@@ -43,6 +43,7 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NgxEchartsModule } from 'ngx-echarts';
+import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 
 import { LogEntry } from '../../../pojo/LogEntry';
 import { LogService } from '../../../service/log.service';
@@ -71,7 +72,8 @@ import { LogService } from '../../../service/log.service';
     NzModalModule,
     NzCheckboxModule,
     NzPopoverModule,
-    NzListModule
+    NzListModule,
+    NzAutocompleteModule
   ],
   templateUrl: './log-manage.component.html',
   styleUrl: './log-manage.component.less'

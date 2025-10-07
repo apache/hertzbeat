@@ -30,6 +30,7 @@ import { NzDividerComponent } from 'ng-zorro-antd/divider';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -52,6 +53,7 @@ interface ExtendedLogEntry {
     FormsModule,
     NzCardModule,
     NzInputModule,
+    NzAutocompleteModule,
     NzSelectModule,
     NzButtonModule,
     NzTagModule,
