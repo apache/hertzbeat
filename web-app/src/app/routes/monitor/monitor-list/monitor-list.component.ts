@@ -115,7 +115,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       clearInterval(this.intervalId);
     }
     
-    // 清理所有宽限期定时器
     if (this.previousMonitors) {
       this.previousMonitors.forEach(monitor => {
         if (monitor._graceTimer) {
@@ -461,10 +460,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          // 优雅处理监控项不存在的情况
-          if (message.code === 3) { // MONITOR_NOT_EXIST_CODE = 0x03
+          if (message.code === 3) {
             this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
-            this.loadMonitorTable(); // 自动刷新列表
+            this.loadMonitorTable();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), message.msg);
           }
@@ -473,10 +471,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       error => {
         this.tableLoading = false;
         cancelManage$.unsubscribe();
-        // 检查是否是404错误
         if (error.status === 404) {
           this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
-          this.loadMonitorTable(); // 自动刷新列表
+          this.loadMonitorTable();
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), error.msg);
         }
@@ -662,7 +659,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         }
       },
       error => {
-        // 检查是否是404错误
         if (error.status === 404) {
           this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
           this.loadMonitorTable();
