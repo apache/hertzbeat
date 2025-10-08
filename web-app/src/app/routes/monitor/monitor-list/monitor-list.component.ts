@@ -190,7 +190,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            // 应用智能状态协调逻辑
             this.monitors = this.reconcileMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
@@ -216,7 +215,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            // 应用智能状态协调逻辑
             this.monitors = this.reconcileMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
@@ -521,10 +519,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          // 优雅处理监控项不存在的情况
-          if (message.code === 3) { // MONITOR_NOT_EXIST_CODE = 0x03
+          if (message.code === 3) {
             this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
-            this.loadMonitorTable(); // 自动刷新列表
+            this.loadMonitorTable();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), message.msg);
           }
@@ -536,7 +533,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         // 检查是否是404错误
         if (error.status === 404) {
           this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
-          this.loadMonitorTable(); // 自动刷新列表
+          this.loadMonitorTable();
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), error.msg);
         }
