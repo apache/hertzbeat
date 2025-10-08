@@ -73,6 +73,10 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   currentSortField: string | null = null;
   currentSortOrder: string | null = null;
 
+
+  private previousMonitors: Monitor[] = [];
+  private readonly GRACE_PERIOD_MS = 5000;
+
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
@@ -109,6 +113,15 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
+    }
+    
+    // 清理所有宽限期定时器
+    if (this.previousMonitors) {
+      this.previousMonitors.forEach(monitor => {
+        if (monitor._graceTimer) {
+          clearTimeout(monitor._graceTimer);
+        }
+      });
     }
   }
 
@@ -178,7 +191,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            this.monitors = page.content;
+            // 应用智能状态协调逻辑
+            this.monitors = this.reconcileMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
           } else {
@@ -203,7 +217,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            this.monitors = page.content;
+            // 应用智能状态协调逻辑
+            this.monitors = this.reconcileMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
           } else {
@@ -446,13 +461,25 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), message.msg);
+          // 优雅处理监控项不存在的情况
+          if (message.code === 3) { // MONITOR_NOT_EXIST_CODE = 0x03
+            this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+            this.loadMonitorTable(); // 自动刷新列表
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), message.msg);
+          }
         }
       },
       error => {
         this.tableLoading = false;
         cancelManage$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), error.msg);
+        // 检查是否是404错误
+        if (error.status === 404) {
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+          this.loadMonitorTable(); // 自动刷新列表
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), error.msg);
+        }
       }
     );
   }
@@ -497,13 +524,25 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), message.msg);
+          // 优雅处理监控项不存在的情况
+          if (message.code === 3) { // MONITOR_NOT_EXIST_CODE = 0x03
+            this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+            this.loadMonitorTable(); // 自动刷新列表
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), message.msg);
+          }
         }
       },
       error => {
         this.tableLoading = false;
         enableManage$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), error.msg);
+        // 检查是否是404错误
+        if (error.status === 404) {
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+          this.loadMonitorTable(); // 自动刷新列表
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), error.msg);
+        }
       }
     );
   }
@@ -614,12 +653,122 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.notifySvc.success(this.i18nSvc.fanyi('monitor.copy.success'), '');
           this.loadMonitorTable();
         } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), message.msg);
+          // 优雅处理监控项不存在的情况
+          if (message.code === 3) { // MONITOR_NOT_EXIST_CODE = 0x03
+            this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+            this.loadMonitorTable(); // 自动刷新列表
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), message.msg);
+          }
         }
       },
       error => {
-        this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), error.msg);
+        // 检查是否是404错误
+        if (error.status === 404) {
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+          this.loadMonitorTable(); // 自动刷新列表
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), error.msg);
+        }
       }
     );
+  }
+
+  /**
+   * 智能状态协调方法 - 优化用户体验
+   * Intelligent State Reconciliation Method - For Better User Experience
+   * 
+   * 这个方法会比较新旧监控列表，为消失的条目提供"宽限期"，
+   * 避免短暂的网络问题导致监控项在界面上闪烁
+   */
+  private reconcileMonitorStates(newMonitors: Monitor[]): Monitor[] {
+    // 如果这是第一次加载或者没有之前的数据，直接返回新数据
+    if (!this.previousMonitors || this.previousMonitors.length === 0) {
+      const processedMonitors = newMonitors.map(monitor => ({
+        ...monitor,
+        _displayStatus: 'ACTIVE' as const
+      }));
+      this.previousMonitors = [...processedMonitors];
+      return processedMonitors;
+    }
+
+    // 创建ID映射以便快速查找
+    const newMonitorMap = new Map(newMonitors.map(m => [m.id, m]));
+    const previousMonitorMap = new Map(this.previousMonitors.map(m => [m.id, m]));
+    
+    const reconciledMonitors: Monitor[] = [];
+
+    // 处理新列表中的监控项（存在的或更新的）
+    newMonitors.forEach(newMonitor => {
+      const previousMonitor = previousMonitorMap.get(newMonitor.id);
+      
+      if (previousMonitor) {
+        // 如果之前存在，清除任何宽限期状态
+        if (previousMonitor._graceTimer) {
+          clearTimeout(previousMonitor._graceTimer);
+        }
+        reconciledMonitors.push({
+          ...newMonitor,
+          _displayStatus: 'ACTIVE' as const
+        });
+      } else {
+        // 新出现的监控项
+        reconciledMonitors.push({
+          ...newMonitor,
+          _displayStatus: 'ACTIVE' as const
+        });
+      }
+    });
+
+    // 处理消失的监控项 - 给它们一个宽限期
+    this.previousMonitors.forEach(previousMonitor => {
+      if (!newMonitorMap.has(previousMonitor.id)) {
+        // 监控项消失了
+        
+        if (previousMonitor._displayStatus === 'DISAPPEARED') {
+          // 已经在宽限期中，继续保持
+          reconciledMonitors.push(previousMonitor);
+        } else {
+          // 刚刚消失，开始宽限期
+          const disappearedMonitor = {
+            ...previousMonitor,
+            _displayStatus: 'DISAPPEARED' as const,
+            _disappearTime: Date.now()
+          };
+
+          // 设置宽限期计时器
+          disappearedMonitor._graceTimer = setTimeout(() => {
+            // 宽限期结束，从列表中移除
+            this.monitors = this.monitors.filter(m => m.id !== disappearedMonitor.id);
+          }, this.GRACE_PERIOD_MS);
+
+          reconciledMonitors.push(disappearedMonitor);
+        }
+      }
+    });
+
+    // 更新之前的监控列表引用
+    this.previousMonitors = [...reconciledMonitors];
+    
+    return reconciledMonitors;
+  }
+
+  /**
+   * 检查监控项是否应该显示为禁用状态
+   * Check if monitor item should be displayed as disabled
+   */
+  isMonitorDisabled(monitor: Monitor): boolean {
+    return monitor._displayStatus === 'DISAPPEARED';
+  }
+
+  /**
+   * 获取监控项的显示样式类
+   * Get display style class for monitor item
+   */
+  getMonitorDisplayClass(monitor: Monitor): string {
+    if (monitor._displayStatus === 'DISAPPEARED') {
+      return 'monitor-disappeared';
+    }
+    return '';
   }
 }

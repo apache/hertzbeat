@@ -155,19 +155,34 @@
 
   <nz-spin [nzSpinning]="tableLoading">
     <div class="monitor-card-list-content">
-      <div class="monitor-card" *ngFor="let data of monitors">
+      <div class="monitor-card" 
+           *ngFor="let data of monitors" 
+           [ngClass]="getMonitorDisplayClass(data)"
+           [class.monitor-unavailable]="isMonitorDisabled(data)">
         <div class="monitor-card-checkbox">
-          <label nz-checkbox [ngModel]="checkedMonitorIds.has(data.id)" (ngModelChange)="onItemChecked(data.id, $event)"></label>
+          <label nz-checkbox 
+                 [ngModel]="checkedMonitorIds.has(data.id)" 
+                 [nzDisabled]="isMonitorDisabled(data)"
+                 (ngModelChange)="onItemChecked(data.id, $event)"></label>
         </div>
         <div class="monitor-card-content">
           <div class="monitor-card-header">
             <div class="monitor-card-title">
-              <button nz-button nzType="link" [routerLink]="['/monitors/' + data.id]">
+              <button nz-button 
+                      nzType="link" 
+                      [routerLink]="['/monitors/' + data.id]"
+                      [disabled]="isMonitorDisabled(data)">
                 <span nz-icon nzType="area-chart"></span>
                 {{ data.name }}
+                <nz-tag *ngIf="isMonitorDisabled(data)" 
+                        nzColor="orange" 
+                        style="margin-left: 8px;">
+                  {{ 'monitor.status.unavailable' | i18n }}
+                </nz-tag>
               </button>
             </div>
-            <div class="monitor-card-status">
+            <div class="monitor-card-status"
+                 [class.status-faded]="isMonitorDisabled(data)">
               <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
                 <i nz-icon nzType="meh" nzTheme="outline"></i>
                 <span>{{ 'monitor.status.paused' | i18n }}</span>
@@ -202,7 +217,11 @@
                 {{ 'monitor.scrape.type.' + data.scrape | i18n }}
               </button>
 
-              <button nz-button nz-dropdown [nzDropdownMenu]="actionMenu" class="action-button">
+              <button nz-button 
+                      nz-dropdown 
+                      [nzDropdownMenu]="actionMenu" 
+                      class="action-button"
+                      [disabled]="isMonitorDisabled(data)">
                 <span nz-icon nzType="ellipsis"></span>
               </button>
             </div>
@@ -237,39 +256,52 @@
           <nz-dropdown-menu #actionMenu="nzDropdownMenu">
             <ul nz-menu>
               <li nz-menu-item>
-                <button nz-button [routerLink]="['/monitors/' + data.id]">
+                <button nz-button 
+                        [routerLink]="['/monitors/' + data.id]"
+                        [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="area-chart"></i>
                   {{ 'monitor.detail' | i18n }}
                 </button>
               </li>
               <li nz-menu-item>
-                <button nz-button (click)="onEditOneMonitor(data.id)">
+                <button nz-button 
+                        (click)="onEditOneMonitor(data.id)"
+                        [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="edit"></i>
                   {{ 'monitor.edit-monitor' | i18n }}
                 </button>
               </li>
               <li nz-menu-item>
-                <button nz-button (click)="copyMonitor(data.id)">
+                <button nz-button 
+                        (click)="copyMonitor(data.id)"
+                        [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="copy"></i>
                   {{ 'monitor.copy' | i18n }}
                 </button>
               </li>
               <li nz-menu-divider></li>
               <li nz-menu-item *ngIf="data.status == 0">
-                <button nz-button (click)="onEnableManageOneMonitor(data.id)">
+                <button nz-button 
+                        (click)="onEnableManageOneMonitor(data.id)"
+                        [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="play-circle"></i>
                   {{ 'monitor.enable' | i18n }}
                 </button>
               </li>
               <li nz-menu-item *ngIf="data.status != 0">
-                <button nz-button (click)="onCancelManageOneMonitor(data.id)">
+                <button nz-button 
+                        (click)="onCancelManageOneMonitor(data.id)"
+                        [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="pause-circle"></i>
                   {{ 'monitor.cancel' | i18n }}
                 </button>
               </li>
               <li nz-menu-divider></li>
               <li nz-menu-item>
-                <button nz-button nzDanger (click)="onDeleteOneMonitor(data.id)">
+                <button nz-button 
+                        nzDanger 
+                        (click)="onDeleteOneMonitor(data.id)"
+                        [disabled]="isMonitorDisabled(data)">
                   <i nz-icon nzType="delete"></i>
                   {{ 'monitor.delete-monitor' | i18n }}
                 </button>
