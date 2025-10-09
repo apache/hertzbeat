@@ -104,11 +104,26 @@
         <div class="filter-item">
           <label class="filter-label">{{ 'log.stream.severity-text' | i18n }}</label>
           <nz-input-group [nzPrefix]="severityTextTemplate" class="filter-input">
-            <input type="text" nz-input [(ngModel)]="filterSeverityText" [placeholder]="'log.stream.severity-text-placeholder' | i18n" />
+            <input
+              type="text"
+              nz-input
+              [(ngModel)]="filterSeverityText"
+              [placeholder]="'log.stream.severity-text-placeholder' | i18n"
+              [nzAutocomplete]="severityTextAuto"
+            />
           </nz-input-group>
           <ng-template #severityTextTemplate>
             <i nz-icon nzType="file-text"></i>
           </ng-template>
+
+          <nz-autocomplete #severityTextAuto>
+            <nz-auto-option nzValue="TRACE">TRACE</nz-auto-option>
+            <nz-auto-option nzValue="DEBUG">DEBUG</nz-auto-option>
+            <nz-auto-option nzValue="INFO">INFO</nz-auto-option>
+            <nz-auto-option nzValue="WARN">WARN</nz-auto-option>
+            <nz-auto-option nzValue="ERROR">ERROR</nz-auto-option>
+            <nz-auto-option nzValue="FATAL">FATAL</nz-auto-option>
+          </nz-autocomplete>
         </div>
 
         <div class="filter-item">
