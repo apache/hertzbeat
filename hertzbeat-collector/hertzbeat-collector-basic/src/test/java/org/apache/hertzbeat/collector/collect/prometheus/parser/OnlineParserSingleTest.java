@@ -489,7 +489,7 @@ public class OnlineParserSingleTest {
 
     @Test
     void testHandleUtf8Character_ValidThreeByteSequence() throws Exception {
-        // Test valid 3-byte UTF-8 sequence: 中 (U+4E2D) = 0xE4 0xB8 0xAD
+        // Test valid 3-byte UTF-8 sequence: Chinese character (U+4E2D) = 0xE4 0xB8 0xAD
         String str = "test_metric{label=\"\u4e2d\u6587\"} 1\n";
         InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
         Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
@@ -501,7 +501,7 @@ public class OnlineParserSingleTest {
         
         MetricFamily.Label label = metricFamily.getMetricList().get(0).getLabels().get(0);
         assertEquals("label", label.getName());
-        assertEquals("中文", label.getValue());
+        assertEquals("\u4e2d\u6587", label.getValue());
     }
 
     @Test
@@ -596,6 +596,6 @@ public class OnlineParserSingleTest {
         assertEquals("label", label.getName());
         String value = label.getValue();
         assertNotNull(value);
-        assertEquals("Helloé中😀", value);
+        assertEquals("Hello\u00e9\u4e2d\ud83d\ude00", value);
     }
 }
