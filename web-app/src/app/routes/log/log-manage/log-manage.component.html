@@ -39,7 +39,23 @@
         [(ngModel)]="severityNumber"
         style="width: 120px"
       />
-      <input *nzSpaceItem nz-input [placeholder]="'log.manage.severity-text' | i18n" [(ngModel)]="severityText" style="width: 120px" />
+      <input
+        *nzSpaceItem
+        type="text"
+        nz-input
+        [(ngModel)]="severityText"
+        [placeholder]="'log.manage.severity-text' | i18n"
+        [nzAutocomplete]="severityTextAuto"
+        style="width: 120px"
+      />
+      <nz-autocomplete #severityTextAuto>
+        <nz-auto-option nzValue="TRACE">TRACE</nz-auto-option>
+        <nz-auto-option nzValue="DEBUG">DEBUG</nz-auto-option>
+        <nz-auto-option nzValue="INFO">INFO</nz-auto-option>
+        <nz-auto-option nzValue="WARN">WARN</nz-auto-option>
+        <nz-auto-option nzValue="ERROR">ERROR</nz-auto-option>
+        <nz-auto-option nzValue="FATAL">FATAL</nz-auto-option>
+      </nz-autocomplete>
       <button *nzSpaceItem nz-button nzType="primary" (click)="query()">
         <i nz-icon nzType="search"></i> {{ 'log.manage.search' | i18n }}
       </button>

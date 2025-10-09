@@ -119,7 +119,7 @@
   "alert.notice.receiver.type": "Notice Type",
   "alert.notice.receiver.type.placeholder": "Select a notice type",
   "alert.notice.rule": "Notice Policy",
-  "alert.notice.rule.all": "Dispatch ALl",
+  "alert.notice.rule.all": "Dispatch All",
   "alert.notice.rule.delete": "Delete Notice Policy",
   "alert.notice.rule.edit": "Edit Notice Policy",
   "alert.notice.rule.name": "Policy Name",
