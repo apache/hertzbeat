@@ -104,7 +104,7 @@ export class MonitorEditComponent implements OnInit {
             }
           } else {
             console.warn(message.msg);
-            if (message.code === 3) { 
+            if (message.code === 3) {
               // MONITOR_NOT_EXIST_CODE = 0x03
               this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable'), '');
               setTimeout(() => {

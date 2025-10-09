@@ -73,7 +73,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   currentSortField: string | null = null;
   currentSortOrder: string | null = null;
 
-
   private previousMonitors: Monitor[] = [];
   private readonly GRACE_PERIOD_MS = 5000;
 
@@ -114,7 +113,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     if (this.intervalId) {
       clearInterval(this.intervalId);
     }
-    
+
     if (this.previousMonitors) {
       this.previousMonitors.forEach(monitor => {
         if (monitor._graceTimer) {
@@ -666,7 +665,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     );
   }
 
-
   private reconcileMonitorStates(newMonitors: Monitor[]): Monitor[] {
     if (!this.previousMonitors || this.previousMonitors.length === 0) {
       const processedMonitors = newMonitors.map(monitor => ({
@@ -678,12 +676,10 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     }
     const newMonitorMap = new Map(newMonitors.map(m => [m.id, m]));
     const previousMonitorMap = new Map(this.previousMonitors.map(m => [m.id, m]));
-    
     const reconciledMonitors: Monitor[] = [];
 
     newMonitors.forEach(newMonitor => {
       const previousMonitor = previousMonitorMap.get(newMonitor.id);
-      
       if (previousMonitor) {
         if (previousMonitor._graceTimer) {
           clearTimeout(previousMonitor._graceTimer);
@@ -702,7 +698,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
     this.previousMonitors.forEach(previousMonitor => {
       if (!newMonitorMap.has(previousMonitor.id)) {
-        
         if (previousMonitor._displayStatus === 'DISAPPEARED') {
           reconciledMonitors.push(previousMonitor);
         } else {
@@ -722,7 +717,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     });
 
     this.previousMonitors = [...reconciledMonitors];
-    
     return reconciledMonitors;
   }
 

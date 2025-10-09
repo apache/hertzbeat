@@ -35,7 +35,7 @@ export class Monitor {
   modifier!: string;
   gmtCreate!: number;
   gmtUpdate!: number;
-  
+
   _displayStatus?: 'ACTIVE' | 'DISAPPEARED' | 'GRACE_PERIOD';
   _graceTimer?: any;
   _disappearTime?: number;
