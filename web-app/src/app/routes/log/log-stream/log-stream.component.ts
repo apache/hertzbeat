@@ -24,6 +24,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { SharedModule } from '@shared';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzAutocompleteModule } from 'ng-zorro-antd/auto-complete';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
@@ -52,6 +53,7 @@ interface ExtendedLogEntry {
     FormsModule,
     NzCardModule,
     NzInputModule,
+    NzAutocompleteModule,
     NzSelectModule,
     NzButtonModule,
     NzTagModule,
