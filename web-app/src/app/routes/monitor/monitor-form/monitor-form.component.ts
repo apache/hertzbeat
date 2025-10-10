@@ -69,7 +69,7 @@ export class MonitorFormComponent implements OnChanges {
       this.monitor.scheduleType = 'interval';
       this.monitor.cronExpression = '';
     }
-    
+
     if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
       for (const advancedParam of changes.advancedParams.currentValue) {
         if (advancedParam.display !== false) {
@@ -274,6 +274,7 @@ export class MonitorFormComponent implements OnChanges {
 
   /**
    * Validate if the given string is a valid cron expression
+   *
    * @param cronExpression The cron expression to validate
    * @returns True if the cron expression is valid, false otherwise
    */
@@ -281,14 +282,15 @@ export class MonitorFormComponent implements OnChanges {
     if (!cronExpression || cronExpression.trim() === '') {
       return false;
     }
-    
+
     // Enhanced cron expression validation supporting common syntax:
     // - Standard 5-field and 6-field cron expressions
     // - Step values (0/30, */30)
     // - Question mark (?) for day of month/week in Quartz-style expressions
     // - Ranges (1-5), lists (1,3,5), and wildcards (*)
-    const cronRegex = /^\s*(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)(\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?))?\s*$/;
-    
+    const cronRegex =
+      /^\s*(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)(\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?))?\s*$/;
+
     return cronRegex.test(cronExpression);
   }
 }

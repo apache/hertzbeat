@@ -57,9 +57,7 @@
                 <ng-container *ngIf="monitor.scheduleType === 'cron' && monitor.cronExpression; else showInterval">
                   {{ monitor.cronExpression }}
                 </ng-container>
-                <ng-template #showInterval>
-                  {{ monitor.intervals }}s
-                </ng-template>
+                <ng-template #showInterval> {{ monitor.intervals }}s </ng-template>
               </nz-descriptions-item>
               <nz-descriptions-item [nzTitle]="'label' | i18n" [nzSpan]="2">
                 <div class="tags-container">
