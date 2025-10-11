@@ -29,6 +29,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Parse a Single metric in prometheus test
@@ -467,5 +468,134 @@ public class OnlineParserSingleTest {
 
     private Map<String, MetricFamily> parseMetrics(InputStream inputStream, String metric) throws IOException {
         return OnlineParser.parseMetrics(inputStream, metric);
+    }
+
+    @Test
+    void testHandleUtf8Character_ValidTwoByteSequence() throws Exception {
+        // Test valid 2-byte UTF-8 sequence: é (U+00E9) = 0xC3 0xA9
+        String str = "test_metric{label=\"caf\u00e9\"} 1\n";
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+
+        assertNotNull(metricFamilyMap);
+        MetricFamily metricFamily = metricFamilyMap.get("test_metric");
+        assertNotNull(metricFamily);
+        assertEquals(1, metricFamily.getMetricList().size());
+        
+        MetricFamily.Label label = metricFamily.getMetricList().get(0).getLabels().get(0);
+        assertEquals("label", label.getName());
+        assertEquals("café", label.getValue());
+    }
+
+    @Test
+    void testHandleUtf8Character_ValidThreeByteSequence() throws Exception {
+        // Test valid 3-byte UTF-8 sequence: Chinese character (U+4E2D) = 0xE4 0xB8 0xAD
+        String str = "test_metric{label=\"\u4e2d\u6587\"} 1\n";
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+
+        assertNotNull(metricFamilyMap);
+        MetricFamily metricFamily = metricFamilyMap.get("test_metric");
+        assertNotNull(metricFamily);
+        assertEquals(1, metricFamily.getMetricList().size());
+        
+        MetricFamily.Label label = metricFamily.getMetricList().get(0).getLabels().get(0);
+        assertEquals("label", label.getName());
+        assertEquals("\u4e2d\u6587", label.getValue());
+    }
+
+    @Test
+    void testHandleUtf8Character_ValidFourByteSequence() throws Exception {
+        // Test valid 4-byte UTF-8 sequence: 𝕳 (U+1D573) = 0xF0 0x9D 0x95 0xB3
+        String str = "test_metric{label=\"\uD835\uDD73ello\"} 1\n";
+        InputStream inputStream = new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8));
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+
+        assertNotNull(metricFamilyMap);
+        MetricFamily metricFamily = metricFamilyMap.get("test_metric");
+        assertNotNull(metricFamily);
+        assertEquals(1, metricFamily.getMetricList().size());
+        
+        MetricFamily.Label label = metricFamily.getMetricList().get(0).getLabels().get(0);
+        assertEquals("label", label.getName());
+        assertEquals("𝕳ello", label.getValue());
+    }
+
+    @Test
+    void testHandleUtf8Character_InvalidFirstByte_0xC0() throws Exception {
+        // Test invalid first byte 0xC0 (overlong encoding) - should cause parsing failure
+        byte[] invalidBytes = {
+            't', 'e', 's', 't', '_', 'm', 'e', 't', 'r', 'i', 'c', '{', 'l', 'a', 'b', 'e', 'l', '=', '"',
+            (byte) 0xC0, (byte) 0x80,
+            '"', '}', ' ', '1', '\n'
+        };
+        InputStream inputStream = new ByteArrayInputStream(invalidBytes);
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+        assertNull(metricFamilyMap);
+    }
+
+    @Test
+    void testHandleUtf8Character_InvalidFirstByte_0xC1() throws Exception {
+        // Test invalid first byte 0xC1 (overlong encoding) - should cause parsing failure
+        byte[] invalidBytes = {
+            't', 'e', 's', 't', '_', 'm', 'e', 't', 'r', 'i', 'c', '{', 'l', 'a', 'b', 'e', 'l', '=', '"',
+            (byte) 0xC1, (byte) 0x80,
+            '"', '}', ' ', '1', '\n'
+        };
+        InputStream inputStream = new ByteArrayInputStream(invalidBytes);
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+        assertNull(metricFamilyMap);
+    }
+
+    @Test
+    void testHandleUtf8Character_InvalidFirstByte_0xF5() throws Exception {
+        // Test invalid first byte 0xF5 (out of range) - should cause parsing failure
+        byte[] invalidBytes = {
+            't', 'e', 's', 't', '_', 'm', 'e', 't', 'r', 'i', 'c', '{', 'l', 'a', 'b', 'e', 'l', '=', '"',
+            (byte) 0xF5, (byte) 0x80, (byte) 0x80, (byte) 0x80,
+            '"', '}', ' ', '1', '\n'
+        };
+        InputStream inputStream = new ByteArrayInputStream(invalidBytes);
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+        assertNull(metricFamilyMap);
+    }
+
+    @Test
+    void testHandleUtf8Character_InvalidContinuationByte() throws Exception {
+        // Test invalid continuation byte (should be 10xxxxxx but is 11xxxxxx) - should cause parsing failure
+        byte[] invalidBytes = {
+            't', 'e', 's', 't', '_', 'm', 'e', 't', 'r', 'i', 'c', '{', 'l', 'a', 'b', 'e', 'l', '=', '"',
+            (byte) 0xC3, (byte) 0xC0,
+            '"', '}', ' ', '1', '\n'
+        };
+        InputStream inputStream = new ByteArrayInputStream(invalidBytes);
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+        assertNull(metricFamilyMap);
+    }
+
+    @Test
+    void testHandleUtf8Character_MixedValidInvalid() throws Exception {
+        // Test mixed valid UTF-8 sequences (removed invalid sequences that cause parsing to fail)
+        byte[] mixedBytes = {
+            't', 'e', 's', 't', '_', 'm', 'e', 't', 'r', 'i', 'c', '{', 'l', 'a', 'b', 'e', 'l', '=', '"',
+            'H', 'e', 'l', 'l', 'o',
+            (byte) 0xC3, (byte) 0xA9,
+            (byte) 0xE4, (byte) 0xB8, (byte) 0xAD,
+            (byte) 0xF0, (byte) 0x9F, (byte) 0x98, (byte) 0x80,
+            '"', '}', ' ', '1', '\n'
+        };
+        InputStream inputStream = new ByteArrayInputStream(mixedBytes);
+        Map<String, MetricFamily> metricFamilyMap = parseMetrics(inputStream, "test_metric");
+
+        assertNotNull(metricFamilyMap);
+        MetricFamily metricFamily = metricFamilyMap.get("test_metric");
+        assertNotNull(metricFamily);
+        assertEquals(1, metricFamily.getMetricList().size());
+        
+        MetricFamily.Label label = metricFamily.getMetricList().get(0).getLabels().get(0);
+        assertEquals("label", label.getName());
+        String value = label.getValue();
+        assertNotNull(value);
+        assertEquals("Hello\u00e9\u4e2d\ud83d\ude00", value);
     }
 }

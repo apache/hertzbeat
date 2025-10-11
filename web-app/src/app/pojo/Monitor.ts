@@ -24,6 +24,10 @@ export class Monitor {
   scrape!: string;
   host!: string;
   intervals: number = 60;
+  // Schedule type: interval | cron
+  scheduleType: string = 'interval';
+  // Cron expression when scheduleType is cron
+  cronExpression?: string;
   // Monitoring status 0: Paused, 1: Up, 2: Down
   status!: number;
   // Task type 0: Normal, 1: push auto create, 2: discovery auto create
