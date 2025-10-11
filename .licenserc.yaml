@@ -66,6 +66,7 @@ header:
     - '.gitpod.yml'
     - 'karma.conf.js'
     - 'proxy.conf.js'
+    - 'pnpm-lock.yaml'
     - '.helmignore'
     - 'script/helm/**'
     - 'web-app/src/app/core/**'
