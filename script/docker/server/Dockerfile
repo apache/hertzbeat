@@ -20,7 +20,8 @@ FROM eclipse-temurin:21-jdk
 MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
 
 # Install SSH And Locales
-RUN apt-get update && apt-get install -y openssh-server && apt-get install -y locales
+RUN  sed -i 's#http://#https://#g' /etc/apt/sources.list.d/ubuntu.sources && \
+     apt-get update && apt-get install -y openssh-server && apt-get install -y locales
 RUN mkdir /var/run/sshd
 # Build zh_CN en_US locale resource package
 RUN localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
