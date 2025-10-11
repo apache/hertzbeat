@@ -104,7 +104,15 @@ export class MonitorEditComponent implements OnInit {
             }
           } else {
             console.warn(message.msg);
-            this.notifySvc.error(this.i18nSvc.fanyi('monitor.not-found'), message.msg);
+            if (message.code === 3) {
+              // MONITOR_NOT_EXIST_CODE = 0x03
+              this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable'), '');
+              setTimeout(() => {
+                this.router.navigateByUrl('/monitors');
+              }, 1500);
+            } else {
+              this.notifySvc.error(this.i18nSvc.fanyi('monitor.not-found'), message.msg);
+            }
             return throwError(this.i18nSvc.fanyi('monitor.not-found'));
           }
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
