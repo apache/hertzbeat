@@ -73,6 +73,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   currentSortField: string | null = null;
   currentSortOrder: string | null = null;
 
+  private previousMonitors: Monitor[] = [];
+  private readonly GRACE_PERIOD_MS = 5000;
+
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
@@ -109,6 +112,14 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
+    }
+
+    if (this.previousMonitors) {
+      this.previousMonitors.forEach(monitor => {
+        if (monitor._graceTimer) {
+          clearTimeout(monitor._graceTimer);
+        }
+      });
     }
   }
 
@@ -178,7 +189,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            this.monitors = page.content;
+            this.monitors = this.reconcileMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
           } else {
@@ -203,7 +214,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.checkedMonitorIds.clear();
           if (message.code === 0) {
             let page = message.data;
-            this.monitors = page.content;
+            this.monitors = this.reconcileMonitorStates(page.content);
             this.pageIndex = page.number + 1;
             this.total = page.totalElements;
           } else {
@@ -446,13 +457,23 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), message.msg);
+          if (message.code === 3) {
+            this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+            this.loadMonitorTable();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), message.msg);
+          }
         }
       },
       error => {
         this.tableLoading = false;
         cancelManage$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), error.msg);
+        if (error.status === 404) {
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+          this.loadMonitorTable();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.cancel-fail'), error.msg);
+        }
       }
     );
   }
@@ -497,13 +518,24 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), message.msg);
+          if (message.code === 3) {
+            this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+            this.loadMonitorTable();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), message.msg);
+          }
         }
       },
       error => {
         this.tableLoading = false;
         enableManage$.unsubscribe();
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), error.msg);
+        // 检查是否是404错误
+        if (error.status === 404) {
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+          this.loadMonitorTable();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.enable-fail'), error.msg);
+        }
       }
     );
   }
@@ -614,12 +646,88 @@ export class MonitorListComponent implements OnInit, OnDestroy {
           this.notifySvc.success(this.i18nSvc.fanyi('monitor.copy.success'), '');
           this.loadMonitorTable();
         } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), message.msg);
+          if (message.code === 3) {
+            this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+            this.loadMonitorTable();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), message.msg);
+          }
         }
       },
       error => {
-        this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), error.msg);
+        if (error.status === 404) {
+          this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable.refresh'), '');
+          this.loadMonitorTable();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('monitor.copy.failed'), error.msg);
+        }
       }
     );
+  }
+
+  private reconcileMonitorStates(newMonitors: Monitor[]): Monitor[] {
+    if (!this.previousMonitors || this.previousMonitors.length === 0) {
+      const processedMonitors = newMonitors.map(monitor => ({
+        ...monitor,
+        _displayStatus: 'ACTIVE' as const
+      }));
+      this.previousMonitors = [...processedMonitors];
+      return processedMonitors;
+    }
+    const newMonitorMap = new Map(newMonitors.map(m => [m.id, m]));
+    const previousMonitorMap = new Map(this.previousMonitors.map(m => [m.id, m]));
+    const reconciledMonitors: Monitor[] = [];
+
+    newMonitors.forEach(newMonitor => {
+      const previousMonitor = previousMonitorMap.get(newMonitor.id);
+      if (previousMonitor) {
+        if (previousMonitor._graceTimer) {
+          clearTimeout(previousMonitor._graceTimer);
+        }
+        reconciledMonitors.push({
+          ...newMonitor,
+          _displayStatus: 'ACTIVE' as const
+        });
+      } else {
+        reconciledMonitors.push({
+          ...newMonitor,
+          _displayStatus: 'ACTIVE' as const
+        });
+      }
+    });
+
+    this.previousMonitors.forEach(previousMonitor => {
+      if (!newMonitorMap.has(previousMonitor.id)) {
+        if (previousMonitor._displayStatus === 'DISAPPEARED') {
+          reconciledMonitors.push(previousMonitor);
+        } else {
+          const disappearedMonitor = {
+            ...previousMonitor,
+            _displayStatus: 'DISAPPEARED' as const,
+            _disappearTime: Date.now()
+          };
+
+          disappearedMonitor._graceTimer = setTimeout(() => {
+            this.monitors = this.monitors.filter(m => m.id !== disappearedMonitor.id);
+          }, this.GRACE_PERIOD_MS);
+
+          reconciledMonitors.push(disappearedMonitor);
+        }
+      }
+    });
+
+    this.previousMonitors = [...reconciledMonitors];
+    return reconciledMonitors;
+  }
+
+  isMonitorDisabled(monitor: Monitor): boolean {
+    return monitor._displayStatus === 'DISAPPEARED';
+  }
+
+  getMonitorDisplayClass(monitor: Monitor): string {
+    if (monitor._displayStatus === 'DISAPPEARED') {
+      return 'monitor-disappeared';
+    }
+    return '';
   }
 }
