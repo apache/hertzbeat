@@ -65,6 +65,7 @@ import org.apache.http.impl.auth.DigestScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 
@@ -276,7 +277,7 @@ public class PrometheusAutoCollectImpl implements PrometheusCollect {
         }
 
         // if it has payload, would override post params
-        if (StringUtils.hasLength(protocol.getPayload())) {
+        if (StringUtils.hasLength(protocol.getPayload()) && (HttpMethod.POST.matches(protocol.getMethod()) || HttpMethod.PUT.matches(protocol.getMethod()))) {
             requestBuilder.setEntity(new StringEntity(protocol.getPayload(), StandardCharsets.UTF_8));
         }
         
