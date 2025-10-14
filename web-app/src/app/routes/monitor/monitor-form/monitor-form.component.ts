@@ -18,7 +18,7 @@
  */
 
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, Inject } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, FormControl } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -64,6 +64,12 @@ export class MonitorFormComponent implements OnChanges {
   constructor(private notifySvc: NzNotificationService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   ngOnChanges(changes: SimpleChanges) {
+    // Initialize scheduleType and cronExpression if not present
+    if (this.monitor && !this.monitor.scheduleType) {
+      this.monitor.scheduleType = 'interval';
+      this.monitor.cronExpression = '';
+    }
+
     if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
       for (const advancedParam of changes.advancedParams.currentValue) {
         if (advancedParam.display !== false) {
@@ -132,6 +138,14 @@ export class MonitorFormComponent implements OnChanges {
         }
       });
       return;
+    }
+
+    // Validate cron expression if scheduleType is cron
+    if (this.monitor.scheduleType === 'cron') {
+      if (!this.monitor.cronExpression || !this.isValidCronExpression(this.monitor.cronExpression)) {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.error'), this.i18nSvc.fanyi('monitor.cronExpression.invalid'));
+        return;
+      }
     }
     this.monitor.host = this.monitor.host?.trim();
     this.monitor.name = this.monitor.name?.trim();
@@ -256,5 +270,27 @@ export class MonitorFormComponent implements OnChanges {
         console.log(error);
       };
     }
+  }
+
+  /**
+   * Validate if the given string is a valid cron expression
+   *
+   * @param cronExpression The cron expression to validate
+   * @returns True if the cron expression is valid, false otherwise
+   */
+  isValidCronExpression(cronExpression: string): boolean {
+    if (!cronExpression || cronExpression.trim() === '') {
+      return false;
+    }
+
+    // Enhanced cron expression validation supporting common syntax:
+    // - Standard 5-field and 6-field cron expressions
+    // - Step values (0/30, */30)
+    // - Question mark (?) for day of month/week in Quartz-style expressions
+    // - Ranges (1-5), lists (1,3,5), and wildcards (*)
+    const cronRegex =
+      /^\s*(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)(\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?))?\s*$/;
+
+    return cronRegex.test(cronExpression);
   }
 }

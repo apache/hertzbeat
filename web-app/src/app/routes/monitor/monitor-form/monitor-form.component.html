@@ -158,6 +158,18 @@
       </nz-form-item>
 
       <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'scheduleType'" [nzTooltipTitle]="'monitor.scheduleType.tip' | i18n"
+          >{{ 'monitor.scheduleType' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select [(ngModel)]="monitor.scheduleType" name="scheduleType" nzPlaceHolder="{{ 'monitor.scheduleType.tip' | i18n }}">
+            <nz-option nzValue="interval" [nzLabel]="'monitor.scheduleType.interval' | i18n"></nz-option>
+            <nz-option nzValue="cron" [nzLabel]="'monitor.scheduleType.cron' | i18n"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="monitor.scheduleType === 'interval'">
         <nz-form-label nzSpan="7" [nzFor]="'intervals'" [nzTooltipTitle]="'monitor.intervals.tip' | i18n"
           >{{ 'monitor.intervals' | i18n }}
         </nz-form-label>
@@ -170,6 +182,22 @@
             [extra]="{ interval_type: monitor.app }"
             [name]="'intervals'"
             [(ngModel)]="monitor.intervals"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="monitor.scheduleType === 'cron'">
+        <nz-form-label nzSpan="7" [nzFor]="'cronExpression'" [nzTooltipTitle]="'monitor.cronExpression.tip' | i18n"
+          >{{ 'monitor.cronExpression' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <input
+            nz-input
+            [(ngModel)]="monitor.cronExpression"
+            name="cronExpression"
+            id="cronExpression"
+            placeholder="{{ 'monitor.cronExpression.tip' | i18n }}"
+            required
           />
         </nz-form-control>
       </nz-form-item>

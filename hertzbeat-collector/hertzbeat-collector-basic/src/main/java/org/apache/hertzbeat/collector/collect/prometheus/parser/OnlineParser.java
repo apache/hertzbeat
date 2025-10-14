@@ -23,11 +23,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -41,6 +43,7 @@ public class OnlineParser {
 
     private static final char RIGHT_BRACKET = '}';
     private static final char LEFT_BRACKET = '{';
+    private static final char UTF8_REPLACEMENT_CHARACTER = '\uFFFD';
 
     static {
         escapeMap.put((int) 'n', (int) '\n');
@@ -362,37 +365,123 @@ public class OnlineParser {
         return new CharChecker(i);
     }
 
+    /**
+     * Handles multi-byte UTF-8 character parsing from input stream.
+     * Reads additional bytes based on the first byte and validates the UTF-8 sequence.
+     * Appends the decoded character to the string builder or replacement character if invalid.
+     *
+     * @param firstByte the first byte of the UTF-8 character sequence
+     * @param inputStream the input stream to read additional bytes from
+     * @param stringBuilder the string builder to append the decoded character to
+     * @throws IOException if an I/O error occurs while reading from the input stream
+     */
     private static void handleUtf8Character(int firstByte, InputStream inputStream, StringBuilder stringBuilder) throws IOException {
-        List<Integer> bytes = new ArrayList<>();
-        bytes.add(firstByte);
+        byte[] byteArray = new byte[4];
+        byteArray[0] = (byte) firstByte;
+        int additionalBytes = calculateUtf8ContinuationBytes(firstByte);
+        if (additionalBytes == -1) {
+            appendInvalidCharacters(stringBuilder);
+            return;
+        }
+        int totalBytes = 1;
 
-        int additionalBytes = getUtf8AdditionalByteCount(firstByte);
-
-        for (int j = 0; j < additionalBytes; j++) {
+        for (int i = 0; i < additionalBytes; i++) {
             int nextByte = inputStream.read();
-            if (nextByte == -1) break;
-            bytes.add(nextByte);
+            if (nextByte == -1) {
+                appendInvalidCharacters(stringBuilder);
+                return;
+            }
+            // Verify subsequent byte format:10xxxxxx
+            if ((nextByte & 0xC0) != 0x80) {
+                appendInvalidCharacters(stringBuilder);
+                return;
+            }
+            byteArray[i + 1] = (byte) nextByte;
+            totalBytes++;
         }
-
-        byte[] byteArray = new byte[bytes.size()];
-        for (int j = 0; j < bytes.size(); j++) {
-            byteArray[j] = (byte) bytes.get(j).intValue();
-        }
-
         try {
-            String utf8Chars = new String(byteArray, StandardCharsets.UTF_8);
+            // todo: If stricter UTF-8 semantic validation is required，boundary conditions are slightly strengthened.
+            String utf8Chars = new String(byteArray, 0, totalBytes, StandardCharsets.UTF_8);
             stringBuilder.append(utf8Chars);
         } catch (Exception e) {
-            stringBuilder.append((char) firstByte);
+            log.debug("Invalid UTF-8 sequence detected at firstByte: {}", Integer.toHexString(firstByte));
+            appendInvalidCharacters(stringBuilder);
         }
     }
 
-    private static int getUtf8AdditionalByteCount(int firstByte) {
-        if ((firstByte & 0x80) == 0) return 0; // 0xxxxxxx - ASCII (shouldn't reach here)
-        if ((firstByte & 0xE0) == 0xC0) return 1; // 110xxxxx - 2 bytes total, 1 additional
-        if ((firstByte & 0xF0) == 0xE0) return 2; // 1110xxxx - 3 bytes total, 2 additional
-        if ((firstByte & 0xF8) == 0xF0) return 3; // 11110xxx - 4 bytes total, 3 additional
-        return 0;
+    /**
+     * Appends the UTF-8 replacement character (\uFFFD) to the StringBuilder.
+     * This method is used to append the replacement character to the string builder
+     * when invalid UTF-8 byte sequences are encountered during parsing.
+     * The replacement character (U+FFFD) is a special Unicode character used to
+     * represent characters that cannot be decoded properly.
+     *
+     * @param stringBuilder the string builder to append to, no operation if null
+     */
+    private static void appendInvalidCharacters(StringBuilder stringBuilder) {
+        Optional.ofNullable(stringBuilder).ifPresent(t -> t.append(UTF8_REPLACEMENT_CHARACTER));
+    }
+
+    /**
+     * Checks if a label value contains invalid characters.
+     * This method is used to validate the validity of Prometheus label values.
+     * If the label value contains the UTF-8 replacement character (\uFFFD),
+     * it is considered invalid because the replacement character indicates that
+     * byte sequences that could not be properly decoded were encountered during parsing.
+     * 
+     * According to Prometheus specifications, label values should not contain
+     * replacement characters as this would cause data inconsistency and query issues.
+     *
+     * @param labelValue the label value to check
+     * @return true if the label value is not blank and contains UTF-8 replacement character, false otherwise
+     */
+    private static boolean isInvalidLabelValue(String labelValue) {
+        return StringUtils.isNotBlank(labelValue) && labelValue.contains(String.valueOf(UTF8_REPLACEMENT_CHARACTER));
+    }
+
+    /**
+     * Calculates the number of continuation bytes needed for a UTF-8 character.
+     * This method analyzes the first byte of a UTF-8 encoding to determine how many
+     * continuation bytes (10xxxxxx pattern) are required to complete the character.
+     * 
+     * UTF-8 encoding rules:
+     * - 1-byte character: 0xxxxxxx (ASCII characters, this method won't be called)
+     * - 2-byte character: 110xxxxx 10xxxxxx (returns 1 continuation byte)
+     * - 3-byte character: 1110xxxx 10xxxxxx 10xxxxxx (returns 2 continuation bytes)
+     * - 4-byte character: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx (returns 3 continuation bytes)
+     * 
+     * Also validates byte sequences:
+     * - 0xC0 and 0xC1: overlong encoding, invalid
+     * - 0xF5-0xFF: out of Unicode range, invalid
+     *
+     * Note: A basic Overlong Encoding check has been added here.
+     * If stricter and more comprehensive validation is required later,
+     * this method should be separated out to serve solely as a check for the first character.
+     *
+     * @param firstByte the first byte of the UTF-8 character sequence
+     * @return the number of continuation bytes needed, or -1 if the first byte is invalid
+     *         - returns 1: 2-byte character (needs 1 continuation byte)
+     *         - returns 2: 3-byte character (needs 2 continuation bytes)
+     *         - returns 3: 4-byte character (needs 3 continuation bytes)
+     *         - returns -1: invalid first byte
+     */
+    private static int calculateUtf8ContinuationBytes(int firstByte) {
+        if ((firstByte & 0xE0) == 0xC0) {
+            if (firstByte <= 0xC1) {
+                return -1;
+            }
+            return 1;
+        }
+        if ((firstByte & 0xF0) == 0xE0) {
+            return 2;
+        }
+        if ((firstByte & 0xF8) == 0xF0) {
+            if (firstByte >= 0xF5) {
+                return -1;
+            }
+            return 3;
+        }
+        return -1;
     }
 
     private static CharChecker skipSpaces(InputStream inputStream) throws IOException, FormatException {
@@ -451,10 +540,10 @@ public class OnlineParser {
         skipSpaces(inputStream).maybeQuotationMark().noElse();
         parseLabelValue(inputStream, stringBuilder).maybeQuotationMark().noElse();
         String labelValue = stringBuilder.toString();
-        if (!isValidLabelValue(labelValue)) {
+        if (isInvalidLabelValue(labelValue)) {
+            log.error("Invalid UTF-8 sequence detected at labelValue.");
             throw new FormatException();
         }
-
         label.setValue(labelValue);
         stringBuilder.delete(0, stringBuilder.length());
         labelList.add(label);
@@ -526,33 +615,5 @@ public class OnlineParser {
 
         metricFamily.getMetricList().add(metric);
         return new CharChecker(i);
-    }
-
-    private static boolean isValidLabelValue(String labelValue) {
-        if (labelValue == null) {
-            return false;
-        }
-
-        //Check if all characters are ASCII (0-127)
-        boolean isAscii = true;
-        for (int i = 0; i < labelValue.length(); i++) {
-            char c = labelValue.charAt(i);
-            if (c > 127) {
-                isAscii = false;
-                break;
-            }
-        }
-
-        if (isAscii) {
-            return true;
-        }
-
-        try {
-            byte[] bytes = labelValue.getBytes(StandardCharsets.UTF_8);
-            String reconstructed = new String(bytes, StandardCharsets.UTF_8);
-            return labelValue.equals(reconstructed);
-        } catch (Exception e) {
-            return false;
-        }
     }
 }
