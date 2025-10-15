@@ -165,8 +165,9 @@ async function main() {
         const avatarsArray = await processAvatars(uniqueGithubArray);
 
         // 3. Write files
-        console.log(`\n==> Writing ${avatarFile} file`);
+        console.log(`\n==> Write to ${avatarFile}`);
         fs.writeFileSync(avatarFile, JSON.stringify(avatarsArray, null, 2));
+        console.log(`\n==> Write to ${allContributorFile}`);
         fs.writeFileSync(allContributorFile, JSON.stringify(allContributorData, null, 2));
 
         console.log("\n✓ Done!");
