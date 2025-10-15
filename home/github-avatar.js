@@ -3,9 +3,9 @@ const https = require("https");
 
 const teamSrc = "src/pages/team/data/member.json";
 const allContributorSrc = "../.all-contributorsrc";
-const avatarFile = "src/pages/team/data/github_avatar.json";
+const avatarFile = "src/pages/team/data/github-avatar.json";
 const avatarSize = 100;
-const allContributorFile = "src/pages/team/data/allContributor.json";
+const allContributorFile = "src/pages/team/data/all-ontributor.json";
 
 /**
  * Generates a random delay between min and max milliseconds

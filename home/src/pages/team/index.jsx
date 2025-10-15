@@ -1,8 +1,8 @@
 import React from "react";
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import config from "./data/member.json";
-import avatar from "./data/github_avatar.json";
-import allContributor from "./data/allContributor.json";
+import avatar from "./data/github-avatar.json";
+import allContributor from "./data/all-contributor.json";
 import Layout from "@theme/Layout";
 import "./index.css";
 import Github from "./github.svg";
