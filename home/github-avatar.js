@@ -5,7 +5,7 @@ const teamSrc = "src/pages/team/data/member.json";
 const allContributorSrc = "../.all-contributorsrc";
 const avatarFile = "src/pages/team/data/github-avatar.json";
 const avatarSize = 100;
-const allContributorFile = "src/pages/team/data/all-ontributor.json";
+const allContributorFile = "src/pages/team/data/all-contributor.json";
 
 /**
  * Generates a random delay between min and max milliseconds
