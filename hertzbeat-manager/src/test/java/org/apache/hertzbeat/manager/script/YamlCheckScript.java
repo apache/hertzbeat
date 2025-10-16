@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.manager.script;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.constants.JexlKeywordsEnum;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
@@ -45,95 +44,11 @@ public class YamlCheckScript {
         if (!Files.exists(definePath)) {
             throw new IllegalStateException("Define directory not found: " + YML_PATH);
         }
-        // check keywords
+        // check keywords/start char/space
         try (Stream<Path> paths = Files.walk(definePath)) {
             paths.filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".yml"))
                     .forEach(this::validateYmlFile);
-        }
-        // check start char
-        try (Stream<Path> paths = Files.walk(definePath)) {
-            paths.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".yml"))
-                    .forEach(this::validateStartCharYmlFile);
-        }
-        // check space
-        try (Stream<Path> paths = Files.walk(definePath)) {
-            paths.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".yml"))
-                    .forEach(this::validateSpaceYmlFile);
-        }
-    }
-
-    private void validateStartCharYmlFile(Path filePath) {
-        var yaml = new Yaml();
-        Job app;
-        try {
-            app = yaml.loadAs(Files.readString(filePath), Job.class);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("parse yml error in file " + filePath.getFileName() + ": " + e.getMessage());
-        }
-        if (app == null) {
-            throw new IllegalArgumentException("Failed to load Job from file: " + filePath.getFileName());
-        }
-        try {
-            for (Metrics metric : app.getMetrics()) {
-                if (null == metric.getFields() || metric.getFields().isEmpty()) {
-                    continue;
-                }
-                for (Metrics.Field field : metric.getFields()) {
-                    String trim = field.getField().trim();
-
-                    if (trim.startsWith("now")
-                            || trim.startsWith("equals")
-                            || trim.startsWith("contains")
-                            || trim.startsWith("exists")
-                            || trim.startsWith("matches")
-                            || trim.startsWith("json")
-                    ) {
-                        continue;
-                    }
-                    if (!isValidStartChar(trim.charAt(0))) {
-                        throw new IllegalArgumentException("check jexl keywords failed. field:" + field.getField());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.out.printf("file: %s , msg: %s%n", filePath.getFileName(), e.getMessage());
-        }
-    }
-
-    public static boolean isValidStartChar(char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || c == '$';
-    }
-
-    private void validateSpaceYmlFile(Path filePath) {
-        var yaml = new Yaml();
-        Job app;
-        try {
-            app = yaml.loadAs(Files.readString(filePath), Job.class);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("parse yml error in file " + filePath.getFileName() + ": " + e.getMessage());
-        }
-        if (app == null) {
-            throw new IllegalArgumentException("Failed to load Job from file: " + filePath.getFileName());
-        }
-        try {
-            for (Metrics metric : app.getMetrics()) {
-                if (null == metric.getFields() || metric.getFields().isEmpty()) {
-                    continue;
-                }
-                for (Metrics.Field field : metric.getFields()) {
-                    String trim = field.getField().trim();
-                    boolean hasMiddleSpaces = trim.matches(JexlCheckerUtil.SPACES_REGEX);
-
-                    if (hasMiddleSpaces) {
-                        throw new IllegalArgumentException("check jexl keywords failed. field:" + field.getField());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.out.printf("file: %s , msg: %s%n", filePath.getFileName(), e.getMessage());
         }
     }
 
@@ -149,13 +64,13 @@ public class YamlCheckScript {
             throw new IllegalArgumentException("Failed to load Job from file: " + filePath.getFileName());
         }
         try {
-            validateJexlKeywords(app.getMetrics());
+            validateJexl(app.getMetrics());
         } catch (Exception e) {
             System.out.printf("file: %s , msg: %s%n", filePath.getFileName(), e.getMessage());
         }
     }
 
-    private void validateJexlKeywords(List<Metrics> metrics) {
+    private void validateJexl(List<Metrics> metrics) {
         if (null == metrics || metrics.isEmpty()) {
             return;
         }
@@ -167,8 +82,14 @@ public class YamlCheckScript {
                 if (null == field || StringUtils.isBlank(field.getField())) {
                     continue;
                 }
-                if (JexlKeywordsEnum.match(field.getField())) {
+                if (JexlCheckerUtil.verifyKeywords(field.getField())) {
                     throw new IllegalArgumentException("check jexl keywords failed. field:" + field.getField());
+                }
+                if (JexlCheckerUtil.verifyStartCharacter(field.getField())) {
+                    throw new IllegalArgumentException("check jexl start char failed. field:" + field.getField());
+                }
+                if (JexlCheckerUtil.verifySpaces(field.getField())) {
+                    throw new IllegalArgumentException("check jexl spaces failed. field:" + field.getField());
                 }
             }
         }
