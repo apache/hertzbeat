@@ -47,7 +47,7 @@ keywords: [open-source monitoring system, open-source database monitoring, Hbase
 |----------------------|------|------------------------------------|
 | Max File Descriptors | NONE | Maximum Number of File Descriptors |
 
-#### Metric Set: jvm_memory_pool_allocated_bytes
+#### Metric Set: jvm_memory_pool_allocated_bytes_total
 
 Number of bytes of memory allocated in a specific memory pool in the Java Virtual Machine (JVM). In Pulsar, this typically refers to the amount of memory allocated for various purposes in the JVM (such as heap memory, non-heap memory, etc.).
 
@@ -67,6 +67,6 @@ Maximum number of bytes of memory that can be allocated in a specific memory poo
 
 Message publishing latency on the broker side.
 
-#### Metric Set: pulsar_metadata_store_ops_latency_ms
+#### Metric Set: pulsar_metadata_store_ops_latency_ms_bucket
 
 Latency of metadata store operations on the broker side.
