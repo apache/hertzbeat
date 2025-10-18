@@ -6,8 +6,7 @@
   "files": [
     "README.md",
     "README_CN.md",
-    "README_JP.md",
-    "home/src/pages/team/index.jsx"
+    "README_JP.md"
   ],
   "imageSize": 100,
   "commit": true,
