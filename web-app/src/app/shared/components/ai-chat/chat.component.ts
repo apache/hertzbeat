@@ -22,8 +22,9 @@ import { I18NService } from '@core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
+import { ModelProviderConfig } from '../../../pojo/ModelProviderConfig';
 import { AiChatService, ChatMessage, ConversationDto } from '../../../service/ai-chat.service';
-import { OpenAiConfigService, OpenAiConfig, OpenAiConfigStatus } from '../../../service/openai-config.service';
+import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
 @Component({
@@ -46,10 +47,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   isOpenAiConfigured = false;
   showConfigModal = false;
   configLoading = false;
-  openAiConfig: OpenAiConfig = {
-    enable: false,
-    apiKey: ''
-  };
+  aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
 
   constructor(
     private aiChatService: AiChatService,
@@ -58,7 +56,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     private i18n: I18NService,
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
-    private openAiConfigService: OpenAiConfigService
+    private generalConfigSvc: GeneralConfigService
   ) {}
 
   ngOnInit(): void {
@@ -428,61 +426,46 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Check OpenAI configuration status
+   * Check provider configuration status
    */
   checkOpenAiConfiguration(): void {
-    this.openAiConfigService.getOpenAiConfigStatus().subscribe({
+    this.generalConfigSvc.getModelProviderConfig().subscribe({
       next: response => {
-        if (response.code === 0) {
-          this.isOpenAiConfigured = response.data.configured;
-          if (this.isOpenAiConfigured) {
+        if (response.code === 0 && response.data) {
+          this.aiProviderConfig = response.data;
+          if (!response.data.enable) {
             this.loadConversations();
           } else {
-            this.showOpenAiConfigDialog(response.data);
+            this.showAiProviderConfigDialog(response.data.error);
           }
-        } else {
-          console.error('Failed to check OpenAI configuration:', response.msg);
-          this.showOpenAiConfigDialog();
         }
       },
       error: error => {
-        console.error('Error checking OpenAI configuration:', error);
-        this.showOpenAiConfigDialog();
+        console.error('Failed to load model provider config:', error);
+        this.showAiProviderConfigDialog();
       }
     });
   }
 
   /**
-   * Show OpenAI configuration dialog
+   * Show ai configuration dialog
    */
-  showOpenAiConfigDialog(status?: OpenAiConfigStatus): void {
-    // Load existing configuration if available
-    this.loadOpenAiConfig();
-
+  showAiProviderConfigDialog(error?: string): void {
     let contentMessage = `
       <div style="margin-bottom: 16px;">
-        <p>To use AI Agent Chat, please configure your OpenAI API key.</p>
+        <p>To use AI Agent Chat, please configure your Model Provider.</p>
     `;
 
-    if (status && !status.validationPassed && status.validationMessage) {
+    if (error) {
       contentMessage += `
         <div style="margin-bottom: 12px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
-          <strong>Configuration Issue:</strong> ${status.validationMessage}
+          <strong>Configuration Issue:</strong> ${error}
         </div>
       `;
     }
 
-    contentMessage += `
-        <p>You can either:</p>
-        <ul>
-          <li>Configure it here (stored in database)</li>
-          <li>Add it to your application.yml file under <code>spring.ai.openai.api-key</code></li>
-        </ul>
-      </div>
-    `;
-
     const modalRef = this.modal.create({
-      nzTitle: 'OpenAI Configuration Required',
+      nzTitle: 'Ai Model Provider Configuration Required',
       nzContent: contentMessage,
       nzWidth: 600,
       nzClosable: false,
@@ -501,26 +484,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Load OpenAI configuration
-   */
-  loadOpenAiConfig(): void {
-    this.openAiConfigService.getOpenAiConfig().subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          this.openAiConfig = { ...this.openAiConfig, ...response.data };
-        }
-      },
-      error: error => {
-        console.error('Failed to load OpenAI config:', error);
-      }
-    });
-  }
-
-  /**
    * Show configuration modal
    */
   onShowConfigModal(): void {
-    this.loadOpenAiConfig();
+    this.checkOpenAiConfiguration();
     this.showConfigModal = true;
   }
 
@@ -534,23 +501,23 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   /**
    * Save OpenAI configuration
    */
-  onSaveOpenAiConfig(): void {
-    if (!this.openAiConfig.apiKey.trim()) {
+  onSaveAiProviderConfig(): void {
+    if (!this.aiProviderConfig.apiKey.trim()) {
       this.message.error('API Key is required');
       return;
     }
 
     // Always enable when saving an API key
-    this.openAiConfig.enable = true;
+    this.aiProviderConfig.enable = true;
 
     this.configLoading = true;
     this.message.info('Validating API key...', { nzDuration: 2000 });
 
-    this.openAiConfigService.saveOpenAiConfig(this.openAiConfig).subscribe({
+    this.generalConfigSvc.saveModelProviderConfig(this.aiProviderConfig).subscribe({
       next: response => {
         this.configLoading = false;
         if (response.code === 0) {
-          this.message.success('OpenAI API key validated and saved successfully!');
+          this.message.success('Model Provider configuration saved successfully!');
           this.showConfigModal = false;
           this.isOpenAiConfigured = true;
           this.loadConversations();

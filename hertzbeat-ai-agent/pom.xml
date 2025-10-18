@@ -26,7 +26,7 @@
 	<artifactId>hertzbeat-ai-agent</artifactId>
 	<version>${hertzbeat.version}</version>
 	<properties>
-		<spring-ai.version>1.0.1</spring-ai.version>
+		<spring-ai.version>1.0.3</spring-ai.version>
 		<java.version>17</java.version>
 	</properties>
 
@@ -51,12 +51,22 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-starter-model-openai</artifactId>
+            <artifactId>spring-ai-openai</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-client-chat</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>org.apache.hertzbeat</groupId>
 			<artifactId>hertzbeat-common</artifactId>
 		</dependency>
+        <!-- common -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-base</artifactId>
+            <scope>provided</scope>
+        </dependency>
 		<dependency>
 			<groupId>org.apache.hertzbeat</groupId>
 			<artifactId>hertzbeat-alerter</artifactId>

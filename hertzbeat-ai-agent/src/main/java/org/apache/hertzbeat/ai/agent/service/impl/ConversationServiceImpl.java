@@ -24,7 +24,7 @@ import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.agent.service.ConversationService;
-import org.apache.hertzbeat.ai.agent.service.OpenAiConfigService;
+import org.apache.hertzbeat.ai.agent.service.AiConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
@@ -53,7 +53,7 @@ public class ConversationServiceImpl implements ConversationService {
     private ChatClientProviderService chatClientProviderService;
 
     @Autowired
-    private OpenAiConfigService openAiConfigService;
+    private AiConfigService openAiConfigService;
 
     @Override
     public ConversationDto createConversation() {
@@ -78,7 +78,7 @@ public class ConversationServiceImpl implements ConversationService {
         if (!openAiConfigService.isConfigured()) {
             ChatResponseDto errorResponse = ChatResponseDto.builder()
                     .conversationId(conversationId)
-                    .response("OpenAI is not configured. Please configure your OpenAI API key in the settings or application.yml file.")
+                    .response("Provider is not configured. Please configure your OpenAI API key in the settings or application.yml file.")
                     .build();
             return Flux.just(ServerSentEvent.builder(errorResponse)
                     .event("error")

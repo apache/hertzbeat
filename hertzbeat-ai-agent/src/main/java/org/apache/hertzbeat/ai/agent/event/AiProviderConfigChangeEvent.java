@@ -15,29 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.ai.agent.config;
+package org.apache.hertzbeat.ai.agent.event;
 
-import lombok.Data;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * OpenAI YAML Configuration - reads from spring.ai.openai.api-key
+ * Ai Provider configuration change event
  */
-@Data
-@Component
-@ConfigurationProperties(prefix = "spring.ai.openai")
-public class OpenAiYamlConfig {
+public class AiProviderConfigChangeEvent extends ApplicationEvent {
 
-    /**
-     * OpenAI API key from spring.ai.openai.api-key
-     */
-    private String apiKey;
-
-    /**
-     * Check if OpenAI is enabled (has API key)
-     */
-    public boolean isEnable() {
-        return apiKey != null && !apiKey.trim().isEmpty();
+    public AiProviderConfigChangeEvent(ApplicationContext source) {
+        super(source);
     }
 }

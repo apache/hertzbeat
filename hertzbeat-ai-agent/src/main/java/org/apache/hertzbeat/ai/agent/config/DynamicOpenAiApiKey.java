@@ -18,40 +18,39 @@
 package org.apache.hertzbeat.ai.agent.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.agent.pojo.dto.OpenAiConfigDto;
-import org.apache.hertzbeat.ai.agent.service.OpenAiConfigService;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ModelProviderConfig;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.model.ApiKey;
 import org.springframework.stereotype.Component;
 
 /**
- * Dynamic OpenAI API Key implementation that retrieves the API key
- * from our configuration service (database first, then YAML fallback)
+ * Dynamic LLM Provider API Key implementation that retrieves the API key
  */
 @Slf4j
 @Component
 public class DynamicOpenAiApiKey implements ApiKey {
 
-    private final OpenAiConfigService openAiConfigService;
-
-    public DynamicOpenAiApiKey(OpenAiConfigService openAiConfigService) {
-        this.openAiConfigService = openAiConfigService;
+    private final GeneralConfigDao generalConfigDao;
+    
+    public DynamicOpenAiApiKey(GeneralConfigDao generalConfigDao) {
+        this.generalConfigDao = generalConfigDao;
     }
 
+    @NotNull
     @Override
     public String getValue() {
-        try {
-            OpenAiConfigDto effectiveConfig = openAiConfigService.getEffectiveConfig();
-            
-            if (effectiveConfig != null && effectiveConfig.isEnable() && effectiveConfig.getApiKey() != null) {
-                log.debug("Retrieved OpenAI API key from configuration service");
-                return effectiveConfig.getApiKey();
-            } else {
-                log.warn("No valid OpenAI API key found in configuration");
-                return null;
-            }
-        } catch (Exception e) {
-            log.error("Error retrieving OpenAI API key from configuration", e);
-            return null;
+        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+        ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+
+        if (modelProviderConfig != null && modelProviderConfig.isEnable() && modelProviderConfig.isStatus()) {
+            log.debug("Retrieved {} API key from configuration service", modelProviderConfig.getCode());
+            return modelProviderConfig.getApiKey();
+        } else {
+            log.warn("No valid LLM Provider API key found in configuration");
+            return "";
         }
     }
 }

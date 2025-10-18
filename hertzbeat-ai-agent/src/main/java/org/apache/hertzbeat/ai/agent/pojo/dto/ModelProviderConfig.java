@@ -24,24 +24,36 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * OpenAI Configuration DTO - simplified to handle only API key
+ * Model Provider Configuration
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "OpenAI configuration")
-public class OpenAiConfigDto {
-
-    /**
-     * Whether to enable OpenAI, default is false
-     */
-    @Schema(title = "Enable OpenAI", description = "Whether OpenAI is enabled", example = "true")
+@Schema(description = "LLM Model Provider configuration")
+public class ModelProviderConfig {
+    
+    @Schema(title = "Enable Provider", description = "Whether Provider is enabled", example = "true")
     private boolean enable = false;
-
-    /**
-     * OpenAI API key
-     */
-    @Schema(title = "API Key", description = "OpenAI API key", example = "sk-...")
+    
+    @Schema(title = "Check the provider available status")
+    private boolean status = false;
+    
+    @Schema(title = "The error message when provider status check failed")
+    private String error;
+    
+    @Schema(title = "Model type, text-generate, vision")
+    private String type;
+    
+    @Schema(title = "Model Provider code, like openai, zai, bigmodel")
+    private String code;
+    
+    @Schema(title = "custom the provider server base url")
+    private String baseUrl;
+    
+    @Schema(title = "use the model id name, eg: gpt-5, glm-4.6")
+    private String model;
+    
+    @Schema(title = "API Key", description = "API key", example = "sk-...")
     @NotBlank(message = "API Key cannot be empty when enabled")
     private String apiKey;
 }
