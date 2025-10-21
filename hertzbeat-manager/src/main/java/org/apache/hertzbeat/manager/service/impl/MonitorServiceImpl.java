@@ -30,7 +30,6 @@ import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
-import org.apache.hertzbeat.common.constants.JexlKeywordsEnum;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
@@ -50,6 +49,7 @@ import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
@@ -464,9 +464,17 @@ public class MonitorServiceImpl implements MonitorService {
                     continue;
                 }
                 for (Metrics.Field field : metrics.getFields()) {
-                    if (JexlKeywordsEnum.match(field.getField())) {
+                    if (JexlCheckerUtil.verifyKeywords(field.getField())) {
                         throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
                                 + field.getField() + " prohibited keywords, please modify the template information.");
+                    }
+                    if (JexlCheckerUtil.verifyStartCharacter(field.getField())) {
+                        throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
+                                + field.getField() + " illegal start character, please modify the template information.");
+                    }
+                    if (JexlCheckerUtil.verifySpaces(field.getField())) {
+                        throw new IllegalArgumentException(job.getApp() + " " + metrics.getName() + " "
+                                + field.getField() + " no spaces allowed, please modify the template information.");
                     }
                 }
             }

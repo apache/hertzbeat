@@ -188,7 +188,7 @@ metrics:
           zh-CN: 消费者组ID
           en-US: Consumer Group ID
           ja-JP: 消費者グループID
-      - field: Group Member Num
+      - field: group_member_num
         type: 1
         i18n:
           zh-CN: 消费者实例数量
@@ -201,7 +201,7 @@ metrics:
           zh-CN: 订阅主题名称
           en-US: Subscribed Topic Name
           ja-JP: 購読されたトピック名
-      - field: Offset of Each Partition
+      - field: offset_of_each_partition
         type: 1
         i18n:
           zh-CN: 各分区偏移量
