@@ -19,7 +19,7 @@
 package org.apache.hertzbeat.ai.agent.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.agent.event.AiProviderConfigChangeEvent;
+import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ModelProviderConfig;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;

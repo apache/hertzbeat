@@ -19,7 +19,7 @@
 
 export class ModelProviderConfig {
   enable: boolean = false;
-  status: boolean = false;
+  status: boolean = true;
   error!: string;
   type!: string;
   code: string = 'openai';

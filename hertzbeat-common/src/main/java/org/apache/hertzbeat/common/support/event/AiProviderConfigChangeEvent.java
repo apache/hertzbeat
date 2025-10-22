@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.ai.agent.event;
+package org.apache.hertzbeat.common.support.event;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;

@@ -21,7 +21,11 @@ package org.apache.hertzbeat.ai.agent.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.config.PromptProvider;
 import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
 import org.springframework.ai.chat.client.ChatClient;
@@ -48,13 +52,16 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     private final ApplicationContext applicationContext;
 
+    private final GeneralConfigDao generalConfigDao;
+
     @Qualifier("hertzbeatTools")
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
 
     @Autowired
-    public ChatClientProviderServiceImpl(ApplicationContext applicationContext) {
+    public ChatClientProviderServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
         this.applicationContext = applicationContext;
+        this.generalConfigDao = generalConfigDao;
     }
 
     public String complete(String message) {
@@ -101,5 +108,12 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             log.error("Error setting up streaming chat: {}", e.getMessage(), e);
             return Flux.error(e);
         }
+    }
+
+    @Override
+    public boolean isConfigured() {
+        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+        ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+        return modelProviderConfig != null && modelProviderConfig.isStatus();
     }
 }

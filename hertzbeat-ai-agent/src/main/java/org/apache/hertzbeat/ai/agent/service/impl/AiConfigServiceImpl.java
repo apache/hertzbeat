@@ -18,13 +18,8 @@
 package org.apache.hertzbeat.ai.agent.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.agent.event.AiProviderConfigChangeEvent;
-import org.apache.hertzbeat.ai.agent.pojo.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.agent.service.AiConfigService;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
-import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -49,13 +44,6 @@ public class AiConfigServiceImpl implements AiConfigService {
     public AiConfigServiceImpl(GeneralConfigDao generalConfigDao, RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
         this.generalConfigDao = generalConfigDao;
-    }
-
-    @Override
-    public boolean isConfigured() {
-        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-        ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-        return modelProviderConfig != null && modelProviderConfig.isStatus();
     }
 
     @Override
@@ -108,21 +96,5 @@ public class AiConfigServiceImpl implements AiConfigService {
                 return ValidationResult.failure("API key validation failed: " + errorMessage);
             }
         }
-    }
-
-    @Override
-    public void reloadConfig() {
-        synchronized (this) {
-            
-        }
-    }
-
-    /**
-     * OpenAI configuration change event listener
-     */
-    @EventListener(AiProviderConfigChangeEvent.class)
-    public void onAiProviderConfigChange(AiProviderConfigChangeEvent event) {
-        log.info("Provider configuration change event received");
-        reloadConfig();
     }
 }

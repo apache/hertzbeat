@@ -23,23 +23,11 @@ package org.apache.hertzbeat.ai.agent.service;
 public interface AiConfigService {
 
     /**
-     * Check if OpenAI is properly configured
-     * @return true if configured and enabled
-     */
-    boolean isConfigured();
-
-    /**
      * Validate OpenAI API key by calling the OpenAI API
      * @param apiKey the API key to validate
      * @return validation result with success status and message
      */
     ValidationResult validateApiKey(String apiKey);
-
-    /**
-     * Force reload of OpenAI configuration cache
-     * This method is typically called when configuration changes
-     */
-    void reloadConfig();
 
     /**
      * Validation result class

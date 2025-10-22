@@ -547,6 +547,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
     // Always enable when saving an API key
     this.aiProviderConfig.enable = true;
+    this.aiProviderConfig.status = true;
 
     this.configLoading = true;
     this.message.info('Validating API key...', { nzDuration: 2000 });

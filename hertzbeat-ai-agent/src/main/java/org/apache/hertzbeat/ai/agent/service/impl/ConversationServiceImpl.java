@@ -51,10 +51,7 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Autowired
     private ChatClientProviderService chatClientProviderService;
-
-    @Autowired
-    private AiConfigService openAiConfigService;
-
+    
     @Override
     public ConversationDto createConversation() {
         String conversationId = createNewConversation();
@@ -75,10 +72,10 @@ public class ConversationServiceImpl implements ConversationService {
         }
 
         // Check if OpenAI is properly configured
-        if (!openAiConfigService.isConfigured()) {
+        if (!chatClientProviderService.isConfigured()) {
             ChatResponseDto errorResponse = ChatResponseDto.builder()
                     .conversationId(conversationId)
-                    .response("Provider is not configured. Please configure your OpenAI API key in the settings or application.yml file.")
+                    .response("Provider is not configured. Please configure your AI Provider.")
                     .build();
             return Flux.just(ServerSentEvent.builder(errorResponse)
                     .event("error")

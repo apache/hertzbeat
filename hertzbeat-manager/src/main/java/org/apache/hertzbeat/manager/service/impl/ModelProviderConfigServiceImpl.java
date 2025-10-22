@@ -23,6 +23,8 @@ import java.lang.reflect.Type;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ModelProviderConfig;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
+import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -31,6 +33,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ModelProviderConfig> {
 
+    private final ApplicationContext applicationContext;
+    
     /**
      *
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
@@ -38,15 +42,21 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
      * @param generalConfigDao ConfigDao object
      * @param objectMapper     JSON tool object
      */
-    public ModelProviderConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    public ModelProviderConfigServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
+        this.applicationContext = applicationContext;
     }
     
     @Override
     public String type() {
         return GeneralConfigTypeEnum.provider.name();
     }
-    
+
+    @Override
+    public void handler(ModelProviderConfig config) {
+        applicationContext.publishEvent(new AiProviderConfigChangeEvent(applicationContext));
+    }
+
     @Override
     public TypeReference<ModelProviderConfig> getTypeReference() {
         return new TypeReference<>() {
