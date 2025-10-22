@@ -206,7 +206,7 @@
       <nz-form-item>
         <nz-form-label>Base URL</nz-form-label>
         <nz-form-control>
-          <nz-input-group nzSuffix="resetBtn">
+          <nz-input-group [nzSuffix]="resetBtn">
             <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1" />
             <ng-template #resetBtn>
               <button 
