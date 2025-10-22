@@ -94,23 +94,22 @@ public class LlmConfig {
             }
         }
 
+        OpenAiApi.Builder builder = new OpenAiApi.Builder();
+        builder.baseUrl(modelProviderConfig.getBaseUrl());
+        builder.apiKey(modelProviderConfig.getApiKey());
         if (modelProviderConfig.getModel() == null) {
             if ("openai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("gpt-5");
             } else if ("zhipu".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("glm-4.6");
+                builder.completionsPath("/chat/completions");
             } else if ("zai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("glm-4.6");
+                builder.completionsPath("/chat/completions");
             } else {
                 modelProviderConfig.setModel("gpt-5");
             }
         }
-
-        // Create OpenAI API instance
-        OpenAiApi openAiApi = OpenAiApi.builder()
-                .baseUrl(modelProviderConfig.getBaseUrl())
-                .apiKey(modelProviderConfig.getApiKey())
-                .build();
         
         // Create OpenAI Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
@@ -120,7 +119,7 @@ public class LlmConfig {
         
         // Create OpenAI Chat Model
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
-                .openAiApi(openAiApi)
+                .openAiApi(builder.build())
                 .defaultOptions(openAiChatOptions)
                 .build();
         
