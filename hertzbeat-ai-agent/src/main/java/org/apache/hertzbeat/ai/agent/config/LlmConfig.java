@@ -93,31 +93,31 @@ public class LlmConfig {
                 modelProviderConfig.setBaseUrl("https://api.openai.com/v1");
             }
         }
-
-        OpenAiApi.Builder builder = new OpenAiApi.Builder();
-        builder.baseUrl(modelProviderConfig.getBaseUrl());
-        builder.apiKey(modelProviderConfig.getApiKey());
+        
         if (modelProviderConfig.getModel() == null) {
             if ("openai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("gpt-5");
             } else if ("zhipu".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("glm-4.6");
-                builder.completionsPath("/chat/completions");
             } else if ("zai".equals(modelProviderConfig.getCode())) {
                 modelProviderConfig.setModel("glm-4.6");
-                builder.completionsPath("/chat/completions");
             } else {
                 modelProviderConfig.setModel("gpt-5");
             }
         }
+
+        OpenAiApi.Builder builder = new OpenAiApi.Builder();
+        builder.baseUrl(modelProviderConfig.getBaseUrl());
+        builder.apiKey(modelProviderConfig.getApiKey());
+        builder.completionsPath("/chat/completions");
         
-        // Create OpenAI Chat Options
+        // Create Chat Options
         OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
                 .model(modelProviderConfig.getModel())
                 .temperature(0.3)
                 .build();
         
-        // Create OpenAI Chat Model
+        // Create Chat Model
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
                 .openAiApi(builder.build())
                 .defaultOptions(openAiChatOptions)

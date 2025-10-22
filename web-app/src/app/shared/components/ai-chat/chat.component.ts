@@ -62,7 +62,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
-    this.checkOpenAiConfiguration();
+    this.checkAiConfiguration();
   }
 
   ngAfterViewChecked(): void {
@@ -73,10 +73,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Load all conversations
    */
   loadConversations(): void {
-    console.log('Loading conversations...');
     this.aiChatService.getConversations().subscribe({
       next: response => {
-        console.log('Conversations response:', response);
         if (response.code === 0 && response.data) {
           this.conversations = response.data;
           // If no current conversation, create a new one
@@ -106,10 +104,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Create a new conversation
    */
   createNewConversation(): void {
-    console.log('Creating new conversation...');
     this.aiChatService.createConversation().subscribe({
       next: response => {
-        console.log('Create conversation response:', response);
         if (response.code === 0 && response.data) {
           const newConversation = response.data;
           this.conversations.unshift(newConversation);
@@ -164,7 +160,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.aiChatService.getConversation(conversationId).subscribe({
       next: response => {
         this.isLoading = false;
-        console.log('Conversation history response:', response);
 
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
@@ -321,7 +316,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.scrollToBottom();
       },
       complete: () => {
-        console.log('Chat stream completed');
         this.isLoading = false;
         this.cdr.detectChanges();
 
@@ -429,7 +423,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   /**
    * Check provider configuration status
    */
-  checkOpenAiConfiguration(): void {
+  checkAiConfiguration(): void {
     this.generalConfigSvc.getModelProviderConfig().subscribe({
       next: response => {
         if (response.code === 0 && response.data) {
@@ -451,7 +445,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
             }
           }
 
-          if (!response.data.enable) {
+          if (response.data.enable) {
             this.loadConversations();
           } else {
             this.showAiProviderConfigDialog(response.data.error);
@@ -510,7 +504,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Show configuration modal
    */
   onShowConfigModal(): void {
-    this.checkOpenAiConfiguration();
+    this.checkAiConfiguration();
     this.showConfigModal = true;
   }
 

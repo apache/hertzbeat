@@ -43,15 +43,15 @@ export const PROVIDER_OPTIONS: ProviderOption[] = [
     defaultModel: 'gpt-4'
   },
   {
-    value: 'zhipu',
-    label: 'ZhiPu (智谱)',
-    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    defaultModel: 'glm-4'
-  },
-  {
     value: 'zai',
     label: 'ZAI',
     defaultBaseUrl: 'https://api.z.ai/api/paas/v4',
-    defaultModel: 'glm-4'
+    defaultModel: 'glm-4.6'
+  },
+  {
+    value: 'zhipu',
+    label: 'ZhiPu',
+    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    defaultModel: 'glm-4.6'
   }
 ];

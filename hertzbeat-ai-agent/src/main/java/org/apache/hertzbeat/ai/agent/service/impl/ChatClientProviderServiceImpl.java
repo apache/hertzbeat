@@ -57,6 +57,8 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     @Qualifier("hertzbeatTools")
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
+    
+    private boolean isConfigured = false;
 
     @Autowired
     public ChatClientProviderServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
@@ -112,8 +114,11 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
     @Override
     public boolean isConfigured() {
-        GeneralConfig providerConfig = generalConfigDao.findByType("provider");
-        ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-        return modelProviderConfig != null && modelProviderConfig.isStatus();
+        if (!isConfigured) {
+            GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+            ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+            isConfigured = modelProviderConfig != null && modelProviderConfig.isStatus();   
+        }
+        return isConfigured;
     }
 }
