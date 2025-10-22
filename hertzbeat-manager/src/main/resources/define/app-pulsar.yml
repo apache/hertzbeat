@@ -172,7 +172,7 @@ metrics:
       timeout: ^_^timeout^_^
       method: GET
       parseType: prometheus
-  - name: jvm_memory_pool_allocated_bytes
+  - name: jvm_memory_pool_allocated_bytes_total
     i18n:
       zh-CN: JVM 内存池已分配字节
       en-US: JVM Memory Pool Allocated Bytes
@@ -181,13 +181,6 @@ metrics:
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
-      - field: .name
-        type: 1
-        i18n:
-          zh-CN: 名称
-          en-US: Name
-          ja-JP: 名前
-        label: true
       - field: pool
         type: 1
         label: true
@@ -320,13 +313,6 @@ metrics:
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
-      - field: .name
-        type: 1
-        i18n:
-          zh-CN: 指标名称
-          en-US: Metric Name
-          ja-JP: メトリクス名
-        label: true
       - field: cluster
         type: 1
         i18n:
@@ -358,7 +344,7 @@ metrics:
       timeout: ^_^timeout^_^
       method: GET
       parseType: prometheus
-  - name: pulsar_metadata_store_ops_latency_ms
+  - name: pulsar_metadata_store_ops_latency_ms_bucket
     i18n:
       zh-CN: 元数据存储操作延迟
       en-US: Metadata Store Ops Latency
@@ -367,13 +353,6 @@ metrics:
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
-      - field: .name
-        type: 1
-        i18n:
-          zh-CN: 指标名称
-          en-US: Metric Name
-          ja-JP: メトリクス名
-        label: true
       - field: cluster
         type: 1
         i18n:
@@ -402,8 +381,23 @@ metrics:
           en-US: Status
           ja-JP: ステータス
         label: true
-      - field: le
+      - field: le_label
+        type: 1
+      - field: value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: value
+          ja-JP: 値
+    aliasFields:
+      - cluster
+      - name
+      - type
+      - status
+      - le
+      - value
+    calculates:
+      - le_label=le
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
