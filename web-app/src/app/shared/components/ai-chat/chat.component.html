@@ -176,18 +176,14 @@
       <nz-form-item>
         <nz-form-label nzRequired="true">AI Provider</nz-form-label>
         <nz-form-control nzErrorTip="Please select an AI provider">
-          <nz-select 
-            [(ngModel)]="aiProviderConfig.code" 
+          <nz-select
+            [(ngModel)]="aiProviderConfig.code"
             name="provider"
             nzPlaceHolder="Select AI Provider"
             (ngModelChange)="onProviderChange($event)"
             style="width: 100%"
           >
-            <nz-option 
-              *ngFor="let option of providerOptions" 
-              [nzValue]="option.value" 
-              [nzLabel]="option.label"
-            ></nz-option>
+            <nz-option *ngFor="let option of providerOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
           </nz-select>
           <p class="form-help">Choose your AI provider (OpenAI, ZhiPu, or ZAI)</p>
         </nz-form-control>
@@ -209,11 +205,11 @@
           <nz-input-group [nzSuffix]="resetBtn">
             <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1" />
             <ng-template #resetBtn>
-              <button 
-                nz-button 
-                nzType="link" 
-                nzSize="small" 
-                (click)="resetToDefaults()" 
+              <button
+                nz-button
+                nzType="link"
+                nzSize="small"
+                (click)="resetToDefaults()"
                 nzTooltipTitle="Reset to default values"
                 nz-tooltip
               >
