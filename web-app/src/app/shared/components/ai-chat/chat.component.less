@@ -634,6 +634,41 @@ body[data-theme='dark'] .chat-container {
   }
 }
 
+// Provider configuration form styles
+.provider-config-form {
+  .provider-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    nz-select {
+      flex: 1;
+    }
+  }
+  
+  .baseurl-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    nz-input-group {
+      flex: 1;
+    }
+    
+    .reset-btn {
+      flex-shrink: 0;
+    }
+  }
+  
+  .form-item-with-help {
+    margin-bottom: 8px;
+    
+    + .form-help {
+      margin-bottom: 16px;
+    }
+  }
+}
+
 nz-modal {
   .ant-modal-body {
     padding: 24px;

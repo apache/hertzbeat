@@ -22,8 +22,36 @@ export class ModelProviderConfig {
   status: boolean = false;
   error!: string;
   type!: string;
-  code!: string;
-  baseUrl!: string;
-  model!: string;
+  code: string = 'openai';
+  baseUrl: string = '';
+  model: string = '';
   apiKey!: string;
 }
+
+export interface ProviderOption {
+  value: string;
+  label: string;
+  defaultBaseUrl: string;
+  defaultModel: string;
+}
+
+export const PROVIDER_OPTIONS: ProviderOption[] = [
+  {
+    value: 'openai',
+    label: 'OpenAI',
+    defaultBaseUrl: 'https://api.openai.com/v1',
+    defaultModel: 'gpt-4'
+  },
+  {
+    value: 'zhipu',
+    label: 'ZhiPu (智谱)',
+    defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    defaultModel: 'glm-4'
+  },
+  {
+    value: 'zai',
+    label: 'ZAI',
+    defaultBaseUrl: 'https://api.z.ai/api/paas/v4',
+    defaultModel: 'glm-4'
+  }
+];

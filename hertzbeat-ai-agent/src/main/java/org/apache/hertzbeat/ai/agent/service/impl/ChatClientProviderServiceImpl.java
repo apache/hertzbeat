@@ -31,6 +31,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -45,19 +46,20 @@ import java.util.List;
 @Service
 public class ChatClientProviderServiceImpl implements ChatClientProviderService {
 
-    private final ChatClient chatClient;
+    private final ApplicationContext applicationContext;
 
     @Qualifier("hertzbeatTools")
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
 
     @Autowired
-    public ChatClientProviderServiceImpl(ChatClient openAiChatClient) {
-        this.chatClient = openAiChatClient;
+    public ChatClientProviderServiceImpl(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     public String complete(String message) {
-        return this.chatClient.prompt()
+        ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
+        return chatClient.prompt()
                 .user(message)
                 .call()
                 .content();
@@ -66,6 +68,9 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     @Override
     public Flux<String> streamChat(ChatRequestContext context) {
         try {
+            // Get the current (potentially refreshed) ChatClient instance
+            ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
+            
             List<Message> messages = new ArrayList<>();
 
             // Add conversation history if available
@@ -83,7 +88,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             log.info("Starting streaming chat for conversation: {}", context.getConversationId());
 
-            return this.chatClient.prompt()
+            return chatClient.prompt()
                     .messages(messages)
                     .system(PromptProvider.HERTZBEAT_SYSTEM_PROMPT)
                     .toolCallbacks(toolCallbackProvider)

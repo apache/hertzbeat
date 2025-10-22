@@ -22,7 +22,7 @@ import { I18NService } from '@core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
-import { ModelProviderConfig } from '../../../pojo/ModelProviderConfig';
+import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
 import { AiChatService, ChatMessage, ConversationDto } from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
@@ -48,6 +48,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   showConfigModal = false;
   configLoading = false;
   aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
+  providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
 
   constructor(
     private aiChatService: AiChatService,
@@ -433,15 +434,37 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       next: response => {
         if (response.code === 0 && response.data) {
           this.aiProviderConfig = response.data;
+          // Ensure default values are set if not present
+          if (!this.aiProviderConfig.code) {
+            this.aiProviderConfig.code = 'openai';
+          }
+          if (!this.aiProviderConfig.baseUrl) {
+            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+            if (defaultProvider) {
+              this.aiProviderConfig.baseUrl = defaultProvider.defaultBaseUrl;
+            }
+          }
+          if (!this.aiProviderConfig.model) {
+            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+            if (defaultProvider) {
+              this.aiProviderConfig.model = defaultProvider.defaultModel;
+            }
+          }
+
           if (!response.data.enable) {
             this.loadConversations();
           } else {
             this.showAiProviderConfigDialog(response.data.error);
           }
+        } else {
+          // Initialize with default values if no config exists
+          this.aiProviderConfig = new ModelProviderConfig();
+          this.showAiProviderConfigDialog();
         }
       },
       error: error => {
         console.error('Failed to load model provider config:', error);
+        this.aiProviderConfig = new ModelProviderConfig();
         this.showAiProviderConfigDialog();
       }
     });
@@ -502,8 +525,23 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Save OpenAI configuration
    */
   onSaveAiProviderConfig(): void {
-    if (!this.aiProviderConfig.apiKey.trim()) {
-      this.message.error('API Key is required');
+    if (!this.aiProviderConfig.apiKey?.trim()) {
+      this.message.error('Please enter API Key');
+      return;
+    }
+
+    if (!this.aiProviderConfig.code?.trim()) {
+      this.message.error('Please select a provider');
+      return;
+    }
+
+    if (!this.aiProviderConfig.baseUrl?.trim()) {
+      this.message.error('Please enter Base URL');
+      return;
+    }
+
+    if (!this.aiProviderConfig.model?.trim()) {
+      this.message.error('Please enter Model');
       return;
     }
 
@@ -535,5 +573,33 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.message.error(`Failed to save configuration: ${error.message}`);
       }
     });
+  }
+
+  /**
+   * Handle provider selection change
+   */
+  onProviderChange(provider: string): void {
+    const selectedProvider = this.providerOptions.find(p => p.value === provider);
+    if (selectedProvider) {
+      this.aiProviderConfig.code = provider;
+      // Auto-fill default values if current values are empty
+      if (!this.aiProviderConfig.baseUrl) {
+        this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+      }
+      if (!this.aiProviderConfig.model) {
+        this.aiProviderConfig.model = selectedProvider.defaultModel;
+      }
+    }
+  }
+
+  /**
+   * Reset to default values for selected provider
+   */
+  resetToDefaults(): void {
+    const selectedProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+    if (selectedProvider) {
+      this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+      this.aiProviderConfig.model = selectedProvider.defaultModel;
+    }
   }
 }

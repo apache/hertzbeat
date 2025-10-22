@@ -160,23 +160,77 @@
 <!-- OpenAI Configuration Modal -->
 <nz-modal
   [(nzVisible)]="showConfigModal"
-  nzTitle="Ai Provider Configuration"
+  nzTitle="AI Provider Configuration"
   (nzOnCancel)="onCloseConfigModal()"
   (nzOnOk)="onSaveAiProviderConfig()"
   nzMaskClosable="false"
   [nzClosable]="false"
-  nzWidth="600px"
+  nzWidth="700px"
   [nzOkLoading]="configLoading"
   nzOkText="Validate & Save"
   nzCancelText="Cancel"
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form nzLayout="vertical">
+      <!-- Provider Selection -->
+      <nz-form-item>
+        <nz-form-label nzRequired="true">AI Provider</nz-form-label>
+        <nz-form-control nzErrorTip="Please select an AI provider">
+          <nz-select 
+            [(ngModel)]="aiProviderConfig.code" 
+            name="provider"
+            nzPlaceHolder="Select AI Provider"
+            (ngModelChange)="onProviderChange($event)"
+            style="width: 100%"
+          >
+            <nz-option 
+              *ngFor="let option of providerOptions" 
+              [nzValue]="option.value" 
+              [nzLabel]="option.label"
+            ></nz-option>
+          </nz-select>
+          <p class="form-help">Choose your AI provider (OpenAI, ZhiPu, or ZAI)</p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- API Key -->
       <nz-form-item>
         <nz-form-label nzRequired="true">API Key</nz-form-label>
         <nz-form-control nzErrorTip="API Key is required">
           <input nz-input [(ngModel)]="aiProviderConfig.apiKey" name="apiKey" type="password" placeholder="sk-..." required />
           <p class="form-help">Your Provider API key. The key will be validated when saved.</p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Base URL -->
+      <nz-form-item>
+        <nz-form-label>Base URL</nz-form-label>
+        <nz-form-control>
+          <nz-input-group nzSuffix="resetBtn">
+            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1" />
+            <ng-template #resetBtn>
+              <button 
+                nz-button 
+                nzType="link" 
+                nzSize="small" 
+                (click)="resetToDefaults()" 
+                nzTooltipTitle="Reset to default values"
+                nz-tooltip
+              >
+                <i nz-icon nzType="reload"></i>
+              </button>
+            </ng-template>
+          </nz-input-group>
+          <p class="form-help">Custom API endpoint URL. Leave empty to use default for selected provider.</p>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- Model -->
+      <nz-form-item>
+        <nz-form-label>Model</nz-form-label>
+        <nz-form-control>
+          <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" placeholder="gpt-4" />
+          <p class="form-help">Model name to use. Leave empty to use default for selected provider.</p>
         </nz-form-control>
       </nz-form-item>
     </form>
