@@ -206,10 +206,13 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
             this.metricsInfo = message.data.metrics || [];
             this.metrics = this.metricsInfo.map((metric: any) => metric.name);
 
-            if (this.metrics && this.metrics.length > 0) {
-              this.loadInitialMetrics();
-              this.setupIntersectionObserver();
-            }
+            setTimeout(() => {
+              this.cdr.detectChanges();
+              if (this.metrics && this.metrics.length > 0) {
+                this.loadInitialMetrics();
+                this.setupIntersectionObserver();
+              }
+            }, 0);
           } else {
             console.warn(message.msg);
           }
@@ -437,6 +440,8 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
       if (this.countDownTime == 0) {
         if (this.whichTabIndex == 1) {
           this.loadMetricChart();
+        } else if (this.whichTabIndex == 2) {
+          this.loadFavoriteMetrics();
         } else {
           this.loadRealTimeMetric();
         }
@@ -490,11 +495,13 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     if (this.favoriteMetricsSet.size === 0) {
       return;
     }
-
-    // Convert favorites indicator to array
-    this.favoriteMetrics = Array.from(this.favoriteMetricsSet);
-    this.displayedFavoriteMetrics = this.favoriteMetrics.slice(0, this.favoritePageSize);
-    this.hasMoreFavorites = this.favoriteMetrics.length > this.favoritePageSize;
+    setTimeout(() => {
+      // Convert favorites indicator to array
+      this.favoriteMetrics = Array.from(this.favoriteMetricsSet);
+      this.displayedFavoriteMetrics = this.favoriteMetrics.slice(0, this.favoritePageSize);
+      this.hasMoreFavorites = this.favoriteMetrics.length > this.favoritePageSize;
+      this.cdr.detectChanges();
+    }, 0);
 
     this.loadFavoriteChartDefinitions();
 
