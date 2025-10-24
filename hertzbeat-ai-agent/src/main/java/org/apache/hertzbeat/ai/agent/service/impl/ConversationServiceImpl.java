@@ -24,7 +24,6 @@ import org.apache.hertzbeat.ai.agent.pojo.dto.ConversationDto;
 import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.agent.service.ConversationService;
-import org.apache.hertzbeat.ai.agent.service.AiConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
