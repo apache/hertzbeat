@@ -217,7 +217,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-ai-agent</artifactId>
+            <artifactId>hertzbeat-ai</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
