@@ -2604,6 +2604,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "jl15988",
+      "name": "会功夫的李白",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70638770?v=4",
+      "profile": "https://github.com/jl15988",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

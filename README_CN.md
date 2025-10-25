@@ -538,6 +538,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/tuzuy"><img src="https://avatars.githubusercontent.com/u/95274591?v=4?s=100" width="100px;" alt="tuzuy"/><br /><sub><b>tuzuy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tuzuy" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/carlpinto25"><img src="https://avatars.githubusercontent.com/u/117299909?v=4?s=100" width="100px;" alt="carl pinto"/><br /><sub><b>carl pinto</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=carlpinto25" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://cxhello.top/"><img src="https://avatars.githubusercontent.com/u/49056040?v=4?s=100" width="100px;" alt="cxhello"/><br /><sub><b>cxhello</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cxhello" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jl15988"><img src="https://avatars.githubusercontent.com/u/70638770?v=4?s=100" width="100px;" alt="会功夫的李白"/><br /><sub><b>会功夫的李白</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jl15988" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
