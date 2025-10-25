@@ -51,12 +51,12 @@ In Apache Hertzbeat, all MD articles have to pass MD's [CI](https://github.com/a
 After you have written an MD article, you can execute the following command locally to check whether the content of the MD article meets the requirements, so as to reduce the workload of review and save your time:
 
 ```shell
-cd home && yarn
+cd home && pnpm install
 
-yarn md-lint
+pnpm md-lint
 
-# If the documentation is wrong, you can use yarn md-lint-fix to fix it.
-yarn md-lint-fix
+# If the documentation is wrong, you can use pnpm md-lint-fix to fix it.
+pnpm md-lint-fix
 ```
 
 For formatting rules for MD articles you can refer to: [Markdown-lint-rules](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)

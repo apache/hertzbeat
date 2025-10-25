@@ -1393,11 +1393,7 @@
     "avatar_url": "https://avatars.githubusercontent.com/u/105542329?v=4",
     "profile": "https://github.com/lynx009",
     "contributions": [
-      "code",
-      "doc",
-      "blog",
-      "bug",
-      "design"
+      "doc"
     ],
     "githubId": "105542329"
   },
@@ -2843,8 +2839,7 @@
     "avatar_url": "https://avatars.githubusercontent.com/u/95274591?v=4",
     "profile": "https://github.com/tuzuy",
     "contributions": [
-      "code",
-      "design"
+      "code"
     ],
     "githubId": "95274591"
   },
@@ -2857,5 +2852,85 @@
       "code"
     ],
     "githubId": "117299909"
+  },
+  {
+    "login": "cxhello",
+    "name": "cxhello",
+    "avatar_url": "https://avatars.githubusercontent.com/u/49056040?v=4",
+    "profile": "https://cxhello.top/",
+    "contributions": [
+      "doc"
+    ],
+    "githubId": "49056040"
+  },
+  {
+    "login": "jl15988",
+    "name": "会功夫的李白",
+    "avatar_url": "https://avatars.githubusercontent.com/u/70638770?v=4",
+    "profile": "https://github.com/jl15988",
+    "contributions": [
+      "code"
+    ],
+    "githubId": "70638770"
+  },
+  {
+    "login": "AlbertYang0801",
+    "name": "Albert.Yang",
+    "avatar_url": "https://avatars.githubusercontent.com/u/37127008?v=4",
+    "profile": "https://blog.aytop.cloud/",
+    "contributions": [
+      "code"
+    ],
+    "githubId": "37127008"
+  },
+  {
+    "login": "mengnankkkk",
+    "name": "zhou yong kang",
+    "avatar_url": "https://avatars.githubusercontent.com/u/150590575?v=4",
+    "profile": "https://blog.tokenlen.top/",
+    "contributions": [
+      "code"
+    ],
+    "githubId": "150590575"
+  },
+  {
+    "login": "warrobe",
+    "name": "warrobe",
+    "avatar_url": "https://avatars.githubusercontent.com/u/89446159?v=4",
+    "profile": "https://github.com/warrobe",
+    "contributions": [
+      "code"
+    ],
+    "githubId": "89446159"
+  },
+  {
+    "login": "Jetiaime",
+    "name": "TeAmo",
+    "avatar_url": "https://avatars.githubusercontent.com/u/93769000?v=4",
+    "profile": "https://github.com/Jetiaime",
+    "contributions": [
+      "code"
+    ],
+    "githubId": "93769000"
+  },
+  {
+    "login": "pentium100",
+    "name": "pentium100",
+    "avatar_url": "https://avatars.githubusercontent.com/u/27917?v=4",
+    "profile": "https://github.com/pentium100",
+    "contributions": [
+      "code"
+    ],
+    "githubId": "27917"
+  },
+  {
+    "login": "dedyks",
+    "name": "Dedy Kurniawan Santoso",
+    "avatar_url": "https://avatars.githubusercontent.com/u/23741665?v=4",
+    "profile": "https://github.com/dedyks",
+    "contributions": [
+      "code"
+    ],
+    "githubId": "23741665"
   }
 ]

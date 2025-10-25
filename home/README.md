@@ -5,22 +5,22 @@ This website is built with [Docusaurus](https://docusaurus.io/).
 ## Installation
 
 ```shell
-yarn install
-## yarn install --registry=https://registry.npmmirror.com
+pnpm install
+## pnpm install --registry=https://registry.npmmirror.com
 ```
 
 ## I18N
 
 ```console
-yarn write-translations --locale zh-cn
+pnpm write-translations --locale zh-cn
 
-yarn write-translations --locale en
+pnpm write-translations --locale en
 ```
 
 ## Local Development
 
 ```console
-yarn start
+pnpm start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
@@ -36,7 +36,7 @@ Update the member information in `src/pages/team/data/member.json` File.
 Please refer to the [All Contributors](https://allcontributors.org/) to auto add contributor.
 
 ```console
-yarn all-contributors generate
+pnpm all-contributors generate
 ```
 
 Use generate to read the contributors list from `.all-contributorsrc` file and update the contributor tables specified by the files key.
@@ -44,7 +44,7 @@ Use generate to read the contributors list from `.all-contributorsrc` file and u
 ### Avatar
 
 ```console
-yarn github-avatar
+pnpm github-avatar
 ```
 
 This command will fetch the base64 string of the GitHub avatar from file `src/pages/team/data/member.json` and `.all-contributorsrc`, and store the result in the `src/pages/team/data/` directory. The operation might take a little while.
@@ -52,7 +52,7 @@ This command will fetch the base64 string of the GitHub avatar from file `src/pa
 ## Build
 
 ```console
-yarn build
+pnpm build
 ```
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
@@ -60,9 +60,9 @@ This command generates static content into the `build` directory and can be serv
 ## Deployment
 
 ```console
-GIT_USER=<Your GitHub username> USE_SSH=true yarn deploy
+GIT_USER=<Your GitHub username> USE_SSH=true pnpm deploy
 OR
-USE_SSH=true yarn deploy
+USE_SSH=true pnpm deploy
 ```
 
 If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
@@ -70,13 +70,13 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
 ### Deployment to Gitee
 
 ```console
-GITHUB_HOST=gitee.com USE_SSH=true yarn deploy  
+GITHUB_HOST=gitee.com USE_SSH=true pnpm deploy
 ```
 
 ### Archive Version
 
 ```shell
-yarn docusaurus docs:version v1.5.x
+pnpm docusaurus docs:version v1.5.x
 ```
 
 ## Directory Structure
