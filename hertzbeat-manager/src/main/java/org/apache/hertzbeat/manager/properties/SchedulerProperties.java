@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.config;
+package org.apache.hertzbeat.manager.properties;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,32 +24,36 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
- * status page properties
+ * scheduler properties config
  */
 
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.STATUS)
-public class StatusProperties {
+@ConfigurationProperties(prefix =
+        ConfigConstants.FunctionModuleConstants.SCHEDULER)
+public class SchedulerProperties {
+    
+    private ServerProperties server;
 
     /**
-     * calculate component status properties
-     */
-    private CalculateProperties calculate;
-
-    /**
-     * calculate component status properties
+     * server properties
      */
     @Getter
     @Setter
-    public static class CalculateProperties {
+    public static class ServerProperties {
+        
+        private boolean enabled = true;
+        
+        private int port = 1158;
 
         /**
-         * the component status calculate interval(s)
+         * an IdleStateEvent whose state is IdleState.ALL_IDLE will be triggered when neither read nor write 
+         * was performed for the specified period of time.
+         * unit: s
          */
-        private Integer interval = 300;
+        private int idleStateEventTriggerTime = 100;
 
     }
-
+    
 }

@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Data
 public class AssignJobs {
+    private static final Integer DEFAULT_CAPACITY = 16;
 
     /**
      * current assign jobIds
@@ -51,10 +52,10 @@ public class AssignJobs {
     private Set<Long> pinnedJobs;
 
     public AssignJobs() {
-        jobs = ConcurrentHashMap.newKeySet(16);
-        addingJobs = ConcurrentHashMap.newKeySet(16);
-        removingJobs = ConcurrentHashMap.newKeySet(16);
-        pinnedJobs = ConcurrentHashMap.newKeySet(16);
+        jobs = ConcurrentHashMap.newKeySet(DEFAULT_CAPACITY);
+        addingJobs = ConcurrentHashMap.newKeySet(DEFAULT_CAPACITY);
+        removingJobs = ConcurrentHashMap.newKeySet(DEFAULT_CAPACITY);
+        pinnedJobs = ConcurrentHashMap.newKeySet(DEFAULT_CAPACITY);
     }
 
     public void addAssignJob(Long jobId) {

@@ -29,6 +29,7 @@ import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.manager.pojo.CollectorNode;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +64,7 @@ public class CollectorJobSchedulerTest {
     @InjectMocks
     private CollectorJobScheduler collectorJobScheduler;
     @Mock
-    private ConsistentHash consistentHash;
+    private ConsistentHashCollectorKeeper consistentHashCollectorKeeper;
     @Mock
     private CollectorDao collectorDao;
     @Mock
@@ -85,8 +86,8 @@ public class CollectorJobSchedulerTest {
     public void testCollectSyncJobData() {
         assertDoesNotThrow(() -> {
             Job job = new Job();
-            when(consistentHash.preDispatchJob(any(String.class))).thenReturn(null);
-            List<?> list = collectorJobScheduler.collectSyncJobData(job);
+            when(consistentHashCollectorKeeper.determineNode(any(Long.class))).thenReturn(null);
+            List<?> list = collectorJobScheduler.collectSyncJobData(job, null);
             assertEquals(1, list.size());
         });
     }
@@ -127,9 +128,8 @@ public class CollectorJobSchedulerTest {
         appDefine.setParams(Collections.emptyList());
         when(appService.getAppDefine(anyString())).thenReturn(appDefine);
 
-        ConsistentHash.Node node = new ConsistentHash.Node(identity, collector.getMode(),
-                collector.getIp(), System.currentTimeMillis(), null);
-        when(consistentHash.getNode("collector-1")).thenReturn(node);
+        CollectorNode node = new CollectorNode(identity, collector.getMode(), collector.getIp(), System.currentTimeMillis(), null);
+        when(consistentHashCollectorKeeper.addJob(appDefine, identity)).thenReturn(node);
 
         ManageServer manageServer = mock(ManageServer.class);
         collectorJobScheduler.setManageServer(manageServer);
@@ -138,7 +138,7 @@ public class CollectorJobSchedulerTest {
 
         // Capture the parameters of sendMsg
         ArgumentCaptor<ClusterMsg.Message> msgCaptor = ArgumentCaptor.forClass(ClusterMsg.Message.class);
-        verify(manageServer, atLeastOnce()).sendMsg(eq("collector-1"), msgCaptor.capture());
+        verify(manageServer, atLeastOnce()).sendMsg(eq(identity), msgCaptor.capture());
         ClusterMsg.Message message = msgCaptor.getValue();
 
         Job job = JsonUtil.fromJson(message.getMsg().toStringUtf8(), Job.class);

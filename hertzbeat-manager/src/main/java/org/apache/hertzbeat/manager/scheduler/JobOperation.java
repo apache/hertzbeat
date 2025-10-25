@@ -24,15 +24,8 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 /**
  * Collection job management provides api interface
  */
-public interface CollectJobScheduling {
+public interface JobOperation {
 
-    /**
-     * Execute a one-time collection task and get the collected data response
-     * @param job Collect task details
-     * @return Collection results
-     */
-    List<CollectRep.MetricsData> collectSyncJobData(Job job);
-    
     /**
      * Execute a one-time collection task and get the collected data response
      * @param job Collect task details
@@ -49,13 +42,6 @@ public interface CollectJobScheduling {
      */
     long addAsyncCollectJob(Job job, String collector);
 
-    /**
-     * Update the periodic asynchronous collection tasks that have been delivered
-     * @param modifyJob Collect task details
-     * @return long Job ID
-     */
-    long updateAsyncCollectJob(Job modifyJob);
-    
     /**
      * Update the periodic asynchronous collection tasks that have been delivered
      * @param modifyJob Collect task details

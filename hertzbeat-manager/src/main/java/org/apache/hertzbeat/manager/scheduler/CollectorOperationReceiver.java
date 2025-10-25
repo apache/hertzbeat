@@ -20,39 +20,25 @@ package org.apache.hertzbeat.manager.scheduler;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 
 /**
- * slave collector service
+ * Interface defining operations for receiving collector status updates from remote collectors.
+ * This interface serves as a callback mechanism for handling collector online/offline events.
  */
-public interface CollectorScheduling {
-    
+public interface CollectorOperationReceiver {
     /**
-     * register collector go online
-     * @param identity collector identity name
-     * @param collectorInfo collector information
+     * Notifies the system when a collector comes online.
+     * This method should be called when a collector establishes connection and becomes available.
+     *
+     * @param identity The unique identifier of the collector (e.g., hostname, IP, or custom ID)
+     * @param collectorInfo Detailed information about the collector including capabilities,
+     *                      configuration, and status metadata
      */
     void collectorGoOnline(String identity, CollectorInfo collectorInfo);
-    
-    /**
-     * register collector go offline
-     * @param identity collector identity name
-     */
-    void collectorGoOffline(String identity);
-    
-    /**
-     * reBalance dispatch monitoring jobs when collector go online or offline or timeout
-     */
-    void reBalanceCollectorAssignJobs();
-    
-    /**
-     * offline collector(stop collector collect operation)
-     * @param identity collector identity name
-     * @return true/false
-     */
-    boolean offlineCollector(String identity);
 
     /**
-     * online collector(start collector collect operation)
-     * @param identity collector identity name
-     * @return true/false
+     * Notifies the system when a collector goes offline.
+     * This method should be called when a collector disconnects or becomes unavailable.
+     *
+     * @param identity The unique identifier of the collector to be marked as offline
      */
-    boolean onlineCollector(String identity);
+    void collectorGoOffline(String identity);
 }

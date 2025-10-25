@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager;
 
 import javax.annotation.PostConstruct;
+
+import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.apache.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -36,10 +38,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableJpaAuditing
-@EnableJpaRepositories(basePackages = {"org.apache.hertzbeat"})
-@EntityScan(basePackages = {"org.apache.hertzbeat"})
-@ComponentScan(basePackages = {"org.apache.hertzbeat"})
-@ConfigurationPropertiesScan(basePackages = {"org.apache.hertzbeat"})
+@EnableJpaRepositories(basePackages = {ConfigConstants.PkgConstant.PKG})
+@EntityScan(basePackages = {ConfigConstants.PkgConstant.PKG})
+@ComponentScan(basePackages = {ConfigConstants.PkgConstant.PKG})
+@ConfigurationPropertiesScan(basePackages = {ConfigConstants.PkgConstant.PKG})
 @ImportRuntimeHints(HertzbeatRuntimeHintsRegistrar.class)
 @EnableAsync
 @EnableScheduling
