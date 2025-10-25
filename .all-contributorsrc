@@ -2659,6 +2659,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "dedyks",
+      "name": "Dedy Kurniawan Santoso",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23741665?v=4",
+      "profile": "https://github.com/dedyks",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
