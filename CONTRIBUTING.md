@@ -44,19 +44,17 @@ Even small corrections to typos are very welcome :)
 
 #### Frontend start
 
-1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
+1. Need `Node pnpm` Environment, Make sure `Node.js >= 18`
 
 2. Cd to the `web-app` directory: `cd web-app`
 
-3. Install yarn if not existed `npm install -g yarn`
+3. Install pnpm if not existed `npm install -g pnpm`
 
-4. Install Dependencies: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. Install Dependencies: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. Install angular-cli globally: `yarn global add @angular/cli@15` or `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`
+5. After the local backend is started, start the local frontend in the web-app directory: `pnpm start`
 
-6. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-
-7. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
+6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
 
 ### Find tasks   
@@ -198,19 +196,17 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 #### 前端启动
 
-1. 需要 `nodejs yarn` 环境, Make sure `Node.js >= 18`
+1. 需要 `nodejs pnpm` 环境, Make sure `Node.js >= 18`
 
 2. 进入 `web-app` 目录: `cd web-app`
 
-3. 安装yarn: `npm install -g yarn`
+3. 安装pnpm: `npm install -g pnpm`
 
-4. 在前端工程目录 `web-app` 下执行: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. 在前端工程目录 `web-app` 下执行: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. 全局安装 `angular-cli`: `yarn global add @angular/cli@15` or `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`
+5. 待本地后端启动后，在web-app目录下启动本地前端 `pnpm start`
 
-6. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
-
-7. 浏览器访问 localhost:4200 即可开始，默认账号密码 *admin/hertzbeat*
+6. 浏览器访问 localhost:4200 即可开始，默认账号密码 *admin/hertzbeat*
 
 ### 寻找任务  
 

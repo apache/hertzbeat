@@ -15,7 +15,6 @@
     "customizations": {
         "vscode": {
             "settings": {},
-            // same extensions as Gitpod, should match /.gitpod.yml
             "extensions": [
                 "vscjava.vscode-java-pack",
                 "editorconfig.editorconfig",
