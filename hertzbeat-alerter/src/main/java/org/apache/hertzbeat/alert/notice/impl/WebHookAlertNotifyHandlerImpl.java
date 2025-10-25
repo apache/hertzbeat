@@ -48,6 +48,11 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             }
 
             HttpHeaders headers = new HttpHeaders();
+            if ("Basic".equalsIgnoreCase(receiver.getHookAuthType())) {
+                headers.setBasicAuth(receiver.getHookAuthToken());
+            } else if ("Bearer".equalsIgnoreCase(receiver.getHookAuthType())) {
+                headers.setBearerAuth(receiver.getHookAuthToken());
+            }
             headers.setContentType(MediaType.APPLICATION_JSON);
             //  alert.setContent(escapeJsonStr(alert.getContent()));
             String webhookJson = renderContent(noticeTemplate, alert);
