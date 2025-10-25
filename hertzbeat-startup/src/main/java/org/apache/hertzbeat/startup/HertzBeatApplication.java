@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager;
+package org.apache.hertzbeat.startup;
 
 import javax.annotation.PostConstruct;
 import org.apache.hertzbeat.manager.nativex.HertzbeatRuntimeHintsRegistrar;
@@ -31,9 +31,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * start up class.
+ * HertzBeat main application startup class.
+ * This class replaces the original Manager class as the main entry point for HertzBeat application.
  */
-
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableJpaRepositories(basePackages = {"org.apache.hertzbeat"})
@@ -43,13 +43,15 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ImportRuntimeHints(HertzbeatRuntimeHintsRegistrar.class)
 @EnableAsync
 @EnableScheduling
-public class Manager {
+public class HertzBeatApplication {
+
     public static void main(String[] args) {
-        SpringApplication.run(Manager.class, args);
+        SpringApplication.run(HertzBeatApplication.class, args);
     }
 
     @PostConstruct
     public void init() {
+        // Set JNDI object factory filter for security
         System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
     }
 }

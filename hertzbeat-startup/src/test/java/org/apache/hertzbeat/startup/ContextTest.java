@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager;
+package org.apache.hertzbeat.startup;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import javax.annotation.Resource;
-import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.realtime.MetricsRealTimeAlertCalculator;
@@ -59,7 +58,7 @@ import org.springframework.context.ApplicationContext;
  *
  * @version 2.1
  */
-class ManagerTest extends AbstractSpringIntegrationTest {
+class ContextTest extends AbstractSpringIntegrationTest {
 
     @Resource
     private ApplicationContext ctx;
@@ -107,13 +106,5 @@ class ManagerTest extends AbstractSpringIntegrationTest {
 
         assertNotNull(ctx.getBean(MetricsDataController.class));
     }
-
-    @Test
-    void testJndi() throws NamingException {
-        //System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
-        // for CI
-        //InitialContext initialContext = new InitialContext();
-        //initialContext.lookup("rmi://localhost:1099/Exploit");
-    }
-
+    
 }

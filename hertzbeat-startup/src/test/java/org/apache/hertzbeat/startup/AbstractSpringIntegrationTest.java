@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager;
+package org.apache.hertzbeat.startup;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -24,7 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
  * Abstract Integration Test for Spring.
  */
 @ActiveProfiles("test")
-@SpringBootTest(classes = Manager.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class AbstractSpringIntegrationTest {
 
 }
