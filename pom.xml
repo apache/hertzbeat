@@ -91,7 +91,6 @@
         <module>hertzbeat-otel</module>
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
-        <module>hertzbeat-mcp</module>
         <module>hertzbeat-log</module>
         <module>hertzbeat-ai</module>
     </modules>

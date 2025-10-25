@@ -10,4 +10,6 @@ script in the machine running this server.
 
 Use a simple Oauth2.0 for authentication.
 
+## mcp-log-server
 
+This mcp server provide the ability to query log from greptime db.
