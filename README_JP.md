@@ -548,6 +548,7 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://blog.tokenlen.top/"><img src="https://avatars.githubusercontent.com/u/150590575?v=4?s=100" width="100px;" alt="zhou yong kang"/><br /><sub><b>zhou yong kang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mengnankkkk" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/warrobe"><img src="https://avatars.githubusercontent.com/u/89446159?v=4?s=100" width="100px;" alt="warrobe"/><br /><sub><b>warrobe</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=warrobe" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jetiaime"><img src="https://avatars.githubusercontent.com/u/93769000?v=4?s=100" width="100px;" alt="TeAmo"/><br /><sub><b>TeAmo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Jetiaime" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
