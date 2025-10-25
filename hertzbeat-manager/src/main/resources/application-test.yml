@@ -189,16 +189,3 @@ grafana:
   expose-url: http://127.0.0.1:3000
   username: admin
   password: admin
-
-# See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
-ai:
-  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk、ollama、openRouter
-  type:
-  # Model name：glm-4、qwen-turboo、moonshot-v1-8k、generalv3.5
-  model:
-  # api key
-  api-key:
-  #At present, only IFLYTEK large model needs to be filled in
-  api-secret:
-  # The URL of the ollama AI service
-  api-url:

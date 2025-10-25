@@ -20,7 +20,6 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 // Icon to be used for registration
 const icons: IconDefinition[] = [RobotOutline, CloseOutline, SendOutline];
 
-import { AiBotComponent } from './components/ai-bot/ai-bot.component';
 import { AiChatModule } from './components/ai-chat/ai-chat.module';
 import { ConfigurableFieldComponent } from './components/configurable-field/configurable-field.component';
 import { FormFieldComponent } from './components/form-field/form-field.component';
@@ -43,7 +42,6 @@ const COMPONENTS: Array<Type<void>> = [
   ConfigurableFieldComponent,
   FormFieldComponent,
   MonitorSelectMenuComponent,
-  AiBotComponent,
   LabelSelectorComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];

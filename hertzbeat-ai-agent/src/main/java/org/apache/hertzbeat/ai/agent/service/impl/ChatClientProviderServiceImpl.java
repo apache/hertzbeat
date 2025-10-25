@@ -21,7 +21,11 @@ package org.apache.hertzbeat.ai.agent.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.agent.config.PromptProvider;
 import org.apache.hertzbeat.ai.agent.pojo.dto.MessageDto;
+import org.apache.hertzbeat.ai.agent.pojo.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.agent.service.ChatClientProviderService;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.agent.pojo.dto.ChatRequestContext;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,6 +35,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -45,19 +50,25 @@ import java.util.List;
 @Service
 public class ChatClientProviderServiceImpl implements ChatClientProviderService {
 
-    private final ChatClient chatClient;
+    private final ApplicationContext applicationContext;
+
+    private final GeneralConfigDao generalConfigDao;
 
     @Qualifier("hertzbeatTools")
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
+    
+    private boolean isConfigured = false;
 
     @Autowired
-    public ChatClientProviderServiceImpl(ChatClient openAiChatClient) {
-        this.chatClient = openAiChatClient;
+    public ChatClientProviderServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
+        this.applicationContext = applicationContext;
+        this.generalConfigDao = generalConfigDao;
     }
 
     public String complete(String message) {
-        return this.chatClient.prompt()
+        ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
+        return chatClient.prompt()
                 .user(message)
                 .call()
                 .content();
@@ -66,6 +77,9 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     @Override
     public Flux<String> streamChat(ChatRequestContext context) {
         try {
+            // Get the current (potentially refreshed) ChatClient instance
+            ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
+            
             List<Message> messages = new ArrayList<>();
 
             // Add conversation history if available
@@ -83,7 +97,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             log.info("Starting streaming chat for conversation: {}", context.getConversationId());
 
-            return this.chatClient.prompt()
+            return chatClient.prompt()
                     .messages(messages)
                     .system(PromptProvider.HERTZBEAT_SYSTEM_PROMPT)
                     .toolCallbacks(toolCallbackProvider)
@@ -96,5 +110,15 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             log.error("Error setting up streaming chat: {}", e.getMessage(), e);
             return Flux.error(e);
         }
+    }
+
+    @Override
+    public boolean isConfigured() {
+        if (!isConfigured) {
+            GeneralConfig providerConfig = generalConfigDao.findByType("provider");
+            ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
+            isConfigured = modelProviderConfig != null && modelProviderConfig.isStatus();   
+        }
+        return isConfigured;
     }
 }

@@ -22,8 +22,9 @@ import { I18NService } from '@core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
+import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
 import { AiChatService, ChatMessage, ConversationDto } from '../../../service/ai-chat.service';
-import { OpenAiConfigService, OpenAiConfig, OpenAiConfigStatus } from '../../../service/openai-config.service';
+import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
 @Component({
@@ -46,10 +47,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   isOpenAiConfigured = false;
   showConfigModal = false;
   configLoading = false;
-  openAiConfig: OpenAiConfig = {
-    enable: false,
-    apiKey: ''
-  };
+  aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
+  providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
 
   constructor(
     private aiChatService: AiChatService,
@@ -58,12 +57,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     private i18n: I18NService,
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
-    private openAiConfigService: OpenAiConfigService
+    private generalConfigSvc: GeneralConfigService
   ) {}
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
-    this.checkOpenAiConfiguration();
+    this.checkAiConfiguration();
   }
 
   ngAfterViewChecked(): void {
@@ -74,10 +73,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Load all conversations
    */
   loadConversations(): void {
-    console.log('Loading conversations...');
     this.aiChatService.getConversations().subscribe({
       next: response => {
-        console.log('Conversations response:', response);
         if (response.code === 0 && response.data) {
           this.conversations = response.data;
           // If no current conversation, create a new one
@@ -107,10 +104,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Create a new conversation
    */
   createNewConversation(): void {
-    console.log('Creating new conversation...');
     this.aiChatService.createConversation().subscribe({
       next: response => {
-        console.log('Create conversation response:', response);
         if (response.code === 0 && response.data) {
           const newConversation = response.data;
           this.conversations.unshift(newConversation);
@@ -165,7 +160,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.aiChatService.getConversation(conversationId).subscribe({
       next: response => {
         this.isLoading = false;
-        console.log('Conversation history response:', response);
 
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
@@ -322,7 +316,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.scrollToBottom();
       },
       complete: () => {
-        console.log('Chat stream completed');
         this.isLoading = false;
         this.cdr.detectChanges();
 
@@ -428,61 +421,68 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Check OpenAI configuration status
+   * Check provider configuration status
    */
-  checkOpenAiConfiguration(): void {
-    this.openAiConfigService.getOpenAiConfigStatus().subscribe({
+  checkAiConfiguration(): void {
+    this.generalConfigSvc.getModelProviderConfig().subscribe({
       next: response => {
-        if (response.code === 0) {
-          this.isOpenAiConfigured = response.data.configured;
-          if (this.isOpenAiConfigured) {
+        if (response.code === 0 && response.data) {
+          this.aiProviderConfig = response.data;
+          // Ensure default values are set if not present
+          if (!this.aiProviderConfig.code) {
+            this.aiProviderConfig.code = 'openai';
+          }
+          if (!this.aiProviderConfig.baseUrl) {
+            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+            if (defaultProvider) {
+              this.aiProviderConfig.baseUrl = defaultProvider.defaultBaseUrl;
+            }
+          }
+          if (!this.aiProviderConfig.model) {
+            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+            if (defaultProvider) {
+              this.aiProviderConfig.model = defaultProvider.defaultModel;
+            }
+          }
+
+          if (response.data.enable) {
             this.loadConversations();
           } else {
-            this.showOpenAiConfigDialog(response.data);
+            this.showAiProviderConfigDialog(response.data.error);
           }
         } else {
-          console.error('Failed to check OpenAI configuration:', response.msg);
-          this.showOpenAiConfigDialog();
+          // Initialize with default values if no config exists
+          this.aiProviderConfig = new ModelProviderConfig();
+          this.showAiProviderConfigDialog();
         }
       },
       error: error => {
-        console.error('Error checking OpenAI configuration:', error);
-        this.showOpenAiConfigDialog();
+        console.error('Failed to load model provider config:', error);
+        this.aiProviderConfig = new ModelProviderConfig();
+        this.showAiProviderConfigDialog();
       }
     });
   }
 
   /**
-   * Show OpenAI configuration dialog
+   * Show ai configuration dialog
    */
-  showOpenAiConfigDialog(status?: OpenAiConfigStatus): void {
-    // Load existing configuration if available
-    this.loadOpenAiConfig();
-
+  showAiProviderConfigDialog(error?: string): void {
     let contentMessage = `
       <div style="margin-bottom: 16px;">
-        <p>To use AI Agent Chat, please configure your OpenAI API key.</p>
+        <p>To use AI Agent Chat, please configure your Model Provider.</p>
     `;
 
-    if (status && !status.validationPassed && status.validationMessage) {
+    if (error) {
       contentMessage += `
         <div style="margin-bottom: 12px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
-          <strong>Configuration Issue:</strong> ${status.validationMessage}
+          <strong>Configuration Issue:</strong> ${error}
         </div>
       `;
     }
 
-    contentMessage += `
-        <p>You can either:</p>
-        <ul>
-          <li>Configure it here (stored in database)</li>
-          <li>Add it to your application.yml file under <code>spring.ai.openai.api-key</code></li>
-        </ul>
-      </div>
-    `;
-
     const modalRef = this.modal.create({
-      nzTitle: 'OpenAI Configuration Required',
+      nzTitle: 'Ai Model Provider Configuration Required',
       nzContent: contentMessage,
       nzWidth: 600,
       nzClosable: false,
@@ -501,26 +501,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Load OpenAI configuration
-   */
-  loadOpenAiConfig(): void {
-    this.openAiConfigService.getOpenAiConfig().subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          this.openAiConfig = { ...this.openAiConfig, ...response.data };
-        }
-      },
-      error: error => {
-        console.error('Failed to load OpenAI config:', error);
-      }
-    });
-  }
-
-  /**
    * Show configuration modal
    */
   onShowConfigModal(): void {
-    this.loadOpenAiConfig();
+    this.checkAiConfiguration();
     this.showConfigModal = true;
   }
 
@@ -534,23 +518,39 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   /**
    * Save OpenAI configuration
    */
-  onSaveOpenAiConfig(): void {
-    if (!this.openAiConfig.apiKey.trim()) {
-      this.message.error('API Key is required');
+  onSaveAiProviderConfig(): void {
+    if (!this.aiProviderConfig.apiKey?.trim()) {
+      this.message.error('Please enter API Key');
+      return;
+    }
+
+    if (!this.aiProviderConfig.code?.trim()) {
+      this.message.error('Please select a provider');
+      return;
+    }
+
+    if (!this.aiProviderConfig.baseUrl?.trim()) {
+      this.message.error('Please enter Base URL');
+      return;
+    }
+
+    if (!this.aiProviderConfig.model?.trim()) {
+      this.message.error('Please enter Model');
       return;
     }
 
     // Always enable when saving an API key
-    this.openAiConfig.enable = true;
+    this.aiProviderConfig.enable = true;
+    this.aiProviderConfig.status = true;
 
     this.configLoading = true;
     this.message.info('Validating API key...', { nzDuration: 2000 });
 
-    this.openAiConfigService.saveOpenAiConfig(this.openAiConfig).subscribe({
+    this.generalConfigSvc.saveModelProviderConfig(this.aiProviderConfig).subscribe({
       next: response => {
         this.configLoading = false;
         if (response.code === 0) {
-          this.message.success('OpenAI API key validated and saved successfully!');
+          this.message.success('Model Provider configuration saved successfully!');
           this.showConfigModal = false;
           this.isOpenAiConfigured = true;
           this.loadConversations();
@@ -568,5 +568,33 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.message.error(`Failed to save configuration: ${error.message}`);
       }
     });
+  }
+
+  /**
+   * Handle provider selection change
+   */
+  onProviderChange(provider: string): void {
+    const selectedProvider = this.providerOptions.find(p => p.value === provider);
+    if (selectedProvider) {
+      this.aiProviderConfig.code = provider;
+      // Auto-fill default values if current values are empty
+      if (!this.aiProviderConfig.baseUrl) {
+        this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+      }
+      if (!this.aiProviderConfig.model) {
+        this.aiProviderConfig.model = selectedProvider.defaultModel;
+      }
+    }
+  }
+
+  /**
+   * Reset to default values for selected provider
+   */
+  resetToDefaults(): void {
+    const selectedProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+    if (selectedProvider) {
+      this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+      this.aiProviderConfig.model = selectedProvider.defaultModel;
+    }
   }
 }

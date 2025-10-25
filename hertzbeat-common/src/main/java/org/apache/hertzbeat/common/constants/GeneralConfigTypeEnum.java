@@ -55,5 +55,10 @@ public enum GeneralConfigTypeEnum {
     /**
      * system store config
      */
-    oss
+    oss,
+
+    /**
+     * model llm provider
+     */
+    provider
 }
