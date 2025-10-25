@@ -17,38 +17,10 @@
 
 package org.apache.hertzbeat.ai.agent.service;
 
-import org.apache.hertzbeat.ai.agent.event.OpenAiConfigChangeEvent;
-import org.apache.hertzbeat.ai.agent.pojo.dto.OpenAiConfigDto;
-
 /**
- * OpenAI Configuration Service
- * Consolidated service for OpenAI configuration, validation, and client factory management
+ * Ai Configuration Service
  */
-public interface OpenAiConfigService {
-
-    /**
-     * Save OpenAI configuration
-     * @param config OpenAI configuration
-     */
-    void saveConfig(OpenAiConfigDto config);
-
-    /**
-     * Get OpenAI configuration
-     * @return OpenAI configuration
-     */
-    OpenAiConfigDto getConfig();
-
-    /**
-     * Check if OpenAI is properly configured
-     * @return true if configured and enabled
-     */
-    boolean isConfigured();
-
-    /**
-     * Get effective OpenAI configuration (DB first, then YAML fallback)
-     * @return effective configuration or null if not configured
-     */
-    OpenAiConfigDto getEffectiveConfig();
+public interface AiConfigService {
 
     /**
      * Validate OpenAI API key by calling the OpenAI API
@@ -56,18 +28,6 @@ public interface OpenAiConfigService {
      * @return validation result with success status and message
      */
     ValidationResult validateApiKey(String apiKey);
-
-    /**
-     * Force reload of OpenAI configuration cache
-     * This method is typically called when configuration changes
-     */
-    void reloadConfig();
-
-    /**
-     * Handle OpenAI configuration change events
-     * @param event OpenAI configuration change event
-     */
-    void onOpenAiConfigChange(OpenAiConfigChangeEvent event);
 
     /**
      * Validation result class

@@ -33,4 +33,10 @@ public interface ChatClientProviderService {
      * @return Flux of string chunks from the LLM response
      */
     Flux<String> streamChat(ChatRequestContext context);
+
+    /**
+     * Check if provider is properly configured
+     * @return true if configured and enabled
+     */
+    boolean isConfigured();
 }

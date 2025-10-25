@@ -51,11 +51,11 @@ import java.util.stream.Collectors;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
- * Alert sender Configuration API
+ * Generate Configuration API
  */
 @RestController
 @RequestMapping(value = "/api/config", produces = {APPLICATION_JSON_VALUE})
-@Tag(name = "Alert sender Configuration API")
+@Tag(name = "Generate Configuration API")
 @Slf4j
 public class GeneralConfigController {
 
