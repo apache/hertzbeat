@@ -537,6 +537,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rowankid"><img src="https://avatars.githubusercontent.com/u/18652781?v=4?s=100" width="100px;" alt="Wenqi Luo"/><br /><sub><b>Wenqi Luo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/issues?q=author%3Arowankid" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/tuzuy"><img src="https://avatars.githubusercontent.com/u/95274591?v=4?s=100" width="100px;" alt="tuzuy"/><br /><sub><b>tuzuy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tuzuy" title="Code">💻</a> <a href="#design-tuzuy" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/carlpinto25"><img src="https://avatars.githubusercontent.com/u/117299909?v=4?s=100" width="100px;" alt="carl pinto"/><br /><sub><b>carl pinto</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=carlpinto25" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://cxhello.top/"><img src="https://avatars.githubusercontent.com/u/49056040?v=4?s=100" width="100px;" alt="cxhello"/><br /><sub><b>cxhello</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cxhello" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

@@ -2596,6 +2596,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "cxhello",
+      "name": "cxhello",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49056040?v=4",
+      "profile": "https://cxhello.top/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
