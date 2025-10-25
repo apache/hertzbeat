@@ -73,7 +73,7 @@ if [ -n "$SERVER_PORT" ]; then
         fi
     fi
 fi
-MAIN_CLASS="org.apache.hertzbeat.manager.Manager"
+MAIN_CLASS="org.apache.hertzbeat.startup.HertzBeatApplication"
 EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
 CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
 # log dir

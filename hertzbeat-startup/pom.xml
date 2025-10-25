@@ -130,7 +130,7 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>provided</scope>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Lombok -->
@@ -147,4 +147,218 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>apache-hertzbeat-${hzb.version}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>*.yml</include>
+                    <include>*.properties</include>
+                    <include>*.xml</include>
+                    <include>banner.txt</include>
+                    <include>define/**</include>
+                    <include>db/**</include>
+                    <include>templates/**</include>
+                    <include>**/*.html</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <classesDirectory>target/classes/</classesDirectory>
+                    <archive>
+                        <!--Exclude maven descriptors from generated JAR-->
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                        <manifest>
+                            <!--Main class of the project-->
+                            <mainClass>org.apache.hertzbeat.startup.HertzBeatApplication</mainClass>
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <!--Add third-party JARs to the classpath using maven-dependency-plugin-->
+                            <addClasspath>true</addClasspath>
+                            <!--Location of external dependency JARs-->
+                            <classpathPrefix>lib/</classpathPrefix>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>. config</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!--Critical plugin, assembly plugin provided by maven, should be placed last-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven-assembly-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>make-zip</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>../dist</outputDirectory>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-docker-zip</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>../dist</outputDirectory>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-docker.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-docker-compose-script</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>../dist</outputDirectory>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-docker-compose.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>runtime</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven-assembly-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>make-macos-arm64</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-macos-arm64.xml</descriptor>
+                                    </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-macos-amd64</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-macos-amd64.xml</descriptor>
+                                    </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-linux-arm64</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-linux-arm64.xml</descriptor>
+                                    </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-linux-amd64</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-linux-amd64.xml</descriptor>
+                                    </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-windows-64</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-windows-64.xml</descriptor>
+                                    </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-docker-compose-script</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-docker-compose.xml</descriptor>
+                                    </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>
