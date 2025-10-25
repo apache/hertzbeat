@@ -24,17 +24,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test case for {@link ParamDefineDao}
  */
 @Transactional
-class ParamDefineDaoTest extends AbstractSpringIntegrationTest {
+@DataJpaTest
+class ParamDefineDaoTest {
 
     @Resource
     private ParamDefineDao paramDefineDao;

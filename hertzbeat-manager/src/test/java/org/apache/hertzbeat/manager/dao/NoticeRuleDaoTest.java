@@ -24,17 +24,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test case for {@link NoticeRuleDao}
  */
 @Transactional
-class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
+@DataJpaTest
+class NoticeRuleDaoTest {
 
     @Resource
     private NoticeRuleDao noticeRuleDao;

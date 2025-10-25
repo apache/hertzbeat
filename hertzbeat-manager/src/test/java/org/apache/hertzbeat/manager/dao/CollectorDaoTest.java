@@ -22,10 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import javax.annotation.Resource;
 import org.apache.hertzbeat.common.entity.manager.Collector;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -34,7 +34,8 @@ import java.util.List;
  * Test case for {@link CollectorDao}
  */
 @Transactional
-public class CollectorDaoTest extends AbstractSpringIntegrationTest {
+@DataJpaTest
+public class CollectorDaoTest {
 
     @Resource
     private CollectorDao collectorDao;

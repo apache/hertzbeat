@@ -27,17 +27,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.manager.Label;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test case for {@link LabelDao}
  */
 @Transactional
-class LabelDaoTest extends AbstractSpringIntegrationTest {
+@DataJpaTest
+class LabelDaoTest {
 
     @Resource
     private LabelDao labelDao;

@@ -29,18 +29,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test case for {@link MonitorDao}
  */
 @Transactional
-class MonitorDaoTest extends AbstractSpringIntegrationTest {
+@DataJpaTest
+class MonitorDaoTest {
 
     @Resource
     private MonitorDao monitorDao;

@@ -19,9 +19,9 @@ package org.apache.hertzbeat.manager.dao;
 
 import jakarta.annotation.Resource;
 import org.apache.hertzbeat.common.entity.manager.MetricsFavorite;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +41,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Test case for {@link MetricsFavoriteDao}
  */
 @Transactional
+@DataJpaTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
+class MetricsFavoriteDaoTest {
 
     @Resource
     private MetricsFavoriteDao metricsFavoriteDao;

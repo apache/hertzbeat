@@ -20,11 +20,11 @@ package org.apache.hertzbeat.manager.service;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,11 +39,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Test case for {@link AlertDefineService}
  */
-public class AlertDefineServiceIntegrationTest extends AbstractSpringIntegrationTest {
+public class AlertDefineServiceTest {
 
-    @Autowired
+    @InjectMocks
     private AlertDefineService alertDefineService;
-    @Autowired
+    
+    @Mock
     private AlertDefineDao alertDefineDao;
 
     private List<Long> createdIds = new ArrayList<>();
