@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.startup.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,18 +24,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
 import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
+import org.apache.hertzbeat.startup.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test case for {@link NoticeRuleDao}
  */
 @Transactional
-@DataJpaTest
-class NoticeRuleDaoTest {
+class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
 
     @Resource
     private NoticeRuleDao noticeRuleDao;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.startup.dao;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,18 +27,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.manager.Label;
+import org.apache.hertzbeat.manager.dao.LabelDao;
+import org.apache.hertzbeat.startup.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test case for {@link LabelDao}
  */
 @Transactional
-@DataJpaTest
-class LabelDaoTest {
+class LabelDaoTest extends AbstractSpringIntegrationTest {
 
     @Resource
     private LabelDao labelDao;

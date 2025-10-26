@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.startup.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -25,18 +25,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.startup.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Test case for {@link ParamDao}
  */
 @Transactional
-@DataJpaTest
-class ParamDaoTest {
+class ParamDaoTest extends AbstractSpringIntegrationTest {
 
     @Resource
     private ParamDao paramDao;

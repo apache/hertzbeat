@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.startup.dao;
 
 import jakarta.annotation.Resource;
 import org.apache.hertzbeat.common.entity.manager.MetricsFavorite;
+import org.apache.hertzbeat.manager.dao.MetricsFavoriteDao;
+import org.apache.hertzbeat.startup.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -41,9 +43,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Test case for {@link MetricsFavoriteDao}
  */
 @Transactional
-@DataJpaTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class MetricsFavoriteDaoTest {
+class MetricsFavoriteDaoTest extends AbstractSpringIntegrationTest {
 
     @Resource
     private MetricsFavoriteDao metricsFavoriteDao;
