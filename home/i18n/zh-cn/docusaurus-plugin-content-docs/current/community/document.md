@@ -51,12 +51,12 @@ git clone git@github.com:<your-github-user-name>/hertzbeat.git
 在您编写了相关 MD 文章之后，您可以在本地执行以下命令，预先检查 MD 的文章内容是否符合要求，减少 review 的工作量，节省您的时间：
 
 ```shell
-cd home && yarn
+cd home && pnpm install
 
-yarn md-lint
+pnpm md-lint
 
-# 如果文档错误，您可以使用 yarn md-lint-fix 修复
-yarn md-lint-fix
+# 如果文档错误，您可以使用 pnpm md-lint-fix 修复
+pnpm md-lint-fix
 ```
 
 MD 文章的相关格式规则您可以参考：[Markdown-lint-rules](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)

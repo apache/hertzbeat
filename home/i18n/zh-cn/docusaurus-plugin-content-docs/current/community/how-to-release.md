@@ -11,7 +11,7 @@ sidebar_position: 4
 此发布过程在 UbuntuOS(可在 Windows Mac) 中进行操作，并需要以下环境：
 
 - JDK 17
-- Node18 Yarn
+- Node18 pnpm
 - Apache Maven 3.x
 - GnuPG 2.x
 - Git
@@ -188,9 +188,9 @@ git checkout release-1.7.3-rc1
 > HertzBeat 编译打包，在项目`web-app`目录下执行以下命令，
 
 ```shell
-yarn install
+pnpm install
 
-yarn package
+pnpm package
 ```
 
 > 在项目根目录下执行以下命令
