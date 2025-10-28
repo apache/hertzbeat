@@ -42,6 +42,12 @@
         <!-- HertzBeat modules -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-startup</artifactId>
+            <version>${hertzbeat.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-manager</artifactId>
             <version>${hertzbeat.version}</version>
             <scope>test</scope>
@@ -100,61 +106,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <!-- Copy manager resources to test classpath -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>${maven.dependency.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>unpack-manager-resources</id>
-                        <phase>generate-test-resources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.apache.hertzbeat</groupId>
-                                    <artifactId>hertzbeat-manager</artifactId>
-                                    <version>${hertzbeat.version}</version>
-                                    <type>jar</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-                                    <includes>
-                                        define/**,
-                                        db/**,
-                                        templates/**,
-                                        grafana/**,
-                                        *.yml,
-                                        *.xml,
-                                        *.txt
-                                    </includes>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <!-- Ensure test resources are processed -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>${maven.resources.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>copy-test-resources</id>
-                        <phase>generate-test-resources</phase>
-                        <goals>
-                            <goal>testResources</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

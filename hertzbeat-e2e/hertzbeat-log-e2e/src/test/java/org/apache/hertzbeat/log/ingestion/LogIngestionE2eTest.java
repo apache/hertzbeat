@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /**
  * E2E tests for log ingestion.
  */
-@SpringBootTest(classes = org.apache.hertzbeat.manager.Manager.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = org.apache.hertzbeat.startup.HertzBeatApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LogIngestionE2eTest {
