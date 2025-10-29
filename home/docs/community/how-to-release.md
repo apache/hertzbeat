@@ -11,7 +11,7 @@ This tutorial describes in detail how to release Apache HertzBeat™, take the r
 This release process is operated in the UbuntuOS(Windows,Mac), and the following tools are required:
 
 - JDK 17
-- Node18 Yarn
+- Node18 pnpm
 - Apache Maven 3.x
 - GnuPG 2.x
 - Git
@@ -188,9 +188,9 @@ git checkout release-1.7.3-rc1
 > Build HertzBeat server binary, run script in `web-app`
 
 ```shell
-yarn install
+pnpm install
 
-yarn package
+pnpm package
 ```
 
 > run script in root

@@ -20,33 +20,33 @@ sidebar_label: Development
 
 ### Frontend start
 
-1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
+1. Need `Node pnpm` Environment, Make sure `Node.js >= 18`
 
 2. Cd to the `web-app` directory: `cd web-app`
 
-3. Install yarn if not existed `npm install -g yarn`
+3. Install pnpm if not existed `npm install -g pnpm`
 
-4. Install Dependencies: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. Install Dependencies: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. After the local backend is started, start the local frontend in the web-app directory: `yarn start`
+5. After the local backend is started, start the local frontend in the web-app directory: `pnpm start`
 
 6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
 ## Build HertzBeat binary package
 
-> Requires `maven3+`, `java17`, `node` and `yarn` environments.
+> Requires `maven3+`, `java17`, `node` and `pnpm` environments.
 
 ### Frontend build
 
-1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
+1. Need `Node pnpm` Environment, Make sure `Node.js >= 18`
 
 2. Cd to the `web-app` directory: `cd web-app`
 
-3. Install yarn if not existed `npm install -g yarn`
+3. Install pnpm if not existed `npm install -g pnpm`
 
-4. Install Dependencies: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. Install Dependencies: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. Build web-app: `yarn package`
+5. Build web-app: `pnpm package`
 
 ### Backend build
 

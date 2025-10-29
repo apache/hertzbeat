@@ -64,15 +64,15 @@ limitations under the License.
 
 #### 前端启动
 
-1. 需要 `nodejs yarn` 环境, 确保 `Node.js >= 18`
+1. 需要 `nodejs pnpm` 环境, 确保 `Node.js >= 18`
 
 2. 进入 `web-app` 目录: `cd web-app`
 
-3. 安装 yarn: `npm install -g yarn`
+3. 安装 pnpm: `npm install -g pnpm`
 
-4. 在前端工程目录 `web-app` 下执行: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. 在前端工程目录 `web-app` 下执行: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. 待本地后端启动后，在 web-app 目录下启动本地前端 `yarn start`
+5. 待本地后端启动后，在 web-app 目录下启动本地前端 `pnpm start`
 
 6. 浏览器访问 localhost:4200 即可开始，默认账号密码 **admin/hertzbeat**
 
