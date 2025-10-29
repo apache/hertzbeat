@@ -61,6 +61,7 @@ kubectl create token --duration=1000h cluster-admin
 | capacity_memory    | None        | Memory capacity       |
 | allocatable_memory | None        | Memory                | allocated |
 | creation_time      | None        | Node creation time    |
+| uid                | None        | UUID unique identifier|
 
 #### metric Collection: namespaces
 
@@ -69,6 +70,7 @@ kubectl create token --duration=1000h cluster-admin
 | namespace     | None        | namespace name        |
 | status        | None        | Status                |
 | creation_time | None        | Created               |
+| uid           | None        | UUID unique identifier|
 
 #### metric collection: pods
 
@@ -82,6 +84,7 @@ kubectl create token --duration=1000h cluster-admin
 | pod_ip        | None        | pod ip                        |
 | creation_time | None        | Pod creation time             |
 | start_time    | None        | Pod startup time              |
+| uid           | None        | UUID unique identifier        |
 
 #### metric Collection: services
 
@@ -93,3 +96,4 @@ kubectl create token --duration=1000h cluster-admin
 | cluster_ip    | None        | cluster ip                                                |
 | selector      | None        | tag selector matches                                      |
 | creation_time | None        | Created                                                   |
+| uid           | None        | UUID unique identifier                                    |
