@@ -70,7 +70,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-manager</artifactId>
+            <artifactId>hertzbeat-startup</artifactId>
             <version>${hertzbeat.version}</version>
             <scope>test</scope>
         </dependency>
