@@ -252,7 +252,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       setTimeout(() => {
         const offlineMessage: ChatMessage = {
           content:
-            'I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI Agent module is running and try again later.',
+            'I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI module is running and try again later.',
           role: 'assistant',
           timestamp: new Date()
         };

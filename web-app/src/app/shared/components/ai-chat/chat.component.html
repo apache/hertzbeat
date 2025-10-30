@@ -62,7 +62,7 @@
         <h2 *ngIf="currentConversation">
           {{ getConversationTitle(currentConversation) }}
         </h2>
-        <h2 *ngIf="!currentConversation"> HertzBeat AI Agent </h2>
+        <h2 *ngIf="!currentConversation"> HertzBeat AI </h2>
       </div>
     </div>
 
@@ -82,7 +82,7 @@
       <div *ngIf="messages.length === 0 && !isLoading" class="welcome-message">
         <div class="welcome-content">
           <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
-          <h3>Welcome to HertzBeat AI Agent!</h3>
+          <h3>Welcome to HertzBeat AI!</h3>
           <p>
             I'm your intelligent monitoring companion, ready to help you manage and optimize your infrastructure monitoring. You can ask me
             to:
