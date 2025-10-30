@@ -341,7 +341,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 
 - 检查 Apache SVN 提交结果
 
-> 在浏览器中访问 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/> , 检查是否有新的版本内容
+> 在浏览器中访问 <https://dist.apache.org/repos/dist/dev/hertzbeat/> , 检查是否有新的版本内容
 
 ## 4. 进入社区投票阶段
 

@@ -26,7 +26,7 @@ docker stop hertzbeat && docker rm hertzbeat
 
 ### 3. Upgrade Database Schema
 
-Navigate to [HertzBeat GitHub Migration Scripts](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration), select the appropriate `V160__update_column.sql` file under your database type (e.g., MySQL), and execute it in MySQL.
+Navigate to [HertzBeat GitHub Migration Scripts](https://github.com/apache/hertzbeat/tree/master/hertzbeat-startup/src/main/resources/db/migration), select the appropriate `V160__update_column.sql` file under your database type (e.g., MySQL), and execute it in MySQL.
 
 ### 4. Restart HertzBeat with the New Image
 

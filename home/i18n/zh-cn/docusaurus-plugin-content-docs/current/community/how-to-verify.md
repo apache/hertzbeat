@@ -8,7 +8,7 @@ sidebar_position: 4
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/>
+在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/hertzbeat/>
 
 ### 1. 下载候选版本到本地
 
@@ -16,9 +16,9 @@ sidebar_position: 4
 
 ```shell
 #如果本地有svn，可以clone到本地 
-svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/
+svn co https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/
 #或者 直接下载物料文件
-wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/xxx.xxx
+wget https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/xxx.xxx
 
 ```
 
