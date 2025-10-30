@@ -20,11 +20,11 @@ package org.apache.hertzbeat.ai.tools.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.adapters.AlertServiceAdapter;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
 import org.apache.hertzbeat.ai.tools.AlertTools;
 import org.apache.hertzbeat.ai.utils.UtilityClass;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +41,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class AlertToolsImpl implements AlertTools {
     @Autowired
-    private AlertServiceAdapter alertServiceAdapter;
+    private AlertService alertService;
 
     @Override
     @Tool(name = "query_alerts", description = """
@@ -116,7 +116,7 @@ public class AlertToolsImpl implements AlertTools {
 
             // Handle different alert types
             if ("single".equalsIgnoreCase(alertType) || "both".equalsIgnoreCase(alertType)) {
-                Page<SingleAlert> singleResult = alertServiceAdapter.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
+                Page<SingleAlert> singleResult = alertService.getSingleAlerts(status, search, sort, order, pageIndex, pageSize);
                 
                 response.append("SINGLE ALERTS:\n");
                 response.append("Found ").append(singleResult.getContent().size()).append(" single alerts (Total: ").append(singleResult.getTotalElements()).append("):\n\n");
@@ -154,7 +154,7 @@ public class AlertToolsImpl implements AlertTools {
                     response.append("\n");
                 }
                 
-                Page<GroupAlert> groupResult = alertServiceAdapter.getGroupAlerts(status, search, sort, order, pageIndex, pageSize);
+                Page<GroupAlert> groupResult = alertService.getGroupAlerts(status, search, sort, order, pageIndex, pageSize);
                 
                 response.append("GROUP ALERTS:\n");
                 response.append("Found ").append(groupResult.getContent().size()).append(" group alerts (Total: ").append(groupResult.getTotalElements()).append("):\n\n");
@@ -205,7 +205,7 @@ public class AlertToolsImpl implements AlertTools {
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in get_alerts_summary tool: {}", subjectSum);
 
-            AlertSummary summary = alertServiceAdapter.getAlertsSummary();
+            AlertSummary summary = alertService.getAlertsSummary();
 
             StringBuilder response = new StringBuilder();
             response.append("ALERTS SUMMARY\n");

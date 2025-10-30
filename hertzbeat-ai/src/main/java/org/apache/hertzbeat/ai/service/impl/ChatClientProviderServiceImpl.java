@@ -21,7 +21,7 @@ package org.apache.hertzbeat.ai.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.config.PromptProvider;
 import org.apache.hertzbeat.ai.pojo.dto.MessageDto;
-import org.apache.hertzbeat.ai.pojo.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;

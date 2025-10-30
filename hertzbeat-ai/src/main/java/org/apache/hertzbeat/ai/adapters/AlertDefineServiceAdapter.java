@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.ai.adapters;
 
-import org.apache.hertzbeat.ai.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
