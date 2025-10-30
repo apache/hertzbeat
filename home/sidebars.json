@@ -66,6 +66,8 @@
       "items": [
         "help/guide",
         "help/security_model",
+        "help/ai_agent",
+        "help/mcp_sse_server",
         {
           "type": "category",
           "label": "use-case",
@@ -287,9 +289,7 @@
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
-        "help/mcp_sse_server",
         "help/collector",
-        "help/ai_agent_chat",
         "help/risc-v",
         "help/issue"
       ]

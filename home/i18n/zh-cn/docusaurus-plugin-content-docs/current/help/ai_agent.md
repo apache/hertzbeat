@@ -1,7 +1,7 @@
 ---
-id: ai_agent_chat
-title: AI 智能助手用户指南
-sidebar_label: AI 智能助手
+id: ai_agent
+title: HertzBeat AI 智能助手用户指南
+sidebar_label: HertzBeat AI
 keywords: [AI, 聊天, 智能助手, 监控, AI Agent, OpenAI]
 ---
 
@@ -9,7 +9,7 @@ keywords: [AI, 聊天, 智能助手, 监控, AI Agent, OpenAI]
 
 ## 概述
 
-AI 智能助手功能提供了一个交互式聊天界面，您可以：
+HertzBeat AI 智能助手功能提供了一个交互式聊天界面，您可以：
 
 **监控器管理：**
 

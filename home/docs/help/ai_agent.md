@@ -1,7 +1,7 @@
 ---
-id: ai_agent_chat
-title: AI Agent User Guide
-sidebar_label: AI Agent
+id: ai_agent
+title: HertzBeat AI Agent User Guide
+sidebar_label: HertzBeat AI
 keywords: [AI, Chat, Agent, Monitoring, AI Agent, OpenAI]
 ---
 
@@ -9,7 +9,7 @@ keywords: [AI, Chat, Agent, Monitoring, AI Agent, OpenAI]
 
 ## Overview
 
-The AI Agent feature provides an interactive chat interface where you can:
+The HertzBeat AI Agent feature provides an interactive chat interface where you can:
 
 **Monitor Management:**
 

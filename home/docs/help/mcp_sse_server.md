@@ -1,7 +1,7 @@
 ---
 id: mcp_sse_server
-title: MCP SSE Server
-sidebar_label: MCP SSE Server
+title: MCP Server
+sidebar_label: MCP Server
 keywords: [MCP, SSE, streaming, server]
 ---
 
