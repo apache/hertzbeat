@@ -117,7 +117,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         if (!isConfigured) {
             GeneralConfig providerConfig = generalConfigDao.findByType("provider");
             ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-            isConfigured = modelProviderConfig != null && modelProviderConfig.isStatus();   
+            isConfigured = modelProviderConfig != null && modelProviderConfig.getApiKey() != null;   
         }
         return isConfigured;
     }

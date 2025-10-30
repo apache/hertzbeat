@@ -32,15 +32,6 @@ import lombok.NoArgsConstructor;
 @Schema(description = "LLM Model Provider configuration")
 public class ModelProviderConfig {
     
-    @Schema(title = "Enable Provider", description = "Whether Provider is enabled", example = "true")
-    private boolean enable = false;
-    
-    @Schema(title = "Check the provider available status")
-    private boolean status = false;
-    
-    @Schema(title = "The error message when provider status check failed")
-    private String error;
-    
     @Schema(title = "Model type, text-generate, vision")
     private String type;
     

@@ -72,12 +72,7 @@ public class LlmConfig {
         }
         ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
 
-        if (!modelProviderConfig.isEnable() || !modelProviderConfig.isStatus()) {
-            log.warn("LLM Provider is not enabled or status is not valid, ChatClient bean will not be created");
-            return null;
-        }
-
-        if (modelProviderConfig.getApiKey() == null) {
+        if (modelProviderConfig == null || modelProviderConfig.getApiKey() == null) {
             log.warn("LLM Provider configuration is incomplete, ChatClient bean will not be created");
             return null;
         }

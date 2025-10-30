@@ -249,7 +249,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
     // Check if this is a fallback conversation
     if (this.currentConversation?.conversationId.startsWith('fallback-')) {
-      console.log('Fallback mode - showing offline message');
       setTimeout(() => {
         const offlineMessage: ChatMessage = {
           content:
@@ -276,11 +275,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.scrollToBottom();
 
     // Send to AI service
-    console.log('Sending message to AI service:', messageContent);
     this.aiChatService.streamChat(messageContent, this.currentConversation?.conversationId).subscribe({
       next: chunk => {
-        console.log('Received stream chunk:', chunk);
-
         // Find the last assistant message and append content
         const lastMessage = this.messages[this.messages.length - 1];
         if (lastMessage && lastMessage.role === 'assistant') {
@@ -444,12 +440,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
               this.aiProviderConfig.model = defaultProvider.defaultModel;
             }
           }
-
-          if (response.data.enable) {
-            this.loadConversations();
-          } else {
-            this.showAiProviderConfigDialog(response.data.error);
-          }
+          this.loadConversations();
         } else {
           // Initialize with default values if no config exists
           this.aiProviderConfig = new ModelProviderConfig();
@@ -539,12 +530,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       return;
     }
 
-    // Always enable when saving an API key
-    this.aiProviderConfig.enable = true;
-    this.aiProviderConfig.status = true;
-
     this.configLoading = true;
-    this.message.info('Validating API key...', { nzDuration: 2000 });
 
     this.generalConfigSvc.saveModelProviderConfig(this.aiProviderConfig).subscribe({
       next: response => {
