@@ -30,6 +30,7 @@ import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { MarkdownPipe } from 'ngx-markdown';
 
 import { ChatComponent } from './chat.component';
@@ -50,7 +51,8 @@ import { ChatComponent } from './chat.component';
     NzModalModule,
     NzSelectModule,
     NzSpinModule,
-    MarkdownPipe
+    MarkdownPipe,
+    NzTooltipDirective
   ],
   exports: [ChatComponent]
 })

@@ -24,7 +24,7 @@
       <h3>{{ 'menu.extras.ai.chat' | i18n }}</h3>
       <button nz-button nzType="primary" nzSize="small" (click)="createNewConversation()" [disabled]="isSendingMessage">
         <i nz-icon nzType="plus"></i>
-        New Chat
+        {{ 'ai.chat.new-chat' | i18n }}
       </button>
     </div>
 
@@ -62,7 +62,7 @@
         <h2 *ngIf="currentConversation">
           {{ getConversationTitle(currentConversation) }}
         </h2>
-        <h2 *ngIf="!currentConversation"> HertzBeat AI </h2>
+        <h2 *ngIf="!currentConversation">{{ 'ai.chat.title' | i18n }}</h2>
       </div>
     </div>
 
@@ -75,27 +75,26 @@
             <i nz-icon nzType="loading" nzSpin></i>
           </ng-template>
         </nz-spin>
-        <p>Loading conversation history...</p>
+        <p>{{ 'ai.chat.loading' | i18n }}</p>
       </div>
 
       <!-- Welcome message -->
       <div *ngIf="messages.length === 0 && !isLoadingConversations" class="welcome-message">
         <div class="welcome-content">
           <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
-          <h3>Welcome to HertzBeat AI!</h3>
-          <p>
-            I'm your intelligent monitoring companion, ready to help you manage and optimize your infrastructure monitoring. You can ask me
-            to:
+          <h3 class="welcome-title">{{ 'ai.chat.welcome.title' | i18n }}</h3>
+          <p class="welcome-description">
+            {{ 'ai.chat.welcome.description' | i18n }}
           </p>
-          <ul>
-            <li>🔍 Query and manage monitors by status, type, or labels</li>
-            <li>➕ Add new monitors for websites, APIs, databases, and services</li>
-            <li>🚨 View and analyze alerts with comprehensive filtering</li>
-            <li>📊 Access real-time and historical metrics data</li>
-            <li>⚙️ Configure alert rules and thresholds</li>
-            <li>⚡ Troubleshoot performance issues across your infrastructure</li>
+          <ul class="capabilities-list">
+            <li>{{ 'ai.chat.welcome.capabilities.monitor' | i18n }}</li>
+            <li>{{ 'ai.chat.welcome.capabilities.manage' | i18n }}</li>
+            <li>{{ 'ai.chat.welcome.capabilities.metrics' | i18n }}</li>
+            <li>{{ 'ai.chat.welcome.capabilities.alerts' | i18n }}</li>
+            <li>{{ 'ai.chat.welcome.capabilities.config' | i18n }}</li>
+            <li>{{ 'ai.chat.welcome.capabilities.troubleshoot' | i18n }}</li>
           </ul>
-          <p>Ask me anything about your monitoring setup!</p>
+          <p class="welcome-question">{{ 'ai.chat.welcome.question' | i18n }}</p>
         </div>
       </div>
 
@@ -106,7 +105,7 @@
         </div>
         <div class="message-content">
           <div class="message-header">
-            <span class="message-role">{{ message.role === 'user' ? 'You' : 'AI Assistant' }}</span>
+            <span class="message-role">{{ message.role === 'user' ? ('ai.chat.user' | i18n) : ('ai.chat.assistant' | i18n) }}</span>
             <span class="message-time">{{ formatTime(message.timestamp) }}</span>
             <span
               *ngIf="message.role === 'assistant' && isSendingMessage && i === messages.length - 1 && message.content !== ''"
@@ -118,7 +117,7 @@
           </div>
           <div class="message-text" [innerHTML]="message.content"></div>
           <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
-            <span>AI is thinking...</span>
+            <span>{{ 'ai.chat.typing' | i18n }}</span>
           </div>
         </div>
       </div>
@@ -133,26 +132,20 @@
             [(ngModel)]="newMessage"
             (keypress)="onKeyPress($event)"
             [disabled]="isSendingMessage"
-            placeholder="Ask me anything about monitoring..."
+            placeholder="{{ 'ai.chat.input.placeholder' | i18n }}"
             rows="3"
             style="resize: none"
           ></textarea>
         </nz-textarea-count>
-        <button
-          nz-button
-          nzType="primary"
-          (click)="sendMessage()"
-          [disabled]="!newMessage.trim() || isSendingMessage"
-          class="send-button"
-        >
+        <button nz-button nzType="primary" (click)="sendMessage()" [disabled]="!newMessage.trim() || isSendingMessage" class="send-button">
           <i nz-icon [nzType]="isSendingMessage ? 'loading' : 'send'" [nzSpin]="isSendingMessage"></i>
         </button>
       </div>
       <div class="input-hint">
-        <small>Press Enter to send, Shift+Enter for new line</small>
+        <small>{{ 'ai.chat.input.hint' | i18n }}</small>
         <button nz-button nzType="link" nzSize="small" (click)="onShowConfigModal()" style="float: right">
           <i nz-icon nzType="setting"></i>
-          Modify API Key
+          {{ 'ai.chat.modify-api-key' | i18n }}
         </button>
       </div>
     </div>
@@ -162,26 +155,26 @@
 <!-- OpenAI Configuration Modal -->
 <nz-modal
   [(nzVisible)]="showConfigModal"
-  nzTitle="AI Provider Configuration"
+  [nzTitle]="'ai.chat.config.title' | i18n"
   (nzOnCancel)="onCloseConfigModal()"
   (nzOnOk)="onSaveAiProviderConfig()"
   nzMaskClosable="false"
   [nzClosable]="false"
   nzWidth="700px"
   [nzOkLoading]="configLoading"
-  nzOkText="Save"
-  nzCancelText="Cancel"
+  [nzOkText]="'ai.chat.config.save' | i18n"
+  [nzCancelText]="'ai.chat.config.cancel' | i18n"
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form nzLayout="vertical">
       <!-- Provider Selection -->
       <nz-form-item>
-        <nz-form-label nzRequired="true">AI Provider</nz-form-label>
-        <nz-form-control nzErrorTip="Please select an AI provider">
+        <nz-form-label nzRequired="true">{{ 'ai.chat.config.provider' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'ai.chat.config.provider.required' | i18n">
           <nz-select
             [(ngModel)]="aiProviderConfig.code"
             name="provider"
-            nzPlaceHolder="Select AI Provider"
+            [nzPlaceHolder]="'ai.chat.config.provider.help' | i18n"
             (ngModelChange)="onProviderChange($event)"
             style="width: 100%"
           >
@@ -193,16 +186,16 @@
 
       <!-- API Key -->
       <nz-form-item>
-        <nz-form-label nzRequired="true">API Key</nz-form-label>
-        <nz-form-control nzErrorTip="API Key is required">
+        <nz-form-label nzRequired="true">{{ 'ai.chat.config.api-key' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'ai.chat.config.api-key.required' | i18n">
           <input nz-input [(ngModel)]="aiProviderConfig.apiKey" name="apiKey" type="password" placeholder="sk-..." required />
-          <p class="form-help">Your Provider API key. The key will be validated when saved.</p>
+          <p class="form-help">{{ 'ai.chat.config.api-key.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
 
       <!-- Base URL -->
       <nz-form-item>
-        <nz-form-label>Base URL</nz-form-label>
+        <nz-form-label>{{ 'ai.chat.config.base-url' | i18n }}</nz-form-label>
         <nz-form-control>
           <nz-input-group [nzSuffix]="resetBtn">
             <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1" />
@@ -212,23 +205,23 @@
                 nzType="link"
                 nzSize="small"
                 (click)="resetToDefaults()"
-                nzTooltipTitle="Reset to default values"
+                [nzTooltipTitle]="'ai.chat.config.reset' | i18n"
                 nz-tooltip
               >
                 <i nz-icon nzType="reload"></i>
               </button>
             </ng-template>
           </nz-input-group>
-          <p class="form-help">Custom API endpoint URL. Leave empty to use default for selected provider.</p>
+          <p class="form-help">{{ 'ai.chat.config.base-url.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
 
       <!-- Model -->
       <nz-form-item>
-        <nz-form-label>Model</nz-form-label>
+        <nz-form-label>{{ 'ai.chat.config.model' | i18n }}</nz-form-label>
         <nz-form-control>
           <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" placeholder="gpt-4" />
-          <p class="form-help">Model name to use. Leave empty to use default for selected provider.</p>
+          <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
     </form>

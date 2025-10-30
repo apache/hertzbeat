@@ -299,7 +299,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (lastMessage && lastMessage.role === 'assistant') {
           // Accumulate the content for streaming effect
           lastMessage.content += chunk.content;
-          lastMessage.timestamp = chunk.timestamp instanceof Date ? chunk.timestamp : new Date();
+          lastMessage.timestamp = chunk.timestamp;
 
           this.cdr.detectChanges();
           this.scrollToBottom();
@@ -388,9 +388,6 @@ export class ChatComponent implements OnInit, OnDestroy {
    * Format time
    */
   formatTime(date: Date): string {
-    if (!(date instanceof Date)) {
-      date = new Date(date);
-    }
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
