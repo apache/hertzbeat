@@ -87,6 +87,12 @@
             <artifactId>hertzbeat-remoting</artifactId>
         </dependency>
 
+        <!-- HertzBeat ai -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-ai</artifactId>
+        </dependency>
+
         
         <!-- Jackson -->
         <dependency>
