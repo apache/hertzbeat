@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { I18NService } from '@core';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -32,7 +32,7 @@ import { ThemeService } from '../../../service/theme.service';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.less']
 })
-export class ChatComponent implements OnInit, AfterViewChecked {
+export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
   conversations: ConversationDto[] = [];
@@ -42,6 +42,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   isLoading = false;
   sidebarCollapsed = false;
   theme: string = 'default';
+  private scrollTimeout: any;
 
   // OpenAI Configuration
   isOpenAiConfigured = false;
@@ -65,8 +66,22 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.checkAiConfiguration();
   }
 
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
+  ngOnDestroy(): void {
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+    }
+  }
+
+  /**
+   * Debounced scroll to bottom to improve performance
+   */
+  private scrollToBottomDebounced(): void {
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+    }
+    this.scrollTimeout = setTimeout(() => {
+      this.scrollToBottom();
+    }, 100);
   }
 
   /**
@@ -403,13 +418,19 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Scroll to bottom of messages
+   * Scroll to bottom of messages with smooth animation
    */
   private scrollToBottom(): void {
     try {
       if (this.messagesContainer) {
         const element = this.messagesContainer.nativeElement;
-        element.scrollTop = element.scrollHeight;
+        // Use requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
+          element.scrollTo({
+            top: element.scrollHeight,
+            behavior: 'smooth'
+          });
+        });
       }
     } catch (err) {
       console.error('Error scrolling to bottom:', err);

@@ -21,7 +21,9 @@
 
 .chat-container {
   display: flex;
-  height: 80vh; // Use viewport height for modal context
+  height: 100%;
+  min-height: 500px;
+  max-height: 80vh;
   background: @layout-body-background;
 
   .chat-sidebar {
@@ -54,6 +56,25 @@
     .conversation-list {
       flex: 1;
       overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: @border-color-base transparent;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: @border-color-base;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb:hover {
+        background: @border-color-split;
+      }
 
       .conversation-item {
         padding: 12px 16px;
@@ -134,6 +155,26 @@
       padding: 16px;
       overflow-y: auto;
       background: @layout-body-background;
+      scrollbar-width: thin;
+      scrollbar-color: @border-color-base transparent;
+      scroll-behavior: smooth;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: @border-color-base;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb:hover {
+        background: @border-color-split;
+      }
 
       .loading-container {
         display: flex;
@@ -395,6 +436,7 @@
       height: 100%;
       z-index: 100;
       box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease;
 
       &.collapsed {
         transform: translateX(-100%);
@@ -410,6 +452,46 @@
             max-width: 85%;
           }
         }
+      }
+
+      .input-area {
+        .input-container {
+          flex-direction: column;
+          gap: 8px;
+
+          .send-button {
+            align-self: flex-end;
+            width: auto;
+            min-width: 80px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Extra small devices
+@media (max-width: 480px) {
+  .chat-container {
+    min-height: 400px;
+    max-height: 90vh;
+
+    .chat-main {
+      .messages-container {
+        padding: 12px;
+
+        .message {
+          margin-bottom: 16px;
+
+          .message-content {
+            max-width: 90%;
+            padding: 10px 12px;
+          }
+        }
+      }
+
+      .input-area {
+        padding: 12px;
       }
     }
   }
@@ -591,6 +673,47 @@ body[data-theme='dark'] .chat-container {
 
     .ant-input-data-count {
       color: fade(@white, 45%) !important;
+    }
+  }
+
+  // Fix dropdown/select styling in dark theme
+  .ant-select {
+    .ant-select-selector {
+      background: fade(@white, 8%) !important;
+      border-color: @border-color-split !important;
+      color: fade(@white, 85%) !important;
+    }
+
+    .ant-select-selection-placeholder {
+      color: fade(@white, 45%) !important;
+    }
+
+    &:hover .ant-select-selector {
+      border-color: @primary-color !important;
+    }
+
+    &.ant-select-focused .ant-select-selector {
+      border-color: @primary-color !important;
+      box-shadow: 0 0 0 2px fade(@primary-color, 20%) !important;
+    }
+  }
+
+  // Fix dropdown options styling
+  .ant-select-dropdown {
+    background: #141414 !important;
+    border: 1px solid @border-color-split !important;
+
+    .ant-select-item {
+      color: fade(@white, 85%) !important;
+
+      &:hover {
+        background: fade(@white, 8%) !important;
+      }
+
+      &.ant-select-item-option-selected {
+        background: @primary-color !important;
+        color: @white !important;
+      }
     }
   }
 }
