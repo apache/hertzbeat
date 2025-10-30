@@ -133,7 +133,7 @@ Or enter <https://keyserver.ubuntu.com/> address in the browser, enter the name 
 
 #### 2.4 Add the gpg public key to the KEYS file of the Apache SVN project repo
 
-- Apache HertzBeat Branch Dev <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat>
+- Apache HertzBeat Branch Dev <https://dist.apache.org/repos/dist/dev/hertzbeat>
 - Apache HertzBeat Branch Release <https://dist.apache.org/repos/dist/release/incubator/hertzbeat>
 
 ##### 2.4.1 Add public key to KEYS in dev branch

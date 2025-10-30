@@ -16,9 +16,9 @@ sidebar_position: 4
 
 ```shell
 #如果本地有svn，可以clone到本地 
-svn co https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/
+svn co https://dist.apache.org/repos/dist/dev/hertzbeat/incubator/${release_version}-${rc_version}/
 #或者 直接下载物料文件
-wget https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/xxx.xxx
+wget https://dist.apache.org/repos/dist/dev/hertzbeat/incubator/${release_version}-${rc_version}/xxx.xxx
 
 ```
 
