@@ -1,15 +1,15 @@
 ---
 id: ai_agent_chat
-title: AI Agent Chat User Guide
-sidebar_label: AI Agent Chat
+title: AI Agent User Guide
+sidebar_label: AI Agent
 keywords: [AI, Chat, Agent, Monitoring, AI Agent, OpenAI]
 ---
 
-> HertzBeat AI Agent Chat is an intelligent monitoring AI Agent that helps you manage monitors, configure alerts, and optimize your infrastructure monitoring through natural language conversation.
+> HertzBeat AI Agent is an intelligent monitoring AI Agent that helps you manage monitors, configure alerts, and optimize your infrastructure monitoring through natural language conversation.
 
 ## Overview
 
-The AI Agent Chat feature provides an interactive chat interface where you can:
+The AI Agent feature provides an interactive chat interface where you can:
 
 **Monitor Management:**
 
@@ -40,7 +40,7 @@ The AI Agent Chat feature provides an interactive chat interface where you can:
 
 ## Prerequisites
 
-Before using the AI Agent Chat, ensure:
+Before using the AI Agent, ensure:
 
 1 **OpenAI Configuration**: Valid OpenAI API key must be configured. Optionally, you can change the model in `application.yml` under `spring.ai.openai.chat.options.model` (default is `gpt-4.1-nano`).
 2 **Database Connection**: HertzBeat database must be accessible for monitor operations
@@ -49,11 +49,11 @@ Before using the AI Agent Chat, ensure:
 
 ### OpenAI API Key Setup
 
-The AI Agent Chat uses OpenAI's GPT models. You need to configure an OpenAI API key in this ways:
+The AI Agent uses OpenAI's GPT models. You need to configure an OpenAI API key in this ways:
 
 #### Database Configuration via UI
 
-1. Navigate to the AI Agent Chat interface
+1. Navigate to the AI Agent interface
 2. If no API key is configured, you'll see a configuration dialog
 3. Enter your OpenAI API key
 4. Click **Save Configuration**
@@ -64,11 +64,11 @@ The AI Agent Chat uses OpenAI's GPT models. You need to configure an OpenAI API 
 - Configuration changes are applied immediately without restart
 - Invalid API keys are automatically validated before saving
 
-## Using the AI Agent Chat
+## Using the AI Agent
 
 ### Accessing the Chat Interface
 
-1. Navigate to the **AI Agent Chat** section in HertzBeat web interface
+1. Navigate to the **AI Agent** section in HertzBeat web interface
 2. You'll see the HertzBeat Monitoring AI Agent welcome screen
 3. Start typing your questions in the chat input field
 
@@ -350,7 +350,7 @@ You: Add HTTP monitors for all services in my staging environment:
 
 ## Support
 
-For issues with AI Agent Chat:
+For issues with AI Agent:
 
 1. Check this documentation first
 2. Review application logs for errors
