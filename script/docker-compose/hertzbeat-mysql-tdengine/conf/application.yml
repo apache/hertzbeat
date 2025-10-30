@@ -238,10 +238,3 @@ grafana:
   username: admin
   password: admin
 
-ai:
-  type:
-  model:
-  api-key:
-  api-secret:
-  api-url:
-

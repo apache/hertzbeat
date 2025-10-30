@@ -49,25 +49,14 @@ Before using the AI Agent Chat, ensure:
 
 ### OpenAI API Key Setup
 
-The AI Agent Chat uses OpenAI's GPT models. You need to configure an OpenAI API key in one of two ways:
+The AI Agent Chat uses OpenAI's GPT models. You need to configure an OpenAI API key in this ways:
 
-#### Method 1: Database Configuration via UI (Recommended)
+#### Database Configuration via UI
 
 1. Navigate to the AI Agent Chat interface
 2. If no API key is configured, you'll see a configuration dialog
 3. Enter your OpenAI API key
 4. Click **Save Configuration**
-
-#### Method 2: YAML Configuration
-
-Add to your `application.yml`:
-
-```yaml
-spring:
-  ai:
-    openai:
-      api-key: sk-your-openai-api-key-here
-```
 
 ### Configuration Priority
 

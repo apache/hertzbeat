@@ -290,7 +290,6 @@
         "help/mcp_sse_server",
         "help/collector",
         "help/ai_agent_chat",
-        "help/ai_config",
         "help/risc-v",
         "help/issue"
       ]
