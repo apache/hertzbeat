@@ -40,6 +40,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   messages: ChatMessage[] = [];
   newMessage = '';
   isLoading = false;
+  isLoadingConversations = false;
+  isSendingMessage = false;
   sidebarCollapsed = false;
   theme: string = 'default';
   private scrollTimeout: any;
@@ -170,11 +172,11 @@ export class ChatComponent implements OnInit, OnDestroy {
    * Load conversation history from the API
    */
   loadConversationHistory(conversationId: string): void {
-    this.isLoading = true;
+    this.isLoadingConversations = true;
 
     this.aiChatService.getConversation(conversationId).subscribe({
       next: response => {
-        this.isLoading = false;
+        this.isLoadingConversations = false;
 
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
@@ -189,7 +191,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         }
       },
       error: error => {
-        this.isLoading = false;
+        this.isLoadingConversations = false;
         console.error('Error loading conversation history:', error);
         // Fallback to the messages from the conversation list if API fails
         this.messages = this.currentConversation?.messages || [];
@@ -243,7 +245,7 @@ export class ChatComponent implements OnInit, OnDestroy {
    * Send a message
    */
   sendMessage(): void {
-    if (!this.newMessage.trim() || this.isLoading) {
+    if (!this.newMessage.trim() || this.isSendingMessage) {
       return;
     }
 
@@ -258,7 +260,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     const messageContent = this.newMessage.trim();
     this.newMessage = '';
-    this.isLoading = true;
+    this.isSendingMessage = true;
     this.cdr.detectChanges();
     this.scrollToBottom();
 
@@ -272,7 +274,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           timestamp: new Date()
         };
         this.messages.push(offlineMessage);
-        this.isLoading = false;
+        this.isSendingMessage = false;
         this.cdr.detectChanges();
         this.scrollToBottom();
       }, 1000);
@@ -322,12 +324,12 @@ export class ChatComponent implements OnInit, OnDestroy {
           timestamp: new Date()
         };
         this.messages.push(errorMessage);
-        this.isLoading = false;
+        this.isSendingMessage = false;
         this.cdr.detectChanges();
         this.scrollToBottom();
       },
       complete: () => {
-        this.isLoading = false;
+        this.isSendingMessage = false;
         this.cdr.detectChanges();
 
         // Refresh current conversation to get updated data (only if not fallback)

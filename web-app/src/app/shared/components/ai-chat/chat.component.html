@@ -22,7 +22,7 @@
   <div class="chat-sidebar" [class.collapsed]="sidebarCollapsed">
     <div class="sidebar-header">
       <h3>{{ 'menu.extras.ai.chat' | i18n }}</h3>
-      <button nz-button nzType="primary" nzSize="small" (click)="createNewConversation()" [nzLoading]="isLoading">
+      <button nz-button nzType="primary" nzSize="small" (click)="createNewConversation()" [disabled]="isSendingMessage">
         <i nz-icon nzType="plus"></i>
         New Chat
       </button>
@@ -69,7 +69,7 @@
     <!-- Messages area -->
     <div class="messages-container" #messagesContainer>
       <!-- Loading indicator -->
-      <div *ngIf="isLoading" class="loading-container">
+      <div *ngIf="isLoadingConversations" class="loading-container">
         <nz-spin nzSimple [nzSize]="'large'">
           <ng-template #indicator>
             <i nz-icon nzType="loading" nzSpin></i>
@@ -79,7 +79,7 @@
       </div>
 
       <!-- Welcome message -->
-      <div *ngIf="messages.length === 0 && !isLoading" class="welcome-message">
+      <div *ngIf="messages.length === 0 && !isLoadingConversations" class="welcome-message">
         <div class="welcome-content">
           <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
           <h3>Welcome to HertzBeat AI!</h3>
@@ -108,14 +108,17 @@
           <div class="message-header">
             <span class="message-role">{{ message.role === 'user' ? 'You' : 'AI Assistant' }}</span>
             <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-            <span *ngIf="message.role === 'assistant' && isLoading && i === messages.length - 1" class="streaming-indicator">
-              <nz-spin nzSize="small"></nz-spin>
+            <span
+              *ngIf="message.role === 'assistant' && isSendingMessage && i === messages.length - 1 && message.content !== ''"
+              class="streaming-indicator"
+            >
+              <i nz-icon nzType="loading" nzSpin style="font-size: 12px"></i>
+              <span style="font-size: 11px">Typing...</span>
             </span>
           </div>
           <div class="message-text" [innerHTML]="message.content"></div>
-          <div *ngIf="message.role === 'assistant' && message.content === '' && isLoading" class="typing-indicator">
-            <nz-spin nzSize="small"></nz-spin>
-            <span>Starting to type...</span>
+          <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
+            <span>AI is thinking...</span>
           </div>
         </div>
       </div>
@@ -129,7 +132,7 @@
             nz-input
             [(ngModel)]="newMessage"
             (keypress)="onKeyPress($event)"
-            [disabled]="isLoading"
+            [disabled]="isSendingMessage"
             placeholder="Ask me anything about monitoring..."
             rows="3"
             style="resize: none"
@@ -139,11 +142,10 @@
           nz-button
           nzType="primary"
           (click)="sendMessage()"
-          [disabled]="!newMessage.trim() || isLoading"
-          [nzLoading]="isLoading"
+          [disabled]="!newMessage.trim() || isSendingMessage"
           class="send-button"
         >
-          <i nz-icon nzType="send"></i>
+          <i nz-icon [nzType]="isSendingMessage ? 'loading' : 'send'" [nzSpin]="isSendingMessage"></i>
         </button>
       </div>
       <div class="input-hint">
