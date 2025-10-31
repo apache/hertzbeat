@@ -8,7 +8,7 @@ sidebar_position: 4
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/>
+在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/hertzbeat/>
 
 ### 1. 下载候选版本到本地
 
