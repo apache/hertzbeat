@@ -24,7 +24,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dto.MailServerConfig;
+import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;

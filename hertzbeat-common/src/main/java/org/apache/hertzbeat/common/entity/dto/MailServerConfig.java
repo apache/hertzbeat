@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.dto;
+package org.apache.hertzbeat.common.entity.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;

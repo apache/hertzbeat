@@ -15,41 +15,63 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.config;
+package org.apache.hertzbeat.common.entity.dto.sms;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
- * Alibaba Cloud SMS configuration properties
+ * SMS configuration
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class AlibabaSmsProperties {
+@NoArgsConstructor
+@Component
+@ConfigurationProperties(prefix = "alerter.sms")
+public class SmsConfig {
+
     /**
-     * Alibaba Cloud access key id
+     * whether to enable SMS, default is false
      */
-    @NotBlank(message = "AccessKeyId cannot be empty")
-    private String accessKeyId;
-    
+    private boolean enable = false;
+
     /**
-     * Alibaba Cloud access key secret
+     * sms service provider
      */
-    @NotBlank(message = "AccessKeySecret cannot be empty")
-    private String accessKeySecret;
-    
+    @NotBlank(message = "Type cannot be empty")
+    private String type;
+
     /**
-     * SMS signature
+     * Tencent cloud SMS configuration
      */
-    @NotBlank(message = "SignName cannot be empty")
-    private String signName;
-    
+    private TencentSmsProperties tencent;
+
     /**
-     * SMS template Code
+     * Aliyun SMS configuration
      */
-    @NotBlank(message = "TemplateCode cannot be null")
-    private String templateCode;
+    private AlibabaSmsProperties alibaba;
+
+    /**
+     * UniSMS configuration
+     */
+    private UniSmsProperties unisms;
+
+    /**
+     * Aws configuration
+     */
+    private AwsSmsProperties aws;
+
+    /**
+     * Twilio SMS configuration
+     */
+    private TwilioSmsProperties twilio;
+
+    /**
+     * Smslocal SMS configuration
+     */
+    private SmslocalSmsProperties smslocal;
 }

@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import org.apache.hertzbeat.alert.config.UniSmsProperties;
+import org.apache.hertzbeat.common.entity.dto.sms.UniSmsProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.support.exception.SendMessageException;

@@ -19,7 +19,7 @@ package org.apache.hertzbeat.alert.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.config.AlibabaSmsProperties;
+import org.apache.hertzbeat.common.entity.dto.sms.AlibabaSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
 import org.apache.hertzbeat.alert.util.CryptoUtils;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;

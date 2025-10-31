@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.config;
+package org.apache.hertzbeat.common.entity.dto.sms;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

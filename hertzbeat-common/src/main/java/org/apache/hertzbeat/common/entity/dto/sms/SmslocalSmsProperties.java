@@ -15,32 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.config;
+package org.apache.hertzbeat.common.entity.dto.sms;
 
-import jakarta.validation.constraints.NotBlank;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * AWS Cloud SMS configuration properties
+ * Smslocal SMS Properties
  */
 @Data
-public class AwsSmsProperties {
+@NoArgsConstructor
+@AllArgsConstructor
+public class SmslocalSmsProperties {
     /**
-     * AWS Cloud access key id
+     * SmsLocal account api key
      */
-    @NotBlank(message = "AccessKeyId cannot be empty")
-    private String accessKeyId;
-
-    /**
-     * AWS Cloud access key secret
-     */
-    @NotBlank(message = "AccessKeySecret cannot be empty")
-    private String accessKeySecret;
-
-    /**
-     * AWS Cloud region
-     */
-    @NotBlank(message = "region cannot be empty")
-    private String region;
+    private String apiKey;
 
 }

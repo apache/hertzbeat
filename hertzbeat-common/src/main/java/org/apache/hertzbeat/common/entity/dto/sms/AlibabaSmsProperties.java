@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.alert.config;
+package org.apache.hertzbeat.common.entity.dto.sms;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -23,27 +23,33 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Twilio SMS configuration properties
+ * Alibaba Cloud SMS configuration properties
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class TwilioSmsProperties {
+@AllArgsConstructor
+public class AlibabaSmsProperties {
     /**
-     * Twilio Account SID
+     * Alibaba Cloud access key id
      */
-    @NotBlank(message = "Account SID cannot be empty")
-    private String accountSid;
-
+    @NotBlank(message = "AccessKeyId cannot be empty")
+    private String accessKeyId;
+    
     /**
-     * Twilio Auth Token
+     * Alibaba Cloud access key secret
      */
-    @NotBlank(message = "Auth Token cannot be empty")
-    private String authToken;
-
+    @NotBlank(message = "AccessKeySecret cannot be empty")
+    private String accessKeySecret;
+    
     /**
-     * Twilio Issued Phone Number
+     * SMS signature
      */
-    @NotBlank(message = "Twilio Phone Number cannot be empty")
-    private String twilioPhoneNumber;
+    @NotBlank(message = "SignName cannot be empty")
+    private String signName;
+    
+    /**
+     * SMS template Code
+     */
+    @NotBlank(message = "TemplateCode cannot be null")
+    private String templateCode;
 }
