@@ -15,36 +15,15 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.ai.dao;
 
-package org.apache.hertzbeat.ai.pojo.dto;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.List;
-import org.apache.hertzbeat.common.entity.ai.ChatMessage;
+import org.apache.hertzbeat.common.entity.ai.ChatConversation;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 /**
- * Chat request context for AI chat endpoint.
+ * Repository interface for Conversation entities
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ChatRequestContext {
-    /**
-     * The user's message (required)
-     */
-    private String message;
-    /**
-     * Optional conversation ID for context
-     */
-    private Long conversationId;
-
-    /**
-     * Conversation history messages for context
-     */
-    private List<ChatMessage> conversationHistory;
+@Repository
+public interface ChatConversationDao extends JpaRepository<ChatConversation, Long> {
 }

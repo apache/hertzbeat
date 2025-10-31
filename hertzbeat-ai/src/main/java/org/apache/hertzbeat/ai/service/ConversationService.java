@@ -18,8 +18,8 @@
 
 package org.apache.hertzbeat.ai.service;
 
-import org.apache.hertzbeat.ai.pojo.dto.ChatResponseDto;
-import org.apache.hertzbeat.ai.pojo.dto.ConversationDto;
+import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
+import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
@@ -31,21 +31,20 @@ import java.util.List;
 public interface ConversationService {
 
     /**
-     * Create a new conversation
-     *
-     * @return Created conversation data
-     */
-    ConversationDto createConversation();
-
-    /**
      * Send a message and receive a streaming response
      *
      * @param message The user's message
      * @param conversationId Optional conversation ID for continuing a chat
      * @return Flux of ServerSentEvent for streaming the response
      */
-    Flux<ServerSentEvent<ChatResponseDto>> streamChat(String message, String conversationId);
+    Flux<ServerSentEvent<ChatResponseChunk>> streamChat(String message, Long conversationId);
 
+    /**
+     * Create a new conversation
+     *
+     * @return Created conversation data
+     */
+    ChatConversation createConversation();
 
     /**
      * Get conversation history for a specific conversation
@@ -53,28 +52,19 @@ public interface ConversationService {
      * @param conversationId Conversation ID
      * @return Conversation data including messages
      */
-    ConversationDto getConversation(String conversationId);
+    ChatConversation getConversation(Long conversationId);
 
     /**
      * Get all conversations for the current user
      *
      * @return List of conversations
      */
-    List<ConversationDto> getAllConversations();
+    List<ChatConversation> getAllConversations();
 
     /**
      * Delete a conversation
      *
      * @param conversationId Conversation ID to delete
-     * @return true if deleted, false if conversation not found
      */
-    boolean deleteConversation(String conversationId);
-
-    /**
-     * Check if a conversation exists
-     *
-     * @param conversationId Conversation ID to check
-     * @return true if conversation exists, false otherwise
-     */
-    boolean conversationExists(String conversationId);
+    void deleteConversation(Long conversationId);
 }

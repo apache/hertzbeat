@@ -31,17 +31,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Chat response")
-public class ChatResponseDto {
+public class ChatResponseChunk {
 
-    @Schema(description = "Conversation ID", example = "conv-123")
-    private String conversationId;
+    @Schema(description = "Conversation ID", example = "123")
+    private Long conversationId;
 
     @Schema(description = "AI response message", example = "Here are your monitors...")
     private String response;
 
-    @Schema(description = "User message ID", example = "msg-user-123")
-    private String userMessageId;
+    @Schema(description = "User message ID", example = "123")
+    private Long userMessageId;
+    
+    @Schema(description = "Assistant message ID", example = "123")
+    private Long assistantMessageId;
 
-    @Schema(description = "Assistant message ID", example = "msg-assistant-123")
-    private String assistantMessageId;
 }

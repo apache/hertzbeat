@@ -27,19 +27,19 @@ import { LocalStorageService } from './local-storage.service';
 export interface ChatMessage {
   content: string;
   role: 'user' | 'assistant';
-  timestamp: Date;
+  gmtCreate: Date;
 }
 
-export interface ConversationDto {
-  conversationId: string;
-  createdAt: Date;
-  updatedAt: Date;
+export interface ChatConversation {
+  id: number;
+  gmtCreated: Date;
+  gmtUpdate: Date;
   messages: ChatMessage[];
 }
 
 export interface ChatRequestContext {
   message: string;
-  conversationId?: string;
+  conversationId?: number;
 }
 
 const chat_uri = '/chat';
@@ -53,35 +53,35 @@ export class AiChatService {
   /**
    * Create a new conversation
    */
-  createConversation(): Observable<Message<ConversationDto>> {
-    return this.http.post<Message<ConversationDto>>(`${chat_uri}/conversations`, {});
+  createConversation(): Observable<Message<ChatConversation>> {
+    return this.http.post<Message<ChatConversation>>(`${chat_uri}/conversations`, {});
   }
 
   /**
    * Get all conversations
    */
-  getConversations(): Observable<Message<ConversationDto[]>> {
-    return this.http.get<Message<ConversationDto[]>>(`${chat_uri}/conversations`);
+  getConversations(): Observable<Message<ChatConversation[]>> {
+    return this.http.get<Message<ChatConversation[]>>(`${chat_uri}/conversations`);
   }
 
   /**
    * Get a specific conversation with its history
    */
-  getConversation(conversationId: string): Observable<Message<ConversationDto>> {
-    return this.http.get<Message<ConversationDto>>(`${chat_uri}/conversations/${conversationId}`);
+  getConversation(conversationId: number): Observable<Message<ChatConversation>> {
+    return this.http.get<Message<ChatConversation>>(`${chat_uri}/conversations/${conversationId}`);
   }
 
   /**
    * Delete a conversation
    */
-  deleteConversation(conversationId: string): Observable<Message<void>> {
+  deleteConversation(conversationId: number): Observable<Message<void>> {
     return this.http.delete<Message<void>>(`${chat_uri}/conversations/${conversationId}`);
   }
 
   /**
    * Send a message and get streaming response
    */
-  streamChat(message: string, conversationId?: string): Observable<ChatMessage> {
+  streamChat(message: string, conversationId?: number): Observable<ChatMessage> {
     const responseSubject = new Subject<ChatMessage>();
 
     const requestBody: ChatRequestContext = { message };
@@ -147,7 +147,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: data.response || '',
                         role: 'assistant',
-                        timestamp: data.timestamp ? new Date(data.timestamp) : new Date()
+                        gmtCreate: data.timestamp ? new Date(data.timestamp) : new Date()
                       });
                     }
                   } catch (parseError) {
@@ -156,7 +156,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: jsonStr,
                         role: 'assistant',
-                        timestamp: new Date()
+                        gmtCreate: new Date()
                       });
                     }
                   }

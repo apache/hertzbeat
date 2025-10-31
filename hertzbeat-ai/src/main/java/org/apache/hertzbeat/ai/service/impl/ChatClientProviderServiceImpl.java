@@ -20,7 +20,7 @@ package org.apache.hertzbeat.ai.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.config.PromptProvider;
-import org.apache.hertzbeat.ai.pojo.dto.MessageDto;
+import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
@@ -66,14 +66,6 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         this.generalConfigDao = generalConfigDao;
     }
 
-    public String complete(String message) {
-        ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
-        return chatClient.prompt()
-                .user(message)
-                .call()
-                .content();
-    }
-
     @Override
     public Flux<String> streamChat(ChatRequestContext context) {
         try {
@@ -84,7 +76,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             // Add conversation history if available
             if (context.getConversationHistory() != null && !context.getConversationHistory().isEmpty()) {
-                for (MessageDto historyMessage : context.getConversationHistory()) {
+                for (ChatMessage historyMessage : context.getConversationHistory()) {
                     if ("user".equals(historyMessage.getRole())) {
                         messages.add(new UserMessage(historyMessage.getContent()));
                     } else if ("assistant".equals(historyMessage.getRole())) {

@@ -25,9 +25,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
-import org.apache.hertzbeat.ai.pojo.dto.ChatResponseDto;
-import org.apache.hertzbeat.ai.pojo.dto.ConversationDto;
+import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
 import org.apache.hertzbeat.ai.service.ConversationService;
+import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -64,23 +64,6 @@ public class ChatController {
     }
 
     /**
-     * Create a new conversation
-     *
-     * @return Created conversation details
-     */
-    @PostMapping(path = "/conversations")
-    @Operation(summary = "Create a new conversation", description = "Create a new conversation")
-    public ResponseEntity<Message<ConversationDto>> createConversation() {
-        try {
-            ConversationDto conversation = conversationService.createConversation();
-            return ResponseEntity.ok(Message.success(conversation));
-        } catch (Exception e) {
-            log.error("Error creating conversation: ", e);
-            return ResponseEntity.ok(Message.fail((byte) -1, "Failed to create conversation"));
-        }
-    }
-
-    /**
      * Send a message and get a streaming response with conversation tracking
      *
      * @param context The chat request context containing message and optional conversationId
@@ -88,14 +71,13 @@ public class ChatController {
      */
     @PostMapping(value = "/stream", produces = TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "Send a chat message with streaming response", description = "Send a message to AI and get a streaming response with conversation tracking")
-    public Flux<ServerSentEvent<ChatResponseDto>> streamChat(@Valid @RequestBody ChatRequestContext context) {
+    public Flux<ServerSentEvent<ChatResponseChunk>> streamChat(@Valid @RequestBody ChatRequestContext context) {
         try {
             // Validate message is not empty
             SubjectSum subject = SurenessContextHolder.getBindSubject();
-            log.info(subject.toString());
             McpContextHolder.setSubject(subject);
             if (context.getMessage() == null || context.getMessage().trim().isEmpty()) {
-                ChatResponseDto errorResponse = ChatResponseDto.builder()
+                ChatResponseChunk errorResponse = ChatResponseChunk.builder()
                         .conversationId(context.getConversationId())
                         .response("Error: Message cannot be empty")
                         .build();
@@ -109,7 +91,7 @@ public class ChatController {
 
         } catch (Exception e) {
             log.error("Error in stream chat endpoint: ", e);
-            ChatResponseDto errorResponse = ChatResponseDto.builder()
+            ChatResponseChunk errorResponse = ChatResponseChunk.builder()
                     .conversationId(context.getConversationId())
                     .response("An error occurred: " + e.getMessage())
                     .build();
@@ -120,20 +102,27 @@ public class ChatController {
     }
 
     /**
+     * Create a new conversation
+     *
+     * @return Created conversation details
+     */
+    @PostMapping(path = "/conversations")
+    @Operation(summary = "Create a new conversation", description = "Create a new conversation")
+    public ResponseEntity<Message<ChatConversation>> createConversation() {
+        ChatConversation conversation = conversationService.createConversation();
+        return ResponseEntity.ok(Message.success(conversation));
+    }
+
+    /**
      * Get all conversations
      *
      * @return List of all conversations
      */
     @GetMapping(path = "/conversations")
     @Operation(summary = "List all conversations", description = "Get a list of all conversations")
-    public ResponseEntity<Message<List<ConversationDto>>> listConversations() {
-        try {
-            List<ConversationDto> conversations = conversationService.getAllConversations();
-            return ResponseEntity.ok(Message.success(conversations));
-        } catch (Exception e) {
-            log.error("Error listing conversations: ", e);
-            return ResponseEntity.ok(Message.fail((byte) -1, "Failed to retrieve conversations"));
-        }
+    public ResponseEntity<Message<List<ChatConversation>>> listConversations() {
+        List<ChatConversation> conversations = conversationService.getAllConversations();
+        return ResponseEntity.ok(Message.success(conversations));
     }
 
     /**
@@ -144,26 +133,10 @@ public class ChatController {
      */
     @GetMapping(path = "/conversations/{conversationId}")
     @Operation(summary = "Get conversation history", description = "Get detailed information and message history for a specific conversation")
-    public ResponseEntity<Message<ConversationDto>> getConversation(
-            @Parameter(description = "Conversation ID", example = "conv-12345678") @PathVariable("conversationId") String conversationId) {
-        try {
-            // Validate conversation ID
-            if (conversationId == null || conversationId.trim().isEmpty()) {
-                return ResponseEntity.ok(Message.fail((byte) -1, "Conversation ID is required"));
-            }
-
-            ConversationDto conversation = conversationService.getConversation(conversationId);
-
-            if (conversation == null) {
-                return ResponseEntity.ok(Message.fail((byte) -1, "Conversation not found: " + conversationId));
-            }
-
-            return ResponseEntity.ok(Message.success(conversation));
-
-        } catch (Exception e) {
-            log.error("Error getting conversation: ", e);
-            return ResponseEntity.ok(Message.fail((byte) -1, "Failed to retrieve conversation"));
-        }
+    public ResponseEntity<Message<ChatConversation>> getConversation(
+            @Parameter(description = "Conversation ID", example = "12345678") @PathVariable(value = "conversationId") Long conversationId) {
+        ChatConversation conversation = conversationService.getConversation(conversationId);
+        return ResponseEntity.ok(Message.success(conversation));
     }
 
     /**
@@ -175,23 +148,8 @@ public class ChatController {
     @DeleteMapping(path = "/conversations/{conversationId}")
     @Operation(summary = "Delete conversation", description = "Delete a specific conversation and all its messages")
     public ResponseEntity<Message<Void>> deleteConversation(
-            @Parameter(description = "Conversation ID", example = "conv-12345678") @PathVariable("conversationId") String conversationId) {
-        try {
-            // Validate conversation ID
-            if (conversationId == null || conversationId.trim().isEmpty()) {
-                return ResponseEntity.ok(Message.fail((byte) -1, "Conversation ID is required"));
-            }
-
-            boolean deleted = conversationService.deleteConversation(conversationId);
-            if (!deleted) {
-                return ResponseEntity.ok(Message.fail((byte) -1, "Conversation not found: " + conversationId));
-            }
-
-            return ResponseEntity.ok(Message.success("Conversation deleted successfully"));
-        } catch (Exception e) {
-            log.error("Error deleting conversation: ", e);
-            return ResponseEntity.ok(Message.fail((byte) -1, "Failed to delete conversation"));
-        }
-
+            @Parameter(description = "Conversation ID", example = "2345678") @PathVariable("conversationId") Long conversationId) {
+        conversationService.deleteConversation(conversationId);
+        return ResponseEntity.ok(Message.success());
     }
 }

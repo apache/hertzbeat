@@ -32,7 +32,7 @@
       <div
         *ngFor="let conversation of conversations"
         class="conversation-item"
-        [class.active]="currentConversation?.conversationId === conversation.conversationId"
+        [class.active]="currentConversation?.id === conversation.id"
         (click)="selectConversation(conversation)"
       >
         <div class="conversation-content">
@@ -40,7 +40,7 @@
             {{ getConversationTitle(conversation) }}
           </div>
           <div class="conversation-time">
-            {{ conversation.updatedAt | date : 'MMM d, HH:mm' }}
+            {{ conversation.gmtUpdate | date : 'MMM d, HH:mm' }}
           </div>
         </div>
         <button nz-button nzType="text" nzSize="small" nzDanger (click)="deleteConversation(conversation, $event)" class="delete-btn">
@@ -106,7 +106,7 @@
         <div class="message-content">
           <div class="message-header">
             <span class="message-role">{{ message.role === 'user' ? ('ai.chat.user' | i18n) : ('ai.chat.assistant' | i18n) }}</span>
-            <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+            <span class="message-time">{{ formatTime(message.gmtCreate) }}</span>
             <span
               *ngIf="message.role === 'assistant' && isSendingMessage && i === messages.length - 1 && message.content !== ''"
               class="streaming-indicator"

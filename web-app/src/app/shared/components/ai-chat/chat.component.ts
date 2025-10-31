@@ -24,7 +24,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
-import { AiChatService, ChatMessage, ConversationDto } from '../../../service/ai-chat.service';
+import { AiChatService, ChatMessage, ChatConversation } from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
@@ -36,8 +36,8 @@ import { ThemeService } from '../../../service/theme.service';
 export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
-  conversations: ConversationDto[] = [];
-  currentConversation: ConversationDto | null = null;
+  conversations: ChatConversation[] = [];
+  currentConversation: ChatConversation | null = null;
   messages: ChatMessage[] = [];
   newMessage = '';
   isLoading = false;
@@ -152,10 +152,10 @@ export class ChatComponent implements OnInit, OnDestroy {
    * Create a fallback conversation when API is not available
    */
   createFallbackConversation(): void {
-    const fallbackConversation: ConversationDto = {
-      conversationId: `fallback-${Date.now()}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const fallbackConversation: ChatConversation = {
+      id: 0,
+      gmtCreated: new Date(),
+      gmtUpdate: new Date(),
       messages: []
     };
 
@@ -168,15 +168,15 @@ export class ChatComponent implements OnInit, OnDestroy {
   /**
    * Select a conversation and load its messages
    */
-  selectConversation(conversation: ConversationDto): void {
+  selectConversation(conversation: ChatConversation): void {
     this.currentConversation = conversation;
-    this.loadConversationHistory(conversation.conversationId);
+    this.loadConversationHistory(conversation.id);
   }
 
   /**
    * Load conversation history from the API
    */
-  loadConversationHistory(conversationId: string): void {
+  loadConversationHistory(conversationId: number): void {
     this.isLoadingConversations = true;
 
     this.aiChatService.getConversation(conversationId).subscribe({
@@ -209,7 +209,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   /**
    * Delete a conversation
    */
-  deleteConversation(conversation: ConversationDto, event: Event): void {
+  deleteConversation(conversation: ChatConversation, event: Event): void {
     event.stopPropagation();
 
     this.modal.confirm({
@@ -219,14 +219,14 @@ export class ChatComponent implements OnInit, OnDestroy {
       nzOkType: 'primary',
       nzOkDanger: true,
       nzOnOk: () => {
-        this.aiChatService.deleteConversation(conversation.conversationId).subscribe({
+        this.aiChatService.deleteConversation(conversation.id).subscribe({
           next: response => {
             if (response.code === 0) {
               // Remove from conversations list
-              this.conversations = this.conversations.filter(c => c.conversationId !== conversation.conversationId);
+              this.conversations = this.conversations.filter(c => c.id !== conversation.id);
 
               // If this was the current conversation, select another or create new
-              if (this.currentConversation?.conversationId === conversation.conversationId) {
+              if (this.currentConversation?.id === conversation.id) {
                 if (this.conversations.length > 0) {
                   this.selectConversation(this.conversations[0]);
                 } else {
@@ -257,7 +257,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const userMessage: ChatMessage = {
       content: this.newMessage.trim(),
       role: 'user',
-      timestamp: new Date()
+      gmtCreate: new Date()
     };
 
     // Add user message to the messages list
@@ -270,12 +270,12 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.scrollToBottom();
 
     // Check if this is a fallback conversation
-    if (this.currentConversation?.conversationId.startsWith('fallback-')) {
+    if (this.currentConversation?.id == 0) {
       setTimeout(() => {
         const offlineMessage: ChatMessage = {
           content: this.i18nSvc.fanyi('ai.chat.offline.response'),
           role: 'assistant',
-          timestamp: new Date()
+          gmtCreate: new Date()
         };
         this.messages.push(offlineMessage);
         this.isSendingMessage = false;
@@ -289,21 +289,21 @@ export class ChatComponent implements OnInit, OnDestroy {
     const assistantMessage: ChatMessage = {
       content: '',
       role: 'assistant',
-      timestamp: new Date()
+      gmtCreate: new Date()
     };
     this.messages.push(assistantMessage);
     this.cdr.detectChanges();
     this.scrollToBottom();
 
     // Send to AI service
-    this.aiChatService.streamChat(messageContent, this.currentConversation?.conversationId).subscribe({
+    this.aiChatService.streamChat(messageContent, this.currentConversation?.id).subscribe({
       next: chunk => {
         // Find the last assistant message and append content
         const lastMessage = this.messages[this.messages.length - 1];
         if (lastMessage && lastMessage.role === 'assistant') {
           // Accumulate the content for streaming effect
           lastMessage.content += chunk.content;
-          lastMessage.timestamp = chunk.timestamp;
+          lastMessage.gmtCreate = chunk.gmtCreate;
 
           this.cdr.detectChanges();
           this.scrollToBottom();
@@ -325,7 +325,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         const errorMessage: ChatMessage = {
           content: this.i18nSvc.fanyi('ai.chat.error.processing'),
           role: 'assistant',
-          timestamp: new Date()
+          gmtCreate: new Date()
         };
         this.messages.push(errorMessage);
         this.isSendingMessage = false;
@@ -337,12 +337,12 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
 
         // Refresh current conversation to get updated data (only if not fallback)
-        if (this.currentConversation && !this.currentConversation.conversationId.startsWith('fallback-')) {
-          this.aiChatService.getConversation(this.currentConversation.conversationId).subscribe({
+        if (this.currentConversation && this.currentConversation.id !== 0) {
+          this.aiChatService.getConversation(this.currentConversation.id).subscribe({
             next: response => {
               if (response.code === 0 && response.data) {
                 // Update conversation in the list
-                const index = this.conversations.findIndex(c => c.conversationId === response.data!.conversationId);
+                const index = this.conversations.findIndex(c => c.id === response.data!.id);
                 if (index >= 0) {
                   this.conversations[index] = response.data;
                 }
@@ -378,20 +378,21 @@ export class ChatComponent implements OnInit, OnDestroy {
   /**
    * Format conversation title
    */
-  getConversationTitle(conversation: ConversationDto): string {
+  getConversationTitle(conversation: ChatConversation): string {
     if (conversation.messages && conversation.messages.length > 0) {
       const firstUserMessage = conversation.messages.find(m => m.role === 'user');
       if (firstUserMessage) {
         return firstUserMessage.content.length > 30 ? `${firstUserMessage.content.substring(0, 30)}...` : firstUserMessage.content;
       }
     }
-    return `Conversation ${conversation.conversationId.substring(0, 8)}`;
+    return `Conversation ${conversation.id}`;
   }
 
   /**
    * Format time
    */
-  formatTime(date: Date): string {
+  formatTime(date: any): string {
+    date = new Date(date);
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
