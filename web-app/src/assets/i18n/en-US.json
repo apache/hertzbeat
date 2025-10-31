@@ -1094,5 +1094,6 @@
   "ai.chat.welcome.capabilities.troubleshoot": "Troubleshoot performance issues across your infrastructure",
   "ai.chat.welcome.description": "I'm your intelligent observability companion, ready to help you manage and optimize your infrastructure observability. You can ask me to:",
   "ai.chat.welcome.question": "Ask me anything about your observability setup!",
-  "ai.chat.welcome.title": "Welcome to HertzBeat AI!"
+  "ai.chat.welcome.title": "Welcome to HertzBeat AI!",
+  "ai.chat.conversation.created": "New conversation created"
 }

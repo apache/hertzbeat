@@ -1089,6 +1089,7 @@
   "ai.chat.welcome.description": "Sou seu companheiro inteligente de observabilidade, pronto para ajudá-lo a gerenciar e otimizar a observabilidade de sua infraestrutura. Você pode me pedir para:",
   "ai.chat.welcome.question": "Pergunte-me qualquer coisa sobre sua configuração de observabilidade!",
   "ai.chat.welcome.title": "Bem-vindo ao HertzBeat AI!",
+  "ai.chat.conversation.created": "Nova conversa criada",
   "alert": "Alerta",
   "annotation": "Anotar",
   "monitor": "Monitor",
@@ -1140,41 +1141,6 @@
   "placeholder.value": "Valor",
   "question.link": "https://hertzbeat.apache.org/docs/help/issue/",
   "settings.system-config.locale.ja-JP": "Japonês(ja_JP)",
-  "about": {
-    "not-show-next-login": "Não mostrar este popup no próximo login"
-  },
-  "bulletin": {
-    "batch": {
-      "delete": "Excluir Boletim em Lote"
-    },
-    "delete": "Excluir Boletim",
-    "edit": "Editar Boletim",
-    "help": {
-      "content": "Boletim de monitoramento personalizado (beta), exibindo métricas selecionadas de um monitor específico em formato de tabela",
-      "link": "https://hertzbeat.apache.org/docs/help/bulletin"
-    },
-    "monitor": {
-      "metrics": "Métricas do Monitor",
-      "name": "Nome da Tarefa de Monitoramento",
-      "type": "Tipo de Monitor"
-    },
-    "name": "Nome do Boletim",
-    "new": "Novo Boletim"
-  },
-  "common": {
-    "notify": {
-      "copy-fail": "Falha na Cópia!",
-      "import-fail-detail": "Importação [{{taskName}}] Falhou: [{{errMsg}}]",
-      "import-success-detail": "Importação [{{taskName}}] Sucesso!",
-      "import-submitted": "Importação [{{taskName}}] Enviada!",
-      "import-progress": "Importando [{{taskName}}], progresso: {{progress}}%",
-      "query-fail": "Falha na Consulta do Monitor!"
-    }
-  },
-  "define": {
-    "disable": "Desabilitar {{app}}",
-    "enable": "Habilitar {{app}}"
-  },
   "about.not-show-next-login": "Não mostrar este popup no próximo login",
   "alert.center.end-time": "Hora de Término",
   "alert.center.labels": "Etiquetas",

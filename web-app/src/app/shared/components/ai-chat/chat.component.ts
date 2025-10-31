@@ -17,8 +17,9 @@
  * under the License.
  */
 
-import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy, Inject } from '@angular/core';
 import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
@@ -57,7 +58,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private aiChatService: AiChatService,
     private message: NzMessageService,
     private modal: NzModalService,
-    private i18n: I18NService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
     private generalConfigSvc: GeneralConfigService
@@ -127,7 +128,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           const newConversation = response.data;
           this.conversations.unshift(newConversation);
           this.selectConversation(newConversation);
-          this.message.success('New conversation created');
+          this.message.success(this.i18nSvc.fanyi('ai.chat.conversation.created'));
         } else {
           console.error('Error in create conversation response:', response);
           this.message.error(`Failed to create conversation: ${response.msg || 'Unknown error'}`);

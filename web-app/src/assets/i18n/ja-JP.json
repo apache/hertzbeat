@@ -1069,5 +1069,6 @@
   "ai.chat.welcome.capabilities.troubleshoot": "インフラストラクチャ全体のパフォーマンス問題をトラブルシューティング",
   "ai.chat.welcome.description": "私はあなたのインテリジェントな可観測性パートナーです。インフラストラクチャ可観測性の管理と最適化をお手伝いします。以下のことをお尋ねいただけます：",
   "ai.chat.welcome.question": "可観測性設定について何でもお聞きください！",
-  "ai.chat.welcome.title": "HertzBeat AI へようこそ！"
+  "ai.chat.welcome.title": "HertzBeat AI へようこそ！",
+  "ai.chat.conversation.created": "新しい会話が作成されました"
 }
