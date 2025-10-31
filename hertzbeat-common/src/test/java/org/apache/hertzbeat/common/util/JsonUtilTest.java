@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.common.util;
 
 import static org.apache.hertzbeat.common.util.JsonUtil.isJsonStr;
+import static org.apache.hertzbeat.common.util.JsonUtil.isArray;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -76,4 +78,17 @@ class JsonUtilTest {
         assertFalse(isJsonStr("{invalid}"));
     }
 
+    @Test
+    void testIsArray() {
+        String jsonStringNull = "{\"name\":\"John\", \"age\":30";
+        assertEquals(Boolean.FALSE, isArray(jsonStringNull));
+
+        String jsonString = "{\"name\":\"John\", \"age\":30}";
+        assertNotNull(isArray(jsonString));
+        assertEquals(Boolean.FALSE, isArray(jsonString));
+
+        String jsonStringArrays = "[{\"name\":\"John\"}, {\"name\":\"Doe\"}]";
+        assertNotNull(isArray(jsonStringArrays));
+        assertEquals(Boolean.TRUE, isArray(jsonStringArrays));
+    }
 }

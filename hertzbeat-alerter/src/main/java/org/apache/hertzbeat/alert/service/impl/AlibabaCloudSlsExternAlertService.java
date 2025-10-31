@@ -17,7 +17,9 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dto.AlibabaCloudSlsExternAlert;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
@@ -33,7 +35,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,19 +50,32 @@ public class AlibabaCloudSlsExternAlertService implements ExternAlertService {
 
     private final AlarmCommonReduce alarmCommonReduce;
 
+    private static final AlibabaCloudSlsConverter CONVERTER = new AlibabaCloudSlsConverter();
+
     public AlibabaCloudSlsExternAlertService(AlarmCommonReduce alarmCommonReduce) {
         this.alarmCommonReduce = alarmCommonReduce;
     }
 
     @Override
     public void addExternAlert(String content) {
-        AlibabaCloudSlsExternAlert externAlert = JsonUtil.fromJson(content, AlibabaCloudSlsExternAlert.class);
-        if (externAlert == null) {
+        List<AlibabaCloudSlsExternAlert> externAlerts = new ArrayList<>();
+        if (BooleanUtils.isTrue(JsonUtil.isArray(content))) {
+            TypeReference<List<AlibabaCloudSlsExternAlert>> typeReference = new TypeReference<>() {};
+            externAlerts = JsonUtil.fromJson(content, typeReference);
+        } else {
+            AlibabaCloudSlsExternAlert externAlert = JsonUtil.fromJson(content, AlibabaCloudSlsExternAlert.class);
+            if (null != externAlert) {
+                externAlerts.add(externAlert);
+            }
+        }
+        if (null == externAlerts || externAlerts.isEmpty()) {
             log.warn("Failure to parse external alert content. content: {}", content);
             return;
         }
-        SingleAlert singleAlert = new AlibabaCloudSlsConverter().convert(externAlert);
-        alarmCommonReduce.reduceAndSendAlarm(singleAlert);
+        for (AlibabaCloudSlsExternAlert externAlert : externAlerts) {
+            SingleAlert singleAlert = CONVERTER.convert(externAlert);
+            alarmCommonReduce.reduceAndSendAlarm(singleAlert);
+        }
     }
 
     @Override
