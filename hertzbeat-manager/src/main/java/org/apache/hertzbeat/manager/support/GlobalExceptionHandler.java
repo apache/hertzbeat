@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.startup.support;
+package org.apache.hertzbeat.manager.support;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.DETECT_FAILED_CODE;
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
