@@ -1067,7 +1067,7 @@
   "ai.chat.config.save": "儲存",
   "ai.chat.config.title": "AI 提供商配置",
   "ai.chat.input.hint": "按 Enter 傳送，Shift+Enter 換行",
-  "ai.chat.input.placeholder": "詢問任何關於監控的問題...",
+  "ai.chat.input.placeholder": "詢問任何關於可觀測的問題...",
   "ai.chat.loading": "正在載入對話歷史...",
   "ai.chat.modify-api-key": "修改 API 金鑰",
   "ai.chat.new-chat": "新建對話",

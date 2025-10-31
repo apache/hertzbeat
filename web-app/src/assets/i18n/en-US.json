@@ -1078,7 +1078,7 @@
   "ai.chat.config.save": "Save",
   "ai.chat.config.title": "AI Provider Configuration",
   "ai.chat.input.hint": "Press Enter to send, Shift+Enter for new line",
-  "ai.chat.input.placeholder": "Ask me anything about monitoring...",
+  "ai.chat.input.placeholder": "Ask me anything about observability...",
   "ai.chat.loading": "Loading conversation history...",
   "ai.chat.modify-api-key": "Modify API Key",
   "ai.chat.new-chat": "New Chat",

@@ -1072,7 +1072,7 @@
   "ai.chat.config.save": "Salvar",
   "ai.chat.config.title": "Configuração do Provedor de IA",
   "ai.chat.input.hint": "Pressione Enter para enviar, Shift+Enter para nova linha",
-  "ai.chat.input.placeholder": "Pergunte-me qualquer coisa sobre monitoramento...",
+  "ai.chat.input.placeholder": "Pergunte-me qualquer coisa sobre observabilidade...",
   "ai.chat.loading": "Carregando histórico da conversa...",
   "ai.chat.modify-api-key": "Modificar Chave da API",
   "ai.chat.new-chat": "Nova Conversa",

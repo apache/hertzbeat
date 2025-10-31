@@ -1053,7 +1053,7 @@
   "ai.chat.config.save": "保存",
   "ai.chat.config.title": "AI プロバイダー設定",
   "ai.chat.input.hint": "Enter で送信、Shift+Enter で改行",
-  "ai.chat.input.placeholder": "監視について何でもお聞きください...",
+  "ai.chat.input.placeholder": "可観測性について何でもお聞きください...",
   "ai.chat.loading": "会話履歴を読み込み中...",
   "ai.chat.modify-api-key": "API キーを変更",
   "ai.chat.new-chat": "新しいチャット",
