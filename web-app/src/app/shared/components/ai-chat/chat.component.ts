@@ -104,12 +104,14 @@ export class ChatComponent implements OnInit, OnDestroy {
           }
         } else {
           console.error('Error in conversations response:', response);
-          this.message.error(`Failed to load conversations: ${response.msg || 'Unknown error'}`);
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.conversations.load')}: ${response.msg || 'Unknown error'}`);
         }
       },
       error: error => {
         console.error('Error loading conversations:', error);
-        this.message.error(`Failed to load conversations: ${error.status} ${error.statusText || error.message}`);
+        this.message.error(
+          `${this.i18nSvc.fanyi('ai.chat.error.conversations.load')}: ${error.status} ${error.statusText || error.message}`
+        );
 
         // Create a fallback new conversation if API is not available
         console.log('Creating fallback conversation...');
@@ -131,12 +133,14 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.message.success(this.i18nSvc.fanyi('ai.chat.conversation.created'));
         } else {
           console.error('Error in create conversation response:', response);
-          this.message.error(`Failed to create conversation: ${response.msg || 'Unknown error'}`);
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.conversation.create')}: ${response.msg || 'Unknown error'}`);
         }
       },
       error: error => {
         console.error('Error creating conversation:', error);
-        this.message.error(`Failed to create new conversation: ${error.status} ${error.statusText || error.message}`);
+        this.message.error(
+          `${this.i18nSvc.fanyi('ai.chat.error.conversation.create')}: ${error.status} ${error.statusText || error.message}`
+        );
 
         // Create fallback conversation
         this.createFallbackConversation();
@@ -158,7 +162,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.conversations = [fallbackConversation];
     this.selectConversation(fallbackConversation);
 
-    this.message.warning('AI Chat service unavailable. Running in offline mode.');
+    this.message.warning(this.i18nSvc.fanyi('ai.chat.offline.mode'));
   }
 
   /**
@@ -209,9 +213,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     event.stopPropagation();
 
     this.modal.confirm({
-      nzTitle: 'Delete Conversation',
-      nzContent: 'Are you sure you want to delete this conversation?',
-      nzOkText: 'Delete',
+      nzTitle: this.i18nSvc.fanyi('ai.chat.conversation.delete.title'),
+      nzContent: this.i18nSvc.fanyi('ai.chat.conversation.delete.content'),
+      nzOkText: this.i18nSvc.fanyi('ai.chat.conversation.delete.confirm'),
       nzOkType: 'primary',
       nzOkDanger: true,
       nzOnOk: () => {
@@ -230,12 +234,12 @@ export class ChatComponent implements OnInit, OnDestroy {
                 }
               }
 
-              this.message.success('Conversation deleted');
+              this.message.success(this.i18nSvc.fanyi('ai.chat.conversation.delete.success'));
             }
           },
           error: error => {
             console.error('Error deleting conversation:', error);
-            this.message.error('Failed to delete conversation');
+            this.message.error(this.i18nSvc.fanyi('ai.chat.conversation.delete.failed'));
           }
         });
       }
@@ -269,8 +273,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     if (this.currentConversation?.conversationId.startsWith('fallback-')) {
       setTimeout(() => {
         const offlineMessage: ChatMessage = {
-          content:
-            'I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI module is running and try again later.',
+          content: this.i18nSvc.fanyi('ai.chat.offline.response'),
           role: 'assistant',
           timestamp: new Date()
         };
@@ -308,7 +311,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       },
       error: error => {
         console.error('Error in chat stream:', error);
-        this.message.error(`Failed to get AI response: ${error.status} ${error.statusText || error.message}`);
+        this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.chat.response')}: ${error.status} ${error.statusText || error.message}`);
 
         // Remove the empty assistant message and add error message
         if (
@@ -320,7 +323,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         }
 
         const errorMessage: ChatMessage = {
-          content: 'Sorry, there was an error processing your request. Please check if the AI Agent service is running and try again.',
+          content: this.i18nSvc.fanyi('ai.chat.error.processing'),
           role: 'assistant',
           timestamp: new Date()
         };
@@ -482,26 +485,26 @@ export class ChatComponent implements OnInit, OnDestroy {
   showAiProviderConfigDialog(error?: string): void {
     let contentMessage = `
       <div style="margin-bottom: 16px;">
-        <p>To use AI Agent Chat, please configure your Model Provider.</p>
+        <p>${this.i18nSvc.fanyi('ai.chat.config.required.content')}</p>
     `;
 
     if (error) {
       contentMessage += `
         <div style="margin-bottom: 12px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
-          <strong>Configuration Issue:</strong> ${error}
+          <strong>${this.i18nSvc.fanyi('ai.chat.config.required.error')}</strong> ${error}
         </div>
       `;
     }
 
     const modalRef = this.modal.create({
-      nzTitle: 'Ai Model Provider Configuration Required',
+      nzTitle: this.i18nSvc.fanyi('ai.chat.config.required.title'),
       nzContent: contentMessage,
       nzWidth: 600,
       nzClosable: false,
       nzMaskClosable: false,
       nzFooter: [
         {
-          label: 'Configure Here',
+          label: this.i18nSvc.fanyi('ai.chat.config.required.button'),
           type: 'primary',
           onClick: () => {
             this.showConfigModal = true;
@@ -532,22 +535,22 @@ export class ChatComponent implements OnInit, OnDestroy {
    */
   onSaveAiProviderConfig(): void {
     if (!this.aiProviderConfig.apiKey?.trim()) {
-      this.message.error('Please enter API Key');
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.api.key'));
       return;
     }
 
     if (!this.aiProviderConfig.code?.trim()) {
-      this.message.error('Please select a provider');
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.provider'));
       return;
     }
 
     if (!this.aiProviderConfig.baseUrl?.trim()) {
-      this.message.error('Please enter Base URL');
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.base.url'));
       return;
     }
 
     if (!this.aiProviderConfig.model?.trim()) {
-      this.message.error('Please enter Model');
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.model'));
       return;
     }
 
@@ -557,22 +560,22 @@ export class ChatComponent implements OnInit, OnDestroy {
       next: response => {
         this.configLoading = false;
         if (response.code === 0) {
-          this.message.success('Model Provider configuration saved successfully!');
+          this.message.success(this.i18nSvc.fanyi('ai.chat.config.save.success'));
           this.showConfigModal = false;
           this.isOpenAiConfigured = true;
           this.loadConversations();
         } else {
           // Check if it's a validation error
           if (response.msg.includes('validation failed')) {
-            this.message.error(`❌ API Key validation failed: ${response.msg}`, { nzDuration: 5000 });
+            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.validation.failed')} ${response.msg}`, { nzDuration: 5000 });
           } else {
-            this.message.error(`Failed to save configuration: ${response.msg}`);
+            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${response.msg}`);
           }
         }
       },
       error: error => {
         this.configLoading = false;
-        this.message.error(`Failed to save configuration: ${error.message}`);
+        this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${error.message}`);
       }
     });
   }
