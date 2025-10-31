@@ -19,8 +19,9 @@ package org.apache.hertzbeat.ai.tools.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
+import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.ai.utils.UtilityClass;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.data.domain.Page;
@@ -43,7 +44,9 @@ import java.util.Map;
 @Service
 public class MonitorToolsImpl implements MonitorTools {
     @Autowired
-    private MonitorServiceAdapter monitorServiceAdapter;
+    private MonitorService monitorService;
+    @Autowired
+    private AppService appService;
 
 
     /**
@@ -123,8 +126,12 @@ public class MonitorToolsImpl implements MonitorTools {
                 includeStats = false;
             }
             
-            Page<Monitor> result = monitorServiceAdapter.getMonitors(ids, app, search, status, sort, order, pageIndex, pageSize, labels);
-            log.debug("MonitorServiceAdapter.getMonitors result: {}", result);
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject: {}", subjectSum);
+
+            Page<Monitor> result = monitorService.getMonitors(
+                    ids, app, search, status, sort, order, pageIndex, pageSize, labels);
+            log.debug("MonitorService.getMonitors result: {}", result);
             
             StringBuilder response = new StringBuilder();
             response.append("MONITOR QUERY RESULTS\n");
@@ -133,10 +140,10 @@ public class MonitorToolsImpl implements MonitorTools {
             // Include statistics if requested
             if (includeStats) {
                 // Get status distribution by calling with different status values
-                long onlineCount = monitorServiceAdapter.getMonitors(null, app, search, (byte) 1, null, null, 0, 1000, labels).getTotalElements();
-                long offlineCount = monitorServiceAdapter.getMonitors(null, app, search, (byte) 2, null, null, 0, 1000, labels).getTotalElements();
-                long unreachableCount = monitorServiceAdapter.getMonitors(null, app, search, (byte) 3, null, null, 0, 1000, labels).getTotalElements();
-                long pausedCount = monitorServiceAdapter.getMonitors(null, app, search, (byte) 0, null, null, 0, 1000, labels).getTotalElements();
+                long onlineCount = monitorService.getMonitors(null, app, search, (byte) 1, null, null, 0, 1000, labels).getTotalElements();
+                long offlineCount = monitorService.getMonitors(null, app, search, (byte) 2, null, null, 0, 1000, labels).getTotalElements();
+                long unreachableCount = monitorService.getMonitors(null, app, search, (byte) 3, null, null, 0, 1000, labels).getTotalElements();
+                long pausedCount = monitorService.getMonitors(null, app, search, (byte) 0, null, null, 0, 1000, labels).getTotalElements();
                 
                 response.append("STATUS OVERVIEW:\n");
                 response.append("- Online: ").append(onlineCount).append("\n");
@@ -266,7 +273,10 @@ public class MonitorToolsImpl implements MonitorTools {
             
             // Validate that all required parameters for this monitor type are provided
             try {
-                List<ParamDefine> requiredParams = monitorServiceAdapter.getMonitorParamDefines(app);
+                SubjectSum subjectSum = McpContextHolder.getSubject();
+                log.debug("Current security subject for getMonitorParamDefines: {}", subjectSum);
+
+                List<ParamDefine> requiredParams = appService.getAppParamDefines(app.toLowerCase().trim());
                 log.info("Checking required parameters for monitor type '{}': {}", app, requiredParams);
                 List<String> missingParams = new ArrayList<>();
                 
@@ -290,8 +300,12 @@ public class MonitorToolsImpl implements MonitorTools {
                 log.warn("Could not validate required parameters for monitor type '{}': {}", app, e.getMessage());
             }
             
-            // Call adapter - it handles all the complexity (validation, defaults, app-specific logic)
-            Long monitorId = monitorServiceAdapter.addMonitor(monitor, params, null);
+            // Call monitor service - it handles all the complexity (validation, defaults, app-specific logic)
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for addMonitor: {}", subjectSum);
+
+            monitorService.addMonitor(monitor, params, null, null);
+            Long monitorId = monitor.getId();
             
             log.info("Successfully added monitor '{}' with ID: {}", name, monitorId);
             return String.format("Successfully added %s monitor '%s' with ID: %d (Host: %s, Interval: %d seconds)", 
@@ -361,14 +375,14 @@ public class MonitorToolsImpl implements MonitorTools {
             log.info("Listing available monitor types for language: {}", language);
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in list_monitor_types tool: {}", subjectSum);
-            
+
             // Set default language if not provided
             if (language == null || language.trim().isEmpty()) {
                 language = "en-US";
             }
-            
-            // Get available monitor types from adapter
-            Map<String, String> monitorTypes = monitorServiceAdapter.getAvailableMonitorTypes(language);
+
+            // Get available monitor types from app service
+            Map<String, String> monitorTypes = appService.getI18nApps(language);
             
             if (monitorTypes == null || monitorTypes.isEmpty()) {
                 return "No monitor types are currently available.";
@@ -416,14 +430,14 @@ public class MonitorToolsImpl implements MonitorTools {
             log.info("Getting parameter definitions for monitor type: {}", app);
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in get_monitor_param_defines tool: {}", subjectSum);
-            
+
             // Validate required parameter
             if (app == null || app.trim().isEmpty()) {
                 return "Error: Monitor type/application parameter is required";
             }
-            
-            // Get parameter definitions from adapter
-            List<ParamDefine> paramDefines = monitorServiceAdapter.getMonitorParamDefines(app);
+
+            // Get parameter definitions from app service
+            List<ParamDefine> paramDefines = appService.getAppParamDefines(app.toLowerCase().trim());
             
             if (paramDefines == null || paramDefines.isEmpty()) {
                 return String.format("No parameter definitions found for monitor type '%s'. "

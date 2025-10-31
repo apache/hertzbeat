@@ -20,9 +20,8 @@ package org.apache.hertzbeat.ai.tools.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.adapters.MetricsServiceAdapter;
-import org.apache.hertzbeat.ai.adapters.MonitorServiceAdapter;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
+import org.apache.hertzbeat.warehouse.service.MetricsDataService;
 import org.apache.hertzbeat.ai.tools.MetricsTools;
 import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
@@ -44,9 +43,7 @@ import java.util.Map;
 @Service
 public class MetricsToolsImpl implements MetricsTools {
     @Autowired
-    private MetricsServiceAdapter metricsServiceAdapter;
-    @Autowired
-    private MonitorServiceAdapter monitorServiceAdapter;
+    private MetricsDataService metricsDataService;
 
     @Override
     @Tool(name = "query_realtime_metrics", description = """
@@ -78,7 +75,7 @@ public class MetricsToolsImpl implements MetricsTools {
             SubjectSum subjectSum = McpContextHolder.getSubject();
             log.debug("Current subject in get_realtime_metrics tool: {}", subjectSum);
 
-            MetricsData metricsData = metricsServiceAdapter.getMetricsData(monitorId, metrics);
+            MetricsData metricsData = metricsDataService.getMetricsData(monitorId, metrics);
 
             if (metricsData == null) {
                 return String.format("No real-time metrics data found for monitor ID %d and metrics '%s'", monitorId, metrics);
@@ -173,7 +170,7 @@ public class MetricsToolsImpl implements MetricsTools {
                 interval = true;
             }
 
-            MetricsHistoryData historyData = metricsServiceAdapter.getMetricHistoryData(
+            MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(
                     monitorId, app, metrics, fieldParameter, label, history, interval);
 
             if (historyData == null) {
@@ -235,8 +232,10 @@ public class MetricsToolsImpl implements MetricsTools {
     public String getWarehouseStatus() {
         try {
             log.info("Checking warehouse storage status");
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for getWarehouseStorageServerStatus: {}", subjectSum);
 
-            Boolean status = metricsServiceAdapter.getWarehouseStorageServerStatus();
+            Boolean status = metricsDataService.getWarehouseStorageServerStatus();
 
             StringBuilder response = new StringBuilder();
             response.append("METRICS WAREHOUSE STATUS\n");

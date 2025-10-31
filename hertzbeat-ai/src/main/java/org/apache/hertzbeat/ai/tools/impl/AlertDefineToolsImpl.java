@@ -22,8 +22,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.usthe.sureness.subject.SubjectSum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.adapters.AlertDefineServiceAdapter;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
+import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.ai.tools.AlertDefineTools;
 import org.apache.hertzbeat.ai.utils.UtilityClass;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -46,7 +47,9 @@ import java.util.Map;
 @Service
 public class AlertDefineToolsImpl implements AlertDefineTools {
     @Autowired
-    private AlertDefineServiceAdapter alertDefineServiceAdapter;
+    private AlertDefineService alertDefineService;
+    @Autowired
+    private AppService appService;
 
 
     @Override
@@ -240,17 +243,19 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                     .datasource(datasource)
                     .enable(enable)
                     .build();
+            
+            log.debug("Current security subject for addAlertDefine: {}", subjectSum);
 
-            AlertDefine createdAlertDefine = alertDefineServiceAdapter.addAlertDefine(alertDefine);
+            alertDefineService.addAlertDefine(alertDefine);
 
             // Note: Monitor binding is handled separately via bind_monitors_to_alert_rule tool
             String bindingNote = String.format(" (Use bind_monitors_to_alert_rule tool to associate specific monitors)");
 
-            log.info("Successfully created alert rule '{}' with ID: {}", name, createdAlertDefine.getId());
+            log.info("Successfully created alert rule '{}' with ID: {}", name, alertDefine.getId());
             
             StringBuilder response = new StringBuilder();
             response.append(String.format("Successfully created %s alert rule '%s' with ID: %d\n", 
-                    type, name, createdAlertDefine.getId()));
+                    type, name, alertDefine.getId()));
             response.append(String.format("Expression: %s\n", expr));
             response.append(String.format("Priority: %d (%s)\n", priority, severityLabel));
             response.append(String.format("Trigger after: %d consecutive violations\n", times));
@@ -296,8 +301,11 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                 pageSize = 10;
             }
 
-            Page<AlertDefine> result = alertDefineServiceAdapter.getAlertDefines(
-                    search, monitorType, enabled, "gmtCreate", "desc", pageIndex, pageSize);
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for getAlertDefines: {}", subjectSum);
+
+            Page<AlertDefine> result = alertDefineService.getAlertDefines(null,
+                    search, "gmtCreate", "desc", pageIndex, pageSize);
 
             StringBuilder response = new StringBuilder();
             response.append("Found ").append(result.getContent().size())
@@ -345,7 +353,21 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
         try {
             log.info("Toggling alert rule ID: {} to enabled: {}", ruleId, enabled);
 
-            alertDefineServiceAdapter.toggleAlertDefineStatus(ruleId, enabled);
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for toggleAlertDefineStatus: {}", subjectSum);
+
+            // First get the existing AlertDefine
+            AlertDefine alertDefine = alertDefineService.getAlertDefine(ruleId);
+
+            if (alertDefine == null) {
+                throw new RuntimeException("AlertDefine with ID " + ruleId + " not found");
+            }
+
+            // Update the enable status
+            alertDefine.setEnable(enabled);
+
+            // Use modifyAlertDefine to save the changes
+            alertDefineService.modifyAlertDefine(alertDefine);
 
             log.info("Successfully toggled alert rule ID: {} to enabled: {}", ruleId, enabled);
             return String.format("Successfully %s alert rule ID: %d",
@@ -369,7 +391,10 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
         try {
             log.info("Getting alert rule details for ID: {}", ruleId);
 
-            AlertDefine alertDefine = alertDefineServiceAdapter.getAlertDefine(ruleId);
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for getAlertDefine: {}", subjectSum);
+
+            AlertDefine alertDefine = alertDefineService.getAlertDefine(ruleId);
             if (alertDefine == null) {
                 return "Alert rule with ID " + ruleId + " not found";
             }
@@ -441,7 +466,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             log.debug("Current subject in get_apps_metrics_hierarchy tool: {}", subjectSum);
 
             List<Hierarchy> hierarchies;
-            hierarchies = alertDefineServiceAdapter.getAppHierarchy(app.trim().toLowerCase(), "en-US");
+            hierarchies = appService.getAppHierarchy(app.trim().toLowerCase(), "en-US");
 
 
             ObjectMapper mapper = new ObjectMapper();
@@ -494,7 +519,9 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             }
 
             // Get the existing alert rule
-            AlertDefine existingRule = alertDefineServiceAdapter.getAlertDefine(ruleId);
+            log.debug("Current security subject for getAlertDefine: {}", subjectSum);
+
+            AlertDefine existingRule = alertDefineService.getAlertDefine(ruleId);
             if (existingRule == null) {
                 return String.format("Error: Alert rule with ID %d not found", ruleId);
             }
@@ -571,7 +598,9 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                 
                 // Update the alert rule
                 existingRule.setExpr(newExpr);
-                alertDefineServiceAdapter.modifyAlertDefine(existingRule);
+                log.debug("Current security subject for modifyAlertDefine: {}", subjectSum);
+
+                alertDefineService.modifyAlertDefine(existingRule);
                 
                 log.info("Successfully added monitors {} to existing bindings for alert rule ID: {}", validMonitorIds, ruleId);
                 return String.format("Successfully added %d new monitor(s) to alert rule ID %d.\nTotal bound monitors: %s\nUpdated expression: %s", 
@@ -608,7 +637,8 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
             // Update the alert rule
             existingRule.setExpr(newExpr);
-            alertDefineServiceAdapter.modifyAlertDefine(existingRule);
+
+            alertDefineService.modifyAlertDefine(existingRule);
 
             log.info("Successfully bound monitors {} to alert rule ID: {}", validMonitorIds, ruleId);
             return String.format("Successfully bound %d monitor(s) to alert rule ID %d.\nMonitor IDs: %s\nUpdated expression: %s", 
@@ -633,7 +663,10 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             log.debug("Validating hierarchy relationships: app={}, metrics={}, fieldConditions={}", app, metrics, fieldConditions);
 
             // Get hierarchy for the specified app
-            List<Hierarchy> hierarchies = alertDefineServiceAdapter.getAppHierarchy(app.toLowerCase(), "en-US");
+            SubjectSum subjectSum = McpContextHolder.getSubject();
+            log.debug("Current security subject for getAppHierarchy: {}", subjectSum);
+
+            List<Hierarchy> hierarchies = appService.getAppHierarchy(app.toLowerCase(), "en-US");
 
             if (hierarchies == null || hierarchies.isEmpty()) {
                 return String.format("Error: App '%s' not found in hierarchy. Please use list_monitor_types to get valid app names.", app);
