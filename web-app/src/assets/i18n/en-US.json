@@ -1092,7 +1092,7 @@
   "ai.chat.welcome.capabilities.metrics": "Access real-time and historical metrics data",
   "ai.chat.welcome.capabilities.monitor": "Add new monitors for websites, APIs, databases, and services",
   "ai.chat.welcome.capabilities.troubleshoot": "Troubleshoot performance issues across your infrastructure",
-  "ai.chat.welcome.description": "I'm your intelligent monitoring companion, ready to help you manage and optimize your infrastructure monitoring. You can ask me to:",
-  "ai.chat.welcome.question": "Ask me anything about your monitoring setup!",
+  "ai.chat.welcome.description": "I'm your intelligent observability companion, ready to help you manage and optimize your infrastructure observability. You can ask me to:",
+  "ai.chat.welcome.question": "Ask me anything about your observability setup!",
   "ai.chat.welcome.title": "Welcome to HertzBeat AI!"
 }

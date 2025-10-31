@@ -1081,7 +1081,7 @@
   "ai.chat.welcome.capabilities.metrics": "存取即時和歷史指標資料",
   "ai.chat.welcome.capabilities.monitor": "為網站、API、資料庫和服務新增新的監控器",
   "ai.chat.welcome.capabilities.troubleshoot": "排查整個基礎設施的效能問題",
-  "ai.chat.welcome.description": "我是您的智慧監控夥伴，隨時準備幫助您管理和最佳化基礎設施監控。您可以要求我：",
-  "ai.chat.welcome.question": "詢問我任何關於您的監控設定的問題！",
+  "ai.chat.welcome.description": "我是您的智慧可觀測夥伴，隨時準備幫助您管理和最佳化基礎設施可觀測。您可以要求我：",
+  "ai.chat.welcome.question": "詢問我任何關於您的可觀測設定的問題！",
   "ai.chat.welcome.title": "歡迎使用 HertzBeat AI！"
 }

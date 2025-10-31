@@ -1067,7 +1067,7 @@
   "ai.chat.welcome.capabilities.metrics": "リアルタイムおよび履歴メトリクスデータにアクセス",
   "ai.chat.welcome.capabilities.monitor": "ウェブサイト、API、データベース、サービスの新しいモニターを追加",
   "ai.chat.welcome.capabilities.troubleshoot": "インフラストラクチャ全体のパフォーマンス問題をトラブルシューティング",
-  "ai.chat.welcome.description": "私はあなたのインテリジェントな監視パートナーです。インフラストラクチャ監視の管理と最適化をお手伝いします。以下のことをお尋ねいただけます：",
-  "ai.chat.welcome.question": "監視設定について何でもお聞きください！",
+  "ai.chat.welcome.description": "私はあなたのインテリジェントな可観測性パートナーです。インフラストラクチャ可観測性の管理と最適化をお手伝いします。以下のことをお尋ねいただけます：",
+  "ai.chat.welcome.question": "可観測性設定について何でもお聞きください！",
   "ai.chat.welcome.title": "HertzBeat AI へようこそ！"
 }
