@@ -5,25 +5,24 @@ sidebar_label: Introduce
 slug: /
 ---
 
-> A real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
-
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
 ## 🎡 <font color="green">Introduction</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time observability system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) is an AI-powered next-generation open source real-time observability system. Unified metrics and logs collection, centralized alerting distribution, intelligent management and analysis. No Agent required, high performance cluster, provides powerful custom monitoring and status page building capabilities.
 
 ### Features
 
-* Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, program, database, cache, os, webserver, middleware, bigdata, cloud-native, network, custom and more.
-* Easy to use and agentless, web-based and with one-click monitoring and alerting, zero learning curve.
-* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
-* Compatible with the `Prometheus` ecosystem and more, can monitoring what `Prometheus` can monitoring with few clicks on webui.
-* High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
-* Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
-* Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
+- Integrates **collection + analysis + alerting + notification** into one platform, with new AI-powered interactions and features under HertzBeat AI, and built-in MCP Server capabilities.
+- Unified metrics platform, agentless, Prometheus-compatible, supports application services, programs, databases, caches, operating systems, big data, middleware, web servers, cloud-native, networks, custom monitoring and more.
+- Unified logging platform, seamlessly integrates multiple log sources through OTLP protocol for reporting.
+- Unified alerting platform, integrates internal alerts with various external alert sources, unified alert processing and analysis, flexible real-time and periodic threshold rules, grouping convergence, silence, suppression, etc.
+- Unified message distribution, alerts processed by the alerting platform are distributed via `Email` `Discord` `Slack` `Telegram` `DingTalk` `WeChat` `FeiShu` `SMS` `Webhook` `ServerChan` and other methods.
+- Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
+- High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
+- Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.
+> HertzBeat's unified platform, AI intelligence, powerful customization, multi-type support, high performance, and easy expansion, aims to help users quickly and conveniently achieve observability requirements.
 
 ---
 
