@@ -32,6 +32,7 @@ export interface ChatMessage {
 
 export interface ChatConversation {
   id: number;
+  title: string;
   gmtCreated: Date;
   gmtUpdate: Date;
   messages: ChatMessage[];

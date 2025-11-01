@@ -66,6 +66,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
+    // Always load conversations first, regardless of AI configuration status
+    this.loadConversations();
     this.checkAiConfiguration();
   }
 
@@ -154,6 +156,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   createFallbackConversation(): void {
     const fallbackConversation: ChatConversation = {
       id: 0,
+      title: 'Offline Conversation',
       gmtCreated: new Date(),
       gmtUpdate: new Date(),
       messages: []
@@ -379,6 +382,9 @@ export class ChatComponent implements OnInit, OnDestroy {
    * Format conversation title
    */
   getConversationTitle(conversation: ChatConversation): string {
+    if (conversation.title) {
+      return conversation.title;
+    }
     if (conversation.messages && conversation.messages.length > 0) {
       const firstUserMessage = conversation.messages.find(m => m.role === 'user');
       if (firstUserMessage) {
@@ -465,7 +471,7 @@ export class ChatComponent implements OnInit, OnDestroy {
               this.aiProviderConfig.model = defaultProvider.defaultModel;
             }
           }
-          this.loadConversations();
+          // Don't load conversations here anymore - they're loaded in ngOnInit
         } else {
           // Initialize with default values if no config exists
           this.aiProviderConfig = new ModelProviderConfig();
