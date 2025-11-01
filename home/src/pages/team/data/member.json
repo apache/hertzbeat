@@ -89,6 +89,11 @@
       "githubId": "2263040",
       "gitUrl": "https://github.com/F21",
       "name": "Francis Chuang"
+    },
+    {
+      "githubId": "131688897",
+      "gitUrl": "https://github.com/Calvin979",
+      "name": "Calvin"
     }
   ],
   "committer" : [
@@ -106,11 +111,6 @@
       "githubId": "118667222",
       "gitUrl": "https://github.com/Yanshuming1",
       "name": "LinDong"
-    },
-    {
-      "githubId": "131688897",
-      "gitUrl": "https://github.com/Calvin979",
-      "name": "Calvin"
     },
     {
       "githubId": "77964041",
@@ -141,6 +141,11 @@
       "githubId": "73413979",
       "gitUrl": "https://github.com/bigcyy",
       "name": "Yang Chen"
+    },
+    {
+      "githubId": "112607719",
+      "gitUrl": "https://github.com/Duansg",
+      "name": "Duansg"
     }
   ]
 }
