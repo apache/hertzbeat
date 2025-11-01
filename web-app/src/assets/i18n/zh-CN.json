@@ -695,6 +695,7 @@
   "menu.advanced.labels": "标签管理",
   "menu.advanced.plugins": "插件管理",
   "menu.advanced.status": "状态页面",
+  "menu.advanced.mcp-server": "MCP服务器",
   "menu.alert": "告警",
   "menu.alert.center": "告警中心",
   "menu.alert.converge": "收敛",
