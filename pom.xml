@@ -96,7 +96,7 @@
     </modules>
 
     <properties>
-        <hzb.version>1.7.3</hzb.version>
+        <hzb.version>1.8.0</hzb.version>
 
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
