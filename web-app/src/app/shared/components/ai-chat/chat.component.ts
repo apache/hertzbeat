@@ -40,6 +40,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   currentConversation: ChatConversation | null = null;
   messages: ChatMessage[] = [];
   newMessage = '';
+  initialMessage = '';
   isLoading = false;
   isLoadingConversations = false;
   isSendingMessage = false;
@@ -69,6 +70,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     // Always load conversations first, regardless of AI configuration status
     this.loadConversations();
     this.checkAiConfiguration();
+    if (this.initialMessage) {
+      this.newMessage = this.initialMessage;
+    }
   }
 
   ngOnDestroy(): void {
