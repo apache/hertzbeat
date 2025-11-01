@@ -24,6 +24,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 
 /**
  * Chat request context for AI chat endpoint.
@@ -40,10 +41,10 @@ public class ChatRequestContext {
     /**
      * Optional conversation ID for context
      */
-    private String conversationId;
+    private Long conversationId;
 
     /**
      * Conversation history messages for context
      */
-    private List<MessageDto> conversationHistory;
+    private List<ChatMessage> conversationHistory;
 }

@@ -30,7 +30,7 @@ export class AiChatModalService {
 
   constructor(private modalService: NzModalService) {}
 
-  openChatModal(): void {
+  openChatModal(initialMessage?: string): void {
     if (this.currentModal) {
       this.currentModal.destroy();
     }
@@ -58,6 +58,10 @@ export class AiChatModalService {
         return true;
       }
     });
+
+    if (initialMessage && this.currentModal.componentInstance) {
+      this.currentModal.componentInstance.initialMessage = initialMessage;
+    }
   }
 
   closeChatModal(): void {

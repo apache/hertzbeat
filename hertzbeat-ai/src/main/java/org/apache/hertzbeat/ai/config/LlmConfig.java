@@ -20,7 +20,7 @@ package org.apache.hertzbeat.ai.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
-import org.apache.hertzbeat.ai.pojo.dto.ModelProviderConfig;
+import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -72,12 +72,7 @@ public class LlmConfig {
         }
         ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
 
-        if (!modelProviderConfig.isEnable() || !modelProviderConfig.isStatus()) {
-            log.warn("LLM Provider is not enabled or status is not valid, ChatClient bean will not be created");
-            return null;
-        }
-
-        if (modelProviderConfig.getApiKey() == null) {
+        if (modelProviderConfig == null || modelProviderConfig.getApiKey() == null) {
             log.warn("LLM Provider configuration is incomplete, ChatClient bean will not be created");
             return null;
         }

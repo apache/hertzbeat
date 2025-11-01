@@ -60,7 +60,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
 
         <!-- Configuration files under the src/main/resources/define directory are packaged to the define directory -->
         <fileSet>
-            <directory>src/main/resources</directory>
+            <directory>../hertzbeat-manager/src/main/resources</directory>
             <includes>
                 <include>define/**</include>
             </includes>

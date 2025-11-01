@@ -202,6 +202,12 @@
                 <artifactId>hertzbeat-manager</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
+            <!-- ai -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-ai</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
             <!-- data warehouse -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>

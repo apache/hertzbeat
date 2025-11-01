@@ -1,7 +1,7 @@
 ---
 id: mcp_sse_server
-title: MCP SSE Server
-sidebar_label: MCP SSE Server
+title: MCP Server
+sidebar_label: MCP Server
 keywords: [MCP, SSE, streaming, server]
 ---
 
@@ -25,6 +25,8 @@ You must authenticate each request using one of the following methods:
 - JWT bearer token
 
   - Header: `Authorization: Bearer <your-jwt-token>`
+
+Note: You can generate a JWT token from the HertzBeat web UI under the Log Integration or Alarm Integration Page.
 
 - Basic authentication
   - Header: `Authorization: Basic <base64(username:password)>`
