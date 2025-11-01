@@ -692,6 +692,7 @@
   "menu.advanced.labels": "Labels",
   "menu.advanced.plugins": "Plugins",
   "menu.advanced.status": "Status",
+  "menu.advanced.mcp-server": "MCP Server",
   "menu.alert": "Alerting",
   "menu.alert.center": "Alarms",
   "menu.alert.converge": "Converge",

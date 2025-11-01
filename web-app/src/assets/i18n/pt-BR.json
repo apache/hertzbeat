@@ -459,6 +459,7 @@
   "menu.advanced.labels": "Gerenciamento de tags",
   "menu.advanced.plugins": "Gerenciamento de plug-ins",
   "menu.advanced.status": "Página de status",
+  "menu.advanced.mcp-server": "Servidor MCP",
   "menu.alert": "Alarme",
   "menu.alert.center": "Central de alarme",
   "menu.alert.converge": "Convergência",

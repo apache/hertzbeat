@@ -687,6 +687,7 @@
   "menu.advanced.labels": "標簽管理",
   "menu.advanced.plugins": "外掛管理",
   "menu.advanced.status": "狀態頁面",
+  "menu.advanced.mcp-server": "MCP伺服器",
   "menu.alert": "告警",
   "menu.alert.center": "告警中心",
   "menu.alert.converge": "告警收斂",

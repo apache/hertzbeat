@@ -683,6 +683,7 @@
   "menu.advanced.labels": "ラベル",
   "menu.advanced.plugins": "プラグイン",
   "menu.advanced.status": "ステータス",
+  "menu.advanced.mcp-server": "MCPサーバー",
   "menu.alert": "アラート設定",
   "menu.alert.center": "アラーム",
   "menu.alert.converge": "収束",
