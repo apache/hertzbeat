@@ -43,12 +43,6 @@
 
 ----
 
-![hertzbeat](home/static/img/home/1.png)
-
-![hertzbeat](home/static/img/home/status.png)
-
-![hertzbeat](home/static/img/home/9.png)
-
 ----
 
 ## 🥐 モジュール  
