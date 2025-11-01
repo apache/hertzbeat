@@ -41,15 +41,14 @@ export class ChatComponent implements OnInit, OnDestroy {
   messages: ChatMessage[] = [];
   newMessage = '';
   initialMessage = '';
-  isLoading = false;
   isLoadingConversations = false;
   isSendingMessage = false;
   sidebarCollapsed = false;
   theme: string = 'default';
   private scrollTimeout: any;
 
-  // OpenAI Configuration
-  isOpenAiConfigured = false;
+  // Provider Configuration
+  isAiProviderConfigured = false;
   showConfigModal = false;
   configLoading = false;
   aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
@@ -72,6 +71,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.checkAiConfiguration();
     if (this.initialMessage) {
       this.newMessage = this.initialMessage;
+      setTimeout(() => this.sendMessage(), 800);
     }
   }
 
@@ -573,7 +573,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (response.code === 0) {
           this.message.success(this.i18nSvc.fanyi('ai.chat.config.save.success'));
           this.showConfigModal = false;
-          this.isOpenAiConfigured = true;
+          this.isAiProviderConfigured = true;
           this.loadConversations();
         } else {
           // Check if it's a validation error
