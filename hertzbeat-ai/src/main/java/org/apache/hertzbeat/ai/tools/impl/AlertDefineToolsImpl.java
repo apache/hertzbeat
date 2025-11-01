@@ -484,10 +484,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
                 result.put("message", "No hierarchy data available");
             }
 
-            String jsonResult = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
-            log.info("Hierarchy JSON: {}", jsonResult);
-
-            return jsonResult;
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
 
         } catch (Exception e) {
             log.error("Failed to get apps metrics hierarchy: {}", e.getMessage(), e);
