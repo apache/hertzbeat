@@ -316,7 +316,7 @@
               color: @primary-color;
               font-size: 11px;
               opacity: 0.8;
-              
+
               i {
                 font-size: 12px;
               }
@@ -324,57 +324,7 @@
           }
 
           .message-text {
-            line-height: 1.5;
-            color: @text-color;
-            white-space: pre-wrap;
             word-wrap: break-word;
-
-            // Markdown styling
-            :global {
-              p {
-                margin: 0 0 8px 0;
-
-                &:last-child {
-                  margin-bottom: 0;
-                }
-              }
-
-              code {
-                background: @background-color-light;
-                padding: 2px 4px;
-                border-radius: 3px;
-                font-family: @code-family;
-                font-size: 12px;
-                color: @text-color;
-              }
-
-              pre {
-                background: @background-color-light;
-                padding: 12px;
-                border-radius: 6px;
-                overflow-x: auto;
-                margin: 8px 0;
-                border: 1px solid @border-color-split;
-
-                code {
-                  background: none;
-                  padding: 0;
-                  color: @text-color;
-                }
-              }
-
-              ul, ol {
-                margin: 8px 0;
-                padding-left: 20px;
-              }
-
-              blockquote {
-                border-left: 4px solid @border-color-base;
-                padding-left: 12px;
-                margin: 8px 0;
-                color: @text-color-secondary;
-              }
-            }
           }
 
           .typing-indicator {
@@ -760,7 +710,7 @@ body[data-theme='dark'] .chat-container {
 
 .validation-result {
   margin-top: 8px;
-  
+
   nz-alert {
     font-size: 12px;
   }
@@ -772,29 +722,29 @@ body[data-theme='dark'] .chat-container {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     nz-select {
       flex: 1;
     }
   }
-  
+
   .baseurl-input-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     nz-input-group {
       flex: 1;
     }
-    
+
     .reset-btn {
       flex-shrink: 0;
     }
   }
-  
+
   .form-item-with-help {
     margin-bottom: 8px;
-    
+
     + .form-help {
       margin-bottom: 16px;
     }
@@ -805,11 +755,11 @@ nz-modal {
   .ant-modal-body {
     padding: 24px;
   }
-  
+
   .ant-form-item {
     margin-bottom: 16px;
   }
-  
+
   .ant-form-item-label {
     padding-bottom: 4px;
   }

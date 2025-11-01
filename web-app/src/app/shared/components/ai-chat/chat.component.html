@@ -115,7 +115,10 @@
               <span style="font-size: 11px">Typing...</span>
             </span>
           </div>
-          <div class="message-text" [innerHTML]="message.content"></div>
+          <div class="message-text">
+            <div *ngIf="message.role === 'user'" [innerHTML]="message.content"></div>
+            <markdown *ngIf="message.role === 'assistant'" [data]="message.content"></markdown>
+          </div>
           <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
             <span>{{ 'ai.chat.typing' | i18n }}</span>
           </div>
