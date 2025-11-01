@@ -9,7 +9,7 @@
 <a href="README.md">English</a> | <b><a href="README_CN.md">中文</a></b> | <a href="README_JP.md">日本語</a>
 </p>
 
-> 实时观测系统，无需 Agent，性能集群，兼容 Prometheus，自定义监控和状态页构建能力。
+> AI驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
@@ -28,20 +28,21 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 
-- 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
-- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，无需学习成本。    
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需简单配置即可快速适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
-- 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
+- 集```采集+分析+告警+通知```为一体，HertzBeat AI 驱动下的新交互与功能，也内置 MCP Server 对外能力。
+- 统一的指标平台，无需 Agent，兼容 Prometheus，支持应用服务，程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等。
+- 统一的日志平台，通过 OTLP 协议多日志源无缝对接上报。
+- 统一的告警平台，内部告警与外部多种告警源集成接入，统一告警处理分析，灵活的实时与周期阈值规则，分组收敛，静默，抑制等。
+- 统一的消息分发，告警平台处理后通过 `邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式分发通知。
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需配置模板 `YML` 就能自定义采集指标。您相信只需简单配置即可快速适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 灵活的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 - 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
 
 
-> `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。    
+> `HertzBeat`的统一平台，AI智能，强大自定义，多类型支持，高性能，易扩展，希望能帮助用户快速方便实现观测需求。    
 
 ----
 
@@ -59,8 +60,8 @@
 
 ## ⛄ 已支持    
 
-> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 监控模板，用户可以导入这些模板来支持对应类型的监控!    
-> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模板。
+> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 模板，用户可以导入这些模板来支持对应类型的监控!    
+> 欢迎大家一起贡献你使用过程中自定义的通用指标模板。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
@@ -98,7 +99,7 @@
 - [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-- 和更多自定义监控模板。
+- 和更多自定义指标模板。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
 
 ## 🐕 快速开始  
