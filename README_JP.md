@@ -9,8 +9,6 @@
 <a href="README.md">English</a> | <a href="README_CN.md">中文</a> | <b><a href="README_JP.md">日本語</a></b>
 </p>  
 
-> AI 駆動の次世代オープンソースリアルタイム観測システムです。メトリクスとログの統一収集、アラートの一元配信、インテリジェント管理分析。エージェント不要、高性能クラスタ、強力なカスタム監視とステータスページ構築機能を提供します。
-
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)

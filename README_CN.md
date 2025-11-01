@@ -9,8 +9,6 @@
 <a href="README.md">English</a> | <b><a href="README_CN.md">中文</a></b> | <a href="README_JP.md">日本語</a>
 </p>
 
-> AI驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。
-
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
