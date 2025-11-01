@@ -1087,7 +1087,6 @@
   "ai.chat.welcome.capabilities.monitor": "Adicionar novos monitores para sites, APIs, bancos de dados e serviços",
   "ai.chat.welcome.capabilities.troubleshoot": "Solucionar problemas de desempenho em toda sua infraestrutura",
   "ai.chat.welcome.description": "Sou seu companheiro inteligente de observabilidade, pronto para ajudá-lo a gerenciar e otimizar a observabilidade de sua infraestrutura. Você pode me pedir para:",
-  "ai.chat.welcome.question": "Pergunte-me qualquer coisa sobre sua configuração de observabilidade!",
   "ai.chat.welcome.title": "Bem-vindo ao HertzBeat AI!",
   "ai.chat.conversation.created": "Nova conversa criada",
   "ai.chat.conversation.delete.title": "Excluir Conversa",

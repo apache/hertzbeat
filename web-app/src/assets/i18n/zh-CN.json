@@ -1096,7 +1096,6 @@
   "ai.chat.welcome.capabilities.monitor": "为网站、API、数据库和服务添加新的监控器",
   "ai.chat.welcome.capabilities.troubleshoot": "排查整个基础设施的性能问题",
   "ai.chat.welcome.description": "我是您的智能可观测伙伴，随时准备帮助您管理和优化基础设施可观测。您可以要求我：",
-  "ai.chat.welcome.question": "询问我任何关于您的可观测设置的问题！",
   "ai.chat.welcome.title": "欢迎使用 HertzBeat AI！",
   "ai.chat.conversation.created": "新对话已创建",
   "ai.chat.conversation.delete.title": "删除对话",
