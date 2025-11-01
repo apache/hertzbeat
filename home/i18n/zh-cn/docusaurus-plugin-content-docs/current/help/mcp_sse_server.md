@@ -26,6 +26,8 @@ keywords: [MCP, SSE, 流式传输, 服务器]
 
   - 请求头: `Authorization: Bearer <your-jwt-token>`
 
+注意：您可以在 HertzBeat Web UI 的日志集成或告警集成页面点击生成 JWT 令牌。
+
 - 基本身份验证
   - 请求头: `Authorization: Basic <base64(username:password)>`
 
