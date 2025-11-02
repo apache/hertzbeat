@@ -196,6 +196,7 @@
   "alert.notice.type.WeComApp-userId": "User ID(separated by | symbol)",
   "alert.notice.type.access-token": "Robot ACCESS_TOKEN",
   "alert.notice.type.ding": "DingDing Robot",
+  "alert.notice.type.ding-secret": "Robot Secret",
   "alert.notice.type.discord": "Discord Bot",
   "alert.notice.type.discord-bot-token": "Discord Bot Token",
   "alert.notice.type.discord-channel-id": "Discord Channel ID",

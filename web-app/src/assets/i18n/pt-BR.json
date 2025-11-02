@@ -172,6 +172,7 @@
   "alert.notice.type.WeCom-robot-key": "Chave do Robô WeCom",
   "alert.notice.type.access-token": "Token de Acesso do Robô",
   "alert.notice.type.ding": "Robô DingDing",
+  "alert.notice.type.ding-secret": "Chave Secreta do Robô DingDing",
   "alert.notice.type.fei-shu": "Robô FeiShu",
   "alert.notice.type.fei-shu-key": "Chave do Robô FeiShu",
   "alert.notice.type.telegram-bot": "Bot do Telegram",
