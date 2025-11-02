@@ -20,9 +20,11 @@ github:
   homepage: https://hertzbeat.apache.org/
   labels:
     - ai
+    - agent
     - llm
-    - monitoring
+    - logs
     - monitor
+    - monitoring
     - notifications
     - alerting
     - self-hosted
@@ -34,12 +36,9 @@ github:
     - uptime
     - status
     - status-page
-    - devops
     - server
     - linux
     - database
-    - mysql
-    - cloud
   enabled_merge_buttons:
     squash: true
     merge: false
