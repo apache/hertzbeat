@@ -195,7 +195,7 @@
   "alert.notice.type.WeComApp-userId": "使用者id（多個使用|符號分隔）",
   "alert.notice.type.access-token": "機器人ACCESS_TOKEN",
   "alert.notice.type.ding": "釘釘機器人",
-  "alert.notice.type.ding-secret": "釘釘機器人",
+  "alert.notice.type.ding-secret": "釘釘機器人密鑰",
   "alert.notice.type.discord": "Discord機器人",
   "alert.notice.type.discord-bot-token": "Discord Bot Token",
   "alert.notice.type.discord-channel-id": "Discord頻道ID",
