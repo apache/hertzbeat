@@ -296,13 +296,13 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 5">
-          <nz-form-label [nzSpan]="7" nzFor="appSecret">
-              {{ 'alert.notice.type.ding-secret' | i18n }}
-          </nz-form-label>
-          <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
-            <input [(ngModel)]="receiver.appSecret" name="appSecret" nz-input type="text" />
-          </nz-form-control>
-        </nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="appSecret">
+          {{ 'alert.notice.type.ding-secret' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.appSecret" name="appSecret" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 5">
         <nz-form-label [nzSpan]="7" nzFor="phone">{{ 'alert.notice.type.phone' | i18n }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.phone.invalid' | i18n" [nzSpan]="12">
