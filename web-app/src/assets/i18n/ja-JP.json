@@ -196,6 +196,7 @@
   "alert.notice.type.WeComApp-userId": "ユーザーID（|記号で区切る）",
   "alert.notice.type.access-token": "ロボットACCESS_TOKEN",
   "alert.notice.type.ding": "DingDing ロボット",
+  "alert.notice.type.ding-secret": "DingTalkロボット秘密鍵",
   "alert.notice.type.discord": "Discord ボット",
   "alert.notice.type.discord-bot-token": "Discord ボットトークン",
   "alert.notice.type.discord-channel-id": "Discord チャンネルID",
