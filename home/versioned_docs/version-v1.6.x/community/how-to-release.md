@@ -133,7 +133,7 @@ Or enter <https://keyserver.ubuntu.com/> address in the browser, enter the name 
 
 #### 2.4 Add the gpg public key to the KEYS file of the Apache SVN project repo
 
-- Apache HertzBeat Branch Dev <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat>
+- Apache HertzBeat Branch Dev <https://dist.apache.org/repos/dist/dev/hertzbeat>
 - Apache HertzBeat Branch Release <https://dist.apache.org/repos/dist/release/incubator/hertzbeat>
 
 ##### 2.4.1 Add public key to KEYS in dev branch
@@ -341,7 +341,7 @@ svn commit -m "release for HertzBeat 1.6.0"
 
 - Check Apache SVN Commit Results
 
-> Visit the address <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/> in the browser, check if existed the new material package
+> Visit the address <https://dist.apache.org/repos/dist/dev/hertzbeat/> in the browser, check if existed the new material package
 
 ## 4. Enter the community voting stage
 

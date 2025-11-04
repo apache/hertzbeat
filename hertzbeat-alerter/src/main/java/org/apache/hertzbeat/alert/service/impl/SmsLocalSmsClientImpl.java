@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.config.SmslocalSmsProperties;
+import org.apache.hertzbeat.common.entity.dto.sms.SmslocalSmsProperties;
 import org.apache.hertzbeat.alert.service.SmsClient;
 import org.apache.hertzbeat.common.constants.SmsConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;

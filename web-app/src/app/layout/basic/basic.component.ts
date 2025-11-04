@@ -18,13 +18,8 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
         </a>
       </layout-default-header-item>
 
-      <layout-default-header-item direction="left" hidden="pc">
-        <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
-          <i nz-icon nzType="search"></i>
-        </div>
-      </layout-default-header-item>
       <layout-default-header-item direction="middle">
-        <header-search class="alain-default__search" [toggleChange]="searchToggleStatus"></header-search>
+        <header-ai-chat class="alain-default__ai-chat"></header-ai-chat>
       </layout-default-header-item>
       <layout-default-header-item direction="right" hidden="mobile">
         <header-notify></header-notify>
@@ -101,6 +96,7 @@ export class LayoutBasicComponent implements OnDestroy {
   };
   avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
+  aiChatToggleStatus = false;
   showSettingDrawer = !environment.production;
   version = CONSTANTS.VERSION;
   currentYear = new Date().getFullYear();

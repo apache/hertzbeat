@@ -21,7 +21,7 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { LayoutBasicComponent } from './basic/basic.component';
 import { HeaderFullScreenComponent } from './basic/widgets/fullscreen.component';
 import { HeaderI18nComponent } from './basic/widgets/i18n.component';
-import { HeaderSearchComponent } from './basic/widgets/search.component';
+import { HeaderAiChatComponent } from './basic/widgets/chat-input.component';
 import { HeaderUserComponent } from './basic/widgets/user.component';
 import { HeaderNotifyComponent } from './basic/widgets/notify.component';
 import { LayoutBlankComponent } from './blank/blank.component';
@@ -29,7 +29,7 @@ import { LayoutBlankComponent } from './blank/blank.component';
 const COMPONENTS = [LayoutBasicComponent, LayoutBlankComponent, HeaderI18nComponent];
 
 const HEADER_COMPONENTS = [
-  HeaderSearchComponent,
+  HeaderAiChatComponent,
   HeaderFullScreenComponent,
   HeaderI18nComponent,
   HeaderUserComponent,

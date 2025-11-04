@@ -107,7 +107,7 @@
     grid-area: header !important;
     background: linear-gradient(135deg, var(--primary-color, @primary-color) 0%, var(--primary-color-light, lighten(@primary-color, 10%)) 100%) !important;
     box-shadow: 0 4px 20px var(--shadow-color, rgba(0, 0, 0, 0.08)) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     backdrop-filter: blur(10px) !important;
     transition: all 0.3s ease !important;
     position: relative !important;
@@ -147,7 +147,7 @@
   .alain-default__aside {
     grid-area: sidebar !important;
     background: var(--sidebar-background, #ffffff) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
     backdrop-filter: blur(20px) !important;
@@ -167,7 +167,7 @@
   .alain-default__content {
     grid-area: content !important;
     background: var(--content-background, #ffffff) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
     backdrop-filter: blur(20px) !important;
@@ -183,7 +183,7 @@
   /* Sidebar navigation modern styling */
   .sidebar-nav__item {
     margin: 4px 12px;
-    border-radius: 12px;
+    border-radius: 8px;
     border-left: none;
     transition: all 0.3s ease;
     overflow: hidden;
@@ -197,7 +197,7 @@
   .sidebar-nav__selected {
     background: linear-gradient(135deg, rgba(63, 81, 181, 0.12) 0%, rgba(63, 81, 181, 0.08) 100%);
     border-left: none;
-    border-radius: 12px;
+    border-radius: 8px;
     position: relative;
   }
 
@@ -215,7 +215,7 @@
 
   .sidebar-nav__item-link {
     padding: 12px 16px;
-    border-radius: 8px;
+    border-radius: 6px;
     transition: all 0.3s ease;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
     font-weight: 500;
@@ -227,7 +227,7 @@
 
   /* Header items modern styling */
   .alain-default__nav-item {
-    border-radius: 8px;
+    border-radius: 6px;
     margin: 0 4px;
     transition: all 0.3s ease;
   }
@@ -246,7 +246,7 @@
   /* Search component modern styling */
   .alain-default__search {
     .ant-input-affix-wrapper {
-      border-radius: 20px;
+      border-radius: 16px;
       background: rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(10px);
@@ -264,7 +264,7 @@
 
   /* Logo area styling */
   .alain-default__header-logo {
-    border-radius: 12px;
+    border-radius: 8px;
     margin: 8px;
     transition: all 0.3s ease;
   }
@@ -280,18 +280,18 @@
     }
 
     .alain-default__header {
-      border-radius: 12px;
+      border-radius: 8px;
     }
 
     .alain-default__aside {
       margin-top: 4px;
-      border-radius: 12px;
+      border-radius: 8px;
     }
 
     .alain-default__content {
       margin-top: 4px;
       margin-left: 4px;
-      border-radius: 12px;
+      border-radius: 8px;
     }
   }
 
@@ -363,23 +363,23 @@ global-footer {
 /* AI Chat Modal Styles */
 :host ::ng-deep .ai-chat-modal {
   .ant-modal {
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     overflow: hidden !important;
   }
   .ant-modal-content {
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     overflow: hidden !important;
   }
 
 
 
   .ant-modal-header {
-    border-radius: 16px 16px 0 0 !important;
+    border-radius: 12px 12px 0 0 !important;
     margin: 0 !important;
     padding: 16px !important;
   }
   .ant-modal-body {
-    border-radius: 0 0 16px 16px !important;
+    border-radius: 0 0 12px 12px !important;
     padding: 0 !important;
   }
 

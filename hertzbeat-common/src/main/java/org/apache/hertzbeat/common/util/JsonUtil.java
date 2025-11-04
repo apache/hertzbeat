@@ -121,4 +121,26 @@ public final class JsonUtil {
             return false;
         }
     }
+
+    public static Boolean isArray(String jsonStr) {
+        if (!isJsonLike(jsonStr)) {
+            return false;
+        }
+        try {
+            JsonNode jsonNode = OBJECT_MAPPER.readTree(jsonStr);
+            return jsonNode.isArray();
+        } catch (Exception ignore) {
+            return false;
+        }
+    }
+
+    public static boolean isJsonLike(String jsonStr) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return false;
+        }
+        jsonStr = jsonStr.trim();
+        char start = jsonStr.charAt(0);
+        char end = jsonStr.charAt(jsonStr.length() - 1);
+        return (start == '{' && end == '}') || (start == '[' && end == ']');
+    }
 }
