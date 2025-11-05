@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import com.google.common.collect.Lists;
-import org.apache.hertzbeat.alert.config.SmslocalSmsProperties;
+import org.apache.hertzbeat.common.entity.dto.sms.SmslocalSmsProperties;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;

@@ -64,6 +64,7 @@ kubectl create token --duration=1000h cluster-admin
 | capacity_memory    | 无    | 内存容量   |
 | allocatable_memory | 无    | 已分配内存  |
 | creation_time      | 无    | 节点创建时间 |
+| uid                | 无    | UUID 唯一标识符 |
 
 #### 指标集合：namespaces
 
@@ -72,6 +73,7 @@ kubectl create token --duration=1000h cluster-admin
 | namespace     | 无    | namespace名称 |
 | status        | 无    | 状态          |
 | creation_time | 无    | 创建时间        |
+| uid           | 无    | UUID 唯一标识符 |
 
 #### 指标集合：pods
 
@@ -85,6 +87,7 @@ kubectl create token --duration=1000h cluster-admin
 | pod_ip        | 无    | pod ip         |
 | creation_time | 无    | pod创建时间        |
 | start_time    | 无    | pod启动时间        |
+| uid           | 无    | UUID 唯一标识符 |
 
 #### 指标集合：services
 
@@ -96,3 +99,4 @@ kubectl create token --duration=1000h cluster-admin
 | cluster_ip    | 无    | cluster ip                                             |
 | selector      | 无    | tag selector匹配                                         |
 | creation_time | 无    | 创建时间                                                   |
+| uid           | 无    | UUID 唯一标识符 |

@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import org.apache.hertzbeat.alert.config.TwilioSmsProperties;
+import org.apache.hertzbeat.common.entity.dto.sms.TwilioSmsProperties;
 import org.apache.hertzbeat.alert.service.impl.TwilioSmsClientImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

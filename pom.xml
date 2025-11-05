@@ -96,7 +96,7 @@
     </modules>
 
     <properties>
-        <hzb.version>1.7.3</hzb.version>
+        <hzb.version>1.8.0</hzb.version>
 
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -200,6 +200,12 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-manager</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- ai -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-ai</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- data warehouse -->

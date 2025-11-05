@@ -8,7 +8,7 @@ sidebar_position: 4
 
 For detailed check list, please refer to the official [check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-Version content accessible in browser <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/>
+Version content accessible in browser <https://dist.apache.org/repos/dist/dev/hertzbeat/>
 
 ### 1. Download the candidate version
 

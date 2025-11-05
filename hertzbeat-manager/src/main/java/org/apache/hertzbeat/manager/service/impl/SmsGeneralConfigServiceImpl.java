@@ -22,9 +22,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Type;
 
 import jakarta.annotation.Resource;
-import org.apache.hertzbeat.alert.config.SmsConfig;
+
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
 import org.apache.hertzbeat.common.support.event.SmsConfigChangeEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
