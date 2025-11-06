@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Type;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
-import org.apache.hertzbeat.alert.dto.MailServerConfig;
+import org.apache.hertzbeat.common.entity.dto.MailServerConfig;
 import org.springframework.stereotype.Service;
 
 /**

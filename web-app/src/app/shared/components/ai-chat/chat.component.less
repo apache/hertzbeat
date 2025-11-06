@@ -21,7 +21,9 @@
 
 .chat-container {
   display: flex;
-  height: 80vh; // Use viewport height for modal context
+  height: 100%;
+  min-height: 500px;
+  max-height: 80vh;
   background: @layout-body-background;
 
   .chat-sidebar {
@@ -54,6 +56,25 @@
     .conversation-list {
       flex: 1;
       overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: @border-color-base transparent;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: @border-color-base;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb:hover {
+        background: @border-color-split;
+      }
 
       .conversation-item {
         padding: 12px 16px;
@@ -134,6 +155,26 @@
       padding: 16px;
       overflow-y: auto;
       background: @layout-body-background;
+      scrollbar-width: thin;
+      scrollbar-color: @border-color-base transparent;
+      scroll-behavior: smooth;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: @border-color-base;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb:hover {
+        background: @border-color-split;
+      }
 
       .loading-container {
         display: flex;
@@ -141,6 +182,7 @@
         align-items: center;
         justify-content: center;
         height: 100%;
+        opacity: 0.8;
 
         p {
           margin-top: 16px;
@@ -228,7 +270,7 @@
         .message-avatar {
           width: 32px;
           height: 32px;
-          border-radius: 16px;
+          border-radius: 8px;
           background: @background-color-light;
           display: flex;
           align-items: center;
@@ -273,61 +315,16 @@
               gap: 4px;
               color: @primary-color;
               font-size: 11px;
+              opacity: 0.8;
+
+              i {
+                font-size: 12px;
+              }
             }
           }
 
           .message-text {
-            line-height: 1.5;
-            color: @text-color;
-            white-space: pre-wrap;
             word-wrap: break-word;
-
-            // Markdown styling
-            :global {
-              p {
-                margin: 0 0 8px 0;
-
-                &:last-child {
-                  margin-bottom: 0;
-                }
-              }
-
-              code {
-                background: @background-color-light;
-                padding: 2px 4px;
-                border-radius: 3px;
-                font-family: @code-family;
-                font-size: 12px;
-                color: @text-color;
-              }
-
-              pre {
-                background: @background-color-light;
-                padding: 12px;
-                border-radius: 6px;
-                overflow-x: auto;
-                margin: 8px 0;
-                border: 1px solid @border-color-split;
-
-                code {
-                  background: none;
-                  padding: 0;
-                  color: @text-color;
-                }
-              }
-
-              ul, ol {
-                margin: 8px 0;
-                padding-left: 20px;
-              }
-
-              blockquote {
-                border-left: 4px solid @border-color-base;
-                padding-left: 12px;
-                margin: 8px 0;
-                color: @text-color-secondary;
-              }
-            }
           }
 
           .typing-indicator {
@@ -336,6 +333,9 @@
             gap: 8px;
             color: @text-color-secondary;
             font-style: italic;
+            font-size: 13px;
+            opacity: 0.7;
+            padding: 4px 0;
           }
         }
       }
@@ -395,6 +395,7 @@
       height: 100%;
       z-index: 100;
       box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease;
 
       &.collapsed {
         transform: translateX(-100%);
@@ -410,6 +411,46 @@
             max-width: 85%;
           }
         }
+      }
+
+      .input-area {
+        .input-container {
+          flex-direction: column;
+          gap: 8px;
+
+          .send-button {
+            align-self: flex-end;
+            width: auto;
+            min-width: 80px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Extra small devices
+@media (max-width: 480px) {
+  .chat-container {
+    min-height: 400px;
+    max-height: 90vh;
+
+    .chat-main {
+      .messages-container {
+        padding: 12px;
+
+        .message {
+          margin-bottom: 16px;
+
+          .message-content {
+            max-width: 90%;
+            padding: 10px 12px;
+          }
+        }
+      }
+
+      .input-area {
+        padding: 12px;
       }
     }
   }
@@ -593,6 +634,47 @@ body[data-theme='dark'] .chat-container {
       color: fade(@white, 45%) !important;
     }
   }
+
+  // Fix dropdown/select styling in dark theme
+  .ant-select {
+    .ant-select-selector {
+      background: fade(@white, 8%) !important;
+      border-color: @border-color-split !important;
+      color: fade(@white, 85%) !important;
+    }
+
+    .ant-select-selection-placeholder {
+      color: fade(@white, 45%) !important;
+    }
+
+    &:hover .ant-select-selector {
+      border-color: @primary-color !important;
+    }
+
+    &.ant-select-focused .ant-select-selector {
+      border-color: @primary-color !important;
+      box-shadow: 0 0 0 2px fade(@primary-color, 20%) !important;
+    }
+  }
+
+  // Fix dropdown options styling
+  .ant-select-dropdown {
+    background: #141414 !important;
+    border: 1px solid @border-color-split !important;
+
+    .ant-select-item {
+      color: fade(@white, 85%) !important;
+
+      &:hover {
+        background: fade(@white, 8%) !important;
+      }
+
+      &.ant-select-item-option-selected {
+        background: @primary-color !important;
+        color: @white !important;
+      }
+    }
+  }
 }
 
 // Additional high-specificity overrides for dark theme
@@ -628,9 +710,44 @@ body[data-theme='dark'] .chat-container {
 
 .validation-result {
   margin-top: 8px;
-  
+
   nz-alert {
     font-size: 12px;
+  }
+}
+
+// Provider configuration form styles
+.provider-config-form {
+  .provider-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    nz-select {
+      flex: 1;
+    }
+  }
+
+  .baseurl-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    nz-input-group {
+      flex: 1;
+    }
+
+    .reset-btn {
+      flex-shrink: 0;
+    }
+  }
+
+  .form-item-with-help {
+    margin-bottom: 8px;
+
+    + .form-help {
+      margin-bottom: 16px;
+    }
   }
 }
 
@@ -638,11 +755,11 @@ nz-modal {
   .ant-modal-body {
     padding: 24px;
   }
-  
+
   .ant-form-item {
     margin-bottom: 16px;
   }
-  
+
   .ant-form-item-label {
     padding-bottom: 4px;
   }

@@ -38,14 +38,6 @@ spring:
           resource: true
           prompt: true
           completion: true
-    chat:
-      client:
-        enabled: false
-    openai:
-      api-key: OPENAI_API_KEY
-      chat:
-        options:
-          model: gpt-4.1-nano-2025-04-14
   mvc:
     static-path-pattern: /**
   jackson:
@@ -245,11 +237,4 @@ grafana:
   url: http://127.0.0.1:3000
   username: admin
   password: admin
-
-ai:
-  type:
-  model:
-  api-key:
-  api-secret:
-  api-url:
 

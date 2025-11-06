@@ -18,13 +18,8 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
         </a>
       </layout-default-header-item>
 
-      <layout-default-header-item direction="left" hidden="pc">
-        <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
-          <i nz-icon nzType="search"></i>
-        </div>
-      </layout-default-header-item>
       <layout-default-header-item direction="middle">
-        <header-search class="alain-default__search" [toggleChange]="searchToggleStatus"></header-search>
+        <header-ai-chat class="alain-default__ai-chat"></header-ai-chat>
       </layout-default-header-item>
       <layout-default-header-item direction="right" hidden="mobile">
         <header-notify></header-notify>
@@ -83,7 +78,7 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
           width="28"
           height="28"
           fill="white"
-          style="min-width:28px; min-height:28px;"
+          style="min-width:36px; min-height:36px;"
         >
           <path
             d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5A2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5a2.5 2.5 0 0 0 2.5 2.5a2.5 2.5 0 0 0 2.5-2.5a2.5 2.5 0 0 0-2.5-2.5z"
@@ -101,6 +96,7 @@ export class LayoutBasicComponent implements OnDestroy {
   };
   avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
+  aiChatToggleStatus = false;
   showSettingDrawer = !environment.production;
   version = CONSTANTS.VERSION;
   currentYear = new Date().getFullYear();

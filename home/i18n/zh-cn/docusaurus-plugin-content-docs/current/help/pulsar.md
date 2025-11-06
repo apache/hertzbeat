@@ -47,7 +47,7 @@ keywords: [开源监控系统, 开源数据库监控, HbaseMaster监控]
 |----------------------|------|---------|
 | Max File Descriptors | 无    | 最大文件描述符 |
 
-#### 指标集合： jvm_memory_pool_allocated_bytes
+#### 指标集合： jvm_memory_pool_allocated_bytes_total
 
 Java虚拟机（JVM）中特定内存池已分配的内存字节数。在Pulsar中，这通常指的是用于各种目的的JVM内存（如堆内存、非堆内存等）中已经分配出去的内存量。
 
@@ -67,6 +67,6 @@ JVM中特定内存池可分配的最大内存字节数。这是该内存池允�
 
 Broker端消息发布延迟
 
-#### 指标集合：pulsar_metadata_store_ops_latency_ms
+#### 指标集合：pulsar_metadata_store_ops_latency_ms_bucket
 
 Broker端元数据存储操作延迟

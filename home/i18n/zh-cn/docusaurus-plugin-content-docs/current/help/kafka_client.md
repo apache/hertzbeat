@@ -51,7 +51,7 @@ keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 |   指标名称    | 指标单位 | 指标帮助描述 |
 |-----------|------|-------|
 | GroupId | 无    | 消费者组ID    |
-| Group Member Num      | 无   | 消费者实例数量|
+| group_member_num      | 无   | 消费者实例数量|
 | Subscribed Topic Name       | 无   | 订阅主题名称    |
-| Offsets of Each Partition      | 无   | 各分区偏移量   |
+| offset_of_each_partition      | 无   | 各分区偏移量   |
 | Lag      | 无   | 落后偏移量   |

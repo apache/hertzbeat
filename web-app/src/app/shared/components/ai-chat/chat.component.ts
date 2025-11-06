@@ -17,13 +17,15 @@
  * under the License.
  */
 
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef, OnDestroy, Inject } from '@angular/core';
 import { I18NService } from '@core';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
-import { AiChatService, ChatMessage, ConversationDto } from '../../../service/ai-chat.service';
-import { OpenAiConfigService, OpenAiConfig, OpenAiConfigStatus } from '../../../service/openai-config.service';
+import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
+import { AiChatService, ChatMessage, ChatConversation } from '../../../service/ai-chat.service';
+import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
 @Component({
@@ -31,53 +33,72 @@ import { ThemeService } from '../../../service/theme.service';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.less']
 })
-export class ChatComponent implements OnInit, AfterViewChecked {
+export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
-  conversations: ConversationDto[] = [];
-  currentConversation: ConversationDto | null = null;
+  conversations: ChatConversation[] = [];
+  currentConversation: ChatConversation | null = null;
   messages: ChatMessage[] = [];
   newMessage = '';
-  isLoading = false;
+  initialMessage = '';
+  isLoadingConversations = false;
+  isSendingMessage = false;
   sidebarCollapsed = false;
   theme: string = 'default';
+  private scrollTimeout: any;
 
-  // OpenAI Configuration
-  isOpenAiConfigured = false;
+  // Provider Configuration
+  isAiProviderConfigured = false;
   showConfigModal = false;
   configLoading = false;
-  openAiConfig: OpenAiConfig = {
-    enable: false,
-    apiKey: ''
-  };
+  aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
+  providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
 
   constructor(
     private aiChatService: AiChatService,
     private message: NzMessageService,
     private modal: NzModalService,
-    private i18n: I18NService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
-    private openAiConfigService: OpenAiConfigService
+    private generalConfigSvc: GeneralConfigService
   ) {}
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
-    this.checkOpenAiConfiguration();
+    // Always load conversations first, regardless of AI configuration status
+    this.loadConversations();
+    this.checkAiConfiguration();
+    if (this.initialMessage) {
+      this.newMessage = this.initialMessage;
+      setTimeout(() => this.sendMessage(), 800);
+    }
   }
 
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
+  ngOnDestroy(): void {
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+    }
+  }
+
+  /**
+   * Debounced scroll to bottom to improve performance
+   */
+  private scrollToBottomDebounced(): void {
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+    }
+    this.scrollTimeout = setTimeout(() => {
+      this.scrollToBottom();
+    }, 100);
   }
 
   /**
    * Load all conversations
    */
   loadConversations(): void {
-    console.log('Loading conversations...');
     this.aiChatService.getConversations().subscribe({
       next: response => {
-        console.log('Conversations response:', response);
         if (response.code === 0 && response.data) {
           this.conversations = response.data;
           // If no current conversation, create a new one
@@ -89,12 +110,14 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           }
         } else {
           console.error('Error in conversations response:', response);
-          this.message.error(`Failed to load conversations: ${response.msg || 'Unknown error'}`);
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.conversations.load')}: ${response.msg || 'Unknown error'}`);
         }
       },
       error: error => {
         console.error('Error loading conversations:', error);
-        this.message.error(`Failed to load conversations: ${error.status} ${error.statusText || error.message}`);
+        this.message.error(
+          `${this.i18nSvc.fanyi('ai.chat.error.conversations.load')}: ${error.status} ${error.statusText || error.message}`
+        );
 
         // Create a fallback new conversation if API is not available
         console.log('Creating fallback conversation...');
@@ -107,23 +130,23 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Create a new conversation
    */
   createNewConversation(): void {
-    console.log('Creating new conversation...');
     this.aiChatService.createConversation().subscribe({
       next: response => {
-        console.log('Create conversation response:', response);
         if (response.code === 0 && response.data) {
           const newConversation = response.data;
           this.conversations.unshift(newConversation);
           this.selectConversation(newConversation);
-          this.message.success('New conversation created');
+          this.message.success(this.i18nSvc.fanyi('ai.chat.conversation.created'));
         } else {
           console.error('Error in create conversation response:', response);
-          this.message.error(`Failed to create conversation: ${response.msg || 'Unknown error'}`);
+          this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.conversation.create')}: ${response.msg || 'Unknown error'}`);
         }
       },
       error: error => {
         console.error('Error creating conversation:', error);
-        this.message.error(`Failed to create new conversation: ${error.status} ${error.statusText || error.message}`);
+        this.message.error(
+          `${this.i18nSvc.fanyi('ai.chat.error.conversation.create')}: ${error.status} ${error.statusText || error.message}`
+        );
 
         // Create fallback conversation
         this.createFallbackConversation();
@@ -135,37 +158,37 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Create a fallback conversation when API is not available
    */
   createFallbackConversation(): void {
-    const fallbackConversation: ConversationDto = {
-      conversationId: `fallback-${Date.now()}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    const fallbackConversation: ChatConversation = {
+      id: 0,
+      title: 'Offline Conversation',
+      gmtCreated: new Date(),
+      gmtUpdate: new Date(),
       messages: []
     };
 
     this.conversations = [fallbackConversation];
     this.selectConversation(fallbackConversation);
 
-    this.message.warning('AI Chat service unavailable. Running in offline mode.');
+    this.message.warning(this.i18nSvc.fanyi('ai.chat.offline.mode'));
   }
 
   /**
    * Select a conversation and load its messages
    */
-  selectConversation(conversation: ConversationDto): void {
+  selectConversation(conversation: ChatConversation): void {
     this.currentConversation = conversation;
-    this.loadConversationHistory(conversation.conversationId);
+    this.loadConversationHistory(conversation.id);
   }
 
   /**
    * Load conversation history from the API
    */
-  loadConversationHistory(conversationId: string): void {
-    this.isLoading = true;
+  loadConversationHistory(conversationId: number): void {
+    this.isLoadingConversations = true;
 
     this.aiChatService.getConversation(conversationId).subscribe({
       next: response => {
-        this.isLoading = false;
-        console.log('Conversation history response:', response);
+        this.isLoadingConversations = false;
 
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
@@ -180,7 +203,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         }
       },
       error: error => {
-        this.isLoading = false;
+        this.isLoadingConversations = false;
         console.error('Error loading conversation history:', error);
         // Fallback to the messages from the conversation list if API fails
         this.messages = this.currentConversation?.messages || [];
@@ -193,24 +216,24 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   /**
    * Delete a conversation
    */
-  deleteConversation(conversation: ConversationDto, event: Event): void {
+  deleteConversation(conversation: ChatConversation, event: Event): void {
     event.stopPropagation();
 
     this.modal.confirm({
-      nzTitle: 'Delete Conversation',
-      nzContent: 'Are you sure you want to delete this conversation?',
-      nzOkText: 'Delete',
+      nzTitle: this.i18nSvc.fanyi('ai.chat.conversation.delete.title'),
+      nzContent: this.i18nSvc.fanyi('ai.chat.conversation.delete.content'),
+      nzOkText: this.i18nSvc.fanyi('ai.chat.conversation.delete.confirm'),
       nzOkType: 'primary',
       nzOkDanger: true,
       nzOnOk: () => {
-        this.aiChatService.deleteConversation(conversation.conversationId).subscribe({
+        this.aiChatService.deleteConversation(conversation.id).subscribe({
           next: response => {
             if (response.code === 0) {
               // Remove from conversations list
-              this.conversations = this.conversations.filter(c => c.conversationId !== conversation.conversationId);
+              this.conversations = this.conversations.filter(c => c.id !== conversation.id);
 
               // If this was the current conversation, select another or create new
-              if (this.currentConversation?.conversationId === conversation.conversationId) {
+              if (this.currentConversation?.id === conversation.id) {
                 if (this.conversations.length > 0) {
                   this.selectConversation(this.conversations[0]);
                 } else {
@@ -218,12 +241,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
                 }
               }
 
-              this.message.success('Conversation deleted');
+              this.message.success(this.i18nSvc.fanyi('ai.chat.conversation.delete.success'));
             }
           },
           error: error => {
             console.error('Error deleting conversation:', error);
-            this.message.error('Failed to delete conversation');
+            this.message.error(this.i18nSvc.fanyi('ai.chat.conversation.delete.failed'));
           }
         });
       }
@@ -234,14 +257,14 @@ export class ChatComponent implements OnInit, AfterViewChecked {
    * Send a message
    */
   sendMessage(): void {
-    if (!this.newMessage.trim() || this.isLoading) {
+    if (!this.newMessage.trim() || this.isSendingMessage) {
       return;
     }
 
     const userMessage: ChatMessage = {
       content: this.newMessage.trim(),
       role: 'user',
-      timestamp: new Date()
+      gmtCreate: new Date()
     };
 
     // Add user message to the messages list
@@ -249,22 +272,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
     const messageContent = this.newMessage.trim();
     this.newMessage = '';
-    this.isLoading = true;
+    this.isSendingMessage = true;
     this.cdr.detectChanges();
     this.scrollToBottom();
 
     // Check if this is a fallback conversation
-    if (this.currentConversation?.conversationId.startsWith('fallback-')) {
-      console.log('Fallback mode - showing offline message');
+    if (this.currentConversation?.id == 0) {
       setTimeout(() => {
         const offlineMessage: ChatMessage = {
-          content:
-            'I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI Agent module is running and try again later.',
+          content: this.i18nSvc.fanyi('ai.chat.offline.response'),
           role: 'assistant',
-          timestamp: new Date()
+          gmtCreate: new Date()
         };
         this.messages.push(offlineMessage);
-        this.isLoading = false;
+        this.isSendingMessage = false;
         this.cdr.detectChanges();
         this.scrollToBottom();
       }, 1000);
@@ -275,24 +296,21 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     const assistantMessage: ChatMessage = {
       content: '',
       role: 'assistant',
-      timestamp: new Date()
+      gmtCreate: new Date()
     };
     this.messages.push(assistantMessage);
     this.cdr.detectChanges();
     this.scrollToBottom();
 
     // Send to AI service
-    console.log('Sending message to AI service:', messageContent);
-    this.aiChatService.streamChat(messageContent, this.currentConversation?.conversationId).subscribe({
+    this.aiChatService.streamChat(messageContent, this.currentConversation?.id).subscribe({
       next: chunk => {
-        console.log('Received stream chunk:', chunk);
-
         // Find the last assistant message and append content
         const lastMessage = this.messages[this.messages.length - 1];
         if (lastMessage && lastMessage.role === 'assistant') {
           // Accumulate the content for streaming effect
           lastMessage.content += chunk.content;
-          lastMessage.timestamp = chunk.timestamp instanceof Date ? chunk.timestamp : new Date();
+          lastMessage.gmtCreate = chunk.gmtCreate;
 
           this.cdr.detectChanges();
           this.scrollToBottom();
@@ -300,7 +318,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       },
       error: error => {
         console.error('Error in chat stream:', error);
-        this.message.error(`Failed to get AI response: ${error.status} ${error.statusText || error.message}`);
+        this.message.error(`${this.i18nSvc.fanyi('ai.chat.error.chat.response')}: ${error.status} ${error.statusText || error.message}`);
 
         // Remove the empty assistant message and add error message
         if (
@@ -312,27 +330,26 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         }
 
         const errorMessage: ChatMessage = {
-          content: 'Sorry, there was an error processing your request. Please check if the AI Agent service is running and try again.',
+          content: this.i18nSvc.fanyi('ai.chat.error.processing'),
           role: 'assistant',
-          timestamp: new Date()
+          gmtCreate: new Date()
         };
         this.messages.push(errorMessage);
-        this.isLoading = false;
+        this.isSendingMessage = false;
         this.cdr.detectChanges();
         this.scrollToBottom();
       },
       complete: () => {
-        console.log('Chat stream completed');
-        this.isLoading = false;
+        this.isSendingMessage = false;
         this.cdr.detectChanges();
 
         // Refresh current conversation to get updated data (only if not fallback)
-        if (this.currentConversation && !this.currentConversation.conversationId.startsWith('fallback-')) {
-          this.aiChatService.getConversation(this.currentConversation.conversationId).subscribe({
+        if (this.currentConversation && this.currentConversation.id !== 0) {
+          this.aiChatService.getConversation(this.currentConversation.id).subscribe({
             next: response => {
               if (response.code === 0 && response.data) {
                 // Update conversation in the list
-                const index = this.conversations.findIndex(c => c.conversationId === response.data!.conversationId);
+                const index = this.conversations.findIndex(c => c.id === response.data!.id);
                 if (index >= 0) {
                   this.conversations[index] = response.data;
                 }
@@ -368,23 +385,24 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   /**
    * Format conversation title
    */
-  getConversationTitle(conversation: ConversationDto): string {
+  getConversationTitle(conversation: ChatConversation): string {
+    if (conversation.title) {
+      return conversation.title;
+    }
     if (conversation.messages && conversation.messages.length > 0) {
       const firstUserMessage = conversation.messages.find(m => m.role === 'user');
       if (firstUserMessage) {
         return firstUserMessage.content.length > 30 ? `${firstUserMessage.content.substring(0, 30)}...` : firstUserMessage.content;
       }
     }
-    return `Conversation ${conversation.conversationId.substring(0, 8)}`;
+    return `Conversation ${conversation.id}`;
   }
 
   /**
    * Format time
    */
-  formatTime(date: Date): string {
-    if (!(date instanceof Date)) {
-      date = new Date(date);
-    }
+  formatTime(date: any): string {
+    date = new Date(date);
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
@@ -414,13 +432,19 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Scroll to bottom of messages
+   * Scroll to bottom of messages with smooth animation
    */
   private scrollToBottom(): void {
     try {
       if (this.messagesContainer) {
         const element = this.messagesContainer.nativeElement;
-        element.scrollTop = element.scrollHeight;
+        // Use requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
+          element.scrollTo({
+            top: element.scrollHeight,
+            behavior: 'smooth'
+          });
+        });
       }
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
@@ -428,68 +452,70 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Check OpenAI configuration status
+   * Check provider configuration status
    */
-  checkOpenAiConfiguration(): void {
-    this.openAiConfigService.getOpenAiConfigStatus().subscribe({
+  checkAiConfiguration(): void {
+    this.generalConfigSvc.getModelProviderConfig().subscribe({
       next: response => {
-        if (response.code === 0) {
-          this.isOpenAiConfigured = response.data.configured;
-          if (this.isOpenAiConfigured) {
-            this.loadConversations();
-          } else {
-            this.showOpenAiConfigDialog(response.data);
+        if (response.code === 0 && response.data) {
+          this.aiProviderConfig = response.data;
+          // Ensure default values are set if not present
+          if (!this.aiProviderConfig.code) {
+            this.aiProviderConfig.code = 'openai';
           }
+          if (!this.aiProviderConfig.baseUrl) {
+            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+            if (defaultProvider) {
+              this.aiProviderConfig.baseUrl = defaultProvider.defaultBaseUrl;
+            }
+          }
+          if (!this.aiProviderConfig.model) {
+            const defaultProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+            if (defaultProvider) {
+              this.aiProviderConfig.model = defaultProvider.defaultModel;
+            }
+          }
+          // Don't load conversations here anymore - they're loaded in ngOnInit
         } else {
-          console.error('Failed to check OpenAI configuration:', response.msg);
-          this.showOpenAiConfigDialog();
+          // Initialize with default values if no config exists
+          this.aiProviderConfig = new ModelProviderConfig();
+          this.showAiProviderConfigDialog();
         }
       },
       error: error => {
-        console.error('Error checking OpenAI configuration:', error);
-        this.showOpenAiConfigDialog();
+        console.error('Failed to load model provider config:', error);
+        this.aiProviderConfig = new ModelProviderConfig();
+        this.showAiProviderConfigDialog();
       }
     });
   }
 
   /**
-   * Show OpenAI configuration dialog
+   * Show ai configuration dialog
    */
-  showOpenAiConfigDialog(status?: OpenAiConfigStatus): void {
-    // Load existing configuration if available
-    this.loadOpenAiConfig();
-
+  showAiProviderConfigDialog(error?: string): void {
     let contentMessage = `
       <div style="margin-bottom: 16px;">
-        <p>To use AI Agent Chat, please configure your OpenAI API key.</p>
+        <p>${this.i18nSvc.fanyi('ai.chat.config.required.content')}</p>
     `;
 
-    if (status && !status.validationPassed && status.validationMessage) {
+    if (error) {
       contentMessage += `
         <div style="margin-bottom: 12px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
-          <strong>Configuration Issue:</strong> ${status.validationMessage}
+          <strong>${this.i18nSvc.fanyi('ai.chat.config.required.error')}</strong> ${error}
         </div>
       `;
     }
 
-    contentMessage += `
-        <p>You can either:</p>
-        <ul>
-          <li>Configure it here (stored in database)</li>
-          <li>Add it to your application.yml file under <code>spring.ai.openai.api-key</code></li>
-        </ul>
-      </div>
-    `;
-
     const modalRef = this.modal.create({
-      nzTitle: 'OpenAI Configuration Required',
+      nzTitle: this.i18nSvc.fanyi('ai.chat.config.required.title'),
       nzContent: contentMessage,
       nzWidth: 600,
       nzClosable: false,
       nzMaskClosable: false,
       nzFooter: [
         {
-          label: 'Configure Here',
+          label: this.i18nSvc.fanyi('ai.chat.config.required.button'),
           type: 'primary',
           onClick: () => {
             this.showConfigModal = true;
@@ -501,26 +527,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * Load OpenAI configuration
-   */
-  loadOpenAiConfig(): void {
-    this.openAiConfigService.getOpenAiConfig().subscribe({
-      next: response => {
-        if (response.code === 0 && response.data) {
-          this.openAiConfig = { ...this.openAiConfig, ...response.data };
-        }
-      },
-      error: error => {
-        console.error('Failed to load OpenAI config:', error);
-      }
-    });
-  }
-
-  /**
    * Show configuration modal
    */
   onShowConfigModal(): void {
-    this.loadOpenAiConfig();
+    this.checkAiConfiguration();
     this.showConfigModal = true;
   }
 
@@ -534,39 +544,78 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   /**
    * Save OpenAI configuration
    */
-  onSaveOpenAiConfig(): void {
-    if (!this.openAiConfig.apiKey.trim()) {
-      this.message.error('API Key is required');
+  onSaveAiProviderConfig(): void {
+    if (!this.aiProviderConfig.apiKey?.trim()) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.api.key'));
       return;
     }
 
-    // Always enable when saving an API key
-    this.openAiConfig.enable = true;
+    if (!this.aiProviderConfig.code?.trim()) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.provider'));
+      return;
+    }
+
+    if (!this.aiProviderConfig.baseUrl?.trim()) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.base.url'));
+      return;
+    }
+
+    if (!this.aiProviderConfig.model?.trim()) {
+      this.message.error(this.i18nSvc.fanyi('ai.chat.error.model'));
+      return;
+    }
 
     this.configLoading = true;
-    this.message.info('Validating API key...', { nzDuration: 2000 });
 
-    this.openAiConfigService.saveOpenAiConfig(this.openAiConfig).subscribe({
+    this.generalConfigSvc.saveModelProviderConfig(this.aiProviderConfig).subscribe({
       next: response => {
         this.configLoading = false;
         if (response.code === 0) {
-          this.message.success('OpenAI API key validated and saved successfully!');
+          this.message.success(this.i18nSvc.fanyi('ai.chat.config.save.success'));
           this.showConfigModal = false;
-          this.isOpenAiConfigured = true;
+          this.isAiProviderConfigured = true;
           this.loadConversations();
         } else {
           // Check if it's a validation error
           if (response.msg.includes('validation failed')) {
-            this.message.error(`❌ API Key validation failed: ${response.msg}`, { nzDuration: 5000 });
+            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.validation.failed')} ${response.msg}`, { nzDuration: 5000 });
           } else {
-            this.message.error(`Failed to save configuration: ${response.msg}`);
+            this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${response.msg}`);
           }
         }
       },
       error: error => {
         this.configLoading = false;
-        this.message.error(`Failed to save configuration: ${error.message}`);
+        this.message.error(`${this.i18nSvc.fanyi('ai.chat.config.save.failed')} ${error.message}`);
       }
     });
+  }
+
+  /**
+   * Handle provider selection change
+   */
+  onProviderChange(provider: string): void {
+    const selectedProvider = this.providerOptions.find(p => p.value === provider);
+    if (selectedProvider) {
+      this.aiProviderConfig.code = provider;
+      // Auto-fill default values if current values are empty
+      if (!this.aiProviderConfig.baseUrl) {
+        this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+      }
+      if (!this.aiProviderConfig.model) {
+        this.aiProviderConfig.model = selectedProvider.defaultModel;
+      }
+    }
+  }
+
+  /**
+   * Reset to default values for selected provider
+   */
+  resetToDefaults(): void {
+    const selectedProvider = this.providerOptions.find(p => p.value === this.aiProviderConfig.code);
+    if (selectedProvider) {
+      this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
+      this.aiProviderConfig.model = selectedProvider.defaultModel;
+    }
   }
 }

@@ -219,6 +219,13 @@
       "hideInBreadcrumb": true,
       "children": [
         {
+          "text": "mcp-server",
+          "i18n": "menu.advanced.mcp-server",
+          "icon": "anticon-compass",
+          "target": "_blank",
+          "externalLink": "https://hertzbeat.apache.org/docs/help/mcp_sse_server"
+        },
+        {
           "text": "status",
           "i18n": "menu.advanced.status",
           "icon": "anticon-mobile",

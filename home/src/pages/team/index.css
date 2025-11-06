@@ -1,6 +1,9 @@
 /* Derived from https://github.com/apache/streampark-website/tree/dev/src/pages/team */
 .team_page {
-    margin-top: 50px!important;
+    margin: 0 auto;
+    max-width: 1140px;
+    padding: 0 20px;
+    width: 100%;
 }
 .team_page a {
     text-decoration: none;
@@ -18,7 +21,6 @@
 }
 .team_page .desc {
     font-size: 1rem;
-    margin-left: 1.2rem;
 }
 .team_page .character_list {
     display: grid;
@@ -93,13 +95,12 @@
     margin-right: calc(-0.5 * var(--bs-gutter-x));
     margin-left: calc(-0.5 * var(--bs-gutter-x));
 }
-
 .team-box {
     width: 20% !important;
     padding: 12px;
 }
 .team-user-img {
-    width: 140px;
+    width: 80px;
     border-radius: 50%;
     border: 5px solid #fff;
     box-shadow: 0 0.375rem 1.5rem 0 rgba(87, 96, 113, 0.125) !important;
@@ -136,7 +137,7 @@
     margin-right: 0.25rem;
 }
 .team-link .github-icon {
-    width: 20px ;
+    width: 20px;
     height: 20px;
     color: #fff;
 }
@@ -149,9 +150,71 @@
 .team-name {
     font-size: 1rem;
 }
-
-.block {
-    width: 1200px;
-    padding: 0 20px;
-    margin: 0 auto;
+.contributor-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+.contributor-column {
+    flex: 0 0 calc((100% - 7 * 12px) / 8);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #dfdfdf;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.contributor-avatar {
+    width: 64px;
+    height: 64px;
+    margin: 0 0;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0.375rem 1.5rem 0 rgba(87, 96, 113, 0.125);
+}
+.contributor-name, .contributor-type {
+    width: 100%;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    padding:6px 8px 0 6px;
+}
+.contributor-name a {
+    min-width: 0;
+}
+[data-theme="dark"] .contributor-column {
+    background-color: #0e1114;
+    border: 1px solid #0e1114;
+}
+@media (min-width: 1440px) {
+    .team-page {
+        max-width: 1140px;
+    }
+    .contributor-column {
+        flex: 0 0 calc((100% - 7 * 12px) / 8);
+    }
+}
+@media (max-width: 768px) {
+    .contributor-column {
+        flex: 0 0 calc((100% - 3 * 12px) / 4);
+    }
+    .team-box {
+        width: 50% !important;
+    }
+}
+@media (max-width: 480px) {
+    .contributor-column {
+        flex: 0 0 calc((100% - 1 * 12px) / 2);
+    }
 }

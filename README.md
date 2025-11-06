@@ -9,8 +9,6 @@
 <b><a href="README.md">English</a></b> | <a href="README_CN.md">中文</a> | <a href="README_JP.md">日本語</a>
 </p>
 
-> A real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
-
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
@@ -21,6 +19,7 @@
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/apache/hertzbeat)
+[![zread](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/apache/hertzbeat)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
 **Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe mailing lists**
@@ -28,27 +27,22 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time observability system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) is an AI-powered next-generation open source real-time observability system. Unified metrics and logs collection, centralized alerting distribution, intelligent management and analysis. No Agent required, high performance cluster, provides powerful custom monitoring and status page building capabilities.     
 
 ### Features
 
-* Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, program, database, cache, os, webserver, middleware, bigdata, cloud-native, network, custom and more.
-* Easy to use and agentless, web-based and with one-click monitoring and alerting, zero learning curve.
-* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
-* Compatible with the `Prometheus` ecosystem and more, can monitoring what `Prometheus` can monitoring with few clicks on webui.
-* High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
-* Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
-* Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
+- Integrates **collection + analysis + alerting + notification** into one platform, with new AI-powered interactions and features under HertzBeat AI, and built-in MCP Server capabilities.
+- Unified metrics platform, agentless, Prometheus-compatible, supports application services, programs, databases, caches, operating systems, big data, middleware, web servers, cloud-native, networks, custom monitoring and more.
+- Unified logging platform, seamlessly integrates multiple log sources through OTLP protocol for reporting.
+- Unified alerting platform, integrates internal alerts with various external alert sources, unified alert processing and analysis, flexible real-time and periodic threshold rules, grouping convergence, silence, suppression, etc.
+- Unified message distribution, alerts processed by the alerting platform are distributed via `Email` `Discord` `Slack` `Telegram` `DingTalk` `WeChat` `FeiShu` `SMS` `Webhook` `ServerChan` and other methods.
+- Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
+- High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
+- Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
+> HertzBeat's unified platform, AI intelligence, powerful customization, multi-type support, high performance, and easy expansion, aims to help users quickly and conveniently achieve observability requirements.      
 
 ----
-
-![hertzbeat](home/static/img/home/1.png)
-
-![hertzbeat](home/static/img/home/status.png)
-
-![hertzbeat](home/static/img/home/9.png)
 
 ----
 
@@ -58,8 +52,8 @@
 
 ## ⛄ Supported   
 
-> We define all monitoring collection types such as `mysql`, `jvm`, and `k8s` as `YML` monitoring templates, allowing users to import them to support corresponding types of monitoring.
-> Welcome everyone to contribute your customized general monitoring type YML template during use.
+> We define all metrics collection types such as `mysql`, `jvm`, and `k8s` as `YML` templates, allowing users to import them to support corresponding types of monitoring.
+> Welcome everyone to contribute your customized general metrics type YML template during use.
 
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
@@ -361,7 +355,7 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lisongning"><img src="https://avatars.githubusercontent.com/u/93140178?v=4?s=100" width="100px;" alt="lisongning"/><br /><sub><b>lisongning</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lisongning" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/YutingNie"><img src="https://avatars.githubusercontent.com/u/104416402?v=4?s=100" width="100px;" alt="YutingNie"/><br /><sub><b>YutingNie</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=YutingNie" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=YutingNie" title="Documentation">📖</a> <a href="#design-YutingNie" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mikezzb"><img src="https://avatars.githubusercontent.com/u/23418428?v=4?s=100" width="100px;" alt="Mike Zhou"/><br /><sub><b>Mike Zhou</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mikezzb" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=mikezzb" title="Documentation">📖</a> <a href="#design-mikezzb" title="Design">🎨</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lynx009"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="lynx009"/><br /><sub><b>lynx009</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lynx009" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=lynx009" title="Documentation">📖</a> <a href="#blog-lynx009" title="Blogposts">📝</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3Alynx009" title="Bug reports">🐛</a> <a href="#design-lynx009" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lynx009"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="lynx009"/><br /><sub><b>lynx009</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lynx009" title="Documentation">📖</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/littlezhongzer"><img src="https://avatars.githubusercontent.com/u/33685289?v=4?s=100" width="100px;" alt="littlezhongzer"/><br /><sub><b>littlezhongzer</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=littlezhongzer" title="Code">💻</a></td>
@@ -537,8 +531,18 @@ Thanks to these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/chingjustwe"><img src="https://avatars.githubusercontent.com/u/13643747?v=4?s=100" width="100px;" alt="Rocky, Chi"/><br /><sub><b>Rocky, Chi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=chingjustwe" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rowankid"><img src="https://avatars.githubusercontent.com/u/18652781?v=4?s=100" width="100px;" alt="Wenqi Luo"/><br /><sub><b>Wenqi Luo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/issues?q=author%3Arowankid" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tuzuy"><img src="https://avatars.githubusercontent.com/u/95274591?v=4?s=100" width="100px;" alt="tuzuy"/><br /><sub><b>tuzuy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tuzuy" title="Code">💻</a> <a href="#design-tuzuy" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tuzuy"><img src="https://avatars.githubusercontent.com/u/95274591?v=4?s=100" width="100px;" alt="tuzuy"/><br /><sub><b>tuzuy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tuzuy" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/carlpinto25"><img src="https://avatars.githubusercontent.com/u/117299909?v=4?s=100" width="100px;" alt="carl pinto"/><br /><sub><b>carl pinto</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=carlpinto25" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://cxhello.top/"><img src="https://avatars.githubusercontent.com/u/49056040?v=4?s=100" width="100px;" alt="cxhello"/><br /><sub><b>cxhello</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cxhello" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jl15988"><img src="https://avatars.githubusercontent.com/u/70638770?v=4?s=100" width="100px;" alt="会功夫的李白"/><br /><sub><b>会功夫的李白</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jl15988" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.aytop.cloud/"><img src="https://avatars.githubusercontent.com/u/37127008?v=4?s=100" width="100px;" alt="Albert.Yang"/><br /><sub><b>Albert.Yang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=AlbertYang0801" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.tokenlen.top/"><img src="https://avatars.githubusercontent.com/u/150590575?v=4?s=100" width="100px;" alt="zhou yong kang"/><br /><sub><b>zhou yong kang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mengnankkkk" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/warrobe"><img src="https://avatars.githubusercontent.com/u/89446159?v=4?s=100" width="100px;" alt="warrobe"/><br /><sub><b>warrobe</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=warrobe" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jetiaime"><img src="https://avatars.githubusercontent.com/u/93769000?v=4?s=100" width="100px;" alt="TeAmo"/><br /><sub><b>TeAmo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Jetiaime" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pentium100"><img src="https://avatars.githubusercontent.com/u/27917?v=4?s=100" width="100px;" alt="pentium100"/><br /><sub><b>pentium100</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pentium100" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dedyks"><img src="https://avatars.githubusercontent.com/u/23741665?v=4?s=100" width="100px;" alt="Dedy Kurniawan Santoso"/><br /><sub><b>Dedy Kurniawan Santoso</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=dedyks" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
