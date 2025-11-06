@@ -239,10 +239,3 @@ grafana:
   url: http://127.0.0.1:3000
   username: admin
   password: admin
-
-ai:
-  type:
-  model:
-  api-key:
-  api-secret:
-  api-url:

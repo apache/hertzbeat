@@ -18,12 +18,17 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
+import org.apache.hertzbeat.alert.util.CryptoUtils;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
@@ -54,7 +59,13 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<DingTalkWebHookDto> httpEntity = new HttpEntity<>(dingTalkWebHookDto, headers);
-            String webHookUrl = alerterProperties.getDingTalkWebhookUrl() + receiver.getAccessToken();
+            StringBuilder webHookUrlBuilder = new StringBuilder()
+                    .append(alerterProperties.getDingTalkWebhookUrl())
+                    .append(receiver.getAccessToken());
+            if (StringUtils.isNotBlank(receiver.getAppSecret())) {
+                webHookUrlBuilder.append(signSecret(receiver.getAppSecret()));
+            }
+            String webHookUrl = webHookUrlBuilder.toString();
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
@@ -102,6 +113,13 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
         return dingTalkWebHookDto;
     }
 
+    private String signSecret(String secret) throws Exception {
+        Long timestamp = System.currentTimeMillis();
+        String sign = URLEncoder.encode(CryptoUtils.hmacSha256Base64(secret, timestamp + "\n" + secret),
+                StandardCharsets.UTF_8);
+        return String.format("&timestamp=%s&sign=%s", timestamp, sign);
+    }
+
     @Override
     public byte type() {
         return 5;
@@ -109,6 +127,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
 
     /**
      * DingTalk robot request body
+     *
      * @version 1.0
      */
     @Data
@@ -185,7 +204,6 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
         }
 
     }
-
 
 
 }

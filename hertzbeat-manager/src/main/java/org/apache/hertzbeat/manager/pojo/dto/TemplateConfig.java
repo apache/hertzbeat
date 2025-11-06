@@ -51,6 +51,7 @@ public class TemplateConfig {
         /**
          * Is hide this app in main menus layout, only for app type, default true
          */
+        @Builder.Default
         private boolean hide = true;
     }
 }

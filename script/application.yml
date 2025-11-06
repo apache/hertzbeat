@@ -19,6 +19,25 @@ spring:
     name: ${HOSTNAME:@hertzbeat@}${PID}
   profiles:
     active: prod
+  ai:
+    mcp:
+      server:
+        enabled: true
+        stdio: false
+        name: sse-mcp-server
+        version: 1.0.0
+        resource-change-notification: true
+        tool-change-notification: true
+        prompt-change-notification: true
+        sse-endpoint: /api/sse
+        sse-message-endpoint: /api/mcp/message
+        type: SYNC
+        capabilities:
+          tool: true
+          resource: true
+          prompt: true
+          completion: true
+
   mvc:
     static-path-pattern: /**
   jackson:
@@ -37,6 +56,7 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+
 
 management:
   health:
@@ -124,13 +144,26 @@ spring:
 
 common:
   queue:
-    # memory or kafka
+    # memory, kafka, redis
     type: memory
     # properties when queue type is kafka
     kafka:
       servers: 127.0.0.1:9092
       metrics-data-topic: async-metrics-data
+      service-discovery-data-topic: service-discovery-data
       alerts-data-topic: async-alerts-data
+      log-entry-data-topic: async-log-entry-data
+      log-entry-data-to-storage-topic: log-entry-data-to-storage-topic
+    redis:
+      redis-host: 127.0.0.1
+      redis-port: 6379
+      metrics-data-queue-name-for-service-discovery: service_discovery
+      metrics-data-queue-name-to-persistent-storage: metrics:to_persistent_storage
+      metrics-data-queue-name-to-alerter: metrics:to_alerter
+      metrics-data-queue-name-to-real-time-storage: metrics:to_realtime_storage
+      alerts-data-queue-name: alerts
+      log-entry-queue-name: log:to_alerter
+      log-entry-to-storage-queue-name: log:to_storage
 
 warehouse:
   store:
@@ -143,10 +176,28 @@ warehouse:
       # (please set this configuration reasonably as history records can affect performance when it is large)
       max-history-record-num: 6000
     victoria-metrics:
+      # Standalone mode toggle — must be set to false when using cluster mode
       enabled: false
       url: http://localhost:8428
       username: root
       password: root
+      insert:
+        buffer-size: 100
+        flush-interval: 3
+        compression:
+          enabled: false
+      cluster:
+        enabled: false
+        select:
+          url: http://localhost:8481
+          username: root
+          password: root
+        insert:
+          url: http://localhost:8480
+          username: root
+          password: root
+          buffer-size: 1000
+          flush-interval: 3
     td-engine:
       enabled: false
       driver-class-name: com.taosdata.jdbc.rs.RestfulDriver
@@ -161,6 +212,11 @@ warehouse:
       database: public
       username: greptime
       password: greptime
+    questdb:
+      enabled: false
+      url: localhost:9000
+      username: admin
+      password: quest
     iot-db:
       enabled: false
       host: 127.0.0.1
@@ -244,10 +300,16 @@ alerter:
       region: AWS_REGION_FOR_END_USER_MESSAGING
     twilio:
       account-sid: YOUR_ACCOUNT_SID
-      auth-token: YOUR_AUTH_TOKEN 
+      auth-token: YOUR_AUTH_TOKEN
       twilio-phone-number: YOUR_TWILIO_PHONE_NUMBER
 scheduler:
   server:
     enabled: true
     port: 1158
-    
+
+grafana:
+  enabled: false
+  url: http://127.0.0.1:3000
+  expose-url: http://127.0.0.1:3000
+  username: admin
+  password: admin

@@ -9,8 +9,6 @@
 <b><a href="README.md">English</a></b> | <a href="README_CN.md">中文</a> | <a href="README_JP.md">日本語</a>
 </p>
 
-> A real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
-
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
@@ -21,6 +19,7 @@
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 [![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/apache/hertzbeat)
+[![zread](https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff)](https://zread.ai/apache/hertzbeat)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
 **Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe mailing lists**
@@ -28,27 +27,22 @@
 
 ## 🎡 <font color="green">Introduction</font>
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time observability system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) is an AI-powered next-generation open source real-time observability system. Unified metrics and logs collection, centralized alerting distribution, intelligent management and analysis. No Agent required, high performance cluster, provides powerful custom monitoring and status page building capabilities.     
 
 ### Features
 
-* Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, program, database, cache, os, webserver, middleware, bigdata, cloud-native, network, custom and more.
-* Easy to use and agentless, web-based and with one-click monitoring and alerting, zero learning curve.
-* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
-* Compatible with the `Prometheus` ecosystem and more, can monitoring what `Prometheus` can monitoring with few clicks on webui.
-* High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
-* Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
-* Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
+- Integrates **collection + analysis + alerting + notification** into one platform, with new AI-powered interactions and features under HertzBeat AI, and built-in MCP Server capabilities.
+- Unified metrics platform, agentless, Prometheus-compatible, supports application services, programs, databases, caches, operating systems, big data, middleware, web servers, cloud-native, networks, custom monitoring and more.
+- Unified logging platform, seamlessly integrates multiple log sources through OTLP protocol for reporting.
+- Unified alerting platform, integrates internal alerts with various external alert sources, unified alert processing and analysis, flexible real-time and periodic threshold rules, grouping convergence, silence, suppression, etc.
+- Unified message distribution, alerts processed by the alerting platform are distributed via `Email` `Discord` `Slack` `Telegram` `DingTalk` `WeChat` `FeiShu` `SMS` `Webhook` `ServerChan` and other methods.
+- Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
+- High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
+- Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
+> HertzBeat's unified platform, AI intelligence, powerful customization, multi-type support, high performance, and easy expansion, aims to help users quickly and conveniently achieve observability requirements.      
 
 ----
-
-![hertzbeat](home/static/img/home/1.png)
-
-![hertzbeat](home/static/img/home/status.png)
-
-![hertzbeat](home/static/img/home/9.png)
 
 ----
 
@@ -58,8 +52,8 @@
 
 ## ⛄ Supported   
 
-> We define all monitoring collection types such as `mysql`, `jvm`, and `k8s` as `YML` monitoring templates, allowing users to import them to support corresponding types of monitoring.
-> Welcome everyone to contribute your customized general monitoring type YML template during use.
+> We define all metrics collection types such as `mysql`, `jvm`, and `k8s` as `YML` templates, allowing users to import them to support corresponding types of monitoring.
+> Welcome everyone to contribute your customized general metrics type YML template during use.
 
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),

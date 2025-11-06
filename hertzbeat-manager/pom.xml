@@ -213,11 +213,6 @@
             <artifactId>arrow-memory-netty</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-ai</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
