@@ -107,7 +107,7 @@ collector:
 monitoring-template:
   - changed-files:
       - any-glob-to-any-file:
-          - "hertzbeat-startup/src/main/resources/define/**/*"
+          - "hertzbeat-manager/src/main/resources/define/**/*"
 
 HIP:
   - changed-files:
