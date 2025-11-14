@@ -125,6 +125,9 @@ public class MetricsRealTimeAlertCalculator {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = dataQueue.pollMetricsDataToAlerter();
+                    if (metricsData == null) {
+                        continue;
+                    }
                     calculate(metricsData);
                     dataQueue.sendMetricsDataToStorage(metricsData);
                 } catch (InterruptedException ignored) {
