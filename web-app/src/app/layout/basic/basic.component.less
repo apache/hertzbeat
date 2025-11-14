@@ -1,7 +1,6 @@
 /* Component Styles */
 /* Import system theme variables */
 @import 'src/styles/theme.less';
-
 /* CSS Variables for theme support */
 :host {
   /* Light theme variables */
@@ -13,7 +12,8 @@
   --primary-color: @primary-color;
   --primary-color-light: lighten(@primary-color, 10%);
 
-  display: block;  /* Change to block layout to avoid extra whitespace */
+  display: block;
+  /* Change to block layout to avoid extra whitespace */
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -107,7 +107,7 @@
     grid-area: header !important;
     background: linear-gradient(135deg, var(--primary-color, @primary-color) 0%, var(--primary-color-light, lighten(@primary-color, 10%)) 100%) !important;
     box-shadow: 0 4px 20px var(--shadow-color, rgba(0, 0, 0, 0.08)) !important;
-    border-radius: 12px !important;
+    border-radius: 6px !important;
     backdrop-filter: blur(10px) !important;
     transition: all 0.3s ease !important;
     position: relative !important;
@@ -147,7 +147,7 @@
   .alain-default__aside {
     grid-area: sidebar !important;
     background: var(--sidebar-background, #ffffff) !important;
-    border-radius: 12px !important;
+    border-radius: 6px !important;
     box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
     backdrop-filter: blur(20px) !important;
@@ -160,14 +160,15 @@
   }
 
   .alain-default__aside::after {
-    display: none !important; /* Remove default border */
+    display: none !important;
+    /* Remove default border */
   }
 
   /* Content area modern styling */
   .alain-default__content {
     grid-area: content !important;
     background: var(--content-background, #ffffff) !important;
-    border-radius: 12px !important;
+    border-radius: 6px !important;
     box-shadow: 0 8px 32px var(--shadow-color, rgba(0, 0, 0, 0.06)) !important;
     border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2)) !important;
     backdrop-filter: blur(20px) !important;
@@ -183,7 +184,7 @@
   /* Sidebar navigation modern styling */
   .sidebar-nav__item {
     margin: 4px 12px;
-    border-radius: 8px;
+    border-radius: 6px;
     border-left: none;
     transition: all 0.3s ease;
     overflow: hidden;
@@ -197,7 +198,7 @@
   .sidebar-nav__selected {
     background: linear-gradient(135deg, rgba(63, 81, 181, 0.12) 0%, rgba(63, 81, 181, 0.08) 100%);
     border-left: none;
-    border-radius: 8px;
+    border-radius: 6px;
     position: relative;
   }
 
@@ -210,7 +211,7 @@
     width: 4px;
     height: 24px;
     background: linear-gradient(135deg, @primary-color 0%, lighten(@primary-color, 20%) 100%);
-    border-radius: 0 4px 4px 0;
+    border-radius: 0 3px 3px 0;
   }
 
   .sidebar-nav__item-link {
@@ -246,7 +247,7 @@
   /* Search component modern styling */
   .alain-default__search {
     .ant-input-affix-wrapper {
-      border-radius: 16px;
+      border-radius: 6px;
       background: rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(10px);
@@ -264,7 +265,7 @@
 
   /* Logo area styling */
   .alain-default__header-logo {
-    border-radius: 8px;
+    border-radius: 6px;
     margin: 8px;
     transition: all 0.3s ease;
   }
@@ -280,18 +281,18 @@
     }
 
     .alain-default__header {
-      border-radius: 8px;
+      border-radius: 6px;
     }
 
     .alain-default__aside {
       margin-top: 4px;
-      border-radius: 8px;
+      border-radius: 6px;
     }
 
     .alain-default__content {
       margin-top: 4px;
       margin-left: 4px;
-      border-radius: 8px;
+      border-radius: 6px;
     }
   }
 
@@ -340,7 +341,7 @@ global-footer {
 .ai-chat-button {
   width: 44px;
   height: 44px;
-  border-radius: 8px;
+  border-radius: 6px;
   background-color: @primary-color;
   color: white;
   display: flex;
@@ -363,23 +364,23 @@ global-footer {
 /* AI Chat Modal Styles */
 :host ::ng-deep .ai-chat-modal {
   .ant-modal {
-    border-radius: 12px !important;
+    border-radius: 6px !important;
     overflow: hidden !important;
   }
   .ant-modal-content {
-    border-radius: 12px !important;
+    border-radius: 6px !important;
     overflow: hidden !important;
   }
 
 
 
   .ant-modal-header {
-    border-radius: 12px 12px 0 0 !important;
+    border-radius: 6px 6px 0 0 !important;
     margin: 0 !important;
     padding: 16px !important;
   }
   .ant-modal-body {
-    border-radius: 0 0 12px 12px !important;
+    border-radius: 0 0 6px 6px !important;
     padding: 0 !important;
   }
 
