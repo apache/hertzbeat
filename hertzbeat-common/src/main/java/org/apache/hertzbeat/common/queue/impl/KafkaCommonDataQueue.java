@@ -195,13 +195,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
-        if (metricsDataProducer != null) {
-            ProducerRecord<Long, CollectRep.MetricsData> record =
-                    new ProducerRecord<>(kafka.getMetricsDataToStorageTopic(), metricsData);
-            metricsDataProducer.send(record);
-        } else {
-            log.error("metricsDataProducer is not enabled");
-        }
+        // The message is already sent via sendMetricsData since metricsDataToStorageConsumer
+        // subscribes to the same metricsDataTopic. No need to send again.
     }
 
     @Override
