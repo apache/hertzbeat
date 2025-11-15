@@ -51,4 +51,7 @@ export class NoticeReceiver {
   modifier!: string;
   gmtCreate!: number;
   gmtUpdate!: number;
+  appId!: string;
+  larkReceiveType!: number;
+  chatId!: string;
 }
