@@ -21,7 +21,7 @@ keywords: [Alert FeiShu app notification , open source alerter, open source feis
    | Send batch messages to members from one or more departments     | im:message:send_multi_depts       |                 |                       |           ✓           |          |
    | Send batch messages to multiple users                           | im:message:send_multi_users       |                 |                       |                       |    ✓     |
 
-   > Attention⚠️:In the specified notification type of group chat, to @ someone, you need to enable the permission to 'obtain user ID'
+   > Attention⚠️:In the designated notification type of group chat,the application needs to be added as a robot to the group chat, to @someone, you need to enable the permission to 'obtain user ID'
    >
    > Batch import scopes
    >
