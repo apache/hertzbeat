@@ -156,6 +156,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private History buildHistory(CollectRep.MetricsData metricsData, ArrowCell cell, String monitorType, String metrics, Map<String, String> labels) {
         History.HistoryBuilder historyBuilder = History.builder()
                 .monitorId(metricsData.getId())
+                .instance(metricsData.getInstanceHost())
                 .app(monitorType)
                 .metrics(metrics)
                 .time(metricsData.getTime())
@@ -199,25 +200,26 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         Specification<History> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
-            Predicate predicateMonitorId = criteriaBuilder.equal(root.get("monitorId"), monitorId);
+            Predicate predicateMonitorInstance = criteriaBuilder.equal(root.get("instance"), label);
             Predicate predicateMonitorType = criteriaBuilder.equal(root.get("app"), app);
             if (CommonConstants.PROMETHEUS.equals(app)) {
                 predicateMonitorType = criteriaBuilder.like(root.get("app"), CommonConstants.PROMETHEUS_APP_PREFIX + "%");
             }
             Predicate predicateMonitorMetrics = criteriaBuilder.equal(root.get("metrics"), metrics);
             Predicate predicateMonitorMetric = criteriaBuilder.equal(root.get("metric"), metric);
-            andList.add(predicateMonitorId);
+            andList.add(predicateMonitorInstance);
             andList.add(predicateMonitorType);
             andList.add(predicateMonitorMetrics);
             andList.add(predicateMonitorMetric);
 
             if (StringUtils.isNotBlank(label)) {
-                Predicate predicateMonitorInstance = criteriaBuilder.equal(root.get("instance"), label);
-                andList.add(predicateMonitorInstance);
+                // FIXME: Is this correct? 'label' is used for both 'instance' and 'monitorId'?
+                Predicate predicateMonitorId = criteriaBuilder.equal(root.get("monitorId"), Long.parseLong(label));
+                andList.add(predicateMonitorId);
             }
 
             if (history != null) {
@@ -269,7 +271,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String label, String history) {
         return new HashMap<>(8);
     }
 

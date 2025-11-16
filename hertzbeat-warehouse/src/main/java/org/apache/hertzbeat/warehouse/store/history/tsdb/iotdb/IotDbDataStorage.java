@@ -216,7 +216,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
 
 
                 String label = JsonUtil.toJson(labels);
-                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), label, false);
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstanceHost(), label, false);
                 if (tabletMap.containsKey(label)) {
                     // Avoid Time repeats
                     now++;
@@ -259,7 +259,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
                                                          String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
@@ -271,7 +271,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                     """);
             return instanceValuesMap;
         }
-        String deviceId = getDeviceId(app, metrics, monitorId, label, true);
+        String deviceId = getDeviceId(app, metrics, instance, label, true);
         String selectSql = "";
         try {
             if (label != null) {
@@ -286,7 +286,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                 } else {
                     // todo Transform to a select query: Select Device 1.0. Metric, Device2. Metric from XXX
                     for (String device : devices) {
-                        String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
+                        String prefixDeviceId = getDeviceId(app, metrics, instance, null, false);
                         String instanceId = device.substring(prefixDeviceId.length() + 1);
                         selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId + "." + addQuote(instanceId), history);
                         handleHistorySelect(selectSql, instanceId, instanceValuesMap);
@@ -323,7 +323,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
                                                                  String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
@@ -335,7 +335,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                     """);
             return instanceValuesMap;
         }
-        String deviceId = getDeviceId(app, metrics, monitorId, label, true);
+        String deviceId = getDeviceId(app, metrics, instance, label, true);
         String selectSql;
         if (label != null) {
             selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
@@ -349,11 +349,11 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                 handleHistoryIntervalSelect(selectSql, "", instanceValuesMap);
             } else {
                 for (String device : devices) {
-                    String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
-                    String instance = device.substring(prefixDeviceId.length() + 1);
+                    String prefixDeviceId = getDeviceId(app, metrics, instance, null, false);
+                    String instanceKey = device.substring(prefixDeviceId.length() + 1);
                     selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
-                            addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instance), history);
-                    handleHistoryIntervalSelect(selectSql, instance, instanceValuesMap);
+                            addQuote(metric), addQuote(metric), addQuote(metric), addQuote(metric), deviceId + "." + addQuote(instanceKey), history);
+                    handleHistoryIntervalSelect(selectSql, instanceKey, instanceValuesMap);
                 }
             }
         }
@@ -431,11 +431,11 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
      * otherwise use  ${group}.${app}.${metrics}.${monitor}
      * Use  ${group}.${app}.${metrics}.${monitor}.*  to get all instance data when you tend to query
      */
-    private String getDeviceId(String app, String metrics, Long monitorId, String labels, boolean useQuote) {
+    private String getDeviceId(String app, String metrics, String instance, String labels, boolean useQuote) {
         String deviceId = STORAGE_GROUP + "."
                 + (useQuote ? addQuote(app) : app) + "."
                 + (useQuote ? addQuote(metrics) : metrics) + "."
-                + addQuote(monitorId.toString());
+                + addQuote(instance);
         if (labels != null && !labels.isEmpty() && !labels.equals(CommonConstants.NULL_VALUE)) {
             deviceId += "." + addQuote(labels);
         }

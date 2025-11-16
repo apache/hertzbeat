@@ -287,7 +287,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
             String label, String history) {
         String labelName = metrics + SPILT + metric;
         if (CommonConstants.PROMETHEUS.equals(app)) {
@@ -295,7 +295,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
         String timeSeriesSelector = Stream.of(
                 LABEL_KEY_NAME + "=\"" + labelName + "\"",
-                LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"",
+                LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
                 CommonConstants.PROMETHEUS.equals(app) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -363,7 +363,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
             String metric, String label, String history) {
         if (!serverAvailable) {
             log.error("""
@@ -396,7 +396,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
         String timeSeriesSelector = Stream.of(
                 LABEL_KEY_NAME + "=\"" + labelName + "\"",
-                LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"",
+                LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
                 CommonConstants.PROMETHEUS.equals(app) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
