@@ -230,8 +230,8 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, monitorId);
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String label, String history) {
+        String table = this.generateTable(app, metrics, instance);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
         if (label != null) {
