@@ -19,9 +19,11 @@ package org.apache.hertzbeat.manager.scheduler;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -50,7 +52,7 @@ import org.springframework.util.StringUtils;
 @Order(value = Ordered.LOWEST_PRECEDENCE - 1)
 @Slf4j
 public class SchedulerInit implements CommandLineRunner {
-    
+
     @Autowired
     private CollectorScheduling collectorScheduling;
     
@@ -59,6 +61,7 @@ public class SchedulerInit implements CommandLineRunner {
    
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
     private static final String DEFAULT_COLLECTOR_VERSION = "DEBUG";
+    public static final String PARAM_FIELD_PORT = "port";
 
     @Autowired
     private AppService appService;
@@ -117,8 +120,20 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+
+                String host = monitor.getHost();
+                // The port field may be null
+                Param portParam = params.stream()
+                        .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+                        .findFirst()
+                        .orElse(null);
+                String portWithMark = portParam == null ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+                if (Objects.nonNull(host)) {
+                    host = host + portWithMark;
+                }
+
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                        CommonConstants.LABEL_INSTANCE_HOST, host);
                 appDefine.setMetadata(metadata);
                 appDefine.setLabels(monitor.getLabels());
                 appDefine.setAnnotations(monitor.getAnnotations());

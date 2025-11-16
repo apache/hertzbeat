@@ -111,6 +111,7 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PATTERN_HTTPS = "(?i)https://";
     private static final Long MONITOR_ID_TMP = 1000000000L;
     private static final byte ALL_MONITOR_STATUS = 9;
+    public static final String PARAM_FIELD_PORT = "port";
 
     private static final String CONTENT_VALUE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
@@ -190,8 +191,20 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setDefaultInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
+
+        String host = monitor.getHost();
+        // The port field may be null
+        Param portParam = params.stream()
+                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
+        String portWithMark = portParam == null ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        if (Objects.nonNull(host)) {
+            host = host + portWithMark;
+        }
+
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                CommonConstants.LABEL_INSTANCE_HOST, host);
         appDefine.setMetadata(metadata);
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());

@@ -98,7 +98,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_JOB = "job";
     private static final String LABEL_KEY_INSTANCE = "instance";
-    private static final String LABEL_KEY_HOST = "host";
+    private static final String LABEL_KEY_ID = "id";
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
@@ -201,7 +201,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             isPrometheusAuto = false;
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
-        defaultLabels.put(LABEL_KEY_INSTANCE, String.valueOf(metricsData.getId()));
+        defaultLabels.put(LABEL_KEY_INSTANCE, metricsData.getInstanceHost());
 
 
         try {
@@ -244,7 +244,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 if (!isPrometheusAuto) {
                                     labels.put(MONITOR_METRIC_KEY, entry.getKey());
                                 }
-                                labels.put(LABEL_KEY_HOST, metricsData.getInstanceHost());
+                                labels.put(LABEL_KEY_ID, String.valueOf(metricsData.getId()));
                                 // add customized labels as identifier
                                 var customizedLabels = metricsData.getLabels();
                                 if (!ObjectUtils.isEmpty(customizedLabels)) {
