@@ -52,7 +52,6 @@ keywords: [Alert FeiShu app notification , open source alerter, open source feis
 
    ![email](/img/docs/help/alert-notice-4.png)
 
-
 ### FeiShu app notification common issues
 
 1. FeiShu app did not receive the robot alarm notification.
@@ -60,11 +59,11 @@ keywords: [Alert FeiShu app notification , open source alerter, open source feis
    > Please check whether there is any triggered alarm information in the alarm center.  
    > Please check whether the AppID and AppSecret is configured correctly and whether the alarm strategy association is configured.  
    > Please check if the user was within the available range when the application was published.
-   
+
 2. How to @someone in a designated group chat
 
    > In the form for adding recipients, fill in the `User ID`. If you need to @everyone, you can enter `all` in the `User ID` field. Multiple user IDs are also supported, separated by commas `,`. For detailed instructions on how to get the FeiShu user ID, please refer to: [Get FeiShu user id](https://open.feishu.cn/document/faq/trouble-shooting/how-to-obtain-user-id#529e21a9)
-    
+
 3. How to obtain a chat ID
 
    > Please refer to: [Chat ID description](https://open.feishu.cn/document/server-docs/group/chat/chat-id-description#394516c9)
