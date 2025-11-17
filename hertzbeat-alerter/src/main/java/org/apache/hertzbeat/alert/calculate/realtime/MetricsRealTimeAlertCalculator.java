@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -42,6 +43,7 @@ import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -122,12 +124,18 @@ public class MetricsRealTimeAlertCalculator {
      */
     public void startCalculate() {
         Runnable runnable = () -> {
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = dataQueue.pollMetricsDataToAlerter();
                     if (metricsData == null) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            break;
+                        }
+                        TimeUnit.MICROSECONDS.sleep(backoff.nextDelay());
                         continue;
                     }
+                    backoff.reset();
                     calculate(metricsData);
                     dataQueue.sendMetricsDataToStorage(metricsData);
                 } catch (InterruptedException ignored) {

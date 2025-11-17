@@ -22,6 +22,7 @@ import org.apache.hertzbeat.alert.calculate.realtime.window.LogWorker;
 import org.apache.hertzbeat.alert.calculate.realtime.window.TimeService;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.stereotype.Component;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import javax.annotation.PostConstruct;
@@ -58,13 +59,20 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
 
     @Override
     public void run() {
+        ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 LogEntry logEntry = dataQueue.pollLogEntry();
-                if (logEntry != null) {
-                    processLogEntry(logEntry);
-                    dataQueue.sendLogEntryToStorage(logEntry);
+                if (logEntry == null) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    TimeUnit.MICROSECONDS.sleep(backoff.nextDelay());
+                    continue;
                 }
+                backoff.reset();
+                processLogEntry(logEntry);
+                dataQueue.sendLogEntryToStorage(logEntry);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;

@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
@@ -69,12 +72,18 @@ public class DataStorageDispatch {
     protected void startPersistentDataStorage() {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage();
                     if (metricsData == null) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            break;
+                        }
+                        TimeUnit.MICROSECONDS.sleep(backoff.nextDelay());
                         continue;
                     }
+                    backoff.reset();
                     try {
                         calculateMonitorStatus(metricsData);
                         historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
@@ -94,13 +103,19 @@ public class DataStorageDispatch {
 
     protected void startLogDataStorage() {
         Runnable runnable = () -> {
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             Thread.currentThread().setName("warehouse-log-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     LogEntry logEntry = commonDataQueue.pollLogEntryToStorage();
                     if (logEntry == null) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            break;
+                        }
+                        TimeUnit.MICROSECONDS.sleep(backoff.nextDelay());
                         continue;
                     }
+                    backoff.reset();
                     historyDataWriter.ifPresent(dataWriter -> {
                         try {
                             dataWriter.saveLogData(logEntry);

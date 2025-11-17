@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -34,6 +35,7 @@ import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -80,11 +82,17 @@ public class ServiceDiscoveryWorker implements InitializingBean {
     private class SdUpdateTask implements Runnable {
         @Override
         public void run() {
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try (final CollectRep.MetricsData metricsData = dataQueue.pollServiceDiscoveryData()) {
                     if (metricsData == null) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            break;
+                        }
+                        TimeUnit.MICROSECONDS.sleep(backoff.nextDelay());
                         continue;
                     }
+                    backoff.reset();
                     Long monitorId = metricsData.getId();
                     final Monitor mainMonitor = monitorDao.findById(monitorId).orElse(null);
                     if (mainMonitor == null) {
