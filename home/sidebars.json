@@ -173,7 +173,8 @@
             "help/tidb",
             "help/mongodb",
             "help/mongodb_atlas",
-            "help/oceanbase"
+            "help/oceanbase",
+            "help/db2"
           ]
         },
         {
