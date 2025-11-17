@@ -50,7 +50,7 @@ keywords: [告警飞书自建应用通知 , 开源告警系统, 开源监控告�
 
    > **注意⚠️ 新增了接收人并不代表已经生效可以接收告警信息，还需配置关联的告警通知策略，即指定哪些消息发给哪些接收人**。
 
-   ![email](img/docs/help/alert-notice-4.png)
+   ![email](/img/docs/help/alert-notice-4.png)
 
 ### 飞书自建应用通知常见问题
 

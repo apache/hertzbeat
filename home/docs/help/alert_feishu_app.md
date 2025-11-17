@@ -7,7 +7,7 @@ keywords: [Alert FeiShu app notification , open source alerter, open source feis
 
 > After the threshold is triggered send alarm information and notify the recipient by FeiShu app.
 
-### 操作步骤
+### Operation steps
 
 1. **【[FeiShu Open Platform](https://open.feishu.cn/)】->【Create Custom App】->【Create】->【Add Features:Bot】**
 
