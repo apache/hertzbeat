@@ -545,10 +545,18 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 14">
-        <nz-form-label nzFor="larkReceiveType" nzRequired="true" nzSpan="7">{{ 'alert.notice.type.lark-app-larkReceiveType' | i18n }} </nz-form-label>
+        <nz-form-label nzFor="larkReceiveType" nzRequired="true" nzSpan="7"
+          >{{ 'alert.notice.type.lark-app-larkReceiveType' | i18n }}
+        </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="12">
-          <nz-select [(ngModel)]="receiver.larkReceiveType" [nzOptionOverflowSize]="10" id="larkReceiveType" name="larkReceiveType"
-            [nzPlaceHolder]="'alert.notice.type.lark-app-larkReceiveType.placeholder' | i18n" required>
+          <nz-select
+            [(ngModel)]="receiver.larkReceiveType"
+            [nzOptionOverflowSize]="10"
+            id="larkReceiveType"
+            name="larkReceiveType"
+            [nzPlaceHolder]="'alert.notice.type.lark-app-larkReceiveType.placeholder' | i18n"
+            required
+          >
             <nz-option [nzLabel]="'alert.notice.type.lark-app-larkReceiveType.user' | i18n" [nzValue]="0"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.lark-app-larkReceiveType.chat' | i18n" [nzValue]="1"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.lark-app-larkReceiveType.party' | i18n" [nzValue]="2"></nz-option>
@@ -577,8 +585,7 @@
           {{ 'alert.notice.type.lark-app-userId' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12">
-          <input [(ngModel)]="receiver.userId" name="userId" nz-input
-            type="text" />
+          <input [(ngModel)]="receiver.userId" name="userId" nz-input type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.larkReceiveType === 2">
