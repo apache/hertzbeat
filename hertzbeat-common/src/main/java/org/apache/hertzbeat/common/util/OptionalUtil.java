@@ -45,7 +45,7 @@ public class OptionalUtil {
      */
     public static <T> T of(T obj) throws IllegalArgumentException {
         if (obj == null) {
-            throw new IllegalArgumentException("Invalid exponential backoff params");
+            throw new IllegalArgumentException("Param must not be null");
         }
         return obj;
     }
