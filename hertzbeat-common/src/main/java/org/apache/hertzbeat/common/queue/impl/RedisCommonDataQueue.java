@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -86,33 +87,19 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToAlerter() {
-        try {
-            return syncCommands.rpop(metricsDataQueueNameToAlerter);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return null;
-        }
+    public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
+        return genericBlockingPollFunction(metricsDataQueueNameToAlerter, syncCommands);
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToStorage() throws InterruptedException {
-        try {
-            return syncCommands.rpop(metricsDataQueueNameToStorage);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return null;
-        }
+        return genericBlockingPollFunction(metricsDataQueueNameToStorage, syncCommands);
+
     }
 
     @Override
     public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
-        try {
-            return syncCommands.rpop(metricsDataQueueNameForServiceDiscovery);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return null;
-        }
+        return genericBlockingPollFunction(metricsDataQueueNameForServiceDiscovery, syncCommands);
     }
 
     @Override
@@ -153,12 +140,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public LogEntry pollLogEntry() throws InterruptedException {
-        try {
-            return logEntrySyncCommands.rpop(logEntryQueueName);
-        } catch (Exception e) {
-            log.error("Failed to poll LogEntry from Redis: {}", e.getMessage());
-            throw new InterruptedException("Failed to poll LogEntry from Redis");
-        }
+        return genericBlockingPollFunction(logEntryQueueName, logEntrySyncCommands);
     }
 
     @Override
@@ -172,12 +154,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public LogEntry pollLogEntryToStorage() throws InterruptedException {
-        try {
-            return logEntrySyncCommands.rpop(logEntryToStorageQueueName);
-        } catch (Exception e) {
-            log.error("Failed to poll LogEntry from storage via Redis: {}", e.getMessage());
-            throw new InterruptedException("Failed to poll LogEntry from storage via Redis");
-        }
+        return genericBlockingPollFunction(logEntryToStorageQueueName, logEntrySyncCommands);
     }
 
     @Override
@@ -185,6 +162,25 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         connection.close();
         logEntryConnection.close();
         redisClient.shutdown();
+    }
+
+
+
+    private <T> T genericBlockingPollFunction(String key, RedisCommands<String, T> commands) throws InterruptedException {
+        try {
+            // Use BRPOP for blocking pop with the configured timeout.
+            // If data arrives, it returns immediately; if it times out, it returns null.
+            KeyValue<String, T> keyData = commands.brpop(1L, key);
+            if (keyData != null) {
+                return keyData.getValue();
+            } else {
+                // Returns null on timeout
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("Redis BRPOP failed: {}", e.getMessage());
+            return null;
+        }
     }
 
 }

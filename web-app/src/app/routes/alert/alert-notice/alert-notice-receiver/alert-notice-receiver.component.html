@@ -251,6 +251,39 @@
           <input [(ngModel)]="receiver.hookUrl" [required]="receiver.type === 2" id="hookUrl" name="hookUrl" nz-input type="url" />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 2">
+        <nz-form-label [nzSpan]="7" nzFor="hookAuthType">{{ 'alert.notice.type.webhook-auth-type' | i18n }} </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-select
+            [(ngModel)]="receiver.hookAuthType"
+            id="hookAuthType"
+            name="hookAuthType"
+            nzPlaceHolder="{{ 'alert.notice.type.webhook-auth-type.placeholder' | i18n }}"
+          >
+            <nz-option nzValue="None" nzLabel="None"></nz-option>
+            <nz-option nzValue="Basic" nzLabel="Basic"></nz-option>
+            <nz-option nzValue="Bearer" nzLabel="Bearer"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 2 && (receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer')">
+        <nz-form-label
+          [nzRequired]="receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer'"
+          [nzSpan]="7"
+          nzFor="hookAuthToken"
+          >{{ 'alert.notice.type.webhook-auth-token' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input
+            [(ngModel)]="receiver.hookAuthToken"
+            [required]="receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer'"
+            id="hookAuthToken"
+            name="hookAuthToken"
+            nz-input
+            type="text"
+          />
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 3">
         <nz-form-label [nzRequired]="receiver.type === 3" [nzSpan]="7" nzFor="wechatId"
           >{{ 'alert.notice.type.wechat-id' | i18n }}
