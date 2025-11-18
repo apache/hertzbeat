@@ -22,6 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
@@ -36,20 +37,20 @@ public class GoOfflineProcessor implements NettyRemotingProcessor {
     private TimerDispatch timerDispatch;
     
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         if (this.timerDispatch == null) {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
         timerDispatch.goOffline();
         log.info("receive offline message and handle success");
-        if (message.getMsg().toStringUtf8().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
+        if (message.getMsg().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
             log.error("[Auth Failed]receive client auth failed message and go offline. {}", message.getMsg());
             return null;
         }
-        return ClusterMsg.Message.newBuilder()
-                .setIdentity(message.getIdentity())
-                .setDirection(ClusterMsg.Direction.RESPONSE)
-                .setMsg(ByteString.copyFromUtf8(String.valueOf(CommonConstants.SUCCESS_CODE)))
+        return ClusterMessage.builder()
+                .identity(message.getIdentity())
+                .direction(ClusterMessage.Direction.RESPONSE)
+                .msg(String.valueOf(CommonConstants.SUCCESS_CODE))
                 .build();
     }
 }

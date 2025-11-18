@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,19 +27,19 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.util.NetworkUtil;
 import org.apache.hertzbeat.remoting.RemotingService;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 
 /**
- * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingAbstract 
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingAbstract
  * netty remote abstract
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingAbstract.java">NettyRemotingAbstract</a>
  */
 @Slf4j
 public abstract class NettyRemotingAbstract implements RemotingService {
-    protected ConcurrentHashMap<ClusterMsg.MessageType, NettyRemotingProcessor> processorTable = new ConcurrentHashMap<>();
+    protected ConcurrentHashMap<ClusterMessage.MessageType, NettyRemotingProcessor> processorTable = new ConcurrentHashMap<>();
 
     protected ConcurrentHashMap<String, ResponseFuture> responseTable = new ConcurrentHashMap<>();
 
@@ -51,19 +51,19 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         this.nettyEventListener = nettyEventListener;
     }
 
-    public void registerProcessor(final ClusterMsg.MessageType messageType, final NettyRemotingProcessor processor) {
+    public void registerProcessor(final ClusterMessage.MessageType messageType, final NettyRemotingProcessor processor) {
         this.processorTable.put(messageType, processor);
     }
 
-    protected void processReceiveMsg(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        if (ClusterMsg.Direction.REQUEST.equals(message.getDirection())) {
+    protected void processReceiveMsg(ChannelHandlerContext ctx, ClusterMessage message) {
+        if (ClusterMessage.Direction.REQUEST.equals(message.getDirection())) {
             this.processRequestMsg(ctx, message);
         } else {
             this.processResponseMsg(ctx, message);
         }
     }
 
-    protected void processRequestMsg(ChannelHandlerContext ctx, ClusterMsg.Message request) {
+    protected void processRequestMsg(ChannelHandlerContext ctx, ClusterMessage request) {
         this.doBeforeRequest(ctx, request);
 
         NettyRemotingProcessor processor = this.processorTable.get(request.getType());
@@ -71,13 +71,13 @@ public abstract class NettyRemotingAbstract implements RemotingService {
             log.info("request type {} not supported", request.getType());
             return;
         }
-        ClusterMsg.Message response = processor.handle(ctx, request);
+        ClusterMessage response = processor.handle(ctx, request);
         if (response != null) {
             ctx.writeAndFlush(response);
         }
     }
 
-    private void doBeforeRequest(ChannelHandlerContext ctx, ClusterMsg.Message request) {
+    private void doBeforeRequest(ChannelHandlerContext ctx, ClusterMessage request) {
         if (CollectionUtils.isEmpty(this.nettyHookList)) {
             return;
         }
@@ -86,7 +86,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         }
     }
 
-    protected void processResponseMsg(ChannelHandlerContext ctx, ClusterMsg.Message response) {
+    protected void processResponseMsg(ChannelHandlerContext ctx, ClusterMessage response) {
         // for sync response
         if (this.responseTable.containsKey(response.getIdentity())) {
             ResponseFuture responseFuture = this.responseTable.get(response.getIdentity());
@@ -95,15 +95,15 @@ public abstract class NettyRemotingAbstract implements RemotingService {
             // async response
             NettyRemotingProcessor processor = this.processorTable.get(response.getType());
             if (processor != null) {
-                ClusterMsg.Message repMessage = processor.handle(ctx, response);
+                ClusterMessage repMessage = processor.handle(ctx, response);
                 if (repMessage != null) {
                     ctx.writeAndFlush(repMessage);
                 }
-            }   
+            }
         }
     }
 
-    protected void sendMsgImpl(final Channel channel, final ClusterMsg.Message request) {
+    protected void sendMsgImpl(final Channel channel, final ClusterMessage request) {
         channel.writeAndFlush(request).addListener(future -> {
             if (!future.isSuccess()) {
                 log.warn("send request message failed. address: {}, ", channel.remoteAddress(), future.cause());
@@ -111,7 +111,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
         });
     }
 
-    protected ClusterMsg.Message sendMsgSyncImpl(final Channel channel, final ClusterMsg.Message request, final int timeoutMillis) {
+    protected ClusterMessage sendMsgSyncImpl(final Channel channel, final ClusterMessage request, final int timeoutMillis) {
         final String identity = request.getIdentity();
 
         try {
@@ -123,7 +123,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
                     log.warn("send request message failed. request: {}, address: {}, ", request, channel.remoteAddress(), future.cause());
                 }
             });
-            ClusterMsg.Message response = responseFuture.waitResponse(timeoutMillis);
+            ClusterMessage response = responseFuture.waitResponse(timeoutMillis);
             if (response == null) {
                 log.warn("get response message failed, message is null");
             }

@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.dto.ServerInfo;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -42,10 +43,10 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
     }
 
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         String collector = message.getIdentity();
         log.info("the collector {} actively requests to go online.", collector);
-        String msg = message.getMsg().toStringUtf8();
+        String msg = message.getMsg();
         CollectorInfo collectorInfo = JsonUtil.fromJson(msg, CollectorInfo.class);
         if (collectorInfo != null && StringUtils.isBlank(collectorInfo.getIp())) {
             // fetch remote ip address
@@ -56,11 +57,11 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
         this.manageServer.addChannel(collector, ctx.channel());
         this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(collector, collectorInfo);
         ServerInfo serverInfo = ServerInfo.builder().aesSecret(AesUtil.getDefaultSecretKey()).build();
-        return ClusterMsg.Message.newBuilder()
-                .setIdentity(message.getIdentity())
-                .setDirection(ClusterMsg.Direction.RESPONSE)
-                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(serverInfo)))
-                .setType(ClusterMsg.MessageType.GO_ONLINE)
+        return ClusterMessage.builder()
+                .identity(message.getIdentity())
+                .direction(ClusterMessage.Direction.RESPONSE)
+                .msg(JsonUtil.toJson(serverInfo))
+                .type(ClusterMessage.MessageType.GO_ONLINE)
                 .build();
     }
 }

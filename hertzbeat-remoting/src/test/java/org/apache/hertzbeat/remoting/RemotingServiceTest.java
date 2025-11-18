@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,7 @@
 
 package org.apache.hertzbeat.remoting;
 
-import com.google.protobuf.ByteString;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
@@ -102,15 +101,15 @@ public class RemotingServiceTest {
     public void testSendMsg() {
         final String msg = "hello world";
 
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) -> {
-            Assertions.assertEquals(msg, message.getMsg().toStringUtf8());
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, (ctx, message) -> {
+            Assertions.assertEquals(msg, message.getMsg());
             return null;
         });
 
-        ClusterMsg.Message request = ClusterMsg.Message.newBuilder()
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setType(ClusterMsg.MessageType.HEARTBEAT)
-                .setMsg(ByteString.copyFromUtf8(msg))
+        ClusterMessage request = ClusterMessage.builder()
+                .direction(ClusterMessage.Direction.REQUEST)
+                .type(ClusterMessage.MessageType.HEARTBEAT)
+                .msg(msg)
                 .build();
         this.remotingClient.sendMsg(request);
     }
@@ -120,38 +119,43 @@ public class RemotingServiceTest {
         final String requestMsg = "request";
         final String responseMsg = "response";
 
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) -> {
-            Assertions.assertEquals(requestMsg, message.getMsg().toStringUtf8());
-            return ClusterMsg.Message.newBuilder()
-                    .setDirection(ClusterMsg.Direction.RESPONSE)
-                    .setMsg(ByteString.copyFromUtf8(responseMsg))
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, (ctx, message) -> {
+            Assertions.assertEquals(requestMsg, message.getMsg());
+            return ClusterMessage.builder()
+                    .direction(ClusterMessage.Direction.RESPONSE)
+                    .type(ClusterMessage.MessageType.HEARTBEAT)
+                    .msg(responseMsg)
+                    .identity(message.getIdentity()) // Echo identity for sync matching
                     .build();
         });
 
-        ClusterMsg.Message request = ClusterMsg.Message.newBuilder()
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setType(ClusterMsg.MessageType.HEARTBEAT)
-                .setMsg(ByteString.copyFromUtf8(requestMsg))
+        ClusterMessage request = ClusterMessage.builder()
+                .direction(ClusterMessage.Direction.REQUEST)
+                .type(ClusterMessage.MessageType.HEARTBEAT)
+                .msg(requestMsg)
+                .identity("123456") // Must set identity for sync request
                 .build();
-        ClusterMsg.Message response = this.remotingClient.sendMsgSync(request, 3000);
-        Assertions.assertEquals(responseMsg, response.getMsg().toStringUtf8());
+        ClusterMessage response = this.remotingClient.sendMsgSync(request, 3000);
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals(responseMsg, response.getMsg());
     }
 
     @Test
     public void testNettyHook() {
         this.remotingServer.registerHook(Lists.newArrayList(
-                (ctx, message) -> Assertions.assertEquals("hello world", message.getMsg().toStringUtf8())
+                (ctx, message) -> Assertions.assertEquals("hello world", message.getMsg())
         ));
 
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, (ctx, message) ->
-                ClusterMsg.Message.newBuilder()
-                        .setDirection(ClusterMsg.Direction.RESPONSE)
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, (ctx, message) ->
+                ClusterMessage.builder()
+                        .direction(ClusterMessage.Direction.RESPONSE)
+                        .type(ClusterMessage.MessageType.HEARTBEAT)
                         .build());
 
-        ClusterMsg.Message request = ClusterMsg.Message.newBuilder()
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setType(ClusterMsg.MessageType.HEARTBEAT)
-                .setMsg(ByteString.copyFromUtf8("hello world"))
+        ClusterMessage request = ClusterMessage.builder()
+                .direction(ClusterMessage.Direction.REQUEST)
+                .type(ClusterMessage.MessageType.HEARTBEAT)
+                .msg("hello world")
                 .build();
         this.remotingClient.sendMsg(request);
     }

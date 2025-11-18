@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,21 +29,20 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.compression.ZlibCodecFactory;
 import io.netty.handler.codec.compression.ZlibWrapper;
-import io.netty.handler.codec.protobuf.ProtobufDecoder;
-import io.netty.handler.codec.protobuf.ProtobufEncoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
+import org.apache.hertzbeat.remoting.netty.codec.ForyCodec;
 
 /**
- * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingClient 
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingClient
  * netty client
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingClient.java">NettyRemotingClient</a>
  */
@@ -51,7 +50,7 @@ import org.apache.hertzbeat.remoting.event.NettyEventListener;
 public class NettyRemotingClient extends NettyRemotingAbstract implements RemotingClient {
 
     private static final int DEFAULT_WORKER_THREAD_NUM = Math.min(4, Runtime.getRuntime().availableProcessors());
-    
+
     private final NettyClientConfig nettyClientConfig;
 
     private final CommonThreadPool threadPool;
@@ -81,7 +80,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                     .setDaemon(true)
                     .setNameFormat("netty-client-worker-%d")
                     .build();
-            String envThreadNum = System.getProperty("hertzbeat.client.worker.thread.num"); 
+            String envThreadNum = System.getProperty("hertzbeat.client.worker.thread.num");
             int workerThreadNum = envThreadNum != null ? Integer.parseInt(envThreadNum) : DEFAULT_WORKER_THREAD_NUM;
             this.workerGroup = new NioEventLoopGroup(workerThreadNum, threadFactory);
             this.bootstrap.group(workerGroup)
@@ -96,7 +95,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
             this.channel = null;
             boolean first = true;
-            while (!Thread.currentThread().isInterrupted() 
+            while (!Thread.currentThread().isInterrupted()
                     && (first || this.channel == null || !this.channel.isActive())) {
                 first = false;
                 try {
@@ -124,11 +123,11 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         // zip
         pipeline.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
         pipeline.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP));
-        // protocol buf encode decode
-        pipeline.addLast(new ProtobufVarint32FrameDecoder());
-        pipeline.addLast(new ProtobufDecoder(ClusterMsg.Message.getDefaultInstance()));
-        pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
-        pipeline.addLast(new ProtobufEncoder());
+        // fory codec
+        // max frame length 10MB
+        pipeline.addLast(new LengthFieldBasedFrameDecoder(10 * 1024 * 1024, 0, 4, 0, 4));
+        pipeline.addLast(new LengthFieldPrepender(4));
+        pipeline.addLast(new ForyCodec());
         pipeline.addLast(new NettyClientHandler());
 
     }
@@ -155,16 +154,16 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     }
 
     @Override
-    public void sendMsg(final ClusterMsg.Message request) {
+    public void sendMsg(final ClusterMessage request) {
         this.sendMsgImpl(this.channel, request);
     }
 
     @Override
-    public ClusterMsg.Message sendMsgSync(ClusterMsg.Message request, int timeoutMillis) {
+    public ClusterMessage sendMsgSync(ClusterMessage request, int timeoutMillis) {
         return this.sendMsgSyncImpl(this.channel, request, timeoutMillis);
     }
 
-    class NettyClientHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
+    class NettyClientHandler extends SimpleChannelInboundHandler<ClusterMessage> {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -172,7 +171,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, ClusterMsg.Message msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, ClusterMessage msg) throws Exception {
             NettyRemotingClient.this.processReceiveMsg(ctx, msg);
         }
 

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
@@ -25,13 +24,14 @@ import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.ArrowUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -117,10 +117,10 @@ public class CollectJobService {
         workerPool.executeJob(() -> {
             List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
             byte[] msg = ArrowUtil.serializeMetricsData(metricsDataList);
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setMsg(ByteString.copyFrom(msg))
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setType(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA)
+            ClusterMessage message = ClusterMessage.builder()
+                    .msg(Base64.getEncoder().encodeToString(msg))
+                    .direction(ClusterMessage.Direction.REQUEST)
+                    .type(ClusterMessage.MessageType.RESPONSE_ONE_TIME_TASK_DATA)
                     .build();
             this.collectServer.sendMsg(message);
         });
@@ -153,22 +153,22 @@ public class CollectJobService {
      */
     public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
         byte[] msg = ArrowUtil.serializeMetricsData(List.of(metricsData));
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                .setIdentity(collectorIdentity)
-                .setMsg(ByteString.copyFrom(msg))
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA)
+        ClusterMessage message = ClusterMessage.builder()
+                .identity(collectorIdentity)
+                .msg(Base64.getEncoder().encodeToString(msg))
+                .direction(ClusterMessage.Direction.REQUEST)
+                .type(ClusterMessage.MessageType.RESPONSE_CYCLIC_TASK_DATA)
                 .build();
         this.collectServer.sendMsg(message);
     }
 
     public void sendAsyncServiceDiscoveryData(CollectRep.MetricsData metricsData) {
         byte[] msg = ArrowUtil.serializeMetricsData(List.of(metricsData));
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                .setIdentity(collectorIdentity)
-                .setMsg(ByteString.copyFrom(msg))
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA)
+        ClusterMessage message = ClusterMessage.builder()
+                .identity(collectorIdentity)
+                .msg(Base64.getEncoder().encodeToString(msg))
+                .direction(ClusterMessage.Direction.REQUEST)
+                .type(ClusterMessage.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA)
                 .build();
         this.collectServer.sendMsg(message);
     }
