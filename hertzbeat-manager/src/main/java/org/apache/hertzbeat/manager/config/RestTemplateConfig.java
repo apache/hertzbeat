@@ -18,6 +18,9 @@
 package org.apache.hertzbeat.manager.config;
 
 import java.util.Collections;
+import java.util.concurrent.Executor;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
@@ -30,7 +33,6 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * restTemplate config
- * todo thread pool
  */
 @Configuration
 public class RestTemplateConfig {
@@ -58,4 +60,16 @@ public class RestTemplateConfig {
         );
     }
 
+    @Bean("restTemplateThreadPool")
+    public Executor restTemplateThreadPool() {
+        return new ThreadPoolExecutor(
+                2,
+                Integer.MAX_VALUE,
+                60L,
+                TimeUnit.SECONDS,
+                new SynchronousQueue<>(),
+                r -> new Thread(r, "RestTemplate-" + r.hashCode()),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+    }
 }
