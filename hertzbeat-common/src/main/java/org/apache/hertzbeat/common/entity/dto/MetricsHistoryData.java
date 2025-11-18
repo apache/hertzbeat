@@ -35,8 +35,8 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Metric History Range Query Data")
 public class MetricsHistoryData {
 
-    @Schema(title = "Monitoring Task ID")
-    private Long id;
+    @Schema(title = "Monitoring instance")
+    private String instance;
 
     @Schema(title = "Monitoring Type")
     private String app;

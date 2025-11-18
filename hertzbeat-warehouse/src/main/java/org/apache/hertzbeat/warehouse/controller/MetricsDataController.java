@@ -68,6 +68,7 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
+        // FIXME: 这里是干啥的
         MetricsData metricsData = metricsDataService.getMetricsData(monitorId, metrics);
         if (metricsData == null){
             return ResponseEntity.ok(Message.success("query metrics data is empty"));
@@ -75,11 +76,11 @@ public class MetricsDataController {
         return ResponseEntity.ok(Message.success(metricsData));
     }
 
-    @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
+    @GetMapping("/api/monitor/{instance}/metric/{metricFull}")
     @Operation(summary = "Queries historical data for a specified metric for monitoring", description = "Queries historical data for a specified metric under monitoring")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
-            @Parameter(description = "monitor the task ID", example = "343254354")
-            @PathVariable Long monitorId,
+            @Parameter(description = "Instance host", example = "127.0.0.1 | 127.0.0.1:8080")
+            @PathVariable String instance,
             @Parameter(description = "monitor metric full path", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
             @Parameter(description = "label filter, empty by default", example = "disk2")
@@ -99,7 +100,7 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
-        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, interval);
+        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric, label, history, interval);
         return ResponseEntity.ok(Message.success(historyData));
     }
 }
