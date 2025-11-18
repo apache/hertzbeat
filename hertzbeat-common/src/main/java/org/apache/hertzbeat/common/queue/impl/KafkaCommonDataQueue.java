@@ -117,7 +117,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             Map<String, Object> metricsToStorageConsumerConfig = new HashMap<>(consumerConfig);
             metricsToStorageConsumerConfig.put("group.id", "metrics-persistent-consumer");
             metricsDataToStorageConsumer = new KafkaConsumer<>(metricsToStorageConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
-            metricsDataToStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
+            metricsDataToStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataToStorageTopic()));
 
             Map<String, Object> serviceDiscoveryDataConsumerConfig = new HashMap<>(consumerConfig);
             serviceDiscoveryDataConsumerConfig.put("group.id", "service-discovery-data-consumer");
@@ -195,8 +195,13 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
-        // The message is already sent via sendMetricsData since metricsDataToStorageConsumer
-        // subscribes to the same metricsDataTopic. No need to send again.
+        if (metricsDataProducer != null) {
+            ProducerRecord<Long, CollectRep.MetricsData> record =
+                    new ProducerRecord<>(kafka.getMetricsDataToStorageTopic(), metricsData);
+            metricsDataProducer.send(record);
+        } else {
+            log.error("metricsDataProducer is not enabled");
+        }
     }
 
     @Override
