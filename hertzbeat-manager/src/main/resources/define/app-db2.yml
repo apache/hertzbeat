@@ -354,7 +354,6 @@ metrics:
           en-US: Avg Execution Time
           ja-JP: 平均実行時間
         unit: ms
-      # 替换为新的指标字段：SQL文本
       - field: sql_text
         type: 1
         i18n:
