@@ -67,7 +67,7 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
-                    TimeUnit.MICROSECONDS.sleep(backoff.nextDelay());
+                    TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
                     continue;
                 }
                 backoff.reset();
