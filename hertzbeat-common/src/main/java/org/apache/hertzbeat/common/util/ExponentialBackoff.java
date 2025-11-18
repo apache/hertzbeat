@@ -36,7 +36,11 @@ public final class ExponentialBackoff {
 
     public long nextDelay() {
         long delay = this.current;
-        this.current = Math.min(this.current << 1, this.max);
+        if (this.current <= this.max / 2) {
+            this.current = this.current * 2;
+        } else {
+            this.current = this.max;
+        }
         return delay;
     }
 
