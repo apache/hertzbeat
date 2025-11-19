@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -162,13 +163,8 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             .map(MonitorBind::getMonitorId).collect(Collectors.toSet());
                     monitorService.deleteMonitors(needCancelMonitorIdSet);
                 } catch (CommonDataQueueUnknownException ue) {
-                    if (Thread.currentThread().isInterrupted()) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
                         break;
-                    }
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
                     }
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);

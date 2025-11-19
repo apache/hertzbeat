@@ -43,6 +43,7 @@ import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,13 +139,8 @@ public class MetricsRealTimeAlertCalculator {
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
                 } catch (CommonDataQueueUnknownException ue) {
-                    if (Thread.currentThread().isInterrupted()) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
                         break;
-                    }
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
                     }
                 } catch (Exception e) {
                     log.error("calculate alarm error: {}.", e.getMessage(), e);
