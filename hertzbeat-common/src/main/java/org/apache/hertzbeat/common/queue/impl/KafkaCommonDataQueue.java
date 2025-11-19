@@ -177,7 +177,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             dataConsumer.commitAsync();
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new CommonDataQueueUnknownException();
+            throw new CommonDataQueueUnknownException(e.getMessage(), e);
         } finally {
             lock.unlock();
         }
