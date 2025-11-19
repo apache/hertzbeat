@@ -94,6 +94,7 @@ excludedResource:
   - /setting/**===get
   - /passport/**===get
   - /status/**===get
+  - /log/**===get
   - /**/*.html===get
   - /**/*.js===get
   - /**/*.css===get
