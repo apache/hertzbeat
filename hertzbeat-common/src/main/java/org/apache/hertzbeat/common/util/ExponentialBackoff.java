@@ -34,6 +34,12 @@ public final class ExponentialBackoff {
         this.current = initial;
     }
 
+    /**
+     * Returns the current delay value and advances to the next delay.
+     * The delay doubles on each call until it reaches the maximum value.
+     *
+     * @return the delay in milliseconds to wait before the next retry
+     */
     public long nextDelay() {
         long delay = this.current;
         if (this.current <= this.max / 2) {
