@@ -31,10 +31,11 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.serialize.RedisLogEntryCodec;
 import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
-import org.apache.hertzbeat.common.util.OptionalUtil;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Objects;
 
 /**
  * common data queue implement redis.
@@ -87,7 +88,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
         this.logEntryQueueName = redisProperties.getLogEntryQueueName();
         this.logEntryToStorageQueueName = redisProperties.getLogEntryToStorageQueueName();
-        this.waitTimeout = OptionalUtil.ofNullable(redisProperties.getWaitTimeout(), 1L);
+        this.waitTimeout = Objects.requireNonNullElse(redisProperties.getWaitTimeout(), 1L);
     }
 
     @Override
