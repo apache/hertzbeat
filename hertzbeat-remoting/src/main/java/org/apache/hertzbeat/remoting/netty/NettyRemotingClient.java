@@ -120,13 +120,10 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     private void initChannel(final SocketChannel channel) {
         ChannelPipeline pipeline = channel.pipeline();
-        // zip
-        pipeline.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
-        pipeline.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP));
-        // fory codec
         // max frame length 10MB
         pipeline.addLast(new LengthFieldBasedFrameDecoder(10 * 1024 * 1024, 0, 4, 0, 4));
         pipeline.addLast(new LengthFieldPrepender(4));
+        // fory codec
         pipeline.addLast(new ForyCodec());
         pipeline.addLast(new NettyClientHandler());
 
