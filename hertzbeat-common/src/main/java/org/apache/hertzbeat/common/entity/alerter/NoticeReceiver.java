@@ -98,6 +98,20 @@ public class NoticeReceiver {
     @Column(length = 1000)
     private String hookUrl;
 
+    @Schema(title = "Auth Type: WebHook Authorization Type",
+            description = "Auth Type: WebHook Authorization Type, one of the 'None', 'Basic' and 'Bearer'",
+            example = "None", accessMode = READ_ONLY)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String hookAuthType;
+
+    @Schema(title = "Auth Token: WebHook Authorization Token",
+            description = "Auth Token: WebHook Authorization Token",
+            example = "YWxpY2U6c3VwZXJtYW4", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String hookAuthToken;
+
     @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
             description = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
             example = "343432", accessMode = READ_WRITE)
