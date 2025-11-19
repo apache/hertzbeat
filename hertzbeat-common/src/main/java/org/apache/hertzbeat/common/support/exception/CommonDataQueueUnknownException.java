@@ -28,4 +28,12 @@ public class CommonDataQueueUnknownException extends RuntimeException {
     public CommonDataQueueUnknownException(String message) {
         super(message);
     }
+
+    public CommonDataQueueUnknownException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public CommonDataQueueUnknownException(Throwable cause) {
+        super(cause);
+    }
 }
