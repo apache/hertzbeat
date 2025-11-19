@@ -68,7 +68,7 @@ services:
     command:
       - "standalone"
       - "start"
-      - "--user-provider=static_user_provider:file:/greptimedb_data/auth"
+      - "--user-provider=static_user_provider:cmd:greptime=greptime"
       - "--http-addr"
       - "0.0.0.0:4000"
       - "--rpc-bind-addr"
