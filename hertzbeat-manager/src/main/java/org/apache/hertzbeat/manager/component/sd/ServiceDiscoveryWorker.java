@@ -35,6 +35,7 @@ import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -86,10 +87,6 @@ public class ServiceDiscoveryWorker implements InitializingBean {
             while (!Thread.currentThread().isInterrupted()) {
                 try (final CollectRep.MetricsData metricsData = dataQueue.pollServiceDiscoveryData()) {
                     if (metricsData == null) {
-                        if (Thread.currentThread().isInterrupted()) {
-                            break;
-                        }
-                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
                         continue;
                     }
                     backoff.reset();
@@ -164,6 +161,15 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     final Set<Long> needCancelMonitorIdSet = subMonitorBindMap.values().stream()
                             .map(MonitorBind::getMonitorId).collect(Collectors.toSet());
                     monitorService.deleteMonitors(needCancelMonitorIdSet);
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
                 }

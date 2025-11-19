@@ -33,6 +33,7 @@ import org.apache.hertzbeat.common.serialize.KafkaLogEntryDeserializer;
 import org.apache.hertzbeat.common.serialize.KafkaLogEntrySerializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataDeserializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataSerializer;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -176,6 +177,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             dataConsumer.commitAsync();
         } catch (Exception e) {
             log.error(e.getMessage());
+            throw new CommonDataQueueUnknownException();
         } finally {
             lock.unlock();
         }

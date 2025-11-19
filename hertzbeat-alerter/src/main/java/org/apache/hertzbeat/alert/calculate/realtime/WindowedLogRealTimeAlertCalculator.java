@@ -22,6 +22,7 @@ import org.apache.hertzbeat.alert.calculate.realtime.window.LogWorker;
 import org.apache.hertzbeat.alert.calculate.realtime.window.TimeService;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.stereotype.Component;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -64,10 +65,6 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
             try {
                 LogEntry logEntry = dataQueue.pollLogEntry();
                 if (logEntry == null) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-                    TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
                     continue;
                 }
                 backoff.reset();
@@ -76,6 +73,15 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
+            } catch (CommonDataQueueUnknownException ue) {
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
+                }
+                try {
+                    TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             } catch (Exception e) {
                 log.error("Error in log dispatch loop: {}", e.getMessage(), e);
             }

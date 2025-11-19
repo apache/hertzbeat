@@ -30,6 +30,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.serialize.RedisLogEntryCodec;
 import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
 import org.apache.hertzbeat.common.util.OptionalUtil;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -182,7 +183,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
             }
         } catch (Exception e) {
             log.error("Redis BRPOP failed: {}", e.getMessage());
-            return null;
+            throw new CommonDataQueueUnknownException();
         }
     }
 
