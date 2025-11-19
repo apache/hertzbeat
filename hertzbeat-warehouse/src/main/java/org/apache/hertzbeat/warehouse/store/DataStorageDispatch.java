@@ -28,6 +28,7 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
@@ -77,10 +78,6 @@ public class DataStorageDispatch {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage();
                     if (metricsData == null) {
-                        if (Thread.currentThread().isInterrupted()) {
-                            break;
-                        }
-                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
                         continue;
                     }
                     backoff.reset();
@@ -93,6 +90,15 @@ public class DataStorageDispatch {
                     }
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -109,10 +115,6 @@ public class DataStorageDispatch {
                 try {
                     LogEntry logEntry = commonDataQueue.pollLogEntryToStorage();
                     if (logEntry == null) {
-                        if (Thread.currentThread().isInterrupted()) {
-                            break;
-                        }
-                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
                         continue;
                     }
                     backoff.reset();
@@ -125,6 +127,15 @@ public class DataStorageDispatch {
                     });
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
+                    }
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(backoff.nextDelay());
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
                 } catch (Exception e) {
                     log.error("Error in log data storage thread: {}", e.getMessage(), e);
                 }
