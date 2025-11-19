@@ -50,6 +50,10 @@ public final class ExponentialBackoff {
         return delay;
     }
 
+    /**
+     * Resets the backoff to the initial delay value.
+     * Should be called when an operation succeeds after previous failures.
+     */
     public void reset() {
         if (this.current != this.initial) {
             this.current = this.initial;
