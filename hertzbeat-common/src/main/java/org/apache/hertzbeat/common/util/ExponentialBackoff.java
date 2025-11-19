@@ -18,7 +18,13 @@
 package org.apache.hertzbeat.common.util;
 
 /**
- * Exponential backoff utility class
+ * Exponential backoff utility class.
+ *
+ * <p>Provides exponentially increasing delays starting from an initial value,
+ * doubling with each call to {@link #nextDelay()} until reaching the maximum value.
+ * Call {@link #reset()} to restart from the initial delay.</p>
+ *
+ * <p>Note: This class is <b>not</b> thread-safe. Each thread should use its own instance.</p>
  */
 public final class ExponentialBackoff {
     private final long initial;
