@@ -143,7 +143,7 @@ public class MetricsRealTimeAlertCalculator {
         long currentTimeMilli = System.currentTimeMillis();
         String instance = String.valueOf(metricsData.getId());
         String instanceName = metricsData.getInstanceName();
-        String instanceHost = metricsData.getInstanceHost();
+        String instanceHost = metricsData.getInstance();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
         if ((CommonConstants.PROMETHEUS_APP_PREFIX + instanceName).equals(metricsData.getApp())) {
@@ -197,7 +197,7 @@ public class MetricsRealTimeAlertCalculator {
             commonFingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
             commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
             commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_NAME, instanceName);
-            commonFingerPrints.put(CommonConstants.LABEL_INSTANCE_HOST, instanceHost);
+            commonFingerPrints.put(CommonConstants.LABEL_INSTANCE, instanceHost);
             commonFingerPrints.putAll(define.getLabels());
             if (labels != null) {
                 commonFingerPrints.putAll(labels);

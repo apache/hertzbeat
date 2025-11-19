@@ -157,7 +157,7 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
 
-        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstanceHost());
+        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance());
         List<Point> points = new ArrayList<>();
         
         try {

@@ -128,7 +128,7 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS || metricsData.getValues().isEmpty()) {
             return;
         }
-        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstanceHost());
+        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance());
 
         try {
             RowWrapper rowWrapper = metricsData.readRow();

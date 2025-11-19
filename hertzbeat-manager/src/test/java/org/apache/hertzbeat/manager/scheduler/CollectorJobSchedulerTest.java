@@ -145,7 +145,7 @@ public class CollectorJobSchedulerTest {
         assertNotNull(job);
         assertNotNull(job.getMetadata());
         assertEquals("test-monitor", job.getMetadata().get(CommonConstants.LABEL_INSTANCE_NAME));
-        assertEquals("127.0.0.1", job.getMetadata().get(CommonConstants.LABEL_INSTANCE_HOST));
+        assertEquals("127.0.0.1", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
     }
 
 }

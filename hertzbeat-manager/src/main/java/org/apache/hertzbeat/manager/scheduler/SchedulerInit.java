@@ -19,11 +19,9 @@ package org.apache.hertzbeat.manager.scheduler;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -123,9 +121,8 @@ public class SchedulerInit implements CommandLineRunner {
 
                 String instance = monitor.getInstance();
 
-                // FIXME: use LABEL_INSTANCE
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                        CommonConstants.LABEL_INSTANCE_HOST, instance);
+                        CommonConstants.LABEL_INSTANCE, instance);
                 appDefine.setMetadata(metadata);
                 appDefine.setLabels(monitor.getLabels());
                 appDefine.setAnnotations(monitor.getAnnotations());

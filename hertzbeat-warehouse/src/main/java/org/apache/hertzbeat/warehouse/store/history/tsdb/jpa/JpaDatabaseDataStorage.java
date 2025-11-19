@@ -156,7 +156,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private History buildHistory(CollectRep.MetricsData metricsData, ArrowCell cell, String monitorType, String metrics, Map<String, String> labels) {
         History.HistoryBuilder historyBuilder = History.builder()
                 .monitorId(metricsData.getId())
-                .instance(metricsData.getInstanceHost())
+                .instance(metricsData.getInstance())
                 .app(monitorType)
                 .metrics(metrics)
                 .time(metricsData.getTime())

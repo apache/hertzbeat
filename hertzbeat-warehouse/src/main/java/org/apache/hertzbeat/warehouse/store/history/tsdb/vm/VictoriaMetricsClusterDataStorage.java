@@ -201,7 +201,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             isPrometheusAuto = false;
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
-        defaultLabels.put(LABEL_KEY_INSTANCE, metricsData.getInstanceHost());
+        defaultLabels.put(LABEL_KEY_INSTANCE, metricsData.getInstance());
 
 
         try {

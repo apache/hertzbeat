@@ -182,7 +182,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         } else {
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
-        defaultLabels.put(LABEL_KEY_INSTANCE, metricsData.getInstanceHost());
+        defaultLabels.put(LABEL_KEY_INSTANCE, metricsData.getInstance());
 
 
         List<VictoriaMetricsContent> contentList = new LinkedList<>();

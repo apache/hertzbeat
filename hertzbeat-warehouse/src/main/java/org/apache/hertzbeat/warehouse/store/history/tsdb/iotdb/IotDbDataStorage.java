@@ -216,7 +216,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
 
 
                 String label = JsonUtil.toJson(labels);
-                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstanceHost(), label, false);
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance(), label, false);
                 if (tabletMap.containsKey(label)) {
                     // Avoid Time repeats
                     now++;

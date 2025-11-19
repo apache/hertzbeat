@@ -182,7 +182,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             return;
         }
 
-        String instance = metricsData.getInstanceHost();
+        String instance = metricsData.getInstance();
         String app = metricsData.getApp();
         String metrics = metricsData.getMetrics();
         String superTable = getTable(app, metrics, "_super");

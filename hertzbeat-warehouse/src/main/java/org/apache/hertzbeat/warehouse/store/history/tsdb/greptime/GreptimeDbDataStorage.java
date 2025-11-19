@@ -139,7 +139,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
             return;
         }
-        String instance = metricsData.getInstanceHost();
+        String instance = metricsData.getInstance();
         String tableName = getTableName(metricsData.getMetrics());
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
 

@@ -123,7 +123,7 @@ public class BulletinServiceImpl implements BulletinService {
             if (null == monitor) {
                 continue;
             }
-            // FIXME: change field name in frontend or just keep it
+
             BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
                     .monitorId(monitorId)
                     .monitorName(monitor.getName())
