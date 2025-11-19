@@ -18,14 +18,6 @@
 package org.apache.hertzbeat.manager.component.sd;
 
 import com.google.common.collect.Maps;
-import java.time.LocalDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
@@ -46,6 +38,14 @@ import org.apache.hertzbeat.manager.scheduler.ManagerWorkerPool;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service Discovery Worker

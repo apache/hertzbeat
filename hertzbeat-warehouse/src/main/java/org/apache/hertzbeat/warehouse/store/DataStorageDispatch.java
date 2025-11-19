@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +35,8 @@ import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 /**
  * dispatch storage metrics data

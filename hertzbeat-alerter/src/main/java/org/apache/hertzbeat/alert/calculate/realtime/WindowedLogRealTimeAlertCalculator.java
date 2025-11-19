@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.calculate.realtime;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.calculate.realtime.window.LogWorker;
 import org.apache.hertzbeat.alert.calculate.realtime.window.TimeService;
@@ -26,7 +27,7 @@ import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownExcep
 import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.stereotype.Component;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.LinkedBlockingQueue;
