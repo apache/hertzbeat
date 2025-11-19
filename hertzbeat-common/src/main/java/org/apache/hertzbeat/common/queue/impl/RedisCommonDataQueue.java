@@ -183,7 +183,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
             }
         } catch (Exception e) {
             log.error("Redis BRPOP failed: {}", e.getMessage());
-            throw new CommonDataQueueUnknownException();
+            throw new CommonDataQueueUnknownException(e.getMessage(), e);
         }
     }
 
