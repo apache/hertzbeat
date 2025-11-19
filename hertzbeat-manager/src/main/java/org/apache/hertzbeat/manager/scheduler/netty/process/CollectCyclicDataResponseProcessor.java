@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,11 +18,9 @@
 package org.apache.hertzbeat.manager.scheduler.netty.process;
 
 import io.netty.channel.ChannelHandlerContext;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
@@ -37,7 +35,7 @@ public class CollectCyclicDataResponseProcessor implements NettyRemotingProcesso
     @Override
     public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         CommonDataQueue dataQueue = SpringContextHolder.getBean(CommonDataQueue.class);
-        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg().getBytes(StandardCharsets.UTF_8));
+        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg());
         for (CollectRep.MetricsData metricsData : metricsDataList) {
             if (metricsData != null) {
                 dataQueue.sendMetricsData(metricsData);

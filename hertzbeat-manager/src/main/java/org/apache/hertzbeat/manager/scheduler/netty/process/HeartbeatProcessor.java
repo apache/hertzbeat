@@ -54,7 +54,9 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
             log.debug("server receive collector {} heartbeat", message.getIdentity());
         }
         return ClusterMessage.builder()
+                .identity(message.getIdentity())
                 .type(ClusterMessage.MessageType.HEARTBEAT)
+                .direction(ClusterMessage.Direction.RESPONSE)
                 .build();
     }
 }

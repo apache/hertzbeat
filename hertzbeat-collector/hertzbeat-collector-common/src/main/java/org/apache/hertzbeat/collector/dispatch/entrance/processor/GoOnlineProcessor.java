@@ -20,7 +20,6 @@ package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
@@ -42,9 +41,10 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
         if (this.timerDispatch == null) {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
-        if (message.getMsg() == null || message.getMsg().isEmpty()) {
+        if (message.getMsg() == null || message.getMsgString().isEmpty()) {
             log.warn("The message that server response to collector is empty, please upgrade server");
         } else {
+            // Use the new JsonUtil.fromJson(byte[], Class) method
             ServerInfo serverInfo = JsonUtil.fromJson(message.getMsg(), ServerInfo.class);
             if (serverInfo == null || serverInfo.getAesSecret() == null) {
                 log.warn("The message that server response to collector has not secret empty, please check");
@@ -54,10 +54,8 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
         }
         timerDispatch.goOnline();
         log.info("receive online message and handle success");
-        return ClusterMessage.builder()
-                .identity(message.getIdentity())
-                .direction(ClusterMessage.Direction.RESPONSE)
-                .msg(String.valueOf(CommonConstants.SUCCESS_CODE))
-                .build();
+        // Return null to stop the ping-pong loop.
+        // The collector should not reply to the server's confirmation response.
+        return null;
     }
 }

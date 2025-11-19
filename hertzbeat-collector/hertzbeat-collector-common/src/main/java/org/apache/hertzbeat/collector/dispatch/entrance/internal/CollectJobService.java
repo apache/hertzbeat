@@ -31,7 +31,6 @@ import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -118,7 +117,7 @@ public class CollectJobService {
             List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
             byte[] msg = ArrowUtil.serializeMetricsData(metricsDataList);
             ClusterMessage message = ClusterMessage.builder()
-                    .msg(Base64.getEncoder().encodeToString(msg))
+                    .msg(msg)
                     .direction(ClusterMessage.Direction.REQUEST)
                     .type(ClusterMessage.MessageType.RESPONSE_ONE_TIME_TASK_DATA)
                     .build();
@@ -155,7 +154,7 @@ public class CollectJobService {
         byte[] msg = ArrowUtil.serializeMetricsData(List.of(metricsData));
         ClusterMessage message = ClusterMessage.builder()
                 .identity(collectorIdentity)
-                .msg(Base64.getEncoder().encodeToString(msg))
+                .msg(msg)
                 .direction(ClusterMessage.Direction.REQUEST)
                 .type(ClusterMessage.MessageType.RESPONSE_CYCLIC_TASK_DATA)
                 .build();
@@ -166,7 +165,7 @@ public class CollectJobService {
         byte[] msg = ArrowUtil.serializeMetricsData(List.of(metricsData));
         ClusterMessage message = ClusterMessage.builder()
                 .identity(collectorIdentity)
-                .msg(Base64.getEncoder().encodeToString(msg))
+                .msg(msg)
                 .direction(ClusterMessage.Direction.REQUEST)
                 .type(ClusterMessage.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA)
                 .build();

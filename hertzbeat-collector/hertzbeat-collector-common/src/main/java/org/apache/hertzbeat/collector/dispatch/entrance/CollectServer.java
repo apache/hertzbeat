@@ -145,7 +145,7 @@ public class CollectServer implements CommandLineRunner {
             ClusterMessage message = ClusterMessage.builder()
                     .identity(identity)
                     .type(ClusterMessage.MessageType.GO_ONLINE)
-                    .msg(JsonUtil.toJson(collectorInfo))
+                    .msg(JsonUtil.toJsonBytes(collectorInfo))
                     .build();
             CollectServer.this.sendMsg(message);
 

@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
 import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -43,14 +44,15 @@ public class GoOfflineProcessor implements NettyRemotingProcessor {
         }
         timerDispatch.goOffline();
         log.info("receive offline message and handle success");
-        if (message.getMsg().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
+        if (message.getMsgString().contains(CommonConstants.COLLECTOR_AUTH_FAILED)) {
             log.error("[Auth Failed]receive client auth failed message and go offline. {}", message.getMsg());
             return null;
         }
         return ClusterMessage.builder()
                 .identity(message.getIdentity())
                 .direction(ClusterMessage.Direction.RESPONSE)
-                .msg(String.valueOf(CommonConstants.SUCCESS_CODE))
+                .type(ClusterMessage.MessageType.GO_OFFLINE)
+                .msg(String.valueOf(CommonConstants.SUCCESS_CODE).getBytes(StandardCharsets.UTF_8))
                 .build();
     }
 }

@@ -65,7 +65,6 @@ public abstract class NettyRemotingAbstract implements RemotingService {
 
     protected void processRequestMsg(ChannelHandlerContext ctx, ClusterMessage request) {
         this.doBeforeRequest(ctx, request);
-
         NettyRemotingProcessor processor = this.processorTable.get(request.getType());
         if (processor == null) {
             log.info("request type {} not supported", request.getType());

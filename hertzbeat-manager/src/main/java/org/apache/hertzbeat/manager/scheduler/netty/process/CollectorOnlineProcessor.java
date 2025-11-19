@@ -46,7 +46,7 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
     public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         String collector = message.getIdentity();
         log.info("the collector {} actively requests to go online.", collector);
-        String msg = message.getMsg();
+        String msg = message.getMsgString();
         CollectorInfo collectorInfo = JsonUtil.fromJson(msg, CollectorInfo.class);
         if (collectorInfo != null && StringUtils.isBlank(collectorInfo.getIp())) {
             // fetch remote ip address
@@ -60,7 +60,7 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
         return ClusterMessage.builder()
                 .identity(message.getIdentity())
                 .direction(ClusterMessage.Direction.RESPONSE)
-                .msg(JsonUtil.toJson(serverInfo))
+                .msg(JsonUtil.toJsonBytes(serverInfo))
                 .type(ClusterMessage.MessageType.GO_ONLINE)
                 .build();
     }

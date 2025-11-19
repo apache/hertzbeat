@@ -32,11 +32,21 @@ import java.util.List;
  */
 public class ForyCodec extends ByteToMessageCodec<ClusterMessage> {
 
-    private static final ThreadSafeFory fory = Fory.builder()
-            .withLanguage(Language.JAVA)
-            // disable class registration requirement for flexibility
-            .requireClassRegistration(false)
-            .buildThreadSafeFory();
+    private static final ThreadSafeFory fory;
+
+    static {
+        // 1. Initialize Fory in XLANG mode
+        fory = Fory.builder()
+                .withLanguage(Language.XLANG)
+                .requireClassRegistration(false)
+                .buildThreadSafeFory();
+
+        // 2. Register classes with specific names for Cross-Language compatibility (Java <-> Go)
+        // These names (e.g., "ClusterMessage") must match the registration name in the Go client.
+        fory.register(ClusterMessage.class, "ClusterMessage");
+        fory.register(ClusterMessage.MessageType.class, "MessageType");
+        fory.register(ClusterMessage.Direction.class, "Direction");
+    }
 
     @Override
     protected void encode(ChannelHandlerContext ctx, ClusterMessage msg, ByteBuf out) {

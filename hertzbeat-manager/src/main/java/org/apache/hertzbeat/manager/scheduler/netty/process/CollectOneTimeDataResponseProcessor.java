@@ -43,7 +43,7 @@ public class CollectOneTimeDataResponseProcessor implements NettyRemotingProcess
     @Override
     public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
 
-        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg().getBytes(StandardCharsets.UTF_8));
+        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg());
         this.manageServer.getCollectorAndJobScheduler().collectSyncJobResponse(metricsDataList);
         return null;
     }

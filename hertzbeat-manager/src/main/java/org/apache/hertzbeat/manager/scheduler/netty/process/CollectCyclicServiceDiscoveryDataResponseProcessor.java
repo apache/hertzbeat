@@ -37,7 +37,7 @@ public class CollectCyclicServiceDiscoveryDataResponseProcessor implements Netty
     @Override
     public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         CommonDataQueue dataQueue = SpringContextHolder.getBean(CommonDataQueue.class);
-        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg().getBytes(StandardCharsets.UTF_8));
+        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsgString().getBytes(StandardCharsets.UTF_8));
         for (CollectRep.MetricsData metricsData : metricsDataList) {
             if (metricsData != null) {
                 dataQueue.sendServiceDiscoveryData(metricsData);

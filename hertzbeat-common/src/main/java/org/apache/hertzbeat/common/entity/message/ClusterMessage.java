@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.common.entity.message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.nio.charset.StandardCharsets;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,12 +38,14 @@ public class ClusterMessage implements Serializable {
     /**
      * collector identity
      */
-    private String identity;
+    @Builder.Default
+    private String identity = "";
 
     /**
      * message direction
      */
-    private Direction direction;
+    @Builder.Default
+    private Direction direction = Direction.REQUEST;
 
     /**
      * message type
@@ -50,10 +54,27 @@ public class ClusterMessage implements Serializable {
 
     /**
      * message content
-     * Using String here because most payloads are JSON strings in HertzBeat.
-     * Fury handles String efficiently.
+     * Use byte[] to ensure data integrity for both JSON strings (UTF-8) and Binary data (Arrow).
+     * Avoids String encoding/decoding issues (Mojibake) across different JVMs or Languages.
      */
-    private String msg;
+    private byte[] msg;
+
+    @JsonIgnore
+    public String getMsgString() {
+        if (this.msg == null) {
+            return null;
+        }
+        return new String(this.msg, StandardCharsets.UTF_8);
+    }
+
+    @JsonIgnore
+    public void setMsgString(String jsonString) {
+        if (jsonString != null) {
+            this.msg = jsonString.getBytes(StandardCharsets.UTF_8);
+        } else {
+            this.msg = null;
+        }
+    }
 
     /**
      * Message Type Enum
