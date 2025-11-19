@@ -103,7 +103,7 @@ public class RemotingServiceTest {
         final String msg = "hello world";
 
         this.remotingServer.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, (ctx, message) -> {
-            Assertions.assertEquals(msg, message.getMsg());
+            Assertions.assertEquals(msg, message.getMsgString());
             return null;
         });
 
@@ -121,12 +121,11 @@ public class RemotingServiceTest {
         final String responseMsg = "response";
 
         this.remotingServer.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, (ctx, message) -> {
-            Assertions.assertEquals(requestMsg, message.getMsg());
+            Assertions.assertEquals(requestMsg, message.getMsgString());
             return ClusterMessage.builder()
                     .direction(ClusterMessage.Direction.RESPONSE)
                     .type(ClusterMessage.MessageType.HEARTBEAT)
                     .msg(responseMsg.getBytes(StandardCharsets.UTF_8))
-                    .identity(message.getIdentity()) // Echo identity for sync matching
                     .build();
         });
 
@@ -134,11 +133,9 @@ public class RemotingServiceTest {
                 .direction(ClusterMessage.Direction.REQUEST)
                 .type(ClusterMessage.MessageType.HEARTBEAT)
                 .msg(requestMsg.getBytes(StandardCharsets.UTF_8))
-                .identity("123456") // Must set identity for sync request
                 .build();
         ClusterMessage response = this.remotingClient.sendMsgSync(request, 3000);
-        Assertions.assertNotNull(response);
-        Assertions.assertEquals(responseMsg, response.getMsg());
+        Assertions.assertEquals(responseMsg, response.getMsgString());
     }
 
     @Test
