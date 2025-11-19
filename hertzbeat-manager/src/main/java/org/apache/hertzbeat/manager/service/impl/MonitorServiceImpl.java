@@ -182,7 +182,7 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(app);
         if (!isStatic) {
             appDefine.setSd(true);
-            monitor.setHost("unknow");
+            monitor.setInstance("unknow");
         }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -192,19 +192,21 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
 
-        String host = monitor.getHost();
+        String instance = monitor.getInstance();
         // The port field may be null
         Param portParam = params.stream()
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = portParam == null ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (Objects.nonNull(host)) {
-            host = host + portWithMark;
+        String portWithMark = Objects.isNull(portParam) ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        if (Objects.nonNull(instance)) {
+            instance = instance + portWithMark;
         }
+        monitor.setInstance(instance);
 
+        // FIXME: use LABEL_INSTANCE
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                CommonConstants.LABEL_INSTANCE_HOST, host);
+                CommonConstants.LABEL_INSTANCE_HOST, instance);
         appDefine.setMetadata(metadata);
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());
@@ -291,7 +293,7 @@ public class MonitorServiceImpl implements MonitorService {
         // The request monitoring parameter matches the monitoring parameter definition mapping check
         Monitor monitor = monitorDto.getMonitor();
         // The Service Discovery host field may be null
-        monitor.setHost(StringUtils.hasText(monitor.getHost()) ? monitor.getHost().trim() : null);
+        monitor.setInstance(StringUtils.hasText(monitor.getInstance()) ? monitor.getInstance().trim() : null);
         monitor.setName(monitor.getName().trim());
         Map<String, Param> paramMap = monitorDto.getParams()
                 .stream()
@@ -538,8 +540,9 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setTimestamp(System.currentTimeMillis());
             appDefine.setScheduleType(monitor.getScheduleType());
             appDefine.setCronExpression(monitor.getCronExpression());
+            // FIXME: use LABEL_INSTANCE
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getInstance());
             appDefine.setMetadata(metadata);
             appDefine.setLabels(monitor.getLabels());
             appDefine.setAnnotations(monitor.getAnnotations());
@@ -787,8 +790,9 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setTimestamp(System.currentTimeMillis());
             appDefine.setScheduleType(monitor.getScheduleType());
             appDefine.setCronExpression(monitor.getCronExpression());
+            // FIXME: use LABEL_INSTANCE
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getInstance());
             appDefine.setMetadata(metadata);
             appDefine.setLabels(monitor.getLabels());
             appDefine.setAnnotations(monitor.getAnnotations());
@@ -883,8 +887,9 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+                // FIXME: use LABEL_INSTANCE
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getInstance());
                 appDefine.setMetadata(metadata);
                 appDefine.setLabels(monitor.getLabels());
                 appDefine.setAnnotations(monitor.getAnnotations());
@@ -1015,8 +1020,9 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setMonitorId(monitorId);
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
+        // FIXME: use LABEL_INSTANCE
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                CommonConstants.LABEL_INSTANCE_HOST, monitor.getInstance());
         appDefine.setMetadata(metadata);
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());

@@ -121,19 +121,11 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
 
-                String host = monitor.getHost();
-                // The port field may be null
-                Param portParam = params.stream()
-                        .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
-                        .findFirst()
-                        .orElse(null);
-                String portWithMark = portParam == null ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-                if (Objects.nonNull(host)) {
-                    host = host + portWithMark;
-                }
+                String instance = monitor.getInstance();
 
+                // FIXME: use LABEL_INSTANCE
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                        CommonConstants.LABEL_INSTANCE_HOST, host);
+                        CommonConstants.LABEL_INSTANCE_HOST, instance);
                 appDefine.setMetadata(metadata);
                 appDefine.setLabels(monitor.getLabels());
                 appDefine.setAnnotations(monitor.getAnnotations());
