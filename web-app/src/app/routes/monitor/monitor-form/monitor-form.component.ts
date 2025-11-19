@@ -99,12 +99,12 @@ export class MonitorFormComponent implements OnChanges {
       });
       return;
     }
-    this.monitor.host = this.monitor.host ? this.monitor.host.trim() : '';
+    this.monitor.instance = this.monitor.instance ? this.monitor.instance.trim() : '';
     this.monitor.name = this.monitor.name.trim();
     // todo Set the host property value separately for now
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.paramValue = this.monitor.host;
+        param.paramValue = this.monitor.instance;
       }
       if (param.paramValue != null && typeof param.paramValue == 'string') {
         param.paramValue = (param.paramValue as string).trim();
@@ -147,12 +147,12 @@ export class MonitorFormComponent implements OnChanges {
         return;
       }
     }
-    this.monitor.host = this.monitor.host?.trim();
+    this.monitor.instance = this.monitor.instance?.trim();
     this.monitor.name = this.monitor.name?.trim();
     // todo Set the host property value separately for now
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.paramValue = this.monitor.host;
+        param.paramValue = this.monitor.instance;
       }
       if (param.paramValue != null && typeof param.paramValue == 'string') {
         param.paramValue = (param.paramValue as string).trim();

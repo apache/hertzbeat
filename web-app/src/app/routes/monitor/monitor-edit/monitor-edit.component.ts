@@ -142,7 +142,7 @@ export class MonitorEditComponent implements OnInit {
                 if (define.type === 'boolean') {
                   param.paramValue = define.defaultValue == 'true';
                 } else if (param.field === 'host') {
-                  param.paramValue = this.monitor.host;
+                  param.paramValue = this.monitor.instance;
                 } else if (define.defaultValue != undefined) {
                   if (define.type === 'number') {
                     param.paramValue = Number(define.defaultValue);
@@ -227,7 +227,7 @@ export class MonitorEditComponent implements OnInit {
                   if (define.type === 'boolean') {
                     param.paramValue = define.defaultValue == 'true';
                   } else if (param.field === 'host') {
-                    param.paramValue = this.monitor.host;
+                    param.paramValue = this.monitor.instance;
                   } else if (define.defaultValue != undefined) {
                     if (define.type === 'number') {
                       param.paramValue = Number(define.defaultValue);

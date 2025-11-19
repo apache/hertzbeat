@@ -68,7 +68,6 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
-        // FIXME: 这里是干啥的
         MetricsData metricsData = metricsDataService.getMetricsData(monitorId, metrics);
         if (metricsData == null){
             return ResponseEntity.ok(Message.success("query metrics data is empty"));
