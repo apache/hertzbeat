@@ -20,7 +20,6 @@ package org.apache.hertzbeat.remoting.netty;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 
 /**
  * netty response future

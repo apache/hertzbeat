@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.scheduler.netty.process;
 
-import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.InetSocketAddress;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.dto.ServerInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;

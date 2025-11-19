@@ -23,7 +23,6 @@ import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 import org.springframework.boot.SpringApplication;

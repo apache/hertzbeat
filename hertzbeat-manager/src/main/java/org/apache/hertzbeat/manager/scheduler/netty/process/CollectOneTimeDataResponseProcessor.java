@@ -18,11 +18,9 @@
 package org.apache.hertzbeat.manager.scheduler.netty.process;
 
 import io.netty.channel.ChannelHandlerContext;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.ArrowUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;

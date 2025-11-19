@@ -19,7 +19,6 @@ package org.apache.hertzbeat.remoting.netty;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 
 /**
  * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRequestProcessor 

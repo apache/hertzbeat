@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.SpringContextHolder;

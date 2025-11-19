@@ -17,14 +17,12 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
-import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 

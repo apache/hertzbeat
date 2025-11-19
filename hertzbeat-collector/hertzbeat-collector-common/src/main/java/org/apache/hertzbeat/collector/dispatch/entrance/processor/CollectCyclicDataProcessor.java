@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 

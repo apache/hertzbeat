@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.remoting;
 
+import java.nio.charset.StandardCharsets;
 import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
@@ -109,7 +110,7 @@ public class RemotingServiceTest {
         ClusterMessage request = ClusterMessage.builder()
                 .direction(ClusterMessage.Direction.REQUEST)
                 .type(ClusterMessage.MessageType.HEARTBEAT)
-                .msg(msg)
+                .msg(msg.getBytes(StandardCharsets.UTF_8))
                 .build();
         this.remotingClient.sendMsg(request);
     }
@@ -124,7 +125,7 @@ public class RemotingServiceTest {
             return ClusterMessage.builder()
                     .direction(ClusterMessage.Direction.RESPONSE)
                     .type(ClusterMessage.MessageType.HEARTBEAT)
-                    .msg(responseMsg)
+                    .msg(responseMsg.getBytes(StandardCharsets.UTF_8))
                     .identity(message.getIdentity()) // Echo identity for sync matching
                     .build();
         });
@@ -132,7 +133,7 @@ public class RemotingServiceTest {
         ClusterMessage request = ClusterMessage.builder()
                 .direction(ClusterMessage.Direction.REQUEST)
                 .type(ClusterMessage.MessageType.HEARTBEAT)
-                .msg(requestMsg)
+                .msg(requestMsg.getBytes(StandardCharsets.UTF_8))
                 .identity("123456") // Must set identity for sync request
                 .build();
         ClusterMessage response = this.remotingClient.sendMsgSync(request, 3000);
@@ -155,7 +156,7 @@ public class RemotingServiceTest {
         ClusterMessage request = ClusterMessage.builder()
                 .direction(ClusterMessage.Direction.REQUEST)
                 .type(ClusterMessage.MessageType.HEARTBEAT)
-                .msg("hello world")
+                .msg("hello world".getBytes(StandardCharsets.UTF_8))
                 .build();
         this.remotingClient.sendMsg(request);
     }
