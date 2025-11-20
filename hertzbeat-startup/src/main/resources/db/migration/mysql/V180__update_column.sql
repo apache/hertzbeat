@@ -41,4 +41,14 @@ DELIMITER ;
 
 CALL UpdateAlertDefineColumns();
 DROP PROCEDURE IF EXISTS UpdateAlertDefineColumns;
+
+-- Rename host to instance
+ALTER TABLE hzb_monitor CHANGE host instance VARCHAR(100);
+
+-- Update instance with port
+UPDATE hzb_monitor m
+INNER JOIN hzb_param p ON m.id = p.monitor_id AND p.field = 'port'
+SET m.instance = CONCAT(m.instance, ':', p.param_value)
+WHERE m.instance IS NOT NULL;
+
 COMMIT;

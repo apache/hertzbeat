@@ -27,4 +27,13 @@ UPDATE HZB_ALERT_DEFINE
 SET type = 'periodic_metric'
 WHERE type = 'periodic';
 
+-- Rename host to instance
+ALTER TABLE HZB_MONITOR RENAME COLUMN host TO instance;
+
+-- Update instance with port
+UPDATE HZB_MONITOR m
+SET instance = m.instance || ':' || p.param_value
+FROM HZB_PARAM p
+WHERE m.id = p.monitor_id AND p.field = 'port';
+
 commit;

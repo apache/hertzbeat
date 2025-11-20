@@ -52,7 +52,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "hzb_monitor", indexes = {
         @Index(name = "monitor_query_index", columnList = "app"),
-        @Index(name = "monitor_query_index", columnList = "host"),
+        @Index(name = "monitor_query_index", columnList = "instance"),
         @Index(name = "monitor_query_index", columnList = "name")
 })
 @Data

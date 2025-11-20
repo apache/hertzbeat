@@ -26,3 +26,11 @@ WHERE type = 'realtime';
 UPDATE HZB_ALERT_DEFINE
 SET type = 'periodic_metric'
 WHERE type = 'periodic';
+
+-- Rename host to instance
+ALTER TABLE HZB_MONITOR ALTER COLUMN host RENAME TO instance;
+
+-- Update instance with port
+UPDATE HZB_MONITOR m
+SET instance = CONCAT(instance, ':', (SELECT param_value FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port'))
+WHERE EXISTS (SELECT 1 FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port');
