@@ -113,6 +113,7 @@
             "help/alert_wework",
             "help/alert_dingtalk",
             "help/alert_feishu",
+            "help/alert_feishu_app",
             "help/alert_console",
             "help/alert_enterprise_wechat_app",
             "help/alert_smn",
