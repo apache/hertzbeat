@@ -41,8 +41,8 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
         if (this.timerDispatch == null) {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
-        if (message.getMsg() == null || message.getMsgString().isEmpty()) {
-            log.warn("The message that server response to collector is empty, please upgrade server");
+        String msgString = message.getMsgString();
+        if (message.getMsg() == null || msgString == null || msgString.isEmpty()) {            log.warn("The message that server response to collector is empty, please upgrade server");
         } else {
             // Use the new JsonUtil.fromJson(byte[], Class) method
             ServerInfo serverInfo = JsonUtil.fromJson(message.getMsg(), ServerInfo.class);

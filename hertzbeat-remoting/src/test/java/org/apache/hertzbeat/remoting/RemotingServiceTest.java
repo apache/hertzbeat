@@ -141,7 +141,7 @@ public class RemotingServiceTest {
     @Test
     public void testNettyHook() {
         this.remotingServer.registerHook(Lists.newArrayList(
-                (ctx, message) -> Assertions.assertEquals("hello world", message.getMsg())
+                (ctx, message) -> Assertions.assertEquals("hello world", message.getMsgString())
         ));
 
         this.remotingServer.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, (ctx, message) ->

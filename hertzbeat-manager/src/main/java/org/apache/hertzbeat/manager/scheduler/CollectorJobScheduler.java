@@ -170,7 +170,8 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     }
                 });
                 appDefine.setConfigmap(configmaps);
-                addAsyncCollectJob(appDefine, identity);
+                long jobId = addAsyncCollectJob(appDefine, identity);
+                monitor.setJobId(jobId);
                 monitorDao.save(monitor);
             } catch (Exception e) {
                 log.error("insert pinned monitor job: {} in collector: {} error,continue next monitor", monitor, identity, e);
@@ -247,7 +248,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 .identity(identity)
                 .build();
         ClusterMessage response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg())) {
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsgString())) {
             return false;
         }
         log.info("send offline collector message to {} success", identity);
@@ -269,7 +270,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 .identity(identity)
                 .build();
         ClusterMessage response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg())) {
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsgString())) {
             return false;
         }
         log.info("send online collector message to {} success", identity);
