@@ -43,6 +43,7 @@ import { GeneralConfigService } from '../../../service/general-config.service';
           ngClass="alain-default__nav-item-icon"
           (click)="toggleMute($event)"
           nz-tooltip
+          nzTooltipPlacement="bottom"
           [nzTooltipTitle]="(mute.mute ? 'common.unmute' : 'common.mute') | i18n"
         ></i>
       </nz-badge>
