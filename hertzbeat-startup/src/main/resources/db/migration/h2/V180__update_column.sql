@@ -28,7 +28,32 @@ SET type = 'periodic_metric'
 WHERE type = 'periodic';
 
 -- Rename host to instance
-ALTER TABLE HZB_MONITOR ALTER COLUMN host RENAME TO instance;
+CREATE ALIAS RENAME_HOST_TO_INSTANCE AS $$
+void renameHostToInstance(java.sql.Connection conn) throws java.sql.SQLException {
+    boolean instanceExists = false;
+    boolean hostExists = false;
+    try (java.sql.ResultSet rs = conn.getMetaData().getColumns(null, null, "HZB_MONITOR", "INSTANCE")) {
+        if (rs.next()) instanceExists = true;
+    }
+    try (java.sql.ResultSet rs = conn.getMetaData().getColumns(null, null, "HZB_MONITOR", "HOST")) {
+        if (rs.next()) hostExists = true;
+    }
+    try (java.sql.Statement stmt = conn.createStatement()) {
+        if (instanceExists) {
+            if (hostExists) {
+                stmt.execute("UPDATE HZB_MONITOR SET instance = host WHERE instance IS NULL");
+                stmt.execute("ALTER TABLE HZB_MONITOR DROP COLUMN host");
+            }
+        } else {
+            if (hostExists) {
+                stmt.execute("ALTER TABLE HZB_MONITOR ALTER COLUMN host RENAME TO instance");
+            }
+        }
+    }
+}
+$$;
+CALL RENAME_HOST_TO_INSTANCE();
+DROP ALIAS RENAME_HOST_TO_INSTANCE;
 
 -- Update instance with port
 UPDATE HZB_MONITOR m

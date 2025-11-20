@@ -43,7 +43,37 @@ CALL UpdateAlertDefineColumns();
 DROP PROCEDURE IF EXISTS UpdateAlertDefineColumns;
 
 -- Rename host to instance
-ALTER TABLE hzb_monitor CHANGE host instance VARCHAR(100);
+DELIMITER //
+CREATE PROCEDURE RenameHostToInstance()
+BEGIN
+    DECLARE instance_exists INT;
+    DECLARE host_exists INT;
+    SELECT COUNT(*) INTO instance_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_monitor' AND COLUMN_NAME = 'instance';
+    SELECT COUNT(*) INTO host_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_monitor' AND COLUMN_NAME = 'host';
+    IF instance_exists > 0 THEN
+        IF host_exists > 0 THEN
+            SET @sql_update = 'UPDATE hzb_monitor SET instance = host WHERE instance IS NULL';
+            PREPARE stmt_update FROM @sql_update;
+            EXECUTE stmt_update;
+            DEALLOCATE PREPARE stmt_update;
+
+            SET @sql_drop = 'ALTER TABLE hzb_monitor DROP COLUMN host';
+            PREPARE stmt_drop FROM @sql_drop;
+            EXECUTE stmt_drop;
+            DEALLOCATE PREPARE stmt_drop;
+        END IF;
+    ELSE
+        IF host_exists > 0 THEN
+            SET @sql_change = 'ALTER TABLE hzb_monitor CHANGE host instance VARCHAR(100)';
+            PREPARE stmt_change FROM @sql_change;
+            EXECUTE stmt_change;
+            DEALLOCATE PREPARE stmt_change;
+        END IF;
+    END IF;
+END //
+DELIMITER ;
+CALL RenameHostToInstance();
+DROP PROCEDURE IF EXISTS RenameHostToInstance;
 
 -- Update instance with port
 UPDATE hzb_monitor m

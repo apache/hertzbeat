@@ -28,7 +28,19 @@ SET type = 'periodic_metric'
 WHERE type = 'periodic';
 
 -- Rename host to instance
-ALTER TABLE HZB_MONITOR RENAME COLUMN host TO instance;
+DO $$
+BEGIN
+    IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_monitor' AND column_name = 'instance') THEN
+        IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_monitor' AND column_name = 'host') THEN
+            EXECUTE 'UPDATE HZB_MONITOR SET instance = host WHERE instance IS NULL';
+            EXECUTE 'ALTER TABLE HZB_MONITOR DROP COLUMN host';
+        END IF;
+    ELSE
+        IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_monitor' AND column_name = 'host') THEN
+            EXECUTE 'ALTER TABLE HZB_MONITOR RENAME COLUMN host TO instance';
+        END IF;
+    END IF;
+END $$;
 
 -- Update instance with port
 UPDATE HZB_MONITOR m
