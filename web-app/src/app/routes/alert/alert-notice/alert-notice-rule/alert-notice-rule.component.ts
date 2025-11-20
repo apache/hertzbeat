@@ -275,6 +275,9 @@ export class AlertNoticeRuleComponent implements OnInit {
                 case 12:
                   label = `${label}ServerChan`;
                   break;
+                case 14:
+                  label = `${label}FeiShuApp`;
+                  break;
               }
               this.receiversOption.push({
                 value: item.id,
