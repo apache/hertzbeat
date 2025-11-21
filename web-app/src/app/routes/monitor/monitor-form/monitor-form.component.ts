@@ -60,6 +60,7 @@ export class MonitorFormComponent implements OnChanges {
   @Output() readonly collectorChange = new EventEmitter<string>();
 
   hasAdvancedParams: boolean = false;
+  hostParam: Param | undefined;
 
   constructor(private notifySvc: NzNotificationService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
@@ -68,6 +69,10 @@ export class MonitorFormComponent implements OnChanges {
     if (this.monitor && !this.monitor.scheduleType) {
       this.monitor.scheduleType = 'interval';
       this.monitor.cronExpression = '';
+    }
+
+    if (changes.params && this.params) {
+      this.hostParam = this.params.find(param => param.field === 'host');
     }
 
     if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
@@ -99,13 +104,8 @@ export class MonitorFormComponent implements OnChanges {
       });
       return;
     }
-    this.monitor.instance = this.monitor.instance ? this.monitor.instance.trim() : '';
     this.monitor.name = this.monitor.name.trim();
-    // todo Set the host property value separately for now
     this.params.forEach(param => {
-      if (param.field === 'host') {
-        param.paramValue = this.monitor.instance;
-      }
       if (param.paramValue != null && typeof param.paramValue == 'string') {
         param.paramValue = (param.paramValue as string).trim();
       }
@@ -120,6 +120,13 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
+
+    // Set monitor.instance to host param value, let backend handle the port concatenation
+    const hostParam = this.params.find(param => param.field === 'host');
+    if (hostParam) {
+      this.monitor.instance = hostParam.paramValue;
+    }
+
     this.formDetect.emit({
       monitor: this.monitor,
       sdParams: this.sdParams,
@@ -147,13 +154,8 @@ export class MonitorFormComponent implements OnChanges {
         return;
       }
     }
-    this.monitor.instance = this.monitor.instance?.trim();
     this.monitor.name = this.monitor.name?.trim();
-    // todo Set the host property value separately for now
     this.params.forEach(param => {
-      if (param.field === 'host') {
-        param.paramValue = this.monitor.instance;
-      }
       if (param.paramValue != null && typeof param.paramValue == 'string') {
         param.paramValue = (param.paramValue as string).trim();
       }
@@ -168,6 +170,13 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
+
+    // Set monitor.instance to host param value, let backend handle the port concatenation
+    const hostParam = this.params.find(param => param.field === 'host');
+    if (hostParam) {
+      this.monitor.instance = hostParam.paramValue;
+    }
+
     this.formSubmit.emit({
       monitor: this.monitor,
       sdParams: this.sdParams,

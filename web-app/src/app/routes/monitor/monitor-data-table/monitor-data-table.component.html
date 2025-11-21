@@ -51,14 +51,13 @@
           <div nz-col [nzSpan]="24">
             <nz-descriptions nzBordered [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }">
               <nz-descriptions-item [nzTitle]="'ID'">{{ monitorId }}</nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'HOST'">{{ monitor.instance }}</nz-descriptions-item>
-              <nz-descriptions-item [nzTitle]="'monitor.detail.port' | i18n">{{ port }}</nz-descriptions-item>
               <nz-descriptions-item [nzTitle]="'monitor.period' | i18n">
                 <ng-container *ngIf="monitor.scheduleType === 'cron' && monitor.cronExpression; else showInterval">
                   {{ monitor.cronExpression }}
                 </ng-container>
                 <ng-template #showInterval> {{ monitor.intervals }}s </ng-template>
               </nz-descriptions-item>
+              <nz-descriptions-item [nzTitle]="'Instance'" [nzSpan]="2">{{ monitor.instance }}</nz-descriptions-item>
               <nz-descriptions-item [nzTitle]="'label' | i18n" [nzSpan]="2">
                 <div class="tags-container">
                   <ng-container *ngFor="let label of getObjectEntries(monitor.labels)">

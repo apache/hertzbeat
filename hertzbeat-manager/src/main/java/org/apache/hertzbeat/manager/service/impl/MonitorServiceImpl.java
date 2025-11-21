@@ -521,6 +521,18 @@ public class MonitorServiceImpl implements MonitorService {
             labelDao.saveAll(addLabels);
         }
 
+        String instance = monitor.getInstance();
+        // The port field may be null
+        Param portParam = params.stream()
+                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
+        String portWithMark = Objects.isNull(portParam) ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        if (Objects.nonNull(instance)) {
+            instance = instance + portWithMark;
+        }
+        monitor.setInstance(instance);
+
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
