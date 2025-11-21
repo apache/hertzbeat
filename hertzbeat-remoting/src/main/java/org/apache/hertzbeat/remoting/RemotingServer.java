@@ -19,7 +19,7 @@ package org.apache.hertzbeat.remoting;
 
 import io.netty.channel.Channel;
 import java.util.List;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.remoting.netty.NettyHook;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -33,14 +33,14 @@ public interface RemotingServer extends RemotingService {
      * @param messageType type
      * @param processor remoting processor
      */
-    void registerProcessor(ClusterMsg.MessageType messageType, NettyRemotingProcessor processor);
+    void registerProcessor(ClusterMessage.MessageType messageType, NettyRemotingProcessor processor);
 
     /**
      * send message to client
      * @param channel client channel
      * @param request request message
      */
-    void sendMsg(Channel channel, ClusterMsg.Message request);
+    void sendMsg(Channel channel, ClusterMessage request);
 
     /**
      * send message to client and receive client message
@@ -49,7 +49,7 @@ public interface RemotingServer extends RemotingService {
      * @param timeoutMillis timeout millis
      * @return response message
      */
-    ClusterMsg.Message sendMsgSync(Channel channel, ClusterMsg.Message request, int timeoutMillis);
+    ClusterMessage sendMsgSync(Channel channel, ClusterMessage request, int timeoutMillis);
 
     /**
      * register hook.

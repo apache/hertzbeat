@@ -21,7 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -37,8 +37,8 @@ public class CollectCyclicDataProcessor implements NettyRemotingProcessor {
     }
 
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        Job job = JsonUtil.fromJson(message.getMsg().toStringUtf8(), Job.class);
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
+        Job job = JsonUtil.fromJson(message.getMsg(), Job.class);
         if (job == null) {
             log.error("collector receive cyclic task job is null");
             return null;

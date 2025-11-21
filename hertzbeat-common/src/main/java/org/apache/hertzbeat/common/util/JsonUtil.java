@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -62,12 +62,48 @@ public final class JsonUtil {
         }
     }
 
+    /**
+     * Object to byte array
+     * @param source object
+     * @return byte array
+     */
+    public static byte[] toJsonBytes(Object source) {
+        if (source == null) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.writeValueAsBytes(source);
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
     public static <T> T fromJson(String jsonStr, Class<T> clazz) {
         if (!StringUtils.hasText(jsonStr)) {
             return null;
         }
         try {
             return OBJECT_MAPPER.readValue(jsonStr, clazz);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * byte array to Object
+     * @param jsonBytes json byte array
+     * @param clazz object class
+     * @param <T> object type
+     * @return object
+     */
+    public static <T> T fromJson(byte[] jsonBytes, Class<T> clazz) {
+        if (jsonBytes == null || jsonBytes.length == 0) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(jsonBytes, clazz);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return null;
@@ -85,7 +121,7 @@ public final class JsonUtil {
             return null;
         }
     }
-    
+
     public static JsonNode fromJson(String jsonStr) {
         if (!StringUtils.hasText(jsonStr)) {
             return null;

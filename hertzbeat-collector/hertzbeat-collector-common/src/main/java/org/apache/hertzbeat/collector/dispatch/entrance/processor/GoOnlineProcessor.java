@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,13 +17,11 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
-import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.ServerInfo;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -35,18 +33,20 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
  */
 @Slf4j
 public class GoOnlineProcessor implements NettyRemotingProcessor {
-    
+
     private TimerDispatch timerDispatch;
-    
+
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         if (this.timerDispatch == null) {
             this.timerDispatch = SpringContextHolder.getBean(TimerDispatch.class);
         }
-        if (message.getMsg().isEmpty()) {
+        String msgString = message.getMsgString();
+        if (message.getMsg() == null || msgString == null || msgString.isEmpty()) {
             log.warn("The message that server response to collector is empty, please upgrade server");
         } else {
-            ServerInfo serverInfo = JsonUtil.fromJson(message.getMsg().toStringUtf8(), ServerInfo.class);
+            // Use the new JsonUtil.fromJson(byte[], Class) method
+            ServerInfo serverInfo = JsonUtil.fromJson(message.getMsg(), ServerInfo.class);
             if (serverInfo == null || serverInfo.getAesSecret() == null) {
                 log.warn("The message that server response to collector has not secret empty, please check");
             } else {
@@ -55,10 +55,8 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
         }
         timerDispatch.goOnline();
         log.info("receive online message and handle success");
-        return ClusterMsg.Message.newBuilder()
-                .setIdentity(message.getIdentity())
-                .setDirection(ClusterMsg.Direction.RESPONSE)
-                .setMsg(ByteString.copyFromUtf8(String.valueOf(CommonConstants.SUCCESS_CODE)))
-                .build();
+        // Return null to stop the ping-pong loop.
+        // The collector should not reply to the server's confirmation response.
+        return null;
     }
 }

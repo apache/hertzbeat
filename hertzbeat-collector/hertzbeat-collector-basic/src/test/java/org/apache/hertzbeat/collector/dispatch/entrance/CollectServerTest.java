@@ -29,7 +29,7 @@ import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,7 +113,7 @@ class CollectServerTest {
 
         RemotingClient remotingClient = mock(RemotingClient.class);
         ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
-        ClusterMsg.Message message = mock(ClusterMsg.Message.class);
+        ClusterMessage message = mock(ClusterMessage.class);
 
         collectServer.sendMsg(message);
 
@@ -135,7 +135,7 @@ class CollectServerTest {
         collectNettyEventListener.onChannelActive(channel);
 
         verify(timerDispatch, times(1)).goOnline();
-        verify(remotingClient, times(1)).sendMsg(any(ClusterMsg.Message.class));
+        verify(remotingClient, times(1)).sendMsg(any(ClusterMessage.class));
 
         ScheduledExecutorService scheduledExecutor =
                 (ScheduledExecutorService) ReflectionTestUtils.getField(collectServer, "scheduledExecutor");

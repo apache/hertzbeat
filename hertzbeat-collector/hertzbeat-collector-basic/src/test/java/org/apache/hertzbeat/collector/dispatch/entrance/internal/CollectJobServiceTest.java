@@ -34,7 +34,7 @@ import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -116,7 +116,7 @@ class CollectJobServiceTest {
 
         collectJobService.collectSyncOneTimeJobData(job);
 
-        verify(collectServer, times(1)).sendMsg(any(ClusterMsg.Message.class));
+        verify(collectServer, times(1)).sendMsg(any(ClusterMessage.class));
     }
 
     @Test
@@ -137,7 +137,7 @@ class CollectJobServiceTest {
                 .build();
         collectJobService.sendAsyncCollectData(metricsData);
 
-        verify(collectServer, times(1)).sendMsg(any(ClusterMsg.Message.class));
+        verify(collectServer, times(1)).sendMsg(any(ClusterMessage.class));
     }
 
     @Test

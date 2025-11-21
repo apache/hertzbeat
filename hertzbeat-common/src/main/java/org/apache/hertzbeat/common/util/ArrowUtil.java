@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,7 +37,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
  */
 @Slf4j
 public final class ArrowUtil {
-    
+
     private ArrowUtil() {
     }
 
@@ -53,7 +53,7 @@ public final class ArrowUtil {
     public static byte[] serializeMultipleRoots(List<VectorSchemaRoot> roots) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              DataOutputStream dataOut = new DataOutputStream(out)) {
-            
+
             dataOut.writeInt(roots.size());
             for (VectorSchemaRoot root : roots) {
                 ArrowStreamWriter writer = new ArrowStreamWriter(
@@ -87,10 +87,10 @@ public final class ArrowUtil {
         List<VectorSchemaRoot> roots = new ArrayList<>();
         try (ByteArrayInputStream in = new ByteArrayInputStream(data);
              DataInputStream dataIn = new DataInputStream(in)) {
-            
+
             int rootCount = dataIn.readInt();
             RootAllocator allocator = new RootAllocator();
-            
+
             for (int i = 0; i < rootCount; i++) {
                 ArrowStreamReader reader = new ArrowStreamReader(
                         Channels.newChannel(in),
@@ -153,5 +153,4 @@ public final class ArrowUtil {
         }
         return serializeMultipleRoots(roots);
     }
-    
 }

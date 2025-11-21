@@ -20,7 +20,7 @@ package org.apache.hertzbeat.manager.scheduler.netty.process;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.ArrowUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
@@ -39,9 +39,9 @@ public class CollectOneTimeDataResponseProcessor implements NettyRemotingProcess
     }
 
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
 
-        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg().toByteArray());
+        List<CollectRep.MetricsData> metricsDataList = ArrowUtil.deserializeMetricsData(message.getMsg());
         this.manageServer.getCollectorAndJobScheduler().collectSyncJobResponse(metricsDataList);
         return null;
     }

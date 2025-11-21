@@ -20,7 +20,7 @@ package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -35,8 +35,8 @@ public class CollectOneTimeDataProcessor implements NettyRemotingProcessor {
     }
 
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
-        Job oneTimeJob = JsonUtil.fromJson(message.getMsg().toStringUtf8(), Job.class);
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
+        Job oneTimeJob = JsonUtil.fromJson(message.getMsg(), Job.class);
         collectServer.getCollectJobService().collectSyncOneTimeJobData(oneTimeJob);
         return null;
     }

@@ -22,7 +22,7 @@ import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
@@ -137,11 +137,11 @@ public class CollectorJobSchedulerTest {
         collectorJobScheduler.collectorGoOnline(identity, collectorInfo);
 
         // Capture the parameters of sendMsg
-        ArgumentCaptor<ClusterMsg.Message> msgCaptor = ArgumentCaptor.forClass(ClusterMsg.Message.class);
+        ArgumentCaptor<ClusterMessage> msgCaptor = ArgumentCaptor.forClass(ClusterMessage.class);
         verify(manageServer, atLeastOnce()).sendMsg(eq("collector-1"), msgCaptor.capture());
-        ClusterMsg.Message message = msgCaptor.getValue();
+        ClusterMessage message = msgCaptor.getValue();
 
-        Job job = JsonUtil.fromJson(message.getMsg().toStringUtf8(), Job.class);
+        Job job = JsonUtil.fromJson(message.getMsgString(), Job.class);
         assertNotNull(job);
         assertNotNull(job.getMetadata());
         assertEquals("test-monitor", job.getMetadata().get(CommonConstants.LABEL_INSTANCE_NAME));
