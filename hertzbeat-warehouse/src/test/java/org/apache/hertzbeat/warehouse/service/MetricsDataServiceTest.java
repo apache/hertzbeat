@@ -103,13 +103,18 @@ public class MetricsDataServiceTest {
         String history = "6h";
         Boolean intervalFalse = false;
         Boolean intervalTrue = true;
+        Long monitorId = 12345L;
 
         when(historyDataReader.getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, label, history, intervalFalse));
+        when(historyDataReader.getHistoryMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, label, history, intervalFalse, monitorId));
         verify(historyDataReader, times(1)).getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
+        verify(historyDataReader, times(1)).getHistoryMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
 
         when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, label, history, intervalTrue));
+        when(historyDataReader.getHistoryIntervalMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, label, history, intervalTrue, monitorId));
         verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
+        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
     }
 }

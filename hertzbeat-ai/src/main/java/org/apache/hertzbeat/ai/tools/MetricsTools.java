@@ -33,6 +33,7 @@ public interface MetricsTools {
 
     /**
      * Get historical metrics data for a monitor
+     * @param monitorId Monitor ID
      * @param instance Monitor instance (e.g., "127.0.0.1", "127.0.0.1:8080")
      * @param app Monitor type (e.g., "linux", "mysql", "http")
      * @param metrics Metrics name (e.g., "system", "cpu", "memory")
@@ -42,7 +43,7 @@ public interface MetricsTools {
      * @param interval Whether to aggregate data with intervals
      * @return Historical metrics data formatted for display
      */
-    String getHistoricalMetrics(String instance, String app, String metrics, String metric, String label, String history, Boolean interval);
+    String getHistoricalMetrics(Long monitorId, String instance, String app, String metrics, String metric, String label, String history, Boolean interval);
 
     /**
      * Check warehouse storage server status

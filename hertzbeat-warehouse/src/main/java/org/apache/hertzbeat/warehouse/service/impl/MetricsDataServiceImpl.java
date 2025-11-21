@@ -107,21 +107,50 @@ public class MetricsDataServiceImpl implements MetricsDataService {
     }
 
     @Override
-    public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String label, String history, Boolean interval) {
+    public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String label, String history, Boolean interval, Long monitorId) {
         if (history == null) {
             history = "6h";
         }
+        
+        // Query with instance (new data format)
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
             instanceValuesMap = historyDataReader.get().getHistoryMetricData(instance, app, metrics, metric, label, history);
         } else {
             instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(instance, app, metrics, metric, label, history);
         }
+        
+        // Query with monitorId as instance (legacy data format) if monitorId is provided
+        if (monitorId != null) {
+            String monitorIdAsInstance = String.valueOf(monitorId);
+            Map<String, List<Value>> legacyValuesMap;
+            if (interval == null || !interval) {
+                legacyValuesMap = historyDataReader.get().getHistoryMetricData(monitorIdAsInstance, app, metrics, metric, label, history);
+            } else {
+                legacyValuesMap = historyDataReader.get().getHistoryIntervalMetricData(monitorIdAsInstance, app, metrics, metric, label, history);
+            }
+            
+            // Merge results from both queries
+            if (legacyValuesMap != null && !legacyValuesMap.isEmpty()) {
+                for (Map.Entry<String, List<Value>> entry : legacyValuesMap.entrySet()) {
+                    String key = entry.getKey();
+                    List<Value> legacyValues = entry.getValue();
+                    if (instanceValuesMap.containsKey(key)) {
+                        List<Value> mergedValues = new ArrayList<>(instanceValuesMap.get(key));
+                        mergedValues.addAll(legacyValues);
+                        mergedValues.sort((v1, v2) -> Long.compare(v1.getTime(), v2.getTime()));
+                        instanceValuesMap.put(key, mergedValues);
+                    } else {
+                        instanceValuesMap.put(key, legacyValues);
+                    }
+                }
+            }
+        }
+        
         if (instanceValuesMap.containsKey("{}")) {
             instanceValuesMap.put("", instanceValuesMap.get("{}"));
             instanceValuesMap.remove("{}");
         }
-        // FIXME: monitorId should be fetched from monitor service
         return MetricsHistoryData.builder()
                 .instance(instance).metrics(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())

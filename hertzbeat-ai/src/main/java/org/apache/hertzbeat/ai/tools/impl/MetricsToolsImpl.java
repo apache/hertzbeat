@@ -152,6 +152,7 @@ public class MetricsToolsImpl implements MetricsTools {
             Ask user to provide the filters for labels, history and interval aggregation
             """)
     public String getHistoricalMetrics(
+            @ToolParam(description = "Monitor ID", required = true) Long monitorId,
             @ToolParam(description = "Monitor instance", required = true) String instance,
             @ToolParam(description = "Monitor type (e.g., 'linux', 'mysql', 'http')", required = true) String app,
             @ToolParam(description = "Metrics name (e.g., 'target', 'cpu', 'memory')", required = true) String metrics,
@@ -171,7 +172,7 @@ public class MetricsToolsImpl implements MetricsTools {
             }
 
             MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance,
-                    app, metrics, fieldParameter, label, history, interval);
+                    app, metrics, fieldParameter, label, history, interval, monitorId);
 
             if (historyData == null) {
                 return String.format("No historical metrics data found for monitor instance %d and metrics '%s'", instance, metrics);

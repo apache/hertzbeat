@@ -49,7 +49,8 @@ public interface MetricsDataService {
      * @param label    Label Filter
      * @param history  Query Historical Time Period
      * @param interval aggregate data calc
+     * @param monitorId Monitor ID for backward compatibility with legacy data
      * @return metrics history data
      */
-    MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String label, String history, Boolean interval);
+    MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String label, String history, Boolean interval, Long monitorId);
 }
