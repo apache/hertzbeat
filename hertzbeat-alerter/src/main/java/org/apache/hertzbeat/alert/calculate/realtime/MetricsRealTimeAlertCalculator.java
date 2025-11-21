@@ -17,15 +17,6 @@
 
 package org.apache.hertzbeat.alert.calculate.realtime;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
@@ -41,10 +32,23 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.util.BackoffUtils;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Calculate alarms based on the alarm definition rules and collected data
@@ -122,16 +126,22 @@ public class MetricsRealTimeAlertCalculator {
      */
     public void startCalculate() {
         Runnable runnable = () -> {
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = dataQueue.pollMetricsDataToAlerter();
                     if (metricsData == null) {
                         continue;
                     }
+                    backoff.reset();
                     calculate(metricsData);
                     dataQueue.sendMetricsDataToStorage(metricsData);
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
+                        break;
+                    }
                 } catch (Exception e) {
                     log.error("calculate alarm error: {}.", e.getMessage(), e);
                 }
