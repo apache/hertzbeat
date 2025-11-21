@@ -162,7 +162,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         });
         Table table = Table.from(tableSchemaBuilder.build());
         long now = System.currentTimeMillis();
-        Object[] values = new Object[2 + fields.size()];
+        Object[] values = new Object[3 + fields.size()];
         values[0] = instance;
         values[1] = monitorId;
         values[2] = now;

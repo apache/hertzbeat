@@ -98,7 +98,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_JOB = "job";
     private static final String LABEL_KEY_INSTANCE = "instance";
-    private static final String LABEL_KEY_MONITOR_ID = "__monitor_id__";
+    private static final String LABEL_KEY_MONITOR_ID = "monitor_id";
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
