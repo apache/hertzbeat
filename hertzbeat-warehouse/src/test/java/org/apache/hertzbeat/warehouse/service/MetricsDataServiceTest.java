@@ -95,7 +95,7 @@ public class MetricsDataServiceTest {
 
     @Test
     public void testGetMetricHistoryData() {
-        String instance = "127.0.0.1:8080";
+        Long monitorId = 1L;
         String app = "linux";
         String metrics = "disk";
         String metric = "used";
@@ -103,18 +103,13 @@ public class MetricsDataServiceTest {
         String history = "6h";
         Boolean intervalFalse = false;
         Boolean intervalTrue = true;
-        Long monitorId = 12345L;
 
-        when(historyDataReader.getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        when(historyDataReader.getHistoryMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, label, history, intervalFalse, monitorId));
-        verify(historyDataReader, times(1)).getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
-        verify(historyDataReader, times(1)).getHistoryMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
+        when(historyDataReader.getHistoryMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, intervalFalse));
+        verify(historyDataReader, times(1)).getHistoryMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
 
-        when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        when(historyDataReader.getHistoryIntervalMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, label, history, intervalTrue, monitorId));
-        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
-        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(String.valueOf(monitorId)), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
+        when(historyDataReader.getHistoryIntervalMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, intervalTrue));
+        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
     }
 }

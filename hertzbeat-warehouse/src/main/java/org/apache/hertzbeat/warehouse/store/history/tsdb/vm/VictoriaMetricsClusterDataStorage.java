@@ -98,7 +98,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_JOB = "job";
     private static final String LABEL_KEY_INSTANCE = "instance";
-    private static final String LABEL_KEY_ID = "id";
+    private static final String LABEL_KEY_MONITOR_ID = "__monitor_id__";
     private static final String SPILT = "_";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
@@ -244,7 +244,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                 if (!isPrometheusAuto) {
                                     labels.put(MONITOR_METRIC_KEY, entry.getKey());
                                 }
-                                labels.put(LABEL_KEY_ID, String.valueOf(metricsData.getId()));
+                                labels.put(LABEL_KEY_MONITOR_ID, String.valueOf(metricsData.getId()));
                                 // add customized labels as identifier
                                 var customizedLabels = metricsData.getLabels();
                                 if (!ObjectUtils.isEmpty(customizedLabels)) {
@@ -287,7 +287,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
             String label, String history) {
         String labelName = metrics + SPILT + metric;
         if (CommonConstants.PROMETHEUS.equals(app)) {
@@ -295,7 +295,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
         String timeSeriesSelector = Stream.of(
                 LABEL_KEY_NAME + "=\"" + labelName + "\"",
-                LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
+                LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\"",
                 CommonConstants.PROMETHEUS.equals(app) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -331,6 +331,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         Map<String, String> labels = content.getMetric();
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(LABEL_KEY_INSTANCE);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
@@ -363,7 +364,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
             String metric, String label, String history) {
         if (!serverAvailable) {
             log.error("""
@@ -396,7 +397,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         }
         String timeSeriesSelector = Stream.of(
                 LABEL_KEY_NAME + "=\"" + labelName + "\"",
-                LABEL_KEY_INSTANCE + "=\"" + instance + "\"",
+                LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\"",
                 CommonConstants.PROMETHEUS.equals(app) ? null : MONITOR_METRIC_KEY + "=\"" + metric + "\""
         ).filter(Objects::nonNull).collect(Collectors.joining(","));
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
@@ -432,6 +433,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -470,6 +472,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -508,6 +511,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -546,6 +550,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);

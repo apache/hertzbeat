@@ -153,7 +153,6 @@ public class MetricsToolsImpl implements MetricsTools {
             """)
     public String getHistoricalMetrics(
             @ToolParam(description = "Monitor ID", required = true) Long monitorId,
-            @ToolParam(description = "Monitor instance", required = true) String instance,
             @ToolParam(description = "Monitor type (e.g., 'linux', 'mysql', 'http')", required = true) String app,
             @ToolParam(description = "Metrics name (e.g., 'target', 'cpu', 'memory')", required = true) String metrics,
             @ToolParam(description = "Field Parameter (e.g., 'usage', 'used', 'available')", required = false) String fieldParameter,
@@ -162,7 +161,7 @@ public class MetricsToolsImpl implements MetricsTools {
             @ToolParam(description = "Whether to aggregate data with intervals", required = false) Boolean interval) {
 
         try {
-            log.info("Getting historical metrics for monitor instance {} and metrics {}", instance, metrics);
+            log.info("Getting historical metrics for monitor instance {} and metrics {}", monitorId, metrics);
 
             if (history == null || history.trim().isEmpty()) {
                 history = "24h";
@@ -171,15 +170,15 @@ public class MetricsToolsImpl implements MetricsTools {
                 interval = true;
             }
 
-            MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance,
-                    app, metrics, fieldParameter, label, history, interval, monitorId);
+            MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(monitorId,
+                    app, metrics, fieldParameter, label, history, interval);
 
             if (historyData == null) {
-                return String.format("No historical metrics data found for monitor instance %d and metrics '%s'", instance, metrics);
+                return String.format("No historical metrics data found for monitor %d and metrics '%s'", monitorId, metrics);
             }
 
             StringBuilder response = new StringBuilder();
-            response.append("HISTORICAL METRICS: ").append(metrics).append(" (Monitor ID: ").append(instance).append(")\n");
+            response.append("HISTORICAL METRICS: ").append(metrics).append(" (Monitor ID: ").append(monitorId).append(")\n");
             response.append("Time Range: ").append(history).append(" | Interval Aggregation: ").append(interval).append("\n");
             response.append("=".repeat(60)).append("\n\n");
 

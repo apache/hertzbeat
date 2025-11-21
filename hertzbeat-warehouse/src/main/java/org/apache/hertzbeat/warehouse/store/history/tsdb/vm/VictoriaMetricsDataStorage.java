@@ -264,13 +264,13 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String label, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
         String labelName = metrics + SPILT + metric;
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
-                + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
+                + "," + LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\""
                 + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
@@ -303,6 +303,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -332,7 +333,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
         if (!serverAvailable) {
             log.error("""
@@ -364,7 +365,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             labelName = metrics;
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
-                + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
+                + "," + LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\""
                 + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
@@ -397,6 +398,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -432,6 +434,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -467,6 +470,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);
@@ -502,6 +506,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
                         labels.remove(LABEL_KEY_INSTANCE);
+                        labels.remove(LABEL_KEY_MONITOR_ID);
                         labels.remove(MONITOR_METRICS_KEY);
                         labels.remove(MONITOR_METRIC_KEY);
                         String labelStr = JsonUtil.toJson(labels);

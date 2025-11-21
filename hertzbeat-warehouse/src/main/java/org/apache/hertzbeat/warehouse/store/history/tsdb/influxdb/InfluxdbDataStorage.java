@@ -157,7 +157,7 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
 
-        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance());
+        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId());
         List<Point> points = new ArrayList<>();
         
         try {
@@ -199,8 +199,8 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, instance);
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+        String table = this.generateTable(app, metrics, monitorId);
         String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history)
                 : String.format(QUERY_HISTORY_SQL_WITH_INSTANCE, metric, table, label, history);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
@@ -230,8 +230,8 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, instance);
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+        String table = this.generateTable(app, metrics, monitorId);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
         if (label != null) {
@@ -309,8 +309,8 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
         return instanceValueMap;
     }
 
-    private String generateTable(String app, String metrics, String instance) {
-        return app + "_" + metrics + "_" + instance;
+    private String generateTable(String app, String metrics, Long monitorId) {
+        return app + "_" + metrics + "_" + monitorId;
     }
 
     private long parseTimeToMillis(Object time) {

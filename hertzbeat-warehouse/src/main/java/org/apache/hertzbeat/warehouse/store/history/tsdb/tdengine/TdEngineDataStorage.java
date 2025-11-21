@@ -48,7 +48,6 @@ import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -182,11 +181,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             return;
         }
 
-        String instance = metricsData.getInstance();
-        String app = metricsData.getApp();
-        String metrics = metricsData.getMetrics();
-        String superTable = getTable(app, metrics, "_super");
-        String table = getTable(app, metrics, instance);
+        String monitorId = String.valueOf(metricsData.getId());
+        String superTable = metricsData.getApp() + "_" + metricsData.getMetrics() + "_super";
+        String table = metricsData.getApp() + "_" + metricsData.getMetrics() + "_" + monitorId;
         StringBuilder sqlBuffer = new StringBuilder();
         int i = 0;
 
@@ -246,7 +243,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 sqlBuffer.append(" ").append(String.format(sqlRowBuffer.toString(), formatStringValue(JsonUtil.toJson(labels))));
             }
 
-            String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, instance, sqlBuffer);
+            String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, monitorId, sqlBuffer);
 
             if (log.isDebugEnabled()) {
                 log.debug(insertDataSql);
@@ -317,11 +314,6 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
     }
 
-    @NotNull
-    private static String getTable(String app, String metrics, String instance) {
-        return app + "_" + metrics + "_" + instance;
-    }
-
     private String formatStringValue(String value) {
         String formatValue = SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
         // bugfix Argument list too long
@@ -339,8 +331,8 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String label, String history) {
-        String table = getTable(app, metrics, instance);
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+        String table = app + "_" + metrics + "_" + monitorId;
         String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
 
@@ -392,7 +384,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
         if (!serverAvailable) {
 
@@ -400,7 +392,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
             return Collections.emptyMap();
         }
-        String table = getTable(app, metrics, instance);
+        String table = app + "_" + metrics + "_" + monitorId;
         List<String> instances = new LinkedList<>();
         if (label != null) {
             instances.add(label);

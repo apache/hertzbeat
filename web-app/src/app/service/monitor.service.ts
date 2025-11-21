@@ -164,13 +164,12 @@ export class MonitorService {
   }
 
   public getMonitorMetricHistoryData(
-    instance: string,
+    monitorId: number,
     app: string,
     metrics: string,
     metric: string,
     history: string,
-    interval: boolean,
-    monitorId?: number
+    interval: boolean
   ): Observable<Message<any>> {
     let metricFull = `${app}.${metrics}.${metric}`;
     let httpParams = new HttpParams();
@@ -178,11 +177,8 @@ export class MonitorService {
       history: history,
       interval: interval
     });
-    if (monitorId !== undefined && monitorId !== null) {
-      httpParams = httpParams.append('monitorId', monitorId);
-    }
     const options = { params: httpParams };
-    return this.http.get<Message<any>>(`${monitor_uri}/${instance}/metric/${metricFull}`, options);
+    return this.http.get<Message<any>>(`${monitor_uri}/${monitorId}/metric/${metricFull}`, options);
   }
 
   public getAppsMonitorSummary(): Observable<Message<any>> {

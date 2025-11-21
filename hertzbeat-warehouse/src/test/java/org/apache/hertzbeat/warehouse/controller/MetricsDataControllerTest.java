@@ -116,8 +116,7 @@ class MetricsDataControllerTest {
 
     @Test
     void getMetricHistoryData() throws Exception {
-        final Long monitorId = 6565463543L;
-        final String instance = "127.0.0.1:8080";
+        final long monitorId = 343254354;
         final String app = "linux";
         final String metrics = "cpu";
         final String metric = "usage";
@@ -126,11 +125,11 @@ class MetricsDataControllerTest {
         final String label = "disk2";
         final String history = "6h";
         final Boolean interval = false;
-        final String getUrl = "/api/monitor/" + instance + "/metric/" + metricFull;
-        final String getUrlFail = "/api/monitor/" + instance + "/metric/" + metricFullFail;
+        final String getUrl = "/api/monitor/" + monitorId + "/metric/" + metricFull;
+        final String getUrlFail = "/api/monitor/" + monitorId + "/metric/" + metricFullFail;
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("instance", instance);
+        params.add("monitorId", String.valueOf(monitorId));
         params.add("label", label);
         params.add("history", history);
         params.add("interval", String.valueOf(interval));
@@ -152,17 +151,17 @@ class MetricsDataControllerTest {
         assertTrue(exception.getMessage().contains("IllegalArgumentException"));
 
         MetricsHistoryData metricsHistoryData = MetricsHistoryData.builder()
-                .instance(instance)
+                .id(monitorId)
                 .metrics(metrics)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
-        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(label), eq(history), eq(interval), eq(monitorId)))
+        lenient().when(metricsDataService.getMetricHistoryData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history), eq(interval)))
                 .thenReturn(metricsHistoryData);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data.instance").value(instance))
+                .andExpect(jsonPath("$.data.id").value(monitorId))
                 .andExpect(jsonPath("$.data.metrics").value(metrics))
                 .andExpect(jsonPath("$.data.field.name").value(metric))
                 .andExpect(jsonPath("$.data.field.type").value(String.valueOf(CommonConstants.TYPE_NUMBER)))

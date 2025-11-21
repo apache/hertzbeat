@@ -128,7 +128,7 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS || metricsData.getValues().isEmpty()) {
             return;
         }
-        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance());
+        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId());
 
         try {
             RowWrapper rowWrapper = metricsData.readRow();
@@ -146,7 +146,6 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
                             .filter(cell -> cell.getMetadataAsBoolean(MetricDataConstants.LABEL))
                             .forEach(cell -> labels.put(cell.getField().getName(), cell.getValue()));
                     if (!labels.isEmpty()) {
-                        // FIXME: fix instance here
                         sender.symbol("instance", JsonUtil.toJson(labels));
                     } else {
                         sender.symbol("instance", metricsData.getApp()
@@ -185,8 +184,8 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, instance);
+    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+        String table = this.generateTable(app, metrics, monitorId);
         String dateAdd = getDateAdd(history);
         String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, dateAdd)
                 : String.format(QUERY_HISTORY_SQL_WITH_INSTANCE, metric, table, label.replace("'", "\\'"), dateAdd);
@@ -226,8 +225,8 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, instance);
+    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+        String table = this.generateTable(app, metrics, monitorId);
         String dateAdd = getDateAdd(history);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
@@ -360,8 +359,8 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         return String.format("dateadd('%s', %d, now())", unit, -count);
     }
 
-    private String generateTable(String app, String metrics, String instance) {
-        return app + "_" + metrics + "_" + instance;
+    private String generateTable(String app, String metrics, Long monitorId) {
+        return app + "_" + metrics + "_" + monitorId;
     }
 
     private String parseDoubleValue(String value) {

@@ -161,7 +161,7 @@ class GreptimeDbDataStorageTest {
                 .thenReturn(responseEntity);
 
         Map<String, List<Value>> result = greptimeDbDataStorage.getHistoryMetricData(
-                "127.0.0.1:8080", "test_app", "test_metrics", "test_metric", "test_label", "6h"
+                1L, "test_app", "test_metrics", "test_metric", "test_label", "6h"
         );
 
         assertNotNull(result);

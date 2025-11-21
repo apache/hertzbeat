@@ -34,17 +34,15 @@ import { createWorker, WorkerResult } from './monitor-data-chart.worker';
 })
 export class MonitorDataChartComponent implements OnInit, OnDestroy {
   @Input()
-  get instance(): string {
-    return this._instance;
+  get monitorId(): number {
+    return this._monitorId;
   }
 
-  set instance(instance: string) {
-    this._instance = instance;
+  set monitorId(monitorId: number) {
+    this._monitorId = monitorId;
   }
 
-  private _instance!: string;
-  @Input()
-  monitorId?: number;
+  private _monitorId!: number;
   @Input()
   app!: string;
   @Input()
@@ -258,7 +256,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
     // load historical metrics data
     this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-loading')}`;
     let metricData$ = this.monitorSvc
-      .getMonitorMetricHistoryData(this.instance, this.app, this.metrics, this.metric, this.timePeriod, isInterval, this.monitorId)
+      .getMonitorMetricHistoryData(this.monitorId, this.app, this.metrics, this.metric, this.timePeriod, isInterval)
       .pipe(
         finalize(() => {
           if (!this.worker$) {
