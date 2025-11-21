@@ -118,7 +118,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             Map<String, Object> metricsToStorageConsumerConfig = new HashMap<>(consumerConfig);
             metricsToStorageConsumerConfig.put("group.id", "metrics-persistent-consumer");
             metricsDataToStorageConsumer = new KafkaConsumer<>(metricsToStorageConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
-            metricsDataToStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
+            metricsDataToStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataToStorageTopic()));
 
             Map<String, Object> serviceDiscoveryDataConsumerConfig = new HashMap<>(consumerConfig);
             serviceDiscoveryDataConsumerConfig.put("group.id", "service-discovery-data-consumer");
