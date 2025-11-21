@@ -82,6 +82,9 @@ public class ServiceDiscoveryWorker implements InitializingBean {
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
                 try (final CollectRep.MetricsData metricsData = dataQueue.pollServiceDiscoveryData()) {
+                    if (metricsData == null) {
+                        continue;
+                    }
                     Long monitorId = metricsData.getId();
                     final Monitor mainMonitor = monitorDao.findById(monitorId).orElse(null);
                     if (mainMonitor == null) {
