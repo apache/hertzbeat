@@ -24,9 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.client.RedisCommandDelegate;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 /**

@@ -54,6 +54,7 @@ public class NginxProtocol implements CommonRequestProtocol, Protocol {
     /**
      * Whether nginx uses link encryption ssl/tls, i.e. http or https
      */
+    @Builder.Default
     private String ssl = "false";
 
     /**

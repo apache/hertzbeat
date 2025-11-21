@@ -54,5 +54,6 @@ public class KafkaProtocol implements CommonRequestProtocol, Protocol {
     /**
      * Monitor internal topic
      */
+    @Builder.Default
     private String monitorInternalTopic = "false";
 }

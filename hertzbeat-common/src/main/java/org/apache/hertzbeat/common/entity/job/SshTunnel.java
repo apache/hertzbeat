@@ -36,6 +36,7 @@ public class SshTunnel implements CommonRequestProtocol, Protocol {
     /**
      * enable ssh tunnel
      */
+    @Builder.Default
     private String enable = "false";
 
     /**
@@ -46,11 +47,13 @@ public class SshTunnel implements CommonRequestProtocol, Protocol {
     /**
      * Peer host port
      */
+    @Builder.Default
     private String port = "22";
 
     /**
      * TIME OUT PERIOD
      */
+    @Builder.Default
     private String timeout = "6000";
 
     /**
@@ -76,5 +79,6 @@ public class SshTunnel implements CommonRequestProtocol, Protocol {
     /**
      * share connection session
      */
+    @Builder.Default
     private String shareConnection = "true";
 }

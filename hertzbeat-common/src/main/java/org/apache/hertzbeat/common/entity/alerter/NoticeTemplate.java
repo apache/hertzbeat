@@ -85,6 +85,7 @@ public class NoticeTemplate {
             description = "Is it a preset template: true- preset template false- custom template.",
             accessMode = READ_WRITE)
     @Column(columnDefinition = "boolean default false")
+    @Builder.Default
     private boolean preset = false;
 
     @Schema(title = "Template content",

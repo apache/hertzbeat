@@ -43,6 +43,7 @@ public class JmxProtocol implements CommonRequestProtocol, Protocol {
     /**
      * enable ssl?
      */
+    @Builder.Default
     private String ssl = "false";
 
     /**

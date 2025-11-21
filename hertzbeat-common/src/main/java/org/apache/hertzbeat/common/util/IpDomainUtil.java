@@ -24,8 +24,8 @@ import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.core5.net.InetAddressUtils;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
-import org.apache.http.conn.util.InetAddressUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -60,10 +60,10 @@ public final class IpDomainUtil {
         if (LOCALHOST.equalsIgnoreCase(ipDomain)) {
             return true;
         }
-        if (InetAddressUtils.isIPv4Address(ipDomain)) {
+        if (InetAddressUtils.isIPv4(ipDomain)) {
             return true;
         }
-        if (InetAddressUtils.isIPv6Address(ipDomain)) {
+        if (InetAddressUtils.isIPv6(ipDomain)) {
             return true;
         }
         return DOMAIN_PATTERN.matcher(ipDomain).matches();
@@ -75,7 +75,7 @@ public final class IpDomainUtil {
      * @return true or false
      */
     public static boolean isHasSchema(String domainIp) {
-        if (domainIp == null || !StringUtils.hasText(domainIp)) {
+        if (!StringUtils.hasText(domainIp)) {
             return false;
         }
         return DOMAIN_SCHEMA.matcher(domainIp).matches();

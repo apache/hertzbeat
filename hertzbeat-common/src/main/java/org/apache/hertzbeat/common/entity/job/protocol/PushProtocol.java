@@ -34,6 +34,7 @@ import org.apache.hertzbeat.common.entity.dto.Field;
 public class PushProtocol implements CommonRequestProtocol, Protocol {
     private String host;
     private String port;
+    @Builder.Default
     private String uri = "/api/push";
     private List<Field> fields;
 }

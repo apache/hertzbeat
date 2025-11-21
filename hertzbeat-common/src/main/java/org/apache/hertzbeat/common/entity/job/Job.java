@@ -57,6 +57,7 @@ public class Job {
     /**
      * Tenant id
      */
+    @Builder.Default
     private long tenantId = 0;
     /**
      * Monitoring Task ID
@@ -78,6 +79,7 @@ public class Job {
     /**
      * Is hide this app in main menus layout, only for app type, default true.
      */
+    @Builder.Default
     private boolean hide = true;
     /**
      * Large categories of monitoring
@@ -111,6 +113,7 @@ public class Job {
     /**
      * Default task collection time interval (unit: second) eg: 30,60,600
      */
+    @Builder.Default
     private long defaultInterval = 600L;
     /**
      * Refresh time list for one cycle of the job
@@ -119,6 +122,7 @@ public class Job {
     /**
      * Whether it is a recurring periodic task true is yes, false is no
      */
+    @Builder.Default
     private boolean isCyclic = false;
     /**
      * monitor input need params
@@ -136,21 +140,25 @@ public class Job {
     /**
      * Whether it is a service discovery job, true is yes, false is no
      */
+    @Builder.Default
     private boolean isSd = false;
 
     /**
      * Whether to use the Prometheus proxy
      */
+    @Builder.Default
     private boolean prometheusProxyMode = false;
 
     /**
      * Scheduling type: interval or cron
      */
+    @Builder.Default
     private String scheduleType = "interval";
 
     /**
      * Cron expression for scheduling, used when scheduleType is "cron"
      */
+    @Builder.Default
     private String cronExpression = null;
 
     /**

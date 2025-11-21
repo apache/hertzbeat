@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
@@ -37,18 +50,9 @@ import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 
 /**
- *  NebulaGraph collect
+ * NebulaGraph collect
  */
 @Slf4j
 public class NebulaGraphCollectImpl extends AbstractCollect {
@@ -94,12 +98,16 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         String resp;
         long responseTime;
         HashMap<String, String> resultMap = new HashMap<>(64);
+
+        // Create Context and Request
         HttpContext httpContext = createHttpContext(nebulaGraph.getHost(), nebulaGraph.getPort());
         HttpUriRequest request = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
                 nebulaGraph.getUrl(), nebulaGraph.getTimeout());
+
         // Send an HTTP request to obtain response data
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+            // HttpClient 5: getStatusLine().getStatusCode() -> getCode()
+            int statusCode = response.getCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("StatusCode " + statusCode);
@@ -121,7 +129,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
                 valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
             }
             builder.addValueRow(valueRowBuilder.build());
-        } catch (IOException e) {
+        } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
@@ -135,15 +143,20 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
     }
 
     private HttpContext createHttpContext(String host, String port) {
+        // HttpClient 5: HttpHost
         HttpHost httpHost = new HttpHost(host, Integer.parseInt(port));
-        HttpClientContext httpClientContext = new HttpClientContext();
-        httpClientContext.setTargetHost(httpHost);
+        HttpClientContext httpClientContext = HttpClientContext.create();
+        // Context attribute setting is slightly different but target host is often handled by request routing
+        // explicitly setting it for context reuse if needed.
+        httpClientContext.setAttribute(HttpClientContext.HTTP_ROUTE, new org.apache.hc.client5.http.HttpRoute(httpHost));
         return httpClientContext;
     }
 
     private HttpUriRequest createHttpRequest(String host, String port, String url, String timeoutStr) {
-        RequestBuilder requestBuilder = RequestBuilder.get();
-        // uri
+        // HttpClient 5 uses ClassicRequestBuilder
+        ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
+
+        // uri construction
         String uri = CollectUtil.replaceUriSpecialChar(url);
         if (IpDomainUtil.isHasSchema(host)) {
             requestBuilder.setUri(host + ":" + port + uri);
@@ -158,17 +171,19 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
 
         requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
-
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/plain");
 
         int timeout = Integer.parseInt(timeoutStr);
         if (timeout > 0) {
+            // HttpClient 5 RequestConfig
             RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout)
+                    // Connect Timeout
+                    .setConnectTimeout(Timeout.ofMilliseconds(timeout))
+                    // Response Timeout replaces Socket Timeout for request-level read timeout
+                    .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            requestBuilder.setConfig(requestConfig);
+            requestBuilder..setConfig(requestConfig);
         }
         return requestBuilder.build();
     }
@@ -178,6 +193,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
      *
      * @param responseBody response body
      * @param timePeriod   time period
+     * @param resultMap    result map
      */
     private void parseStatsResponse(String responseBody, String timePeriod, HashMap<String, String> resultMap) {
         // Set up regular expression matching
@@ -188,22 +204,26 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             Matcher matcher = pattern.matcher(str);
             if (matcher.find()) {
                 String[] split = str.split(timeRegex);
-                resultMap.put(split[0], split[1]);
+                if (split.length > 1) {
+                    resultMap.put(split[0], split[1]);
+                }
             }
         }
     }
-
 
     /**
      * Parse the Storage response and filter by time period
      *
      * @param responseBody response body
+     * @param resultMap    result map
      */
     private void parseStorageResponse(String responseBody, HashMap<String, String> resultMap) {
         String[] strArray = responseBody.split(STR_SPLIT);
         for (String str : strArray) {
             String[] split = str.split(STORAGE_SPLIT_KEY_VALUE);
-            resultMap.put(split[0], split[1]);
+            if (split.length > 1) {
+                resultMap.put(split[0], split[1]);
+            }
         }
     }
 }

@@ -69,6 +69,7 @@ public class SnmpProtocol implements CommonRequestProtocol, Protocol {
     /**
      * operation: get, walk
      */
+    @Builder.Default
     private String operation = "get";
     /**
      * oid map

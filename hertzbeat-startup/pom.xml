@@ -1,20 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ Licensed to the Apache Software Foundation (ASF) under one or more
-  ~ contributor license agreements.  See the NOTICE file distributed with
-  ~ this work for additional information regarding copyright ownership.
-  ~ The ASF licenses this file to You under the Apache License, Version 2.0
-  ~ (the "License"); you may not use this file except in compliance with
-  ~ the License.  You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -33,120 +17,94 @@
     <description>Apache HertzBeat startup module</description>
 
     <dependencies>
-        <!-- Spring Boot Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- Spring Boot JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- Spring Boot Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- HertzBeat manager -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-jackson2</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-manager</artifactId>
         </dependency>
-        
-        <!-- HertzBeat common -->
+
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
         </dependency>
 
-        <!-- HertzBeat base -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-base</artifactId>
         </dependency>
 
-        <!-- HertzBeat warehouse -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-warehouse</artifactId>
         </dependency>
 
-        <!-- HertzBeat alerter -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-alerter</artifactId>
         </dependency>
 
-        <!-- HertzBeat remoting -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-remoting</artifactId>
         </dependency>
 
-        <!-- HertzBeat ai -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-ai</artifactId>
         </dependency>
 
-        
-        <!-- Jackson -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
 
-        <!-- Commons Lang3 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
 
-        <!-- Sureness for security -->
         <dependency>
             <groupId>com.usthe.sureness</groupId>
             <artifactId>spring-boot3-starter-sureness</artifactId>
         </dependency>
 
-        <!-- Netty -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
         </dependency>
 
-        <!-- Database Migration - Flyway -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-mysql</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
 
-        <!-- H2 Database (default) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
 
-        <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -180,15 +138,11 @@
                 <configuration>
                     <classesDirectory>target/classes/</classesDirectory>
                     <archive>
-                        <!--Exclude maven descriptors from generated JAR-->
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifest>
-                            <!--Main class of the project-->
                             <mainClass>org.apache.hertzbeat.startup.HertzBeatApplication</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
-                            <!--Add third-party JARs to the classpath using maven-dependency-plugin-->
                             <addClasspath>true</addClasspath>
-                            <!--Location of external dependency JARs-->
                             <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
                         <manifestEntries>
@@ -202,10 +156,38 @@
 
     <profiles>
         <profile>
+            <id>dev-driver</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.mysql</groupId>
+                    <artifactId>mysql-connector-j</artifactId>
+                    <scope>compile</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.oracle.database.jdbc</groupId>
+                    <artifactId>ojdbc8</artifactId>
+                    <scope>compile</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.oracle.database.nls</groupId>
+                    <artifactId>orai18n</artifactId>
+                    <scope>compile</scope>
+                </dependency>
+                <dependency>
+                    <groupId>com.ibm.db2</groupId>
+                    <artifactId>jcc</artifactId>
+                    <scope>compile</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>release</id>
             <build>
                 <plugins>
-                    <!--Critical plugin, assembly plugin provided by maven, should be placed last-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
@@ -213,9 +195,7 @@
                         <executions>
                             <execution>
                                 <id>make-zip</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -228,9 +208,7 @@
                             </execution>
                             <execution>
                                 <id>make-docker-zip</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -243,9 +221,7 @@
                             </execution>
                             <execution>
                                 <id>make-docker-compose-script</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -272,9 +248,7 @@
                         <executions>
                             <execution>
                                 <id>make-macos-arm64</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -287,9 +261,7 @@
                             </execution>
                             <execution>
                                 <id>make-macos-amd64</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -302,9 +274,7 @@
                             </execution>
                             <execution>
                                 <id>make-linux-arm64</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -317,9 +287,7 @@
                             </execution>
                             <execution>
                                 <id>make-linux-amd64</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -332,9 +300,7 @@
                             </execution>
                             <execution>
                                 <id>make-windows-64</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -347,9 +313,7 @@
                             </execution>
                             <execution>
                                 <id>make-docker-compose-script</id>
-                                <!--Bound maven operation-->
                                 <phase>package</phase>
-                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>

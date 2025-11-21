@@ -43,5 +43,6 @@ public class CollectorInfo {
     private String version;
 
     @NotNull
+    @Builder.Default
     private String mode = CommonConstants.MODE_PUBLIC;
 }
