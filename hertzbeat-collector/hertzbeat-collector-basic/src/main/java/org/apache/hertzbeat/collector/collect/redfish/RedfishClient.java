@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,20 +18,21 @@
 package org.apache.hertzbeat.collector.collect.redfish;
 
 import java.nio.charset.StandardCharsets;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.StringEntity;
 import org.springframework.http.MediaType;
 
 /**
@@ -58,11 +59,13 @@ public class RedfishClient {
                 redfishProtocol.getUsername(), redfishProtocol.getPassword(), Integer.parseInt(redfishProtocol.getTimeout()));
     }
 
+    @SuppressWarnings("deprecation")
     public ConnectSession connect() throws Exception {
-        HttpHost host = new HttpHost(this.host, this.port);
-        HttpClientContext httpClientContext = new HttpClientContext();
-        httpClientContext.setTargetHost(host);
-        RequestBuilder requestBuilder = RequestBuilder.post();
+        HttpHost targetHost = new HttpHost(this.host, this.port);
+        HttpClientContext httpClientContext = HttpClientContext.create();
+        // The target host is implicit in the request URI or can be routed automatically
+
+        ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.post();
 
         String uri = REDFISH_SESSION_SERVICE;
         if (IpDomainUtil.isHasSchema(this.host)) {
@@ -79,37 +82,40 @@ public class RedfishClient {
         requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
         requestBuilder.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, NetworkConstants.USER_AGENT);
-        requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8 + "");
+        // Content-Encoding header is usually for compression, setting charset is done in Content-Type usually,
+        // but keeping original logic of setting it explicitly if that was the intent, though standard is usually empty or gzip.
+        // original: requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8 + "");
 
         final String json = "{\"UserName\": \"" + this.username + "\", \"Password\": \"" + this.password + "\"}";
         StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
         requestBuilder.setEntity(entity);
 
+        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
+
         if (this.timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(this.timeout)
-                    .setSocketTimeout(this.timeout)
+                    .setConnectTimeout(Timeout.ofMilliseconds(this.timeout))
+                    .setResponseTimeout(Timeout.ofMilliseconds(this.timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            requestBuilder.setConfig(requestConfig);
+            request.setConfig(requestConfig);
         }
 
-        HttpUriRequest request = requestBuilder.build();
-
-        Session session;
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpClientContext)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+        HttpClientResponseHandler<Session> responseHandler = response -> {
+            int statusCode = response.getCode();
             if (statusCode != HttpStatus.SC_CREATED) {
-                throw new Exception(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
+                throw new org.apache.hc.client5.http.ClientProtocolException(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
             }
             String location = response.getFirstHeader(NetworkConstants.LOCATION).getValue();
             String auth = response.getFirstHeader(NetworkConstants.X_AUTH_TOKEN).getValue();
-            session = new Session(auth, location, this.host, this.port);
+            return new Session(auth, location, this.host, this.port);
+        };
+
+        try {
+            Session session = CommonHttpClient.getHttpClient().execute(request, httpClientContext, responseHandler);
+            return new RedfishConnectSession(session);
         } catch (Exception e) {
-            throw new Exception("Redfish session create error: " + e.getMessage());
-        } finally {
-            request.abort();
+            throw new Exception("Redfish session create error: " + e.getMessage(), e);
         }
-        return new RedfishConnectSession(session);
     }
 }

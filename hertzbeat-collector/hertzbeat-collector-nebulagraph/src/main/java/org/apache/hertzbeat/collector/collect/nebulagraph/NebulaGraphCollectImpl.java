@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.nebulagraph;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,14 +26,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
-import org.apache.hc.client5.http.utils.URIUtils;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.http.protocol.HttpContext;
@@ -95,40 +92,46 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             return;
         }
 
-        String resp;
-        long responseTime;
-        HashMap<String, String> resultMap = new HashMap<>(64);
-
         // Create Context and Request
-        HttpContext httpContext = createHttpContext(nebulaGraph.getHost(), nebulaGraph.getPort());
-        HttpUriRequest request = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
+        HttpContext httpContext = createHttpContext();
+        HttpUriRequestBase request = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
                 nebulaGraph.getUrl(), nebulaGraph.getTimeout());
 
         // Send an HTTP request to obtain response data
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
-            // HttpClient 5: getStatusLine().getStatusCode() -> getCode()
-            int statusCode = response.getCode();
-            if (statusCode != SUCCESS_CODE) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("StatusCode " + statusCode);
-                return;
-            }
-            resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            responseTime = System.currentTimeMillis() - startTime;
-            resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
-            // Parse the response differently depending on the API
-            if (GRAPH_API.equals(nebulaGraph.getUrl())) {
-                parseStatsResponse(resp, nebulaGraph.getTimePeriod(), resultMap);
-            } else if (STORAGE_API.equals(nebulaGraph.getUrl())) {
-                parseStorageResponse(resp, resultMap);
-            }
-            List<String> aliasFields = metrics.getAliasFields();
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-            for (String field : aliasFields) {
-                String fieldValue = resultMap.get(field);
-                valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
-            }
-            builder.addValueRow(valueRowBuilder.build());
+        try {
+            // Use ResponseHandler to avoid manual resource management and CloseableHttpResponse deprecation issues
+            HttpClientResponseHandler<Void> responseHandler = response -> {
+                int statusCode = response.getCode();
+                if (statusCode != SUCCESS_CODE) {
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("StatusCode " + statusCode);
+                    return null;
+                }
+
+                String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                long responseTime = System.currentTimeMillis() - startTime;
+                HashMap<String, String> resultMap = new HashMap<>(64);
+                resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
+
+                // Parse the response differently depending on the API
+                if (GRAPH_API.equals(nebulaGraph.getUrl())) {
+                    parseStatsResponse(resp, nebulaGraph.getTimePeriod(), resultMap);
+                } else if (STORAGE_API.equals(nebulaGraph.getUrl())) {
+                    parseStorageResponse(resp, resultMap);
+                }
+
+                List<String> aliasFields = metrics.getAliasFields();
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String field : aliasFields) {
+                    String fieldValue = resultMap.get(field);
+                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                }
+                builder.addValueRow(valueRowBuilder.build());
+                return null;
+            };
+
+            CommonHttpClient.getHttpClient().execute(request, httpContext, responseHandler);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.info(errorMsg);
@@ -142,17 +145,13 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_NEBULAGRAPH;
     }
 
-    private HttpContext createHttpContext(String host, String port) {
-        // HttpClient 5: HttpHost
-        HttpHost httpHost = new HttpHost(host, Integer.parseInt(port));
-        HttpClientContext httpClientContext = HttpClientContext.create();
-        // Context attribute setting is slightly different but target host is often handled by request routing
-        // explicitly setting it for context reuse if needed.
-        httpClientContext.setAttribute(HttpClientContext.HTTP_ROUTE, new org.apache.hc.client5.http.HttpRoute(httpHost));
-        return httpClientContext;
+    private HttpContext createHttpContext() {
+        // HttpClient 5 automatically determines the route from the request URI
+        return HttpClientContext.create();
     }
 
-    private HttpUriRequest createHttpRequest(String host, String port, String url, String timeoutStr) {
+    @SuppressWarnings("deprecation")
+    private HttpUriRequestBase createHttpRequest(String host, String port, String url, String timeoutStr) {
         // HttpClient 5 uses ClassicRequestBuilder
         ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
 
@@ -163,8 +162,8 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(host);
             String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
-                    ? String.format("[%s]:%s", host, port + uri)
-                    : String.format("%s:%s", host, port + uri);
+                    ? String.format("[%s]:%s%s", host, port, uri)
+                    : String.format("%s:%s%s", host, port, uri);
 
             requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
         }
@@ -173,19 +172,19 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/plain");
 
+        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
+
         int timeout = Integer.parseInt(timeoutStr);
         if (timeout > 0) {
-            // HttpClient 5 RequestConfig
+            // Use setConnectTimeout despite deprecation to allow per-request connection timeout override on a shared client
             RequestConfig requestConfig = RequestConfig.custom()
-                    // Connect Timeout
                     .setConnectTimeout(Timeout.ofMilliseconds(timeout))
-                    // Response Timeout replaces Socket Timeout for request-level read timeout
                     .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            requestBuilder..setConfig(requestConfig);
+            request.setConfig(requestConfig);
         }
-        return requestBuilder.build();
+        return request;
     }
 
     /**

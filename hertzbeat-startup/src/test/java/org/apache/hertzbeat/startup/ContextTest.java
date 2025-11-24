@@ -19,7 +19,8 @@ package org.apache.hertzbeat.startup;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import javax.annotation.Resource;
+
+import jakarta.annotation.Resource;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.realtime.MetricsRealTimeAlertCalculator;

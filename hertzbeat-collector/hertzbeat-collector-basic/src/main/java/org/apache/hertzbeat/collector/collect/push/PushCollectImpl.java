@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -38,15 +48,6 @@ import org.apache.hertzbeat.common.entity.push.PushMetricsDto;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.springframework.http.MediaType;
 
 /**
@@ -84,19 +85,23 @@ public class PushCollectImpl extends AbstractCollect {
         timeMap.put(monitorId, curTime);
 
         HttpContext httpContext = createHttpContext(pushProtocol);
-        HttpUriRequest request = createHttpRequest(pushProtocol, monitorId, time);
+        HttpUriRequestBase request = createHttpRequest(pushProtocol, monitorId, time);
 
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+        HttpClientResponseHandler<String> responseHandler = response -> {
+            int statusCode = response.getCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
-                return;
+                return null;
             }
-            String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+        };
 
-            parseResponse(builder, resp, metrics);
-
+        try {
+            String resp = CommonHttpClient.getHttpClient().execute(request, httpContext, responseHandler);
+            if (resp != null) {
+                parseResponse(builder, resp, metrics);
+            }
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
@@ -113,14 +118,17 @@ public class PushCollectImpl extends AbstractCollect {
 
     private HttpContext createHttpContext(PushProtocol pushProtocol) {
         HttpHost host = new HttpHost(pushProtocol.getHost(), Integer.parseInt(pushProtocol.getPort()));
-        HttpClientContext httpClientContext = new HttpClientContext();
-        httpClientContext.setTargetHost(host);
+        HttpClientContext httpClientContext = HttpClientContext.create();
+        // Explicit target host setting in context is deprecated in favor of routing via Request URI or RoutePlanner,
+        // but for context isolation it is still valid to hold state.
+        // However, setTargetHost is removed in v5 context.
+        // We rely on the request URI having the host/port.
         return httpClientContext;
     }
 
-    private HttpUriRequest createHttpRequest(PushProtocol pushProtocol, Long monitorId, Long startTime) {
-        RequestBuilder requestBuilder = RequestBuilder.get();
-
+    @SuppressWarnings("deprecation")
+    private HttpUriRequestBase createHttpRequest(PushProtocol pushProtocol, Long monitorId, Long startTime) {
+        ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
 
         // uri
         String uri = CollectUtil.replaceUriSpecialChar(pushProtocol.getUri());
@@ -142,19 +150,19 @@ public class PushCollectImpl extends AbstractCollect {
         requestBuilder.addParameter("time", String.valueOf(startTime));
         requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
-
-        //requestBuilder.setUri(pushProtocol.getUri());
+        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
 
         if (DEFAULT_TIMEOUT > 0) {
+            // Using deprecated setConnectTimeout for request-level override
             RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(DEFAULT_TIMEOUT)
-                    .setSocketTimeout(DEFAULT_TIMEOUT)
+                    .setConnectTimeout(Timeout.ofMilliseconds(DEFAULT_TIMEOUT))
+                    .setResponseTimeout(Timeout.ofMilliseconds(DEFAULT_TIMEOUT))
                     .setRedirectsEnabled(true)
                     .build();
-            requestBuilder.setConfig(requestConfig);
+            request.setConfig(requestConfig);
         }
 
-        return requestBuilder.build();
+        return request;
     }
 
     private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {

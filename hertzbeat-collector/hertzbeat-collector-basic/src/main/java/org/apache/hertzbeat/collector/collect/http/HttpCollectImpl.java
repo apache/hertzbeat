@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,6 +47,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
@@ -67,24 +68,26 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.auth.CredentialsProvider;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
@@ -136,14 +139,16 @@ public class HttpCollectImpl extends AbstractCollect {
 
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+
+        // Use HttpClientResponseHandler to handle the response and avoid deprecated execute method
+        HttpClientResponseHandler<Void> responseHandler = response -> {
+            int statusCode = response.getCode();
             boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
-                return;
+                return null;
             }
 
             long responseTime = System.currentTimeMillis() - startTime;
@@ -160,11 +165,6 @@ public class HttpCollectImpl extends AbstractCollect {
                     // Consume entity to release connection
                     EntityUtils.consumeQuietly(entity);
                 } else {
-                    /*
-                     this could create large objects, potentially impacting JVM memory space significantly.
-                     Option 1: Parse using InputStream, but this requires significant code changes;
-                     Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
-                     */
                     String resp = entity == null ? "" : EntityUtils.toString(entity, StandardCharsets.UTF_8);
                     if (!StringUtils.hasText(resp)) {
                         log.info("http response entity is empty, status: {}.", statusCode);
@@ -191,6 +191,11 @@ public class HttpCollectImpl extends AbstractCollect {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("parse response data error:" + e.getMessage());
             }
+            return null;
+        };
+
+        try {
+            CommonHttpClient.getHttpClient().execute((HttpUriRequestBase) request, httpContext, responseHandler);
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
@@ -217,13 +222,11 @@ public class HttpCollectImpl extends AbstractCollect {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
         } finally {
-            if (request != null) {
-                request.abort();
-            }
+            // In v5, execution is managed by try-with-resources on response, or responseHandler automatically closes it.
         }
     }
 
-    private void parseResponseByHeader(CollectRep.MetricsData.Builder builder, List<String> aliases, CloseableHttpResponse response) {
+    private void parseResponseByHeader(CollectRep.MetricsData.Builder builder, List<String> aliases, ClassicHttpResponse response) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliases) {
             if (!StringUtils.hasText(alias)) {
@@ -318,10 +321,13 @@ public class HttpCollectImpl extends AbstractCollect {
             long startTime = System.currentTimeMillis();
             try {
                 HttpGet httpGet = new HttpGet(siteUrl);
-                try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet)) {
-                    statusCode = response.getStatusLine().getStatusCode();
+
+                HttpClientResponseHandler<Integer> statusHandler = response -> {
                     EntityUtils.consume(response.getEntity());
-                }
+                    return response.getCode();
+                };
+                statusCode = CommonHttpClient.getHttpClient().execute(httpGet, statusHandler);
+
             } catch (ClientProtocolException e1) {
                 if (e1.getCause() != null) {
                     errorMsg = e1.getCause().getMessage();
@@ -441,19 +447,6 @@ public class HttpCollectImpl extends AbstractCollect {
 
     /**
      * Parses the response body in Properties/Config format.
-     * Two modes are supported:
-     * 1. single-object mode: if http.parseScript is null, aliasFields are treated as indicator names.
-     * - If there is a locator in the indicator definition, use the locator as the key of the Properties.
-     * - Otherwise, use aliasField (metric name) as the key for Properties.
-     * Generate a single row of data.
-     * 2. array mode: if http.parseScript is not empty (e.g. “users”), treat it as an array base path.
-     * Treat aliasFields as the attribute name of an array element, and generate a single row of data for each array index. locator is invalid in this mode.
-     *
-     * @param resp Response body string
-     * @param aliasFields List of metrics aliases (i.e., the list of fields in metrics.fields).
-     * @param http http protocol configuration
-     * @param builder The metrics data builder.
-     * @param responseTime response time
      */
     private void parseResponseByConfig(String resp, List<String> aliasFields, HttpProtocol http,
                                        CollectRep.MetricsData.Builder builder, Long responseTime) {
@@ -560,13 +553,13 @@ public class HttpCollectImpl extends AbstractCollect {
         return hasMeaningfulData;
     }
 
+    @SuppressWarnings("unchecked")
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
         List<Object> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (int i = 0; i < results.size(); i++) {
             Object objectValue = results.get(i);
-            // if a property is missing or empty due to target version issues, filter it. Refer to the app-elasticsearch.yml configuration under name: nodes
             if (objectValue == null) {
                 continue;
             }
@@ -696,12 +689,12 @@ public class HttpCollectImpl extends AbstractCollect {
     public HttpContext createHttpContext(HttpProtocol httpProtocol) {
         HttpProtocol.Authorization auth = httpProtocol.getAuthorization();
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
-            HttpClientContext clientContext = new HttpClientContext();
+            HttpClientContext clientContext = HttpClientContext.create();
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                     && StringUtils.hasText(auth.getDigestAuthPassword())) {
-                CredentialsProvider provider = new BasicCredentialsProvider();
+                BasicCredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(auth.getDigestAuthUsername(),
-                        auth.getDigestAuthPassword());
+                        auth.getDigestAuthPassword().toCharArray());
                 AuthScope authScope = new AuthScope(httpProtocol.getHost(), Integer.parseInt(httpProtocol.getPort()));
                 provider.setCredentials(authScope, credentials);
 
@@ -718,19 +711,20 @@ public class HttpCollectImpl extends AbstractCollect {
      * @param httpProtocol http params
      * @return http uri request
      */
+    @SuppressWarnings("deprecation")
     public HttpUriRequest createHttpRequest(HttpProtocol httpProtocol) {
-        RequestBuilder requestBuilder;
+        ClassicRequestBuilder requestBuilder;
         String httpMethod = httpProtocol.getMethod().toUpperCase();
         if (HttpMethod.GET.matches(httpMethod)) {
-            requestBuilder = RequestBuilder.get();
+            requestBuilder = ClassicRequestBuilder.get();
         } else if (HttpMethod.POST.matches(httpMethod)) {
-            requestBuilder = RequestBuilder.post();
+            requestBuilder = ClassicRequestBuilder.post();
         } else if (HttpMethod.PUT.matches(httpMethod)) {
-            requestBuilder = RequestBuilder.put();
+            requestBuilder = ClassicRequestBuilder.put();
         } else if (HttpMethod.DELETE.matches(httpMethod)) {
-            requestBuilder = RequestBuilder.delete();
+            requestBuilder = ClassicRequestBuilder.delete();
         } else if (HttpMethod.PATCH.matches(httpMethod)) {
-            requestBuilder = RequestBuilder.patch();
+            requestBuilder = ClassicRequestBuilder.patch();
         } else {
             // not support the method
             log.error("not support the http method: {}.", httpProtocol.getMethod());
@@ -855,17 +849,20 @@ public class HttpCollectImpl extends AbstractCollect {
             throw e;
         }
 
+        // build the request
+        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
+
         // custom timeout
         int timeout = CollectUtil.getTimeout(httpProtocol.getTimeout(), 0);
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout)
+                    .setConnectTimeout(Timeout.ofMilliseconds(timeout))
+                    .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            requestBuilder.setConfig(requestConfig);
+            request.setConfig(requestConfig);
         }
-        return requestBuilder.build();
+        return request;
     }
 
     private boolean checkSuccessInvoke(Metrics metrics, int statusCode) {

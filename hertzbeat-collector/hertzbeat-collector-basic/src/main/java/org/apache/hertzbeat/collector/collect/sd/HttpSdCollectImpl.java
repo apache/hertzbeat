@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,18 +41,21 @@ import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryResponseEntity;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.http.HttpHeaders;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.auth.CredentialsProvider;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriUtils;
@@ -73,20 +76,21 @@ public class HttpSdCollectImpl extends AbstractCollect {
 
         HttpUriRequest request = createHttpRequest(metrics.getHttp_sd());
         HttpContext httpContext = createHttpContext(metrics.getHttp_sd());
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
-            int statusCode = response.getStatusLine().getStatusCode();
+
+        HttpClientResponseHandler<Void> responseHandler = response -> {
+            int statusCode = response.getCode();
             if (statusCode != 200) {
                 log.warn("Failed to fetch sd...");
                 builder.setMsg("StatusCode " + statusCode);
                 builder.setCode(CollectRep.Code.FAIL);
-                return;
+                return null;
             }
 
             String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             TypeReference<List<ServiceDiscoveryResponseEntity>> typeReference = new TypeReference<>() {};
             final List<ServiceDiscoveryResponseEntity> responseEntityList = JsonUtil.fromJson(responseBody, typeReference);
             if (CollectionUtils.isEmpty(responseEntityList)) {
-                return;
+                return null;
             }
 
             responseEntityList.stream()
@@ -100,7 +104,17 @@ public class HttpSdCollectImpl extends AbstractCollect {
                 valueRowBuilder.addColumn(config.getPort());
                 builder.addValueRow(valueRowBuilder.build());
             });
+            return null;
+        };
+
+        try {
+            CommonHttpClient.getHttpClient().execute((HttpUriRequestBase) request, httpContext, responseHandler);
         } catch (IOException e) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.warn("Failed to fetch sd... {}", errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
+        } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("Failed to fetch sd... {}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
@@ -142,12 +156,12 @@ public class HttpSdCollectImpl extends AbstractCollect {
     public HttpContext createHttpContext(HttpProtocol httpSdProtocol) {
         HttpProtocol.Authorization auth = httpSdProtocol.getAuthorization();
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
-            HttpClientContext clientContext = new HttpClientContext();
+            HttpClientContext clientContext = HttpClientContext.create();
             if (org.springframework.util.StringUtils.hasText(auth.getDigestAuthUsername())
                     && org.springframework.util.StringUtils.hasText(auth.getDigestAuthPassword())) {
-                CredentialsProvider provider = new BasicCredentialsProvider();
+                BasicCredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(auth.getDigestAuthUsername(),
-                        auth.getDigestAuthPassword());
+                        auth.getDigestAuthPassword().toCharArray());
                 URL url;
                 try {
                     url = new URL(httpSdProtocol.getUrl());
@@ -171,8 +185,9 @@ public class HttpSdCollectImpl extends AbstractCollect {
      * @param httpSdProtocol http request set
      * @return http uri request
      */
+    @SuppressWarnings("deprecation")
     public HttpUriRequest createHttpRequest(HttpProtocol httpSdProtocol) {
-        RequestBuilder requestBuilder = RequestBuilder.get();
+        ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
 
         // The default request header can be overridden if customized
         // keep-alive
@@ -227,16 +242,18 @@ public class HttpSdCollectImpl extends AbstractCollect {
             throw e;
         }
 
+        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
+
         // custom timeout
         int timeout = CollectUtil.getTimeout(httpSdProtocol.getTimeout(), 0);
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout)
+                    .setConnectTimeout(Timeout.ofMilliseconds(timeout))
+                    .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            requestBuilder.setConfig(requestConfig);
+            request.setConfig(requestConfig);
         }
-        return requestBuilder.build();
+        return request;
     }
 }
