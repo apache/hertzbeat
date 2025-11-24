@@ -17,13 +17,17 @@
 
 package org.apache.hertzbeat.alert.calculate.realtime;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.calculate.realtime.window.LogWorker;
 import org.apache.hertzbeat.alert.calculate.realtime.window.TimeService;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.util.BackoffUtils;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.springframework.stereotype.Component;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -58,16 +62,23 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
 
     @Override
     public void run() {
+        ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 LogEntry logEntry = dataQueue.pollLogEntry();
-                if (logEntry != null) {
-                    processLogEntry(logEntry);
-                    dataQueue.sendLogEntryToStorage(logEntry);
+                if (logEntry == null) {
+                    continue;
                 }
+                backoff.reset();
+                processLogEntry(logEntry);
+                dataQueue.sendLogEntryToStorage(logEntry);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
+            } catch (CommonDataQueueUnknownException ue) {
+                if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
+                    break;
+                }
             } catch (Exception e) {
                 log.error("Error in log dispatch loop: {}", e.getMessage(), e);
             }
