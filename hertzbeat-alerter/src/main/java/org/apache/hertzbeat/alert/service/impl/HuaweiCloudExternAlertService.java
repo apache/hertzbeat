@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dto.HuaweiCloudExternAlert;
@@ -43,6 +44,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.text.MessageFormat;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,6 +71,8 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
     private static final String CERTIFICATE_TYPE = "X.509";
 
     private static final String CHARSET_UTF8 = StandardCharsets.UTF_8.name();
+
+    private static final String SUBSCRIBE_URL_PREFIX = "https://console.huaweicloud.com/smn/subscription/confirm";
 
     private final AlarmCommonReduce alarmCommonReduce;
 
@@ -197,6 +201,9 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
         if (StringUtils.isBlank(subscribeUrl)) {
             return;
         }
+        if (!subscribeUrl.startsWith(SUBSCRIBE_URL_PREFIX)) {
+            throw new SecurityException("Untrusted domain: " + subscribeUrl);
+        }
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet httpGet = new HttpGet(subscribeUrl);
             try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
@@ -303,6 +310,13 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
      */
     private X509Certificate getCertificate(String signCertUrl) throws Exception {
         URL url = new URL(signCertUrl);
+        if (!"https".equalsIgnoreCase(url.getProtocol())) {
+            throw new SecurityException("Only HTTPS is allowed");
+        }
+        boolean trusted = Arrays.stream(Region.values()).anyMatch(ep -> ep.getEndpoint().equals(url.getHost()));
+        if (!trusted) {
+            throw new SecurityException("Untrusted domain: " + url.getHost());
+        }
         try (InputStream in = url.openStream()) {
             CertificateFactory cf = CertificateFactory.getInstance(CERTIFICATE_TYPE);
             return (X509Certificate) cf.generateCertificate(in);
@@ -340,4 +354,48 @@ public class HuaweiCloudExternAlertService implements ExternAlertService {
         return "huaweicloud-ces";
     }
 
+
+    @Getter
+    private enum Region {
+
+        AF_SOUTH_1("af-south-1", "smn.af-south-1.myhuaweicloud.com"),
+        CN_NORTH_4("cn-north-4", "smn.cn-north-4.myhuaweicloud.com"),
+        CN_NORTH_1("cn-north-1", "smn.cn-north-1.myhuaweicloud.com"),
+        CN_EAST_2("cn-east-2", "smn.cn-east-2.myhuaweicloud.com"),
+        CN_EAST_3("cn-east-3", "smn.cn-east-3.myhuaweicloud.com"),
+        CN_SOUTH_1("cn-south-1", "smn.cn-south-1.myhuaweicloud.com"),
+        CN_SOUTHWEST_2("cn-southwest-2", "smn.cn-southwest-2.myhuaweicloud.com"),
+        AP_SOUTHEAST_2("ap-southeast-2", "smn.ap-southeast-2.myhuaweicloud.com"),
+        AP_SOUTHEAST_1("ap-southeast-1", "smn.ap-southeast-1.myhuaweicloud.com"),
+        AP_SOUTHEAST_3("ap-southeast-3", "smn.ap-southeast-3.myhuaweicloud.com"),
+        CN_NORTH_2("cn-north-2", "smn.cn-north-2.myhuaweicloud.cn"),
+        CN_SOUTH_2("cn-south-2", "smn.cn-south-2.myhuaweicloud.com"),
+        NA_MEXICO_1("na-mexico-1", "smn.na-mexico-1.myhuaweicloud.com"),
+        LA_NORTH_2("la-north-2", "smn.la-north-2.myhuaweicloud.com"),
+        SA_BRAZIL_1("sa-brazil-1", "smn.sa-brazil-1.myhuaweicloud.com"),
+        LA_SOUTH_2("la-south-2", "smn.la-south-2.myhuaweicloud.com"),
+        CN_NORTH_9("cn-north-9", "smn.cn-north-9.myhuaweicloud.com"),
+        AP_SOUTHEAST_4("ap-southeast-4", "smn.ap-southeast-4.myhuaweicloud.com"),
+        TR_WEST_1("tr-west-1", "smn.tr-west-1.myhuaweicloud.com"),
+        EU_WEST_101("eu-west-101", "smn.eu-west-101.myhuaweicloud.eu"),
+        EU_WEST_0("eu-west-0", "smn.eu-west-0.myhuaweicloud.com"),
+        MY_KUALALUMPUR_1("my-kualalumpur-1", "smn.my-kualalumpur-1.myhuaweicloud.com"),
+        RU_MOSCOW_1("ru-moscow-1", "smn.ru-moscow-1.myhuaweicloud.com"),
+        AE_AD_1("ae-ad-1", "smn.ae-ad-1.myhuaweicloud.com"),
+        CN_SOUTH_4("cn-south-4", "smn.cn-south-4.myhuaweicloud.com"),
+        CN_EAST_5("cn-east-5", "smn.cn-east-5.myhuaweicloud.com"),
+        CN_EAST_4("cn-east-4", "smn.cn-east-4.myhuaweicloud.com"),
+        CN_NORTH_12("cn-north-12", "smn.cn-north-12.myhuaweicloud.com"),
+        CN_NORTH_11("cn-north-11", "smn.cn-north-11.myhuaweicloud.com"),
+        CN_SOUTHWEST_3("cn-southwest-3", "smn.cn-southwest-3.myhuaweicloud.com");
+
+        private final String id;
+
+        private final String endpoint;
+
+        Region(String id, String endpoint) {
+            this.id = id;
+            this.endpoint = endpoint;
+        }
+    }
 }
