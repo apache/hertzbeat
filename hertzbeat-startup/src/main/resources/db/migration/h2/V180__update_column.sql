@@ -80,6 +80,8 @@ void migrateHistoryTable(java.sql.Connection conn) throws java.sql.SQLException 
                 stmt.execute("ALTER TABLE HZB_HISTORY ADD COLUMN instance VARCHAR(255)");
             } else {
                 stmt.execute("UPDATE HZB_HISTORY SET metric_labels = instance WHERE metric_labels IS NULL");
+                stmt.execute("UPDATE HZB_HISTORY SET instance = NULL");
+                stmt.execute("ALTER TABLE HZB_HISTORY ALTER COLUMN instance SET DATA TYPE VARCHAR(255)");
             }
             stmt.execute("UPDATE HZB_HISTORY h SET instance = (SELECT m.instance FROM HZB_MONITOR m WHERE m.id = h.monitor_id) WHERE h.monitor_id IS NOT NULL");
             stmt.execute("ALTER TABLE HZB_HISTORY DROP COLUMN monitor_id");

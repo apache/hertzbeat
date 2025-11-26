@@ -104,6 +104,11 @@ BEGIN
             DEALLOCATE PREPARE stmt_add;
         ELSE
             UPDATE hzb_history SET metric_labels = instance WHERE metric_labels IS NULL;
+            UPDATE hzb_history SET instance = NULL;
+            SET @sql_resize = 'ALTER TABLE hzb_history MODIFY COLUMN instance VARCHAR(255)';
+            PREPARE stmt_resize FROM @sql_resize;
+            EXECUTE stmt_resize;
+            DEALLOCATE PREPARE stmt_resize;
         END IF;
         
         UPDATE hzb_history h JOIN hzb_monitor m ON h.monitor_id = m.id SET h.instance = m.instance;

@@ -58,6 +58,8 @@ BEGIN
             ALTER TABLE hzb_history ADD COLUMN instance VARCHAR(255);
         ELSE
             UPDATE hzb_history SET metric_labels = instance WHERE metric_labels IS NULL;
+            UPDATE hzb_history SET instance = NULL;
+            ALTER TABLE hzb_history ALTER COLUMN instance TYPE VARCHAR(255);
         END IF;
         
         UPDATE hzb_history h
