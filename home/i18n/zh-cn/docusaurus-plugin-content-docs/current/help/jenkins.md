@@ -1,5 +1,5 @@
 ---
-id: Jenkins
+id: jenkins
 title: 监控：Jenkins
 sidebar_label: Jenkins
 keywords: [ 开源监控系统, CI/CD, DevOps, Jenkins监控 ]

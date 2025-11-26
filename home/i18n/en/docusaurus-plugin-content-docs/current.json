@@ -45,7 +45,7 @@
   },
   "sidebar.docs.category.server": {
     "message": "Server Monitor",
-    "description": "The label for category Server in sidebar docs"
+    "description": "The label for category server in sidebar docs"
   },
   "sidebar.docs.category.alert": {
     "message": "Alerting",
@@ -124,11 +124,11 @@
     "description": "The label for category NGQL in sidebar docs"
   },
   "sidebar.docs.category.llm": {
-    "message": "Ai LLM Monitor",
+    "message": "AI LLM Monitor",
     "description": "The label for category llm in sidebar docs"
   },
   "sidebar.docs.category.aiConfig": {
-    "message": "Ai LLM Config",
+    "message": "AI LLM Config",
     "description": "The label for category aiConfig in sidebar docs"
   },
   "sidebar.docs.category.install": {
@@ -154,5 +154,9 @@
   "sidebar.docs.category.extern-deploy": {
     "message": "Extern Install",
     "description": "The label for category extern-deploy in sidebar docs"
+  },
+  "sidebar.docs.category.log": {
+    "message": "Log",
+    "description": "The label for category log in sidebar docs"
   }
 }
