@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import java.util.Optional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +25,9 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.util.BackoffUtils;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
@@ -33,6 +35,8 @@ import org.apache.hertzbeat.warehouse.store.history.tsdb.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 /**
  * dispatch storage metrics data
@@ -69,12 +73,14 @@ public class DataStorageDispatch {
     protected void startPersistentDataStorage() {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage();
                     if (metricsData == null) {
                         continue;
                     }
+                    backoff.reset();
                     try {
                         calculateMonitorStatus(metricsData);
                         historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
@@ -84,6 +90,10 @@ public class DataStorageDispatch {
                     }
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
+                        break;
+                    }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -94,6 +104,7 @@ public class DataStorageDispatch {
 
     protected void startLogDataStorage() {
         Runnable runnable = () -> {
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             Thread.currentThread().setName("warehouse-log-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -101,6 +112,7 @@ public class DataStorageDispatch {
                     if (logEntry == null) {
                         continue;
                     }
+                    backoff.reset();
                     historyDataWriter.ifPresent(dataWriter -> {
                         try {
                             dataWriter.saveLogData(logEntry);
@@ -110,6 +122,10 @@ public class DataStorageDispatch {
                     });
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
+                        break;
+                    }
                 } catch (Exception e) {
                     log.error("Error in log data storage thread: {}", e.getMessage(), e);
                 }

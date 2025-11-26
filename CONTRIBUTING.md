@@ -20,7 +20,7 @@
 
 - 💬**Suggestion**: You can also make some suggestions to the project or community to promote the healthy development of the community;
 
-More see [Contribution Types](https://allcontributors.org/docs/en/emoji-key)    
+More see [Contribution Types](https://allcontributors.org/emoji-key)    
 
 Even small corrections to typos are very welcome :)   
 
@@ -161,7 +161,7 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 - 💬**建议**：也可以对项目或者社区提出一些建议，促进社区的良性发展；  
 
-更多贡献方式参见 [Contribution Types](https://allcontributors.org/docs/en/emoji-key)
+更多贡献方式参见 [Contribution Types](https://allcontributors.org/emoji-key)
 
 即便是小到错别字的修正我们也都非常欢迎 :)   
 

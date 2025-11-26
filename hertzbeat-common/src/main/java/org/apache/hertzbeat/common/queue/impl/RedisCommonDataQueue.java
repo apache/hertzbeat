@@ -30,9 +30,12 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.serialize.RedisLogEntryCodec;
 import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Objects;
 
 /**
  * common data queue implement redis.
@@ -57,6 +60,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final String logEntryQueueName;
     private final String logEntryToStorageQueueName;
     private final CommonProperties.RedisProperties redisProperties;
+    private final Long waitTimeout;
 
     public RedisCommonDataQueue(CommonProperties properties) {
 
@@ -84,6 +88,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
         this.logEntryQueueName = redisProperties.getLogEntryQueueName();
         this.logEntryToStorageQueueName = redisProperties.getLogEntryToStorageQueueName();
+        this.waitTimeout = Objects.requireNonNullElse(redisProperties.getWaitTimeout(), 1L);
     }
 
     @Override
@@ -170,7 +175,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         try {
             // Use BRPOP for blocking pop with the configured timeout.
             // If data arrives, it returns immediately; if it times out, it returns null.
-            KeyValue<String, T> keyData = commands.brpop(1L, key);
+            KeyValue<String, T> keyData = commands.brpop(waitTimeout, key);
             if (keyData != null) {
                 return keyData.getValue();
             } else {
@@ -179,7 +184,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
             }
         } catch (Exception e) {
             log.error("Redis BRPOP failed: {}", e.getMessage());
-            return null;
+            throw new CommonDataQueueUnknownException(e.getMessage(), e);
         }
     }
 
