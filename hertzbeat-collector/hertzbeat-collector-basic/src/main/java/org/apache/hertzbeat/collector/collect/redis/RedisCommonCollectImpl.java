@@ -67,6 +67,8 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     private static final String CLUSTER = "3";
 
+    private static final String SINGLE = "1";
+
     private static final String CLUSTER_INFO = "cluster";
 
     private static final String UNIQUE_IDENTITY = "identity";
@@ -140,7 +142,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @return data
      */
     private List<Map<String, String>> getClusterRedisInfo(Metrics metrics) throws GeneralSecurityException, IOException {
-        Map<String, StatefulRedisClusterConnection<String, String>> connectionMap = getConnectionList(metrics.getRedis());
+        Map<String, StatefulRedisConnection<String, String>> connectionMap = getConnectionList(metrics.getRedis());
         List<Map<String, String>> list = new ArrayList<>(connectionMap.size());
         connectionMap.forEach((identity, connection) ->{
             String info = connection.sync().info(metrics.getName());
@@ -214,16 +216,21 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @param redisProtocol protocol
      * @return connection map
      */
-    private Map<String, StatefulRedisClusterConnection<String, String>> getConnectionList(RedisProtocol redisProtocol) throws GeneralSecurityException, IOException {
+    private Map<String, StatefulRedisConnection<String, String>> getConnectionList(RedisProtocol redisProtocol) throws GeneralSecurityException, IOException {
         // first connection
         StatefulRedisClusterConnection<String, String> connection = getClusterConnection(redisProtocol);
         Partitions partitions = connection.getPartitions();
-        Map<String, StatefulRedisClusterConnection<String, String>> clusterConnectionMap = new HashMap<>(partitions.size());
+        Map<String, StatefulRedisConnection<String, String>> clusterConnectionMap = new HashMap<>(partitions.size());
         for (RedisClusterNode partition : partitions) {
             RedisURI uri = partition.getUri();
-            redisProtocol.setHost(uri.getHost());
-            redisProtocol.setPort(String.valueOf(uri.getPort()));
-            StatefulRedisClusterConnection<String, String> clusterConnection = getClusterConnection(redisProtocol);
+            RedisProtocol singleRedisProtocol = RedisProtocol.builder()
+                    .host(uri.getHost())
+                    .port(String.valueOf(uri.getPort()))
+                    .username(redisProtocol.getUsername())
+                    .password(redisProtocol.getPassword())
+                    .pattern(SINGLE)
+                    .build();
+            StatefulRedisConnection<String, String> clusterConnection = getSingleConnection(singleRedisProtocol);
             clusterConnectionMap.put(doUri(uri.getHost(), uri.getPort()), clusterConnection);
         }
         return clusterConnectionMap;
