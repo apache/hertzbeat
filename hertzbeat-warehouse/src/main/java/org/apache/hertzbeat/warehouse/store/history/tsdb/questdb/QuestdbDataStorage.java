@@ -65,12 +65,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class QuestdbDataStorage extends AbstractHistoryDataStorage {
 
-    private static final String QUERY_HISTORY_SQL = "SELECT timestamp AS ts, metric_labels, %s AS value FROM \"%s\" WHERE timestamp >= %s ORDER BY timestamp DESC";
+    private static final String QUERY_HISTORY_SQL = "SELECT timestamp AS ts, metric_labels, \"%s\" AS value FROM \"%s\" WHERE timestamp >= %s ORDER BY timestamp DESC";
 
-    private static final String QUERY_HISTORY_SQL_WITH_INSTANCE = "SELECT timestamp AS ts, metric_labels, %s AS value FROM \"%s\" WHERE metric_labels = '%s' AND timestamp >= %s ORDER BY timestamp DESC";
+    private static final String QUERY_HISTORY_SQL_WITH_INSTANCE = "SELECT timestamp AS ts, metric_labels, \"%s\" AS value FROM \"%s\" WHERE metric_labels = '%s' AND timestamp >= %s ORDER BY timestamp DESC";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
-            "SELECT timestamp AS ts, first(%s) AS origin, avg(%s) AS mean, max(%s) AS max, min(%s) AS min FROM \"%s\" WHERE metric_labels = '%s' AND timestamp >= %s SAMPLE BY 4h";
+            "SELECT timestamp AS ts, first(\"%s\") AS origin, avg(\"%s\") AS mean, max(\"%s\") AS max, min(\"%s\") AS min FROM \"%s\" WHERE metric_labels = '%s' AND timestamp >= %s SAMPLE BY 4h";
 
     private static final String QUERY_INSTANCE_SQL = "SELECT DISTINCT metric_labels FROM \"%s\"";
 

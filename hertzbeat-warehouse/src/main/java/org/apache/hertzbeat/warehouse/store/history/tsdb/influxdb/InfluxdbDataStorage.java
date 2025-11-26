@@ -71,11 +71,11 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String CREATE_DATABASE = "CREATE DATABASE %s";
 
-    private static final String QUERY_HISTORY_SQL = "SELECT metric_labels, %s FROM %s WHERE time >= now() - %s order by time desc";
+    private static final String QUERY_HISTORY_SQL = "SELECT metric_labels, \"%s\" FROM \"%s\" WHERE time >= now() - %s order by time desc";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
-            "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE metric_labels = '%s' and time >= now() - %s GROUP BY time(4h)";
-    private static final String QUERY_INSTANCE_SQL = "show tag values from %s with key = \"metric_labels\"";
+            "SELECT FIRST(\"%s\"), MEAN(\"%s\"), MAX(\"%s\"), MIN(\"%s\") FROM \"%s\" WHERE metric_labels = '%s' and time >= now() - %s GROUP BY time(4h)";
+    private static final String QUERY_INSTANCE_SQL = "show tag values from \"%s\" with key = \"metric_labels\"";
 
     private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %d DEFAULT";
 
