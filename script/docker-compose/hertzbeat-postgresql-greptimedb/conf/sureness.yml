@@ -73,7 +73,7 @@ resourceRole:
   - /api/logs/ingest/**===post===[admin,user]
 
 # config the resource restful api that need bypass auth protection
-# rule: api===method 
+# rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alert/sse/**===*

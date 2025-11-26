@@ -125,6 +125,11 @@ public class CommonProperties {
          */
         private String logEntryToStorageQueueName;
 
+        /**
+         * Timeout for blocking wait in seconds (defaults to 1 second if not configured)
+         */
+        private Long waitTimeout;
+
     }
 
     /**

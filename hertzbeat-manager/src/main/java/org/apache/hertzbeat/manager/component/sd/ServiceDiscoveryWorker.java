@@ -18,9 +18,6 @@
 package org.apache.hertzbeat.manager.component.sd;
 
 import com.google.common.collect.Maps;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
@@ -30,6 +27,9 @@ import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.util.BackoffUtils;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -38,6 +38,14 @@ import org.apache.hertzbeat.manager.scheduler.ManagerWorkerPool;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service Discovery Worker
@@ -76,8 +84,13 @@ public class ServiceDiscoveryWorker implements InitializingBean {
     private class SdUpdateTask implements Runnable {
         @Override
         public void run() {
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try (final CollectRep.MetricsData metricsData = dataQueue.pollServiceDiscoveryData()) {
+                    if (metricsData == null) {
+                        continue;
+                    }
+                    backoff.reset();
                     Long monitorId = metricsData.getId();
                     final Monitor mainMonitor = monitorDao.findById(monitorId).orElse(null);
                     if (mainMonitor == null) {
@@ -110,14 +123,13 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                                 .filter(p -> !p.isEmpty())
                                 .orElse(defaultPort);
                         final String keyStr = host + ":" + port;
-                        final String instance = Objects.equals(port, "")  ? host : host + ":" + port;
                         if (subMonitorBindMap.containsKey(keyStr)) {
                             subMonitorBindMap.remove(keyStr);
                             continue;
                         }
                         Monitor newMonitor = mainMonitor.clone();
                         newMonitor.setId(null);
-                        newMonitor.setInstance(instance);
+                        newMonitor.setHost(host);
                         newMonitor.setName(newMonitor.getName() + "-" + host + ":" + port);
                         newMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
                         newMonitor.setGmtCreate(LocalDateTime.now());
@@ -150,6 +162,10 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     final Set<Long> needCancelMonitorIdSet = subMonitorBindMap.values().stream()
                             .map(MonitorBind::getMonitorId).collect(Collectors.toSet());
                     monitorService.deleteMonitors(needCancelMonitorIdSet);
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
+                        break;
+                    }
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
                 }
