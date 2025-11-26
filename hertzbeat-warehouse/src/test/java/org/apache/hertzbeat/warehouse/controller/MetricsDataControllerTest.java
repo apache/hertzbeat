@@ -161,7 +161,7 @@ class MetricsDataControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data.id").value(monitorId))
+                .andExpect(jsonPath("$.data.instance").value(instance))
                 .andExpect(jsonPath("$.data.metrics").value(metrics))
                 .andExpect(jsonPath("$.data.field.name").value(metric))
                 .andExpect(jsonPath("$.data.field.type").value(String.valueOf(CommonConstants.TYPE_NUMBER)))
