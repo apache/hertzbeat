@@ -87,7 +87,6 @@ CREATE PROCEDURE MigrateHistoryTable()
 BEGIN
     DECLARE monitor_id_exists INT;
     DECLARE metric_labels_exists INT;
-    DECLARE instance_exists INT;
 
     SELECT COUNT(*) INTO monitor_id_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_history' AND COLUMN_NAME = 'monitor_id';
     SELECT COUNT(*) INTO metric_labels_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_history' AND COLUMN_NAME = 'metric_labels';
@@ -98,14 +97,13 @@ BEGIN
             PREPARE stmt_rename FROM @sql_rename;
             EXECUTE stmt_rename;
             DEALLOCATE PREPARE stmt_rename;
-        END IF;
-        
-        SELECT COUNT(*) INTO instance_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_history' AND COLUMN_NAME = 'instance';
-        IF instance_exists = 0 THEN
+
             SET @sql_add = 'ALTER TABLE hzb_history ADD COLUMN instance VARCHAR(255)';
             PREPARE stmt_add FROM @sql_add;
             EXECUTE stmt_add;
             DEALLOCATE PREPARE stmt_add;
+        ELSE
+            UPDATE hzb_history SET metric_labels = instance WHERE metric_labels IS NULL;
         END IF;
         
         UPDATE hzb_history h JOIN hzb_monitor m ON h.monitor_id = m.id SET h.instance = m.instance;

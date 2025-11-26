@@ -54,10 +54,10 @@ BEGIN
     IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_history' AND column_name = 'monitor_id') THEN
         IF NOT EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_history' AND column_name = 'metric_labels') THEN
             ALTER TABLE hzb_history RENAME COLUMN instance TO metric_labels;
-        END IF;
-        
-        IF NOT EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_history' AND column_name = 'instance') THEN
+            ALTER TABLE hzb_history ALTER COLUMN metric_labels TYPE VARCHAR(5000);
             ALTER TABLE hzb_history ADD COLUMN instance VARCHAR(255);
+        ELSE
+            UPDATE hzb_history SET metric_labels = instance WHERE metric_labels IS NULL;
         END IF;
         
         UPDATE hzb_history h

@@ -76,13 +76,10 @@ void migrateHistoryTable(java.sql.Connection conn) throws java.sql.SQLException 
         try (java.sql.Statement stmt = conn.createStatement()) {
             if (!metricLabelsExists) {
                 stmt.execute("ALTER TABLE HZB_HISTORY ALTER COLUMN instance RENAME TO metric_labels");
-            }
-            boolean instanceExists = false;
-            try (java.sql.ResultSet rs = conn.getMetaData().getColumns(null, null, "HZB_HISTORY", "INSTANCE")) {
-                if (rs.next()) instanceExists = true;
-            }
-            if (!instanceExists) {
+                stmt.execute("ALTER TABLE HZB_HISTORY ALTER COLUMN metric_labels SET DATA TYPE VARCHAR(5000)");
                 stmt.execute("ALTER TABLE HZB_HISTORY ADD COLUMN instance VARCHAR(255)");
+            } else {
+                stmt.execute("UPDATE HZB_HISTORY SET metric_labels = instance WHERE metric_labels IS NULL");
             }
             stmt.execute("UPDATE HZB_HISTORY h SET instance = (SELECT m.instance FROM HZB_MONITOR m WHERE m.id = h.monitor_id) WHERE h.monitor_id IS NOT NULL");
             stmt.execute("ALTER TABLE HZB_HISTORY DROP COLUMN monitor_id");
