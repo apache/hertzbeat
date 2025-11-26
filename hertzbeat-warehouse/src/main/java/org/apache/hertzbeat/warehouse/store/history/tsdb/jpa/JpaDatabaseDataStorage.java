@@ -242,7 +242,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
             } else {
                 value = dataItem.getStr();
             }
-            String instanceValue = dataItem.getInstance() == null ? "" : dataItem.getInstance();
+            String instanceValue = dataItem.getMetricLabels() == null ? "" : dataItem.getMetricLabels();
             List<Value> valueList = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             valueList.add(new Value(value, dataItem.getTime()));
         }
