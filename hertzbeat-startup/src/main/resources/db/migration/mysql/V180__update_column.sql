@@ -81,4 +81,43 @@ INNER JOIN hzb_param p ON m.id = p.monitor_id AND p.field = 'port'
 SET m.instance = CONCAT(m.instance, ':', p.param_value)
 WHERE m.instance IS NOT NULL;
 
+-- Migrate history table
+DELIMITER //
+CREATE PROCEDURE MigrateHistoryTable()
+BEGIN
+    DECLARE monitor_id_exists INT;
+    DECLARE metric_labels_exists INT;
+    DECLARE instance_exists INT;
+
+    SELECT COUNT(*) INTO monitor_id_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_history' AND COLUMN_NAME = 'monitor_id';
+    SELECT COUNT(*) INTO metric_labels_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_history' AND COLUMN_NAME = 'metric_labels';
+    
+    IF monitor_id_exists > 0 THEN
+        IF metric_labels_exists = 0 THEN
+            SET @sql_rename = 'ALTER TABLE hzb_history CHANGE instance metric_labels VARCHAR(5000)';
+            PREPARE stmt_rename FROM @sql_rename;
+            EXECUTE stmt_rename;
+            DEALLOCATE PREPARE stmt_rename;
+        END IF;
+        
+        SELECT COUNT(*) INTO instance_exists FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_history' AND COLUMN_NAME = 'instance';
+        IF instance_exists = 0 THEN
+            SET @sql_add = 'ALTER TABLE hzb_history ADD COLUMN instance VARCHAR(255)';
+            PREPARE stmt_add FROM @sql_add;
+            EXECUTE stmt_add;
+            DEALLOCATE PREPARE stmt_add;
+        END IF;
+        
+        UPDATE hzb_history h JOIN hzb_monitor m ON h.monitor_id = m.id SET h.instance = m.instance;
+        
+        SET @sql_drop = 'ALTER TABLE hzb_history DROP COLUMN monitor_id';
+        PREPARE stmt_drop FROM @sql_drop;
+        EXECUTE stmt_drop;
+        DEALLOCATE PREPARE stmt_drop;
+    END IF;
+END //
+DELIMITER ;
+CALL MigrateHistoryTable();
+DROP PROCEDURE IF EXISTS MigrateHistoryTable;
+
 COMMIT;

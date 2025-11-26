@@ -48,4 +48,25 @@ SET instance = m.instance || ':' || p.param_value
 FROM HZB_PARAM p
 WHERE m.id = p.monitor_id AND p.field = 'port';
 
+-- Migrate history table
+DO $$
+BEGIN
+    IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_history' AND column_name = 'monitor_id') THEN
+        IF NOT EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_history' AND column_name = 'metric_labels') THEN
+            ALTER TABLE hzb_history RENAME COLUMN instance TO metric_labels;
+        END IF;
+        
+        IF NOT EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'hzb_history' AND column_name = 'instance') THEN
+            ALTER TABLE hzb_history ADD COLUMN instance VARCHAR(255);
+        END IF;
+        
+        UPDATE hzb_history h
+        SET instance = m.instance
+        FROM hzb_monitor m
+        WHERE h.monitor_id = m.id;
+        
+        ALTER TABLE hzb_history DROP COLUMN monitor_id;
+    END IF;
+END $$;
+
 commit;

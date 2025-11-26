@@ -59,3 +59,36 @@ DROP ALIAS RENAME_HOST_TO_INSTANCE;
 UPDATE HZB_MONITOR m
 SET instance = CONCAT(instance, ':', (SELECT param_value FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port'))
 WHERE EXISTS (SELECT 1 FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port');
+
+-- Migrate history table
+CREATE ALIAS MIGRATE_HISTORY_TABLE AS $$
+void migrateHistoryTable(java.sql.Connection conn) throws java.sql.SQLException {
+    boolean monitorIdExists = false;
+    boolean metricLabelsExists = false;
+    try (java.sql.ResultSet rs = conn.getMetaData().getColumns(null, null, "HZB_HISTORY", "MONITOR_ID")) {
+        if (rs.next()) monitorIdExists = true;
+    }
+    try (java.sql.ResultSet rs = conn.getMetaData().getColumns(null, null, "HZB_HISTORY", "METRIC_LABELS")) {
+        if (rs.next()) metricLabelsExists = true;
+    }
+    
+    if (monitorIdExists) {
+        try (java.sql.Statement stmt = conn.createStatement()) {
+            if (!metricLabelsExists) {
+                stmt.execute("ALTER TABLE HZB_HISTORY ALTER COLUMN instance RENAME TO metric_labels");
+            }
+            boolean instanceExists = false;
+            try (java.sql.ResultSet rs = conn.getMetaData().getColumns(null, null, "HZB_HISTORY", "INSTANCE")) {
+                if (rs.next()) instanceExists = true;
+            }
+            if (!instanceExists) {
+                stmt.execute("ALTER TABLE HZB_HISTORY ADD COLUMN instance VARCHAR(255)");
+            }
+            stmt.execute("UPDATE HZB_HISTORY h SET instance = (SELECT m.instance FROM HZB_MONITOR m WHERE m.id = h.monitor_id) WHERE h.monitor_id IS NOT NULL");
+            stmt.execute("ALTER TABLE HZB_HISTORY DROP COLUMN monitor_id");
+        }
+    }
+}
+$$;
+CALL MIGRATE_HISTORY_TABLE();
+DROP ALIAS MIGRATE_HISTORY_TABLE;
