@@ -116,7 +116,7 @@ class MetricsDataControllerTest {
 
     @Test
     void getMetricHistoryData() throws Exception {
-        final long monitorId = 343254354;
+        final String instance = "127.0.0.1:8081";
         final String app = "linux";
         final String metrics = "cpu";
         final String metric = "usage";
@@ -125,11 +125,11 @@ class MetricsDataControllerTest {
         final String label = "disk2";
         final String history = "6h";
         final Boolean interval = false;
-        final String getUrl = "/api/monitor/" + monitorId + "/metric/" + metricFull;
-        final String getUrlFail = "/api/monitor/" + monitorId + "/metric/" + metricFullFail;
+        final String getUrl = "/api/monitor/" + instance + "/metric/" + metricFull;
+        final String getUrlFail = "/api/monitor/" + instance + "/metric/" + metricFullFail;
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("monitorId", String.valueOf(monitorId));
+        params.add("instance", instance);
         params.add("label", label);
         params.add("history", history);
         params.add("interval", String.valueOf(interval));
@@ -151,12 +151,12 @@ class MetricsDataControllerTest {
         assertTrue(exception.getMessage().contains("IllegalArgumentException"));
 
         MetricsHistoryData metricsHistoryData = MetricsHistoryData.builder()
-                .id(monitorId)
+                .instance(instance)
                 .metrics(metrics)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
-        lenient().when(metricsDataService.getMetricHistoryData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history), eq(interval)))
+        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history), eq(interval)))
                 .thenReturn(metricsHistoryData);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())

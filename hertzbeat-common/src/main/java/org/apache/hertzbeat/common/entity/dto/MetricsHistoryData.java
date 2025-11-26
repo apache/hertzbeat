@@ -36,7 +36,7 @@ import lombok.NoArgsConstructor;
 public class MetricsHistoryData {
 
     @Schema(title = "Monitor ID")
-    private Long id;
+    private String instance;
 
     @Schema(title = "Monitoring Type")
     private String app;

@@ -71,16 +71,13 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String CREATE_DATABASE = "CREATE DATABASE %s";
 
-    private static final String QUERY_HISTORY_SQL = "SELECT instance, %s FROM %s WHERE time >= now() - %s order by time desc";
-
-    private static final String QUERY_HISTORY_SQL_WITH_INSTANCE = "SELECT instance, %s FROM %s WHERE instance = '%s' and time >= now() - %s order by time desc";
+    private static final String QUERY_HISTORY_SQL = "SELECT metric_labels, %s FROM %s WHERE time >= now() - %s order by time desc";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
-            "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE instance = '%s' and time >= now() - %s GROUP BY time(4h)";
+            "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE metric_labels = '%s' and time >= now() - %s GROUP BY time(4h)";
+    private static final String QUERY_INSTANCE_SQL = "show tag values from %s with key = \"metric_labels\"";
 
     private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %d DEFAULT";
-
-    private static final String QUERY_INSTANCE_SQL = "show tag values from %s with key = \"instance\"";
 
     private InfluxDB influxDb;
 
@@ -153,11 +150,11 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         if (metricsData.getValues().isEmpty()) {
-            log.info("[warehouse influxdb] flush metrics data {} is null, ignore.", metricsData.getId());
+            log.info("[warehouse influxdb] flush metrics data {} is null, ignore.", metricsData.getInstance());
             return;
         }
 
-        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId());
+        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance());
         List<Point> points = new ArrayList<>();
         
         try {
@@ -186,7 +183,7 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
                         labels.put(cell.getField().getName(), cell.getValue());
                     }
                 });
-                builder.tag("instance", JsonUtil.toJson(labels));
+                builder.tag("metric_labels", JsonUtil.toJson(labels));
                 points.add(builder.build());
             }
 
@@ -199,10 +196,9 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, monitorId);
-        String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history)
-                : String.format(QUERY_HISTORY_SQL_WITH_INSTANCE, metric, table, label, history);
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+        String table = this.generateTable(app, metrics, instance);
+        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         try {
             QueryResult selectResult = this.influxDb.query(new Query(selectSql, DATABASE), TimeUnit.MILLISECONDS);
@@ -230,26 +226,21 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, monitorId);
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
+        String table = this.generateTable(app, metrics, instance);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
-        if (label != null) {
-            instances.add(label);
-        }
-        if (instances.isEmpty()) {
-            // query the instance near 1week
-            String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
-            QueryResult instanceQueryResult = this.influxDb.query(new Query(queryInstanceSql, DATABASE), TimeUnit.MILLISECONDS);
-            for (QueryResult.Result result : instanceQueryResult.getResults()) {
-                if (result.getSeries() == null) {
-                    continue;
-                }
-                for (QueryResult.Series series : result.getSeries()) {
-                    for (List<Object> value : series.getValues()) {
-                        if (value != null && value.get(1) != null) {
-                            instances.add(value.get(1).toString());
-                        }
+        // query all metric_labels
+        String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
+        QueryResult instanceQueryResult = this.influxDb.query(new Query(queryInstanceSql, DATABASE), TimeUnit.MILLISECONDS);
+        for (QueryResult.Result result : instanceQueryResult.getResults()) {
+            if (result.getSeries() == null) {
+                continue;
+            }
+            for (QueryResult.Series series : result.getSeries()) {
+                for (List<Object> value : series.getValues()) {
+                    if (value != null && value.get(1) != null) {
+                        instances.add(value.get(1).toString());
                     }
                 }
             }
@@ -309,8 +300,8 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
         return instanceValueMap;
     }
 
-    private String generateTable(String app, String metrics, Long monitorId) {
-        return app + "_" + metrics + "_" + monitorId;
+    private String generateTable(String app, String metrics, String instance) {
+        return app + "_" + metrics + "_" + instance;
     }
 
     private long parseTimeToMillis(Object time) {

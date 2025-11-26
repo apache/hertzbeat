@@ -56,7 +56,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 /**
- * data storage by mysql/h2 - jpa
+ * data storage by mysql/h2/pgsql - jpa
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.jpa", name = "enabled", havingValue = "true")
@@ -126,7 +126,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         if (metricsData.getValues().isEmpty()) {
-            log.info("[warehouse jpa] flush metrics data {} is null, ignore.", metricsData.getId());
+            log.info("[warehouse jpa] flush metrics data {} is null, ignore.", metricsData.getInstance());
             return;
         }
         String monitorType = metricsData.getApp();
@@ -142,7 +142,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 List<History> singleHistoryList = new ArrayList<>();
 
                 rowWrapper.cellStream().forEach(cell -> singleHistoryList.add(buildHistory(metricsData, cell, monitorType, metrics, labels)));
-                singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
+                singleHistoryList.forEach(history -> history.setMetricLabels(JsonUtil.toJson(labels)));
 
                 allHistoryList.addAll(singleHistoryList);
             }
@@ -155,7 +155,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     private History buildHistory(CollectRep.MetricsData metricsData, ArrowCell cell, String monitorType, String metrics, Map<String, String> labels) {
         History.HistoryBuilder historyBuilder = History.builder()
-                .monitorId(metricsData.getId())
+                .instance(metricsData.getInstance())
                 .app(monitorType)
                 .metrics(metrics)
                 .time(metricsData.getTime())
@@ -199,26 +199,21 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         Specification<History> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
-            Predicate predicateMonitorId = criteriaBuilder.equal(root.get("monitorId"), monitorId);
+            Predicate predicateInstance = criteriaBuilder.equal(root.get("instance"), instance);
             Predicate predicateMonitorType = criteriaBuilder.equal(root.get("app"), app);
             if (CommonConstants.PROMETHEUS.equals(app)) {
                 predicateMonitorType = criteriaBuilder.like(root.get("app"), CommonConstants.PROMETHEUS_APP_PREFIX + "%");
             }
             Predicate predicateMonitorMetrics = criteriaBuilder.equal(root.get("metrics"), metrics);
             Predicate predicateMonitorMetric = criteriaBuilder.equal(root.get("metric"), metric);
-            andList.add(predicateMonitorId);
+            andList.add(predicateInstance);
             andList.add(predicateMonitorType);
             andList.add(predicateMonitorMetrics);
             andList.add(predicateMonitorMetric);
-
-            if (StringUtils.isNotBlank(label)) {
-                Predicate predicateMonitorInstance = criteriaBuilder.equal(root.get("instance"), label);
-                andList.add(predicateMonitorInstance);
-            }
 
             if (history != null) {
                 try {
@@ -269,7 +264,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
         return new HashMap<>(8);
     }
 

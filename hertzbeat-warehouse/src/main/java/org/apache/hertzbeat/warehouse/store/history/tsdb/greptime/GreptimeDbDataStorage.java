@@ -89,7 +89,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
-    private static final String LABEL_KEY_MONITOR_ID = "monitor_id";
     private static final String LOG_TABLE_NAME = "hertzbeat_logs";
     private static final String LABEL_KEY_START_TIME = "start";
     private static final String LABEL_KEY_END_TIME = "end";
@@ -140,13 +139,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
             return;
         }
-        String monitorId = String.valueOf(metricsData.getId());
         String instance = metricsData.getInstance();
         String tableName = getTableName(metricsData.getMetrics());
         TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(tableName);
 
         tableSchemaBuilder.addTag("instance", DataType.String)
-                .addTag("monitor_id", DataType.String)
                 .addTimestamp("ts", DataType.TimestampMillisecond);
         List<CollectRep.Field> fields = metricsData.getFields();
         fields.forEach(field -> {
@@ -162,10 +159,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         });
         Table table = Table.from(tableSchemaBuilder.build());
         long now = System.currentTimeMillis();
-        Object[] values = new Object[3 + fields.size()];
+        Object[] values = new Object[2 + fields.size()];
         values[0] = instance;
-        values[1] = monitorId;
-        values[2] = now;
+        values[1] = now;
         RowWrapper rowWrapper = metricsData.readRow();
         while (rowWrapper.hasNextRow()) {
             rowWrapper = rowWrapper.nextRow();
@@ -175,7 +171,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 index.getAndIncrement();
 
                 if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
-                    values[3 + index.get()] = null;
+                    values[2 + index.get()] = null;
                     return;
                 }
 
@@ -183,12 +179,12 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
 
                 if (label) {
-                    values[3 + index.get()] = cell.getValue();
+                    values[2 + index.get()] = cell.getValue();
                 } else {
                     if (type == CommonConstants.TYPE_NUMBER) {
-                        values[3 + index.get()] = Double.parseDouble(cell.getValue());
+                        values[2 + index.get()] = Double.parseDouble(cell.getValue());
                     } else if (type == CommonConstants.TYPE_STRING) {
-                        values[3 + index.get()] = cell.getValue();
+                        values[2 + index.get()] = cell.getValue();
                     }
                 }
             });
@@ -210,15 +206,15 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
-                                                         String label, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+                                                         String history) {
         Map<String, Long> timeRange = getTimeRange(history);
         Long start = timeRange.get(LABEL_KEY_START_TIME);
         Long end = timeRange.get(LABEL_KEY_END_TIME);
 
         String step = getTimeStep(start, end);
 
-        return getHistoryData(start, end, step, monitorId, app, metrics, metric);
+        return getHistoryData(start, end, step, instance, app, metrics, metric);
     }
 
     private String getTableName(String metrics) {
@@ -226,15 +222,15 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String label, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history) {
         Map<String, Long> timeRange = getTimeRange(history);
         Long start = timeRange.get(LABEL_KEY_START_TIME);
         Long end = timeRange.get(LABEL_KEY_END_TIME);
 
         String step = getTimeStep(start, end);
 
-        Map<String, List<Value>> instanceValuesMap = getHistoryData(start, end, step, monitorId, app, metrics, metric);
+        Map<String, List<Value>> instanceValuesMap = getHistoryData(start, end, step, instance, app, metrics, metric);
 
         // Queries below this point may yield inconsistent results due to exceeding the valid data range.
         // Therefore, we restrict the valid range by obtaining the post-query timeframe.
@@ -245,7 +241,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + Duration.ofHours(4).getSeconds();
 
         String name = getTableName(metrics);
-        String timeSeriesSelector = name + "{" + LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\"";
+        String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + instance + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
             timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
         }
@@ -321,16 +317,16 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      * @param start     start time
      * @param end       end time
      * @param step      step
-     * @param monitorId monitor id
+     * @param instance  monitor instance
      * @param app       monitor type
      * @param metrics   metrics
      * @param metric    metric
      * @return history metric data
      */
-    private Map<String, List<Value>> getHistoryData(long start, long end, String step, Long monitorId, String app, String metrics, String metric) {
+    private Map<String, List<Value>> getHistoryData(long start, long end, String step, String instance, String app, String metrics, String metric) {
         String name = getTableName(metrics);
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + name + "\""
-                + "," + LABEL_KEY_MONITOR_ID + "=\"" + monitorId + "\"";
+                + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
             timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
         }
@@ -362,7 +358,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                         Map<String, String> labels = content.getMetric();
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_INSTANCE);
-                        labels.remove(LABEL_KEY_MONITOR_ID);
                         String labelStr = JsonUtil.toJson(labels);
                         if (content.getValues() != null && !content.getValues().isEmpty()) {
                             List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
@@ -457,7 +452,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             Map<String, String> labels = content.getMetric();
             labels.remove(LABEL_KEY_NAME);
             labels.remove(LABEL_KEY_INSTANCE);
-            labels.remove(LABEL_KEY_MONITOR_ID);
             String labelStr = JsonUtil.toJson(labels);
             if (content.getValues() == null || content.getValues().isEmpty()) {
                 continue;
