@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -19,6 +19,7 @@
 
 package org.apache.hertzbeat.push.service.impl;
 
+import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.LinkedList;
@@ -46,19 +47,27 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class PushGatewayServiceImpl implements PushGatewayService {
-    
+
     private final CommonDataQueue commonDataQueue;
-    
+
     private final PushMonitorDao pushMonitorDao;
-    
+
     private final Map<String, Long> jobInstanceMap;
-    
+
     public PushGatewayServiceImpl(CommonDataQueue commonDataQueue, PushMonitorDao pushMonitorDao) {
         this.commonDataQueue = commonDataQueue;
         this.pushMonitorDao = pushMonitorDao;
         jobInstanceMap = new ConcurrentHashMap<>();
-        pushMonitorDao.findMonitorsByType((byte) 1).forEach(monitor -> 
-                jobInstanceMap.put(monitor.getApp() + "_" + monitor.getName(), monitor.getId()));
+    }
+
+    @PostConstruct
+    public void init() {
+        try {
+            pushMonitorDao.findMonitorsByType((byte) 1).forEach(monitor ->
+                    jobInstanceMap.put(monitor.getApp() + "_" + monitor.getName(), monitor.getId()));
+        } catch (Exception e) {
+            log.error("Failed to load push monitors into cache during initialization: {}", e.getMessage());
+        }
     }
 
     @Override

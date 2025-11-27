@@ -19,7 +19,7 @@ package org.apache.hertzbeat.warehouse.store.realtime;
 
 import java.util.List;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.springframework.lang.NonNull;
+import org.jspecify.annotations.NonNull;
 
 
 /**

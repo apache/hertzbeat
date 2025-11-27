@@ -96,6 +96,7 @@ public class ParamDefine {
      * Is it mandatory true-required false-optional
      */
     @Schema(title = "Is it mandatory true-required false-optional", example = "true", accessMode = READ_WRITE)
+    @Builder.Default
     private boolean required = false;
 
     /**
@@ -156,6 +157,7 @@ public class ParamDefine {
      * Is it an advanced hidden parameter true-yes false-no
      */
     @Schema(title = "Is it an advanced hidden parameter true-yes false-no", example = "true", accessMode = READ_WRITE)
+    @Builder.Default
     private boolean hide = false;
 
     /**

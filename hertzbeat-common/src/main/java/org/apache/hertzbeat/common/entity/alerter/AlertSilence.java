@@ -69,9 +69,11 @@ public class AlertSilence {
     private String name;
 
     @Schema(title = "Whether to enable this policy", example = "true")
+    @Builder.Default
     private boolean enable = true;
     
     @Schema(title = "Whether to match all", example = "true")
+    @Builder.Default
     private boolean matchAll = true;
 
     @Schema(title = "Silence type 0: once, 1:cyc", example = "1")

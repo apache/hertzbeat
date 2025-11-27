@@ -23,7 +23,7 @@ import lombok.EqualsAndHashCode;
 import org.apache.hertzbeat.common.constants.ImportTaskStatusEnum;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
 import org.apache.hertzbeat.common.constants.NotifyLevelEnum;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Import task message

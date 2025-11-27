@@ -69,6 +69,7 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
     /**
      * reuse connection session
      */
+    @Builder.Default
     private String reuseConnection = "true";
 
     /**
@@ -104,6 +105,7 @@ public class SshProtocol implements CommonRequestProtocol, Protocol {
     /**
      * flag of use proxy
      */
+    @Builder.Default
     private String useProxy = "false";
 
     /**

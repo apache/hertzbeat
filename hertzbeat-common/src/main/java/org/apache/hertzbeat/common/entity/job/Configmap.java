@@ -50,5 +50,6 @@ public class Configmap implements Serializable {
      * 0: number 1: string 2: encrypted string 3: json string mapped by map
      * number,string,secret
      */
+    @Builder.Default
     private byte type = 1;
 }

@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -47,6 +48,7 @@ import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.ObjectStoreService;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -56,7 +58,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

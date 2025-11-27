@@ -28,12 +28,12 @@ import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory;
 import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.common.util.security.bouncycastle.BouncyCastleSecurityProviderRegistrar;
 import org.apache.sshd.common.util.security.eddsa.EdDSASecurityProviderRegistrar;
+import org.jspecify.annotations.NonNull;
 import org.springframework.aot.hint.ExecutableMode;
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
-import org.springframework.lang.NonNull;
 import org.springframework.util.ClassUtils;
 
 /**

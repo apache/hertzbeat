@@ -74,6 +74,7 @@ public class JdbcProtocol implements CommonRequestProtocol, Protocol {
     /**
      * reuse connection session
      */
+    @Builder.Default
     private String reuseConnection = "true";
     /**
      * ssh tunnel

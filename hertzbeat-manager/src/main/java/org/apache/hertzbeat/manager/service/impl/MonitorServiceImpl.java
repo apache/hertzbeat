@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -82,7 +82,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -98,6 +101,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -145,6 +149,9 @@ public class MonitorServiceImpl implements MonitorService {
     @Autowired
     private MetricsFavoriteService metricsFavoriteService;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
         imExportServiceList.forEach(it -> imExportServiceMap.put(it.type(), it));
     }
@@ -160,20 +167,10 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard) throws RuntimeException {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
-        Map<String, String> labels = monitor.getLabels();
-        if (labels == null) {
-            labels = new HashMap<>(8);
-            monitor.setLabels(labels);
-        }
-        List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
-
-        if (!addLabels.isEmpty()) {
-            labelDao.saveAll(addLabels);
-        }
 
         // Construct the collection task Job entity
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
@@ -200,28 +197,54 @@ public class MonitorServiceImpl implements MonitorService {
             return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
+
+        // 1. Dispatch the job (Memory operation, fast)
         long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
                 collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+
+        // 2. Perform detection (Network I/O operation, potentially slow) - OUTSIDE TRANSACTION
         try {
             detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // If detection fails, cancel the job and throw exception
+            collectJobScheduling.cancelAsyncCollectJob(jobId);
+            throw e;
+        }
 
+        // 3. Save to Database (DB operation, fast) - INSIDE TRANSACTION
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
         try {
-            if (collector != null) {
-                CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                        .collector(collector)
-                        .monitorId(monitorId)
-                        .build();
-                collectorMonitorBindDao.save(collectorMonitorBind);
-            }
-            monitor.setId(monitorId);
-            monitor.setJobId(jobId);
-            // create grafana dashboard
-            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null && grafanaDashboard.isEnabled()) {
-                dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
-            }
-            monitorDao.save(monitor);
-            paramDao.saveAll(params);
+            transactionTemplate.executeWithoutResult(status -> {
+                try {
+                    Map<String, String> labels = monitor.getLabels();
+                    if (labels == null) {
+                        labels = new HashMap<>(8);
+                        monitor.setLabels(labels);
+                    }
+                    List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
+                    if (!addLabels.isEmpty()) {
+                        labelDao.saveAll(addLabels);
+                    }
+
+                    if (collector != null) {
+                        CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
+                                .collector(collector)
+                                .monitorId(monitorId)
+                                .build();
+                        collectorMonitorBindDao.save(collectorMonitorBind);
+                    }
+                    monitor.setId(monitorId);
+                    monitor.setJobId(jobId);
+                    // create grafana dashboard
+                    if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null && grafanaDashboard.isEnabled()) {
+                        dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
+                    }
+                    monitorDao.save(monitor);
+                    paramDao.saveAll(params);
+                } catch (Exception e) {
+                    throw new MonitorDatabaseException(e.getMessage());
+                }
+            });
         } catch (Exception e) {
             log.error("Error while adding monitor: {}", e.getMessage(), e);
             collectJobScheduling.cancelAsyncCollectJob(jobId);
@@ -250,7 +273,7 @@ public class MonitorServiceImpl implements MonitorService {
                 .stream()
                 .map(Monitor::getId)
                 .collect(Collectors.toList());
-        
+
         // Use the existing export method to export all monitors
         export(allMonitorIds, type, res);
     }
@@ -288,7 +311,7 @@ public class MonitorServiceImpl implements MonitorService {
                     param.setParamValue(value);
                 })
                 .collect(Collectors.toMap(Param::getField, param -> param));
-        // Check name uniqueness and can not equal app type    
+        // Check name uniqueness and can not equal app type
         if (isModify != null) {
             Optional<Job> defineOptional = appService.getAppDefineOption(monitor.getName());
             if (defineOptional.isPresent()) {
@@ -756,52 +779,56 @@ public class MonitorServiceImpl implements MonitorService {
             return;
         }
 
-        for (Monitor monitor : unManagedMonitors) {
-            // Construct the collection task Job entity
-            List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
-            boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
-            String app = isStatic ? monitor.getApp() : monitor.getScrape();
-            Job appDefine = appService.getAppDefine(app);
-            if (!isStatic) {
-                appDefine.setSd(true);
-            }
-            if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-            }
-            appDefine.setMonitorId(monitor.getId());
-            appDefine.setDefaultInterval(monitor.getIntervals());
-            appDefine.setCyclic(true);
-            appDefine.setTimestamp(System.currentTimeMillis());
-            appDefine.setScheduleType(monitor.getScheduleType());
-            appDefine.setCronExpression(monitor.getCronExpression());
-            Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
-            appDefine.setMetadata(metadata);
-            appDefine.setLabels(monitor.getLabels());
-            appDefine.setAnnotations(monitor.getAnnotations());
-            List<Configmap> configmaps = params.stream().map(param ->
-                    new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
-            List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                    .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                    .toList();
-            paramDefaultValue.forEach(defaultVar -> {
-                if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                    Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), CommonConstants.TYPE_STRING);
-                    configmaps.add(configmap);
-                }
-            });
-            appDefine.setConfigmap(configmaps);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (Monitor monitor : unManagedMonitors) {
+                executor.submit(() -> {
+                    // Construct the collection task Job entity
+                    List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+                    boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
+                    String app = isStatic ? monitor.getApp() : monitor.getScrape();
+                    Job appDefine = appService.getAppDefine(app);
+                    if (!isStatic) {
+                        appDefine.setSd(true);
+                    }
+                    if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                        appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+                    }
+                    appDefine.setMonitorId(monitor.getId());
+                    appDefine.setDefaultInterval(monitor.getIntervals());
+                    appDefine.setCyclic(true);
+                    appDefine.setTimestamp(System.currentTimeMillis());
+                    appDefine.setScheduleType(monitor.getScheduleType());
+                    appDefine.setCronExpression(monitor.getCronExpression());
+                    Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                            CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                    appDefine.setMetadata(metadata);
+                    appDefine.setLabels(monitor.getLabels());
+                    appDefine.setAnnotations(monitor.getAnnotations());
+                    List<Configmap> configmaps = params.stream().map(param ->
+                            new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
+                    List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                            .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                            .toList();
+                    paramDefaultValue.forEach(defaultVar -> {
+                        if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
+                            Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), CommonConstants.TYPE_STRING);
+                            configmaps.add(configmap);
+                        }
+                    });
+                    appDefine.setConfigmap(configmaps);
 
-            // Issue collection tasks
-            Optional<CollectorMonitorBind> bindOptional =
-                    collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
-            String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElse(null);
-            long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-            monitor.setJobId(newJobId);
-            applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
-            try {
-                detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {
+                    // Issue collection tasks
+                    Optional<CollectorMonitorBind> bindOptional =
+                            collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
+                    String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElse(null);
+                    long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+                    monitor.setJobId(newJobId);
+                    applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
+                    try {
+                        detectMonitor(monitor, params, collector);
+                    } catch (Exception ignored) {
+                    }
+                });
             }
         }
         monitorDao.saveAll(unManagedMonitors);
@@ -899,7 +926,7 @@ public class MonitorServiceImpl implements MonitorService {
             }
         }
     }
-    
+
     @Override
     public Monitor getMonitor(Long monitorId) {
         return monitorDao.findById(monitorId).orElse(null);
@@ -983,9 +1010,9 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException("Collect Timeout No Response");
         }
-        if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+        if (collectRep.getFirst().getCode() != CollectRep.Code.SUCCESS) {
             monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
-            throw new MonitorDetectException(collectRep.get(0).getMsg());
+            throw new MonitorDetectException(collectRep.getFirst().getMsg());
         }
         collectRep.forEach(CollectRep.MetricsData::close);
     }
@@ -1027,9 +1054,9 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException("Collect Timeout No Response");
         }
-        if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+        if (collectRep.getFirst().getCode() != CollectRep.Code.SUCCESS) {
             monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
-            throw new MonitorDetectException(collectRep.get(0).getMsg());
+            throw new MonitorDetectException(collectRep.getFirst().getMsg());
         }
         collectRep.forEach(CollectRep.MetricsData::close);
     }
