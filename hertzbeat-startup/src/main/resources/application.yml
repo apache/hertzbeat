@@ -145,6 +145,7 @@ common:
     kafka:
       servers: 127.0.0.1:9092
       metrics-data-topic: async-metrics-data
+      metrics-data-to-storage-topic: metrics-data-to-storage-topic
       service-discovery-data-topic: service-discovery-data
       alerts-data-topic: async-alerts-data
       log-entry-data-topic: async-log-entry-data

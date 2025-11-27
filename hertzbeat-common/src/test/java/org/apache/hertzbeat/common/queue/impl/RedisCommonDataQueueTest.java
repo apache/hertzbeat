@@ -79,7 +79,7 @@ class RedisCommonDataQueueTest {
         when(redisProperties.getLogEntryToStorageQueueName()).thenReturn("logEntryToStorageQueue");
         when(redisProperties.getRedisHost()).thenReturn("localhost");
         when(redisProperties.getRedisPort()).thenReturn(6379);
-
+        when(redisProperties.getWaitTimeout()).thenReturn(1L);
         try (MockedStatic<RedisClient> mockedRedisClient = mockStatic(RedisClient.class)) {
             mockedRedisClient.when(() -> RedisClient.create(any(RedisURI.class))).thenReturn(redisClient);
             when(redisClient.connect(any(RedisMetricsDataCodec.class))).thenReturn(connection);
