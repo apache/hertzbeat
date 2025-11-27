@@ -18,11 +18,10 @@
 package org.apache.hertzbeat.collector.collect.redfish;
 
 import java.nio.charset.StandardCharsets;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.StringEntity;
@@ -61,9 +60,17 @@ public class RedfishClient {
 
     @SuppressWarnings("deprecation")
     public ConnectSession connect() throws Exception {
-        HttpHost targetHost = new HttpHost(this.host, this.port);
         HttpClientContext httpClientContext = HttpClientContext.create();
-        // The target host is implicit in the request URI or can be routed automatically
+
+        // Configure RequestConfig if timeout is set
+        if (this.timeout > 0) {
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setConnectTimeout(Timeout.ofMilliseconds(this.timeout))
+                    .setResponseTimeout(Timeout.ofMilliseconds(this.timeout))
+                    .setRedirectsEnabled(true)
+                    .build();
+            httpClientContext.setRequestConfig(requestConfig);
+        }
 
         ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.post();
 
@@ -90,16 +97,7 @@ public class RedfishClient {
         StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
         requestBuilder.setEntity(entity);
 
-        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
-
-        if (this.timeout > 0) {
-            RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(Timeout.ofMilliseconds(this.timeout))
-                    .setResponseTimeout(Timeout.ofMilliseconds(this.timeout))
-                    .setRedirectsEnabled(true)
-                    .build();
-            request.setConfig(requestConfig);
-        }
+        ClassicHttpRequest request = requestBuilder.build();
 
         HttpClientResponseHandler<Session> responseHandler = response -> {
             int statusCode = response.getCode();

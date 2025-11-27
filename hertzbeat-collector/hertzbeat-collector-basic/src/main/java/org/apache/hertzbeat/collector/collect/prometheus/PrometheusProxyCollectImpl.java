@@ -171,9 +171,6 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
             log.error("Prometheus proxy collect unknown error: {}. Host: {}, Port: {}", errorMsg, prometheusProtocol.getHost(), prometheusProtocol.getPort(), e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
-        } finally {
-            // Request is handled by responseHandler, no need for manual abort in v5 generally,
-            // but if we were holding a reference we could use it.
         }
         return Collections.singletonList(builder.build());
     }
@@ -308,7 +305,7 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
             }
         }
 
-        RequestConfig requestConfig = null;
+        RequestConfig requestConfig;
         // custom timeout
         int timeout = CollectUtil.getTimeout(protocol.getTimeout());
         if (timeout > 0) {

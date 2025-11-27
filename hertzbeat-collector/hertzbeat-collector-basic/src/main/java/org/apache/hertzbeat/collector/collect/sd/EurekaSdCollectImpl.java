@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
@@ -58,7 +58,7 @@ public class EurekaSdCollectImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         List<ConnectionConfig> configList = Lists.newArrayList();
 
-        HttpUriRequestBase request = (HttpUriRequestBase) ClassicRequestBuilder.get()
+        ClassicHttpRequest request = ClassicRequestBuilder.get()
                 .setUri(metrics.getEureka_sd().getUrl() + APP_LIST_PATH)
                 .build();
 

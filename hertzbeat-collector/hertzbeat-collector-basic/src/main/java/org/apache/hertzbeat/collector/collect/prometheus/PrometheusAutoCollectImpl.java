@@ -343,6 +343,7 @@ public class PrometheusAutoCollectImpl implements PrometheusCollect {
                     .setRedirectsEnabled(true)
                     .build();
         }
+
         return new HttpRequestWithConfig(requestBuilder.build(), requestConfig);
     }
 

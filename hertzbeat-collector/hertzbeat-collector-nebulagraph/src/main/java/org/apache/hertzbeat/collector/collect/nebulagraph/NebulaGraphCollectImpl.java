@@ -26,11 +26,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
@@ -67,6 +66,27 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
 
     private static final String STORAGE_API = "/rocksdb_stats";
 
+    /**
+     * Inner class to wrap HTTP request with its configuration
+     */
+    private static class HttpRequestWithConfig {
+        private final ClassicHttpRequest request;
+        private final RequestConfig requestConfig;
+
+        public HttpRequestWithConfig(ClassicHttpRequest request, RequestConfig requestConfig) {
+            this.request = request;
+            this.requestConfig = requestConfig;
+        }
+
+        public ClassicHttpRequest getRequest() {
+            return request;
+        }
+
+        public RequestConfig getRequestConfig() {
+            return requestConfig;
+        }
+    }
+
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         if (metrics == null || metrics.getNebulaGraph() == null) {
@@ -92,10 +112,13 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             return;
         }
 
-        // Create Context and Request
-        HttpContext httpContext = createHttpContext();
-        HttpUriRequestBase request = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
+        // Create Request and Config
+        HttpRequestWithConfig requestWithConfig = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
                 nebulaGraph.getUrl(), nebulaGraph.getTimeout());
+
+        // Create Context and set Config
+        HttpContext httpContext = createHttpContext(requestWithConfig.getRequestConfig());
+        ClassicHttpRequest request = requestWithConfig.getRequest();
 
         // Send an HTTP request to obtain response data
         try {
@@ -145,13 +168,16 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_NEBULAGRAPH;
     }
 
-    private HttpContext createHttpContext() {
-        // HttpClient 5 automatically determines the route from the request URI
-        return HttpClientContext.create();
+    private HttpContext createHttpContext(RequestConfig requestConfig) {
+        HttpClientContext context = HttpClientContext.create();
+        if (requestConfig != null) {
+            context.setRequestConfig(requestConfig);
+        }
+        return context;
     }
 
     @SuppressWarnings("deprecation")
-    private HttpUriRequestBase createHttpRequest(String host, String port, String url, String timeoutStr) {
+    private HttpRequestWithConfig createHttpRequest(String host, String port, String url, String timeoutStr) {
         // HttpClient 5 uses ClassicRequestBuilder
         ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
 
@@ -172,19 +198,17 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/plain");
 
-        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
-
+        RequestConfig requestConfig = null;
         int timeout = Integer.parseInt(timeoutStr);
         if (timeout > 0) {
             // Use setConnectTimeout despite deprecation to allow per-request connection timeout override on a shared client
-            RequestConfig requestConfig = RequestConfig.custom()
+            requestConfig = RequestConfig.custom()
                     .setConnectTimeout(Timeout.ofMilliseconds(timeout))
                     .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            request.setConfig(requestConfig);
         }
-        return request;
+        return new HttpRequestWithConfig(requestBuilder.build(), requestConfig);
     }
 
     /**

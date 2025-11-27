@@ -24,11 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
@@ -55,6 +54,27 @@ import org.springframework.http.MediaType;
  */
 @Slf4j
 public class PushCollectImpl extends AbstractCollect {
+
+    /**
+     * Inner class to wrap HTTP request with its configuration
+     */
+    private static class HttpRequestWithConfig {
+        private final ClassicHttpRequest request;
+        private final RequestConfig requestConfig;
+
+        public HttpRequestWithConfig(ClassicHttpRequest request, RequestConfig requestConfig) {
+            this.request = request;
+            this.requestConfig = requestConfig;
+        }
+
+        public ClassicHttpRequest getRequest() {
+            return request;
+        }
+
+        public RequestConfig getRequestConfig() {
+            return requestConfig;
+        }
+    }
 
     private static final Map<Long, Long> timeMap = new ConcurrentHashMap<>();
 
@@ -84,8 +104,9 @@ public class PushCollectImpl extends AbstractCollect {
         Long time = timeMap.getOrDefault(monitorId, curTime - FIRST_COLLECT_INTERVAL);
         timeMap.put(monitorId, curTime);
 
-        HttpContext httpContext = createHttpContext(pushProtocol);
-        HttpUriRequestBase request = createHttpRequest(pushProtocol, monitorId, time);
+        HttpRequestWithConfig requestWithConfig = createHttpRequest(pushProtocol, monitorId, time);
+        ClassicHttpRequest request = requestWithConfig.getRequest();
+        HttpContext httpContext = createHttpContext(pushProtocol, requestWithConfig.getRequestConfig());
 
         HttpClientResponseHandler<String> responseHandler = response -> {
             int statusCode = response.getCode();
@@ -116,18 +137,16 @@ public class PushCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_PUSH;
     }
 
-    private HttpContext createHttpContext(PushProtocol pushProtocol) {
-        HttpHost host = new HttpHost(pushProtocol.getHost(), Integer.parseInt(pushProtocol.getPort()));
+    private HttpContext createHttpContext(PushProtocol pushProtocol, RequestConfig requestConfig) {
         HttpClientContext httpClientContext = HttpClientContext.create();
-        // Explicit target host setting in context is deprecated in favor of routing via Request URI or RoutePlanner,
-        // but for context isolation it is still valid to hold state.
-        // However, setTargetHost is removed in v5 context.
-        // We rely on the request URI having the host/port.
+        if (requestConfig != null) {
+            httpClientContext.setRequestConfig(requestConfig);
+        }
         return httpClientContext;
     }
 
     @SuppressWarnings("deprecation")
-    private HttpUriRequestBase createHttpRequest(PushProtocol pushProtocol, Long monitorId, Long startTime) {
+    private HttpRequestWithConfig createHttpRequest(PushProtocol pushProtocol, Long monitorId, Long startTime) {
         ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
 
         // uri
@@ -150,19 +169,17 @@ public class PushCollectImpl extends AbstractCollect {
         requestBuilder.addParameter("time", String.valueOf(startTime));
         requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
-        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
-
+        RequestConfig requestConfig = null;
         if (DEFAULT_TIMEOUT > 0) {
             // Using deprecated setConnectTimeout for request-level override
-            RequestConfig requestConfig = RequestConfig.custom()
+            requestConfig = RequestConfig.custom()
                     .setConnectTimeout(Timeout.ofMilliseconds(DEFAULT_TIMEOUT))
                     .setResponseTimeout(Timeout.ofMilliseconds(DEFAULT_TIMEOUT))
                     .setRedirectsEnabled(true)
                     .build();
-            request.setConfig(requestConfig);
         }
 
-        return request;
+        return new HttpRequestWithConfig(requestBuilder.build(), requestConfig);
     }
 
     private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {
