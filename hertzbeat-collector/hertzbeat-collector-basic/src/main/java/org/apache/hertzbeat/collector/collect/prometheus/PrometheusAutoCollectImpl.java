@@ -50,13 +50,12 @@ import org.apache.hertzbeat.collector.collect.prometheus.parser.OnlineParser;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.auth.AuthCache;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
@@ -76,6 +75,27 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class PrometheusAutoCollectImpl implements PrometheusCollect {
 
+    /**
+     * Inner class to wrap HTTP request with its configuration
+     */
+    private static class HttpRequestWithConfig {
+        private final ClassicHttpRequest request;
+        private final RequestConfig requestConfig;
+
+        public HttpRequestWithConfig(ClassicHttpRequest request, RequestConfig requestConfig) {
+            this.request = request;
+            this.requestConfig = requestConfig;
+        }
+
+        public ClassicHttpRequest getRequest() {
+            return request;
+        }
+
+        public RequestConfig getRequestConfig() {
+            return requestConfig;
+        }
+    }
+
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
@@ -90,8 +110,10 @@ public class PrometheusAutoCollectImpl implements PrometheusCollect {
             builder.setMsg(e.getMessage());
             return null;
         }
-        HttpContext httpContext = createHttpContext(metrics.getPrometheus());
-        HttpUriRequest request = createHttpRequest(metrics.getPrometheus());
+
+        HttpRequestWithConfig requestWithConfig = createHttpRequest(metrics.getPrometheus());
+        ClassicHttpRequest request = requestWithConfig.getRequest();
+        HttpContext httpContext = createHttpContext(metrics.getPrometheus(), requestWithConfig.getRequestConfig());
 
         HttpClientResponseHandler<List<CollectRep.MetricsData>> responseHandler = response -> {
             int statusCode = response.getCode();
@@ -114,7 +136,7 @@ public class PrometheusAutoCollectImpl implements PrometheusCollect {
         };
 
         try {
-            return CommonHttpClient.getHttpClient().execute((HttpUriRequestBase) request, httpContext, responseHandler);
+            return CommonHttpClient.getHttpClient().execute(request, httpContext, responseHandler);
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
@@ -209,12 +231,18 @@ public class PrometheusAutoCollectImpl implements PrometheusCollect {
      * create httpContext
      *
      * @param protocol prometheus protocol
+     * @param requestConfig request config
      * @return context
      */
-    public HttpContext createHttpContext(PrometheusProtocol protocol) {
+    public HttpContext createHttpContext(PrometheusProtocol protocol, RequestConfig requestConfig) {
+        HttpClientContext clientContext = HttpClientContext.create();
+
+        if (requestConfig != null) {
+            clientContext.setRequestConfig(requestConfig);
+        }
+
         PrometheusProtocol.Authorization auth = protocol.getAuthorization();
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
-            HttpClientContext clientContext = HttpClientContext.create();
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                     && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 BasicCredentialsProvider provider = new BasicCredentialsProvider();
@@ -228,19 +256,18 @@ public class PrometheusAutoCollectImpl implements PrometheusCollect {
                 authCache.put(new HttpHost(protocol.getHost(), Integer.parseInt(protocol.getPort())), new DigestScheme());
                 clientContext.setCredentialsProvider(provider);
                 clientContext.setAuthCache(authCache);
-                return clientContext;
             }
         }
-        return null;
+        return clientContext;
     }
 
     /**
      * create http request
      * @param protocol http params
-     * @return http uri request
+     * @return http uri request wrapper
      */
     @SuppressWarnings("deprecation")
-    public HttpUriRequest createHttpRequest(PrometheusProtocol protocol) {
+    private HttpRequestWithConfig createHttpRequest(PrometheusProtocol protocol) {
         ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
         // params
         Map<String, String> params = protocol.getParams();
@@ -306,19 +333,17 @@ public class PrometheusAutoCollectImpl implements PrometheusCollect {
             }
         }
 
-        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
-
+        RequestConfig requestConfig = null;
         // custom timeout
         int timeout = CollectUtil.getTimeout(protocol.getTimeout(), 0);
         if (timeout > 0) {
-            RequestConfig requestConfig = RequestConfig.custom()
+            requestConfig = RequestConfig.custom()
                     .setConnectTimeout(Timeout.ofMilliseconds(timeout))
                     .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            request.setConfig(requestConfig);
         }
-        return request;
+        return new HttpRequestWithConfig(requestBuilder.build(), requestConfig);
     }
 
     /**

@@ -42,11 +42,10 @@ import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
@@ -64,6 +63,28 @@ import org.springframework.web.util.UriUtils;
  */
 @Slf4j
 public class HttpSdCollectImpl extends AbstractCollect {
+
+    /**
+     * Inner class to wrap HTTP request with its configuration
+     */
+    private static class HttpRequestWithConfig {
+        private final ClassicHttpRequest request;
+        private final RequestConfig requestConfig;
+
+        public HttpRequestWithConfig(ClassicHttpRequest request, RequestConfig requestConfig) {
+            this.request = request;
+            this.requestConfig = requestConfig;
+        }
+
+        public ClassicHttpRequest getRequest() {
+            return request;
+        }
+
+        public RequestConfig getRequestConfig() {
+            return requestConfig;
+        }
+    }
+
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
     }
@@ -72,8 +93,15 @@ public class HttpSdCollectImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         List<ConnectionConfig> configList = Lists.newArrayList();
 
-        HttpUriRequest request = createHttpRequest(metrics.getHttp_sd());
-        HttpContext httpContext = createHttpContext(metrics.getHttp_sd());
+        HttpRequestWithConfig requestWithConfig = createHttpRequest(metrics.getHttp_sd());
+        if (requestWithConfig == null) {
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Failed to create HTTP request");
+            return;
+        }
+
+        ClassicHttpRequest request = requestWithConfig.getRequest();
+        HttpContext httpContext = createHttpContext(metrics.getHttp_sd(), requestWithConfig.getRequestConfig());
 
         HttpClientResponseHandler<Void> responseHandler = response -> {
             int statusCode = response.getCode();
@@ -106,7 +134,7 @@ public class HttpSdCollectImpl extends AbstractCollect {
         };
 
         try {
-            CommonHttpClient.getHttpClient().execute((HttpUriRequestBase) request, httpContext, responseHandler);
+            CommonHttpClient.getHttpClient().execute(request, httpContext, responseHandler);
         } catch (IOException e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("Failed to fetch sd... {}", errorMsg);
@@ -149,12 +177,18 @@ public class HttpSdCollectImpl extends AbstractCollect {
      * create httpContext
      *
      * @param httpSdProtocol http sd protocol
+     * @param requestConfig request config
      * @return context
      */
-    public HttpContext createHttpContext(HttpProtocol httpSdProtocol) {
+    public HttpContext createHttpContext(HttpProtocol httpSdProtocol, RequestConfig requestConfig) {
+        HttpClientContext clientContext = HttpClientContext.create();
+
+        if (requestConfig != null) {
+            clientContext.setRequestConfig(requestConfig);
+        }
+
         HttpProtocol.Authorization auth = httpSdProtocol.getAuthorization();
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
-            HttpClientContext clientContext = HttpClientContext.create();
             if (org.springframework.util.StringUtils.hasText(auth.getDigestAuthUsername())
                     && org.springframework.util.StringUtils.hasText(auth.getDigestAuthPassword())) {
                 BasicCredentialsProvider provider = new BasicCredentialsProvider();
@@ -171,20 +205,19 @@ public class HttpSdCollectImpl extends AbstractCollect {
                 provider.setCredentials(authScope, credentials);
 
                 clientContext.setCredentialsProvider(provider);
-                return clientContext;
             }
         }
-        return null;
+        return clientContext;
     }
 
     /**
      * create http request
      *
      * @param httpSdProtocol http request set
-     * @return http uri request
+     * @return http uri request wrapper
      */
     @SuppressWarnings("deprecation")
-    public HttpUriRequest createHttpRequest(HttpProtocol httpSdProtocol) {
+    private HttpRequestWithConfig createHttpRequest(HttpProtocol httpSdProtocol) {
         ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
 
         // The default request header can be overridden if customized
@@ -240,18 +273,17 @@ public class HttpSdCollectImpl extends AbstractCollect {
             throw e;
         }
 
-        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
-
+        RequestConfig requestConfig = null;
         // custom timeout
         int timeout = CollectUtil.getTimeout(httpSdProtocol.getTimeout(), 0);
         if (timeout > 0) {
-            RequestConfig requestConfig = RequestConfig.custom()
+            requestConfig = RequestConfig.custom()
                     .setConnectTimeout(Timeout.ofMilliseconds(timeout))
                     .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            request.setConfig(requestConfig);
         }
-        return request;
+
+        return new HttpRequestWithConfig(requestBuilder.build(), requestConfig);
     }
 }

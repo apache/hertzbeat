@@ -98,7 +98,7 @@
     <properties>
         <hzb.version>1.8.0</hzb.version>
 
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
@@ -161,7 +161,6 @@
         <nacos-client.version>2.2.1</nacos-client.version>
         <vesoft-client.version>3.6.0</vesoft-client.version>
         <jutf7.version>1.0.0</jutf7.version>
-        <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
         <huawei.obs.version>3.23.5</huawei.obs.version>
         <commons-net>3.8.0</commons-net>

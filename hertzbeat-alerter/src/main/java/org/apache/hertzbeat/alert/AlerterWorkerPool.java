@@ -17,25 +17,23 @@
 
 package org.apache.hertzbeat.alert;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 /**
- * alarm module thread pool
+ * alarm module thread pool with Virtual Threads
  */
 @Component
 @Slf4j
 public class AlerterWorkerPool {
 
-    private ThreadPoolExecutor workerExecutor;
-    private ThreadPoolExecutor notifyExecutor;
-    private ThreadPoolExecutor logWorkerExecutor;
+    private ExecutorService workerExecutor;
+    private ExecutorService notifyExecutor;
+    private ExecutorService logWorkerExecutor;
 
     public AlerterWorkerPool() {
         initWorkExecutor();
@@ -44,62 +42,31 @@ public class AlerterWorkerPool {
     }
 
     private void initWorkExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("Alerter workerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("alerter-worker-%d")
-                .build();
-        workerExecutor = new ThreadPoolExecutor(10,
-                10,
-                10,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+        ThreadFactory factory = Thread.ofVirtual()
+                .name("alerter-worker-", 0)
+                .factory();
+        workerExecutor = Executors.newThreadPerTaskExecutor(factory);
     }
 
     private void initNotifyExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("Alerter notifyExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("notify-worker-%d")
-                .build();
-        notifyExecutor = new ThreadPoolExecutor(6,
-                6,
-                10,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+        ThreadFactory factory = Thread.ofVirtual()
+                .name("notify-worker-", 0)
+                .factory();
+        notifyExecutor = Executors.newThreadPerTaskExecutor(factory);
     }
 
     private void initLogWorkerExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("Alerter logWorkerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("log-worker-%d")
-                .build();
-        logWorkerExecutor = new ThreadPoolExecutor(10, 10, 10, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(1000),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+        ThreadFactory factory = Thread.ofVirtual()
+                .name("log-worker-", 0)
+                .factory();
+        logWorkerExecutor = Executors.newThreadPerTaskExecutor(factory);
     }
 
     /**
      * Run the alerter task
      * @param runnable task
-     * @throws RejectedExecutionException when The thread pool is full of
      */
-    public void executeJob(Runnable runnable) throws RejectedExecutionException {
+    public void executeJob(Runnable runnable){
         workerExecutor.execute(runnable);
     }
 
@@ -107,9 +74,8 @@ public class AlerterWorkerPool {
      * Executes the given runnable task using the notifyExecutor.
      *
      * @param runnable the task to be executed
-     * @throws RejectedExecutionException if the task cannot be accepted for execution
      */
-    public void executeNotify(Runnable runnable) throws RejectedExecutionException {
+    public void executeNotify(Runnable runnable){
         notifyExecutor.execute(runnable);
     }
 
@@ -117,9 +83,8 @@ public class AlerterWorkerPool {
      * Executes the given runnable task using the logWorkerExecutor.
      *
      * @param runnable the task to be executed
-     * @throws RejectedExecutionException if the task cannot be accepted for execution
      */
-    public void executeLogJob(Runnable runnable) throws RejectedExecutionException {
+    public void executeLogJob(Runnable runnable){
         logWorkerExecutor.execute(runnable);
     }
 }

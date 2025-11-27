@@ -33,13 +33,12 @@ import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.client5.http.auth.AuthScope;
 import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.auth.AuthCache;
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
-import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.io.entity.StringEntity;
@@ -72,6 +71,27 @@ import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 @Slf4j
 public class PrometheusProxyCollectImpl implements PrometheusCollect {
 
+    /**
+     * Inner class to wrap HTTP request with its configuration
+     */
+    private static class HttpRequestWithConfig {
+        private final ClassicHttpRequest request;
+        private final RequestConfig requestConfig;
+
+        public HttpRequestWithConfig(ClassicHttpRequest request, RequestConfig requestConfig) {
+            this.request = request;
+            this.requestConfig = requestConfig;
+        }
+
+        public ClassicHttpRequest getRequest() {
+            return request;
+        }
+
+        public RequestConfig getRequestConfig() {
+            return requestConfig;
+        }
+    }
+
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
@@ -81,7 +101,7 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
     @Override
     public List<CollectRep.MetricsData> collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         PrometheusProtocol prometheusProtocol = metrics.getPrometheus();
-        HttpUriRequest request;
+
         try {
             validateParams(metrics);
         } catch (Exception e) {
@@ -90,8 +110,9 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
             return Collections.singletonList(builder.build());
         }
 
-        HttpContext httpContext = createHttpContext(prometheusProtocol);
-        request = createHttpRequest(prometheusProtocol);
+        HttpRequestWithConfig requestWithConfig = createHttpRequest(prometheusProtocol);
+        ClassicHttpRequest request = requestWithConfig.getRequest();
+        HttpContext httpContext = createHttpContext(prometheusProtocol, requestWithConfig.getRequestConfig());
 
         // Use HttpClientResponseHandler to avoid deprecated execute method and manual resource closing
         HttpClientResponseHandler<Void> responseHandler = response -> {
@@ -124,7 +145,7 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
         };
 
         try {
-            CommonHttpClient.getHttpClient().execute((HttpUriRequestBase) request, httpContext, responseHandler);
+            CommonHttpClient.getHttpClient().execute(request, httpContext, responseHandler);
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error("Prometheus proxy collect error: {}. Host: {}, Port: {}", errorMsg, prometheusProtocol.getHost(), prometheusProtocol.getPort(), e1);
@@ -182,12 +203,18 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
      * create httpContext
      * This method is adapted from PrometheusAutoCollectImpl
      * @param protocol prometheus protocol
+     * @param requestConfig request config
      * @return context
      */
-    public HttpContext createHttpContext(PrometheusProtocol protocol) {
+    public HttpContext createHttpContext(PrometheusProtocol protocol, RequestConfig requestConfig) {
+        HttpClientContext clientContext = HttpClientContext.create();
+
+        if (requestConfig != null) {
+            clientContext.setRequestConfig(requestConfig);
+        }
+
         PrometheusProtocol.Authorization auth = protocol.getAuthorization();
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
-            HttpClientContext clientContext = HttpClientContext.create();
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                     && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 BasicCredentialsProvider provider = new BasicCredentialsProvider();
@@ -202,20 +229,19 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
                 authCache.put(targetHost, new DigestScheme());
                 clientContext.setCredentialsProvider(provider);
                 clientContext.setAuthCache(authCache);
-                return clientContext;
             }
         }
-        return null;
+        return clientContext;
     }
 
     /**
      * create http request
      * This method is adapted from PrometheusAutoCollectImpl
      * @param protocol http params
-     * @return http uri request
+     * @return http uri request wrapper
      */
     @SuppressWarnings("deprecation")
-    public HttpUriRequest createHttpRequest(PrometheusProtocol protocol) {
+    private HttpRequestWithConfig createHttpRequest(PrometheusProtocol protocol) {
         ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
         // params
         Map<String, String> params = protocol.getParams();
@@ -282,24 +308,21 @@ public class PrometheusProxyCollectImpl implements PrometheusCollect {
             }
         }
 
-        HttpUriRequestBase request = (HttpUriRequestBase) requestBuilder.build();
-
+        RequestConfig requestConfig = null;
         // custom timeout
         int timeout = CollectUtil.getTimeout(protocol.getTimeout());
         if (timeout > 0) {
-            RequestConfig requestConfig = RequestConfig.custom()
+            requestConfig = RequestConfig.custom()
                     .setConnectTimeout(Timeout.ofMilliseconds(timeout))
                     .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            request.setConfig(requestConfig);
         } else {
-            RequestConfig requestConfig = RequestConfig.custom()
+            requestConfig = RequestConfig.custom()
                     .setRedirectsEnabled(true)
                     .build();
-            request.setConfig(requestConfig);
         }
-        return request;
+        return new HttpRequestWithConfig(requestBuilder.build(), requestConfig);
     }
 
     /**

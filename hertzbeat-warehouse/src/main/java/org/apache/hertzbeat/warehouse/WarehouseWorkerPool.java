@@ -17,52 +17,38 @@
 
 package org.apache.hertzbeat.warehouse;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 /**
- * warehouse worker thread pool
+ * warehouse worker thread pool with Virtual Threads
  */
 @Component
 @Slf4j
 public class WarehouseWorkerPool {
 
-    private ThreadPoolExecutor workerExecutor;
+    private ExecutorService workerExecutor;
 
     public WarehouseWorkerPool() {
         initWorkExecutor();
     }
 
     private void initWorkExecutor() {
-        // Thread factory
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("workerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable); })
-                .setDaemon(true)
-                .setNameFormat("warehouse-worker-%d")
-                .build();
-        workerExecutor = new ThreadPoolExecutor(2,
-                Integer.MAX_VALUE,
-                10,
-                TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+        ThreadFactory factory = Thread.ofVirtual()
+                .name("warehouse-worker-", 0)
+                .factory();
+        workerExecutor = Executors.newThreadPerTaskExecutor(factory);
     }
 
     /**
      * Run warehouse task
      * @param runnable task
-     * @throws RejectedExecutionException when THREAD POOL FULL
      */
-    public void executeJob(Runnable runnable) throws RejectedExecutionException {
+    public void executeJob(Runnable runnable) {
         workerExecutor.execute(runnable);
     }
 }
