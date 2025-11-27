@@ -41,7 +41,7 @@ limitations under the License.
 
 - 💬**Suggestion**: You can also make some suggestions to the project or community to promote the healthy development of the community;
 
-More see [Contribution Types](https://allcontributors.org/docs/en/emoji-key)
+More see [Contribution Types](https://allcontributors.org/emoji-key)
 
 Even small corrections to typos are very welcome :)
 
