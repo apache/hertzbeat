@@ -17,65 +17,48 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Collection task worker thread pool
+ * Collection task worker thread pool with Virtual Threads
  */
 @Component
 @Slf4j
 public class WorkerPool implements DisposableBean {
 
-    private ThreadPoolExecutor workerExecutor;
+    private ExecutorService workerExecutor;
 
     public WorkerPool() {
         initWorkExecutor();
     }
 
     private void initWorkExecutor() {
-        // thread factory
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("[Important] WorkerPool workerExecutor has uncaughtException.", throwable);
-                    log.error("Thread Name {} : {}", thread.getName(), throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("collect-worker-%d")
-                .build();
-        int coreSize = Math.max(2, Runtime.getRuntime().availableProcessors());
-        int maxSize = Runtime.getRuntime().availableProcessors() * 16;
-        workerExecutor = new ThreadPoolExecutor(coreSize,
-                maxSize,
-                10,
-                TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+        ThreadFactory virtualThreadFactory = Thread.ofVirtual()
+                .name("collect-vt-", 0)
+                .factory();
+
+        workerExecutor = Executors.newThreadPerTaskExecutor(virtualThreadFactory);
+        log.info("WorkerPool initialized with JDK 25 Virtual Threads successfully.");
     }
 
     /**
-     * Run the collection task thread
-     *
-     * @param runnable Task  
-     * @throws RejectedExecutionException when thread pool full 
+     * Run the collection task
+     * @param runnable Task
      */
-    public void executeJob(Runnable runnable) throws RejectedExecutionException {
+    public void executeJob(Runnable runnable) {
         workerExecutor.execute(runnable);
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         if (workerExecutor != null) {
-            workerExecutor.shutdownNow();
+            workerExecutor.close();
         }
     }
 }

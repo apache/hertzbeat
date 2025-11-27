@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,12 +43,22 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * class AbstractImExportServiceImpl
  */
 @Slf4j
 public abstract class AbstractImExportServiceImpl implements ImExportService {
+
+    /**
+     * Limit the number of concurrent import tasks to prevent database connection pool exhaustion.
+     * Although virtual threads are cheap, database connections are limited.
+     * This acts as a backpressure mechanism.
+     */
+    private static final int IMPORT_CONCURRENCY_LIMIT = 200;
 
     @Resource
     @Lazy
@@ -66,12 +76,36 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         if (!CollectionUtils.isEmpty(formList)) {
             int totalElements = formList.size();
             int progressInterval = Math.max(1, totalElements / 10);
-            for (int i = 0; i < totalElements; i++) {
-                MonitorDto monitorDto = formList.get(i);
-                monitorService.validate(monitorDto, false);
-                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
-                if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && ((i + 1) % progressInterval == 0) && (i + 1 < totalElements)) {
-                    managerSseManager.broadcastImportTaskInProgress(taskName, (int) ((i + 1) * 100.0 / totalElements));
+            AtomicInteger counter = new AtomicInteger(0);
+
+            // Semaphore to limit concurrency
+            Semaphore semaphore = new Semaphore(IMPORT_CONCURRENCY_LIMIT);
+
+            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                for (MonitorDto monitorDto : formList) {
+                    // Acquire permit before submitting/executing
+                    try {
+                        semaphore.acquire();
+                    } catch (InterruptedException e) {
+                        log.error("Import interrupted.", e);
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+
+                    executor.submit(() -> {
+                        try {
+                            monitorService.validate(monitorDto, false);
+                            monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
+                        } catch (Exception e) {
+                            log.error("Import monitor {} failed.", monitorDto.getMonitor().getName(), e);
+                        } finally {
+                            semaphore.release(); // Release permit
+                            int count = counter.incrementAndGet();
+                            if (totalElements >= ImExportTaskConstant.IMPORT_TASK_PROCESS_THRESHOLD && (count % progressInterval == 0) && (count < totalElements)) {
+                                managerSseManager.broadcastImportTaskInProgress(taskName, (int) (count * 100.0 / totalElements));
+                            }
+                        }
+                    });
                 }
             }
             managerSseManager.broadcastImportTaskSuccess(taskName);

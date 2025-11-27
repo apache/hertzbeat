@@ -64,5 +64,6 @@ public class FtpProtocol implements CommonRequestProtocol, Protocol {
      * Whether ftp uses link encryption ssl/tls, i.e. ftp or sftp
      *
      */
+    @Builder.Default
     private String ssl = "false";
 }

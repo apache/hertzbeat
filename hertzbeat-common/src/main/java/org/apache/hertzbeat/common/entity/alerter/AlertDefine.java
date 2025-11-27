@@ -101,6 +101,7 @@ public class AlertDefine {
     private String datasource;
 
     @Schema(title = "Is Enabled", example = "true")
+    @Builder.Default
     private boolean enable = true;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

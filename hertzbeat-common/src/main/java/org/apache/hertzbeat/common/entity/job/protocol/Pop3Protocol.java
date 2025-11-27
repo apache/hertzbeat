@@ -49,6 +49,7 @@ public class Pop3Protocol implements CommonRequestProtocol, Protocol {
     /**
      * Whether to enable SSL encryption [Email Transmission]
      */
+    @Builder.Default
     private String ssl = "false";
 
     /**

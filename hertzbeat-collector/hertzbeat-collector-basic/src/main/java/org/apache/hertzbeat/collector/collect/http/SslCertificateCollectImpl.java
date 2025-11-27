@@ -117,11 +117,11 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                     } else if (NAME_EXPIRED.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumn(Boolean.toString(expired));
                     } else if (NAME_START_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumn(x509Certificate.getNotBefore().toLocaleString());
+                        valueRowBuilder.addColumn(x509Certificate.getNotBefore().toString());
                     } else if (NAME_START_TIMESTAMP.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumn(String.valueOf(x509Certificate.getNotBefore().getTime()));
                     } else if (NAME_END_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumn(x509Certificate.getNotAfter().toLocaleString());
+                        valueRowBuilder.addColumn(x509Certificate.getNotAfter().toString());
                     } else if (NAME_END_TIMESTAMP.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumn(String.valueOf(x509Certificate.getNotAfter().getTime()));
                     } else {

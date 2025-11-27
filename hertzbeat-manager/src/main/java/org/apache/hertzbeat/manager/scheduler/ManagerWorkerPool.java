@@ -17,46 +17,34 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 /**
- * manager module thread pool
+ * manager module thread pool with Virtual Threads
  */
 @Slf4j
 @Component
 public class ManagerWorkerPool {
-    private ThreadPoolExecutor workerExecutor;
+
+    private ExecutorService workerExecutor;
 
     public ManagerWorkerPool() {
         initWorkExecutor();
     }
 
     private void initWorkExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("workerExecutor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("manager-worker-%d")
-                .build();
-        workerExecutor = new ThreadPoolExecutor(6,
-                10,
-                10,
-                TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+        ThreadFactory factory = Thread.ofVirtual()
+                .name("manager-worker-", 0)
+                .factory();
+        workerExecutor = Executors.newThreadPerTaskExecutor(factory);
     }
 
-    public void executeJob(Runnable runnable) throws RejectedExecutionException {
+    public void executeJob(Runnable runnable) {
         workerExecutor.execute(runnable);
     }
 }

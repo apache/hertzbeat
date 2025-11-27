@@ -50,6 +50,7 @@ public class PrometheusProtocol implements CommonRequestProtocol, Protocol {
     /**
      * http Whether to use link-encrypted ssl/tls, that is, http or https
      */
+    @Builder.Default
     private String ssl = "false";
     /**
      * HTTP REQUEST METHOD: get, post, put, delete, patch

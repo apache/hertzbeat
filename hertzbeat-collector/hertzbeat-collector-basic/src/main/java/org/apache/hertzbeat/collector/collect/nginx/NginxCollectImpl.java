@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,16 +44,17 @@ import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.MediaType;
 
 /**
@@ -61,6 +62,27 @@ import org.springframework.http.MediaType;
  */
 @Slf4j
 public class NginxCollectImpl extends AbstractCollect {
+
+    /**
+     * Inner class to wrap HTTP request with its configuration
+     */
+    private static class HttpRequestWithConfig {
+        private final ClassicHttpRequest request;
+        private final RequestConfig requestConfig;
+
+        public HttpRequestWithConfig(ClassicHttpRequest request, RequestConfig requestConfig) {
+            this.request = request;
+            this.requestConfig = requestConfig;
+        }
+
+        public ClassicHttpRequest getRequest() {
+            return request;
+        }
+
+        public RequestConfig getRequestConfig() {
+            return requestConfig;
+        }
+    }
 
     private static final String NGINX_STATUS_NAME = "nginx_status";
     private static final String REQ_STATUS_NAME = "req_status";
@@ -93,34 +115,36 @@ public class NginxCollectImpl extends AbstractCollect {
             nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
 
-        HttpContext httpContext = createHttpContext(metrics.getNginx());
-        HttpUriRequest request = createHttpRequest(metrics.getNginx());
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)){
-            // send an HTTP request and get the response data
-            int statusCode = response.getStatusLine().getStatusCode();
+        HttpRequestWithConfig requestWithConfig = createHttpRequest(metrics.getNginx());
+        HttpContext httpContext = createHttpContext(metrics.getNginx(), requestWithConfig.getRequestConfig());
+        ClassicHttpRequest request = requestWithConfig.getRequest();
+
+        HttpClientResponseHandler<Void> responseHandler = response -> {
+            int statusCode = response.getCode();
             if (statusCode != HttpStatus.SC_OK) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg(NetworkConstants.STATUS_CODE + statusCode);
-                return;
+                return null;
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
 
             Long responseTime = System.currentTimeMillis() - startTime;
             // call different parsing methods based on the metrics name
-            if (StringUtils.equalsAny(metrics.getName(), NGINX_STATUS_NAME, AVAILABLE)) {
+            if (NGINX_STATUS_NAME.equals(metrics.getName()) || AVAILABLE.equals(metrics.getName())) {
                 parseNginxStatusResponse(builder, resp, metrics, responseTime);
             } else if (REQ_STATUS_NAME.equals(metrics.getName())) {
                 parseReqStatusResponse(builder, resp, metrics, responseTime);
             }
+            return null;
+        };
+
+        try {
+            CommonHttpClient.getHttpClient().execute(request, httpContext, responseHandler);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
-        } finally {
-            if (request != null) {
-                request.abort();
-            }
         }
 
     }
@@ -130,18 +154,21 @@ public class NginxCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_NGINX;
     }
 
-    private HttpContext createHttpContext(NginxProtocol nginxProtocol) {
+    private HttpContext createHttpContext(NginxProtocol nginxProtocol, RequestConfig requestConfig) {
         HttpHost host = new HttpHost(nginxProtocol.getHost(), Integer.parseInt(nginxProtocol.getPort()));
-        HttpClientContext httpClientContext = new HttpClientContext();
-        httpClientContext.setTargetHost(host);
+        HttpClientContext httpClientContext = HttpClientContext.create();
+        if (requestConfig != null) {
+            httpClientContext.setRequestConfig(requestConfig);
+        }
         return httpClientContext;
     }
 
-    private HttpUriRequest createHttpRequest(NginxProtocol nginxProtocol) {
-        RequestBuilder requestBuilder = RequestBuilder.get();
+    @SuppressWarnings("deprecation")
+    private HttpRequestWithConfig createHttpRequest(NginxProtocol nginxProtocol) {
+        ClassicRequestBuilder requestBuilder = ClassicRequestBuilder.get();
         String portWithUri = nginxProtocol.getPort() + CollectUtil.replaceUriSpecialChar(nginxProtocol.getUrl());
         String host = nginxProtocol.getHost();
-        
+
         if (IpDomainUtil.isHasSchema(host)) {
             requestBuilder.setUri(host + ":" + portWithUri);
         } else {
@@ -162,16 +189,16 @@ public class NginxCollectImpl extends AbstractCollect {
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, NetworkConstants.USER_AGENT);
         requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN_VALUE);
 
+        RequestConfig requestConfig = null;
         int timeout = Integer.parseInt(nginxProtocol.getTimeout());
         if (timeout > 0) {
-            RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(timeout)
-                    .setSocketTimeout(timeout)
+            requestConfig = RequestConfig.custom()
+                    .setConnectTimeout(Timeout.ofMilliseconds(timeout))
+                    .setResponseTimeout(Timeout.ofMilliseconds(timeout))
                     .setRedirectsEnabled(true)
                     .build();
-            requestBuilder.setConfig(requestConfig);
         }
-        return requestBuilder.build();
+        return new HttpRequestWithConfig(requestBuilder.build(), requestConfig);
     }
 
     /**

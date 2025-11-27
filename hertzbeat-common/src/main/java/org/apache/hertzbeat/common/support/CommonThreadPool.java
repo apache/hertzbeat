@@ -17,60 +17,49 @@
 
 package org.apache.hertzbeat.common.support;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 /**
- * common task worker thread pool
+ * common task worker thread pool with Virtual Threads
  */
 @Component
 @Slf4j
 public class CommonThreadPool implements DisposableBean {
 
-    private ThreadPoolExecutor workerExecutor;
+    private ExecutorService workerExecutor;
 
     public CommonThreadPool() {
         initWorkExecutor();
     }
 
     private void initWorkExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setUncaughtExceptionHandler((thread, throwable) -> {
-                    log.error("common executor has uncaughtException.");
-                    log.error(throwable.getMessage(), throwable);
-                })
-                .setDaemon(true)
-                .setNameFormat("common-worker-%d")
-                .build();
-        workerExecutor = new ThreadPoolExecutor(1,
-                Integer.MAX_VALUE,
-                10,
-                TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
-                threadFactory,
-                new ThreadPoolExecutor.AbortPolicy());
+        ThreadFactory factory = Thread.ofVirtual()
+                .name("common-worker-", 0)
+                .factory();
+
+        workerExecutor = Executors.newThreadPerTaskExecutor(factory);
+
+        log.info("CommonThreadPool initialized with Virtual Threads.");
     }
 
     /**
      * Run the task thread
-     * @param runnable Task    
-     * @throws RejectedExecutionException when thread pool full    
+     * @param runnable Task
      */
-    public void execute(Runnable runnable) throws RejectedExecutionException {
+    public void execute(Runnable runnable) {
         workerExecutor.execute(runnable);
     }
 
     @Override
     public void destroy() throws Exception {
         if (workerExecutor != null) {
-            workerExecutor.shutdownNow();
+            workerExecutor.close();
         }
     }
 }

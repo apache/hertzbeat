@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ package org.apache.hertzbeat.common.entity.ai;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -48,7 +49,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "hzb_ai_message", indexes = {
-    @Index(name = "idx_message_conversation_id", columnList = "conversation_id")
+        @Index(name = "idx_message_conversation_id", columnList = "conversation_id")
 })
 @AllArgsConstructor
 @NoArgsConstructor
@@ -57,8 +58,9 @@ public class ChatMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Schema(title = "conversation id")
+    @Column(name = "conversation_id")
     private Long conversationId;
 
     @Schema(title = "message content")
@@ -84,5 +86,5 @@ public class ChatMessage {
     @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-    
+
 }

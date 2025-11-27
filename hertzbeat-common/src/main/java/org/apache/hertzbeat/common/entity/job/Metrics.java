@@ -115,6 +115,7 @@ public class Metrics {
      * Is it visible true or false
      * if false, web ui will not see this metrics.
      */
+    @Builder.Default
     private boolean visible = true;
     /**
      * Public attribute - collection and monitoring final result attribute set eg: speed | times | size
@@ -393,10 +394,12 @@ public class Metrics {
         /**
          * Metric type 0-number: number 1-string: string
          */
+        @Builder.Default
         private byte type = 1;
         /**
          * Whether this field is the label
          */
+        @Builder.Default
         private boolean label = false;
         /**
          * Metric unit

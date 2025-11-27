@@ -103,11 +103,13 @@ public class NoticeRule {
     @Schema(title = "Whether to enable this policy",
             description = "Whether to enable this policy",
             example = "true", accessMode = READ_WRITE)
+    @Builder.Default
     private boolean enable = true;
 
     @Schema(title = "Whether to forward all",
             description = "Whether to forward all",
             example = "false", accessMode = READ_WRITE)
+    @Builder.Default
     private boolean filterAll = true;
 
     @Schema(title = "Labels", example = "{\"alertname\": \"HighCPUUsage\", \"priority\": \"critical\", \"instance\": \"343483943\"}")

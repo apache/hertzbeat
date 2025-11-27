@@ -51,6 +51,7 @@ public class HttpProtocol implements CommonRequestProtocol, Protocol {
     /**
      * Whether http uses link encryption ssl/tls, i.e. http or https
      */
+    @Builder.Default
     private String ssl = "false";
     /**
      * http request methods: get, post, put, delete, patch
@@ -99,6 +100,7 @@ public class HttpProtocol implements CommonRequestProtocol, Protocol {
      * Whether to enable URL encoding for the path. Default is true.
      * When true, the URL path will be encoded. When false, the URL path will not be encoded.
      */
+    @Builder.Default
     private String enableUrlEncoding = "true";
 
     /**
