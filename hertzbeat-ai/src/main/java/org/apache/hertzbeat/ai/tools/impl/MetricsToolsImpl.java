@@ -174,7 +174,7 @@ public class MetricsToolsImpl implements MetricsTools {
                     app, metrics, fieldParameter, history, interval);
 
             if (historyData == null) {
-                return String.format("No historical metrics data found for monitor %d and metrics '%s'", instance, metrics);
+                return String.format("No historical metrics data found for monitor %s and metrics '%s'", instance, metrics);
             }
 
             StringBuilder response = new StringBuilder();
