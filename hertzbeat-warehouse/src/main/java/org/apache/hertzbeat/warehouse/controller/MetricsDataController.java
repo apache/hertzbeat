@@ -78,7 +78,7 @@ public class MetricsDataController {
     @GetMapping("/api/monitor/{instance}/metric/{metricFull}")
     @Operation(summary = "Queries historical data for a specified metric for monitoring", description = "Queries historical data for a specified metric under monitoring")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
-            @Parameter(description = "monitor instance", example = "343254354")
+            @Parameter(description = "monitor instance", example = "127.0.0.1:8080")
             @PathVariable String instance,
             @Parameter(description = "monitor metric full path", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
