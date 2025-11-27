@@ -172,6 +172,17 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.fory</groupId>
+            <artifactId>fory-core</artifactId>
+            <version>${fory.version}</version>
+        </dependency>
+        <!-- row/arrow format support -->
+        <dependency>
+            <groupId>org.apache.fory</groupId>
+            <artifactId>fory-format</artifactId>
+            <version>${fory.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
         </dependency>

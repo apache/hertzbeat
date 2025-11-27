@@ -25,7 +25,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.calculate.CollectorAlertHandler;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
@@ -83,12 +83,12 @@ public class ManageServer implements CommandLineRunner {
         this.remotingServer = new NettyRemotingServer(nettyServerConfig, nettyEventListener, threadPool);
         
         // register processor
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor(this));
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new CollectorOnlineProcessor(this));
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.GO_OFFLINE, new CollectorOfflineProcessor(this));
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_ONE_TIME_TASK_DATA, new CollectOneTimeDataResponseProcessor(this));
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_DATA, new CollectCyclicDataResponseProcessor());
-        this.remotingServer.registerProcessor(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA, new CollectCyclicServiceDiscoveryDataResponseProcessor());
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, new HeartbeatProcessor(this));
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.GO_ONLINE, new CollectorOnlineProcessor(this));
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.GO_OFFLINE, new CollectorOfflineProcessor(this));
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.RESPONSE_ONE_TIME_TASK_DATA, new CollectOneTimeDataResponseProcessor(this));
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.RESPONSE_CYCLIC_TASK_DATA, new CollectCyclicDataResponseProcessor());
+        this.remotingServer.registerProcessor(ClusterMessage.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA, new CollectCyclicServiceDiscoveryDataResponseProcessor());
 
         this.channelSchedule = Executors.newSingleThreadScheduledExecutor();
     }
@@ -144,7 +144,7 @@ public class ManageServer implements CommandLineRunner {
         Channel channel = this.getChannel(identity);
         if (channel != null) {
             this.collectorJobScheduler.collectorGoOffline(identity);
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_CLOSE).build();
+            ClusterMessage message = ClusterMessage.builder().type(ClusterMessage.MessageType.GO_CLOSE).build();
             this.remotingServer.sendMsg(channel, message);
             this.clientChannelTable.remove(identity);
             log.info("close collect client success, identity: {}", identity);
@@ -156,7 +156,7 @@ public class ManageServer implements CommandLineRunner {
         return channel != null && channel.isActive();
     }
 
-    public boolean sendMsg(final String identityId, final ClusterMsg.Message message) {
+    public boolean sendMsg(final String identityId, final ClusterMessage message) {
         Channel channel = this.getChannel(identityId);
         if (channel != null) {
             this.remotingServer.sendMsg(channel, message);
@@ -165,7 +165,7 @@ public class ManageServer implements CommandLineRunner {
         return false;
     }
 
-    public ClusterMsg.Message sendMsgSync(final String identityId, final ClusterMsg.Message message) {
+    public ClusterMessage sendMsgSync(final String identityId, final ClusterMessage message) {
         Channel channel = this.getChannel(identityId);
         if (channel != null) {
             return this.remotingServer.sendMsgSync(channel, message, 3000);

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.collector.dispatch.entrance;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.protobuf.ByteString;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
@@ -33,7 +32,7 @@ import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProces
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
 import org.apache.hertzbeat.collector.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
@@ -65,7 +64,7 @@ public class CollectServer implements CommandLineRunner {
     private final TimerDispatch timerDispatch;
 
     private final CollectorInfoProperties infoProperties;
-    
+
     private RemotingClient remotingClient;
 
     private ScheduledExecutorService scheduledExecutor;
@@ -97,13 +96,13 @@ public class CollectServer implements CommandLineRunner {
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor());
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK, new CollectCyclicDataProcessor(this));
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.DELETE_CYCLIC_TASK, new DeleteCyclicTaskProcessor(this));
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK, new CollectOneTimeDataProcessor(this));
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_OFFLINE, new GoOfflineProcessor());
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new GoOnlineProcessor());
-        this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_CLOSE, new GoCloseProcessor(this));
+        this.remotingClient.registerProcessor(ClusterMessage.MessageType.HEARTBEAT, new HeartbeatProcessor());
+        this.remotingClient.registerProcessor(ClusterMessage.MessageType.ISSUE_CYCLIC_TASK, new CollectCyclicDataProcessor(this));
+        this.remotingClient.registerProcessor(ClusterMessage.MessageType.DELETE_CYCLIC_TASK, new DeleteCyclicTaskProcessor(this));
+        this.remotingClient.registerProcessor(ClusterMessage.MessageType.ISSUE_ONE_TIME_TASK, new CollectOneTimeDataProcessor(this));
+        this.remotingClient.registerProcessor(ClusterMessage.MessageType.GO_OFFLINE, new GoOfflineProcessor());
+        this.remotingClient.registerProcessor(ClusterMessage.MessageType.GO_ONLINE, new GoOnlineProcessor());
+        this.remotingClient.registerProcessor(ClusterMessage.MessageType.GO_CLOSE, new GoCloseProcessor(this));
     }
 
     public void shutdown() {
@@ -116,7 +115,7 @@ public class CollectServer implements CommandLineRunner {
         return collectJobService;
     }
 
-    public void sendMsg(final ClusterMsg.Message message) {
+    public void sendMsg(final ClusterMessage message) {
         this.remotingClient.sendMsg(message);
     }
 
@@ -143,10 +142,10 @@ public class CollectServer implements CommandLineRunner {
                     .build();
             timerDispatch.goOnline();
             // send online message
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setIdentity(identity)
-                    .setType(ClusterMsg.MessageType.GO_ONLINE)
-                    .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(collectorInfo)))
+            ClusterMessage message = ClusterMessage.builder()
+                    .identity(identity)
+                    .type(ClusterMessage.MessageType.GO_ONLINE)
+                    .msg(JsonUtil.toJsonBytes(collectorInfo))
                     .build();
             CollectServer.this.sendMsg(message);
 
@@ -163,13 +162,13 @@ public class CollectServer implements CommandLineRunner {
                 // schedule send heartbeat message
                 scheduledExecutor.scheduleAtFixedRate(() -> {
                     try {
-                        ClusterMsg.Message heartbeat = ClusterMsg.Message.newBuilder()
-                                .setIdentity(identity)
-                                .setDirection(ClusterMsg.Direction.REQUEST)
-                                .setType(ClusterMsg.MessageType.HEARTBEAT)
+                        ClusterMessage heartbeat = ClusterMessage.builder()
+                                .identity(identity)
+                                .direction(ClusterMessage.Direction.REQUEST)
+                                .type(ClusterMessage.MessageType.HEARTBEAT)
                                 .build();
                         CollectServer.this.sendMsg(heartbeat);
-                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());   
+                        log.info("collector send cluster server heartbeat, time: {}.", System.currentTimeMillis());
                     } catch (Exception e) {
                         log.error("schedule send heartbeat to server error.{}", e.getMessage());
                     }

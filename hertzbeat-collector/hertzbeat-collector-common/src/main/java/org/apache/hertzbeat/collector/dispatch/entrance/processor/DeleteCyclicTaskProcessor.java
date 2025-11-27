@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -39,9 +39,9 @@ public class DeleteCyclicTaskProcessor implements NettyRemotingProcessor {
     }
 
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         TypeReference<List<Long>> typeReference = new TypeReference<>() {};
-        List<Long> jobIds = JsonUtil.fromJson(message.getMsg().toStringUtf8(), typeReference);
+        List<Long> jobIds = JsonUtil.fromJson(message.getMsgString(), typeReference);
         if (jobIds == null || jobIds.isEmpty()) {
             log.error("collector receive delete cyclic task job ids is null");
             return null;

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
-import com.google.protobuf.ByteString;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -44,7 +43,7 @@ import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -155,9 +154,9 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream()
                         .map(param -> Configmap.builder()
-                                        .key(param.getField())
-                                        .value(param.getParamValue())
-                                        .type(param.getType()).build()).collect(Collectors.toList());
+                                .key(param.getField())
+                                .value(param.getParamValue())
+                                .type(param.getType()).build()).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
                         .toList();
@@ -214,10 +213,10 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
                         collectJobService.addAsyncCollectJob(job);
                     } else {
-                        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                .setDirection(ClusterMsg.Direction.REQUEST)
-                                .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
+                        ClusterMessage message = ClusterMessage.builder()
+                                .direction(ClusterMessage.Direction.REQUEST)
+                                .type(ClusterMessage.MessageType.ISSUE_CYCLIC_TASK)
+                                .msg(JsonUtil.toJsonBytes(job))
                                 .build();
                         this.manageServer.sendMsg(collectorName, message);
                     }
@@ -229,10 +228,10 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
                     assignJobs.getRemovingJobs().forEach(jobId -> collectJobService.cancelAsyncCollectJob(jobId));
                 } else {
-                    ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                            .setDirection(ClusterMsg.Direction.REQUEST)
-                            .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                            .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(assignJobs.getRemovingJobs())))
+                    ClusterMessage message = ClusterMessage.builder()
+                            .direction(ClusterMessage.Direction.REQUEST)
+                            .type(ClusterMessage.MessageType.DELETE_CYCLIC_TASK)
+                            .msg(JsonUtil.toJsonBytes(assignJobs.getRemovingJobs()))
                             .build();
                     this.manageServer.sendMsg(collectorName, message);
                 }
@@ -243,13 +242,13 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
 
     @Override
     public boolean offlineCollector(String identity) {
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                .setType(ClusterMsg.MessageType.GO_OFFLINE)
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setIdentity(identity)
+        ClusterMessage message = ClusterMessage.builder()
+                .type(ClusterMessage.MessageType.GO_OFFLINE)
+                .direction(ClusterMessage.Direction.REQUEST)
+                .identity(identity)
                 .build();
-        ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg().toStringUtf8())) {
+        ClusterMessage response = this.manageServer.sendMsgSync(identity, message);
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsgString())) {
             return false;
         }
         log.info("send offline collector message to {} success", identity);
@@ -264,14 +263,14 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             return false;
         }
         ServerInfo serverInfo = ServerInfo.builder().aesSecret(AesUtil.getDefaultSecretKey()).build();
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                .setType(ClusterMsg.MessageType.GO_ONLINE)
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(serverInfo)))
-                .setIdentity(identity)
+        ClusterMessage message = ClusterMessage.builder()
+                .type(ClusterMessage.MessageType.GO_ONLINE)
+                .direction(ClusterMessage.Direction.REQUEST)
+                .msg(JsonUtil.toJsonBytes(serverInfo))
+                .identity(identity)
                 .build();
-        ClusterMsg.Message response = this.manageServer.sendMsgSync(identity, message);
-        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsg().toStringUtf8())) {
+        ClusterMessage response = this.manageServer.sendMsgSync(identity, message);
+        if (response == null || !String.valueOf(CommonConstants.SUCCESS_CODE).equals(response.getMsgString())) {
             return false;
         }
         log.info("send online collector message to {} success", identity);
@@ -304,10 +303,10 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             List<CollectRep.MetricsData> metricsData = new LinkedList<>();
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
+            ClusterMessage message = ClusterMessage.builder()
+                    .type(ClusterMessage.MessageType.ISSUE_ONE_TIME_TASK)
+                    .direction(ClusterMessage.Direction.REQUEST)
+                    .msg(JsonUtil.toJsonBytes(job))
                     .build();
             boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
 
@@ -347,10 +346,10 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             return collectJobService.collectSyncJobData(job);
         }
         List<CollectRep.MetricsData> metricsData = new LinkedList<>();
-        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
-                .setDirection(ClusterMsg.Direction.REQUEST)
-                .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
+        ClusterMessage message = ClusterMessage.builder()
+                .type(ClusterMessage.MessageType.ISSUE_ONE_TIME_TASK)
+                .direction(ClusterMessage.Direction.REQUEST)
+                .msg(JsonUtil.toJsonBytes(job))
                 .build();
         boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
         if (result) {
@@ -399,10 +398,10 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             collectJobService.addAsyncCollectJob(job);
         } else {
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(job)))
+            ClusterMessage message = ClusterMessage.builder()
+                    .type(ClusterMessage.MessageType.ISSUE_CYCLIC_TASK)
+                    .direction(ClusterMessage.Direction.REQUEST)
+                    .msg(JsonUtil.toJsonBytes(job))
                     .build();
             this.manageServer.sendMsg(node.getIdentity(), message);
         }
@@ -443,10 +442,10 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
                     collectJobService.cancelAsyncCollectJob(jobId);
                 } else {
-                    ClusterMsg.Message deleteMessage = ClusterMsg.Message.newBuilder()
-                            .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                            .setDirection(ClusterMsg.Direction.REQUEST)
-                            .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(List.of(jobId))))
+                    ClusterMessage deleteMessage = ClusterMessage.builder()
+                            .type(ClusterMessage.MessageType.DELETE_CYCLIC_TASK)
+                            .direction(ClusterMessage.Direction.REQUEST)
+                            .msg(JsonUtil.toJsonBytes(List.of(jobId)))
                             .build();
                     this.manageServer.sendMsg(node.getIdentity(), deleteMessage);
                 }

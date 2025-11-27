@@ -19,7 +19,7 @@ package org.apache.hertzbeat.manager.scheduler.netty.process;
 
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
@@ -36,7 +36,7 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
     }
 
     @Override
-    public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
+    public ClusterMessage handle(ChannelHandlerContext ctx, ClusterMessage message) {
         String identity = message.getIdentity();
         boolean isChannelActive = this.manageServer.isChannelActive(identity);
         if (!isChannelActive) {
@@ -52,8 +52,10 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
         if (log.isDebugEnabled()) {
             log.debug("server receive collector {} heartbeat", message.getIdentity());
         }
-        return ClusterMsg.Message.newBuilder()
-                .setType(ClusterMsg.MessageType.HEARTBEAT)
+        return ClusterMessage.builder()
+                .identity(message.getIdentity())
+                .type(ClusterMessage.MessageType.HEARTBEAT)
+                .direction(ClusterMessage.Direction.RESPONSE)
                 .build();
     }
 }

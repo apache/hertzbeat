@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,25 +32,22 @@ import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.compression.ZlibCodecFactory;
-import io.netty.handler.codec.compression.ZlibWrapper;
-import io.netty.handler.codec.protobuf.ProtobufDecoder;
-import io.netty.handler.codec.protobuf.ProtobufEncoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingServer;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
+import org.apache.hertzbeat.remoting.netty.codec.ForyCodec;
 
 /**
- * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingServer 
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingServer
  * netty server
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingServer.java">NettyRemotingServer</a>
  */
@@ -137,14 +134,11 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     private void initChannel(final SocketChannel channel) {
         ChannelPipeline pipeline = channel.pipeline();
-        // zip
-        pipeline.addLast(ZlibCodecFactory.newZlibEncoder(ZlibWrapper.GZIP));
-        pipeline.addLast(ZlibCodecFactory.newZlibDecoder(ZlibWrapper.GZIP));
-        // protocol buf encode decode
-        pipeline.addLast(new ProtobufVarint32FrameDecoder());
-        pipeline.addLast(new ProtobufDecoder(ClusterMsg.Message.getDefaultInstance()));
-        pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
-        pipeline.addLast(new ProtobufEncoder());
+        // fory codec
+        // max frame length 10MB
+        pipeline.addLast(new LengthFieldBasedFrameDecoder(10 * 1024 * 1024, 0, 4, 0, 4));
+        pipeline.addLast(new LengthFieldPrepender(4));
+        pipeline.addLast(new ForyCodec());
         // idle state
         pipeline.addLast(new IdleStateHandler(0, 0, nettyServerConfig.getIdleStateEventTriggerTime()));
         pipeline.addLast(new NettyServerHandler());
@@ -165,12 +159,12 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     }
 
     @Override
-    public void sendMsg(final Channel channel, final ClusterMsg.Message request) {
+    public void sendMsg(final Channel channel, final ClusterMessage request) {
         this.sendMsgImpl(channel, request);
     }
 
     @Override
-    public ClusterMsg.Message sendMsgSync(final Channel channel, final ClusterMsg.Message request, final int timeoutMillis) {
+    public ClusterMessage sendMsgSync(final Channel channel, final ClusterMessage request, final int timeoutMillis) {
         return this.sendMsgSyncImpl(channel, request, timeoutMillis);
     }
 
@@ -183,7 +177,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
      * netty server handler
      */
     @ChannelHandler.Sharable
-    public class NettyServerHandler extends SimpleChannelInboundHandler<ClusterMsg.Message> {
+    public class NettyServerHandler extends SimpleChannelInboundHandler<ClusterMessage> {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -191,7 +185,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, ClusterMsg.Message msg) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, ClusterMessage msg) {
             NettyRemotingServer.this.processReceiveMsg(ctx, msg);
         }
 

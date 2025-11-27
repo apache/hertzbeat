@@ -177,6 +177,7 @@
         <opentelemetry-starter.version>2.22.0</opentelemetry-starter.version>
         <opentelemetry-logback.version>2.22.0-alpha</opentelemetry-logback.version>
         <opentelemetry-proto.version>1.9.0-alpha</opentelemetry-proto.version>
+        <fory.version>0.13.1</fory.version>
     </properties>
 
     <dependencyManagement>

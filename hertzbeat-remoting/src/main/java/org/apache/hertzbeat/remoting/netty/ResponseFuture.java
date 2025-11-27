@@ -19,7 +19,7 @@ package org.apache.hertzbeat.remoting.netty;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.entity.message.ClusterMessage;
 
 /**
  * netty response future
@@ -28,14 +28,14 @@ public class ResponseFuture {
 
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    private ClusterMsg.Message response;
+    private ClusterMessage response;
 
-    public ClusterMsg.Message waitResponse(final long timeoutMillis) throws InterruptedException {
+    public ClusterMessage waitResponse(final long timeoutMillis) throws InterruptedException {
         this.countDownLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         return this.response;
     }
 
-    public void putResponse(final ClusterMsg.Message response) {
+    public void putResponse(final ClusterMessage response) {
         this.response = response;
         this.countDownLatch.countDown();
     }
