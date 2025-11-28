@@ -319,6 +319,12 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
     @NotNull
     private static String getTable(String app, String metrics, String instance) {
+        if (instance.contains(".") || instance.contains(":") || instance.contains("[")) {
+            instance = instance.replace(".", "_")
+                    .replace(":", "_")
+                    .replace("[", "_")
+                    .replace("]", "_");
+        }
         return app + "_" + metrics + "_" + instance;
     }
 

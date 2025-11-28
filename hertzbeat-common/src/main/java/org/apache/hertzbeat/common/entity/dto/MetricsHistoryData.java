@@ -18,12 +18,13 @@
 package org.apache.hertzbeat.common.entity.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Metric History Range Query Data
@@ -35,7 +36,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Metric History Range Query Data")
 public class MetricsHistoryData {
 
-    @Schema(title = "Monitor ID")
+    @Schema(title = "Monitor Instance (e.g., ip:port or domain)")
     private String instance;
 
     @Schema(title = "Monitoring Type")

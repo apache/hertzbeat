@@ -44,7 +44,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -124,7 +123,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                                 .filter(p -> !p.isEmpty())
                                 .orElse(defaultPort);
                         final String keyStr = host + ":" + port;
-                        final String instance = Objects.equals(port, "")  ? host : host + ":" + port;
+                        final String instance = port.isEmpty() ? host : host + ":" + port;
                         if (subMonitorBindMap.containsKey(keyStr)) {
                             subMonitorBindMap.remove(keyStr);
                             continue;

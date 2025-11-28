@@ -216,7 +216,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
 
 
                 String label = JsonUtil.toJson(labels);
-                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance(), label, false);
+                String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance(), label, true);
                 if (tabletMap.containsKey(label)) {
                     // Avoid Time repeats
                     now++;
@@ -389,22 +389,27 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
      * @param deviceId deviceId
      */
     private List<String> queryAllDevices(String deviceId) {
-        String showDevicesSql = String.format(SHOW_DEVICES, deviceId + ".*");
-        SessionDataSetWrapper dataSet = null;
         List<String> devices = new ArrayList<>();
-        try {
-            dataSet = this.sessionPool.executeQueryStatement(showDevicesSql, this.queryTimeoutInMs);
-            while (dataSet.hasNext()) {
-                RowRecord rowRecord = dataSet.next();
-                devices.add(rowRecord.getFields().get(0).getStringValue());
-            }
-        } catch (StatementExecutionException | IoTDBConnectionException e) {
-            log.error("query show all devices sql error. sql: {}", showDevicesSql);
-            log.error(e.getMessage(), e);
-        } finally {
-            if (dataSet != null) {
-                // need to close the result set! ! ! otherwise it will cause server-side heap
-                this.sessionPool.closeResultSet(dataSet);
+        List<String> sqls = new ArrayList<>();
+        sqls.add(String.format(SHOW_DEVICES, deviceId));
+        sqls.add(String.format(SHOW_DEVICES, deviceId + ".*"));
+
+        for (String sql : sqls) {
+            SessionDataSetWrapper dataSet = null;
+            try {
+                dataSet = this.sessionPool.executeQueryStatement(sql, this.queryTimeoutInMs);
+                while (dataSet.hasNext()) {
+                    RowRecord rowRecord = dataSet.next();
+                    devices.add(rowRecord.getFields().get(0).getStringValue());
+                }
+            } catch (StatementExecutionException | IoTDBConnectionException e) {
+                log.error("query show devices sql error. sql: {}", sql);
+                log.error(e.getMessage(), e);
+            } finally {
+                if (dataSet != null) {
+                    // need to close the result set! ! ! otherwise it will cause server-side heap
+                    this.sessionPool.closeResultSet(dataSet);
+                }
             }
         }
         return devices;
@@ -416,8 +421,11 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
      * Use  ${group}.${app}.${metrics}.${monitor}.*  to get all instance data when you tend to query
      */
     private String getDeviceId(String app, String metrics, String instance, String labels, boolean useQuote) {
-        if (instance.contains(".")) {
-            instance = instance.replace(".", "-");
+        if (instance.contains(".") || instance.contains(":") || instance.contains("[")) {
+            instance = instance.replace(".", "_")
+                    .replace(":", "_")
+                    .replace("[", "_")
+                    .replace("]", "_");
         }
         String deviceId = STORAGE_GROUP + "."
                 + (useQuote ? addQuote(app) : app) + "."
