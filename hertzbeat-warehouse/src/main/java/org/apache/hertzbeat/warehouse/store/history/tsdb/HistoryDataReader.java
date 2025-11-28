@@ -43,7 +43,7 @@ public interface HistoryDataReader {
      * @return metrics data
      */
     Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
-            String label, String history);
+                                                  String label, String history);
 
     /**
      * query history range interval metrics data from tsdb
@@ -57,55 +57,86 @@ public interface HistoryDataReader {
      * @return metrics data
      */
     Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric,
-            String label, String history);
+                                                          String label, String history);
 
     /**
-     * Query logs with multiple filter conditions
-     * @param startTime start time in milliseconds
-     * @param endTime end time in milliseconds
-     * @param traceId trace ID filter
-     * @param spanId span ID filter
-     * @param severityNumber severity number filter
-     * @param severityText severity text filter
-     * @return filtered log entries
+     * Query logs with multiple filter conditions (Legacy)
      */
     default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                          String spanId, Integer severityNumber,
                                                          String severityText) {
-        throw new UnsupportedOperationException("query logs by multiple conditions is not supported");
+        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText, null);
     }
 
     /**
-     * Query logs with multiple filter conditions and pagination
+     * Query logs with multiple filter conditions including search content
      * @param startTime start time in milliseconds
      * @param endTime end time in milliseconds
      * @param traceId trace ID filter
      * @param spanId span ID filter
      * @param severityNumber severity number filter
      * @param severityText severity text filter
+     * @param searchContent search content in log body
+     * @return filtered log entries
+     */
+    default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                         String spanId, Integer severityNumber,
+                                                         String severityText, String searchContent) {
+        throw new UnsupportedOperationException("query logs by multiple conditions is not supported");
+    }
+
+    /**
+     * Query logs with multiple filter conditions and pagination (Legacy)
+     */
+    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                       String spanId, Integer severityNumber,
+                                                                       String severityText, Integer offset, Integer limit) {
+        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber, severityText, null, offset, limit);
+    }
+
+    /**
+     * Query logs with multiple filter conditions and pagination including search content
+     * @param startTime start time in milliseconds
+     * @param endTime end time in milliseconds
+     * @param traceId trace ID filter
+     * @param spanId span ID filter
+     * @param severityNumber severity number filter
+     * @param severityText severity text filter
+     * @param searchContent search content in log body
      * @param offset pagination offset
      * @param limit pagination limit
      * @return filtered log entries with pagination
      */
     default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
                                                                        String spanId, Integer severityNumber,
-                                                                       String severityText, Integer offset, Integer limit) {
+                                                                       String severityText, String searchContent,
+                                                                       Integer offset, Integer limit) {
         throw new UnsupportedOperationException("query logs by multiple conditions with pagination is not supported");
     }
 
     /**
-     * Count logs with multiple filter conditions
+     * Count logs with multiple filter conditions (Legacy)
+     */
+    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                               String spanId, Integer severityNumber,
+                                               String severityText) {
+        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText, null);
+    }
+
+    /**
+     * Count logs with multiple filter conditions including search content
      * @param startTime start time in milliseconds
      * @param endTime end time in milliseconds
      * @param traceId trace ID filter
      * @param spanId span ID filter
      * @param severityNumber severity number filter
      * @param severityText severity text filter
+     * @param searchContent search content in log body
      * @return count of matching log entries
      */
     default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                String spanId, Integer severityNumber,
-                                               String severityText) {
+                                               String severityText, String searchContent) {
         throw new UnsupportedOperationException("count logs by multiple conditions is not supported");
     }
 }
