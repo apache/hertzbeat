@@ -229,6 +229,8 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                     .username(redisProtocol.getUsername())
                     .password(redisProtocol.getPassword())
                     .pattern(SINGLE)
+                    .timeout(redisProtocol.getTimeout())
+                    .sshTunnel(redisProtocol.getSshTunnel())
                     .build();
             StatefulRedisConnection<String, String> clusterConnection = getSingleConnection(singleRedisProtocol);
             clusterConnectionMap.put(doUri(uri.getHost(), uri.getPort()), clusterConnection);
