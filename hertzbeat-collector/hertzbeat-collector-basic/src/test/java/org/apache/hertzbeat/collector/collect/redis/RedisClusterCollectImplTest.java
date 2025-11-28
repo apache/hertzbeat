@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -121,11 +122,12 @@ public class RedisClusterCollectImplTest {
         metrics.setAliasFields(aliasField);
         metrics.setFields(fields);
 
-
-        Mockito.mockStatic(RedisClusterClient.class).when(() -> RedisClusterClient.create(Mockito.any(ClientResources.class),
+        MockedStatic<RedisClusterClient> redisClusterClientMockedStatic = Mockito.mockStatic(RedisClusterClient.class);
+        redisClusterClientMockedStatic.when(() -> RedisClusterClient.create(Mockito.any(ClientResources.class),
                 Mockito.any(RedisURI.class))).thenReturn(clusterClient);
         Mockito.when(clusterClient.connect()).thenReturn(clusterConnection);
-        Mockito.mockStatic(RedisClient.class).when(() -> RedisClient.create(Mockito.any(ClientResources.class),
+        MockedStatic<RedisClient> redisClientMockedStatic = Mockito.mockStatic(RedisClient.class);
+        redisClientMockedStatic.when(() -> RedisClient.create(Mockito.any(ClientResources.class),
                 Mockito.any(RedisURI.class))).thenReturn(singleClient);
         Mockito.when(singleClient.connect()).thenReturn(singleConnection);
 
@@ -161,6 +163,8 @@ public class RedisClusterCollectImplTest {
                 assertEquals(row.getColumns(2), uri2);
             }
         }
+        redisClusterClientMockedStatic.close();
+        redisClientMockedStatic.close();
 
     }
 }
