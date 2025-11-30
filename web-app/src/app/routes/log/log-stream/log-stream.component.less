@@ -123,14 +123,22 @@
   }
     
   .log-container {
-    max-height: 60vh;
-    overflow-y: auto;
+    height: 60vh; 
     background: @common-background-color;
     position: relative;
     margin-top: 24px;
 
     &.paused {
       opacity: 0.8;
+    }
+
+    .virtual-scroll-viewport {
+      height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      ::ng-deep .cdk-virtual-scroll-content-wrapper {
+        max-width: 100%;
+      }
     }
 
     .loading-state {
@@ -156,6 +164,13 @@
       padding: 0px 12px;
       background: @common-background-color;
       cursor: pointer;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
 
       &.new-entry {
         background: #e6f7ff;
@@ -170,11 +185,13 @@
         border-bottom: none;
       }
 
-        .log-content {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 4px 0;
+      .log-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 4px 0;
+        flex: 1;
+        min-width: 0;
 
         .log-meta {
           display: flex;

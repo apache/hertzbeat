@@ -19,6 +19,7 @@
 
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { FormsModule } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -62,7 +63,8 @@ interface ExtendedLogEntry {
     NzAlertModule,
     NzEmptyModule,
     NzModalModule,
-    NzDividerComponent
+    NzDividerComponent,
+    ScrollingModule
   ],
   templateUrl: './log-stream.component.html',
   styleUrl: './log-stream.component.less'
@@ -75,7 +77,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Log data
   logEntries: ExtendedLogEntry[] = [];
-  maxLogEntries: number = 1000;
+  maxLogEntries: number = 10000;
   isPaused: boolean = false;
 
   // Filter properties
@@ -94,11 +96,10 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   // Auto scroll state
   userScrolled: boolean = false;
   private scrollTimeout: any;
-  private scrollDebounceTimeout: any;
-  private isNearBottom: boolean = true;
+  private isNearTop: boolean = true;
 
   // ViewChild for log container
-  @ViewChild('logContainer', { static: false }) logContainerRef!: ElementRef;
+  @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
 
   constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
@@ -143,6 +144,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
         if (!this.isPaused) {
           try {
             const logEntry: LogEntry = JSON.parse(evt.data);
+            console.log(logEntry);
             this.addLogEntry(logEntry);
           } catch (error) {
             console.error('Error parsing log data:', error);
@@ -205,7 +207,8 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
       timestamp: logEntry.timeUnixNano ? new Date(logEntry.timeUnixNano / 1000000) : new Date()
     };
 
-    this.logEntries.unshift(extendedEntry);
+    // Add to the end of the list for virtual scroll (natural order)
+    this.logEntries = [extendedEntry, ...this.logEntries];
 
     // Limit the number of log entries
     if (this.logEntries.length > this.maxLogEntries) {
@@ -227,18 +230,9 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private setupScrollListener(): void {
-    if (this.logContainerRef?.nativeElement) {
-      const container = this.logContainerRef.nativeElement;
-
-      container.addEventListener('scroll', () => {
-        // Debounce scroll events for better performance
-        if (this.scrollDebounceTimeout) {
-          clearTimeout(this.scrollDebounceTimeout);
-        }
-
-        this.scrollDebounceTimeout = setTimeout(() => {
-          this.handleScroll();
-        }, 100);
+    if (this.viewport) {
+      this.viewport.elementScrolled().subscribe(() => {
+        this.handleScroll();
       });
     }
   }
@@ -247,22 +241,18 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.scrollTimeout) {
       clearTimeout(this.scrollTimeout);
     }
-    if (this.scrollDebounceTimeout) {
-      clearTimeout(this.scrollDebounceTimeout);
-    }
   }
 
   private handleScroll(): void {
-    if (!this.logContainerRef?.nativeElement) return;
+    if (!this.viewport) return;
 
-    const container = this.logContainerRef.nativeElement;
-    const scrollTop = container.scrollTop;
+    const scrollTop = this.viewport.measureScrollOffset();
 
-    // Check if user is near the top (within 20px for more precise detection)
-    this.isNearBottom = scrollTop <= 20;
+    // Check if user is near the top
+    this.isNearTop = scrollTop <= 40;
 
     // If user scrolls away from top, mark as user scrolled
-    if (!this.isNearBottom) {
+    if (!this.isNearTop) {
       this.userScrolled = true;
     } else {
       // If user scrolls back to top, reset the flag
@@ -283,17 +273,11 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private performAutoScroll(): void {
-    if (!this.logContainerRef?.nativeElement || this.userScrolled) {
+    if (!this.viewport || this.userScrolled) {
       return;
     }
 
-    const container = this.logContainerRef.nativeElement;
-
-    // Use smooth scroll for better UX
-    container.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    this.viewport.scrollToIndex(0, 'smooth');
   }
 
   // Event handlers
@@ -318,7 +302,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   onClearLogs(): void {
     this.logEntries = [];
     this.userScrolled = false;
-    this.isNearBottom = true;
+    this.isNearTop = true;
   }
 
   onToggleFilters(): void {
@@ -328,7 +312,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   // Add method to manually scroll to top
   scrollToTop(): void {
     this.userScrolled = false;
-    this.isNearBottom = true;
+    this.isNearTop = true;
     this.scheduleAutoScroll();
   }
 
