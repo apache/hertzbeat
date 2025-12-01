@@ -175,6 +175,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
               this.queueLogEntry(logEntry);
             } catch (error) {
               // Silently ignore parse errors in high TPS scenario
+              console.error(error);
             }
           }
         });
@@ -259,12 +260,12 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private computeSeverityColor(severityNumber: number | undefined): string {
     if (!severityNumber) return 'default';
-    if (severityNumber < 5) return 'default';      // 1-4
-    if (severityNumber < 9) return 'blue';         // 5-8
-    if (severityNumber < 13) return 'green';       // 9-12
-    if (severityNumber < 17) return 'orange';      // 13-16
-    if (severityNumber < 21) return 'red';         // 17-20
-    if (severityNumber < 25) return 'volcano';     // 21-24
+    if (severityNumber < 5) return 'default'; // 1-4
+    if (severityNumber < 9) return 'blue'; // 5-8
+    if (severityNumber < 13) return 'green'; // 9-12
+    if (severityNumber < 17) return 'orange'; // 13-16
+    if (severityNumber < 21) return 'red'; // 17-20
+    if (severityNumber < 25) return 'volcano'; // 21-24
     return 'default';
   }
 
