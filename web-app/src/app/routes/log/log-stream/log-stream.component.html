@@ -171,7 +171,7 @@
           <div class="log-content">
             <div class="log-meta">
               <nz-tag [nzColor]="logEntry.severityColor" class="severity-tag">
-                {{ logEntry.original.severityText || 'UNKNOWN' }}
+                {{ logEntry.original.severityText || ('log.stream.unknown' | i18n) }}
               </nz-tag>
 
               <span class="timestamp">
