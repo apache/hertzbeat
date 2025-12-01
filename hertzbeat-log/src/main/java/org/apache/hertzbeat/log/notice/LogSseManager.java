@@ -189,7 +189,10 @@ public class LogSseManager {
     public long getQueueSize() {
         return queueSize.get();
     }
-    
+
+    /**
+     * SseSubscriber for SseEmitter and LogSseFilterCriteria
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
