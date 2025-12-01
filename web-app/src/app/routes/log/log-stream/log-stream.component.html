@@ -170,7 +170,6 @@
         <div
           *cdkVirtualFor="let logEntry of logEntries; trackBy: trackByLogEntry"
           class="log-entry"
-          [class.new-entry]="logEntry.isNew"
           (click)="showLogDetails(logEntry)"
         >
           <div class="log-content">

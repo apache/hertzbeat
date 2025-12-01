@@ -172,21 +172,6 @@ class LogSseManagerTest {
         });
     }
 
-    @Test
-    void shouldQueueLogsForBatchProcessing() {
-        // Given: A client
-        SseEmitter mockEmitter = mock(SseEmitter.class);
-        subscribeClient(CLIENT_ID, null, mockEmitter);
-
-        // When: Multiple logs are broadcast
-        for (int i = 0; i < 10; i++) {
-            logSseManager.broadcast(createLogEntry("INFO", "Message " + i));
-        }
-
-        // Then: Queue size should increase
-        assertTrue(logSseManager.getQueueSize() > 0 || logSseManager.getQueueSize() == 0); // May have been processed
-    }
-
     /**
      * Helper method to create a subscriber and inject a mock emitter for testing
      */
