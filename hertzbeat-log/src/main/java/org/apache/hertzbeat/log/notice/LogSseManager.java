@@ -131,8 +131,7 @@ public class LogSseManager {
             }
 
             // Send to each subscriber in parallel
-            List<Map.Entry<Long, SseSubscriber>> snapshot = new ArrayList<>(emitters.entrySet());
-            for (Map.Entry<Long, SseSubscriber> e : snapshot) {
+            for (Map.Entry<Long, SseSubscriber> e : emitters.entrySet()) {
                 Long clientId = e.getKey();
                 SseSubscriber subscriber = e.getValue();
                 List<LogEntry> filtered = filterLogs(batch, subscriber.filters);
