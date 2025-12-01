@@ -104,10 +104,17 @@ public class LogSseManager {
      */
     public void broadcast(LogEntry logEntry) {
         if (queueSize.get() >= MAX_QUEUE_SIZE) {
+            // Optionally log a warning about dropping the log entry
+            log.warn("Log queue is full ({} entries), dropping log entry: {}", queueSize.get(), logEntry);
             return;
         }
-        logQueue.offer(logEntry);
-        queueSize.incrementAndGet();
+        boolean offered = logQueue.offer(logEntry);
+        if (offered) {
+            queueSize.incrementAndGet();
+        } else {
+            // This should not happen with ConcurrentLinkedQueue, but log just in case
+            log.warn("Failed to enqueue log entry: {}", logEntry);
+        }
     }
 
     /**
