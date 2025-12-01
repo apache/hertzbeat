@@ -222,7 +222,7 @@
           <div class="info-row">
             <span class="info-label">{{ 'log.stream.severity' | i18n }}</span>
             <nz-tag [nzColor]="selectedLogEntry.severityColor">
-              {{ selectedLogEntry.original.severityText || 'UNKNOWN' }}
+              {{ selectedLogEntry.original.severityText || ('log.stream.unknown' | i18n) }}
             </nz-tag>
           </div>
           <div class="info-row">
