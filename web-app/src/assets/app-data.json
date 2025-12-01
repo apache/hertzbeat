@@ -223,7 +223,7 @@
           "i18n": "menu.advanced.mcp-server",
           "icon": "anticon-compass",
           "target": "_blank",
-          "externalLink": "https://hertzbeat.apache.org/docs/help/mcp_sse_server"
+          "externalLink": "https://hertzbeat.apache.org/docs/help/mcp_server"
         },
         {
           "text": "status",
