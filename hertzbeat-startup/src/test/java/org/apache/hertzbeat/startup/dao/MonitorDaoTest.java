@@ -53,7 +53,7 @@ class MonitorDaoTest extends AbstractSpringIntegrationTest {
                 .jobId(2L)
                 .app("jvm")
                 .name("jvm_test")
-                .host("192.34.5.43")
+                .instance("192.34.5.43:8989")
                 .status((byte) 1)
                 .build();
         monitor = monitorDao.saveAndFlush(monitor);

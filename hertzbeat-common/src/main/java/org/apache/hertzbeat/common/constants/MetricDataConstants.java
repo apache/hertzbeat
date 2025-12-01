@@ -38,5 +38,5 @@ public interface MetricDataConstants {
     String CODE = "code";
     String MSG = "msg";
     String INSTANCE_NAME = "instancename";
-    String INSTANCE_HOST = "instancehost";
+    String INSTANCE = "instance";
 }

@@ -22,7 +22,7 @@ export class Monitor {
   name!: string;
   app!: string;
   scrape!: string;
-  host!: string;
+  instance!: string;
   intervals: number = 60;
   // Schedule type: interval | cron
   scheduleType: string = 'interval';

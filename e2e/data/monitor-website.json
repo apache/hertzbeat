@@ -5,7 +5,7 @@
       "intervals": 60,
       "tags": [],
       "app": "website",
-      "host": "127.0.0.1",
+      "instance": "127.0.0.1",
       "name": "{{.param.monitorWebsite}}"
     },
     "params": [
