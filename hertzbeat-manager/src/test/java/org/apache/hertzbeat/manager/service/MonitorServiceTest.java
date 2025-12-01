@@ -142,7 +142,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
@@ -165,7 +165,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
@@ -188,7 +188,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
@@ -204,7 +204,7 @@ class MonitorServiceTest {
         Monitor monitor = Monitor.builder()
                 .intervals(1)
                 .name("memory")
-                .host("localhost")
+                .instance("localhost")
                 .app("demoApp")
                 .build();
         Job job = new Job();
@@ -223,10 +223,10 @@ class MonitorServiceTest {
         MonitorDto dto = new MonitorDto();
         List<Param> params = new ArrayList<>();
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(2L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(2L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         try {
             monitorService.validate(dto, isModify);
@@ -249,10 +249,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         ParamDefine pd = ParamDefine.builder()
@@ -282,10 +282,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         ParamDefine paramDefine = ParamDefine.builder()
@@ -318,10 +318,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         ParamDefine paramDefine = ParamDefine.builder()
@@ -354,10 +354,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -398,10 +398,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -443,10 +443,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -490,10 +490,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -541,10 +541,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -584,7 +584,7 @@ class MonitorServiceTest {
         params.add(param);
         dto.setParams(params);
         long monitorId = 1L;
-        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host").id(monitorId).build();
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
         try {
@@ -596,7 +596,7 @@ class MonitorServiceTest {
         /*
           The [monitoring type] of monitor cannot be modified.
          */
-        Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
+        Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").instance("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
         try {
             monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null);
@@ -604,7 +604,7 @@ class MonitorServiceTest {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
         reset();
-        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
@@ -617,7 +617,7 @@ class MonitorServiceTest {
         ids.add(1L);
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id).build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -633,7 +633,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id).build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -643,7 +643,7 @@ class MonitorServiceTest {
     @Test
     void getMonitorDto() {
         long id = 1L;
-        Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+        Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id).build();
         when(monitorDao.findById(id)).thenReturn(Optional.of(monitor));
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.findParamsByMonitorId(id)).thenReturn(params);
@@ -677,7 +677,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id).build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -692,7 +692,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id).build();
             monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             monitors.add(monitor);
         }
@@ -752,7 +752,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
@@ -802,7 +802,7 @@ class MonitorServiceTest {
         Job job = new Job();
         job.setApp("testJob");
         job.setMetrics(metrics);
-        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app(job.getApp()).name(job.getApp()).host("host").build();
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app(job.getApp()).name(job.getApp()).instance("host").build();
 
 
         List<Param> params = new ArrayList<>();

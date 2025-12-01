@@ -64,7 +64,7 @@
         </ng-container>
       </ng-container>
 
-      <nz-form-item *ngIf="monitor.scrape == 'static'">
+      <nz-form-item *ngIf="monitor.scrape == 'static' && hostParam">
         <nz-form-label nzSpan="7" [nzRequired]="true" [nzFor]="'host'">{{ hostName ? hostName : ('monitor.host' | i18n) }} </nz-form-label>
         <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <app-form-field
@@ -75,7 +75,7 @@
               placeholder: 'monitor.host.tip' | i18n
             }"
             [name]="'host'"
-            [(ngModel)]="monitor.host"
+            [(ngModel)]="hostParam.paramValue"
             (ngModelChange)="onHostChange($event)"
           />
         </nz-form-control>
@@ -128,7 +128,7 @@
         </ng-template>
         <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
           <ng-container *ngFor="let paramDefine of advancedParamDefines; let i = index">
-            <nz-form-item *ngIf="advancedParams[i].display !== false && paramDefine.field !== 'host'">
+            <nz-form-item *ngIf="advancedParams[i].display !== false">
               <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
                 >{{ paramDefine.name }}
               </nz-form-label>

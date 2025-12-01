@@ -111,6 +111,7 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String PATTERN_HTTPS = "(?i)https://";
     private static final Long MONITOR_ID_TMP = 1000000000L;
     private static final byte ALL_MONITOR_STATUS = 9;
+    public static final String PARAM_FIELD_PORT = "port";
 
     private static final String CONTENT_VALUE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
@@ -181,7 +182,7 @@ public class MonitorServiceImpl implements MonitorService {
         Job appDefine = appService.getAppDefine(app);
         if (!isStatic) {
             appDefine.setSd(true);
-            monitor.setHost("unknow");
+            monitor.setInstance("unknow");
         }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -190,8 +191,21 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setDefaultInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
+
+        String instance = monitor.getInstance();
+        // The port field may be null
+        Param portParam = params.stream()
+                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
+        String portWithMark = Objects.isNull(portParam) ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        if (Objects.nonNull(instance)) {
+            instance = instance + portWithMark;
+        }
+        monitor.setInstance(instance);
+
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                CommonConstants.LABEL_INSTANCE, instance);
         appDefine.setMetadata(metadata);
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());
@@ -278,7 +292,7 @@ public class MonitorServiceImpl implements MonitorService {
         // The request monitoring parameter matches the monitoring parameter definition mapping check
         Monitor monitor = monitorDto.getMonitor();
         // The Service Discovery host field may be null
-        monitor.setHost(StringUtils.hasText(monitor.getHost()) ? monitor.getHost().trim() : null);
+        monitor.setInstance(StringUtils.hasText(monitor.getInstance()) ? monitor.getInstance().trim() : null);
         monitor.setName(monitor.getName().trim());
         Map<String, Param> paramMap = monitorDto.getParams()
                 .stream()
@@ -507,6 +521,18 @@ public class MonitorServiceImpl implements MonitorService {
             labelDao.saveAll(addLabels);
         }
 
+        String instance = monitor.getInstance();
+        // The port field may be null
+        Param portParam = params.stream()
+                .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
+                .findFirst()
+                .orElse(null);
+        String portWithMark = Objects.isNull(portParam) ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        if (Objects.nonNull(instance)) {
+            instance = instance + portWithMark;
+        }
+        monitor.setInstance(instance);
+
         boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape()) || !StringUtils.hasText(monitor.getScrape());
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
@@ -526,7 +552,7 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setScheduleType(monitor.getScheduleType());
             appDefine.setCronExpression(monitor.getCronExpression());
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                    CommonConstants.LABEL_INSTANCE, monitor.getInstance());
             appDefine.setMetadata(metadata);
             appDefine.setLabels(monitor.getLabels());
             appDefine.setAnnotations(monitor.getAnnotations());
@@ -775,7 +801,7 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setScheduleType(monitor.getScheduleType());
             appDefine.setCronExpression(monitor.getCronExpression());
             Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                    CommonConstants.LABEL_INSTANCE, monitor.getInstance());
             appDefine.setMetadata(metadata);
             appDefine.setLabels(monitor.getLabels());
             appDefine.setAnnotations(monitor.getAnnotations());
@@ -871,7 +897,7 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                        CommonConstants.LABEL_INSTANCE, monitor.getInstance());
                 appDefine.setMetadata(metadata);
                 appDefine.setLabels(monitor.getLabels());
                 appDefine.setAnnotations(monitor.getAnnotations());
@@ -1003,7 +1029,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
         Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                CommonConstants.LABEL_INSTANCE, monitor.getInstance());
         appDefine.setMetadata(metadata);
         appDefine.setLabels(monitor.getLabels());
         appDefine.setAnnotations(monitor.getAnnotations());

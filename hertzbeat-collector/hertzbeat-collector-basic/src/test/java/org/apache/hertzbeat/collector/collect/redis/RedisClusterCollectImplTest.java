@@ -19,10 +19,13 @@ package org.apache.hertzbeat.collector.collect.redis;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.TYPE_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
@@ -37,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -51,13 +55,19 @@ public class RedisClusterCollectImplTest {
 
 
     @Mock
-    private StatefulRedisClusterConnection<String, String> connection;
+    private StatefulRedisClusterConnection<String, String> clusterConnection;
 
     @Mock
-    private RedisAdvancedClusterCommands<String, String> cmd;
+    private StatefulRedisConnection<String, String> singleConnection;
 
     @Mock
-    private RedisClusterClient client;
+    private RedisCommands<String, String> cmd;
+
+    @Mock
+    private RedisClusterClient clusterClient;
+
+    @Mock
+    private RedisClient singleClient;
 
     @BeforeEach
     void setUp() {
@@ -65,8 +75,10 @@ public class RedisClusterCollectImplTest {
 
     @AfterEach
     void setDown() {
-        connection.close();
-        client.shutdown();
+        clusterConnection.close();
+        singleConnection.close();
+        clusterClient.shutdown();
+        singleClient.shutdown();
     }
 
     @Test
@@ -110,10 +122,14 @@ public class RedisClusterCollectImplTest {
         metrics.setAliasFields(aliasField);
         metrics.setFields(fields);
 
-
-        Mockito.mockStatic(RedisClusterClient.class).when(() -> RedisClusterClient.create(Mockito.any(ClientResources.class),
-                Mockito.any(RedisURI.class))).thenReturn(client);
-        Mockito.when(client.connect()).thenReturn(connection);
+        MockedStatic<RedisClusterClient> redisClusterClientMockedStatic = Mockito.mockStatic(RedisClusterClient.class);
+        redisClusterClientMockedStatic.when(() -> RedisClusterClient.create(Mockito.any(ClientResources.class),
+                Mockito.any(RedisURI.class))).thenReturn(clusterClient);
+        Mockito.when(clusterClient.connect()).thenReturn(clusterConnection);
+        MockedStatic<RedisClient> redisClientMockedStatic = Mockito.mockStatic(RedisClient.class);
+        redisClientMockedStatic.when(() -> RedisClient.create(Mockito.any(ClientResources.class),
+                Mockito.any(RedisURI.class))).thenReturn(singleClient);
+        Mockito.when(singleClient.connect()).thenReturn(singleConnection);
 
         Partitions partitions = new Partitions();
         RedisClusterNode node = new RedisClusterNode();
@@ -125,9 +141,9 @@ public class RedisClusterCollectImplTest {
         node2.setUri(RedisURI.create("redis://" + uri2));
         partitions.add(node2);
 
-        Mockito.when(connection.getPartitions()).thenReturn(partitions);
+        Mockito.when(clusterConnection.getPartitions()).thenReturn(partitions);
 
-        Mockito.when(connection.sync()).thenReturn(cmd);
+        Mockito.when(singleConnection.sync()).thenReturn(cmd);
         Mockito.when(cmd.info(metrics.getName())).thenReturn(info);
         Mockito.when(cmd.clusterInfo()).thenReturn(clusterInfo);
 
@@ -147,6 +163,8 @@ public class RedisClusterCollectImplTest {
                 assertEquals(row.getColumns(2), uri2);
             }
         }
+        redisClusterClientMockedStatic.close();
+        redisClientMockedStatic.close();
 
     }
 }

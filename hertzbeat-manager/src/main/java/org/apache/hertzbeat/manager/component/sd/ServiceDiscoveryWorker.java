@@ -123,13 +123,14 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                                 .filter(p -> !p.isEmpty())
                                 .orElse(defaultPort);
                         final String keyStr = host + ":" + port;
+                        final String instance = port.isEmpty() ? host : host + ":" + port;
                         if (subMonitorBindMap.containsKey(keyStr)) {
                             subMonitorBindMap.remove(keyStr);
                             continue;
                         }
                         Monitor newMonitor = mainMonitor.clone();
                         newMonitor.setId(null);
-                        newMonitor.setHost(host);
+                        newMonitor.setInstance(instance);
                         newMonitor.setName(newMonitor.getName() + "-" + host + ":" + port);
                         newMonitor.setScrape(CommonConstants.SCRAPE_STATIC);
                         newMonitor.setGmtCreate(LocalDateTime.now());
