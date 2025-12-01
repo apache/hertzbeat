@@ -150,9 +150,12 @@ public class LogSseManager {
 
     private void sendToSubscriber(Long clientId, SseEmitter emitter, List<LogEntry> logs) {
         try {
+            long batchTimestamp = System.currentTimeMillis();
+            int sequenceNumber = 0;
             for (LogEntry logEntry : logs) {
+                String eventId = batchTimestamp + "-" + sequenceNumber++;
                 emitter.send(SseEmitter.event()
-                        .id(String.valueOf(System.currentTimeMillis()))
+                        .id(eventId)
                         .name("LOG_EVENT")
                         .data(logEntry));
             }
