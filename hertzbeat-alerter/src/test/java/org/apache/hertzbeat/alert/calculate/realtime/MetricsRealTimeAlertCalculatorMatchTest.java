@@ -125,7 +125,7 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
 
         Map<String, String> meta = new HashMap<>();
         meta.put(MetricDataConstants.INSTANCE_NAME, "Cool_Stingray_34Nj_copy");
-        meta.put(MetricDataConstants.INSTANCE_HOST, "127.0.0.1");
+        meta.put(MetricDataConstants.INSTANCE, "127.0.0.1");
 
         builder.addMetadataAll(meta);
         builder.addAllFields(Lists.newArrayList(destination, mode, metricValue));
@@ -175,7 +175,7 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
 
         Map<String, String> meta = new HashMap<>();
         meta.put(MetricDataConstants.INSTANCE_NAME, "Cool_Stingray_34Nj");
-        meta.put(MetricDataConstants.INSTANCE_HOST, "127.0.0.1");
+        meta.put(MetricDataConstants.INSTANCE, "127.0.0.1");
 
         builder.addMetadataAll(meta);
         builder.addAllFields(Lists.newArrayList(destination, mode, metricValue));
@@ -225,7 +225,7 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
 
         Map<String, String> meta = new HashMap<>();
         meta.put(MetricDataConstants.INSTANCE_NAME, "Vibrant_Gazelle_83vJ");
-        meta.put(MetricDataConstants.INSTANCE_HOST, "127.0.0.1");
+        meta.put(MetricDataConstants.INSTANCE, "127.0.0.1");
 
         builder.addMetadataAll(meta);
         builder.addAllFields(Lists.newArrayList(responseTime));

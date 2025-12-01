@@ -92,6 +92,7 @@
               [metric]="item.metric"
               [unit]="item.unit"
               [monitorId]="monitorId"
+              [instance]="monitor.instance"
             ></app-monitor-data-chart>
             <!-- IO sentinel for lazy loading charts -->
             <div id="charts-load-sentinel" style="width: 100%; height: 1px"></div>
@@ -159,6 +160,7 @@
                   [metric]="metric.metric"
                   [unit]="metric.unit"
                   [monitorId]="monitorId"
+                  [instance]="monitor.instance"
                 ></app-monitor-data-chart>
               </div>
               <div

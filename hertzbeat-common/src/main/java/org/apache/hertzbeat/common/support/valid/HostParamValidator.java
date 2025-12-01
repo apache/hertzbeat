@@ -44,7 +44,21 @@ public class HostParamValidator implements ConstraintValidator<HostValid, String
             value = value.replaceFirst(PATTERN_HTTPS, BLANK);
         }
 
-        return IpDomainUtil.validateIpDomain(value);
+        String hostPart = value;
+
+        if (value.contains(":")) {
+            // if contains multiple ":", it may be IPv6 with port
+            if (value.lastIndexOf(":") > value.indexOf(":") && value.contains("[")) {
+                int portIndex = value.lastIndexOf(":");
+                hostPart = value.substring(0, portIndex);
+            } else if (value.split(":").length == 2) {
+                // it is IPv4 or domain with port
+                String[] parts = value.split(":");
+                hostPart = parts[0];
+            }
+        }
+
+        return IpDomainUtil.validateIpDomain(hostPart);
     }
 
 }

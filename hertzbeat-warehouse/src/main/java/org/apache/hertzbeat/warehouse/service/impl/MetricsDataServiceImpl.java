@@ -107,22 +107,22 @@ public class MetricsDataServiceImpl implements MetricsDataService {
     }
 
     @Override
-    public MetricsHistoryData getMetricHistoryData(Long monitorId, String app, String metrics, String metric, String label, String history, Boolean interval) {
+    public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String history, Boolean interval) {
         if (history == null) {
             history = "6h";
         }
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataReader.get().getHistoryMetricData(monitorId, app, metrics, metric, label, history);
+            instanceValuesMap = historyDataReader.get().getHistoryMetricData(instance, app, metrics, metric, history);
         } else {
-            instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
+            instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(instance, app, metrics, metric, history);
         }
         if (instanceValuesMap.containsKey("{}")) {
             instanceValuesMap.put("", instanceValuesMap.get("{}"));
             instanceValuesMap.remove("{}");
         }
         return MetricsHistoryData.builder()
-                .id(monitorId).metrics(metrics).values(instanceValuesMap)
+                .instance(instance).metrics(metrics).values(instanceValuesMap)
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
     }

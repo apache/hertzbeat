@@ -65,14 +65,15 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class QuestdbDataStorage extends AbstractHistoryDataStorage {
 
-    private static final String QUERY_HISTORY_SQL = "SELECT timestamp AS ts, instance, %s AS value FROM \"%s\" WHERE timestamp >= %s ORDER BY timestamp DESC";
+    private static final String QUERY_HISTORY_SQL = "SELECT timestamp AS ts, metric_labels, \"%s\" AS value FROM \"%s\" WHERE timestamp >= %s ORDER BY timestamp DESC";
 
-    private static final String QUERY_HISTORY_SQL_WITH_INSTANCE = "SELECT timestamp AS ts, instance, %s AS value FROM \"%s\" WHERE instance = '%s' AND timestamp >= %s ORDER BY timestamp DESC";
+    private static final String QUERY_HISTORY_SQL_WITH_INSTANCE =
+            "SELECT timestamp AS ts, metric_labels, \"%s\" AS value FROM \"%s\" WHERE metric_labels = '%s' AND timestamp >= %s ORDER BY timestamp DESC";
 
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
-            "SELECT timestamp AS ts, first(%s) AS origin, avg(%s) AS mean, max(%s) AS max, min(%s) AS min FROM \"%s\" WHERE instance = '%s' AND timestamp >= %s SAMPLE BY 4h";
+            "SELECT timestamp AS ts, first(\"%s\") AS origin, avg(\"%s\") AS mean, max(\"%s\") AS max, min(\"%s\") AS min FROM \"%s\" WHERE metric_labels = '%s' AND timestamp >= %s SAMPLE BY 4h";
 
-    private static final String QUERY_INSTANCE_SQL = "SELECT DISTINCT instance FROM \"%s\"";
+    private static final String QUERY_INSTANCE_SQL = "SELECT DISTINCT metric_labels FROM \"%s\"";
 
     private Sender sender;
 
@@ -128,7 +129,7 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS || metricsData.getValues().isEmpty()) {
             return;
         }
-        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId());
+        String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance());
 
         try {
             RowWrapper rowWrapper = metricsData.readRow();
@@ -146,9 +147,9 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
                             .filter(cell -> cell.getMetadataAsBoolean(MetricDataConstants.LABEL))
                             .forEach(cell -> labels.put(cell.getField().getName(), cell.getValue()));
                     if (!labels.isEmpty()) {
-                        sender.symbol("instance", JsonUtil.toJson(labels));
+                        sender.symbol("metric_labels", JsonUtil.toJson(labels));
                     } else {
-                        sender.symbol("instance", metricsData.getApp()
+                        sender.symbol("metric_labels", metricsData.getApp()
                                 + "_" + metricsData.getMetrics());
                     }
 
@@ -184,11 +185,10 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, monitorId);
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+        String table = this.generateTable(app, metrics, instance);
         String dateAdd = getDateAdd(history);
-        String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, dateAdd)
-                : String.format(QUERY_HISTORY_SQL_WITH_INSTANCE, metric, table, label.replace("'", "\\'"), dateAdd);
+        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, dateAdd);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         try {
             Map<String, Object> selectResult = executeQuery(selectSql);
@@ -203,13 +203,13 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
                 colMap.put(columns.get(i).get("name"), i);
             }
             int tsIdx = colMap.get("ts");
-            int instanceIdx = colMap.get("instance");
+            int metricLabelsIdx = colMap.get("metric_labels");
             int valueIdx = colMap.get("value");
 
             for (List<Object> row : dataset) {
                 String tsStr = (String) row.get(tsIdx);
                 long time = Instant.parse(tsStr).toEpochMilli();
-                String instanceValue = row.get(instanceIdx) == null ? "" : (String) row.get(instanceIdx);
+                String instanceValue = row.get(metricLabelsIdx) == null ? "" : (String) row.get(metricLabelsIdx);
                 Object valObj = row.get(valueIdx);
                 String strValue = valObj == null ? null : this.parseDoubleValue(valObj.toString());
                 if (strValue == null) {
@@ -225,24 +225,19 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
-        String table = this.generateTable(app, metrics, monitorId);
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
+        String table = this.generateTable(app, metrics, instance);
         String dateAdd = getDateAdd(history);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
-        if (label != null) {
-            instances.add(label);
-        }
-        if (instances.isEmpty()) {
-            // query the instance
-            String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
-            Map<String, Object> instanceQueryResult = executeQuery(queryInstanceSql);
-            if (instanceQueryResult != null && instanceQueryResult.containsKey("dataset")) {
-                List<List<Object>> dataset = (List<List<Object>>) instanceQueryResult.get("dataset");
-                for (List<Object> row : dataset) {
-                    if (!row.isEmpty() && row.get(0) != null) {
-                        instances.add(row.get(0).toString());
-                    }
+        // query all metric_labels
+        String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
+        Map<String, Object> instanceQueryResult = executeQuery(queryInstanceSql);
+        if (instanceQueryResult != null && instanceQueryResult.containsKey("dataset")) {
+            List<List<Object>> dataset = (List<List<Object>>) instanceQueryResult.get("dataset");
+            for (List<Object> row : dataset) {
+                if (!row.isEmpty() && row.get(0) != null) {
+                    instances.add(row.get(0).toString());
                 }
             }
         }
@@ -273,32 +268,33 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
                 for (List<Object> row : dataset) {
                     String tsStr = (String) row.get(tsIdx);
                     long time = Instant.parse(tsStr).toEpochMilli();
-                    Value.ValueBuilder valueBuilder = Value.builder().time(time);
+                    Value.ValueBuilder valueBuilder = Value.builder();
+                    valueBuilder.time(time);
 
                     Object originObj = row.get(originIdx);
-                    if (originObj != null) {
-                        valueBuilder.origin(this.parseDoubleValue(originObj.toString()));
-                    } else {
+                    if (originObj == null) {
                         continue;
                     }
+                    valueBuilder.origin(this.parseDoubleValue(originObj.toString()));
+
                     Object meanObj = row.get(meanIdx);
-                    if (meanObj != null) {
-                        valueBuilder.mean(this.parseDoubleValue(meanObj.toString()));
-                    } else {
+                    if (meanObj == null) {
                         continue;
                     }
+                    valueBuilder.mean(this.parseDoubleValue(meanObj.toString()));
+
                     Object maxObj = row.get(maxIdx);
-                    if (maxObj != null) {
-                        valueBuilder.max(this.parseDoubleValue(maxObj.toString()));
-                    } else {
+                    if (maxObj == null) {
                         continue;
                     }
+                    valueBuilder.max(this.parseDoubleValue(maxObj.toString()));
+
                     Object minObj = row.get(minIdx);
-                    if (minObj != null) {
-                        valueBuilder.min(this.parseDoubleValue(minObj.toString()));
-                    } else {
+                    if (minObj == null) {
                         continue;
                     }
+                    valueBuilder.min(this.parseDoubleValue(minObj.toString()));
+
                     List<Value> valueList = instanceValueMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
                     valueList.add(valueBuilder.build());
                 }
@@ -359,8 +355,14 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         return String.format("dateadd('%s', %d, now())", unit, -count);
     }
 
-    private String generateTable(String app, String metrics, Long monitorId) {
-        return app + "_" + metrics + "_" + monitorId;
+    private String generateTable(String app, String metrics, String instance) {
+        if (instance.contains(".") || instance.contains(":") || instance.contains("[")) {
+            instance = instance.replace(".", "_")
+                    .replace(":", "_")
+                    .replace("[", "_")
+                    .replace("]", "_");
+        }
+        return app + "_" + metrics + "_" + instance;
     }
 
     private String parseDoubleValue(String value) {

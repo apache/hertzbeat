@@ -123,10 +123,11 @@ public class BulletinServiceImpl implements BulletinService {
             if (null == monitor) {
                 continue;
             }
+
             BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
                     .monitorId(monitorId)
                     .monitorName(monitor.getName())
-                    .host(monitor.getHost());
+                    .host(monitor.getInstance());
 
             List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
             Map<String, List<String>> fieldMap = bulletin.getFields();
