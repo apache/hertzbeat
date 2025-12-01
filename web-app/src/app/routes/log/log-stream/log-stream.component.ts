@@ -245,7 +245,6 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     };
 
     this.pendingLogs.push(extendedEntry);
-    this.displayedLogCount++;
 
     // Schedule flush using requestAnimationFrame for smooth rendering
     if (!this.rafId) {
