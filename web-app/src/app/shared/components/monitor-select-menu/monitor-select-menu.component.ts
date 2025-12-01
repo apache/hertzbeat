@@ -51,4 +51,25 @@ export class MonitorSelectMenuComponent {
   onSelectedChanged(selected: string) {
     this.selectedChanged.emit(selected);
   }
+
+  getCategoryIcon(category: string): string {
+    const iconMap: Record<string, string> = {
+      os: 'desktop',
+      webserver: 'global',
+      bigdata: 'cluster',
+      cache: 'database',
+      service: 'api',
+      server: 'hdd',
+      mid: 'deployment-unit',
+      db: 'database',
+      custom: 'tool',
+      llm: 'robot',
+      network: 'wifi',
+      cn: 'cloud-server',
+      cicd: 'branches',
+      auto: 'thunderbolt',
+      program: 'code'
+    };
+    return iconMap[category] || 'appstore';
+  }
 }
