@@ -103,16 +103,13 @@ public class LogSseManager {
      * Queue log entry for batch processing
      */
     public void broadcast(LogEntry logEntry) {
-        if (queueSize.get() >= MAX_QUEUE_SIZE) {
-            // Optionally log a warning about dropping the log entry
-            log.warn("Log queue is full ({} entries), dropping log entry: {}", queueSize.get(), logEntry);
+        if (queueSize.incrementAndGet() > MAX_QUEUE_SIZE) {
+            queueSize.decrementAndGet();
             return;
         }
         boolean offered = logQueue.offer(logEntry);
-        if (offered) {
-            queueSize.incrementAndGet();
-        } else {
-            // This should not happen with ConcurrentLinkedQueue, but log just in case
+        if (!offered) {
+            queueSize.decrementAndGet();
             log.warn("Failed to enqueue log entry: {}", logEntry);
         }
     }

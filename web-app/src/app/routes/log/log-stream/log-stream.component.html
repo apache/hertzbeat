@@ -167,11 +167,7 @@
 
       <!-- Log Entries with Virtual Scroll -->
       <cdk-virtual-scroll-viewport itemSize="40" class="virtual-scroll-viewport">
-        <div
-          *cdkVirtualFor="let logEntry of logEntries; trackBy: trackByLogEntry"
-          class="log-entry"
-          (click)="showLogDetails(logEntry)"
-        >
+        <div *cdkVirtualFor="let logEntry of logEntries; trackBy: trackByLogEntry" class="log-entry" (click)="showLogDetails(logEntry)">
           <div class="log-content">
             <div class="log-meta">
               <nz-tag [nzColor]="logEntry.severityColor" class="severity-tag">
