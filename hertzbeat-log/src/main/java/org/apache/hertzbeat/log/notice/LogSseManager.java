@@ -104,10 +104,17 @@ public class LogSseManager {
      */
     public void broadcast(LogEntry logEntry) {
         if (queueSize.get() >= MAX_QUEUE_SIZE) {
+            // Optionally log a warning about dropping the log entry
+            log.warn("Log queue is full ({} entries), dropping log entry: {}", queueSize.get(), logEntry);
             return;
         }
-        logQueue.offer(logEntry);
-        queueSize.incrementAndGet();
+        boolean offered = logQueue.offer(logEntry);
+        if (offered) {
+            queueSize.incrementAndGet();
+        } else {
+            // This should not happen with ConcurrentLinkedQueue, but log just in case
+            log.warn("Failed to enqueue log entry: {}", logEntry);
+        }
     }
 
     /**
@@ -131,8 +138,7 @@ public class LogSseManager {
             }
 
             // Send to each subscriber in parallel
-            List<Map.Entry<Long, SseSubscriber>> snapshot = new ArrayList<>(emitters.entrySet());
-            for (Map.Entry<Long, SseSubscriber> e : snapshot) {
+            for (Map.Entry<Long, SseSubscriber> e : emitters.entrySet()) {
                 Long clientId = e.getKey();
                 SseSubscriber subscriber = e.getValue();
                 List<LogEntry> filtered = filterLogs(batch, subscriber.filters);
