@@ -75,15 +75,13 @@ public class MetricsDataController {
         return ResponseEntity.ok(Message.success(metricsData));
     }
 
-    @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
+    @GetMapping("/api/monitor/{instance}/metric/{metricFull}")
     @Operation(summary = "Queries historical data for a specified metric for monitoring", description = "Queries historical data for a specified metric under monitoring")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
-            @Parameter(description = "monitor the task ID", example = "343254354")
-            @PathVariable Long monitorId,
+            @Parameter(description = "monitor instance", example = "127.0.0.1:8080")
+            @PathVariable String instance,
             @Parameter(description = "monitor metric full path", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
-            @Parameter(description = "label filter, empty by default", example = "disk2")
-            @RequestParam(required = false) String label,
             @Parameter(description = "query historical time period, default 6h-6 hours: s-seconds, M-minutes, h-hours, d-days, w-weeks", example = "6h")
             @RequestParam(required = false) String history,
             @Parameter(description = "aggregate data calc. off by default; 4-hour window, query limit >1 week", example = "false")
@@ -99,7 +97,7 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
-        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, interval);
+        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, interval);
         return ResponseEntity.ok(Message.success(historyData));
     }
 }

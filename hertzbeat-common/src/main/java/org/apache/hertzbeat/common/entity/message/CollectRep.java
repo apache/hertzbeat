@@ -225,9 +225,9 @@ public final class CollectRep {
             return metadata.getOrDefault(MetricDataConstants.INSTANCE_NAME, null);
         }
 
-        public String getInstanceHost() {
+        public String getInstance() {
             Map<String, String> metadata = getMetadata();
-            return metadata.getOrDefault(MetricDataConstants.INSTANCE_HOST, null);
+            return metadata.getOrDefault(MetricDataConstants.INSTANCE, null);
         }
 
         public Map<String, String> getLabels() {
@@ -501,8 +501,8 @@ public final class CollectRep {
                 return metadata.getOrDefault(MetricDataConstants.INSTANCE_NAME, null);
             }
             
-            public String getInstanceHost() {
-                return metadata.getOrDefault(MetricDataConstants.INSTANCE_HOST, null);
+            public String getInstance() {
+                return metadata.getOrDefault(MetricDataConstants.INSTANCE, null);
             }
             
             public Map<String, String> getLabels() {

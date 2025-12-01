@@ -37,7 +37,7 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "hzb_history", indexes = {
-        @Index(name = "history_query_index", columnList = "monitorId"),
+        @Index(name = "history_query_index", columnList = "instance"),
         @Index(name = "history_query_index", columnList = "app"),
         @Index(name = "history_query_index", columnList = "metrics"),
         @Index(name = "history_query_index", columnList = "metric")
@@ -54,8 +54,8 @@ public class History {
     @Schema(description = "Metric data history entity primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "Monitoring Id", example = "87432674336", accessMode = READ_WRITE)
-    private Long monitorId;
+    @Schema(title = "Monitoring instance", example = "127.0.0.1:8080", accessMode = READ_WRITE)
+    private String instance;
 
     @Schema(title = "Monitoring Type mysql oracle db2")
     private String app;
@@ -67,7 +67,7 @@ public class History {
     private String metric;
     
     @Column(length = 5000)
-    private String instance;
+    private String metricLabels;
 
     @Schema(title = "Metric Type 0: Number 1：String")
     private Byte metricType;

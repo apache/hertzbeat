@@ -5,7 +5,7 @@
       "intervals": 60,
       "tags": [],
       "app": "udp_port",
-      "host": "127.0.0.1",
+      "instance": "127.0.0.1",
       "name": "{{.param.monitorUDP}}"
     },
     "params": [
