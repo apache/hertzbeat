@@ -18,7 +18,7 @@
  */
 
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, ViewChild, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { FormsModule } from '@angular/forms';
 import { I18NService } from '@core';
@@ -41,8 +41,9 @@ import { LogEntry } from '../../../pojo/LogEntry';
 
 interface ExtendedLogEntry {
   original: LogEntry;
-  isNew?: boolean;
-  timestamp?: Date;
+  timestamp: Date;
+  displayText: string;
+  severityColor: string;
 }
 
 @Component({
@@ -67,7 +68,8 @@ interface ExtendedLogEntry {
     ScrollingModule
   ],
   templateUrl: './log-stream.component.html',
-  styleUrl: './log-stream.component.less'
+  styleUrl: './log-stream.component.less',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   // SSE connection and state
@@ -75,10 +77,11 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   isConnected: boolean = false;
   isConnecting: boolean = false;
 
-  // Log data
+  // Log data - use ring buffer approach
   logEntries: ExtendedLogEntry[] = [];
-  maxLogEntries: number = 10000;
+  maxLogEntries: number = 10000; 
   isPaused: boolean = false;
+  displayedLogCount: number = 0;
 
   // Filter properties
   filterSeverityNumber: string = '';
@@ -98,10 +101,21 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   private scrollTimeout: any;
   private isNearTop: boolean = true;
 
+  // Batch processing for high TPS - use requestAnimationFrame
+  private pendingLogs: ExtendedLogEntry[] = [];
+  private rafId: number | null = null;
+  private lastFlushTime: number = 0;
+  private readonly MIN_FLUSH_INTERVAL = 200; // Minimum 200ms between flushes
+  private readonly MAX_PENDING_LOGS = 1000; // Drop logs if buffer exceeds this
+
   // ViewChild for log container
   @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
 
-  constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+  constructor(
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit(): void {
     this.connectToLogStream();
@@ -114,6 +128,9 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.disconnectFromLogStream();
     this.cleanupScrollListener();
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+    }
   }
 
   onReconnect(): void {
@@ -136,26 +153,33 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
       this.eventSource = new EventSource(url);
 
       this.eventSource.onopen = () => {
-        this.isConnected = true;
-        this.isConnecting = false;
+        this.ngZone.run(() => {
+          this.isConnected = true;
+          this.isConnecting = false;
+          this.cdr.markForCheck();
+        });
       };
 
-      this.eventSource.addEventListener('LOG_EVENT', (evt: MessageEvent) => {
-        if (!this.isPaused) {
-          try {
-            const logEntry: LogEntry = JSON.parse(evt.data);
-            console.log(logEntry);
-            this.addLogEntry(logEntry);
-          } catch (error) {
-            console.error('Error parsing log data:', error);
+      // Run outside Angular zone to prevent change detection on every message
+      this.ngZone.runOutsideAngular(() => {
+        this.eventSource.addEventListener('LOG_EVENT', (evt: MessageEvent) => {
+          if (!this.isPaused) {
+            try {
+              const logEntry: LogEntry = JSON.parse(evt.data);
+              this.queueLogEntry(logEntry);
+            } catch (error) {
+              // Silently ignore parse errors in high TPS scenario
+            }
           }
-        }
+        });
       });
 
       this.eventSource.onerror = error => {
-        console.error('Log stream connection error:', error);
-        this.isConnected = false;
-        this.isConnecting = false;
+        this.ngZone.run(() => {
+          this.isConnected = false;
+          this.isConnecting = false;
+          this.cdr.markForCheck();
+        });
 
         // Auto-reconnect after 5 seconds
         setTimeout(() => {
@@ -200,33 +224,89 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     return params.toString();
   }
 
-  private addLogEntry(logEntry: LogEntry): void {
+  private queueLogEntry(logEntry: LogEntry): void {
+    // Drop logs if buffer is full (backpressure)
+    if (this.pendingLogs.length >= this.MAX_PENDING_LOGS) {
+      return;
+    }
+
+    // Pre-compute everything to minimize work during render
     const extendedEntry: ExtendedLogEntry = {
       original: logEntry,
-      isNew: true,
-      timestamp: logEntry.timeUnixNano ? new Date(logEntry.timeUnixNano / 1000000) : new Date()
+      timestamp: logEntry.timeUnixNano ? new Date(logEntry.timeUnixNano / 1000000) : new Date(),
+      displayText: this.formatLogDisplay(logEntry),
+      severityColor: this.computeSeverityColor(logEntry.severityNumber)
     };
 
-    // Add to the end of the list for virtual scroll (natural order)
-    this.logEntries = [extendedEntry, ...this.logEntries];
+    this.pendingLogs.push(extendedEntry);
+    this.displayedLogCount++;
 
-    // Limit the number of log entries
-    if (this.logEntries.length > this.maxLogEntries) {
-      this.logEntries = this.logEntries.slice(0, this.maxLogEntries);
+    // Schedule flush using requestAnimationFrame for smooth rendering
+    if (!this.rafId) {
+      this.rafId = requestAnimationFrame(() => this.flushPendingLogs());
+    }
+  }
+
+  private formatLogDisplay(logEntry: LogEntry): string {
+    return JSON.stringify(logEntry);
+  }
+
+  private computeSeverityColor(severityNumber: number | undefined): string {
+    if (!severityNumber) return 'default';
+    if (severityNumber <= 4) return 'default';
+    if (severityNumber <= 8) return 'blue';
+    if (severityNumber <= 12) return 'green';
+    if (severityNumber <= 16) return 'orange';
+    if (severityNumber <= 20) return 'red';
+    if (severityNumber <= 24) return 'volcano';
+    return 'default';
+  }
+
+  private flushPendingLogs(): void {
+    this.rafId = null;
+    
+    const now = performance.now();
+    if (now - this.lastFlushTime < this.MIN_FLUSH_INTERVAL) {
+      // Too soon, reschedule
+      this.rafId = requestAnimationFrame(() => this.flushPendingLogs());
+      return;
+    }
+    
+    if (this.pendingLogs.length === 0) {
+      return;
     }
 
-    // Remove new indicator after animation
-    setTimeout(() => {
-      const index = this.logEntries.findIndex(entry => entry === extendedEntry);
-      if (index !== -1) {
-        this.logEntries[index].isNew = false;
+    this.lastFlushTime = now;
+
+    // Get pending logs and clear
+    const newEntries = this.pendingLogs;
+    this.pendingLogs = [];
+
+    // Reverse in place for performance
+    newEntries.reverse();
+
+    // Run inside Angular zone for change detection
+    this.ngZone.run(() => {
+      // Create new array reference for virtual scroll
+      let updated: ExtendedLogEntry[];
+      
+      if (this.logEntries.length + newEntries.length <= this.maxLogEntries) {
+        updated = [...newEntries, ...this.logEntries];
+      } else {
+        // Truncate old entries
+        const keepCount = Math.max(0, this.maxLogEntries - newEntries.length);
+        updated = [...newEntries, ...this.logEntries.slice(0, keepCount)];
       }
-    }, 1000);
 
-    // Auto scroll to top if enabled and user hasn't scrolled away
-    if (!this.userScrolled) {
-      this.scheduleAutoScroll();
-    }
+      this.logEntries = updated;
+
+      // Auto scroll to top if enabled and user hasn't scrolled away
+      if (!this.userScrolled && this.viewport) {
+        this.viewport.scrollToIndex(0);
+      }
+
+      this.cdr.markForCheck();
+    });
   }
 
   private setupScrollListener(): void {
@@ -282,8 +362,9 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Event handlers
   onApplyFilters(): void {
-    this.logEntries = []; // Clear existing logs
-    this.connectToLogStream(); // Reconnect with new filters
+    this.resetState();
+    this.connectToLogStream();
+    this.cdr.markForCheck();
   }
 
   onClearFilters(): void {
@@ -291,22 +372,36 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     this.filterSeverityText = '';
     this.filterTraceId = '';
     this.filterSpanId = '';
-    this.logEntries = [];
+    this.resetState();
     this.connectToLogStream();
+    this.cdr.markForCheck();
   }
 
   onTogglePause(): void {
     this.isPaused = !this.isPaused;
+    this.cdr.markForCheck();
   }
 
   onClearLogs(): void {
-    this.logEntries = [];
-    this.userScrolled = false;
-    this.isNearTop = true;
+    this.resetState();
+    this.cdr.markForCheck();
   }
 
   onToggleFilters(): void {
     this.showFilters = !this.showFilters;
+    this.cdr.markForCheck();
+  }
+
+  private resetState(): void {
+    this.logEntries = [];
+    this.pendingLogs = [];
+    this.displayedLogCount = 0;
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    this.userScrolled = false;
+    this.isNearTop = true;
   }
 
   // Add method to manually scroll to top
@@ -317,43 +412,8 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // Utility methods
-  getSeverityColor(severityNumber: number | undefined): string {
-    if (!severityNumber) {
-      return 'default';
-    }
-
-    // Based on OpenTelemetry specification:
-    // 1-4: TRACE, 5-8: DEBUG, 9-12: INFO, 13-16: WARN, 17-20: ERROR, 21-24: FATAL
-    if (severityNumber >= 1 && severityNumber <= 4) {
-      return 'default'; // TRACE
-    } else if (severityNumber >= 5 && severityNumber <= 8) {
-      return 'blue'; // DEBUG
-    } else if (severityNumber >= 9 && severityNumber <= 12) {
-      return 'green'; // INFO
-    } else if (severityNumber >= 13 && severityNumber <= 16) {
-      return 'orange'; // WARN
-    } else if (severityNumber >= 17 && severityNumber <= 20) {
-      return 'red'; // ERROR
-    } else if (severityNumber >= 21 && severityNumber <= 24) {
-      return 'volcano'; // FATAL
-    } else {
-      return 'default'; // Unknown
-    }
-  }
-
-  formatTimestamp(timestamp: Date): string {
-    return timestamp.toLocaleString();
-  }
-
   copyToClipboard(text: string): void {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        console.log('Copied to clipboard');
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-      });
+    navigator.clipboard.writeText(text).catch(() => {});
   }
 
   trackByLogEntry(index: number, logEntry: ExtendedLogEntry): any {
@@ -364,16 +424,19 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   showLogDetails(logEntry: ExtendedLogEntry): void {
     this.selectedLogEntry = logEntry;
     this.isModalVisible = true;
+    this.cdr.markForCheck();
   }
 
   handleModalOk(): void {
     this.isModalVisible = false;
     this.selectedLogEntry = null;
+    this.cdr.markForCheck();
   }
 
   handleModalCancel(): void {
     this.isModalVisible = false;
     this.selectedLogEntry = null;
+    this.cdr.markForCheck();
   }
 
   getLogEntryJson(logEntry: LogEntry): string {

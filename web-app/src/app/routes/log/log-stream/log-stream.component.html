@@ -175,17 +175,17 @@
         >
           <div class="log-content">
             <div class="log-meta">
-              <nz-tag [nzColor]="getSeverityColor(logEntry.original.severityNumber)" class="severity-tag">
-                {{ logEntry.original.severityText || ('log.stream.unknown' | i18n) }}
+              <nz-tag [nzColor]="logEntry.severityColor" class="severity-tag">
+                {{ logEntry.original.severityText || 'UNKNOWN' }}
               </nz-tag>
 
               <span class="timestamp">
-                {{ formatTimestamp(logEntry.timestamp!) }}
+                {{ logEntry.timestamp | date:'HH:mm:ss.SSS' }}
               </span>
             </div>
 
             <div class="log-message">
-              {{ getLogEntryJson(logEntry.original) }}
+              {{ logEntry.displayText }}
             </div>
 
             <div class="log-actions">
@@ -193,7 +193,7 @@
                 nz-button
                 nzSize="small"
                 nzType="text"
-                (click)="$event.stopPropagation(); copyToClipboard(getLogEntryJson(logEntry.original))"
+                (click)="$event.stopPropagation(); copyToClipboard(logEntry.displayText)"
                 [nz-tooltip]="'log.stream.copy-message' | i18n"
               >
                 <i nz-icon nzType="copy"></i>
@@ -221,13 +221,13 @@
         <div class="basic-info">
           <div class="info-row">
             <span class="info-label">{{ 'log.stream.severity' | i18n }}</span>
-            <nz-tag [nzColor]="getSeverityColor(selectedLogEntry.original.severityNumber)">
-              {{ selectedLogEntry.original.severityText || ('log.stream.unknown' | i18n) }}
+            <nz-tag [nzColor]="selectedLogEntry.severityColor">
+              {{ selectedLogEntry.original.severityText || 'UNKNOWN' }}
             </nz-tag>
           </div>
           <div class="info-row">
             <span class="info-label">{{ 'log.stream.timestamp' | i18n }}</span>
-            <span>{{ formatTimestamp(selectedLogEntry.timestamp!) }}</span>
+            <span>{{ selectedLogEntry.timestamp | date:'yyyy-MM-dd HH:mm:ss.SSS' }}</span>
           </div>
           <div class="info-row" *ngIf="selectedLogEntry.original.traceId">
             <span class="info-label">{{ 'log.stream.trace-id-full' | i18n }}</span>
