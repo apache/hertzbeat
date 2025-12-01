@@ -1,5 +1,5 @@
 ---
-id: Jenkins
+id: jenkins
 title: Monitoring Jenkins
 sidebar_label: Jenkins
 keywords: [ open-source, monitoring system, CI/CD, DevOps, Jenkins monitoring ]

@@ -127,6 +127,10 @@
           <i nz-icon nzTheme="outline" nzType="notification"></i>
           <span>{{ 'alert.notice.type.gotify' | i18n }}</span>
         </nz-tag>
+        <nz-tag *ngIf="data.type == 14" nzColor="orange">
+          <i nz-icon nzTheme="outline" nzType="notification"></i>
+          <span>{{ 'alert.notice.type.lark-app' | i18n }}</span>
+        </nz-tag>
       </td>
       <td nzAlign="center">
         <span *ngIf="data.type == 0">{{ data.phone }}</span>
@@ -143,6 +147,7 @@
         <span *ngIf="data.type == 11">{{ data.smnAk }}</span>
         <span *ngIf="data.type == 12">{{ data.serverChanToken }}</span>
         <span *ngIf="data.type == 13">{{ data.gotifyToken }}</span>
+        <span *ngIf="data.type == 14">{{ data.appId }}</span>
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center" nzRight>
@@ -224,6 +229,7 @@
             <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.lark-app' | i18n" [nzValue]="14"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
@@ -243,6 +249,39 @@
         <nz-form-label [nzRequired]="receiver.type === 2" [nzSpan]="7" nzFor="hookUrl">{{ 'alert.notice.type.url' | i18n }} </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.hookUrl" [required]="receiver.type === 2" id="hookUrl" name="hookUrl" nz-input type="url" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 2">
+        <nz-form-label [nzSpan]="7" nzFor="hookAuthType">{{ 'alert.notice.type.webhook-auth-type' | i18n }} </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <nz-select
+            [(ngModel)]="receiver.hookAuthType"
+            id="hookAuthType"
+            name="hookAuthType"
+            nzPlaceHolder="{{ 'alert.notice.type.webhook-auth-type.placeholder' | i18n }}"
+          >
+            <nz-option nzValue="None" nzLabel="None"></nz-option>
+            <nz-option nzValue="Basic" nzLabel="Basic"></nz-option>
+            <nz-option nzValue="Bearer" nzLabel="Bearer"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 2 && (receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer')">
+        <nz-form-label
+          [nzRequired]="receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer'"
+          [nzSpan]="7"
+          nzFor="hookAuthToken"
+          >{{ 'alert.notice.type.webhook-auth-token' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input
+            [(ngModel)]="receiver.hookAuthToken"
+            [required]="receiver.hookAuthType === 'Basic' || receiver.hookAuthType === 'Bearer'"
+            id="hookAuthToken"
+            name="hookAuthToken"
+            nz-input
+            type="text"
+          />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 3">
@@ -487,6 +526,74 @@
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.gotifyToken" [required]="receiver.type === 13" name="gotifyToken" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 14">
+        <nz-form-label [nzRequired]="receiver.type === 14" [nzSpan]="7" nzFor="appId">
+          {{ 'alert.notice.type.lark-app-appId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.appId" [required]="receiver.type === 14" name="appId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 14">
+        <nz-form-label [nzRequired]="receiver.type === 14" [nzSpan]="7" nzFor="appSecret">
+          {{ 'alert.notice.type.lark-app-appSecret' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.appSecret" [required]="receiver.type === 14" name="appSecret" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 14">
+        <nz-form-label nzFor="larkReceiveType" nzRequired="true" nzSpan="7"
+          >{{ 'alert.notice.type.lark-app-larkReceiveType' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="12">
+          <nz-select
+            [(ngModel)]="receiver.larkReceiveType"
+            [nzOptionOverflowSize]="10"
+            id="larkReceiveType"
+            name="larkReceiveType"
+            [nzPlaceHolder]="'alert.notice.type.lark-app-larkReceiveType.placeholder' | i18n"
+            required
+          >
+            <nz-option [nzLabel]="'alert.notice.type.lark-app-larkReceiveType.user' | i18n" [nzValue]="0"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.lark-app-larkReceiveType.chat' | i18n" [nzValue]="1"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.lark-app-larkReceiveType.party' | i18n" [nzValue]="2"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.lark-app-larkReceiveType.all' | i18n" [nzValue]="3"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.larkReceiveType === 0">
+        <nz-form-label [nzRequired]="receiver.larkReceiveType === 0" [nzSpan]="7" nzFor="userId">
+          {{ 'alert.notice.type.lark-app-userId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.userId" [required]="receiver.larkReceiveType === 0" name="userId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.larkReceiveType === 1">
+        <nz-form-label [nzRequired]="receiver.larkReceiveType === 1" [nzSpan]="7" nzFor="chatId">
+          {{ 'alert.notice.type.lark-app-chatId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.chatId" [required]="receiver.larkReceiveType === 1" name="chatId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.larkReceiveType === 1">
+        <nz-form-label [nzSpan]="7" nzFor="userId">
+          {{ 'alert.notice.type.lark-app-userId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <input [(ngModel)]="receiver.userId" name="userId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="receiver.larkReceiveType === 2">
+        <nz-form-label [nzRequired]="receiver.larkReceiveType === 2" [nzSpan]="7" nzFor="partyId">
+          {{ 'alert.notice.type.lark-app-partyId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.partyId" [required]="receiver.larkReceiveType === 2" name="partyId" nz-input type="text" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
