@@ -180,7 +180,7 @@
               </nz-tag>
 
               <span class="timestamp">
-                {{ logEntry.timestamp | date:'HH:mm:ss.SSS' }}
+                {{ logEntry.timestamp | date : 'HH:mm:ss.SSS' }}
               </span>
             </div>
 
@@ -227,7 +227,7 @@
           </div>
           <div class="info-row">
             <span class="info-label">{{ 'log.stream.timestamp' | i18n }}</span>
-            <span>{{ selectedLogEntry.timestamp | date:'yyyy-MM-dd HH:mm:ss.SSS' }}</span>
+            <span>{{ selectedLogEntry.timestamp | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}</span>
           </div>
           <div class="info-row" *ngIf="selectedLogEntry.original.traceId">
             <span class="info-label">{{ 'log.stream.trace-id-full' | i18n }}</span>

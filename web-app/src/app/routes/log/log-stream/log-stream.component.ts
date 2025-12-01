@@ -17,9 +17,19 @@
  * under the License.
  */
 
-import { CommonModule } from '@angular/common';
-import { Component, Inject, OnDestroy, OnInit, ViewChild, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { CommonModule } from '@angular/common';
+import {
+  Component,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  NgZone
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -79,7 +89,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Log data - use ring buffer approach
   logEntries: ExtendedLogEntry[] = [];
-  maxLogEntries: number = 10000; 
+  maxLogEntries: number = 10000;
   isPaused: boolean = false;
   displayedLogCount: number = 0;
 
@@ -111,11 +121,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   // ViewChild for log container
   @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
 
-  constructor(
-    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
-    private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
-  ) {}
+  constructor(@Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService, private cdr: ChangeDetectorRef, private ngZone: NgZone) {}
 
   ngOnInit(): void {
     this.connectToLogStream();
@@ -264,14 +270,14 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private flushPendingLogs(): void {
     this.rafId = null;
-    
+
     const now = performance.now();
     if (now - this.lastFlushTime < this.MIN_FLUSH_INTERVAL) {
       // Too soon, reschedule
       this.rafId = requestAnimationFrame(() => this.flushPendingLogs());
       return;
     }
-    
+
     if (this.pendingLogs.length === 0) {
       return;
     }
@@ -289,7 +295,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
     this.ngZone.run(() => {
       // Create new array reference for virtual scroll
       let updated: ExtendedLogEntry[];
-      
+
       if (this.logEntries.length + newEntries.length <= this.maxLogEntries) {
         updated = [...newEntries, ...this.logEntries];
       } else {
