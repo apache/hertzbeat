@@ -38,6 +38,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -232,10 +233,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
         Map<String, List<Value>> instanceValuesMap = getHistoryData(start, end, step, instance, app, metrics, metric);
 
+        if (instanceValuesMap.isEmpty()) {
+            return Collections.emptyMap();
+        }
         // Queries below this point may yield inconsistent results due to exceeding the valid data range.
         // Therefore, we restrict the valid range by obtaining the post-query timeframe.
         // Since `gretime`'s `end` excludes the specified time, we add 4 hours.
-        List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().stream().toList().get(0));
+        List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().iterator().next());
         // effective time
         long effectiveStart = values.get(0).getTime() / 1000;
         long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + Duration.ofHours(4).getSeconds();
