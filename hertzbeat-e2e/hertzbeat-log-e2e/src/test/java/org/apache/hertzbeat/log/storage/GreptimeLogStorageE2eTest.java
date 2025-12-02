@@ -59,6 +59,7 @@ public class GreptimeLogStorageE2eTest {
     private static final String GREPTIME_IMAGE = "greptime/greptimedb:latest";
     private static final int GREPTIME_HTTP_PORT = 4000;
     private static final int GREPTIME_GRPC_PORT = 4001;
+    private static final int GREPTIME_PG_PORT = 4003;
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(120);
 
     @LocalServerPort
@@ -75,11 +76,12 @@ public class GreptimeLogStorageE2eTest {
 
     static {
         greptimedb = new GenericContainer<>(DockerImageName.parse(GREPTIME_IMAGE))
-                .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
+                .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT, GREPTIME_PG_PORT)
                 .withCommand("standalone", "start",
                         "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
-                        "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
-                .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
+                        "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT,
+                        "--postgres-addr", "0.0.0.0:" + GREPTIME_PG_PORT)
+                .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT, GREPTIME_PG_PORT))
                 .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
         greptimedb.start();
     }
@@ -90,6 +92,7 @@ public class GreptimeLogStorageE2eTest {
         r.add("warehouse.store.greptime.enabled", () -> "true");
         r.add("warehouse.store.greptime.http-endpoint", () -> "http://localhost:" + greptimedb.getMappedPort(GREPTIME_HTTP_PORT));
         r.add("warehouse.store.greptime.grpc-endpoints", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_GRPC_PORT));
+        r.add("warehouse.store.greptime.postgres-endpoint", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_PG_PORT));
         r.add("warehouse.store.greptime.username", () -> "");
         r.add("warehouse.store.greptime.password", () -> "");
     }
