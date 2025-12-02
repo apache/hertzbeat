@@ -230,7 +230,8 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
         }
 
         // Raw data query - limit to avoid memory issues
-        StringBuilder sqlBuilder = new StringBuilder("SELECT record_time, metric_type, int32_value, double_value, str_value, labels FROM hzb_history WHERE instance = ? AND app = ? AND metrics = ? AND metric = ?");
+        StringBuilder sqlBuilder = new StringBuilder("SELECT record_time, metric_type, int32_value, double_value," +
+                " str_value, labels FROM hzb_history WHERE instance = ? AND app = ? AND metrics = ? AND metric = ?");
 
         long timeBefore = 0;
         if (history != null) {
