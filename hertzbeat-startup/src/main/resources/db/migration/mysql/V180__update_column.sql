@@ -79,7 +79,7 @@ DROP PROCEDURE IF EXISTS RenameHostToInstance;
 UPDATE hzb_monitor m
 INNER JOIN hzb_param p ON m.id = p.monitor_id AND p.field = 'port'
 SET m.instance = CONCAT(m.instance, ':', p.param_value)
-WHERE m.instance IS NOT NULL;
+WHERE m.instance IS NOT NULL AND p.param_value IS NOT NULL AND p.param_value != '';
 
 -- Migrate history table
 DELIMITER //

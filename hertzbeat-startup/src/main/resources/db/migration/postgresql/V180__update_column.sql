@@ -46,7 +46,7 @@ END $$;
 UPDATE HZB_MONITOR m
 SET instance = m.instance || ':' || p.param_value
 FROM HZB_PARAM p
-WHERE m.id = p.monitor_id AND p.field = 'port';
+WHERE m.id = p.monitor_id AND p.field = 'port' AND p.param_value IS NOT NULL AND p.param_value != '';
 
 -- Migrate history table
 DO $$
