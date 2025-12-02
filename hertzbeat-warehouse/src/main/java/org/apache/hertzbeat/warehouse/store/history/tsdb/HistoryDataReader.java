@@ -34,42 +34,31 @@ public interface HistoryDataReader {
 
     /**
      * query history range metrics data from tsdb
-     * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @param metric metric
-     * @param label label
-     * @param history range
+     *
+     * @param instance instance e.g. ip:port or ip or domain
+     * @param app      monitor type
+     * @param metrics  metrics
+     * @param metric   metric
+     * @param history  range
      * @return metrics data
      */
-    Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric,
-                                                  String label, String history);
+    Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history);
 
     /**
      * query history range interval metrics data from tsdb
      * max min mean metrics value
-     * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @param metric metric
-     * @param label label
-     * @param history history range
+     *
+     * @param instance instance e.g. ip:port or ip or domain
+     * @param app      monitor type
+     * @param metrics  metrics
+     * @param metric   metric
+     * @param history  history range
      * @return metrics data
      */
-    Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics, String metric,
-                                                          String label, String history);
+    Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history);
 
     /**
-     * Query logs with multiple filter conditions (Legacy)
-     */
-    default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
-                                                         String spanId, Integer severityNumber,
-                                                         String severityText) {
-        return queryLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText, null);
-    }
-
-    /**
-     * Query logs with multiple filter conditions including search content
+     * Query logs with multiple filter conditions
      * @param startTime start time in milliseconds
      * @param endTime end time in milliseconds
      * @param traceId trace ID filter

@@ -16,6 +16,8 @@ Apache HertzBeat™ uses [Sureness](https://github.com/dromara/sureness) to supp
 
 Use the `sureness.yml` provided by Sureness to configure user accounts, roles, API resources, etc. It is strongly recommended that the initial user modify the account password. For details, refer to [Account Permission Management](../start/account-modify)
 
+Please note that the role permission function is being improved, please do not use roles to control user permissions, all users have management permissions.
+
 ## Monitoring Template Security
 
 Apache HertzBeat™ provides a monitoring template feature that allows users to define monitoring rules by configuring custom monitoring templates and custom scripts.
