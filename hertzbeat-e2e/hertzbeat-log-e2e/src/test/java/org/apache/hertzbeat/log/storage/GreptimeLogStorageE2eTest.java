@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -116,7 +116,7 @@ public class GreptimeLogStorageE2eTest {
     void testLogStorageToGreptimeDb() {
 
         List<LogEntry> capturedLogs = new ArrayList<>();
-        
+
         // Wait for Vector to generate and send logs to HertzBeat
         await().atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofSeconds(3))
@@ -131,7 +131,7 @@ public class GreptimeLogStorageE2eTest {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Test interrupted", e);
                     }
-                    
+
                     // Assert that we have captured at least some logs
                     assertFalse(capturedLogs.isEmpty(), "Should have captured at least one log entry");
                 });
@@ -142,7 +142,7 @@ public class GreptimeLogStorageE2eTest {
         assertNotNull(firstLog, "First log should not be null");
         assertNotNull(firstLog.getBody(), "Log body should not be null");
         assertNotNull(firstLog.getSeverityText(), "Severity text should not be null");
-        
+
         // Additional wait to ensure logs are persisted to GreptimeDB
         await().atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofSeconds(2))
@@ -159,8 +159,8 @@ public class GreptimeLogStorageE2eTest {
     private List<LogEntry> queryStoredLogs() {
         long endTime = System.currentTimeMillis();
         long startTime = endTime - Duration.ofMinutes(5).toMillis(); // Look back 5 minutes
-        
+
         return greptimeDbDataStorage.queryLogsByMultipleConditions(
-                startTime, endTime, null, null, null, null);
+                startTime, endTime, null, null, null, null, null);
     }
 }
