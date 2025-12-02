@@ -458,7 +458,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
                     .addField("severity_number", DataType.Int32)
                     .addField("severity_text", DataType.String)
-                    .addField("body", DataType.Json)
+                    .addField("body", DataType.String)
                     .addField("trace_id", DataType.String)
                     .addField("span_id", DataType.String)
                     .addField("trace_flags", DataType.Int32)
@@ -472,7 +472,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
                     logEntry.getSeverityNumber(),
                     logEntry.getSeverityText(),
-                    JsonUtil.toJson(logEntry.getBody()),
+                    logEntry.getBody(),
                     logEntry.getTraceId(),
                     logEntry.getSpanId(),
                     logEntry.getTraceFlags(),
@@ -505,8 +505,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             sql.append(" ORDER BY time_unix_nano DESC");
 
             // Execute via JDBC executor using parameters
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.query(sql.toString(), args.toArray());
-            return mapRowsToLogEntries(rows);
+            List<LogEntry> rows = greptimeSqlQueryExecutor.query(sql.toString(), args.toArray());
+            return rows;
         } catch (Exception e) {
             log.error("[warehouse greptime-log] queryLogsByMultipleConditions error: {}", e.getMessage(), e);
             return List.of();
@@ -533,8 +533,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 }
             }
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.query(sql.toString(), args.toArray());
-            return mapRowsToLogEntries(rows);
+            return greptimeSqlQueryExecutor.query(sql.toString(), args.toArray());
         } catch (Exception e) {
             log.error("[warehouse greptime-log] queryLogsByMultipleConditionsWithPagination error: {}", e.getMessage(), e);
             return List.of();
@@ -550,14 +549,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             List<Object> args = new ArrayList<>();
             buildWhereConditions(sql, args, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
 
-            List<Map<String, Object>> rows = greptimeSqlQueryExecutor.query(sql.toString(), args.toArray());
-            if (rows != null && !rows.isEmpty()) {
-                Object countObj = rows.get(0).get("count");
-                if (countObj instanceof Number) {
-                    return ((Number) countObj).longValue();
-                }
-            }
-            return 0;
+            return greptimeSqlQueryExecutor.count(sql.toString(), args.toArray());
         } catch (Exception e) {
             log.error("[warehouse greptime-log] countLogsByMultipleConditions error: {}", e.getMessage(), e);
             return 0;
@@ -612,96 +604,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ").append(String.join(" AND ", conditions));
         }
-    }
-
-    private List<LogEntry> mapRowsToLogEntries(List<Map<String, Object>> rows) {
-        List<LogEntry> list = new LinkedList<>();
-        if (rows == null || rows.isEmpty()) {
-            return list;
-        }
-        for (Map<String, Object> row : rows) {
-            try {
-                LogEntry.InstrumentationScope scope = null;
-                Object scopeObj = row.get("instrumentation_scope");
-                if (scopeObj instanceof String scopeStr && StringUtils.hasText(scopeStr)) {
-                    try {
-                        scope = JsonUtil.fromJson(scopeStr, LogEntry.InstrumentationScope.class);
-                    } catch (Exception ignore) {
-                        scope = null;
-                    }
-                }
-                Object bodyObj = parseJsonMaybe(row.get("body"));
-                Map<String, Object> attributes = castToMap(parseJsonMaybe(row.get("attributes")));
-                Map<String, Object> resource = castToMap(parseJsonMaybe(row.get("resource")));
-                LogEntry entry = LogEntry.builder()
-                        .timeUnixNano(castToLong(row.get("time_unix_nano")))
-                        .observedTimeUnixNano(castToLong(row.get("observed_time_unix_nano")))
-                        .severityNumber(castToInteger(row.get("severity_number")))
-                        .severityText(castToString(row.get("severity_text")))
-                        .body(bodyObj)
-                        .traceId(castToString(row.get("trace_id")))
-                        .spanId(castToString(row.get("span_id")))
-                        .traceFlags(castToInteger(row.get("trace_flags")))
-                        .attributes(attributes)
-                        .resource(resource)
-                        .instrumentationScope(scope)
-                        .droppedAttributesCount(castToInteger(row.get("dropped_attributes_count")))
-                        .build();
-                list.add(entry);
-            } catch (Exception e) {
-                log.warn("[warehouse greptime-log] map row to LogEntry error: {}", e.getMessage());
-            }
-        }
-        return list;
-    }
-
-    private static Object parseJsonMaybe(Object value) {
-        if (value == null) return null;
-        if (value instanceof Map) return value;
-        if (value instanceof String str) {
-            String s = str.trim();
-            if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) {
-                try {
-                    return JsonUtil.fromJson(s, Object.class);
-                } catch (Exception e) {
-                    return s;
-                }
-            }
-            return s;
-        }
-        return value;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> castToMap(Object obj) {
-        if (obj instanceof Map) {
-            return (Map<String, Object>) obj;
-        }
-        return null;
-    }
-
-    private static Long castToLong(Object obj) {
-        if (obj == null) return null;
-        if (obj instanceof Number n) return n.longValue();
-        try {
-            return Long.parseLong(String.valueOf(obj));
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static Integer castToInteger(Object obj) {
-        if (obj == null) return null;
-        if (obj instanceof Number n) return n.intValue();
-        try {
-            return Integer.parseInt(String.valueOf(obj));
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static String castToString(Object obj) {
-        return obj == null ? null : String.valueOf(obj);
     }
 
     @Override
