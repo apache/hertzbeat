@@ -58,7 +58,8 @@ DROP ALIAS RENAME_HOST_TO_INSTANCE;
 -- Update instance with port
 UPDATE HZB_MONITOR m
 SET instance = CONCAT(instance, ':', (SELECT param_value FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port'))
-WHERE EXISTS (SELECT 1 FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port' AND p.param_value IS NOT NULL AND p.param_value != '');
+WHERE EXISTS (SELECT 1 FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port' AND p.param_value IS NOT NULL AND p.param_value != '')
+  AND instance NOT LIKE CONCAT('%:', (SELECT param_value FROM HZB_PARAM p WHERE p.monitor_id = m.id AND p.field = 'port'));
 
 -- Migrate history table
 CREATE ALIAS MIGRATE_HISTORY_TABLE AS $$
