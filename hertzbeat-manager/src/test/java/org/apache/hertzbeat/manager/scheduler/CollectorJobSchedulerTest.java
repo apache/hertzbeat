@@ -116,7 +116,7 @@ public class CollectorJobSchedulerTest {
         when(collectorMonitorBindDao.findCollectorMonitorBindsByCollector(identity)).thenReturn(List.of(bind));
 
         // mock monitor
-        Monitor monitor = Monitor.builder().id(1L).name("test-monitor").host("127.0.0.1").app("test-app").intervals(60).status((byte) 1).build();
+        Monitor monitor = Monitor.builder().id(1L).name("test-monitor").instance("127.0.0.1:8080").app("test-app").intervals(60).status((byte) 1).build();
         when(monitorDao.findMonitorsByIdIn(any())).thenReturn(List.of(monitor));
 
         // mock Params
@@ -145,7 +145,7 @@ public class CollectorJobSchedulerTest {
         assertNotNull(job);
         assertNotNull(job.getMetadata());
         assertEquals("test-monitor", job.getMetadata().get(CommonConstants.LABEL_INSTANCE_NAME));
-        assertEquals("127.0.0.1", job.getMetadata().get(CommonConstants.LABEL_INSTANCE_HOST));
+        assertEquals("127.0.0.1:8080", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
     }
 
 }

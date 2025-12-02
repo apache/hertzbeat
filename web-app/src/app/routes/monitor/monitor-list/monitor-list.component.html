@@ -202,13 +202,13 @@
                 *ngIf="data.scrape == 'static' || !data.scrape"
                 nz-button
                 nzType="text"
-                [cdkCopyToClipboard]="data.host"
+                [cdkCopyToClipboard]="data.instance"
                 nz-tooltip
                 [nzTooltipTitle]="'common.button.copy.tip' | i18n"
                 (click)="notifyCopySuccess()"
               >
                 <i nz-icon nzType="global"></i>
-                {{ data.host }}
+                {{ data.instance }}
               </button>
               <button nz-button nzType="text" *ngIf="data.scrape && data.scrape != 'static'">
                 <i nz-icon nzType="partition"></i>

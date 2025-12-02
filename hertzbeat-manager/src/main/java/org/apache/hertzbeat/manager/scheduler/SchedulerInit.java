@@ -50,7 +50,7 @@ import org.springframework.util.StringUtils;
 @Order(value = Ordered.LOWEST_PRECEDENCE - 1)
 @Slf4j
 public class SchedulerInit implements CommandLineRunner {
-    
+
     @Autowired
     private CollectorScheduling collectorScheduling;
     
@@ -59,6 +59,7 @@ public class SchedulerInit implements CommandLineRunner {
    
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
     private static final String DEFAULT_COLLECTOR_VERSION = "DEBUG";
+    public static final String PARAM_FIELD_PORT = "port";
 
     @Autowired
     private AppService appService;
@@ -117,8 +118,11 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
+
+                String instance = monitor.getInstance();
+
                 Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                        CommonConstants.LABEL_INSTANCE_HOST, monitor.getHost());
+                        CommonConstants.LABEL_INSTANCE, instance);
                 appDefine.setMetadata(metadata);
                 appDefine.setLabels(monitor.getLabels());
                 appDefine.setAnnotations(monitor.getAnnotations());
