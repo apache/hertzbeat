@@ -262,8 +262,8 @@ class GreptimeDbDataStorageTest {
             // Test with valid list
             boolean result = greptimeDbDataStorage.batchDeleteLogs(List.of(1L, 2L));
             assertTrue(result);
-            // Verify query method is called with 2 arguments (for 2 IDs)
-            verify(greptimeSqlQueryExecutor, times(1)).query(anyString(), eq(1L), eq(2L));
+            // Verify delete method is called with 2 arguments (for 2 IDs)
+            verify(greptimeSqlQueryExecutor, times(1)).delete(anyString(), eq(1L), eq(2L));
         }
     }
 
@@ -276,8 +276,8 @@ class GreptimeDbDataStorageTest {
             // Test with empty list
             boolean emptyResult = greptimeDbDataStorage.batchDeleteLogs(Collections.emptyList());
             assertFalse(emptyResult);
-            // Verify query was never called
-            verify(greptimeSqlQueryExecutor, never()).query(anyString(), any());
+            // Verify delete was never called
+            verify(greptimeSqlQueryExecutor, never()).delete(anyString(), any());
         }
     }
 
@@ -290,8 +290,8 @@ class GreptimeDbDataStorageTest {
             // Test with null list
             boolean nullResult = greptimeDbDataStorage.batchDeleteLogs(null);
             assertFalse(nullResult);
-            // Verify query was never called
-            verify(greptimeSqlQueryExecutor, never()).query(anyString(), any());
+            // Verify delete was never called
+            verify(greptimeSqlQueryExecutor, never()).delete(anyString(), any());
         }
     }
 
