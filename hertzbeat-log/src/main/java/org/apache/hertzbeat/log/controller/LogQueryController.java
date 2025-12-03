@@ -61,50 +61,54 @@ public class LogQueryController {
     }
 
     @GetMapping("/list")
-    @Operation(summary = "Query logs by time range with optional filters", 
-               description = "Query logs by [start,end] in ms and optional filters with pagination. Returns paginated log entries sorted by timestamp in descending order.")
+    @Operation(summary = "Query logs by time range with optional filters",
+            description = "Query logs by [start,end] in ms and optional filters with pagination. Returns paginated log entries sorted by timestamp in descending order.")
     public ResponseEntity<Message<Page<LogEntry>>> list(
-            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000") 
+            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
-            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000") 
+            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
             @RequestParam(value = "end", required = false) Long end,
-            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef") 
+            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef")
             @RequestParam(value = "traceId", required = false) String traceId,
-            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890") 
+            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890")
             @RequestParam(value = "spanId", required = false) String spanId,
-            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9") 
+            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9")
             @RequestParam(value = "severityNumber", required = false) Integer severityNumber,
-            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO") 
+            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
             @RequestParam(value = "severityText", required = false) String severityText,
-            @Parameter(description = "Page index starting from 0", example = "0") 
+            @Parameter(description = "Log content search keyword", example = "error")
+            @RequestParam(value = "search", required = false) String search,
+            @Parameter(description = "Page index starting from 0", example = "0")
             @RequestParam(value = "pageIndex", required = false, defaultValue = "0") Integer pageIndex,
-            @Parameter(description = "Number of items per page", example = "20") 
+            @Parameter(description = "Number of items per page", example = "20")
             @RequestParam(value = "pageSize", required = false, defaultValue = "20") Integer pageSize) {
-        Page<LogEntry> result = getPagedLogs(start, end, traceId, spanId, severityNumber, severityText, pageIndex, pageSize);
+        Page<LogEntry> result = getPagedLogs(start, end, traceId, spanId, severityNumber, severityText, search, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(result));
     }
 
     @GetMapping("/stats/overview")
-    @Operation(summary = "Log overview statistics", 
-               description = "Overall counts and basic statistics with filters. Provides counts by severity levels according to OpenTelemetry standard.")
+    @Operation(summary = "Log overview statistics",
+            description = "Overall counts and basic statistics with filters. Provides counts by severity levels according to OpenTelemetry standard.")
     public ResponseEntity<Message<Map<String, Object>>> overviewStats(
-            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000") 
+            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
-            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000") 
+            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
             @RequestParam(value = "end", required = false) Long end,
-            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef") 
+            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef")
             @RequestParam(value = "traceId", required = false) String traceId,
-            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890") 
+            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890")
             @RequestParam(value = "spanId", required = false) String spanId,
-            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9") 
+            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9")
             @RequestParam(value = "severityNumber", required = false) Integer severityNumber,
-            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO") 
-            @RequestParam(value = "severityText", required = false) String severityText) {
-        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText);
-        
+            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
+            @RequestParam(value = "severityText", required = false) String severityText,
+            @Parameter(description = "Log content search keyword", example = "error")
+            @RequestParam(value = "search", required = false) String search) {
+        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search);
+
         Map<String, Object> overview = new HashMap<>();
         overview.put("totalCount", logs.size());
-        
+
         // Count by severity levels according to OpenTelemetry standard
         // TRACE: 1-4, DEBUG: 5-8, INFO: 9-12, WARN: 13-16, ERROR: 17-20, FATAL: 21-24
         long fatalCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 21 && log.getSeverityNumber() <= 24).count();
@@ -113,114 +117,117 @@ public class LogQueryController {
         long infoCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 9 && log.getSeverityNumber() <= 12).count();
         long debugCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 5 && log.getSeverityNumber() <= 8).count();
         long traceCount = logs.stream().filter(log -> log.getSeverityNumber() != null && log.getSeverityNumber() >= 1 && log.getSeverityNumber() <= 4).count();
-        
+
         overview.put("fatalCount", fatalCount);
         overview.put("errorCount", errorCount);
         overview.put("warnCount", warnCount);
         overview.put("infoCount", infoCount);
         overview.put("debugCount", debugCount);
         overview.put("traceCount", traceCount);
-        
+
         return ResponseEntity.ok(Message.success(overview));
     }
 
     @GetMapping("/stats/trace-coverage")
-    @Operation(summary = "Trace coverage statistics", 
-               description = "Statistics about trace information availability. Shows how many logs have trace IDs, span IDs, or both for distributed tracing analysis.")
+    @Operation(summary = "Trace coverage statistics",
+            description = "Statistics about trace information availability. Shows how many logs have trace IDs, span IDs, or both for distributed tracing analysis.")
     public ResponseEntity<Message<Map<String, Object>>> traceCoverageStats(
-            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000") 
+            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
-            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000") 
+            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
             @RequestParam(value = "end", required = false) Long end,
-            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef") 
+            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef")
             @RequestParam(value = "traceId", required = false) String traceId,
-            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890") 
+            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890")
             @RequestParam(value = "spanId", required = false) String spanId,
-            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9") 
+            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9")
             @RequestParam(value = "severityNumber", required = false) Integer severityNumber,
-            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO") 
-            @RequestParam(value = "severityText", required = false) String severityText) {
-        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText);
-        
+            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
+            @RequestParam(value = "severityText", required = false) String severityText,
+            @Parameter(description = "Log content search keyword", example = "error")
+            @RequestParam(value = "search", required = false) String search) {
+        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search);
+
         Map<String, Object> result = new HashMap<>();
-        
+
         // Trace coverage statistics
         long withTraceId = logs.stream().filter(log -> log.getTraceId() != null && !log.getTraceId().isEmpty()).count();
         long withSpanId = logs.stream().filter(log -> log.getSpanId() != null && !log.getSpanId().isEmpty()).count();
-        long withBothTraceAndSpan = logs.stream().filter(log -> 
-            log.getTraceId() != null && !log.getTraceId().isEmpty()
-                    && log.getSpanId() != null && !log.getSpanId().isEmpty()).count();
+        long withBothTraceAndSpan = logs.stream().filter(log ->
+                log.getTraceId() != null && !log.getTraceId().isEmpty()
+                        && log.getSpanId() != null && !log.getSpanId().isEmpty()).count();
         long withoutTrace = logs.size() - withTraceId;
-        
+
         Map<String, Long> traceCoverage = new HashMap<>();
         traceCoverage.put("withTrace", withTraceId);
         traceCoverage.put("withoutTrace", withoutTrace);
         traceCoverage.put("withSpan", withSpanId);
         traceCoverage.put("withBothTraceAndSpan", withBothTraceAndSpan);
-        
+
         result.put("traceCoverage", traceCoverage);
         return ResponseEntity.ok(Message.success(result));
     }
 
     @GetMapping("/stats/trend")
-    @Operation(summary = "Log trend over time", 
-               description = "Count logs by hour intervals with filters. Groups logs by hour and provides time-series data for trend analysis.")
+    @Operation(summary = "Log trend over time",
+            description = "Count logs by hour intervals with filters. Groups logs by hour and provides time-series data for trend analysis.")
     public ResponseEntity<Message<Map<String, Object>>> trendStats(
-            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000") 
+            @Parameter(description = "Start timestamp in milliseconds (Unix timestamp)", example = "1640995200000")
             @RequestParam(value = "start", required = false) Long start,
-            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000") 
+            @Parameter(description = "End timestamp in milliseconds (Unix timestamp)", example = "1641081600000")
             @RequestParam(value = "end", required = false) Long end,
-            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef") 
+            @Parameter(description = "Trace ID for distributed tracing", example = "1234567890abcdef")
             @RequestParam(value = "traceId", required = false) String traceId,
-            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890") 
+            @Parameter(description = "Span ID for distributed tracing", example = "abcdef1234567890")
             @RequestParam(value = "spanId", required = false) String spanId,
-            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9") 
+            @Parameter(description = "Log severity number (1-24 according to OpenTelemetry standard)", example = "9")
             @RequestParam(value = "severityNumber", required = false) Integer severityNumber,
-            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO") 
-            @RequestParam(value = "severityText", required = false) String severityText) {
-        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText);
-        
+            @Parameter(description = "Log severity text (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)", example = "INFO")
+            @RequestParam(value = "severityText", required = false) String severityText,
+            @Parameter(description = "Log content search keyword", example = "error")
+            @RequestParam(value = "search", required = false) String search) {
+        List<LogEntry> logs = getFilteredLogs(start, end, traceId, spanId, severityNumber, severityText, search);
+
         // Group by hour
         Map<String, Long> hourlyStats = logs.stream()
-            .filter(log -> log.getTimeUnixNano() != null)
-            .collect(Collectors.groupingBy(
-                log -> {
-                    long timestampMs = log.getTimeUnixNano() / 1_000_000L;
-                    LocalDateTime dateTime = LocalDateTime.ofInstant(
-                        Instant.ofEpochMilli(timestampMs),
-                        ZoneId.systemDefault());
-                    return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00"));
-                },
-                Collectors.counting()));
-        
+                .filter(log -> log.getTimeUnixNano() != null)
+                .collect(Collectors.groupingBy(
+                        log -> {
+                            long timestampMs = log.getTimeUnixNano() / 1_000_000L;
+                            LocalDateTime dateTime = LocalDateTime.ofInstant(
+                                    Instant.ofEpochMilli(timestampMs),
+                                    ZoneId.systemDefault());
+                            return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00"));
+                        },
+                        Collectors.counting()));
+
         Map<String, Object> result = new HashMap<>();
         result.put("hourlyStats", hourlyStats);
         return ResponseEntity.ok(Message.success(result));
     }
 
-    private List<LogEntry> getFilteredLogs(Long start, Long end, String traceId, String spanId, 
-                                           Integer severityNumber, String severityText) {
+    private List<LogEntry> getFilteredLogs(Long start, Long end, String traceId, String spanId,
+                                           Integer severityNumber, String severityText, String search) {
         // Use the new multi-condition query method
-        return historyDataReader.queryLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText);
+        return historyDataReader.queryLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText, search);
     }
 
-    private Page<LogEntry> getPagedLogs(Long start, Long end, String traceId, String spanId, 
-                                        Integer severityNumber, String severityText, Integer pageIndex, Integer pageSize) {
+    private Page<LogEntry> getPagedLogs(Long start, Long end, String traceId, String spanId,
+                                        Integer severityNumber, String severityText, String search,
+                                        Integer pageIndex, Integer pageSize) {
         // Calculate pagination parameters
         int offset = pageIndex * pageSize;
-        
+
         // Get total count and paginated data
-        long totalElements = historyDataReader.countLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText);
+        long totalElements = historyDataReader.countLogsByMultipleConditions(start, end, traceId, spanId, severityNumber, severityText, search);
         List<LogEntry> pagedLogs = historyDataReader.queryLogsByMultipleConditionsWithPagination(
-            start, end, traceId, spanId, severityNumber, severityText, offset, pageSize);
-        
+                start, end, traceId, spanId, severityNumber, severityText, search, offset, pageSize);
+
         // Create PageRequest (sorted by timestamp descending)
         Sort sort = Sort.by(Sort.Direction.DESC, "timeUnixNano");
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sort);
-        
+
         // Return Spring Data Page object
         return new PageImpl<>(pagedLogs, pageRequest, totalElements);
     }
 }
-
-

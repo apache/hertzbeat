@@ -29,24 +29,20 @@
     <name>${project.artifactId}</name>
 
     <dependencies>
-        <!-- common -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- plugin -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-plugin</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- util -->
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
         </dependency>
-        <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -61,13 +57,16 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- taos-jdbc driver -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.taosdata.jdbc</groupId>
             <artifactId>taos-jdbcdriver</artifactId>
             <version>${taos-jdbcdriver.version}</version>
         </dependency>
-        <!-- IoTDB -->
         <dependency>
             <groupId>org.apache.iotdb</groupId>
             <artifactId>iotdb-session</artifactId>
@@ -83,19 +82,16 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- QuestDB  -->
         <dependency>
             <groupId>org.questdb</groupId>
             <artifactId>questdb</artifactId>
             <version>${questdb.version}</version>
         </dependency>
-        <!-- influxdb Here, support for version 1.7, use influxdb-java, Full support for version 2.x requires influxdb-client-java -->
         <dependency>
             <groupId>org.influxdb</groupId>
             <artifactId>influxdb-java</artifactId>
             <version>${influxdb.version}</version>
         </dependency>
-        <!-- greptimedb -->
         <dependency>
             <groupId>io.greptime</groupId>
             <artifactId>ingester-all</artifactId>
@@ -119,7 +115,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
@@ -130,13 +125,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!--redis-->
         <dependency>
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -150,11 +143,15 @@
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory-netty</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
             <version>${snappy-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
     </dependencies>
 </project>
