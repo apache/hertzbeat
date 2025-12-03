@@ -95,6 +95,8 @@ public class GreptimeLogStorageE2eTest {
         r.add("warehouse.store.greptime.postgres-endpoint", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_PG_PORT));
         r.add("warehouse.store.greptime.username", () -> "");
         r.add("warehouse.store.greptime.password", () -> "");
+        // Explicitly set the driver class name for JDBC to ensure PostgreSQL driver is used
+        r.add("warehouse.store.greptime.driver-class-name", () -> "org.postgresql.Driver");
     }
 
 
@@ -162,6 +164,7 @@ public class GreptimeLogStorageE2eTest {
      */
     private List<LogEntry> queryStoredLogs() {
         long endTime = System.currentTimeMillis();
+        // Look back 10 minutes to ensure we cover the test execution window
         long startTime = endTime - Duration.ofMinutes(10).toMillis();
 
         return greptimeDbDataStorage.queryLogsByMultipleConditions(

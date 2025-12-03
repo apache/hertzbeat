@@ -58,6 +58,7 @@ import java.math.RoundingMode;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -504,6 +505,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             Table table = Table.from(tableSchemaBuilder.build());
 
             // Convert LogEntry to table row
+            // FIX: Use current system time if timestamp is missing, NOT System.nanoTime() which is uptime
             long nowNs = System.currentTimeMillis() * 1_000_000L;
             Object[] values = new Object[] {
                     logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : nowNs,
@@ -597,10 +599,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
     }
 
-    private static long msToNs(Long ms) {
-        return ms * 1_000_000L;
-    }
-
     /**
      * build WHERE conditions
      * @param sql SQL builder
@@ -616,8 +614,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         List<String> conditions = new ArrayList<>();
         if (startTime != null && endTime != null) {
             conditions.add("time_unix_nano >= ? AND time_unix_nano <= ?");
-            args.add(msToNs(startTime));
-            args.add(msToNs(endTime));
+            args.add(new Timestamp(startTime));
+            args.add(new Timestamp(endTime));
         }
         if (StringUtils.hasText(traceId)) {
             conditions.add("trace_id = ?");
