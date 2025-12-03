@@ -54,4 +54,17 @@ public interface HistoryDataWriter {
     default boolean batchDeleteLogs(List<Long> timeUnixNanos) {
         throw new UnsupportedOperationException("batch delete logs is not supported");
     }
+
+    /**
+     * Batch save log data
+     * @param logEntries list of log entries
+     */
+    default void saveLogDataBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        for (LogEntry logEntry : logEntries) {
+            saveLogData(logEntry);
+        }
+    }
 }

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import java.util.List;
+import java.util.Optional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +38,6 @@ import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
 /**
  * dispatch storage metrics data
  */
@@ -51,6 +51,7 @@ public class DataStorageDispatch {
     private final RealTimeDataWriter realTimeDataWriter;
     private final Optional<HistoryDataWriter> historyDataWriter;
     private final PluginRunner pluginRunner;
+    private static final int LOG_BATCH_SIZE = 1000;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -108,16 +109,16 @@ public class DataStorageDispatch {
             Thread.currentThread().setName("warehouse-log-data-storage");
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    LogEntry logEntry = commonDataQueue.pollLogEntryToStorage();
-                    if (logEntry == null) {
+                    List<LogEntry> logEntries = commonDataQueue.pollLogEntryToStorageBatch(LOG_BATCH_SIZE);
+                    if (logEntries == null || logEntries.isEmpty()) {
                         continue;
                     }
                     backoff.reset();
                     historyDataWriter.ifPresent(dataWriter -> {
                         try {
-                            dataWriter.saveLogData(logEntry);
+                            dataWriter.saveLogDataBatch(logEntries);
                         } catch (Exception e) {
-                            log.error("Failed to save log entry: {}", e.getMessage(), e);
+                            log.error("Failed to save log entries batch: {}", e.getMessage(), e);
                         }
                     });
                 } catch (InterruptedException interruptedException) {

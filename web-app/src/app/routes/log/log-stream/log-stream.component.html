@@ -159,47 +159,44 @@
       </div>
     </div>
 
-    <div class="log-container" #logContainer [class.paused]="isPaused">
+    <div class="log-container" [class.paused]="isPaused">
       <!-- Empty State -->
       <div *ngIf="!isConnecting && logEntries.length === 0" class="empty-state">
         <nz-empty [nzNotFoundContent]="'log.stream.no-logs' | i18n"> </nz-empty>
       </div>
 
-      <!-- Log Entries -->
-      <div
-        *ngFor="let logEntry of logEntries; trackBy: trackByLogEntry"
-        class="log-entry"
-        [class.new-entry]="logEntry.isNew"
-        (click)="showLogDetails(logEntry)"
-      >
-        <div class="log-content">
-          <div class="log-meta">
-            <nz-tag [nzColor]="getSeverityColor(logEntry.original.severityNumber)" class="severity-tag">
-              {{ logEntry.original.severityText || ('log.stream.unknown' | i18n) }}
-            </nz-tag>
+      <!-- Log Entries with Virtual Scroll -->
+      <cdk-virtual-scroll-viewport itemSize="40" class="virtual-scroll-viewport">
+        <div *cdkVirtualFor="let logEntry of logEntries; trackBy: trackByLogEntry" class="log-entry" (click)="showLogDetails(logEntry)">
+          <div class="log-content">
+            <div class="log-meta">
+              <nz-tag [nzColor]="logEntry.severityColor" class="severity-tag">
+                {{ logEntry.original.severityText || ('log.stream.unknown' | i18n) }}
+              </nz-tag>
 
-            <span class="timestamp">
-              {{ formatTimestamp(logEntry.timestamp!) }}
-            </span>
-          </div>
+              <span class="timestamp">
+                {{ logEntry.timestamp | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}
+              </span>
+            </div>
 
-          <div class="log-message">
-            {{ getLogEntryJson(logEntry.original) }}
-          </div>
+            <div class="log-message">
+              {{ logEntry.displayText }}
+            </div>
 
-          <div class="log-actions">
-            <button
-              nz-button
-              nzSize="small"
-              nzType="text"
-              (click)="$event.stopPropagation(); copyToClipboard(getLogEntryJson(logEntry.original))"
-              [nz-tooltip]="'log.stream.copy-message' | i18n"
-            >
-              <i nz-icon nzType="copy"></i>
-            </button>
+            <div class="log-actions">
+              <button
+                nz-button
+                nzSize="small"
+                nzType="text"
+                (click)="$event.stopPropagation(); copyToClipboard(logEntry.displayText)"
+                [nz-tooltip]="'log.stream.copy-message' | i18n"
+              >
+                <i nz-icon nzType="copy"></i>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </cdk-virtual-scroll-viewport>
     </div>
   </nz-card>
 </div>
@@ -219,13 +216,13 @@
         <div class="basic-info">
           <div class="info-row">
             <span class="info-label">{{ 'log.stream.severity' | i18n }}</span>
-            <nz-tag [nzColor]="getSeverityColor(selectedLogEntry.original.severityNumber)">
+            <nz-tag [nzColor]="selectedLogEntry.severityColor">
               {{ selectedLogEntry.original.severityText || ('log.stream.unknown' | i18n) }}
             </nz-tag>
           </div>
           <div class="info-row">
             <span class="info-label">{{ 'log.stream.timestamp' | i18n }}</span>
-            <span>{{ formatTimestamp(selectedLogEntry.timestamp!) }}</span>
+            <span>{{ selectedLogEntry.timestamp | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}</span>
           </div>
           <div class="info-row" *ngIf="selectedLogEntry.original.traceId">
             <span class="info-label">{{ 'log.stream.trace-id-full' | i18n }}</span>
