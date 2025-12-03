@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.queue;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
@@ -91,4 +92,32 @@ public interface CommonDataQueue {
      * @throws InterruptedException when poll timeout
      */
     LogEntry pollLogEntryToStorage() throws InterruptedException;
+    
+    /**
+     * send batch log entries to alert queue
+     * @param logEntries list of log entry data
+     */
+    void sendLogEntryToAlertBatch(List<LogEntry> logEntries);
+
+    /**
+     * poll batch log entries from alert queue
+     * @param maxBatchSize maximum number of entries to poll
+     * @return list of log entry data
+     * @throws InterruptedException when poll timeout
+     */
+    List<LogEntry> pollLogEntryToAlertBatch(int maxBatchSize) throws InterruptedException;
+    
+    /**
+     * send batch log entries to storage queue
+     * @param logEntries list of log entry data
+     */
+    void sendLogEntryToStorageBatch(List<LogEntry> logEntries);
+
+    /**
+     * poll batch log entries from storage queue
+     * @param maxBatchSize maximum number of entries to poll
+     * @return list of log entry data
+     * @throws InterruptedException when poll timeout
+     */
+    List<LogEntry> pollLogEntryToStorageBatch(int maxBatchSize) throws InterruptedException;
 }

@@ -18,8 +18,10 @@
 package org.apache.hertzbeat.common.queue.impl;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
@@ -259,6 +261,92 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     @Override
     public LogEntry pollLogEntryToStorage() throws InterruptedException {
         return genericPollDataFunction(logEntryToStorageQueue, logEntryToStorageConsumer, logEntryToStorageLock);
+    }
+
+    @Override
+    public void sendLogEntryToAlertBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        if (logEntryProducer != null) {
+            try {
+                for (LogEntry logEntry : logEntries) {
+                    ProducerRecord<Long, LogEntry> record = new ProducerRecord<>(kafka.getLogEntryDataTopic(), logEntry);
+                    logEntryProducer.send(record);
+                }
+            } catch (Exception e) {
+                log.error("Failed to send LogEntry batch to Kafka: {}", e.getMessage());
+                for (LogEntry logEntry : logEntries) {
+                    logEntryQueue.offer(logEntry);
+                }
+            }
+        } else {
+            log.warn("logEntryProducer is not enabled, using memory queue");
+            for (LogEntry logEntry : logEntries) {
+                logEntryQueue.offer(logEntry);
+            }
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToAlertBatch(int maxBatchSize) throws InterruptedException {
+        return genericBatchPollDataFunction(logEntryQueue, logEntryConsumer, logEntryLock, maxBatchSize);
+    }
+
+    @Override
+    public void sendLogEntryToStorageBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        if (logEntryProducer != null) {
+            try {
+                for (LogEntry logEntry : logEntries) {
+                    ProducerRecord<Long, LogEntry> record = new ProducerRecord<>(kafka.getLogEntryDataToStorageTopic(), logEntry);
+                    logEntryProducer.send(record);
+                }
+            } catch (Exception e) {
+                log.error("Failed to send LogEntry batch to storage via Kafka: {}", e.getMessage());
+                for (LogEntry logEntry : logEntries) {
+                    logEntryToStorageQueue.offer(logEntry);
+                }
+            }
+        } else {
+            log.warn("logEntryProducer is not enabled, using memory queue for storage");
+            for (LogEntry logEntry : logEntries) {
+                logEntryToStorageQueue.offer(logEntry);
+            }
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToStorageBatch(int maxBatchSize) throws InterruptedException {
+        return genericBatchPollDataFunction(logEntryToStorageQueue, logEntryToStorageConsumer, logEntryToStorageLock, maxBatchSize);
+    }
+
+    public <T> List<T> genericBatchPollDataFunction(LinkedBlockingQueue<T> dataQueue, KafkaConsumer<Long, T> dataConsumer,
+            ReentrantLock lock, int maxBatchSize) throws InterruptedException {
+        List<T> batch = new ArrayList<>(maxBatchSize);
+        lock.lockInterruptibly();
+        try {
+            dataQueue.drainTo(batch, maxBatchSize);
+            if (batch.size() >= maxBatchSize) {
+                return batch;
+            }
+            ConsumerRecords<Long, T> records = dataConsumer.poll(Duration.ofSeconds(1));
+            for (ConsumerRecord<Long, T> record : records) {
+                if (batch.size() < maxBatchSize) {
+                    batch.add(record.value());
+                } else {
+                    dataQueue.offer(record.value());
+                }
+            }
+            dataConsumer.commitAsync();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+        return batch;
     }
 
     @Override

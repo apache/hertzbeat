@@ -71,7 +71,6 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
                 }
                 backoff.reset();
                 processLogEntry(logEntry);
-                dataQueue.sendLogEntryToStorage(logEntry);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
