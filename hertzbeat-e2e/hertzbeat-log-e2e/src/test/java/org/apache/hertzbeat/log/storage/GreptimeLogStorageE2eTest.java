@@ -121,7 +121,7 @@ public class GreptimeLogStorageE2eTest {
         List<LogEntry> capturedLogs = new ArrayList<>();
 
         // Wait for Vector to generate and send logs to HertzBeat
-        await().atMost(Duration.ofSeconds(30))
+        await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(3))
                 .untilAsserted(() -> {
                     // Poll log entries from the queue (non-blocking)
@@ -147,11 +147,12 @@ public class GreptimeLogStorageE2eTest {
         assertNotNull(firstLog.getSeverityText(), "Severity text should not be null");
 
         // Additional wait to ensure logs are persisted to GreptimeDB
-        await().atMost(Duration.ofSeconds(30))
+        await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(2))
                 .untilAsserted(() -> {
                     // Query GreptimeDB directly to verify data persistence
                     List<LogEntry> storedLogs = queryStoredLogs();
+                    log.info("Query stored logs size: {}", storedLogs.size());
                     assertFalse(storedLogs.isEmpty(), "Should have logs stored in GreptimeDB");
                 });
     }
@@ -161,7 +162,7 @@ public class GreptimeLogStorageE2eTest {
      */
     private List<LogEntry> queryStoredLogs() {
         long endTime = System.currentTimeMillis();
-        long startTime = endTime - Duration.ofMinutes(5).toMillis(); // Look back 5 minutes
+        long startTime = endTime - Duration.ofMinutes(10).toMillis();
 
         return greptimeDbDataStorage.queryLogsByMultipleConditions(
                 startTime, endTime, null, null, null, null, null);

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -504,9 +504,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             Table table = Table.from(tableSchemaBuilder.build());
 
             // Convert LogEntry to table row
+            long nowNs = System.currentTimeMillis() * 1_000_000L;
             Object[] values = new Object[] {
-                    logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
-                    logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
+                    logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : nowNs,
+                    logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : nowNs,
                     logEntry.getSeverityNumber(),
                     logEntry.getSeverityText(),
                     logEntry.getBody(),
@@ -601,7 +602,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     *  build WHERE conditions
+     * build WHERE conditions
      * @param sql SQL builder
      * @param startTime start time
      * @param endTime end time
@@ -700,10 +701,12 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
             Table table = Table.from(tableSchemaBuilder.build());
 
+            long nowNs = System.currentTimeMillis() * 1_000_000L;
+
             for (LogEntry logEntry : logEntries) {
                 Object[] values = new Object[] {
-                        logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
-                        logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
+                        logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : nowNs,
+                        logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : nowNs,
                         logEntry.getSeverityNumber(),
                         logEntry.getSeverityText(),
                         logEntry.getBody(),
