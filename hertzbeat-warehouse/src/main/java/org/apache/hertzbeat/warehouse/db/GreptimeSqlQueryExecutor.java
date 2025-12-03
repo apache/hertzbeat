@@ -156,9 +156,10 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
     }
 
     /**
-     * Execute count SQ
-     * @param sql SQL
-     * @return count
+     * Execute a count SQL query and return the result.
+     * @param sql the SQL query string, typically a SELECT COUNT(*) statement with optional ? placeholders
+     * @param args arguments to fill the placeholders in the SQL query
+     * @return the count result as a Long, or throws an exception if the query fails
      */
     public Long count(String sql, Object... args) {
         try {
