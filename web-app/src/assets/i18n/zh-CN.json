@@ -685,6 +685,8 @@
   "log.stream.severity-number-placeholder": "输入日志级别编号",
   "log.stream.severity-text": "日志级别:",
   "log.stream.severity-text-placeholder": "输入日志级别",
+  "log.stream.content" : "日志内容",
+  "log.stream.content-placeholder" : "输入日志内容",
   "log.stream.show-filters": "显示过滤器",
   "log.stream.span": "跨度:",
   "log.stream.span-id": "Span ID:",

@@ -682,6 +682,8 @@
   "log.stream.severity-number-placeholder": "Enter Severity Number",
   "log.stream.severity-text": "Severity:",
   "log.stream.severity-text-placeholder": "Enter Severity",
+  "log.stream.content" : "Log Content",
+  "log.stream.content-placeholder" : "Enter Log Content",
   "log.stream.show-filters": "Show Filters",
   "log.stream.span": "Span:",
   "log.stream.span-id": "Span ID:",
