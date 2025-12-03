@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -163,6 +165,42 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public void sendLogEntryToAlertBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        try {
+            logEntrySyncCommands.lpush(logEntryQueueName, logEntries.toArray(new LogEntry[0]));
+        } catch (Exception e) {
+            log.error("Failed to send LogEntry batch to Redis: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToAlertBatch(int maxBatchSize) throws InterruptedException {
+        return genericBatchPollFunction(logEntryQueueName, logEntrySyncCommands, maxBatchSize);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void sendLogEntryToStorageBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        try {
+            logEntrySyncCommands.lpush(logEntryToStorageQueueName, logEntries.toArray(new LogEntry[0]));
+        } catch (Exception e) {
+            log.error("Failed to send LogEntry batch to storage via Redis: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToStorageBatch(int maxBatchSize) throws InterruptedException {
+        return genericBatchPollFunction(logEntryToStorageQueueName, logEntrySyncCommands, maxBatchSize);
+    }
+
+    @Override
     public void destroy() {
         connection.close();
         logEntryConnection.close();
@@ -186,6 +224,19 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
             log.error("Redis BRPOP failed: {}", e.getMessage());
             throw new CommonDataQueueUnknownException(e.getMessage(), e);
         }
+    }
+
+    private List<LogEntry> genericBatchPollFunction(String key, RedisCommands<String, LogEntry> commands, int maxBatchSize) {
+        List<LogEntry> batch = new ArrayList<>(maxBatchSize);
+        try {
+            List<LogEntry> elements = commands.rpop(key, maxBatchSize);
+            if (elements != null) {
+                batch.addAll(elements);
+            }
+        } catch (Exception e) {
+            log.error("Redis batch poll failed: {}", e.getMessage());
+        }
+        return batch;
     }
 
 }
