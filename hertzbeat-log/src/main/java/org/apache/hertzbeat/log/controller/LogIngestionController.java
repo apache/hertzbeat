@@ -60,7 +60,7 @@ public class LogIngestionController {
     @PostMapping("/ingest/{protocol}")
     public ResponseEntity<Message<Void>> ingestExternLog(@PathVariable("protocol") String protocol,
                                                          @RequestBody String content) {
-        log.info("Receive extern log from protocol: {}, content length: {}", protocol, content == null ? 0 : content.length());
+        log.debug("Receive extern log from protocol: {}, content length: {}", protocol, content == null ? 0 : content.length());
         if (!StringUtils.hasText(protocol)) {
             protocol = DEFAULT_PROTOCOL; // Default to OTLP if no protocol specified
         }
