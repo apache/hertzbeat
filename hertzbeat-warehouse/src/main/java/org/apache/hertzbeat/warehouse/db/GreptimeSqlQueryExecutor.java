@@ -27,12 +27,13 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-
 import java.beans.PropertyDescriptor;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -108,6 +109,29 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
         log.debug("Executing GreptimeDB SQL: {}", sql);
         try {
             return jdbcTemplate.queryForList(sql);
+        } catch (Exception e) {
+            log.error("Failed to execute GreptimeDB SQL: {}", sql, e);
+            throw e;
+        }
+    }
+
+    public int delete(String sql, Object... args) {
+        log.debug("Executing GreptimeDB SQL: {}", sql);
+        try {
+            Integer result = jdbcTemplate.execute(sql, (PreparedStatementCallback<Integer>) ps -> {
+                if (args != null && args.length > 0) {
+                    ArgumentPreparedStatementSetter setter = new ArgumentPreparedStatementSetter(args);
+                    setter.setValues(ps);
+                }
+                boolean hasResultSet = ps.execute();
+                int updateCount = ps.getUpdateCount();
+                if (updateCount == -1 && hasResultSet) {
+                    log.warn("GreptimeDB returned a ResultSet for DELETE operation. Ignoring protocol error and assuming success.");
+                    return 0;
+                }
+                return updateCount;
+            });
+            return result != null ? result : 0;
         } catch (Exception e) {
             log.error("Failed to execute GreptimeDB SQL: {}", sql, e);
             throw e;

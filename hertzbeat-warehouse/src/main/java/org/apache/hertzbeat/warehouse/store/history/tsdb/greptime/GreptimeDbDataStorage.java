@@ -76,7 +76,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * GreptimeDB data storage
+ * GreptimeDB data storage, only supports GreptimeDB version >= v0.5
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.greptime", name = "enabled", havingValue = "true")
@@ -94,8 +94,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final int LOG_BATCH_SIZE = 500;
 
     private GreptimeDB greptimeDb;
+
     private final GreptimeProperties greptimeProperties;
+
     private final RestTemplate restTemplate;
+
     private final GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
 
     public GreptimeDbDataStorage(GreptimeProperties greptimeProperties, RestTemplate restTemplate,
@@ -123,6 +126,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             log.error("[warehouse greptime] Fail to start GreptimeDB client");
             return false;
         }
+
         return true;
     }
 
@@ -161,15 +165,19 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         RowWrapper rowWrapper = metricsData.readRow();
         while (rowWrapper.hasNextRow()) {
             rowWrapper = rowWrapper.nextRow();
+
             AtomicInteger index = new AtomicInteger(-1);
             rowWrapper.cellStream().forEach(cell -> {
                 index.getAndIncrement();
+
                 if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
                     values[2 + index.get()] = null;
                     return;
                 }
+
                 Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
                 Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+
                 if (label) {
                     values[2 + index.get()] = cell.getValue();
                 } else {
@@ -180,8 +188,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     }
                 }
             });
+
             table.addRow(values);
         }
+
         CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
         try {
             Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
@@ -201,6 +211,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         Map<String, Long> timeRange = getTimeRange(history);
         Long start = timeRange.get(LABEL_KEY_START_TIME);
         Long end = timeRange.get(LABEL_KEY_END_TIME);
+
         String step = getTimeStep(start, end);
 
         return getHistoryData(start, end, step, instance, app, metrics, metric);
@@ -216,6 +227,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         Map<String, Long> timeRange = getTimeRange(history);
         Long start = timeRange.get(LABEL_KEY_START_TIME);
         Long end = timeRange.get(LABEL_KEY_END_TIME);
+
         String step = getTimeStep(start, end);
 
         Map<String, List<Value>> instanceValuesMap = getHistoryData(start, end, step, instance, app, metrics, metric);
@@ -224,25 +236,32 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         // Therefore, we restrict the valid range by obtaining the post-query timeframe.
         // Since `gretime`'s `end` excludes the specified time, we add 4 hours.
         List<Value> values = instanceValuesMap.get(instanceValuesMap.keySet().stream().toList().get(0));
+        // effective time
         long effectiveStart = values.get(0).getTime() / 1000;
         long effectiveEnd = values.get(values.size() - 1).getTime() / 1000 + Duration.ofHours(4).getSeconds();
+
         String name = getTableName(metrics);
         String timeSeriesSelector = name + "{" + LABEL_KEY_INSTANCE + "=\"" + instance + "\"";
         if (!CommonConstants.PROMETHEUS.equals(app)) {
             timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
         }
         timeSeriesSelector = timeSeriesSelector + "}";
+
         try {
+            // max
             String finalTimeSeriesSelector = timeSeriesSelector;
             URI uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "max_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMax);
+            // min
             uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "min_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMin);
+            // avg
             uri = getUri(effectiveStart, effectiveEnd, step, uriComponents -> "avg_over_time(" + finalTimeSeriesSelector + "[" + step + "])");
             requestIntervalMetricAndPutValue(uri, instanceValuesMap, Value::setMean);
         } catch (Exception e) {
             log.error("query interval metrics data from greptime error. {}", e.getMessage(), e);
         }
+
         return instanceValuesMap;
     }
 
@@ -282,6 +301,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      * @return step
      */
     private String getTimeStep(long start, long end) {
+        // get step
         String step = "60s";
         if (end - start < Duration.ofDays(7).getSeconds() && end - start > Duration.ofDays(1).getSeconds()) {
             step = "1h";
@@ -310,9 +330,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!CommonConstants.PROMETHEUS.equals(app)) {
             timeSeriesSelector = timeSeriesSelector + "," + LABEL_KEY_FIELD + "=\"" + metric + "\"";
         }
+
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpEntity<Void> httpEntity = getHttpEntity();
+
             String finalTimeSeriesSelector = timeSeriesSelector;
             URI uri = getUri(start, end, step, uriComponents -> {
                 MultiValueMap<String, String> queryParams = uriComponents.getQueryParams();
@@ -321,13 +343,16 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 }
                 return null;
             });
+
             ResponseEntity<PromQlQueryContent> responseEntity = null;
             if (uri != null) {
-                responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+                responseEntity = restTemplate.exchange(uri,
+                        HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             }
             if (responseEntity != null && responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from greptime success. {}", uri);
-                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null && responseEntity.getBody().getData().getResult() != null) {
+                if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
+                        && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
@@ -362,7 +387,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        if (StringUtils.hasText(greptimeProperties.username()) && StringUtils.hasText(greptimeProperties.password())) {
+        if (StringUtils.hasText(greptimeProperties.username())
+                && StringUtils.hasText(greptimeProperties.password())) {
             String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
             String encodedAuth = Base64Util.encode(authStr);
             headers.add(HttpHeaders.AUTHORIZATION, BASIC + " " + encodedAuth);
@@ -410,7 +436,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         HttpEntity<Void> httpEntity = getHttpEntity();
-        ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+        ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             log.error("query interval metrics data from greptime failed. {}", responseEntity);
             return;
@@ -457,7 +484,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable()) {
             return;
         }
+
         try {
+            // Create table schema
             TableSchema.Builder tableSchemaBuilder = TableSchema.newBuilder(LOG_TABLE_NAME);
             tableSchemaBuilder.addTimestamp("time_unix_nano", DataType.TimestampNanosecond)
                     .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
@@ -471,8 +500,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .addField("resource", DataType.Json)
                     .addField("instrumentation_scope", DataType.Json)
                     .addField("dropped_attributes_count", DataType.Int32);
+
             Table table = Table.from(tableSchemaBuilder.build());
-            Object[] values = new Object[]{
+
+            // Convert LogEntry to table row
+            Object[] values = new Object[] {
                     logEntry.getTimeUnixNano() != null ? logEntry.getTimeUnixNano() : System.nanoTime(),
                     logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
                     logEntry.getSeverityNumber(),
@@ -486,9 +518,13 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     JsonUtil.toJson(logEntry.getInstrumentationScope()),
                     logEntry.getDroppedAttributesCount()
             };
+
             table.addRow(values);
+
+            // Write to GreptimeDB
             CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
             Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
+
             if (result.isOk()) {
                 log.debug("[warehouse greptime-log] Write successful");
             } else {
@@ -510,8 +546,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             sql.append(" ORDER BY time_unix_nano DESC");
 
             // Execute via JDBC executor using parameters
-            List<LogEntry> rows = greptimeSqlQueryExecutor.query(sql.toString(), args.toArray());
-            return rows;
+            return greptimeSqlQueryExecutor.query(sql.toString(), args.toArray());
         } catch (Exception e) {
             log.error("[warehouse greptime-log] queryLogsByMultipleConditions error: {}", e.getMessage(), e);
             return List.of();
@@ -565,7 +600,6 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         return ms * 1_000_000L;
     }
 
-
     /**
      *  build WHERE conditions
      * @param sql SQL builder
@@ -616,6 +650,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || timeUnixNanos == null || timeUnixNanos.isEmpty()) {
             return false;
         }
+
         try {
             StringBuilder sql = new StringBuilder("DELETE FROM ").append(LOG_TABLE_NAME).append(" WHERE time_unix_nano IN (");
             // Construct placeholders (?,?,?)
@@ -623,9 +658,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             sql.append(placeholders).append(")");
 
             // Convert list to array for varargs
-            greptimeSqlQueryExecutor.query(sql.toString(), timeUnixNanos.toArray());
+            greptimeSqlQueryExecutor.delete(sql.toString(), timeUnixNanos.toArray());
             log.info("[warehouse greptime-log] Batch delete executed successfully for {} logs", timeUnixNanos.size());
             return true;
+
         } catch (Exception e) {
             log.error("[warehouse greptime-log] batchDeleteLogs error: {}", e.getMessage(), e);
             return false;
@@ -653,7 +689,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                     .addField("observed_time_unix_nano", DataType.TimestampNanosecond)
                     .addField("severity_number", DataType.Int32)
                     .addField("severity_text", DataType.String)
-                    .addField("body", DataType.Json)
+                    .addField("body", DataType.String)
                     .addField("trace_id", DataType.String)
                     .addField("span_id", DataType.String)
                     .addField("trace_flags", DataType.Int32)
@@ -670,7 +706,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                         logEntry.getObservedTimeUnixNano() != null ? logEntry.getObservedTimeUnixNano() : System.nanoTime(),
                         logEntry.getSeverityNumber(),
                         logEntry.getSeverityText(),
-                        JsonUtil.toJson(logEntry.getBody()),
+                        logEntry.getBody(),
                         logEntry.getTraceId(),
                         logEntry.getSpanId(),
                         logEntry.getTraceFlags(),
