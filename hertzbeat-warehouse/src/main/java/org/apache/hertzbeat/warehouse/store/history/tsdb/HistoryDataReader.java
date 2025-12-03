@@ -65,67 +65,45 @@ public interface HistoryDataReader {
      * @param spanId span ID filter
      * @param severityNumber severity number filter
      * @param severityText severity text filter
-     * @param searchContent search content in log body
      * @return filtered log entries
      */
     default List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                          String spanId, Integer severityNumber,
-                                                         String severityText, String searchContent) {
+                                                         String severityText) {
         throw new UnsupportedOperationException("query logs by multiple conditions is not supported");
     }
 
     /**
-     * Query logs with multiple filter conditions and pagination (Legacy)
-     */
-    default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
-                                                                       String spanId, Integer severityNumber,
-                                                                       String severityText, Integer offset, Integer limit) {
-        return queryLogsByMultipleConditionsWithPagination(startTime, endTime, traceId, spanId, severityNumber, severityText, null, offset, limit);
-    }
-
-    /**
-     * Query logs with multiple filter conditions and pagination including search content
+     * Query logs with multiple filter conditions and pagination
      * @param startTime start time in milliseconds
      * @param endTime end time in milliseconds
      * @param traceId trace ID filter
      * @param spanId span ID filter
      * @param severityNumber severity number filter
      * @param severityText severity text filter
-     * @param searchContent search content in log body
      * @param offset pagination offset
      * @param limit pagination limit
      * @return filtered log entries with pagination
      */
     default List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
                                                                        String spanId, Integer severityNumber,
-                                                                       String severityText, String searchContent,
-                                                                       Integer offset, Integer limit) {
+                                                                       String severityText, Integer offset, Integer limit) {
         throw new UnsupportedOperationException("query logs by multiple conditions with pagination is not supported");
     }
 
     /**
-     * Count logs with multiple filter conditions (Legacy)
-     */
-    default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
-                                               String spanId, Integer severityNumber,
-                                               String severityText) {
-        return countLogsByMultipleConditions(startTime, endTime, traceId, spanId, severityNumber, severityText, null);
-    }
-
-    /**
-     * Count logs with multiple filter conditions including search content
+     * Count logs with multiple filter conditions
      * @param startTime start time in milliseconds
      * @param endTime end time in milliseconds
      * @param traceId trace ID filter
      * @param spanId span ID filter
      * @param severityNumber severity number filter
      * @param severityText severity text filter
-     * @param searchContent search content in log body
      * @return count of matching log entries
      */
     default long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                String spanId, Integer severityNumber,
-                                               String severityText, String searchContent) {
+                                               String severityText) {
         throw new UnsupportedOperationException("count logs by multiple conditions is not supported");
     }
 }

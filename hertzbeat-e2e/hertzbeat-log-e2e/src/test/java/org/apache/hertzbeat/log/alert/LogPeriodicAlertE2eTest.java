@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -70,7 +70,6 @@ public class LogPeriodicAlertE2eTest {
     private static final String GREPTIME_IMAGE = "greptime/greptimedb:latest";
     private static final int GREPTIME_HTTP_PORT = 4000;
     private static final int GREPTIME_GRPC_PORT = 4001;
-    private static final int GREPTIME_PG_PORT = 4003;
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(120);
 
     @LocalServerPort
@@ -86,17 +85,16 @@ public class LogPeriodicAlertE2eTest {
     private AlarmCommonReduce alarmCommonReduce;
 
     static GenericContainer<?> vector;
-
+    
     static GenericContainer<?> greptimedb;
 
     static {
         greptimedb = new GenericContainer<>(DockerImageName.parse(GREPTIME_IMAGE))
-                .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT, GREPTIME_PG_PORT)
+                .withExposedPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT)
                 .withCommand("standalone", "start",
                         "--http-addr", "0.0.0.0:" + GREPTIME_HTTP_PORT,
-                        "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT,
-                        "--postgres-addr", "0.0.0.0:" + GREPTIME_PG_PORT)
-                .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT, GREPTIME_PG_PORT))
+                        "--rpc-bind-addr", "0.0.0.0:" + GREPTIME_GRPC_PORT)
+                .waitingFor(Wait.forListeningPorts(GREPTIME_HTTP_PORT, GREPTIME_GRPC_PORT))
                 .withStartupTimeout(CONTAINER_STARTUP_TIMEOUT);
         greptimedb.start();
     }
@@ -108,7 +106,6 @@ public class LogPeriodicAlertE2eTest {
         r.add("warehouse.store.greptime.enabled", () -> "true");
         r.add("warehouse.store.greptime.http-endpoint", () -> "http://localhost:" + greptimedb.getMappedPort(GREPTIME_HTTP_PORT));
         r.add("warehouse.store.greptime.grpc-endpoints", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_GRPC_PORT));
-        r.add("warehouse.store.greptime.postgres-endpoint", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_PG_PORT));
         r.add("warehouse.store.greptime.username", () -> "");
         r.add("warehouse.store.greptime.password", () -> "");
     }
