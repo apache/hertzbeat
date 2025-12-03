@@ -20,19 +20,21 @@
 package org.apache.hertzbeat.log.notice;
 
 import org.apache.hertzbeat.common.entity.log.LogEntry;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -41,13 +43,20 @@ import static org.mockito.Mockito.verify;
 /**
  * Unit tests for {@link LogSseManager}.
  */
-@ExtendWith(MockitoExtension.class)
 class LogSseManagerTest {
 
-    @Spy
     private LogSseManager logSseManager;
-
     private static final Long CLIENT_ID = 1L;
+
+    @BeforeEach
+    void setUp() {
+        logSseManager = new LogSseManager();
+    }
+
+    @AfterEach
+    void tearDown() {
+        logSseManager.shutdown();
+    }
 
     @Test
     void shouldCreateAndStoreEmitter() {
@@ -73,12 +82,14 @@ class LogSseManagerTest {
         // When: An "INFO" log is broadcast
         logSseManager.broadcast(infoLog);
 
-        // Then: The log should be sent to the client
-        verify(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
+        // Then: The log should be sent to the client (wait for batch processing)
+        await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() -> 
+            verify(mockEmitter, atLeastOnce()).send(any(SseEmitter.SseEventBuilder.class))
+        );
     }
 
     @Test
-    void shouldNotBroadcastLogWhenFilterDoesNotMatch() throws IOException {
+    void shouldNotBroadcastLogWhenFilterDoesNotMatch() throws IOException, InterruptedException {
         // Given: A client with a filter for "ERROR" logs
         LogSseFilterCriteria filters = new LogSseFilterCriteria();
         filters.setSeverityText("ERROR");
@@ -89,6 +100,9 @@ class LogSseManagerTest {
 
         // When: An "INFO" log is broadcast
         logSseManager.broadcast(infoLog);
+
+        // Wait for batch processing
+        Thread.sleep(300);
 
         // Then: The log should NOT be sent to the client
         verify(mockEmitter, never()).send(any(SseEmitter.SseEventBuilder.class));
@@ -105,12 +119,14 @@ class LogSseManagerTest {
         // When: Any log is broadcast
         logSseManager.broadcast(anyLog);
 
-        // Then: The log should be sent to the client
-        verify(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
+        // Then: The log should be sent to the client (wait for batch processing)
+        await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() -> 
+            verify(mockEmitter, atLeastOnce()).send(any(SseEmitter.SseEventBuilder.class))
+        );
     }
 
     @Test
-    void shouldBroadcastOnlyToMatchingSubscribers() throws IOException {
+    void shouldBroadcastOnlyToMatchingSubscribers() throws IOException, InterruptedException {
         // Given: Two clients with different filters
         LogSseFilterCriteria infoFilter = new LogSseFilterCriteria();
         infoFilter.setSeverityText("INFO");
@@ -127,8 +143,12 @@ class LogSseManagerTest {
         // When: An "INFO" log is broadcast
         logSseManager.broadcast(infoLog);
 
+        // Wait for batch processing
+        await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() -> 
+            verify(infoEmitter, atLeastOnce()).send(any(SseEmitter.SseEventBuilder.class))
+        );
+
         // Then: The log is sent only to the client subscribed to "INFO" logs
-        verify(infoEmitter).send(any(SseEmitter.SseEventBuilder.class));
         verify(errorEmitter, never()).send(any(SseEmitter.SseEventBuilder.class));
     }
 
@@ -146,8 +166,10 @@ class LogSseManagerTest {
         logSseManager.broadcast(log);
 
         // Then: The failing emitter should be completed and removed
-        verify(mockEmitter).complete();
-        assertFalse(logSseManager.getEmitters().containsKey(CLIENT_ID));
+        await().atMost(500, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            verify(mockEmitter).complete();
+            assertFalse(logSseManager.getEmitters().containsKey(CLIENT_ID));
+        });
     }
 
     /**
