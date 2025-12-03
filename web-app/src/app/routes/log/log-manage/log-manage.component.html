@@ -5,9 +5,9 @@
   The ASF licenses this file to You under the Apache License, Version 2.0
   (the "License"); you may not use this file except in compliance with
   the License.  You may obtain a copy of the License at
-
+  
     http://www.apache.org/licenses/LICENSE-2.0
-
+  
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,9 @@
 
 <nz-divider></nz-divider>
 
+<!-- Combined Filter and Statistics Card -->
 <nz-card [nzTitle]="'log.manage.title' | i18n" class="manager-card">
+  <!-- Filters Section -->
   <div class="filters-container">
     <nz-space nzSize="middle" nzWrap>
       <nz-range-picker *nzSpaceItem [(ngModel)]="timeRange" nzShowTime nzFormat="yyyy-MM-dd HH:mm:ss"></nz-range-picker>
@@ -54,7 +56,6 @@
         <nz-auto-option nzValue="ERROR">ERROR</nz-auto-option>
         <nz-auto-option nzValue="FATAL">FATAL</nz-auto-option>
       </nz-autocomplete>
-      <input *nzSpaceItem nz-input [placeholder]="'log.manage.search' | i18n" [(ngModel)]="searchContent" style="width: 200px" />
       <button *nzSpaceItem nz-button nzType="primary" (click)="query()">
         <i nz-icon nzType="search"></i> {{ 'log.manage.search' | i18n }}
       </button>
@@ -100,7 +101,9 @@
     </ng-template>
   </div>
 
+  <!-- Statistics Section (Collapsible) -->
   <div *ngIf="showStatistics">
+    <!-- Statistics Overview -->
     <div nz-row [nzGutter]="16" style="margin-bottom: 16px">
       <div nz-col nzXs="12" nzSm="4">
         <nz-card>
@@ -176,6 +179,7 @@
       </div>
     </div>
 
+    <!-- Charts Section -->
     <div nz-row [nzGutter]="16">
       <div nz-col nzXs="24" nzMd="8">
         <nz-card [nzTitle]="'log.manage.chart.severity-distribution' | i18n" [nzSize]="'small'">
@@ -196,6 +200,7 @@
   </div>
 </nz-card>
 
+<!-- Log Table -->
 <nz-table
   #fixedTable
   [nzData]="data"
@@ -314,6 +319,7 @@
   </tbody>
 </nz-table>
 
+<!-- Log Details Modal -->
 <nz-modal
   [(nzVisible)]="isModalVisible"
   [nzTitle]="'log.manage.log-entry-details' | i18n"
@@ -323,6 +329,7 @@
 >
   <ng-container *nzModalContent>
     <div *ngIf="selectedLogEntry" class="log-details-modal">
+      <!-- Basic Info Section -->
       <nz-card [nzTitle]="'log.manage.basic-information' | i18n" [nzSize]="'small'" class="basic-info-card">
         <div class="basic-info">
           <div class="info-row">
@@ -346,6 +353,7 @@
         </div>
       </nz-card>
 
+      <!-- JSON Details Section -->
       <nz-card [nzTitle]="'log.manage.complete-json-data' | i18n" [nzSize]="'small'">
         <div class="json-content">
           <button

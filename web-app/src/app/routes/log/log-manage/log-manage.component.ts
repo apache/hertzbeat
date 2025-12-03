@@ -92,7 +92,6 @@ export class LogManageComponent implements OnInit {
   severityText?: string;
   traceId: string = '';
   spanId: string = '';
-  searchContent: string = '';
 
   // table with pagination
   loading = false;
@@ -303,7 +302,6 @@ export class LogManageComponent implements OnInit {
       this.spanId,
       this.severityNumber,
       this.severityText,
-      this.searchContent,
       this.pageIndex - 1,
       this.pageSize
     );
@@ -341,9 +339,8 @@ export class LogManageComponent implements OnInit {
     const spanId = this.spanId || undefined;
     const severity = this.severityNumber || undefined;
     const severityText = this.severityText || undefined;
-    const search = this.searchContent || undefined;
 
-    this.logSvc.overviewStats(start, end, traceId, spanId, severity, severityText, search).subscribe({
+    this.logSvc.overviewStats(start, end, traceId, spanId, severity, severityText).subscribe({
       next: message => {
         if (message.code === 0) {
           this.overviewStats = message.data || {};
@@ -352,7 +349,7 @@ export class LogManageComponent implements OnInit {
       }
     });
 
-    this.logSvc.traceCoverageStats(start, end, traceId, spanId, severity, severityText, search).subscribe({
+    this.logSvc.traceCoverageStats(start, end, traceId, spanId, severity, severityText).subscribe({
       next: message => {
         if (message.code === 0) {
           this.refreshTraceCoverageChart(message.data || {});
@@ -360,7 +357,7 @@ export class LogManageComponent implements OnInit {
       }
     });
 
-    this.logSvc.trendStats(start, end, traceId, spanId, severity, severityText, search).subscribe({
+    this.logSvc.trendStats(start, end, traceId, spanId, severity, severityText).subscribe({
       next: message => {
         if (message.code === 0) {
           this.refreshTrendChart(message.data?.hourlyStats || {});
@@ -375,7 +372,6 @@ export class LogManageComponent implements OnInit {
     this.traceId = '';
     this.spanId = '';
     this.severityText = '';
-    this.searchContent = '';
     this.pageIndex = 1;
     this.query();
   }

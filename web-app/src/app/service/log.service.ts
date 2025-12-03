@@ -43,7 +43,6 @@ export class LogService {
     spanId?: string,
     severityNumber?: number,
     severityText?: string,
-    search?: string,
     pageIndex: number = 0,
     pageSize: number = 20
   ): Observable<Message<Page<LogEntry>>> {
@@ -54,7 +53,6 @@ export class LogService {
     if (spanId) params = params.set('spanId', spanId);
     if (severityNumber != null) params = params.set('severityNumber', severityNumber);
     if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
     params = params.set('pageIndex', pageIndex);
     params = params.set('pageSize', pageSize);
     return this.http.get<Message<any>>(logs_list_uri, { params });
@@ -66,8 +64,7 @@ export class LogService {
     traceId?: string,
     spanId?: string,
     severityNumber?: number,
-    severityText?: string,
-    search?: string
+    severityText?: string
   ): Observable<Message<any>> {
     let params = new HttpParams();
     if (start != null) params = params.set('start', start);
@@ -76,7 +73,6 @@ export class LogService {
     if (spanId) params = params.set('spanId', spanId);
     if (severityNumber != null) params = params.set('severityNumber', severityNumber);
     if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
     return this.http.get<Message<any>>(logs_stats_overview_uri, { params });
   }
 
@@ -86,8 +82,7 @@ export class LogService {
     traceId?: string,
     spanId?: string,
     severityNumber?: number,
-    severityText?: string,
-    search?: string
+    severityText?: string
   ): Observable<Message<any>> {
     let params = new HttpParams();
     if (start != null) params = params.set('start', start);
@@ -96,7 +91,6 @@ export class LogService {
     if (spanId) params = params.set('spanId', spanId);
     if (severityNumber != null) params = params.set('severityNumber', severityNumber);
     if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
     return this.http.get<Message<any>>(logs_stats_trend_uri, { params });
   }
 
@@ -106,8 +100,7 @@ export class LogService {
     traceId?: string,
     spanId?: string,
     severityNumber?: number,
-    severityText?: string,
-    search?: string
+    severityText?: string
   ): Observable<Message<any>> {
     let params = new HttpParams();
     if (start != null) params = params.set('start', start);
@@ -116,7 +109,6 @@ export class LogService {
     if (spanId) params = params.set('spanId', spanId);
     if (severityNumber != null) params = params.set('severityNumber', severityNumber);
     if (severityText) params = params.set('severityText', severityText);
-    if (search) params = params.set('search', search);
     return this.http.get<Message<any>>(logs_stats_trace_coverage_uri, { params });
   }
 

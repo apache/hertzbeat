@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -87,26 +87,24 @@ class LogQueryControllerTest {
 
         List<LogEntry> mockLogs = Arrays.asList(logEntry1, logEntry2);
 
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.countLogsByMultipleConditions(anyLong(), anyLong(), anyString(),
-                anyString(), anyInt(), anyString(), isNull())).thenReturn(2L);
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(anyLong(), anyLong(),
-                anyString(), anyString(), anyInt(), anyString(), isNull(), anyInt(), anyInt()))
+        when(historyDataReader.countLogsByMultipleConditions(anyLong(), anyLong(), anyString(), 
+                anyString(), anyInt(), anyString())).thenReturn(2L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(anyLong(), anyLong(), 
+                anyString(), anyString(), anyInt(), anyString(), anyInt(), anyInt()))
                 .thenReturn(mockLogs);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/logs/list")
-                                .param("start", "1734005477000")
-                                .param("end", "1734005478000")
-                                .param("traceId", "trace123")
-                                .param("spanId", "span456")
-                                .param("severityNumber", "9")
-                                .param("severityText", "INFO")
-                                .param("pageIndex", "0")
-                                .param("pageSize", "20")
-                )
+                MockMvcRequestBuilders
+                        .get("/api/logs/list")
+                        .param("start", "1734005477000")
+                        .param("end", "1734005478000")
+                        .param("traceId", "trace123")
+                        .param("spanId", "span456")
+                        .param("severityNumber", "9")
+                        .param("severityText", "INFO")
+                        .param("pageIndex", "0")
+                        .param("pageSize", "20")
+        )
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -129,18 +127,16 @@ class LogQueryControllerTest {
                         .build()
         );
 
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.countLogsByMultipleConditions(isNull(), isNull(), isNull(),
-                isNull(), isNull(), isNull(), isNull())).thenReturn(1L);
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(isNull(), isNull(),
-                isNull(), isNull(), isNull(), isNull(), isNull(), eq(0), eq(20)))
+        when(historyDataReader.countLogsByMultipleConditions(isNull(), isNull(), isNull(), 
+                isNull(), isNull(), isNull())).thenReturn(1L);
+        when(historyDataReader.queryLogsByMultipleConditionsWithPagination(isNull(), isNull(), 
+                isNull(), isNull(), isNull(), isNull(), eq(0), eq(20)))
                 .thenReturn(mockLogs);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/logs/list")
-                )
+                MockMvcRequestBuilders
+                        .get("/api/logs/list")
+        )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content").isArray())
@@ -167,14 +163,13 @@ class LogQueryControllerTest {
                 LogEntry.builder().severityNumber(21).build()
         );
 
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(),
-                isNull(), isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
+                isNull(), isNull(), isNull())).thenReturn(mockLogs);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/logs/stats/overview")
-                )
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/overview")
+        )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.totalCount").value(8))
@@ -193,16 +188,15 @@ class LogQueryControllerTest {
                 LogEntry.builder().severityNumber(17).build()
         );
 
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.queryLogsByMultipleConditions(eq(1734005477000L), eq(1734005478000L),
-                isNull(), isNull(), isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(eq(1734005477000L), eq(1734005478000L), 
+                isNull(), isNull(), isNull(), isNull())).thenReturn(mockLogs);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/logs/stats/overview")
-                                .param("start", "1734005477000")
-                                .param("end", "1734005478000")
-                )
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/overview")
+                        .param("start", "1734005477000")
+                        .param("end", "1734005478000")
+        )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.totalCount").value(2));
@@ -223,14 +217,13 @@ class LogQueryControllerTest {
                 LogEntry.builder().build() // null values
         );
 
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(),
-                isNull(), isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
+                isNull(), isNull(), isNull())).thenReturn(mockLogs);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/logs/stats/trace-coverage")
-                )
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/trace-coverage")
+        )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.traceCoverage.withTrace").value(3))
@@ -251,14 +244,13 @@ class LogQueryControllerTest {
                 LogEntry.builder().timeUnixNano(1734009077630000000L).build()
         );
 
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(),
-                isNull(), isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
+                isNull(), isNull(), isNull())).thenReturn(mockLogs);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/logs/stats/trend")
-                )
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/trend")
+        )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.hourlyStats").isMap());
@@ -271,14 +263,13 @@ class LogQueryControllerTest {
                 LogEntry.builder().timeUnixNano(null).build() // This should be filtered out
         );
 
-        // Fixed: Added searchContent param matcher (7th arg)
-        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(),
-                isNull(), isNull(), isNull(), isNull())).thenReturn(mockLogs);
+        when(historyDataReader.queryLogsByMultipleConditions(isNull(), isNull(), isNull(), 
+                isNull(), isNull(), isNull())).thenReturn(mockLogs);
 
         mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/logs/stats/trend")
-                )
+                MockMvcRequestBuilders
+                        .get("/api/logs/stats/trend")
+        )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.hourlyStats").isMap());

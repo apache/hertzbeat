@@ -27,16 +27,11 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * GrepTimeDB configuration information
  */
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
-        + SignConstants.DOT
-        + WarehouseConstants.STORE
-        + SignConstants.DOT
-        + WarehouseConstants.HistoryName.GREPTIME)
-public record GreptimeProperties(
-        @DefaultValue("false") boolean enabled,
-        @DefaultValue("127.0.0.1:4001") String grpcEndpoints,
-        @DefaultValue("http://127.0.0.1:4000") String httpEndpoint,
-        @DefaultValue("127.0.0.1:4003") String postgresEndpoint,
-        @DefaultValue("public") String database,
-        String username,
-        String password) {
+		+ SignConstants.DOT
+		+ WarehouseConstants.STORE
+		+ SignConstants.DOT
+		+ WarehouseConstants.HistoryName.GREPTIME)
+public record GreptimeProperties(@DefaultValue("false") boolean enabled,
+	@DefaultValue("127.0.0.1:4001") String grpcEndpoints, @DefaultValue("http://127.0.0.1:4000") String httpEndpoint,
+	@DefaultValue("public") String database, String username, String password) {
 }
