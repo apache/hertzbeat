@@ -25,6 +25,8 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 /**
  * for collector instance
  * send collect response data by netty
@@ -107,5 +109,25 @@ public class NettyDataQueue implements CommonDataQueue {
     @Override
     public LogEntry pollLogEntryToStorage() throws InterruptedException {
         return null;
+    }
+
+    @Override
+    public void sendLogEntryToAlertBatch(List<LogEntry> logEntries) {
+
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToAlertBatch(int maxBatchSize) throws InterruptedException {
+        return List.of();
+    }
+
+    @Override
+    public void sendLogEntryToStorageBatch(List<LogEntry> logEntries) {
+
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToStorageBatch(int maxBatchSize) throws InterruptedException {
+        return List.of();
     }
 }
