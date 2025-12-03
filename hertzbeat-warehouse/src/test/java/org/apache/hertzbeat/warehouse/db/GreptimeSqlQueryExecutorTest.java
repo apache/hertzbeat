@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -21,26 +21,23 @@ package org.apache.hertzbeat.warehouse.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeProperties;
-import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeSqlQueryContent;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 /**
  * Test case for {@link GreptimeSqlQueryExecutor}
@@ -49,36 +46,23 @@ import org.springframework.web.client.RestTemplate;
 class GreptimeSqlQueryExecutorTest {
 
     @Mock
-    private GreptimeProperties greptimeProperties;
-
-    @Mock
-    private RestTemplate restTemplate;
+    private JdbcTemplate jdbcTemplate;
 
     private GreptimeSqlQueryExecutor greptimeSqlQueryExecutor;
 
     @BeforeEach
     void setUp() {
-        when(greptimeProperties.httpEndpoint()).thenReturn("http://127.0.0.1:4000");
-        when(greptimeProperties.database()).thenReturn("hertzbeat");
-        when(greptimeProperties.username()).thenReturn("username");
-        when(greptimeProperties.password()).thenReturn("password");
-        
-        greptimeSqlQueryExecutor = new GreptimeSqlQueryExecutor(greptimeProperties, restTemplate);
+        // Use the constructor capable of dependency injection for mocking
+        greptimeSqlQueryExecutor = new GreptimeSqlQueryExecutor(jdbcTemplate);
     }
 
     @Test
     void testExecuteSuccess() {
-        // Mock successful response
-        GreptimeSqlQueryContent mockResponse = createMockResponse();
-        ResponseEntity<GreptimeSqlQueryContent> responseEntity = 
-            new ResponseEntity<>(mockResponse, HttpStatus.OK);
+        // Mock successful response for queryForList
+        List<Map<String, Object>> mockResult = new ArrayList<>();
+        mockResult.add(Map.of("metric_name", "cpu", "value", 85.5));
 
-        when(restTemplate.exchange(
-            any(String.class),
-            eq(HttpMethod.POST),
-            any(HttpEntity.class),
-            eq(GreptimeSqlQueryContent.class)
-        )).thenReturn(responseEntity);
+        when(jdbcTemplate.queryForList(any(String.class))).thenReturn(mockResult);
 
         // Execute
         List<Map<String, Object>> result = greptimeSqlQueryExecutor.execute("SELECT * FROM metrics");
@@ -93,48 +77,41 @@ class GreptimeSqlQueryExecutorTest {
     @Test
     void testExecuteError() {
         // Mock error response
-        when(restTemplate.exchange(
-            any(String.class),
-            eq(HttpMethod.POST),
-            any(HttpEntity.class),
-            eq(GreptimeSqlQueryContent.class)
-        )).thenThrow(new RuntimeException("Connection error"));
+        when(jdbcTemplate.queryForList(any(String.class))).thenThrow(new RuntimeException("Connection error"));
 
-        // Execute
-        List<Map<String, Object>> result = greptimeSqlQueryExecutor.execute("SELECT * FROM metrics");
-
-        // Verify returns empty list on error
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Execute and verify exception
+        assertThrows(RuntimeException.class, () -> greptimeSqlQueryExecutor.execute("SELECT * FROM metrics"));
     }
 
-    private GreptimeSqlQueryContent createMockResponse() {
-        GreptimeSqlQueryContent response = new GreptimeSqlQueryContent();
-        response.setCode(0);
+    @Test
+    void testQuerySuccess() {
+        // Mock success response for query (using RowMapper)
+        List<LogEntry> mockLogs = List.of(LogEntry.builder().traceId("123").build());
+        when(jdbcTemplate.query(any(String.class), any(RowMapper.class), any(Object[].class)))
+                .thenReturn(mockLogs);
 
-        // Create simple schema
-        List<GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema> columnSchemas = new ArrayList<>();
-        columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema("metric_name", "String"));
-        columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema("value", "Float64"));
+        // Execute
+        List<LogEntry> result = greptimeSqlQueryExecutor.query("SELECT * FROM logs WHERE id = ?", 1);
 
-        GreptimeSqlQueryContent.Output.Records.Schema schema = 
-            new GreptimeSqlQueryContent.Output.Records.Schema();
-        schema.setColumnSchemas(columnSchemas);
+        // Verify
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("123", result.get(0).getTraceId());
 
-        // Create simple row
-        List<List<Object>> rows = new ArrayList<>();
-        rows.add(List.of("cpu", 85.5));
+        // Verify args passed
+        verify(jdbcTemplate).query(eq("SELECT * FROM logs WHERE id = ?"), any(RowMapper.class), eq(1));
+    }
 
-        // Build response structure
-        GreptimeSqlQueryContent.Output.Records records = 
-            new GreptimeSqlQueryContent.Output.Records();
-        records.setSchema(schema);
-        records.setRows(rows);
+    @Test
+    void testCountSuccess() {
+        // Mock success response for queryForObject (count)
+        when(jdbcTemplate.queryForObject(any(String.class), eq(Long.class), any(Object[].class)))
+                .thenReturn(10L);
 
-        GreptimeSqlQueryContent.Output output = new GreptimeSqlQueryContent.Output();
-        output.setRecords(records);
+        // Execute
+        Long count = greptimeSqlQueryExecutor.count("SELECT COUNT(*) FROM logs");
 
-        response.setOutput(List.of(output));
-        return response;
+        // Verify
+        assertEquals(10L, count);
     }
 }
