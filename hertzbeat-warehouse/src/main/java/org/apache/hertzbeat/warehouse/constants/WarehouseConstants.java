@@ -46,6 +46,8 @@ public interface WarehouseConstants {
         String VM_CLUSTER = "victoria-metrics.cluster";
 
         String QUEST_DB = "questdb";
+
+        String DUCKDB = "duckdb";
     }
 
     /**
