@@ -19,7 +19,6 @@ package org.apache.hertzbeat.log.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.greptime.GreptimeDbDataStorage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,6 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.awaitility.Awaitility.await;
@@ -64,9 +62,6 @@ public class GreptimeLogStorageE2eTest {
 
     @LocalServerPort
     private int port;
-
-    @Autowired
-    private CommonDataQueue commonDataQueue;
 
     @Autowired
     private GreptimeDbDataStorage greptimeDbDataStorage;
