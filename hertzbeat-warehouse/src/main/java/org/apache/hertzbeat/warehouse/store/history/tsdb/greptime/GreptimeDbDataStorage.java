@@ -599,6 +599,9 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         }
     }
 
+    private static long msToNs(Long ms) {
+        return ms * 1_000_000L;
+    }
     /**
      * build WHERE conditions
      * @param sql SQL builder
@@ -616,8 +619,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
             conditions.add("time_unix_nano >= ? AND time_unix_nano <= ?");
             // Fix: Use Timestamp object for query parameters to match JDBC requirements for TIMESTAMP columns
             // Passing Long (nanoseconds) causes type mismatch (BIGINT vs TIMESTAMP) in Postgres protocol
-            args.add(new Timestamp(startTime));
-            args.add(new Timestamp(endTime));
+            args.add(msToNs(startTime));
+            args.add(msToNs(endTime));
         }
         if (StringUtils.hasText(traceId)) {
             conditions.add("trace_id = ?");

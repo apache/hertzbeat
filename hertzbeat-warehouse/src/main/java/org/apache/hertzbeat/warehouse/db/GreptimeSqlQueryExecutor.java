@@ -69,6 +69,10 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
 
         // Fixed driver class name for PostgreSQL protocol
         this.dataSource.setDriverClassName(DRIVER_CLASS_NAME);
+        this.dataSource.addDataSourceProperty("preferQueryMode", "simple");
+
+        this.dataSource.setConnectionTestQuery("SELECT 1");
+
 
         if (greptimeProperties.username() != null) {
             this.dataSource.setUsername(greptimeProperties.username());
@@ -118,20 +122,7 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
     public int delete(String sql, Object... args) {
         log.debug("Executing GreptimeDB SQL: {}", sql);
         try {
-            Integer result = jdbcTemplate.execute(sql, (PreparedStatementCallback<Integer>) ps -> {
-                if (args != null && args.length > 0) {
-                    ArgumentPreparedStatementSetter setter = new ArgumentPreparedStatementSetter(args);
-                    setter.setValues(ps);
-                }
-                boolean hasResultSet = ps.execute();
-                int updateCount = ps.getUpdateCount();
-                if (updateCount == -1 && hasResultSet) {
-                    log.warn("GreptimeDB returned a ResultSet for DELETE operation. Ignoring protocol error and assuming success.");
-                    return 0;
-                }
-                return updateCount;
-            });
-            return result != null ? result : 0;
+            return jdbcTemplate.update(sql, args);
         } catch (Exception e) {
             log.error("Failed to execute GreptimeDB SQL: {}", sql, e);
             throw e;
