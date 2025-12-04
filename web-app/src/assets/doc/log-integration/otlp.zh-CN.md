@@ -12,6 +12,7 @@
 
 - `Content-Type`: `application/json`
 - `Authorization`: `Bearer {token}`
+-  或者不使用 `Bearer` 而是 `Basic` (根据 HertzBeat 配置的认证配置)
 
 ### 请求体
 
