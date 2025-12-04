@@ -23,7 +23,7 @@ import org.apache.hertzbeat.manager.component.validator.ParamValidator;
 import org.springframework.stereotype.Component;
 
 /**
- * Number parameter validator
+ * Boolean parameter validator
  */
 @Component
 public class BooleanParamValidator implements ParamValidator {
