@@ -194,7 +194,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                                 }
                                 case CommonConstants.TYPE_TIME -> {
                                     preparedStatement.setShort(5, (short) CommonConstants.TYPE_TIME);
-                                    preparedStatement.setInt(6, Integer.parseInt(columnValue));
+                                    try {
+                                        preparedStatement.setInt(6, Integer.parseInt(columnValue));
+                                    } catch (NumberFormatException nfe) {
+                                        log.warn("Failed to parse columnValue '{}' as integer for metric '{}'. Setting value to null.", columnValue, metric, nfe);
+                                        preparedStatement.setObject(6, null);
+                                    }
                                     preparedStatement.setObject(7, null);
                                     preparedStatement.setObject(8, null);
                                 }
