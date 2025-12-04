@@ -42,8 +42,7 @@ public class ParamValidatorManager {
                 return;
             }
         }
-        // If no validator found, maybe throw exception or ignore?
-        // Original code threw exception for default case.
+        // No validator found for the given type.
         throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
     }
 }
