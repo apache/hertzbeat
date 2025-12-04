@@ -209,6 +209,7 @@ warehouse:
       enabled: false
       grpc-endpoints: localhost:4001
       http-endpoint: http://localhost:4000
+      postgres-endpoint: localhost:4003
       # if you config other database name, you should create them first
       database: public
       username: greptime

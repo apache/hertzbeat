@@ -12,6 +12,7 @@ Or use the default endpoint (automatically uses OTLP protocol):
 
 - `Content-Type`: `application/json`
 - `Authorization`: `Bearer {token}`
+-  Or use `Basic` instead of `Bearer` (depending on HertzBeat's configured authentication settings)
 
 ### Request Body
 

@@ -96,7 +96,7 @@ public class WindowedLogRealTimeAlertCalculator implements Runnable {
         
         // Check if this is late data based on current watermark
         if (timeService.isLateData(eventTimestamp)) {
-            log.warn("Dropping late data, timestamp: {}, watermark: {}", 
+            log.debug("Dropping late data, timestamp: {}, watermark: {}",
                      eventTimestamp, timeService.getCurrentWatermark());
             return;
         }
