@@ -96,6 +96,12 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                         record_time BIGINT,
                         labels VARCHAR)""";
                 statement.execute(createTableSql);
+                // Add composite index for query performance
+                String createCompositeIndexSql = "CREATE INDEX IF NOT EXISTS idx_hzb_history_composite ON hzb_history(instance, app, metrics, metric, record_time)";
+                statement.execute(createCompositeIndexSql);
+                // Add index for cleanup performance
+                String createRecordTimeIndexSql = "CREATE INDEX IF NOT EXISTS idx_hzb_history_record_time ON hzb_history(record_time)";
+                statement.execute(createRecordTimeIndexSql);
                 return true;
             }
         } catch (Exception e) {
