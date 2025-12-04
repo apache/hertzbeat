@@ -36,7 +36,7 @@ public class ArrayParamValidator implements ParamValidator {
     public void validate(ParamDefine paramDefine, Param param) {
         String[] arrays = param.getParamValue().split(",");
         if (arrays.length == 0) {
-            throw new IllegalArgumentException("Param field" + paramDefine.getField() + " value "
+            throw new IllegalArgumentException("Param field " + paramDefine.getField() + " value "
                     + param.getParamValue() + " is invalid arrays value");
         }
         if (param.getParamValue().startsWith("[") && param.getParamValue().endsWith("]")) {
