@@ -86,7 +86,7 @@ public class GreptimeLogStorageE2eTest {
 
     @DynamicPropertySource
     static void greptimeProps(DynamicPropertyRegistry r) {
-        r.add("warehouse.store.jpa.enabled", () -> "false");
+        r.add("warehouse.store.duckdb.enabled", () -> "false");
         r.add("warehouse.store.greptime.enabled", () -> "true");
         r.add("warehouse.store.greptime.http-endpoint", () -> "http://localhost:" + greptimedb.getMappedPort(GREPTIME_HTTP_PORT));
         r.add("warehouse.store.greptime.grpc-endpoints", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_GRPC_PORT));
