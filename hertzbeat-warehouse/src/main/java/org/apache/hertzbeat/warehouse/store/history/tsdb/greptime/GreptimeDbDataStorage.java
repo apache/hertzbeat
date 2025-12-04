@@ -614,6 +614,8 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         List<String> conditions = new ArrayList<>();
         if (startTime != null && endTime != null) {
             conditions.add("time_unix_nano >= ? AND time_unix_nano <= ?");
+            // Fix: Use Timestamp object for query parameters to match JDBC requirements for TIMESTAMP columns
+            // Passing Long (nanoseconds) causes type mismatch (BIGINT vs TIMESTAMP) in Postgres protocol
             args.add(new Timestamp(startTime));
             args.add(new Timestamp(endTime));
         }
@@ -699,6 +701,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
             Table table = Table.from(tableSchemaBuilder.build());
 
+            // FIX: Use current system time if timestamp is missing, NOT System.nanoTime()
             long nowNs = System.currentTimeMillis() * 1_000_000L;
 
             for (LogEntry logEntry : logEntries) {

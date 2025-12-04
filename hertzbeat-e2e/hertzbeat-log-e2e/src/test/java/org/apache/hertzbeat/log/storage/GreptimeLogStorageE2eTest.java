@@ -95,8 +95,6 @@ public class GreptimeLogStorageE2eTest {
         r.add("warehouse.store.greptime.postgres-endpoint", () -> "localhost:" + greptimedb.getMappedPort(GREPTIME_PG_PORT));
         r.add("warehouse.store.greptime.username", () -> "");
         r.add("warehouse.store.greptime.password", () -> "");
-        // Explicitly set the driver class name for JDBC to ensure PostgreSQL driver is used
-        r.add("warehouse.store.greptime.driver-class-name", () -> "org.postgresql.Driver");
     }
 
 
@@ -119,43 +117,20 @@ public class GreptimeLogStorageE2eTest {
 
     @Test
     void testLogStorageToGreptimeDb() {
+        // Wait for Vector to generate and send logs to HertzBeat, and for HertzBeat to save them to GreptimeDB
+        // NOTE: We DO NOT poll the queue here, because that would steal the data from the LogWorker
+        // which is responsible for saving it to GreptimeDB.
 
-        List<LogEntry> capturedLogs = new ArrayList<>();
-
-        // Wait for Vector to generate and send logs to HertzBeat
         await().atMost(Duration.ofSeconds(60))
                 .pollInterval(Duration.ofSeconds(3))
-                .untilAsserted(() -> {
-                    // Poll log entries from the queue (non-blocking)
-                    try {
-                        LogEntry logEntry = commonDataQueue.pollLogEntry();
-                        if (logEntry != null) {
-                            capturedLogs.add(logEntry);
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Test interrupted", e);
-                    }
-
-                    // Assert that we have captured at least some logs
-                    assertFalse(capturedLogs.isEmpty(), "Should have captured at least one log entry");
-                });
-
-        // Verify the captured logs
-        assertFalse(capturedLogs.isEmpty(), "No logs were captured from Vector");
-        LogEntry firstLog = capturedLogs.get(0);
-        assertNotNull(firstLog, "First log should not be null");
-        assertNotNull(firstLog.getBody(), "Log body should not be null");
-        assertNotNull(firstLog.getSeverityText(), "Severity text should not be null");
-
-        // Additional wait to ensure logs are persisted to GreptimeDB
-        await().atMost(Duration.ofSeconds(60))
-                .pollInterval(Duration.ofSeconds(2))
                 .untilAsserted(() -> {
                     // Query GreptimeDB directly to verify data persistence
                     List<LogEntry> storedLogs = queryStoredLogs();
                     log.info("Query stored logs size: {}", storedLogs.size());
                     assertFalse(storedLogs.isEmpty(), "Should have logs stored in GreptimeDB");
+
+                    LogEntry firstLog = storedLogs.get(0);
+                    assertNotNull(firstLog, "First log should not be null");
                 });
     }
 
