@@ -67,31 +67,8 @@ class ArrayParamValidatorTest {
         paramDefine.setType("array");
         paramDefine.setField("tags");
         Param param = new Param();
-        param.setParamValue(""); // split returns empty array if string is empty? No, split("") returns [""]
-        // length 1 usually, but let's check implementation.
-        // Implementation: param.getParamValue().split(",")
-        // If value is "", split returns array of length 1 containing "".
-        // Wait, if value is empty string, split returns array with one empty string.
-        // But the validator checks arrays.length == 0.
-        // Actually split(",") on empty string returns array length 1 [""] in Java.
-        // So arrays.length == 0 might not be hit for empty string unless string is
-        // empty?
-        // Let's check logic: String[] arrays = param.getParamValue().split(",");
-        // If paramValue is "a", length is 1.
-        // If paramValue is "", length is 1.
-        // So when does length == 0 happen? Only if string is empty and limit is
-        // non-positive?
-        // Actually, if the input is just empty string, split returns [""] (length 1).
-        // If input is ",", split returns ["", ""] (length 2).
-        // So the check `arrays.length == 0` might be unreachable for standard split
-        // behavior unless specific cases.
-        // However, let's test what we expect.
-        
-        // Re-reading implementation:
-        // String[] arrays = param.getParamValue().split(",");
-        // if (arrays.length == 0) ...
-        
-        // If I pass empty string, it won't throw.
-        // If I pass "val1", it won't throw.
+        param.setParamValue("");
+        assertDoesNotThrow(() -> validator.validate(paramDefine, param));
+        assertEquals("", param.getParamValue());
     }
 }
