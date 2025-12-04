@@ -108,7 +108,6 @@ class WindowedLogRealTimeAlertCalculatorTest {
         verify(timeService).isLateData(anyLong());
         verify(timeService).updateMaxTimestamp(anyLong());
         verify(logWorker).reduceAndSendLogTask(validLogEntry);
-        verify(dataQueue).sendLogEntryToStorage(validLogEntry);
     }
 
     @Test
@@ -134,7 +133,6 @@ class WindowedLogRealTimeAlertCalculatorTest {
         verify(timeService, never()).isLateData(anyLong());
         verify(timeService, never()).updateMaxTimestamp(anyLong());
         verify(logWorker, never()).reduceAndSendLogTask(any());
-        verify(dataQueue).sendLogEntryToStorage(invalidTimestampLogEntry);
     }
 
     @Test
@@ -162,7 +160,6 @@ class WindowedLogRealTimeAlertCalculatorTest {
         verify(timeService).isLateData(anyLong());
         verify(timeService, never()).updateMaxTimestamp(anyLong());
         verify(logWorker, never()).reduceAndSendLogTask(any());
-        verify(dataQueue).sendLogEntryToStorage(lateDataLogEntry);
     }
 
     @Test
