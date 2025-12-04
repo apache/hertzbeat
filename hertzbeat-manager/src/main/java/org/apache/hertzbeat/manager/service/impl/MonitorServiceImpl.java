@@ -198,7 +198,8 @@ public class MonitorServiceImpl implements MonitorService {
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = Objects.isNull(portParam) ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
+                ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
         if (Objects.nonNull(instance)) {
             instance = instance + portWithMark;
         }
@@ -527,7 +528,8 @@ public class MonitorServiceImpl implements MonitorService {
                 .filter(param -> PARAM_FIELD_PORT.equals(param.getField()))
                 .findFirst()
                 .orElse(null);
-        String portWithMark = Objects.isNull(portParam) ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
+        String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
+                ? "" : SignConstants.DOUBLE_MARK + portParam.getParamValue();
         if (Objects.nonNull(instance)) {
             instance = instance + portWithMark;
         }

@@ -69,13 +69,9 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
             // Extract LogEntry instances from the request
             List<LogEntry> logEntries = extractLogEntries(request);
             log.debug("Successfully extracted {} log entries from OTLP payload {}", logEntries.size(), content);
-            
-            logEntries.forEach(entry -> {
-                commonDataQueue.sendLogEntry(entry);
-                logSseManager.broadcast(entry);
-                log.info("Log entry sent to queue: {}", entry);
-            });
-            
+            commonDataQueue.sendLogEntryToStorageBatch(logEntries);
+            commonDataQueue.sendLogEntryToAlertBatch(logEntries);
+            logEntries.forEach(logSseManager::broadcast);
         } catch (InvalidProtocolBufferException e) {
             log.error("Failed to parse OTLP log payload: {}", e.getMessage());
             throw new IllegalArgumentException("Invalid OTLP log content", e);
