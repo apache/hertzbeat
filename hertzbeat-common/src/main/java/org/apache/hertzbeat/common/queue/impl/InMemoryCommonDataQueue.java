@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
 import org.apache.hertzbeat.common.entity.log.LogEntry;
@@ -115,6 +118,48 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     @Override
     public LogEntry pollLogEntryToStorage() throws InterruptedException {
         return logEntryToStorageQueue.take();
+    }
+
+    @Override
+    public void sendLogEntryToAlertBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        for (LogEntry logEntry : logEntries) {
+            logEntryQueue.offer(logEntry);
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToAlertBatch(int maxBatchSize) throws InterruptedException {
+        List<LogEntry> batch = new ArrayList<>(maxBatchSize);
+        LogEntry first = logEntryQueue.poll(1, TimeUnit.SECONDS);
+        if (first != null) {
+            batch.add(first);
+            logEntryQueue.drainTo(batch, maxBatchSize - 1);
+        }
+        return batch;
+    }
+
+    @Override
+    public void sendLogEntryToStorageBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        for (LogEntry logEntry : logEntries) {
+            logEntryToStorageQueue.offer(logEntry);
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToStorageBatch(int maxBatchSize) throws InterruptedException {
+        List<LogEntry> batch = new ArrayList<>(maxBatchSize);
+        LogEntry first = logEntryToStorageQueue.poll(1, TimeUnit.SECONDS);
+        if (first != null) {
+            batch.add(first);
+            logEntryToStorageQueue.drainTo(batch, maxBatchSize - 1);
+        }
+        return batch;
     }
 
     @Override

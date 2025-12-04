@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -85,12 +86,16 @@ class OtlpLogProtocolAdapterTest {
         
         adapter.ingest(otlpPayload);
         
-        ArgumentCaptor<LogEntry> logEntryCaptor = ArgumentCaptor.forClass(LogEntry.class);
-        verify(commonDataQueue, times(1)).sendLogEntry(logEntryCaptor.capture());
-        verify(logSseManager, times(1)).broadcast(logEntryCaptor.capture());
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, times(1)).sendLogEntryToStorageBatch(listCaptor.capture());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(anyList());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
         
-        LogEntry capturedEntry = logEntryCaptor.getValue();
-        assertNotNull(capturedEntry);
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+        
+        LogEntry capturedEntry = capturedList.get(0);
         assertEquals("test-service", capturedEntry.getResource().get("service_name"));
         assertEquals("test-version", capturedEntry.getResource().get("service_version"));
         assertEquals("test-scope", capturedEntry.getInstrumentationScope().getName());
@@ -106,8 +111,13 @@ class OtlpLogProtocolAdapterTest {
         
         adapter.ingest(otlpPayload);
         
-        verify(commonDataQueue, times(2)).sendLogEntry(any(LogEntry.class));
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, times(1)).sendLogEntryToStorageBatch(listCaptor.capture());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(anyList());
         verify(logSseManager, times(2)).broadcast(any(LogEntry.class));
+        
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertEquals(2, capturedList.size());
     }
 
     @Test
@@ -116,15 +126,16 @@ class OtlpLogProtocolAdapterTest {
         
         adapter.ingest(otlpPayload);
         
-        verify(commonDataQueue, times(1)).sendLogEntry(any(LogEntry.class));
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, times(1)).sendLogEntryToStorageBatch(listCaptor.capture());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(anyList());
         verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
         
-        ArgumentCaptor<LogEntry> logEntryCaptor = ArgumentCaptor.forClass(LogEntry.class);
-        verify(commonDataQueue).sendLogEntry(logEntryCaptor.capture());
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
         
-        LogEntry capturedEntry = logEntryCaptor.getValue();
-        assertNotNull(capturedEntry);
-        
+        LogEntry capturedEntry = capturedList.get(0);
         Map<String, Object> attributes = capturedEntry.getAttributes();
         assertEquals("string_value", attributes.get("string_attr"));
         assertEquals(true, attributes.get("bool_attr"));
@@ -145,12 +156,15 @@ class OtlpLogProtocolAdapterTest {
         
         adapter.ingest(otlpPayload);
         
-        verify(commonDataQueue, times(1)).sendLogEntry(any(LogEntry.class));
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, times(1)).sendLogEntryToStorageBatch(listCaptor.capture());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(anyList());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
         
-        ArgumentCaptor<LogEntry> logEntryCaptor = ArgumentCaptor.forClass(LogEntry.class);
-        verify(commonDataQueue).sendLogEntry(logEntryCaptor.capture());
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertEquals(1, capturedList.size());
         
-        LogEntry capturedEntry = logEntryCaptor.getValue();
+        LogEntry capturedEntry = capturedList.get(0);
         assertEquals("1234567890abcdef1234567890abcdef", capturedEntry.getTraceId());
         assertEquals("1234567890abcdef", capturedEntry.getSpanId());
         assertEquals(1, capturedEntry.getTraceFlags());
@@ -170,7 +184,15 @@ class OtlpLogProtocolAdapterTest {
         
         adapter.ingest(otlpPayload);
         
-        verifyNoInteractions(commonDataQueue, logSseManager);
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, times(1)).sendLogEntryToStorageBatch(listCaptor.capture());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(anyList());
+        
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(0, capturedList.size());
+        
+        verifyNoInteractions(logSseManager);
     }
 
     private String createValidOtlpLogPayload() throws Exception {

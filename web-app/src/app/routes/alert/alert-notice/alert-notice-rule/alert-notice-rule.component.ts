@@ -275,6 +275,9 @@ export class AlertNoticeRuleComponent implements OnInit {
                 case 12:
                   label = `${label}ServerChan`;
                   break;
+                case 13:
+                  label = `${label}Gotify`;
+                  break;
                 case 14:
                   label = `${label}FeiShuApp`;
                   break;
