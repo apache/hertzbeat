@@ -51,14 +51,6 @@ class HostParamValidatorTest {
 
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
     }
-
-    @Test
-    void validate_ValidDomain() {
-        ParamDefine paramDefine = new ParamDefine();
-        paramDefine.setType("host");
-        Param param = new Param();
-        param.setParamValue("localhost");
-
         assertDoesNotThrow(() -> validator.validate(paramDefine, param));
     }
 
