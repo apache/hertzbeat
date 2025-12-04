@@ -1,31 +1,154 @@
+@import '~src/styles/theme';
+
 :host ::ng-deep {
-
-  .item{
-    padding-left: 32px!important;
-
-    .ant-menu-title-content {
-      gap: 8px;
-      display: flex;
-      align-items: center;
-
-      :first-child {
-        flex-shrink: 0;
-      }
-
-      .label {
-        flex: 1;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-    }
-  }
-
   .ant-spin-container {
     height: 100%;
     display: flex;
     overflow: hidden;
     flex-direction: column;
   }
+}
 
+:host {
+  display: block;
+  height: 100%;
+
+  .search-container {
+    padding: 16px 16px 0 16px;
+  }
+
+  .category-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+  }
+
+  .category-section {
+    margin-bottom: 20px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .category-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f1f1f;
+  }
+
+  .category-count {
+    font-size: 12px;
+    color: #8c8c8c;
+    background: #f5f5f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+  }
+
+  .category-items {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+
+  .monitor-type-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+
+    &:hover {
+      border-color: @primary-color;
+      background: #e6f4ff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+    }
+
+    &.selected {
+      border-color: @primary-color;
+      background: #e6f4ff;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+    }
+  }
+
+  .card-label {
+    font-size: 13px;
+    color: #333;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 0;
+    color: #8c8c8c;
+
+    i {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+  }
+}
+
+// Dark theme support
+[data-theme='dark'] {
+  :host {
+    .category-header {
+      border-bottom-color: #303030;
+    }
+
+    .category-title {
+      color: #d9d9d9;
+    }
+
+    .category-count {
+      background: #303030;
+      color: #a0a0a0;
+    }
+
+    .monitor-type-card {
+      background: #1f1f1f;
+      border-color: #303030;
+
+      &:hover {
+        border-color: @primary-color;
+        background: #111d2c;
+      }
+
+      &.selected {
+        border-color: @primary-color;
+        background: #111d2c;
+      }
+    }
+
+    .card-label {
+      color: #d9d9d9;
+    }
+
+    .empty-state {
+      color: #6c6c6c;
+    }
+  }
 }
