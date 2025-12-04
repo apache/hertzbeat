@@ -20,11 +20,11 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 
 @Component({
-  selector: 'app-monitor-select-menu',
-  templateUrl: './monitor-select-menu.component.html',
-  styleUrls: ['./monitor-select-menu.component.less']
+  selector: 'app-monitor-select-list',
+  templateUrl: './monitor-select-list.component.html',
+  styleUrls: ['./monitor-select-list.component.less']
 })
-export class MonitorSelectMenuComponent {
+export class MonitorSelectListComponent {
   @ContentChild('prefix', { static: true }) prefixTemplateRef: TemplateRef<any> | undefined;
   @ContentChild('suffix', { static: true }) suffixTemplateRef: TemplateRef<any> | undefined;
   @Input() data!: any[][];
@@ -50,26 +50,5 @@ export class MonitorSelectMenuComponent {
 
   onSelectedChanged(selected: string) {
     this.selectedChanged.emit(selected);
-  }
-
-  getCategoryIcon(category: string): string {
-    const iconMap: Record<string, string> = {
-      os: 'desktop',
-      webserver: 'global',
-      bigdata: 'cluster',
-      cache: 'database',
-      service: 'api',
-      server: 'hdd',
-      mid: 'deployment-unit',
-      db: 'database',
-      custom: 'tool',
-      llm: 'robot',
-      network: 'wifi',
-      cn: 'cloud-server',
-      cicd: 'branches',
-      auto: 'thunderbolt',
-      program: 'code'
-    };
-    return iconMap[category] || 'appstore';
   }
 }
