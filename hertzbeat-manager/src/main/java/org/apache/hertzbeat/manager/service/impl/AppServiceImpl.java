@@ -34,6 +34,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.HertzBeatKeywordsUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -439,24 +440,18 @@ public class AppServiceImpl implements AppService, InitializingBean {
         for (ParamDefine param : app.getParams()) {
             CommonUtil.validDefineI18n(param.getName(),  param.getField() + " param");
         }
-        for (Metrics metric : app.getMetrics()) {
-            CommonUtil.validDefineI18n(metric.getI18n(), metric.getName() + " metric");
-            if (metric.getFields() == null){
-                continue;
-            }
-            for (Metrics.Field field : metric.getFields()) {
-                CommonUtil.validDefineI18n(field.getI18n(), metric.getName() + " metric " + field.getField() + " field");
-            }
-        }
         if (!isModify) {
             Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
                     "monitoring template name " + app.getApp() + " already exists.");
         }
         Set<String> fieldsSet = new HashSet<>(16);
         for (Metrics metrics : app.getMetrics()) {
+            CommonUtil.validDefineI18n(metrics.getI18n(), metrics.getName() + " metric");
             Assert.notEmpty(metrics.getFields(), "monitoring template metrics fields can not null");
             fieldsSet.clear();
             for (Metrics.Field field : metrics.getFields()) {
+                CommonUtil.validDefineI18n(field.getI18n(), metrics.getName() + " metric " + field.getField() + " field");
+                HertzBeatKeywordsUtil.verifyKeywords(field.getField());
                 if (fieldsSet.contains(field.getField())) {
                     throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " " 
                             + field.getField() + " can not duplicated.");
