@@ -2,21 +2,17 @@
 
 ### API Endpoint
 
-`POST /api/logs/ingest/otlp`
-
-Or use the default endpoint (automatically uses OTLP protocol):
-
-`POST /api/logs/ingest`
+`POST /api/logs/otlp/v1/logs`
 
 ### Request Headers
 
-- `Content-Type`: `application/json`
+- `Content-Type`: `application/json` or `application/x-protobuf`
 - `Authorization`: `Bearer {token}`
 -  Or use `Basic` instead of `Bearer` (depending on HertzBeat's configured authentication settings)
 
 ### Request Body
 
-Supports standard OTLP JSON format log data:
+Supports standard OTLP JSON-Protobuf format or Binary Protobuf format log data:
 
 ```json
 {
@@ -76,7 +72,7 @@ Supports standard OTLP JSON format log data:
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/ingest/otlp
+    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
     compression: none
     encoding: json
     headers:
@@ -94,10 +90,8 @@ exporters:
 #### Log Sending Failures
 - Ensure HertzBeat service address is accessible from external systems
 - Check if Token is correctly configured
-- Verify request header Content-Type is set to application/json
 
 #### Log Format Errors
-- Ensure sending standard OTLP JSON format
 - Check timestamp format is nanosecond precision
 - Verify severityNumber value range (1-24)
 

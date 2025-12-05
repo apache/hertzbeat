@@ -18,7 +18,7 @@ keywords: [开源监控, 日志集成, 日志管理, 多源日志]
 
 HertzBeat 当前已支持以下协议进行日志数据接入：
 
-- **OTLP**：支持标准的 OpenTelemetry 日志协议 (OTLP) HTTP/JSON 格式，可直接接收来自 OpenTelemetry Collector 和各种支持 OTLP 的应用程序的日志数据。
+- **OTLP**：支持标准的 OpenTelemetry 日志协议 (OTLP) HTTP 格式，可直接接收来自 OpenTelemetry Collector 和各种支持 OTLP 的应用程序的日志数据。
 - **更多协议支持**：HertzBeat 正在积极扩展其日志集成支持，包括 Filebeat、Vector、Loki 等。如果暂时没有找到你需要的集成，活跃的社区也可以协助你添加。
 
 你可以通过 HertzBeat 的"日志集成"界面查看具体的接入方式和配置示例。
@@ -31,29 +31,21 @@ HertzBeat 当前已支持以下协议进行日志数据接入：
 
 HertzBeat 提供以下接口用于接收 OTLP 日志数据：
 
-**指定协议接口**：
-
 ```text
-POST /api/logs/ingest/otlp
-```
-
-**默认接口**（自动使用OTLP协议）：
-
-```text
-POST /api/logs/ingest
+POST /api/logs/otlp/v1/logs
 ```
 
 ### 请求配置
 
 #### 请求头
 
-- `Content-Type`: `application/json`
+- `Content-Type`: `application/json` 或 `application/x-protobuf`
 - `Authorization`: `Bearer {token}` 
 -  或者不使用 `Bearer` 而是 `Basic` (根据 HertzBeat 配置的认证配置)
 
 #### 请求体格式
 
-支持标准的 OTLP JSON 格式日志数据：
+支持标准的 OTLP JSON-Protobuf 格式日志数据或者 Binary Protobuf 格式日志数据：
 
 ```json
 {
@@ -117,7 +109,7 @@ POST /api/logs/ingest
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/ingest/otlp
+    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
     compression: none
     encoding: json
     headers:
@@ -169,7 +161,7 @@ service:
 
 #### 日志格式错误
 
-- **OTLP格式**：确保发送的是标准OTLP JSON格式
+- **OTLP格式**：确保发送的是标准 OTLP JSON-Protobuf 或 Binary Protobuf 格式
 - **时间戳格式**：检查时间戳格式是否为纳秒精度的Unix时间戳
 - **日志级别**：验证 severityNumber 值范围（1-24）
 - **数据类型**：确保各字段的数据类型符合OTLP规范
