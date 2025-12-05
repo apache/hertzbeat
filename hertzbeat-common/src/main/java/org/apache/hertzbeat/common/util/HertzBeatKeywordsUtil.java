@@ -20,11 +20,18 @@ package org.apache.hertzbeat.common.util;
 import org.apache.hertzbeat.common.constants.HertzBeatKeywordsEnum;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Validate JEXL rules
  */
 public class HertzBeatKeywordsUtil {
+
+
+    private static final Map<String, HertzBeatKeywordsEnum> KEYWORDS =
+            Arrays.stream(HertzBeatKeywordsEnum.values())
+                    .collect(Collectors.toMap(HertzBeatKeywordsEnum::getKeyword, e -> e));
 
 
     /**
@@ -33,8 +40,7 @@ public class HertzBeatKeywordsUtil {
      * @param field Field name to verify
      */
     public static void verifyKeywords(String field) {
-        HertzBeatKeywordsEnum keyword = Arrays.stream(HertzBeatKeywordsEnum.values())
-                .filter(t -> t.getKeyword().equals(field)).findFirst().orElse(null);
+        HertzBeatKeywordsEnum keyword = KEYWORDS.get(field);
         if (null == keyword) {
             return;
         }
