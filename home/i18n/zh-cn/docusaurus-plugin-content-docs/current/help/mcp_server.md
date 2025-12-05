@@ -1,5 +1,5 @@
 ---
-id: mcp_sse_server
+id: mcp_server
 title: MCP 服务器
 sidebar_label: MCP 服务器
 keywords: [MCP, SSE, 流式传输, 服务器]
