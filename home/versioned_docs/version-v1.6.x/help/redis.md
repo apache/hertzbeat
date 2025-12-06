@@ -5,7 +5,7 @@ sidebar_label: REDIS
 keywords: [ open source monitoring tool, open source Redis monitoring tool, monitoring Redis metrics ]
 ---
 
-> Collect and monitor the general performance Metrics of Redis database. Support REDIS1.0+.
+> Collect and monitor the general performance Metrics of Redis database including slow query logs. Support REDIS1.0+.
 
 ### Configuration parameter
 
@@ -232,3 +232,20 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 | cmdstat_lpop  | none    | lpop command stat                                                                                                               |
 | cmdstat_rpop  | none    | rpop command stat                                                                                                               |
 | cmdstat_llen  | none    | llen command stat                                                                                                               |
+
+#### Metric set：slowlog
+
+|           Metric name            | Metric unit |                                            Metric help description                                             |
+|---------------------------|----------|-----------------------------------------------------------------------------------------------|
+| id                        | none     | Unique progressive identifier for every slow log entry                                                                            |
+| timestamp                 | none     | Unix timestamp at which the logged command was processed                                                                          |
+| execution_time            | μs       | The amount of time needed for its execution, in microseconds                                                                      |
+| command                   | none     | The command and its arguments                                                                                                     |
+| client_ip                 | none     | Client IP address (available for Redis 4.0 or higher)                                                                             |
+| client_name               | none     | Client name if set via the CLIENT SETNAME command (available for Redis 4.0 or higher)                                             |
+
+> Note: To configure Redis slow log settings, use the following Redis commands:
+>
+> - `CONFIG SET slowlog-log-slower-than 10000` - Log commands that take longer than 10,000 microseconds (10ms)
+> - `CONFIG SET slowlog-max-len 128` - Keep the last 128 slow log entries
+> - The slow log metrics are displayed in real-time and updated automatically.
