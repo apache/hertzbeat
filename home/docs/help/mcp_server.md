@@ -2,21 +2,21 @@
 id: mcp_server
 title: MCP Server
 sidebar_label: MCP Server
-keywords: [MCP, SSE, streaming, server]
+keywords: [MCP, StreamableHttp, streaming, server]
 ---
 
-This page explains how connect to the HertzBeat MCP SSE server. The MCP server auto starts on the default port 1157 when you start the HertzBeat server.
+This page explains how connect to the HertzBeat MCP server. The MCP server auto starts on the default port 1157 when you start the HertzBeat server.
 
 ### Overview
 
-- Provides a Server‑Sent Events (SSE) stream for tool calling.
+- Provides Streamable-Http protocol MCP server.
 - Intended for MCP integrations and clients that consume streaming events.
 
 ### Connect to the MCP server
 
 Make sure that hertzbeat server is up and running. If you are using any other port than 1157, replace the following accordingly
 
-- URL: `http://localhost:1157/api/sse`
+- URL: `http://localhost:1157/api/mcp`
 
 ### Authentication
 
@@ -40,7 +40,7 @@ Basic auth:
 ```json
 {
       "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/sse",
+            "url": "http://localhost:1157/api/mcp",
             "headers": {
                   "Authorization": "Basic <base64(username:password)>"
             }
@@ -53,7 +53,7 @@ JWT bearer:
 ```json
 {
       "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/sse",
+            "url": "http://localhost:1157/api/mcp",
             "headers": {
                   "Authorization": "Bearer <your-jwt-token>"
             }
