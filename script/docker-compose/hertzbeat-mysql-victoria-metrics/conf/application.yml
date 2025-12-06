@@ -25,19 +25,12 @@ spring:
       server:
         enabled: true
         stdio: false
-        name: sse-mcp-server
+        protocol: streamable
+        streamable-http:
+          mcp-endpoint: /api/mcp
+        name: hertzbeat-mcp-server
         version: 1.0.0
-        resource-change-notification: true
-        tool-change-notification: true
-        prompt-change-notification: true
-        sse-endpoint: /api/sse
-        sse-message-endpoint: /api/mcp/message
         type: SYNC
-        capabilities:
-          tool: true
-          resource: true
-          prompt: true
-          completion: true
   mvc:
     static-path-pattern: /**
   jackson:

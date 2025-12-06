@@ -18,23 +18,17 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
-import org.apache.hertzbeat.ai.config.CustomSseServerTransport;
 import org.apache.hertzbeat.ai.service.McpServerService;
 import org.apache.hertzbeat.ai.tools.AlertDefineTools;
 import org.apache.hertzbeat.ai.tools.AlertTools;
 import org.apache.hertzbeat.ai.tools.MetricsTools;
 import org.apache.hertzbeat.ai.tools.MonitorTools;
-import org.springframework.ai.mcp.server.autoconfigure.McpServerProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.web.servlet.function.RouterFunction;
-import org.springframework.web.servlet.function.ServerResponse;
 
 /**
  * Implementation of the McpServerService interface.
@@ -55,37 +49,5 @@ public class McpServerServiceImpl implements McpServerService {
     @Bean
     public ToolCallbackProvider hertzbeatTools() {
         return MethodToolCallbackProvider.builder().toolObjects(monitorTools, alertTools, alertDefineTools, metricsTools).build();
-    }
-    /**
-     * Provides a custom SSE server transport for the MCP server.
-     *
-     * @param objectMapper the ObjectMapper instance for JSON serialization
-     * @param serverProperties the properties for the MCP server configuration
-     * @return a CustomSseServerTransport instance configured with the provided properties
-     */
-
-    @Bean
-    public CustomSseServerTransport webMvcSseServerTransportProvider(
-            ObjectMapper objectMapper,
-            McpServerProperties serverProperties
-    ) {
-        return new CustomSseServerTransport(
-                objectMapper,
-                serverProperties.getBaseUrl(),
-                serverProperties.getSseMessageEndpoint(),
-                serverProperties.getSseEndpoint()
-        );
-    }
-    /**
-     * Provides the MCP server transport bean.
-     *
-     * @param transport the custom SSE server transport
-     * @return the MCP server transport instance
-     */
-
-    @Primary
-    @Bean
-    public RouterFunction<ServerResponse> mvcMcpRouterFunction(CustomSseServerTransport transport) {
-        return transport.getRouterFunction();
     }
 }

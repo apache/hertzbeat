@@ -2,21 +2,21 @@
 id: mcp_server
 title: MCP 服务器
 sidebar_label: MCP 服务器
-keywords: [MCP, SSE, 流式传输, 服务器]
+keywords: [MCP, StreamabelHttp, 流式传输, 服务器]
 ---
 
-本页面介绍如何连接到 HertzBeat MCP SSE 服务器。当您启动 HertzBeat 服务器时，MCP 服务器会自动在默认端口 1157 上启动。
+本页面介绍如何连接到 HertzBeat MCP 服务器。当您启动 HertzBeat 服务器时，MCP 服务器会自动在默认端口 1157 上启动。
 
 ### 概述
 
-- 提供用于工具调用的服务器发送事件 (SSE) 流。
+- 提供 StreamabelHttp 协议的 MCP服务器。
 - 专为 MCP 集成和消费流式事件的客户端而设计。
 
 ### 连接到 MCP 服务器
 
 确保 HertzBeat 服务器已启动并正在运行。如果您使用的端口不是 1157，请相应地替换以下内容：
 
-- URL: `http://localhost:1157/api/sse`
+- URL: `http://localhost:1157/api/mcp`
 
 ### 身份验证
 
@@ -40,7 +40,7 @@ keywords: [MCP, SSE, 流式传输, 服务器]
 ```json
 {
       "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/sse",
+            "url": "http://localhost:1157/api/mcp",
             "headers": {
                   "Authorization": "Basic <base64(username:password)>"
             }
@@ -53,7 +53,7 @@ JWT Bearer：
 ```json
 {
       "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/sse",
+            "url": "http://localhost:1157/api/mcp",
             "headers": {
                   "Authorization": "Bearer <your-jwt-token>"
             }
