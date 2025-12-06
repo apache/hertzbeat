@@ -1,5 +1,5 @@
 ---
-id: mcp_sse_server
+id: mcp_server
 title: MCP Server
 sidebar_label: MCP Server
 keywords: [MCP, SSE, streaming, server]

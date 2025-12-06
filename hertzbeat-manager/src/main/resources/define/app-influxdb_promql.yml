@@ -162,7 +162,7 @@ metrics:
     # metrics fields list.
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      - field: instance
+      - field: metric_instance
         type: 1
         i18n:
           zh-CN: 实例
@@ -180,6 +180,12 @@ metrics:
           zh-CN: 值
           en-US: Value
           ja-JP: 値
+    aliasFields:
+      - instance
+      - timestamp
+      - value
+    calculates:
+      - metric_instance=instance
 # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
     protocol: http
 # When the protocol is HTTP, the specific collection configuration is as follows
@@ -201,7 +207,7 @@ metrics:
         ^_^headers^_^: ^_^headers^_^
       # Request parameter content
       params:
-        ^_^params^_^: ^_^params^_^
+        query: basic_influxdb_memstats_alloc
       # authorization
       authorization:
         # Authentication method: Basic Auth, Digest Auth, Bearer Token
@@ -231,7 +237,7 @@ metrics:
           zh-CN: 任务
           en-US: Job
           ja-JP: タスク
-      - field: instance
+      - field: metric_instance
         type: 1
         i18n:
           zh-CN: 实例
@@ -255,6 +261,14 @@ metrics:
           zh-CN: 值
           en-US: Value
           ja-JP: 値
+    aliasFields:
+      - job
+      - instance
+      - database
+      - timestamp
+      - value
+    calculates:
+      - metric_instance=instance
     # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
     protocol: http
     # When the protocol is HTTP, the specific collection configuration is as follows
@@ -300,7 +314,7 @@ metrics:
     # metrics fields list.
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      - field: instance
+      - field: metric_instance
         type: 1
         i18n:
           zh-CN: 实例
@@ -318,6 +332,12 @@ metrics:
           zh-CN: 值
           en-US: Value
           ja-JP: 値
+    aliasFields:
+      - instance
+      - timestamp
+      - value
+    calculates:
+      - metric_instance=instance
     # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
     protocol: http
     # When the protocol is HTTP, the specific collection configuration is as follows
@@ -364,7 +384,7 @@ metrics:
     # metrics fields list.
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      - field: instance
+      - field: metric_instance
         type: 1
         i18n:
           zh-CN: 实例
@@ -382,6 +402,12 @@ metrics:
           zh-CN: 值
           en-US: Value
           ja-JP: 値
+    aliasFields:
+      - instance
+      - timestamp
+      - value
+    calculates:
+      - metric_instance=instance
     # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
     protocol: http
     # When the protocol is HTTP, the specific collection configuration is as follows

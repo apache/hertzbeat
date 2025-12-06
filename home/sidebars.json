@@ -67,7 +67,7 @@
         "help/guide",
         "help/security_model",
         "help/ai_agent",
-        "help/mcp_sse_server",
+        "help/mcp_server",
         {
           "type": "category",
           "label": "use-case",

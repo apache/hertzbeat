@@ -205,7 +205,6 @@ public class MetricsRealTimeAlertCalculator {
             }
             Long defineId = define.getId();
             Map<String, String> commonFingerPrints = new HashMap<>(8);
-            commonFingerPrints.put(CommonConstants.LABEL_INSTANCE, instance);
             // here use the alert name as finger, not care the alert name may be changed
             commonFingerPrints.put(CommonConstants.LABEL_DEFINE_ID, String.valueOf(define.getId()));
             commonFingerPrints.put(CommonConstants.LABEL_ALERT_NAME, define.getName());
