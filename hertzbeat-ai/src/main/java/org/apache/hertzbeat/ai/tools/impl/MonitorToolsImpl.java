@@ -58,7 +58,7 @@ public class MonitorToolsImpl implements MonitorTools {
      */
     @Override
     @Tool(name = "query_monitors", description = """ 
-            Query Existing/configured monitors in HertzBeat.
+            HertzBeat: Query Existing/configured monitors in HertzBeat.
             This tool retrieves monitors based on various filters and parameters.
             Comprehensive monitor querying with flexible filtering, pagination, and specialized views.
             
@@ -196,7 +196,7 @@ public class MonitorToolsImpl implements MonitorTools {
 
     @Override
     @Tool(name = "add_monitor", description = """
-            Add a new monitoring target to HertzBeat with comprehensive configuration.
+            HertzBeat: Add a new monitoring target to HertzBeat with comprehensive configuration.
             This tool dynamically handles different parameter requirements for each monitor type.
             
             This tool creates monitors with proper app-specific parameters.
@@ -367,7 +367,7 @@ public class MonitorToolsImpl implements MonitorTools {
     
     @Override
     @Tool(name = "list_monitor_types", description = """
-            List all available monitor types that can be added to HertzBeat.
+            HertzBeat: List all available monitor types that can be added to HertzBeat.
             This tool shows all supported monitor types with their display names.
             Use this to see what types of monitors you can create with the add_monitor tool.
             """)
@@ -421,7 +421,7 @@ public class MonitorToolsImpl implements MonitorTools {
     
     @Override
     @Tool(name = "get_monitor_additional_params", description = """
-            Get the parameter definitions required for a specific monitor type.
+            HertzBeat: Get the parameter definitions required for a specific monitor type.
             This tool shows what parameters are needed when adding a monitor of the specified type,
             ALWAYS use this before adding a monitor to understand what parameters the user needs to provide.
             Use the app parameter to specify the monitor type/application name (e.g., 'linux', 'mysql', 'redis') this can be obtained from the list_monitor_types tool.

@@ -45,7 +45,7 @@ public class AlertToolsImpl implements AlertTools {
 
     @Override
     @Tool(name = "query_alerts", description = """
-            Query alerts with comprehensive filtering and pagination options.
+            HertzBeat: Query alerts with comprehensive filtering and pagination options.
             
             ALERT TYPES:
             - Pass alertType='single' for individual alert instances
@@ -196,7 +196,7 @@ public class AlertToolsImpl implements AlertTools {
 
     @Override
     @Tool(name = "get_alerts_summary", description = """
-            Get alerts summary statistics including total counts, status distribution, and recent trends.
+            HertzBeat: Get alerts summary statistics including total counts, status distribution, and recent trends.
             Returns comprehensive overview of the current alerting status across all monitors.
             """)
     public String getAlertsSummary() {

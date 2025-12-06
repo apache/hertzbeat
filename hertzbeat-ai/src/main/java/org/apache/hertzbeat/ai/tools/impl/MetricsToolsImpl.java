@@ -47,7 +47,7 @@ public class MetricsToolsImpl implements MetricsTools {
 
     @Override
     @Tool(name = "query_realtime_metrics", description = """
-            Get the supported monitor types/names from the list_monitor_types tool, make sure to use right name in the next call
+            HertzBeat: Get the supported monitor types/names from the list_monitor_types tool, make sure to use right name in the next call
             Use the query_monitors tool to find monitor IDs in case the user does not tell the id explicitly. You might have to use this multiple times based on the user's query
             Get real-time metrics data for a specific monitor.
             Returns current metrics values including CPU, memory, disk usage, etc.
@@ -144,7 +144,7 @@ public class MetricsToolsImpl implements MetricsTools {
 
     @Override
     @Tool(name = "get_historical_metrics", description = """
-            Get historical metrics data for analysis and trending.
+            HertzBeat: Get historical metrics data for analysis and trending.
             Returns time-series data for specified metrics over a time range.
             Use the query_monitors tool to find the correct monitor IDs/ name or type for the monitor(s) user asked the metrics for
             Pass that name into the get_apps_metrics_hierarchy tool to get the metrics hierarchy i.e metrics and the field paramater
@@ -226,7 +226,7 @@ public class MetricsToolsImpl implements MetricsTools {
 
     @Override
     @Tool(name = "get_warehouse_status", description = """
-            Check the status of the metrics storage warehouse system.
+            HertzBeat: Check the status of the metrics storage warehouse system.
             Returns whether the metrics storage is operational and accessible.
             """)
     public String getWarehouseStatus() {
