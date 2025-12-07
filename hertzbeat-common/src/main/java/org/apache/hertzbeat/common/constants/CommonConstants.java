@@ -98,11 +98,6 @@ public interface CommonConstants {
     String LABEL_ALERT_NAME = "alertname";
 
     /**
-     * label key: instance host
-     */
-    String LABEL_INSTANCE_HOST = "instancehost";
-
-    /**
      * label key: instance name
      */
     String LABEL_INSTANCE_NAME = "instancename";

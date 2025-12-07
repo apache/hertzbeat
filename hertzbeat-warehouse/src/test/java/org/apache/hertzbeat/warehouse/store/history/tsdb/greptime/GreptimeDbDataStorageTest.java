@@ -160,9 +160,7 @@ class GreptimeDbDataStorageTest {
         when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class)))
                 .thenReturn(responseEntity);
 
-        Map<String, List<Value>> result = greptimeDbDataStorage.getHistoryMetricData(
-                1L, "test_app", "test_metrics", "test_metric", "test_label", "6h"
-        );
+        Map<String, List<Value>> result = greptimeDbDataStorage.getHistoryMetricData("127.0.0.1:8080", "test_app", "test_metrics", "test_metric", "6h");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());

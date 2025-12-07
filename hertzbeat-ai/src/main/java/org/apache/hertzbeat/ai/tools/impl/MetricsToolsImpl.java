@@ -151,7 +151,7 @@ public class MetricsToolsImpl implements MetricsTools {
             Ask user to provide the filters for labels, history and interval aggregation
             """)
     public String getHistoricalMetrics(
-            @ToolParam(description = "Monitor ID", required = true) Long monitorId,
+            @ToolParam(description = "Instance identifier (e.g., 'ip:port', 'ip', or 'domain')") String instance,
             @ToolParam(description = "Monitor type (e.g., 'linux', 'mysql', 'http')", required = true) String app,
             @ToolParam(description = "Metrics name (e.g., 'target', 'cpu', 'memory')", required = true) String metrics,
             @ToolParam(description = "Field Parameter (e.g., 'usage', 'used', 'available')", required = false) String fieldParameter,
@@ -160,7 +160,7 @@ public class MetricsToolsImpl implements MetricsTools {
             @ToolParam(description = "Whether to aggregate data with intervals", required = false) Boolean interval) {
 
         try {
-            log.info("Getting historical metrics for monitor {} and metrics {}", monitorId, metrics);
+            log.info("Getting historical metrics for monitor instance {} and metrics {}", instance, metrics);
 
             if (history == null || history.trim().isEmpty()) {
                 history = "24h";
@@ -169,15 +169,15 @@ public class MetricsToolsImpl implements MetricsTools {
                 interval = true;
             }
 
-            MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(
-                    monitorId, app, metrics, fieldParameter, label, history, interval);
+            MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance,
+                    app, metrics, fieldParameter, history, interval);
 
             if (historyData == null) {
-                return String.format("No historical metrics data found for monitor ID %d and metrics '%s'", monitorId, metrics);
+                return String.format("No historical metrics data found for monitor %s and metrics '%s'", instance, metrics);
             }
 
             StringBuilder response = new StringBuilder();
-            response.append("HISTORICAL METRICS: ").append(metrics).append(" (Monitor ID: ").append(monitorId).append(")\n");
+            response.append("HISTORICAL METRICS: ").append(metrics).append(" (Monitor ID: ").append(instance).append(")\n");
             response.append("Time Range: ").append(history).append(" | Interval Aggregation: ").append(interval).append("\n");
             response.append("=".repeat(60)).append("\n\n");
 

@@ -36,6 +36,7 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Implementation of Monitoring Tools functionality
@@ -170,7 +171,7 @@ public class MonitorToolsImpl implements MonitorTools {
                 response.append("ID: ").append(monitor.getId())
                        .append(" | Name: ").append(monitor.getName())
                        .append(" | Type: ").append(monitor.getApp())
-                       .append(" | Host: ").append(monitor.getHost())
+                       .append(" | Instance: ").append(monitor.getInstance())
                        .append(" | Status: ").append(UtilityClass.getStatusText(monitor.getStatus()));
                        
                 // Add creation date for better context
@@ -255,12 +256,14 @@ public class MonitorToolsImpl implements MonitorTools {
             if (intervals == null || intervals < 10) {
                 intervals = 600;
             }
-            
+
+            String instance = Objects.nonNull(port) ? host.trim() + ":" + port : host.trim();
+
             // Create Monitor entity
             Monitor monitor = Monitor.builder()
                     .name(name.trim())
                     .app(app.toLowerCase().trim())
-                    .host(host.trim())
+                    .instance(instance)
                     .intervals(intervals)
                     .status((byte) 1)
                     .type((byte) 0)

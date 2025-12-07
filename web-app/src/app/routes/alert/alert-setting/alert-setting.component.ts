@@ -1524,7 +1524,7 @@ export class AlertSettingComponent implements OnInit {
         this.transferData = monitors.map(item => ({
           key: item.id,
           title: item.name,
-          description: item.host,
+          description: item.instance,
           direction: this.selectedMonitorIds.has(item.id) ? 'right' : 'left',
           labels: Object.entries(item.labels).map(([key, value]) => `${key}:${value}`)
         }));

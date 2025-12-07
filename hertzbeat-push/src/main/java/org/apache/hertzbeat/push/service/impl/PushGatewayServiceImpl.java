@@ -81,7 +81,7 @@ public class PushGatewayServiceImpl implements PushGatewayService {
                             .id(monitorId)
                             .app(job)
                             .name(instance)
-                            .host(instance)
+                            .instance(instance)
                             .type((byte) 1)
                             .status(CommonConstants.MONITOR_UP_CODE)
                             .build();

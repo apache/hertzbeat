@@ -52,7 +52,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "hzb_monitor", indexes = {
         @Index(name = "monitor_query_index", columnList = "app"),
-        @Index(name = "monitor_query_index", columnList = "host"),
+        @Index(name = "monitor_query_index", columnList = "instance"),
         @Index(name = "monitor_query_index", columnList = "name")
 })
 @Data
@@ -82,10 +82,10 @@ public class Monitor {
     @Size(max = 100)
     private String scrape;
     
-    @Schema(title = "peer host: ipv4, ipv6, domain name", example = "192.167.25.11", accessMode = READ_WRITE)
+    @Schema(title = "the monitor target: ip/domain+port or ip/domain", example = "192.167.25.11:8081", accessMode = READ_WRITE)
     @Size(max = 100)
     @HostValid
-    private String host;
+    private String instance;
     
     @Schema(title = "Monitoring of the acquisition interval time in seconds", example = "600", accessMode = READ_WRITE)
     @Min(10)
