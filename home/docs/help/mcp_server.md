@@ -5,6 +5,9 @@ sidebar_label: MCP Server
 keywords: [MCP, StreamableHttp, streaming, server]
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 This page explains how connect to the HertzBeat MCP server. The MCP server auto starts on the default port 1157 when you start the HertzBeat server.
 
 ### Overview
@@ -16,7 +19,7 @@ This page explains how connect to the HertzBeat MCP server. The MCP server auto 
 
 Make sure that hertzbeat server is up and running. If you are using any other port than 1157, replace the following accordingly
 
-- URL: `http://localhost:1157/api/mcp`
+- URL: `http://your-hertzbeat-server-host:1157/api/mcp`
 
 ### Authentication
 
@@ -31,7 +34,57 @@ Note: You can generate a JWT token from the HertzBeat web UI under the Log Integ
 - Basic authentication
   - Header: `Authorization: Basic <base64(username:password)>`
 
-### Cursor MCP configuration
+### Editor MCP configuration
+
+<Tabs>
+  <TabItem value="claude-code" label="Claude Code MCP">
+
+Claude Code use a global config file `~/.claude.json` to config mcp server. You can add HertzBeat MCP by CLI or edit this file directly.
+
+Method A: Use the CLI.
+
+```bash
+claude mcp add -s user -t http hertzbeat-mcp http://your-hertzbeat-server-host:1157/api/mcp --header "Authorization: Bearer your_jwt_key"
+```
+
+Method B: Edit the file directly.
+
+Basic auth:
+
+```jsonc
+{
+  "mcpServers": {
+    "hertzbeat-mcp": {
+      "type": "sse",
+      "url": "http://your-hertzbeat-server-host:1157/api/mcp",
+      "headers": {
+        "Authorization": "Basic <base64(username:password)>"
+      }
+    }
+  }
+}
+```
+
+JWT bearer:
+
+```jsonc
+{
+  "mcpServers": {
+    "hertzbeat-mcp": {
+      "type": "sse",
+      "url": "http://your-hertzbeat-server-host:1157/api/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-jwt-token>"
+      }
+    }
+  }
+}
+```
+
+After saving `~/.claude.json`, restart or reload Claude Code to make the new MCP configuration take effect.
+
+  </TabItem>
+  <TabItem value="cursor" label="Cursor MCP" default>
 
 Create or edit `.cursor/mcp.json` in your home directory or project root.
 
@@ -39,8 +92,8 @@ Basic auth:
 
 ```json
 {
-      "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/mcp",
+      "hertzbeat-mcp": {
+            "url": "http://your-hertzbeat-server-host:1157/api/mcp",
             "headers": {
                   "Authorization": "Basic <base64(username:password)>"
             }
@@ -52,8 +105,8 @@ JWT bearer:
 
 ```json
 {
-      "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/mcp",
+      "hertzbeat-mcp": {
+            "url": "http://your-hertzbeat-server-host:1157/api/mcp",
             "headers": {
                   "Authorization": "Bearer <your-jwt-token>"
             }
@@ -62,6 +115,9 @@ JWT bearer:
 ```
 
 After saving, reload MCP in Cursor or restart the editor.
+
+  </TabItem>
+</Tabs>
 
 ### Tools available
 
