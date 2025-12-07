@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.tools.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
@@ -222,7 +221,6 @@ public class MetricsToolsImpl implements MetricsTools {
             return "Error retrieving historical metrics: " + e.getMessage();
         }
     }
-
 
     @Override
     @Tool(name = "get_warehouse_status", description = """

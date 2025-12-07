@@ -68,7 +68,6 @@ public class CustomSseServerTransport implements McpServerTransportProvider {
         this(objectMapper, messageEndpoint, "/sse");
     }
 
-
     public CustomSseServerTransport(ObjectMapper objectMapper, String messageEndpoint, String sseEndpoint) {
         this(objectMapper, "", messageEndpoint, sseEndpoint);
     }
@@ -123,15 +122,12 @@ public class CustomSseServerTransport implements McpServerTransportProvider {
             return ServerResponse.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: " + e.getMessage());
         }
 
-
-
         if (this.isClosing) {
             return ServerResponse.status(HttpStatus.SERVICE_UNAVAILABLE).body("Server is shutting down");
         } else {
             String sessionId = UUID.randomUUID().toString();
             log.debug("Generated session ID for SSE connection: {}", sessionId);
             log.debug("Creating new SSE connection for session: {}", sessionId);
-
 
             return ServerResponse.sse((sseBuilder) -> {
                 sseBuilder.onComplete(() -> {
@@ -166,7 +162,7 @@ public class CustomSseServerTransport implements McpServerTransportProvider {
             return ServerResponse.badRequest().body(new McpError("Session ID missing in message endpoint"));
         } else {
             String sessionId = (String) request.param("sessionId").get();
-            McpServerSession session = (McpServerSession) this.sessions.get(sessionId);
+            McpServerSession session = this.sessions.get(sessionId);
             log.debug("Authorization header for message request: {}", request.servletRequest().getHeader("Authorization"));
             SubjectSum subject = SurenessSecurityManager.getInstance().checkIn(sessionRequest.get(sessionId));
             McpContextHolder.setSubject(subject);

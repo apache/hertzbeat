@@ -51,7 +51,6 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
     @Autowired
     private AppService appService;
 
-
     @Override
     @Tool(name = "create_alert_rule", description = """
             ALERT RULE means when to alert a user
@@ -379,7 +378,6 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
         }
     }
 
-
     @Override
     @Tool(name = "get_alert_rule_details", description = """
             Get detailed information about a specific alert rule.
@@ -646,7 +644,6 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             return String.format("Error binding monitors to alert rule: %s", e.getMessage());
         }
     }
-
 
     /**
      * Validates that the app, metric, and field conditions are valid according to hierarchy
