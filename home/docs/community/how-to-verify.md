@@ -75,9 +75,9 @@ Please decide how far you trust this user to correctly verify other users' keys
 
 Your decision? 5 #choose 5
 Do you really want to set this key to ultimate trust? (y/N) y  #choose y
-                                                            
+
 gpg>
-         
+
 ```
 
 ##### 2.2.3 Check the gpg signature
@@ -152,23 +152,9 @@ If you initiate a posting vote, you can refer to this response example to reply 
 <font color="red">
 When replying to the email, you must bring the information that you have checked by yourself. Simply replying to `+1 approve` is invalid.
 
-When PPMC votes in the <dev@hertzbeat.apache.org> hertzbeat community, Please bring the binding suffix to indicate that it has a binding vote for the vote in the hertzbeat community, and it is convenient to count the voting results.
+When new PMC votes in the <dev@hertzbeat.apache.org> hertzbeat community, Please bring the binding suffix to indicate that it has a binding vote for the vote in the hertzbeat community, and it is convenient to count the voting results.
 
-When IPMC votes in the <general@incubator.apache.org> incubator community. Please bring the binding suffix to indicate that the voting in the incubator community has a binding vote, which is convenient for counting the voting results.
-</font>
-
-:::caution
-If you have already voted on <dev@hertzbeat.apache.org>, you can take it directly to the incubator community when you reply to the vote, such as:
-
-```html
-//Incubator community voting, only IPMC members have binding binding，PPMC needs to be aware of binding changes
-Forward my +1 from dev@listhertzbeatnkis (non-binding)
-Copy my +1 from hertzbeat DEV ML (non-binding)
-```
-
-:::
-
-Non-PPMC/Non-IPMC member:
+Non-PMC member:
 
 ```text
 +1 (non-binding)
@@ -177,20 +163,19 @@ I checked:
      2. Checksum and signature are OK
      3. LICENSE and NOTICE are exist
      4. Build successfully on macOS(Big Sur)
-     5. 
+     5.
 ```
 
-PPMC/IPMC member:
+PMC member:
 
 ```text
-//Incubator community voting, only IPMC members have binding binding
 +1 (binding)
 I checked:
      1. All download links are valid
      2. Checksum and signature are OK
      3. LICENSE and NOTICE are exist
      4. Build successfully on macOS(Big Sur)
-     5. 
+     5.
 ```
 
 ---
