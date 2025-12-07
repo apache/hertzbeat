@@ -30,26 +30,16 @@ public interface MonitorTools {
      * 
      * @param name Monitor name
      * @param app Monitor type/application (e.g., 'linux', 'mysql', 'http')
-     * @param host Target host (IP address or domain name)
-     * @param port Target port (optional, depends on monitor type)
      * @param intervals Collection interval in seconds (default: 600)
-     * @param username Username for authentication (optional)
-     * @param password Password for authentication (optional)
-     * @param database Database name (for database monitors)
-     * @param additionalParams Additional app-specific parameters as JSON string (optional)
+     * @param params Monitor-specific parameters as JSON string (e.g., host, port, username, password, etc.)
      * @param description Monitor description (optional)
      * @return Result message with monitor ID if successful
      */
     String addMonitor(
             String name, 
-            String app, 
-            String host,
-            Integer port,
+            String app,
             Integer intervals,
-            String username,
-            String password,
-            String database,
-            String additionalParams,
+            String params,
             String description
     );
     
