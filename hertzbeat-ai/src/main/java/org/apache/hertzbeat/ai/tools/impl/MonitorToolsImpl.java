@@ -438,13 +438,13 @@ public class MonitorToolsImpl implements MonitorTools {
     }
 
     @Override
-    @Tool(name = "get_monitor_additional_params", description = """
+    @Tool(name = "get_monitor_params", description = """
             HertzBeat: Get the parameter definitions required for a specific monitor type.
             This tool shows what parameters are needed when adding a monitor of the specified type,
             ALWAYS use this before adding a monitor to understand what parameters the user needs to provide.
             Use the app parameter to specify the monitor type/application name (e.g., 'linux', 'mysql', 'redis') this can be obtained from the list_monitor_types tool.
             """)
-    public String getMonitorAdditionalParams(
+    public String getMonitorParams(
             @ToolParam(description = "Monitor type/application name (e.g., 'linux', 'mysql', 'redis')", required = true) String app) {
 
         try {
