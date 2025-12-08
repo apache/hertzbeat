@@ -41,7 +41,7 @@ POST /api/logs/otlp/v1/logs
 
 - `Content-Type`: `application/json` or `application/x-protobuf`
 - `Authorization`: `Bearer {token}`
--  Or use `Basic` instead of `Bearer` (depending on HertzBeat's configured authentication settings)
+- Or use `Basic` instead of `Bearer` (depending on HertzBeat's configured authentication settings)
 
 #### Request Body Format
 
@@ -60,7 +60,7 @@ Supports standard OTLP JSON-Protobuf format or Binary Protobuf format log data:
             }
           },
           {
-            "key": "service.version", 
+            "key": "service.version",
             "value": {
               "stringValue": "1.0.0"
             }
