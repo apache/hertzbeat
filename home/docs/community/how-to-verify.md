@@ -154,7 +154,6 @@ If you initiate a posting vote, you can refer to this response example to reply 
 When replying to the email, you must bring the information that you have checked by yourself. Simply replying to `+1 approve` is invalid.
 
 When new PMC votes in the <dev@hertzbeat.apache.org> hertzbeat community, Please bring the binding suffix to indicate that it has a binding vote for the vote in the hertzbeat community, and it is convenient to count the voting results.
-</font>
 :::
 
 Non-PMC member:
