@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.tools.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
@@ -32,7 +31,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
-
 
 /**
  * Implementation of Alert Tools functionality for alarm data queries and management
@@ -192,7 +190,6 @@ public class AlertToolsImpl implements AlertTools {
             return "Error retrieving alerts: " + e.getMessage();
         }
     }
-
 
     @Override
     @Tool(name = "get_alerts_summary", description = """

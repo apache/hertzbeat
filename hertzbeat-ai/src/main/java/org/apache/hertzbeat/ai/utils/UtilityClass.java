@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.ai.utils;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;

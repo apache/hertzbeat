@@ -49,7 +49,6 @@ public class MonitorToolsImpl implements MonitorTools {
     @Autowired
     private AppService appService;
 
-
     /**
      * Tool to query monitor information with flexible filtering and pagination.
      * Supports filtering by monitor IDs, type, status, host, labels, sorting, and
@@ -192,7 +191,6 @@ public class MonitorToolsImpl implements MonitorTools {
             return "Error retrieving monitors: " + e.getMessage();
         }
     }
-
 
     @Override
     @Tool(name = "add_monitor", description = """
@@ -520,7 +518,5 @@ public class MonitorToolsImpl implements MonitorTools {
             return "Error retrieving parameter definitions for monitor type '" + app + "': " + e.getMessage();
         }
     }
-
-
 
 }
