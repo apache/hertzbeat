@@ -605,6 +605,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static long msToNs(Long ms) {
         return ms * 1_000_000L;
     }
+
     /**
      * build WHERE conditions
      * @param sql SQL builder
