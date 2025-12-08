@@ -1,6 +1,6 @@
 ---
 id: 'become_pmc_member'
-title: 'Become A PPMC member'
+title: 'Become A new PMC member'
 sidebar_position: 3
 ---
 
@@ -21,10 +21,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## Become A PPMC member of Apache HertzBeat
+## Become A new PMC member of Apache HertzBeat
 
 Anyone being supportive of the community and working in any of the
-CoPDoC areas can become an Apache HertzBeat™ PPMC member. The CoPDoC is an
+CoPDoC areas can become an Apache HertzBeat™ new PMC member. The CoPDoC is an
 acronym from ASF to describe how we recognize your contributions not
 only by code.
 
@@ -38,16 +38,16 @@ only by code.
 
 Apache HertzBeat™ community strives to be meritocratic. Thus, once someone
 has contributed sufficiently to any area of CoPDoC they can be a
-candidate for PPMC membership and at last voted in as a HertzBeat
-PMC member. Being an Apache HertzBeat™ PPMC member does not necessarily mean
+candidate for new PMC membership and at last voted in as a HertzBeat
+PMC member. Being an Apache HertzBeat™ new PMC member does not necessarily mean
 you must commit code with your commit privilege to the codebase; it
 means you are committed to the HertzBeat project and are productively
 contributing to our community's success.
 
-## PPMC member requirements
+## new PMC member requirements
 
-There are no strict rules for becoming a committer or PPMC member.
-Candidates for new PPMC member are typically people that are active
+There are no strict rules for becoming a committer or new PMC member.
+Candidates for new PMC member are typically people that are active
 contributors and community members. Anyway, if the rules can be
 clarified a little bit, it can somehow clear the doubts in the minds
 of contributors and make the community more transparent, reasonable,
