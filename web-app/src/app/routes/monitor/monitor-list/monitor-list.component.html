@@ -370,16 +370,17 @@
 <nz-modal
   [(nzVisible)]="appSwitchModalVisible"
   (nzOnCancel)="onAppSwitchModalCancel()"
-  nzClosable="false"
-  nzWidth="30%"
+  nzClosable="true"
+  nzWidth="900px"
   nzWrapClassName="monitor-select-menu-modal"
+  [nzTitle]="appSwitchModalVisibleType === 1 ? ('monitor.search.app' | i18n) : ('monitor.new-monitor' | i18n)"
   [nzFooter]="null"
   [nzOkLoading]="appSearchLoading"
+  nzCentered
 >
   <div *nzModalContent class="-inner-content">
     <app-monitor-select-menu
-      listStyle="border-right: 0px"
-      [searchPlaceholder]="(appSwitchModalVisibleType === 1 ? 'monitor.search.app' : 'monitor.center.search.placeholder') | i18n"
+      [searchPlaceholder]="'monitor.center.search.placeholder' | i18n"
       [loading]="appSearchLoading"
       [data]="appSearchOrigin"
       (selectedChanged)="gotoMonitorAddDetail($event)"
@@ -387,7 +388,6 @@
       <ng-template let-app="item" #prefix>
         <i nz-icon [nzType]="getAppIconName(app.value)" nzTheme="outline"></i>
       </ng-template>
-      <ng-template #suffix>@if (appSwitchModalVisibleType !== 1) {<i nz-icon nzType="right"></i>}</ng-template>
     </app-monitor-select-menu>
   </div>
 </nz-modal>

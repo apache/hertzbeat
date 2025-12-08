@@ -169,6 +169,7 @@
         <commons-net>3.8.0</commons-net>
         <zookeeper.version>3.9.3</zookeeper.version>
 
+        <duckdb.version>1.4.2.0</duckdb.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>

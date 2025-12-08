@@ -169,13 +169,10 @@ common:
 warehouse:
   store:
     # store history metrics data, enable only one below
-    jpa:
+    duckdb:
       enabled: true
       # The maximum retention time for history records, after which records will be deleted
-      expire-time: 1h
-      # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
-      # (please set this configuration reasonably as history records can affect performance when it is large)
-      max-history-record-num: 6000
+      expire-time: 90d
     victoria-metrics:
       # Standalone mode toggle — must be set to false when using cluster mode
       enabled: false
