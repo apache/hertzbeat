@@ -51,10 +51,9 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
     @Autowired
     private AppService appService;
 
-
     @Override
     @Tool(name = "create_alert_rule", description = """
-            ALERT RULE means when to alert a user
+            HertzBeat: ALERT RULE means when to alert a user
             THESE ARE ALERT RULES WITH THRESHOLD VALUES. USERS CAN SPECIFY THE THRESHOLD VALUES FOR EXAMPLE,
             IF THE USER SAYS "ALERT ME WHEN MY COST EXCEEDS 700, THE EXPRESSION SHOULD BE 'cost > 700' NOT 'cost < 700'.
             APPLY THE SAME LOGIC FOR LESS THAN OPERATOR.
@@ -281,7 +280,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
     @Override
     @Tool(name = "list_alert_rules", description = """
-            List existing alert rules with filtering options.
+            HertzBeat: List existing alert rules with filtering options.
             Shows configured thresholds and alert definitions.
             """)
     public String listAlertRules(
@@ -343,7 +342,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
     @Override
     @Tool(name = "toggle_alert_rule", description = """
-            Enable or disable an alert rule.
+            HertzBeat: Enable or disable an alert rule.
             Allows activating or deactivating threshold monitoring.
             """)
     public String toggleAlertRule(
@@ -379,10 +378,9 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
         }
     }
 
-
     @Override
     @Tool(name = "get_alert_rule_details", description = """
-            Get detailed information about a specific alert rule.
+            HertzBeat: Get detailed information about a specific alert rule.
             Shows complete threshold configuration and rule settings.
             """)
     public String getAlertRuleDetails(
@@ -441,7 +439,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
     @Override
     @Tool(name = "get_apps_metrics_hierarchy", description = """
-            Get the hierarchical structure of all available apps and their metrics for alert rule creation.
+            HertzBeat: Get the hierarchical structure of all available apps and their metrics for alert rule creation.
             This tool provides the exact app name, metric name and corresponding param names according to each metric.
             Returns structured JSON data showing the complete hierarchy with field parameters for alert expressions.
             
@@ -494,7 +492,7 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
 
     @Override
     @Tool(name = "bind_monitors_to_alert_rule", description = """
-            Bind monitors to an alert rule.
+            HertzBeat: Bind monitors to an alert rule.
             Call this tool if users want to bind specific monitors to their alert rule.
             Get the right monitor ids for a particular app using the query_monitors tool.
             Get the alert rule ID from the create_alert_rule tool output OR use the list_alert_rules tool with app_name search filter, if the output of create_alert_rule is not applicable.
@@ -646,7 +644,6 @@ public class AlertDefineToolsImpl implements AlertDefineTools {
             return String.format("Error binding monitors to alert rule: %s", e.getMessage());
         }
     }
-
 
     /**
      * Validates that the app, metric, and field conditions are valid according to hierarchy

@@ -66,10 +66,10 @@ resourceRole:
   - /api/bulletin/**===post===[admin,user]
   - /api/bulletin/**===put===[admin,user]
   - /api/bulletin/**===delete===[admin]
-  - /api/sse/**===get===[admin,user]
-  - /api/sse/**===post===[admin,user]
+  - /api/mcp/**===get===[admin]
+  - /api/mcp/**===post===[admin]
   - /api/chat/**===get===[admin,user]
-  - /api/chat/**===post===[admin,user]
+  - /api/chat/**===post===[admin]
   - /api/logs/ingest/**===post===[admin,user]
 
 # config the resource restful api that need bypass auth protection
@@ -114,7 +114,7 @@ excludedResource:
   # h2 database
   - /h2-console/**===*
 
-# account info config
+# account info config refer the https://hertzbeat.apache.org/docs/start/account-modify
 # eg: admin has role [admin,user], password is hertzbeat
 # eg: tom has role [user], password is hertzbeat
 # eg: lili has role [guest], plain password is lili, salt is 123, salted password is 1A676730B0C7F54654B0E09184448289
@@ -122,16 +122,3 @@ account:
   - appId: admin
     credential: hertzbeat
     role: [admin]
-  - appId: tom
-    credential: hertzbeat
-    role: [user]
-  - appId: guest
-    credential: hertzbeat
-    role: [guest]
-  - appId: lili
-    # credential = MD5(password + salt)
-    # plain password: hertzbeat
-    # attention: digest authentication does not support salted encrypted password accounts
-    credential: 94C6B34E7A199A9F9D4E1F208093B489
-    salt: 123
-    role: [user]

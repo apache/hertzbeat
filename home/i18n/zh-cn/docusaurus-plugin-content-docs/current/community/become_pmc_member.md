@@ -21,7 +21,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-## 成为 Apache HertzBeat™ 的 PPMC 成员
+## 成为 Apache HertzBeat™ 的 PMC 成员
 
 任何支持社区并在 CoPDoC 领域中工作的人都可以成为 Apache HertzBeat™ 的PMC 成员。CoPDoC 是 ASF 的缩写，用来描述我们如何不仅仅通过代码来认识到您的贡献。
 
@@ -30,11 +30,11 @@ limitations under the License.
 - **Documentation** - 没有它，内容只会停留在作者的头脑中。
 - **Code** - 没有代码，讨论就毫无意义。
 
-Apache HertzBeat™ 社区努力追求基于功绩的原则。因此，一旦有人在 CoPDoC 的任何领域有了足够的贡献，他们就可以成为 PPMC 成员资格的候选人，最终被投票选为 HertzBeat 的 PPMC 成员。成为 Apache HertzBeat™ 的 PPMC 成员并不一定意味着您必须使用您的提交权限向代码库提交代码；它意味着您致力于 HertzBeat 项目并为我们社区的成功做出了积极的贡献。
+Apache HertzBeat™ 社区努力追求基于功绩的原则。因此，一旦有人在 CoPDoC 的任何领域有了足够的贡献，他们就可以成为 PMC 成员资格的候选人，最终被投票选为 HertzBeat 的 PMC 成员。成为 Apache HertzBeat™ 的 PMC 成员并不一定意味着您必须使用您的提交权限向代码库提交代码；它意味着您致力于 HertzBeat 项目并为我们社区的成功做出了积极的贡献。
 
-## PPMC 成员的要求
+## PMC 成员的要求
 
-没有成为 Committer 或 PPMC 成员的严格规则。新的 PPMC 成员的候选人通常是积极的贡献者和社区成员。但是，如果能稍微明确一些规则，就可以在一定程度上消除贡献者的疑虑，使社区更加透明、合理和公平。
+没有成为 Committer 或 PMC 成员的严格规则。新的 PMC 成员的候选人通常是积极的贡献者和社区成员。但是，如果能稍微明确一些规则，就可以在一定程度上消除贡献者的疑虑，使社区更加透明、合理和公平。
 
 ### 持续的贡献
 

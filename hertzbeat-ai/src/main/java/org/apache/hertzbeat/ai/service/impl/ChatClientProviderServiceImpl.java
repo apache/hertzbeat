@@ -19,13 +19,15 @@
 package org.apache.hertzbeat.ai.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.ai.config.PromptProvider;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.ai.chat.prompt.SystemPromptTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.springframework.ai.chat.client.ChatClient;
@@ -34,7 +36,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import reactor.core.publisher.Flux;
 
@@ -53,12 +54,14 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     private final ApplicationContext applicationContext;
 
     private final GeneralConfigDao generalConfigDao;
-
-    @Qualifier("hertzbeatTools")
+    
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
     
     private boolean isConfigured = false;
+
+    @Value("classpath:/prompts/system-message.st")
+    private Resource systemResource;
 
     @Autowired
     public ChatClientProviderServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
@@ -91,7 +94,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             return chatClient.prompt()
                     .messages(messages)
-                    .system(PromptProvider.HERTZBEAT_SYSTEM_PROMPT)
+                    .system(SystemPromptTemplate.builder().resource(systemResource).build().getTemplate())
                     .toolCallbacks(toolCallbackProvider)
                     .stream()
                     .content()

@@ -43,6 +43,7 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 
+import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
@@ -188,7 +189,7 @@ public class MonitorServiceImpl implements MonitorService {
         String portWithMark = (Objects.isNull(portParam) || !StringUtils.hasText(portParam.getParamValue()))
                 ? ""
                 : SignConstants.DOUBLE_MARK + portParam.getParamValue();
-        if (Objects.nonNull(instance)) {
+        if (!IpDomainUtil.isHasPortWithMark(instance)) {
             instance = instance + portWithMark;
         }
         monitor.setInstance(instance);
