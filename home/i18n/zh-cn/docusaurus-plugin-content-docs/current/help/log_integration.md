@@ -40,8 +40,8 @@ POST /api/logs/otlp/v1/logs
 #### 请求头
 
 - `Content-Type`: `application/json` 或 `application/x-protobuf`
-- `Authorization`: `Bearer {token}` 
--  或者不使用 `Bearer` 而是 `Basic` (根据 HertzBeat 配置的认证配置)
+- `Authorization`: `Bearer {token}`
+- 或者不使用 `Bearer` 而是 `Basic` (根据 HertzBeat 配置的认证配置)
 
 #### 请求体格式
 
@@ -60,7 +60,7 @@ POST /api/logs/otlp/v1/logs
             }
           },
           {
-            "key": "service.version", 
+            "key": "service.version",
             "value": {
               "stringValue": "1.0.0"
             }
