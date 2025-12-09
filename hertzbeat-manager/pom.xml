@@ -27,7 +27,7 @@
     <name>${project.artifactId}</name>
     <packaging>jar</packaging>
 
-  
+
     <dependencies>
         <!-- common -->
         <dependency>
@@ -95,6 +95,11 @@
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-log</artifactId>
+        </dependency>
+        <!-- analysis -->
+        <dependency>
+          <groupId>org.apache.hertzbeat</groupId>
+          <artifactId>hertzbeat-analysis</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>

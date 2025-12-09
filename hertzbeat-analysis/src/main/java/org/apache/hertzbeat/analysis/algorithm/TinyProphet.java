@@ -62,13 +62,22 @@ public class TinyProphet {
         if (timePoints.length != values.length) {
             throw new IllegalArgumentException("Time points and values length mismatch");
         }
-        int numFeatures = 1 + (2 * FOURIER_ORDER);
+
+        // Validation: Need enough points to solve OLS
+        // Features = Intercept(1) + Trend(1) + Fourier(2*ORDER)
+        int numFeatures = 1 + (1 + 2 * FOURIER_ORDER);
+
+        // We need at least (numFeatures + 1) points to have degrees of freedom > 0
         if (timePoints.length < numFeatures + 1) {
+            // Not enough data points to fit the model parameters
             return;
         }
 
         // 1. Build Design Matrix
-        double[][] x = new double[timePoints.length][numFeatures];
+        // OLS class adds Intercept automatically, so we feed Trend + Fourier columns
+        int cols = 1 + (2 * FOURIER_ORDER);
+        double[][] x = new double[timePoints.length][cols];
+
         for (int i = 0; i < timePoints.length; i++) {
             fillFeatures(x[i], timePoints[i]);
         }
@@ -80,15 +89,15 @@ public class TinyProphet {
             this.coefficients = regression.estimateRegressionParameters();
 
             // 3. Calculate Residual Standard Deviation (Sigma)
-            // Sigma = Sqrt( Sum( (y - y_hat)^2 ) / (N - p) )
             double sumSquaredResiduals = 0.0;
             for (int i = 0; i < timePoints.length; i++) {
                 double yHat = predictValueOnly(timePoints[i]);
                 double residual = values[i] - yHat;
                 sumSquaredResiduals += (residual * residual);
             }
-            // Degrees of freedom = N - (number of features + 1 intercept)
-            int df = timePoints.length - (numFeatures + 1);
+
+            // Degrees of freedom = N - p (where p is total parameters including intercept)
+            int df = timePoints.length - (cols + 1);
             if (df > 0) {
                 this.stdDeviation = Math.sqrt(sumSquaredResiduals / df);
             } else {
@@ -96,6 +105,7 @@ public class TinyProphet {
             }
 
         } catch (Exception e) {
+            // Regression failed (singular matrix, etc.)
             this.coefficients = null;
             this.stdDeviation = 0.0;
         }
@@ -106,7 +116,12 @@ public class TinyProphet {
      */
     public PredictionResult predict(double t) {
         if (coefficients == null) {
-            return new PredictionResult(Double.NaN, Double.NaN, Double.NaN);
+            // Model not trained or failed
+            return PredictionResult.builder()
+                .forecast(Double.NaN)
+                .lowerBound(Double.NaN)
+                .upperBound(Double.NaN)
+                .build();
         }
 
         double forecast = predictValueOnly(t);
@@ -120,21 +135,24 @@ public class TinyProphet {
     }
 
     private double predictValueOnly(double t) {
-        double prediction = coefficients[0]; // Intercept
-        prediction += coefficients[1] * t;   // Trend
+        // coefficients: [0]=Intercept, [1]=Trend, [2]=Sin1, [3]=Cos1, ...
+        double prediction = coefficients[0] + coefficients[1] * t;
 
         for (int k = 1; k <= FOURIER_ORDER; k++) {
             double omega = 2 * Math.PI * k * t / PERIOD;
-            // coefficients array: [intercept, slope, sin1, cos1, sin2, cos2...]
-            double betaSin = coefficients[1 + (2 * k - 1)];
-            double betaCos = coefficients[1 + (2 * k)];
-            prediction += betaSin * Math.sin(omega) + betaCos * Math.cos(omega);
+            int idxSin = 1 + (2 * k - 1);
+            int idxCos = 1 + (2 * k);
+
+            if (idxCos < coefficients.length) {
+                prediction += coefficients[idxSin] * Math.sin(omega)
+                    + coefficients[idxCos] * Math.cos(omega);
+            }
         }
         return prediction;
     }
 
     /**
-     * Helper to fill feature row
+     * Helper to fill feature row (Trend + Fourier)
      */
     private void fillFeatures(double[] row, double t) {
         row[0] = t; // Trend

@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -35,6 +35,7 @@ const summary_uri = '/summary';
 const warehouse_storage_status_uri = '/warehouse/storage/status';
 const grafana_dashboard_uri = '/grafana/dashboard';
 const metrics_favorite_uri = '/metrics/favorite';
+const analysis_uri = '/analysis';
 
 @Injectable({
   providedIn: 'root'
@@ -179,6 +180,24 @@ export class MonitorService {
     });
     const options = { params: httpParams };
     return this.http.get<Message<any>>(`${monitor_uri}/${instance}/metric/${metricFull}`, options);
+  }
+
+  /**
+   * Get metric prediction data
+   */
+  public getMonitorMetricsPredictionData(
+    instance: string,
+    app: string,
+    metrics: string,
+    metric: string,
+    history: string
+  ): Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.append('history', history);
+    httpParams = httpParams.append('forecastCount', 10);
+    const options = { params: httpParams };
+    // Use instance in path instead of monitorId
+    return this.http.get<Message<any>>(`${analysis_uri}/predict/${instance}/${app}/${metrics}/${metric}`, options);
   }
 
   public getAppsMonitorSummary(): Observable<Message<any>> {

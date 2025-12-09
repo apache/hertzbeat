@@ -32,17 +32,22 @@ import lombok.NoArgsConstructor;
 public class PredictionResult {
 
     /**
+     * Prediction Timestamp
+     */
+    private Long time;
+
+    /**
      * Predicted Value (y-hat)
      */
-    private double forecast;
+    private Double forecast;
 
     /**
      * Lower Bound (forecast - 3 * sigma)
      */
-    private double lowerBound;
+    private Double lowerBound;
 
     /**
      * Upper Bound (forecast + 3 * sigma)
      */
-    private double upperBound;
+    private Double upperBound;
 }

@@ -79,10 +79,19 @@ public class AnalysisServiceImpl implements AnalysisService {
         // 5. Forecast
         List<PredictionResult> forecastResult = new ArrayList<>(forecastCount);
         int lastIndex = x.length - 1;
+
+        // Use the actual last timestamp from preprocessing as the base for future time
+        // Note: endTime calculated above is the timestamp of the last bucket
+        long lastTimestamp = endTime;
+
         for (int i = 1; i <= forecastCount; i++) {
             double futureT = lastIndex + i;
-            // Now predict() returns object with upper/lower bounds
+            // predict() returns object with forecast/upper/lower
             PredictionResult result = prophetModel.predict(futureT);
+
+            // Critical: Set the absolute timestamp for the frontend
+            result.setTime(lastTimestamp + (i * stepMillis));
+
             forecastResult.add(result);
         }
 

@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -22,6 +22,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { EChartsOption } from 'echarts';
 import { InViewportAction } from 'ng-in-viewport';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { MonitorService } from '../../../service/monitor.service';
@@ -63,7 +64,11 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   private debounceTimer: any = undefined;
   private worker$: any = null;
 
-  constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+  constructor(
+    private monitorSvc: MonitorService,
+    private notifySvc: NzNotificationService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
+  ) {}
 
   handleViewportAction(event: InViewportAction) {
     if (this.debounceTimer) {
@@ -185,6 +190,21 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
               this.loadData('12W', true);
             }
           },
+          myForecast: {
+            show: true,
+            title: 'Forecast (Beta)',
+            icon: 'path://M10,20 C10,20 15,10 20,20 C20,20 25,30 30,20 C30,20 35,10 40,20',
+            emphasis: {
+              iconStyle: {
+                textPosition: 'left',
+                borderColor: '#1890ff',
+                borderWidth: 1
+              }
+            },
+            onclick: () => {
+              this.loadPredictionData();
+            }
+          },
           myRefresh: {
             show: true,
             title: this.i18nSvc.fanyi('common.refresh'),
@@ -286,6 +306,8 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
                 this.worker$.unsubscribe();
                 this.worker$ = null;
                 this.loading = null;
+                // Auto load prediction data silently after main data loaded
+                setTimeout(() => this.loadPredictionData(true), 500);
               } else if (rsp.progress > 0) {
                 this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-processing')} ${rsp.progress}%`;
               }
@@ -311,6 +333,128 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
         },
         error => {
           console.error(error.msg);
+        }
+      );
+  }
+
+  loadPredictionData(isAuto: boolean = false) {
+    if (!isAuto) {
+      this.loading = 'Forecasting...';
+    }
+    // Update call to use this.instance instead of this.monitorId
+    let predictionData$ = this.monitorSvc
+      .getMonitorMetricsPredictionData(this.instance, this.app, this.metrics, this.metric, this.timePeriod)
+      .pipe(
+        finalize(() => {
+          if (!isAuto) {
+            this.loading = null;
+          }
+          predictionData$.unsubscribe();
+        })
+      )
+      .subscribe(
+        (message: any) => {
+          if (message.code === 0 && message.data) {
+            // Get current series to append forecast data
+            const currentSeries = (this.eChartOption.series as any[]) || [];
+            const newSeries = [...currentSeries];
+
+            let hasData = false;
+            // Iterate over prediction results
+            for (const [instance, results] of Object.entries(message.data)) {
+              const predictions = results as any[];
+              if (!predictions || predictions.length === 0) continue;
+              hasData = true;
+
+              // Parse prediction data
+              const forecastLineData = [];
+              const lowerBoundData = [];
+              const upperBoundData = [];
+
+              for (const p of predictions) {
+                const val = p.forecast;
+                const upper = p.upperBound;
+                const lower = p.lowerBound;
+                const t = p.time;
+
+                forecastLineData.push([t, val]);
+                lowerBoundData.push([t, lower]);
+                // ECharts stack logic for band
+                upperBoundData.push([t, upper - lower]);
+              }
+
+              // 1. Confidence Interval Base (Transparent)
+              newSeries.push({
+                name: `Confidence-Base-${instance}`,
+                type: 'line',
+                data: lowerBoundData,
+                stack: `confidence-band-${instance}`,
+                symbol: 'none',
+                lineStyle: { opacity: 0 },
+                areaStyle: { opacity: 0 },
+                silent: true
+              });
+
+              // 2. Confidence Interval Band
+              newSeries.push({
+                name: `Confidence-Band-${instance}`,
+                type: 'line',
+                data: upperBoundData,
+                stack: `confidence-band-${instance}`,
+                symbol: 'none',
+                lineStyle: { opacity: 0 },
+                areaStyle: {
+                  opacity: 0.3,
+                  color: '#A6C8FF'
+                },
+                silent: true
+              });
+
+              // 3. Forecast Main Line
+              newSeries.push({
+                name: `Forecast-${instance}`,
+                type: 'line',
+                data: forecastLineData,
+                smooth: true,
+                lineStyle: {
+                  type: 'dashed',
+                  width: 2
+                },
+                itemStyle: {
+                  opacity: 0
+                },
+                symbol: 'none',
+                z: 5
+              });
+            }
+
+            if (hasData) {
+              this.eChartOption.series = newSeries;
+              if (this.echartsInstance) {
+                this.echartsInstance.setOption({
+                  series: newSeries
+                });
+              }
+              if (!isAuto) {
+                this.notifySvc.success(this.i18nSvc.fanyi('common.notify.success'), 'Forecast data loaded.');
+              }
+            } else {
+              if (!isAuto) {
+                this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.warning'), 'Insufficient history data for prediction.');
+              }
+            }
+          } else {
+            console.warn(`Prediction failed or no data returned: ${message.msg}`);
+            if (!isAuto) {
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.error'), message.msg || 'Prediction failed.');
+            }
+          }
+        },
+        error => {
+          console.error(error);
+          if (!isAuto) {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.error'), error.msg || 'Network error during prediction.');
+          }
         }
       );
   }
