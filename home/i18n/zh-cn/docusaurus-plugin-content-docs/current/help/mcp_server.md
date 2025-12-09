@@ -2,21 +2,24 @@
 id: mcp_server
 title: MCP 服务器
 sidebar_label: MCP 服务器
-keywords: [MCP, SSE, 流式传输, 服务器]
+keywords: [MCP, StreamabelHttp, 流式传输, 服务器]
 ---
 
-本页面介绍如何连接到 HertzBeat MCP SSE 服务器。当您启动 HertzBeat 服务器时，MCP 服务器会自动在默认端口 1157 上启动。
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+本页面介绍如何连接到 HertzBeat MCP 服务器。当您启动 HertzBeat 服务器时，MCP 服务器会自动在默认端口 1157 上启动。
 
 ### 概述
 
-- 提供用于工具调用的服务器发送事件 (SSE) 流。
+- 提供 StreamabelHttp 协议的 MCP服务器。
 - 专为 MCP 集成和消费流式事件的客户端而设计。
 
 ### 连接到 MCP 服务器
 
 确保 HertzBeat 服务器已启动并正在运行。如果您使用的端口不是 1157，请相应地替换以下内容：
 
-- URL: `http://localhost:1157/api/sse`
+- URL: `http://your-hertzbeat-server-host:1157/api/mcp`
 
 ### 身份验证
 
@@ -31,16 +34,66 @@ keywords: [MCP, SSE, 流式传输, 服务器]
 - 基本身份验证
   - 请求头: `Authorization: Basic <base64(username:password)>`
 
-### Cursor MCP 配置
+### MCP 配置
 
-在您的主目录或项目根目录中创建或编辑 `.cursor/mcp.json`。
+<Tabs>
+  <TabItem value="claude-code" label="Claude Code MCP">
 
-基本身份验证：
+Claude Code 使用一个全局配置文件 `~/.claude.json` 来管理 MCP 服务器，你可以通过 CLI 或直接编辑这个文件来添加 HertzBeat MCP：
+
+方式一: 使用 CLI 快速创建：
+
+```bash
+claude mcp add -s user -t http hertzbeat-mcp http://your-hertzbeat-server-host:1157/api/mcp --header "Authorization: Bearer your_jwt_key"
+```
+
+方式二：打开 `~/.claude.json`，在顶层的 `mcpServers` 下添加 HertzBeat MCP 配置。
+
+Basic auth:
+
+```jsonc
+{
+  "mcpServers": {
+    "hertzbeat-mcp": {
+      "type": "sse",
+      "url": "http://your-hertzbeat-server-host:1157/api/mcp",
+      "headers": {
+        "Authorization": "Basic <base64(username:password)>"
+      }
+    }
+  }
+}
+```
+
+JWT bearer:
+
+```jsonc
+{
+  "mcpServers": {
+    "hertzbeat-mcp": {
+      "type": "sse",
+      "url": "http://your-hertzbeat-server-host:1157/api/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-jwt-token>"
+      }
+    }
+  }
+}
+```
+
+保存 `~/.claude.json` 后，重启或重新加载 Claude Code，让新的 MCP 配置生效。
+
+  </TabItem>
+  <TabItem value="cursor" label="Cursor MCP" default>
+
+Cursor 使用配置文件 `.cursor/mcp.json` 来管理 MCP 服务器，在用户目录或者项目目录下创建或者编辑这个文件：
+
+Basic auth:
 
 ```json
 {
-      "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/sse",
+      "hertzbeat-mcp": {
+            "url": "http://your-hertzbeat-server-host:1157/api/mcp",
             "headers": {
                   "Authorization": "Basic <base64(username:password)>"
             }
@@ -48,12 +101,12 @@ keywords: [MCP, SSE, 流式传输, 服务器]
 }
 ```
 
-JWT Bearer：
+JWT bearer:
 
 ```json
 {
-      "Hertzbeat-MCP": {
-            "url": "http://localhost:1157/api/sse",
+      "hertzbeat-mcp": {
+            "url": "http://your-hertzbeat-server-host:1157/api/mcp",
             "headers": {
                   "Authorization": "Bearer <your-jwt-token>"
             }
@@ -61,7 +114,10 @@ JWT Bearer：
 }
 ```
 
-保存后，在 Cursor 中重新加载 MCP 或重启编辑器。
+After saving, reload MCP in Cursor or restart the editor.
+
+  </TabItem>
+</Tabs>
 
 ### 可用工具
 

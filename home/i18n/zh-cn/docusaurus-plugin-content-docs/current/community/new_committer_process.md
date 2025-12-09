@@ -73,7 +73,7 @@ Subject: [VOTE] New committer: ${NEW_COMMITTER_NAME}
 ```
 
 ```text
-Hi HertzBeat PPMC,
+Hi HertzBeat PMC,
 
 This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our community new committer.
 
@@ -118,7 +118,7 @@ Subject: [RESULT] [VOTE] New committer: ${NEW_COMMITTER_NAME}
 ```
 
 ```text
-Hi HertzBeat PPMC,
+Hi HertzBeat PMC,
 
 The vote has now closed. The results are:
 
@@ -142,23 +142,23 @@ Subject: Invitation to become HertzBeat committer: ${NEW_COMMITTER_NAME}
 ```text
 Hello ${NEW_COMMITTER_NAME},
 
-The HertzBeat Project Management Committee (PMC) 
+The HertzBeat Project Management Committee (PMC)
 hereby offers you committer privileges to the project.
 
 These privileges are offered on the understanding that
 you'll use them reasonably and with common sense.
-We like to work on trust rather than unnecessary constraints. 
+We like to work on trust rather than unnecessary constraints.
 
-Being a committer enables you to more easily make 
-changes without needing to go through the patch 
+Being a committer enables you to more easily make
+changes without needing to go through the patch
 submission process.
 
-Being a committer does not require you to 
-participate any more than you already do. It does 
-tend to make one even more committed.  You will 
+Being a committer does not require you to
+participate any more than you already do. It does
+tend to make one even more committed.  You will
 probably find that you spend more time here.
 
-Of course, you can decline and instead remain as a 
+Of course, you can decline and instead remain as a
 contributor, participating as you do now.
 
 This personal invitation is a chance for you to accept or decline in private.
@@ -232,10 +232,10 @@ You need to choose a preferred ASF user name and alternatives.
 In order to ensure it is available you can view a list of taken IDs at
 https://people.apache.org/committer-index.html
 
-Please notify us when you have submitted the CLA and by what means 
+Please notify us when you have submitted the CLA and by what means
 you did so. This will enable us to monitor its progress.
 
-We will arrange for your Apache user account when the CLA has 
+We will arrange for your Apache user account when the CLA has
 been recorded.
 
 After that is done, please make followup replies to the dev@hertzbeat.apache.org list.
@@ -257,7 +257,7 @@ requires adherence to the ASF Code of Conduct:
   https://www.apache.org/foundation/policies/conduct.html
 
 Yours,
-The Apache HertzBeat PPMC
+The Apache HertzBeat PMC
 ```
 
 ### Announce New Committer Template
@@ -270,7 +270,7 @@ Subject: [ANNOUNCE] New committer: ${NEW_COMMITTER_NAME}
 ```text
 Hello Community,
 
-The Podling Project Management Committee (PPMC) for Apache HertzBeat
+The Podling Project Management Committee (PMC) for Apache HertzBeat
 has invited ${NEW_COMMITTER_NAME} to become a committer and we are pleased to
 announce that he has accepted.
 
@@ -290,7 +290,7 @@ Best Wishes!
 ```text
 Hello xxxx,
 
-The HertzBeat Project Management Committee (PPMC)
+The HertzBeat Project Management Committee (PMC)
 hereby offers you committer privileges to the project.
 These privileges are offered on the understanding that
 you'll use them reasonably and with common sense.

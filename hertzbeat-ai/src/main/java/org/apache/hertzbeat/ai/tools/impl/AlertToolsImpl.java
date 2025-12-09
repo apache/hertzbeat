@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.tools.impl;
 
 import com.usthe.sureness.subject.SubjectSum;
@@ -33,7 +32,6 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 
-
 /**
  * Implementation of Alert Tools functionality for alarm data queries and management
  */
@@ -45,7 +43,7 @@ public class AlertToolsImpl implements AlertTools {
 
     @Override
     @Tool(name = "query_alerts", description = """
-            Query alerts with comprehensive filtering and pagination options.
+            HertzBeat: Query alerts with comprehensive filtering and pagination options.
             
             ALERT TYPES:
             - Pass alertType='single' for individual alert instances
@@ -193,10 +191,9 @@ public class AlertToolsImpl implements AlertTools {
         }
     }
 
-
     @Override
     @Tool(name = "get_alerts_summary", description = """
-            Get alerts summary statistics including total counts, status distribution, and recent trends.
+            HertzBeat: Get alerts summary statistics including total counts, status distribution, and recent trends.
             Returns comprehensive overview of the current alerting status across all monitors.
             """)
     public String getAlertsSummary() {

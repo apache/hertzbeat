@@ -24,7 +24,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
@@ -34,24 +37,27 @@ import org.apache.hertzbeat.common.entity.manager.Param;
  */
 @Data
 @Schema(description = "Monitoring information entities")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class MonitorDto {
-    
+
     @Schema(description = "monitor content", accessMode = READ_WRITE)
     @NotNull
     @Valid
     private Monitor monitor;
-    
+
     @Schema(description = "monitor params", accessMode = READ_WRITE)
     @NotEmpty
     @Valid
     private List<Param> params;
-    
+
     @Schema(description = "Monitor Metrics", accessMode = READ_ONLY)
     private List<MetricsInfo> metrics;
-    
+
     @Schema(description = "pinned collector, default null if system dispatch", accessMode = READ_WRITE)
     private String collector;
-    
+
     @Schema(description = "grafana dashboard")
     private GrafanaDashboard grafanaDashboard;
 }

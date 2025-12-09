@@ -33,8 +33,8 @@ public final class McpContextHolder {
      * Attaches the user's context to the current thread.
      */
     public static void setSubject(SubjectSum subject) {
-        subjectHolder.set(subject);
 
+        subjectHolder.set(subject);
     }
 
     /**

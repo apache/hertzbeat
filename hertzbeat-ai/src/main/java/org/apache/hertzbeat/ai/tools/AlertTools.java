@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.tools;
 
 /**
@@ -41,6 +40,5 @@ public interface AlertTools {
      * @return Alert summary information including counts by status
      */
     String getAlertsSummary();
-
 
 }
