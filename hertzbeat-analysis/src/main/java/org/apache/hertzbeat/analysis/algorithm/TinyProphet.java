@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.analysis.algorithm;
 
-import lombok.Getter;
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Component;
  * Lightweight Time Series Forecasting Model (inspired by Prophet's additive model).
  * Uses OLS (Ordinary Least Squares) Regression with Fourier Series features.
  */
-@Getter
 @Component
 public class TinyProphet {
 
@@ -41,81 +39,109 @@ public class TinyProphet {
     private static final double PERIOD = 1440.0;
 
     /**
+     * Confidence interval factor (3-Sigma = 99.7%)
+     */
+    private static final double SIGMA_FACTOR = 3.0;
+
+    /**
      * Trained coefficients (beta)
      */
     private double[] coefficients;
 
     /**
-     * Train the model
-     * @param timePoints Time points (x axis, e.g., 0, 1, 2...)
-     * @param values Observed values (y axis)
+     * Standard Deviation of residuals (model error)
+     */
+    private double stdDeviation;
+
+    /**
+     * Train the model and calculate error (sigma)
+     * @param timePoints Time points (x-axis)
+     * @param values Observed values (y-axis)
      */
     public void train(double[] timePoints, double[] values) {
         if (timePoints.length != values.length) {
             throw new IllegalArgumentException("Time points and values length mismatch");
         }
-        if (timePoints.length < (1 + 2 * FOURIER_ORDER)) {
-            // Not enough data points to solve regression
+        int numFeatures = 1 + (2 * FOURIER_ORDER);
+        if (timePoints.length < numFeatures + 1) {
             return;
         }
 
-        // 1. Build Design Matrix (Features)
-        // Col 0: Trend t
-        // Col 1..N: Fourier terms
-        int numFeatures = 1 + (2 * FOURIER_ORDER);
+        // 1. Build Design Matrix
         double[][] x = new double[timePoints.length][numFeatures];
-
         for (int i = 0; i < timePoints.length; i++) {
-            double t = timePoints[i];
-
-            // Feature 0: Linear Trend
-            x[i][0] = t;
-
-            // Features 1~N: Fourier Seasonality
-            for (int k = 1; k <= FOURIER_ORDER; k++) {
-                double omega = 2 * Math.PI * k * t / PERIOD;
-                x[i][2 * k - 1] = Math.sin(omega);
-                x[i][2 * k]     = Math.cos(omega);
-            }
+            fillFeatures(x[i], timePoints[i]);
         }
 
-        // 2. Solve OLS (Least Squares)
+        // 2. Solve OLS
         try {
             OLSMultipleLinearRegression regression = new OLSMultipleLinearRegression();
             regression.newSampleData(values, x);
             this.coefficients = regression.estimateRegressionParameters();
+
+            // 3. Calculate Residual Standard Deviation (Sigma)
+            // Sigma = Sqrt( Sum( (y - y_hat)^2 ) / (N - p) )
+            double sumSquaredResiduals = 0.0;
+            for (int i = 0; i < timePoints.length; i++) {
+                double yHat = predictValueOnly(timePoints[i]);
+                double residual = values[i] - yHat;
+                sumSquaredResiduals += (residual * residual);
+            }
+            // Degrees of freedom = N - (number of features + 1 intercept)
+            int df = timePoints.length - (numFeatures + 1);
+            if (df > 0) {
+                this.stdDeviation = Math.sqrt(sumSquaredResiduals / df);
+            } else {
+                this.stdDeviation = 0.0;
+            }
+
         } catch (Exception e) {
-            // Matrix singularity or not enough data
             this.coefficients = null;
+            this.stdDeviation = 0.0;
         }
     }
 
     /**
-     * Predict future value
-     * @param t Future time point
-     * @return Predicted value
+     * Predict future value with confidence interval
      */
-    public double predict(double t) {
+    public PredictionResult predict(double t) {
         if (coefficients == null) {
-            return Double.NaN;
+            return new PredictionResult(Double.NaN, Double.NaN, Double.NaN);
         }
 
-        // coefficients[0] is Intercept
-        double prediction = coefficients[0];
+        double forecast = predictValueOnly(t);
+        double interval = SIGMA_FACTOR * stdDeviation;
 
-        // Add Linear Trend: beta1 * t
-        prediction += coefficients[1] * t;
+        return PredictionResult.builder()
+            .forecast(forecast)
+            .upperBound(forecast + interval)
+            .lowerBound(forecast - interval)
+            .build();
+    }
 
-        // Add Seasonality
+    private double predictValueOnly(double t) {
+        double prediction = coefficients[0]; // Intercept
+        prediction += coefficients[1] * t;   // Trend
+
         for (int k = 1; k <= FOURIER_ORDER; k++) {
             double omega = 2 * Math.PI * k * t / PERIOD;
+            // coefficients array: [intercept, slope, sin1, cos1, sin2, cos2...]
             double betaSin = coefficients[1 + (2 * k - 1)];
             double betaCos = coefficients[1 + (2 * k)];
-
             prediction += betaSin * Math.sin(omega) + betaCos * Math.cos(omega);
         }
-
         return prediction;
     }
 
+    /**
+     * Helper to fill feature row
+     */
+    private void fillFeatures(double[] row, double t) {
+        row[0] = t; // Trend
+        for (int k = 1; k <= FOURIER_ORDER; k++) {
+            double omega = 2 * Math.PI * k * t / PERIOD;
+            row[2 * k - 1] = Math.sin(omega);
+            row[2 * k]     = Math.cos(omega);
+        }
+    }
 }

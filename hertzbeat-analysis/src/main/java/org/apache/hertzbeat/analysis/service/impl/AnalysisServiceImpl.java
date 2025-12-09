@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.analysis.algorithm.PredictionResult;
 import org.apache.hertzbeat.analysis.algorithm.TimeSeriesPreprocessor;
 import org.apache.hertzbeat.analysis.algorithm.TinyProphet;
 import org.apache.hertzbeat.analysis.service.AnalysisService;
@@ -42,18 +43,21 @@ public class AnalysisServiceImpl implements AnalysisService {
     private TinyProphet prophetModel;
 
     @Override
-    public List<Double> forecast(List<History> historyData, long stepMillis, int forecastCount) {
+    public List<PredictionResult> forecast(List<History> historyData, long stepMillis, int forecastCount) {
         if (historyData == null || historyData.isEmpty()) {
             return Collections.emptyList();
         }
 
         // 1. Determine time range
-        // Assume data is sorted, or we sort it, but Preprocessor handles it via TreeMap
         long minTime = Long.MAX_VALUE;
         long maxTime = Long.MIN_VALUE;
         for (History h : historyData) {
-            if (h.getTime() < minTime) minTime = h.getTime();
-            if (h.getTime() > maxTime) maxTime = h.getTime();
+            if (h.getTime() < minTime) {
+                minTime = h.getTime();
+            }
+            if (h.getTime() > maxTime) {
+                maxTime = h.getTime();
+            }
         }
 
         // Align start/end to step
@@ -66,21 +70,20 @@ public class AnalysisServiceImpl implements AnalysisService {
         // 3. Prepare Time Points (x)
         double[] x = new double[y.length];
         for (int i = 0; i < y.length; i++) {
-            x[i] = i; // Relative time step
+            x[i] = i;
         }
 
-        // 4. Train Model
-        // Note: In real production, we should cache the model coefficients instead of training every time.
-        // This is a simplified "Train-on-demand" version for Phase 1.
+        // 4. Train Model (Calculates coefficients and sigma)
         prophetModel.train(x, y);
 
         // 5. Forecast
-        List<Double> forecastResult = new ArrayList<>(forecastCount);
+        List<PredictionResult> forecastResult = new ArrayList<>(forecastCount);
         int lastIndex = x.length - 1;
         for (int i = 1; i <= forecastCount; i++) {
             double futureT = lastIndex + i;
-            double predictedVal = prophetModel.predict(futureT);
-            forecastResult.add(predictedVal);
+            // Now predict() returns object with upper/lower bounds
+            PredictionResult result = prophetModel.predict(futureT);
+            forecastResult.add(result);
         }
 
         return forecastResult;

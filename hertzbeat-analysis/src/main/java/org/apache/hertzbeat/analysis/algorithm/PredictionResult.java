@@ -15,23 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.analysis.service;
+package org.apache.hertzbeat.analysis.algorithm;
 
-import java.util.List;
-import org.apache.hertzbeat.analysis.algorithm.PredictionResult;
-import org.apache.hertzbeat.common.entity.warehouse.History;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Intelligent Analysis Service Interface
+ * Prediction result with confidence interval
  */
-public interface AnalysisService {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class PredictionResult {
 
     /**
-     * Train model and forecast future trend with confidence interval
-     * @param historyData Historical metric data
-     * @param stepMillis Time step (bucket size) in millis
-     * @param forecastCount Number of future points to predict
-     * @return List of prediction results (forecast + bounds)
+     * Predicted Value (y-hat)
      */
-    List<PredictionResult> forecast(List<History> historyData, long stepMillis, int forecastCount);
+    private double forecast;
+
+    /**
+     * Lower Bound (forecast - 3 * sigma)
+     */
+    private double lowerBound;
+
+    /**
+     * Upper Bound (forecast + 3 * sigma)
+     */
+    private double upperBound;
 }
