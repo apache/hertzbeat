@@ -77,8 +77,8 @@
         </mailingList>
     </mailingLists>
 
-
     <modules>
+        <module>hertzbeat-startup</module>
         <module>hertzbeat-manager</module>
         <module>hertzbeat-alerter</module>
         <module>hertzbeat-common</module>
@@ -91,13 +91,12 @@
         <module>hertzbeat-otel</module>
         <module>hertzbeat-e2e</module>
         <module>hertzbeat-base</module>
-        <module>hertzbeat-mcp</module>
-        <module>hertzbeat-ai-agent</module>
-
+        <module>hertzbeat-log</module>
+        <module>hertzbeat-ai</module>
     </modules>
 
     <properties>
-        <hzb.version>1.7.3</hzb.version>
+        <hzb.version>1.8.0</hzb.version>
 
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -125,7 +124,7 @@
         <caffeine.version>2.9.3</caffeine.version>
         <httpclient.version>4.5.14</httpclient.version>
 
-        <lombok.version>1.18.28</lombok.version>
+        <lombok.version>1.18.32</lombok.version>
         <slf4j.version>2.0.9</slf4j.version>
         <xml.bind.version>2.3.0</xml.bind.version>
         <snake.yaml.version>2.2</snake.yaml.version>
@@ -143,6 +142,7 @@
         <h2.version>2.2.224</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
+        <questdb.version>9.0.2</questdb.version>
         <flyway.version>10.11.1</flyway.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-jexl3>3.2.1</commons-jexl3>
@@ -170,6 +170,7 @@
         <commons-net>3.8.0</commons-net>
         <zookeeper.version>3.9.3</zookeeper.version>
 
+        <duckdb.version>1.4.2.0</duckdb.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
@@ -180,6 +181,7 @@
         <sshd-sftp.version>2.13.1</sshd-sftp.version>
         <opentelemetry-starter.version>2.15.0</opentelemetry-starter.version>
         <opentelemetry-logback.version>2.14.0-alpha</opentelemetry-logback.version>
+        <opentelemetry-proto.version>1.3.1-alpha</opentelemetry-proto.version>
     </properties>
 
     <dependencyManagement>
@@ -194,6 +196,18 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-base</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- manager -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-manager</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- ai -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-ai</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- data warehouse -->
@@ -238,10 +252,16 @@
                 <artifactId>hertzbeat-grafana</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
-            <!-- log -->
+            <!-- log otel -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-otel</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- log -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-log</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- collector-basic -->
@@ -496,6 +516,17 @@
                 <version>${opentelemetry-starter.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.opentelemetry.proto</groupId>
+                <artifactId>opentelemetry-proto</artifactId>
+                <version>${opentelemetry-proto.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -9,8 +9,6 @@
 <a href="README.md">English</a> | <b><a href="README_CN.md">中文</a></b> | <a href="README_JP.md">日本語</a>
 </p>
 
-> 实时观测系统，无需 Agent，性能集群，兼容 Prometheus，自定义监控和状态页构建能力。
-
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://x.com/hertzbeat1024)
@@ -28,28 +26,23 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 
-- 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
-- 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，无需学习成本。    
-- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模板 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需简单配置即可快速适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
-- 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
+- 集```采集+分析+告警+通知```为一体，HertzBeat AI 驱动下的新交互与功能，也内置 MCP Server 对外能力。
+- 统一的指标平台，无需 Agent，兼容 Prometheus，支持应用服务，程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等。
+- 统一的日志平台，通过 OTLP 协议多日志源无缝对接上报。
+- 统一的告警平台，内部告警与外部多种告警源集成接入，统一告警处理分析，灵活的实时与周期阈值规则，分组收敛，静默，抑制等。
+- 统一的消息分发，告警平台处理后通过 `邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式分发通知。
+- 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需配置模板 `YML` 就能自定义采集指标。您相信只需简单配置即可快速适配一款 `K8s` 或 `Docker` 等新的监控类型吗？
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
-- 灵活的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 - 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
 
 
-> `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。    
+> `HertzBeat`的统一平台，AI智能，强大自定义，多类型支持，高性能，易扩展，希望能帮助用户快速方便实现观测需求。    
 
 ----
-
-![hertzbeat](home/static/img/home/1.png)
-
-![hertzbeat](home/static/img/home/status.png)
-
-![hertzbeat](home/static/img/home/9.png)
 
 ----
 
@@ -59,8 +52,8 @@
 
 ## ⛄ 已支持    
 
-> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 监控模板，用户可以导入这些模板来支持对应类型的监控!    
-> 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模板。
+> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 模板，用户可以导入这些模板来支持对应类型的监控!    
+> 欢迎大家一起贡献你使用过程中自定义的通用指标模板。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
@@ -98,7 +91,7 @@
 - [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-- 和更多自定义监控模板。
+- 和更多自定义指标模板。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
 
 ## 🐕 快速开始  
@@ -159,8 +152,8 @@
 
 ##### 方式三：本地代码启动
 
-1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `manager` 和前端工程 `web-app`
-2. 后端：需要 `maven3+`, `java17` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `manager` 服务即可。
+1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `hertzbeat-startup` 和前端工程 `web-app`
+2. 后端：需要 `maven3+`, `java17` 和 `lombok` 环境，修改 `YML` 配置信息，添加JVM参数`--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`后启动 `hertzbeat-startup` 服务即可。
 3. 前端：需要 `nodejs npm angular-cli`环境，待本地后端启动后，在 `web-app` 目录下启动 `ng serve --open`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
@@ -359,7 +352,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lisongning"><img src="https://avatars.githubusercontent.com/u/93140178?v=4?s=100" width="100px;" alt="lisongning"/><br /><sub><b>lisongning</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lisongning" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/YutingNie"><img src="https://avatars.githubusercontent.com/u/104416402?v=4?s=100" width="100px;" alt="YutingNie"/><br /><sub><b>YutingNie</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=YutingNie" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=YutingNie" title="Documentation">📖</a> <a href="#design-YutingNie" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mikezzb"><img src="https://avatars.githubusercontent.com/u/23418428?v=4?s=100" width="100px;" alt="Mike Zhou"/><br /><sub><b>Mike Zhou</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mikezzb" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=mikezzb" title="Documentation">📖</a> <a href="#design-mikezzb" title="Design">🎨</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/a-little-fool"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="小笨蛋"/><br /><sub><b>小笨蛋</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=a-little-fool" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=a-little-fool" title="Documentation">📖</a> <a href="#blog-a-little-fool" title="Blogposts">📝</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3Aa-little-fool" title="Bug reports">🐛</a> <a href="#design-a-little-fool" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lynx009"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="lynx009"/><br /><sub><b>lynx009</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lynx009" title="Documentation">📖</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/littlezhongzer"><img src="https://avatars.githubusercontent.com/u/33685289?v=4?s=100" width="100px;" alt="littlezhongzer"/><br /><sub><b>littlezhongzer</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=littlezhongzer" title="Code">💻</a></td>
@@ -383,7 +376,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/1036664317"><img src="https://avatars.githubusercontent.com/u/7696697?v=4?s=100" width="100px;" alt="moghn"/><br /><sub><b>moghn</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=1036664317" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaoguolong"><img src="https://avatars.githubusercontent.com/u/33684988?v=4?s=100" width="100px;" alt="xiaoguolong"/><br /><sub><b>xiaoguolong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xiaoguolong" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Clownsw"><img src="https://avatars.githubusercontent.com/u/28394742?v=4?s=100" width="100px;" alt="Smliexx"/><br /><sub><b>Smliexx</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Clownsw" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3AClownsw" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Naruse"/><br /><sub><b>Naruse</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Code">💻</a> <a href="#design-Calvin979" title="Design">🎨</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3ACalvin979" title="Bug reports">🐛</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Calvin"/><br /><sub><b>Calvin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Code">💻</a> <a href="#design-Calvin979" title="Design">🎨</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3ACalvin979" title="Bug reports">🐛</a> <a href="https://github.com/apache/hertzbeat/commits?author=Calvin979" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bbelide2"><img src="https://avatars.githubusercontent.com/u/26840796?v=4?s=100" width="100px;" alt="Bala Sukesh"/><br /><sub><b>Bala Sukesh</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=bbelide2" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jinyaoMa"><img src="https://avatars.githubusercontent.com/u/25066570?v=4?s=100" width="100px;" alt="Jinyao Ma"/><br /><sub><b>Jinyao Ma</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jinyaoMa" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://linuxsuren.github.io/open-source-best-practice/"><img src="https://avatars.githubusercontent.com/u/1450685?v=4?s=100" width="100px;" alt="Rick"/><br /><sub><b>Rick</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=LinuxSuRen" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=LinuxSuRen" title="Tests">⚠️</a></td>
@@ -527,6 +520,26 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaomizhou2"><img src="https://avatars.githubusercontent.com/u/47807926?v=4?s=100" width="100px;" alt="zhangyaxi"/><br /><sub><b>zhangyaxi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=xiaomizhou2" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/RainBondsongyg"><img src="https://avatars.githubusercontent.com/u/94501396?v=4?s=100" width="100px;" alt="songyg"/><br /><sub><b>songyg</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=RainBondsongyg" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lx1229"><img src="https://avatars.githubusercontent.com/u/44620005?v=4?s=100" width="100px;" alt="Liuxin"/><br /><sub><b>Liuxin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lx1229" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yy549159265"><img src="https://avatars.githubusercontent.com/u/40821310?v=4?s=100" width="100px;" alt="yy549159265"/><br /><sub><b>yy549159265</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yy549159265" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=yy549159265" title="Tests">⚠️</a> <a href="#design-yy549159265" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/cto-huhang"><img src="https://avatars.githubusercontent.com/u/53338629?v=4?s=100" width="100px;" alt="cto-huhang"/><br /><sub><b>cto-huhang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cto-huhang" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Saramanda9988"><img src="https://avatars.githubusercontent.com/u/176664901?v=4?s=100" width="100px;" alt="LunaRain_079"/><br /><sub><b>LunaRain_079</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Saramanda9988" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/delei"><img src="https://avatars.githubusercontent.com/u/17263766?v=4?s=100" width="100px;" alt="DeleiGuo"/><br /><sub><b>DeleiGuo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=delei" title="Documentation">📖</a> <a href="https://github.com/apache/hertzbeat/commits?author=delei" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=delei" title="Tests">⚠️</a> <a href="https://github.com/apache/hertzbeat/issues?q=author%3Adelei" title="Bug reports">🐛</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/chingjustwe"><img src="https://avatars.githubusercontent.com/u/13643747?v=4?s=100" width="100px;" alt="Rocky, Chi"/><br /><sub><b>Rocky, Chi</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=chingjustwe" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rowankid"><img src="https://avatars.githubusercontent.com/u/18652781?v=4?s=100" width="100px;" alt="Wenqi Luo"/><br /><sub><b>Wenqi Luo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/issues?q=author%3Arowankid" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tuzuy"><img src="https://avatars.githubusercontent.com/u/95274591?v=4?s=100" width="100px;" alt="tuzuy"/><br /><sub><b>tuzuy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tuzuy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/carlpinto25"><img src="https://avatars.githubusercontent.com/u/117299909?v=4?s=100" width="100px;" alt="carl pinto"/><br /><sub><b>carl pinto</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=carlpinto25" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://cxhello.top/"><img src="https://avatars.githubusercontent.com/u/49056040?v=4?s=100" width="100px;" alt="cxhello"/><br /><sub><b>cxhello</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cxhello" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jl15988"><img src="https://avatars.githubusercontent.com/u/70638770?v=4?s=100" width="100px;" alt="会功夫的李白"/><br /><sub><b>会功夫的李白</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jl15988" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.aytop.cloud/"><img src="https://avatars.githubusercontent.com/u/37127008?v=4?s=100" width="100px;" alt="Albert.Yang"/><br /><sub><b>Albert.Yang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=AlbertYang0801" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.tokenlen.top/"><img src="https://avatars.githubusercontent.com/u/150590575?v=4?s=100" width="100px;" alt="zhou yong kang"/><br /><sub><b>zhou yong kang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mengnankkkk" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/warrobe"><img src="https://avatars.githubusercontent.com/u/89446159?v=4?s=100" width="100px;" alt="warrobe"/><br /><sub><b>warrobe</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=warrobe" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Jetiaime"><img src="https://avatars.githubusercontent.com/u/93769000?v=4?s=100" width="100px;" alt="TeAmo"/><br /><sub><b>TeAmo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Jetiaime" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pentium100"><img src="https://avatars.githubusercontent.com/u/27917?v=4?s=100" width="100px;" alt="pentium100"/><br /><sub><b>pentium100</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pentium100" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dedyks"><img src="https://avatars.githubusercontent.com/u/23741665?v=4?s=100" width="100px;" alt="Dedy Kurniawan Santoso"/><br /><sub><b>Dedy Kurniawan Santoso</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=dedyks" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -572,8 +585,8 @@ HertzBeat is built on so many great open source projects, thanks to them!
 <p align="left">
 <img src="./home/static/img/home/cncf-landscape-left-logo.svg" width="300">&nbsp;&nbsp;<img src="./home/static/img/home/cncf-right-logo.svg" width="345" />
 <br /><br />
-HertzBeat has been included in the <a href="https://landscape.cncf.io/guide?item=observability-and-analysis--monitoring--hertzbeat#observability-and-analysis--monitoring">
-CNCF Observability And Analysis - Monitoring Landscape.</a>
+HertzBeat has been included in the <a href="https://landscape.cncf.io/?item=observability-and-analysis--observability--hertzbeat">
+CNCF Observability And Analysis - Observability Landscape.</a>
 </p>
 
 ## 🛡️ License

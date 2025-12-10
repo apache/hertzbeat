@@ -111,6 +111,6 @@ spring:
 
 - 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串。
 
-> 注意：上述是针对下载安装包的方式，对于本地切换数据源，只需完成[数据库创建](./mysql-change#数据库创建)以及修改`hertzbeat-manager/src/main/resources/application.yml`中的配置即可。
+> 注意：上述是针对下载安装包的方式，对于本地切换数据源，只需完成[数据库创建](./mysql-change#数据库创建)以及修改`hertzbeat-startup/src/main/resources/application.yml`中的配置即可。
 
 **启动 HertzBeat 浏览器访问 <http://ip:1157/> 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**

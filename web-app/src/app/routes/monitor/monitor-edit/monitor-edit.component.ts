@@ -72,6 +72,7 @@ export class MonitorEditComponent implements OnInit {
   spinningTip: string = 'Loading...';
   labelKeys: string[] = [];
   labelMap: { [key: string]: string[] } = {};
+  labelIsCustom: boolean = true;
 
   ngOnInit(): void {
     this.route.paramMap
@@ -103,7 +104,15 @@ export class MonitorEditComponent implements OnInit {
             }
           } else {
             console.warn(message.msg);
-            this.notifySvc.error(this.i18nSvc.fanyi('monitor.not-found'), message.msg);
+            if (message.code === 3) {
+              // MONITOR_NOT_EXIST_CODE = 0x03
+              this.notifySvc.warning(this.i18nSvc.fanyi('monitor.item.unavailable'), '');
+              setTimeout(() => {
+                this.router.navigateByUrl('/monitors');
+              }, 1500);
+            } else {
+              this.notifySvc.error(this.i18nSvc.fanyi('monitor.not-found'), message.msg);
+            }
             return throwError(this.i18nSvc.fanyi('monitor.not-found'));
           }
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
@@ -132,8 +141,6 @@ export class MonitorEditComponent implements OnInit {
                 }
                 if (define.type === 'boolean') {
                   param.paramValue = define.defaultValue == 'true';
-                } else if (param.field === 'host') {
-                  param.paramValue = this.monitor.host;
                 } else if (define.defaultValue != undefined) {
                   if (define.type === 'number') {
                     param.paramValue = Number(define.defaultValue);
@@ -218,7 +225,7 @@ export class MonitorEditComponent implements OnInit {
                   if (define.type === 'boolean') {
                     param.paramValue = define.defaultValue == 'true';
                   } else if (param.field === 'host') {
-                    param.paramValue = this.monitor.host;
+                    param.paramValue = this.monitor.instance;
                   } else if (define.defaultValue != undefined) {
                     if (define.type === 'number') {
                       param.paramValue = Number(define.defaultValue);

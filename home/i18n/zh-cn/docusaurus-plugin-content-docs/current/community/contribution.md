@@ -41,7 +41,7 @@ limitations under the License.
 
 - 💬**建议**：也可以对项目或者社区提出一些建议，促进社区的良性发展；
 
-更多贡献方式参见 [Contribution Types](https://allcontributors.org/docs/en/emoji-key)
+更多贡献方式参见 [Contribution Types](https://allcontributors.org/emoji-key)
 
 即便是小到错别字的修正我们也都非常欢迎 :)
 
@@ -54,25 +54,25 @@ limitations under the License.
 
 1. 需要 `maven3+`, `java17` 和 `lombok` 环境
 
-2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
+2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 
 3. 在项目根目录运行编译: `mvn clean install -DskipTests`
 
 4. 在 `jvm` 加入参数 `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`
 
-5. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
+5. 启动`springboot startup`服务 `hertzbeat-startup/src/main/java/org/apache/hertzbeat/startup/HertzBeatApplication.java`
 
 #### 前端启动
 
-1. 需要 `nodejs yarn` 环境, 确保 `Node.js >= 18`
+1. 需要 `nodejs pnpm` 环境, 确保 `Node.js >= 18`
 
 2. 进入 `web-app` 目录: `cd web-app`
 
-3. 安装 yarn: `npm install -g yarn`
+3. 安装 pnpm: `npm install -g pnpm`
 
-4. 在前端工程目录 `web-app` 下执行: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. 在前端工程目录 `web-app` 下执行: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. 待本地后端启动后，在 web-app 目录下启动本地前端 `yarn start`
+5. 待本地后端启动后，在 web-app 目录下启动本地前端 `pnpm start`
 
 6. 浏览器访问 localhost:4200 即可开始，默认账号密码 **admin/hertzbeat**
 
@@ -147,7 +147,7 @@ git pull upstream master
 
 在您的 PR 被合并后，您可以发送如下内容邮件到 `dev@hertzbeat.apache.org` 来申请领取属于您的 Apache HertzBeat™ 贡献者电子证书。
 
-```
+```text
 Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
 Body:
 Hello,
@@ -162,7 +162,7 @@ Best regards,
 <Your Name>
 ```
 
-在几个工作日内，您会收到携带电子证书的回复，您的名字也会出现在贡献者列表中。    
+在几个工作日内，您会收到携带电子证书的回复，您的名字也会出现在贡献者列表中。
 注意贡献者的证书是电子的，待您成为 `Committer` 或者 `PMC` 的证书是实体的。
 
 证书样例：

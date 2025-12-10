@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
@@ -31,6 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -47,9 +50,13 @@ import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
+import org.apache.hertzbeat.manager.component.validator.ParamValidatorManager;
+import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,13 +77,19 @@ import org.springframework.data.jpa.domain.Specification;
  * <a href="https://www.cnblogs.com/it1042290135/p/16202478.html">...</a>
  * <p>
  * <a href="http://clickhouse:9363/metrics">...</a>
- * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363
- * --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server
- * --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
+ * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p
+ * 9090:9000 -p 9363:9363
+ * --ulimit nofile=262144:262144
+ * --volume=/opt/clickhouse/data:/var/lib/clickhouse
+ * --volume=/opt/clickhouse/log:/var/log/clickhouse-server
+ * --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml
+ * --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml
+ * clickhouse/clickhouse-server
  * <p>
  * <p>
  * <a href="https://hub.docker.com/r/clickhouse/clickhouse-server/">...</a>
- * docker run -d -p 18123:8123 -p19000:9000 --name some-clickhouse-server --ulimit nofile=262144:262144 clickhouse/clickhouse-server
+ * docker run -d -p 18123:8123 -p19000:9000 --name some-clickhouse-server
+ * --ulimit nofile=262144:262144 clickhouse/clickhouse-server
  * curl '<a href="http://localhost:18123/">...</a>'
  * web UI
  * <a href="http://localhost:18123/play">...</a>
@@ -90,7 +103,13 @@ import org.springframework.data.jpa.domain.Specification;
 class MonitorServiceTest {
 
     @InjectMocks
-    private MonitorServiceImpl monitorService = new MonitorServiceImpl(List.of());
+    private MonitorServiceImpl monitorService;
+
+    @Mock
+    private ParamValidatorManager paramValidatorManager;
+
+    @Mock
+    private MonitorImExportHelper monitorImExportHelper;
 
     @Mock
     private MonitorDao monitorDao;
@@ -122,6 +141,9 @@ class MonitorServiceTest {
     @Mock
     private ApplicationContext applicationContext;
 
+    @Mock
+    private MetricsFavoriteService metricsFavoriteService;
+
     /**
      * Properties cannot be directly mock, test execution before - manual assignment
      */
@@ -136,7 +158,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
@@ -159,7 +181,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
@@ -182,7 +204,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
@@ -198,7 +220,7 @@ class MonitorServiceTest {
         Monitor monitor = Monitor.builder()
                 .intervals(1)
                 .name("memory")
-                .host("localhost")
+                .instance("localhost")
                 .app("demoApp")
                 .build();
         Job job = new Job();
@@ -217,10 +239,10 @@ class MonitorServiceTest {
         MonitorDto dto = new MonitorDto();
         List<Param> params = new ArrayList<>();
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(2L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(2L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         try {
             monitorService.validate(dto, isModify);
@@ -243,10 +265,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         ParamDefine pd = ParamDefine.builder()
@@ -276,10 +298,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         ParamDefine paramDefine = ParamDefine.builder()
@@ -290,6 +312,8 @@ class MonitorServiceTest {
                 .build();
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
+        doThrow(new IllegalArgumentException("Params field " + field + " type "
+                + paramDefine.getType() + " is invalid.")).when(paramValidatorManager).validate(any(), any());
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
@@ -299,7 +323,8 @@ class MonitorServiceTest {
     }
 
     /**
-     * Parameter verification - This parameter is mandatory. - Integer parameter range
+     * Parameter verification - This parameter is mandatory. - Integer parameter
+     * range
      */
     @Test
     void validateMonitorParamsRange() {
@@ -312,10 +337,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         ParamDefine paramDefine = ParamDefine.builder()
@@ -326,6 +351,9 @@ class MonitorServiceTest {
                 .build();
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
+        doThrow(new IllegalArgumentException("Params field " + field + " type "
+                + paramDefine.getType() + " over range " + paramDefine.getRange())).when(paramValidatorManager)
+                .validate(any(), any());
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
@@ -348,10 +376,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -363,6 +391,8 @@ class MonitorServiceTest {
                 .build();
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
+        doThrow(new IllegalArgumentException("Params field " + field + " type "
+                + paramDefine.getType() + " over limit " + limit)).when(paramValidatorManager).validate(any(), any());
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
@@ -392,10 +422,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -407,6 +437,11 @@ class MonitorServiceTest {
                 .build();
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
+        if (checkException) {
+            doThrow(new IllegalArgumentException(
+                    "Params field " + field + " value " + value + " is invalid host value."))
+                    .when(paramValidatorManager).validate(any(), any());
+        }
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
@@ -437,10 +472,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -453,6 +488,10 @@ class MonitorServiceTest {
                 .build();
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
+        if (checkException) {
+            doThrow(new IllegalArgumentException("Params field " + field + " value "
+                    + value + " is invalid boolean value.")).when(paramValidatorManager).validate(any(), any());
+        }
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
@@ -484,10 +523,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -504,6 +543,11 @@ class MonitorServiceTest {
                 .build();
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
+        if (checkException) {
+            doThrow(new IllegalArgumentException("Params field " + field + " value "
+                    + param.getParamValue() + " is invalid option value")).when(paramValidatorManager)
+                    .validate(any(), any());
+        }
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
@@ -535,10 +579,10 @@ class MonitorServiceTest {
                 .build();
         params.add(param);
         dto.setParams(params);
-        Monitor monitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor monitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         dto.setMonitor(monitor);
         Boolean isModify = true;
-        Monitor existMonitor = Monitor.builder().name("memory").host("host").id(1L).build();
+        Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(1L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
         List<ParamDefine> paramDefines = new ArrayList<>();
         Short limit = 3;
@@ -555,6 +599,10 @@ class MonitorServiceTest {
                 .build();
         paramDefines.add(paramDefine);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
+        if (checkException) {
+            doThrow(new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid."))
+                    .when(paramValidatorManager).validate(any(), any());
+        }
         try {
             monitorService.validate(dto, isModify);
         } catch (IllegalArgumentException e) {
@@ -578,7 +626,8 @@ class MonitorServiceTest {
         params.add(param);
         dto.setParams(params);
         long monitorId = 1L;
-        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+                .id(monitorId).build();
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
         try {
@@ -588,9 +637,9 @@ class MonitorServiceTest {
         }
         reset();
         /*
-          The [monitoring type] of monitor cannot be modified.
+         * The [monitoring type] of monitor cannot be modified.
          */
-        Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
+        Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").instance("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
         try {
             monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null);
@@ -598,11 +647,13 @@ class MonitorServiceTest {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
         reset();
-        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").instance("host")
+                .id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
-        assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+        assertThrows(MonitorDatabaseException.class,
+                () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
     }
 
     @Test
@@ -611,7 +662,8 @@ class MonitorServiceTest {
         ids.add(1L);
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+                    .build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -627,7 +679,8 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+                    .build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -637,7 +690,8 @@ class MonitorServiceTest {
     @Test
     void getMonitorDto() {
         long id = 1L;
-        Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+        Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+                .build();
         when(monitorDao.findById(id)).thenReturn(Optional.of(monitor));
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.findParamsByMonitorId(id)).thenReturn(params);
@@ -651,8 +705,16 @@ class MonitorServiceTest {
 
     @Test
     void getMonitors() {
-        doReturn(Page.empty()).when(monitorDao).findAll(any(Specification.class), any(PageRequest.class));
-        assertNotNull(monitorService.getMonitors(null, null, null, null, "gmtCreate", "desc", 1, 1, null));
+        when(monitorDao.findAll(any(Specification.class), any(PageRequest.class))).thenAnswer((invocation) -> {
+            Specification<Monitor> spec = invocation.getArgument(0);
+            CriteriaBuilder cb = mock(CriteriaBuilder.class);
+            CriteriaQuery<?> query = mock(CriteriaQuery.class);
+            Root<Monitor> root = mock(Root.class);
+            spec.toPredicate(root, query, cb);
+            return Page.empty();
+        });
+        assertNotNull(monitorService.getMonitors(null, null, "9.111", null, "gmtCreate", "desc", 1, 1, null));
+        assertNotNull(monitorService.getMonitors(null, null, "9", null, "gmtCreate", "desc", 1, 1, null));
     }
 
     @Test
@@ -663,7 +725,8 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+                    .build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -678,7 +741,8 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").instance("host").id(id)
+                    .build();
             monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             monitors.add(monitor);
         }
@@ -701,7 +765,6 @@ class MonitorServiceTest {
         appCount.setStatus(CommonConstants.MONITOR_UP_CODE);
         appCounts.add(appCount);
         when(monitorDao.findAppsStatusCount()).thenReturn(appCounts);
-
 
         Job job = new Job();
         job.setMetrics(new ArrayList<>());
@@ -738,7 +801,7 @@ class MonitorServiceTest {
                 .intervals(1)
                 .name("memory")
                 .app("demoApp")
-                .host("localhost")
+                .instance("localhost")
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
@@ -754,26 +817,17 @@ class MonitorServiceTest {
         Monitor monitor1 = Monitor.builder().id(1L).name("test1").app("app1").build();
         Monitor monitor2 = Monitor.builder().id(2L).name("test2").app("app2").build();
         List<Monitor> allMonitors = List.of(monitor1, monitor2);
-        
+
         // Mock the behavior of monitorDao.findAll
         when(monitorDao.findAll()).thenReturn(allMonitors);
-        
+
         // Create a mock HttpServletResponse
-        jakarta.servlet.http.HttpServletResponse mockResponse = org.mockito.Mockito.mock(jakarta.servlet.http.HttpServletResponse.class);
-        
-        // Mock the ImExportService
-        org.apache.hertzbeat.manager.service.ImExportService mockImExportService = org.mockito.Mockito.mock(org.apache.hertzbeat.manager.service.ImExportService.class);
-        // Mock the getFileName method
-        when(mockImExportService.getFileName()).thenReturn("test.json");
-        // Set the field using reflection
-        java.lang.reflect.Field field = MonitorServiceImpl.class.getDeclaredField("imExportServiceMap");
-        field.setAccessible(true);
-        java.util.Map<String, org.apache.hertzbeat.manager.service.ImExportService> imExportServiceMap = new java.util.HashMap<>();
-        imExportServiceMap.put("JSON", mockImExportService);
-        field.set(monitorService, imExportServiceMap);
-        
+        jakarta.servlet.http.HttpServletResponse mockResponse = org.mockito.Mockito
+                .mock(jakarta.servlet.http.HttpServletResponse.class);
+
         // Test the exportAll method
         assertDoesNotThrow(() -> monitorService.exportAll("JSON", mockResponse));
+        verify(monitorImExportHelper).export(List.of(1L, 2L), "JSON", mockResponse);
     }
 
     @Test
@@ -788,8 +842,8 @@ class MonitorServiceTest {
         Job job = new Job();
         job.setApp("testJob");
         job.setMetrics(metrics);
-        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app(job.getApp()).name(job.getApp()).host("host").build();
-
+        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app(job.getApp()).name(job.getApp()).instance("host")
+                .build();
 
         List<Param> params = new ArrayList<>();
         params.add(Param.builder().field("field").paramValue("value").build());
@@ -799,7 +853,9 @@ class MonitorServiceTest {
         dto.setParams(params);
 
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, null));
-        assertEquals("testJob metricsName size prohibited keywords, please modify the template information.", exception.getMessage());
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.validate(dto, null));
+        assertEquals("testJob metricsName size prohibited keywords, please modify the template information.",
+                exception.getMessage());
     }
 }

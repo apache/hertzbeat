@@ -16,11 +16,13 @@ Apache HertzBeat™ 使用 [Sureness](https://github.com/dromara/sureness) 来�
 
 使用 Sureness 提供的 `sureness.yml` 来配置用户账户，角色，API资源等，强烈建议初始用户修改账户密码，具体参考 [账户权限管理](../start/account-modify)
 
+请注意角色权限功能正在完善中，请勿使用角色来控制用户权限，所有用户均拥有管理权限。
+
 ## 监控模板安全
 
-Apache HertzBeat™ 提供了监控模板功能，用户可以通过配置监控模板里面的自定义脚本来定义监控规则。
+Apache HertzBeat™ 提供了监控模板功能，用户可以通过配置自定义监控模板和自定义脚本来定义监控规则。
 
-脚本类型包含 `SQL` `SHELL` `JMX` `URL` `API` 等，当用户自定义脚本时需要自行保证自定义脚本的安全性，避免脚本中包含恶意代码等。
+监控模版内包含 `SQL` `SHELL` `JMX` `URL` `API` 等脚本和其它内容，当用户自定义监控模版时需要自行保证模版内容的安全性，避免包含恶意代码等。
 
 ## 自定义插件安全
 

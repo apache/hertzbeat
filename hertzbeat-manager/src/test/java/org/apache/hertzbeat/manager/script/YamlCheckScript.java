@@ -18,9 +18,9 @@
 package org.apache.hertzbeat.manager.script;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.constants.JexlKeywordsEnum;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.util.JexlCheckerUtil;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -44,6 +44,7 @@ public class YamlCheckScript {
         if (!Files.exists(definePath)) {
             throw new IllegalStateException("Define directory not found: " + YML_PATH);
         }
+        // check keywords/start char/space
         try (Stream<Path> paths = Files.walk(definePath)) {
             paths.filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".yml"))
@@ -63,13 +64,13 @@ public class YamlCheckScript {
             throw new IllegalArgumentException("Failed to load Job from file: " + filePath.getFileName());
         }
         try {
-            validateJexlKeywords(app.getMetrics());
+            validateJexl(app.getMetrics());
         } catch (Exception e) {
             System.out.printf("file: %s , msg: %s%n", filePath.getFileName(), e.getMessage());
         }
     }
 
-    private void validateJexlKeywords(List<Metrics> metrics) {
+    private void validateJexl(List<Metrics> metrics) {
         if (null == metrics || metrics.isEmpty()) {
             return;
         }
@@ -81,8 +82,14 @@ public class YamlCheckScript {
                 if (null == field || StringUtils.isBlank(field.getField())) {
                     continue;
                 }
-                if (JexlKeywordsEnum.match(field.getField())) {
+                if (JexlCheckerUtil.verifyKeywords(field.getField())) {
                     throw new IllegalArgumentException("check jexl keywords failed. field:" + field.getField());
+                }
+                if (JexlCheckerUtil.verifyStartCharacter(field.getField())) {
+                    throw new IllegalArgumentException("check jexl start char failed. field:" + field.getField());
+                }
+                if (JexlCheckerUtil.verifySpaces(field.getField())) {
+                    throw new IllegalArgumentException("check jexl spaces failed. field:" + field.getField());
                 }
             }
         }

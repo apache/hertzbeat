@@ -117,6 +117,9 @@
           <nz-tag *ngIf="data.type == 13" nzColor="orange">
             <span>{{ 'alert.notice.type.gotify' | i18n }}</span>
           </nz-tag>
+          <nz-tag *ngIf="data.type == 14" nzColor="orange">
+            <span>{{ 'alert.notice.type.lark-app' | i18n }}</span>
+          </nz-tag>
         </span>
       </td>
       <td nzAlign="center">
@@ -212,6 +215,7 @@
             <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.lark-app' | i18n" [nzValue]="14"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>

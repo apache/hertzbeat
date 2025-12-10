@@ -88,7 +88,7 @@ class AlertDefineControllerTest {
                                 Monitor.builder()
                                         .id(1L)
                                         .app("app")
-                                        .host("localhost")
+                                        .instance("localhost")
                                         .name("monitor")
                                         .build()
                         )

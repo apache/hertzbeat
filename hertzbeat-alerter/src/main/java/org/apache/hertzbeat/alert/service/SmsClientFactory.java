@@ -19,7 +19,7 @@ package org.apache.hertzbeat.alert.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.config.SmsConfig;
+import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
 import org.apache.hertzbeat.alert.service.impl.SmsLocalSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.AwsSmsClientImpl;
 import org.apache.hertzbeat.alert.service.impl.TencentSmsClientImpl;

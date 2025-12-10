@@ -41,7 +41,7 @@ limitations under the License.
 
 - 💬**建议**：也可以对项目或者社区提出一些建议，促进社区的良性发展；
 
-更多贡献方式参见 [Contribution Types](https://allcontributors.org/docs/en/emoji-key)
+更多贡献方式参见 [Contribution Types](https://allcontributors.org/emoji-key)
 
 即便是小到错别字的修正我们也都非常欢迎 :)
 
@@ -54,13 +54,13 @@ limitations under the License.
 
 1. 需要 `maven3+`, `java17` 和 `lombok` 环境
 
-2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
+2. (可选)修改配置文件配置信息-`hertzbeat-startup/src/main/resources/application.yml`
 
 3. 在项目根目录运行编译: `mvn clean install -DskipTests`
 
 4. 在 `jvm` 加入参数 `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`
 
-5. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
+5. 启动`springboot startup`服务 `hertzbeat-startup/src/main/java/org/apache/hertzbeat/startup/HertzBeatApplication.java`
 
 #### 前端启动
 

@@ -19,8 +19,8 @@ package org.apache.hertzbeat.alert.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.hertzbeat.alert.config.SmsConfig;
-import org.apache.hertzbeat.alert.config.SmslocalSmsProperties;
+import org.apache.hertzbeat.common.entity.dto.sms.SmsConfig;
+import org.apache.hertzbeat.common.entity.dto.sms.SmslocalSmsProperties;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;

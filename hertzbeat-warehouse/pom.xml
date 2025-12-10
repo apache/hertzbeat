@@ -83,6 +83,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- QuestDB  -->
+        <dependency>
+            <groupId>org.questdb</groupId>
+            <artifactId>questdb</artifactId>
+            <version>${questdb.version}</version>
+        </dependency>
         <!-- influxdb Here, support for version 1.7, use influxdb-java, Full support for version 2.x requires influxdb-client-java -->
         <dependency>
             <groupId>org.influxdb</groupId>
@@ -144,11 +150,17 @@
             <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory-netty</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
             <version>${snappy-java.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.duckdb</groupId>
+            <artifactId>duckdb_jdbc</artifactId>
+            <version>${duckdb.version}</version>
         </dependency>
     </dependencies>
 </project>

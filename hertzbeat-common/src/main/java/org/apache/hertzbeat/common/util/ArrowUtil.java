@@ -17,14 +17,6 @@
 
 package org.apache.hertzbeat.common.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.nio.channels.Channels;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -32,12 +24,21 @@ import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Arrow data serialization and deserialization utility class
  */
 @Slf4j
 public final class ArrowUtil {
-    
+
     private ArrowUtil() {
     }
 
@@ -53,18 +54,22 @@ public final class ArrowUtil {
     public static byte[] serializeMultipleRoots(List<VectorSchemaRoot> roots) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              DataOutputStream dataOut = new DataOutputStream(out)) {
-            
+
             dataOut.writeInt(roots.size());
             for (VectorSchemaRoot root : roots) {
-                ArrowStreamWriter writer = new ArrowStreamWriter(
-                        root,
-                        null,
-                        Channels.newChannel(out));
-                writer.start();
-                writer.writeBatch();
-                writer.end();
-                writer.close();
-                root.close();
+                // Use a temporary stream to obtain the precise byte length of a single root,
+                // write the length, and resolve the pre-read issue.
+                try (ByteArrayOutputStream tempOut = new ByteArrayOutputStream()) {
+                    try (ArrowStreamWriter writer = new ArrowStreamWriter(root, null, Channels.newChannel(tempOut))) {
+                        writer.start();
+                        writer.writeBatch();
+                        writer.end();
+                    }
+                    int size = tempOut.size();
+                    dataOut.writeInt(size);
+                    dataOut.flush();
+                    tempOut.writeTo(out);
+                }
             }
             return out.toByteArray();
         } catch (IOException e) {
@@ -85,15 +90,20 @@ public final class ArrowUtil {
      */
     public static List<VectorSchemaRoot> deserializeMultipleRoots(byte[] data) {
         List<VectorSchemaRoot> roots = new ArrayList<>();
-        try (ByteArrayInputStream in = new ByteArrayInputStream(data);
-             DataInputStream dataIn = new DataInputStream(in)) {
-            
-            int rootCount = dataIn.readInt();
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        try {
+            int rootCount = buffer.getInt();
             RootAllocator allocator = new RootAllocator();
-            
+
             for (int i = 0; i < rootCount; i++) {
+                int length = buffer.getInt();
+
+                // Split the InputStream to prevent the Reader from reading beyond its bounds.
+                ByteArrayInputStream rootIn = new ByteArrayInputStream(data, buffer.position(), length);
+                buffer.position(buffer.position() + length);
+
                 ArrowStreamReader reader = new ArrowStreamReader(
-                        Channels.newChannel(in),
+                        Channels.newChannel(rootIn),
                         allocator);
                 VectorSchemaRoot root = reader.getVectorSchemaRoot();
                 reader.loadNextBatch();
@@ -147,11 +157,15 @@ public final class ArrowUtil {
      */
     public static byte[] serializeMetricsData(List<CollectRep.MetricsData> metricsDataList) {
         List<VectorSchemaRoot> roots = new ArrayList<>(metricsDataList.size());
-        for (CollectRep.MetricsData metricsData : metricsDataList) {
-            VectorSchemaRoot root = metricsData.toVectorSchemaRootAndRelease();
-            roots.add(root);
+        try {
+            for (CollectRep.MetricsData metricsData : metricsDataList) {
+                VectorSchemaRoot root = metricsData.toVectorSchemaRootAndRelease();
+                roots.add(root);
+            }
+            return serializeMultipleRoots(roots);
+        } finally {
+            roots.forEach(VectorSchemaRoot::close);
         }
-        return serializeMultipleRoots(roots);
     }
-    
+
 }

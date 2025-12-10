@@ -22,8 +22,12 @@ export class Monitor {
   name!: string;
   app!: string;
   scrape!: string;
-  host!: string;
+  instance!: string;
   intervals: number = 60;
+  // Schedule type: interval | cron
+  scheduleType: string = 'interval';
+  // Cron expression when scheduleType is cron
+  cronExpression?: string;
   // Monitoring status 0: Paused, 1: Up, 2: Down
   status!: number;
   // Task type 0: Normal, 1: push auto create, 2: discovery auto create
@@ -35,4 +39,8 @@ export class Monitor {
   modifier!: string;
   gmtCreate!: number;
   gmtUpdate!: number;
+
+  _displayStatus?: 'ACTIVE' | 'DISAPPEARED' | 'GRACE_PERIOD';
+  _graceTimer?: any;
+  _disappearTime?: number;
 }

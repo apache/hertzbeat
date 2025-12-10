@@ -172,6 +172,14 @@ public class JdbcCommonCollect extends AbstractCollect {
                 ".*en\\s*([/\\\\]|\\\\n|/n|\\n)\\s*crypt.*",
                 ".*ci\\s*([/\\\\]|\\\\n|/n|\\n)\\s*pher.*"
         });
+
+        // DB2 bypass mode
+        PLATFORM_BYPASS_PATTERNS.put("db2", new String[]{
+                ".*security\\s*([/\\\\]|\\\\n|/n|\\n)\\s*mechanism.*",
+                ".*client\\s*([/\\\\]|\\\\n|/n|\\n)\\s*accounting.*",
+                ".*ssl\\s*([/\\\\]|\\\\n|/n|\\n)\\s*connection.*",
+                ".*use\\s*([/\\\\]|\\\\n|/n|\\n)\\s*client\\s*([/\\\\]|\\\\n|/n|\\n)\\s*information.*"
+        });
     }
 
     private final GlobalConnectionCache connectionCommonCache = GlobalConnectionCache.getInstance();
@@ -533,6 +541,8 @@ public class JdbcCommonCollect extends AbstractCollect {
             case "oracle" -> "jdbc:oracle:thin:@" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
             case "dm" -> "jdbc:dm://" + host + ":" + port;
+            case "db2" -> "jdbc:db2://" + host + ":" + port
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
             case "testcontainers" -> "jdbc:tc:" + host + ":" + port
                     + ":///" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase()) + "?user=root&password=root";
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());

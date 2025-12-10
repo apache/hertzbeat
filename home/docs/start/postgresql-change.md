@@ -96,6 +96,6 @@ spring:
           level: SEVERE
 ```
 
-> Note: The above applies to the method of downloading and installing the package. For local data source switching, simply complete the [Database creation](./postgresql-change#database-creation) and modify the configuration in `hertzbeat-manager/src/main/resources/application.yml`.
+> Note: The above applies to the method of downloading and installing the package. For local data source switching, simply complete the [Database creation](./postgresql-change#database-creation) and modify the configuration in `hertzbeat-startup/src/main/resources/application.yml`.
 
 **Start HertzBeat  visit <http://ip:1157/> on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**

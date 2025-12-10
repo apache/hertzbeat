@@ -5,25 +5,24 @@ sidebar_label: Introduce
 slug: /
 ---
 
-> A real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
-
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
 ## 🎡 <font color="green">Introduction</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) is an easy-to-use, open source, real-time observability system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.
+[Apache HertzBeat™](https://github.com/apache/hertzbeat) is an AI-powered next-generation open source real-time observability system. Unified metrics and logs collection, centralized alerting distribution, intelligent management and analysis. No Agent required, high performance cluster, provides powerful custom monitoring and status page building capabilities.
 
 ### Features
 
-* Combines **monitoring, alarm, and notification** features into one platform, and supports monitoring for web service, program, database, cache, os, webserver, middleware, bigdata, cloud-native, network, custom and more.
-* Easy to use and agentless, web-based and with one-click monitoring and alerting, zero learning curve.
-* Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
-* Compatible with the `Prometheus` ecosystem and more, can monitoring what `Prometheus` can monitoring with few clicks on webui.
-* High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
-* Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
-* Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
+- Integrates **collection + analysis + alerting + notification*- into one platform, with new AI-powered interactions and features under HertzBeat AI, and built-in MCP Server capabilities.
+- Unified metrics platform, agentless, Prometheus-compatible, supports application services, programs, databases, caches, operating systems, big data, middleware, web servers, cloud-native, networks, custom monitoring and more.
+- Unified logging platform, seamlessly integrates multiple log sources through OTLP protocol for reporting.
+- Unified alerting platform, integrates internal alerts with various external alert sources, unified alert processing and analysis, flexible real-time and periodic threshold rules, grouping convergence, silence, suppression, etc.
+- Unified message distribution, alerts processed by the alerting platform are distributed via `Email` `Discord` `Slack` `Telegram` `DingTalk` `WeChat` `FeiShu` `SMS` `Webhook` `ServerChan` and other methods.
+- Makes protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, allowing you to collect any metrics by simply configuring the template `YML` file online. Imagine being able to quickly adapt to a new monitoring type like K8s or Docker simply by configuring online with HertzBeat.
+- High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
+- Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.
+> HertzBeat's unified platform, AI intelligence, powerful customization, multi-type support, high performance, and easy expansion, aims to help users quickly and conveniently achieve observability requirements.
 
 ---
 
@@ -43,7 +42,7 @@ Do you believe that users can just write a monitoring template on the UI page, c
 
 **There are a lot of built-in monitoring templates for users to add directly on the page, one monitoring type corresponds to one YML monitoring template**.
 
-* [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
+- [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
   [Jvm](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-fullsite.yml),
   [Ssl Certificate](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-springboot2.yml),
@@ -52,7 +51,7 @@ Do you believe that users can just write a monitoring template on the UI page, c
   [Pop3](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ntp.yml),
   [Api Code](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-smtp.yml),
   [Nginx](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nginx.yml)
-* [Mysql](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-postgresql.yml),
+- [Mysql](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-postgresql.yml),
   [MariaDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis.yml),
   [ElasticSearch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-sqlserver.yml),
   [Oracle](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-oracle.yml), [MongoDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mongodb.yml),
@@ -61,13 +60,13 @@ Do you believe that users can just write a monitoring template on the UI page, c
   [Redis Cluster](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_sentinel.yml),
   [Doris BE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_fe.yml),
   [Memcached](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-nebula_graph.yml)
-* [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ubuntu.yml),
+- [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-windows.yml),
   [EulerOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-coreos.yml),
   [OpenSUSE](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-rockylinux.yml),
   [Red Hat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-freebsd.yml),
   [AlmaLinux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-debian.yml)
-* [Tomcat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nacos.yml),
+- [Tomcat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nacos.yml),
   [Zookeeper](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-rabbitmq.yml),
   [Flink](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kafka.yml),
   [ShenYu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-dynamic_tp.yml),
@@ -75,12 +74,12 @@ Do you believe that users can just write a monitoring template on the UI page, c
   [Spring Gateway](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-emqx.yml),
   [AirFlow](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hive.yml),
   [Spark](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hadoop.yml)
-* [Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-docker.yml)
-* [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
+- [Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-docker.yml)
+- [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
-* And More Your Custom Template.
-* Notified Support `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
+- And More Your Custom Template.
+- Notified Support `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
 ### Customization
 
@@ -98,8 +97,8 @@ Do you believe that users can just write a monitoring template on the UI page, c
 
 The principle of `HertzBeat` is to use different protocols to connect directly to the end system, and use the `PULL` form to pull the collected data, without the need for the user to deploy and install `Agent` | `Exporter` on the host of the end, etc. For example, monitoring the `linux operating system`.
 
-* For example, if you want to monitor `linux OS`, you can just input the IP port account password or key on `HertzBeat` side.
-* For example, to monitor `linux OS`, just enter your ip/port account password or key in `HertzBeat`.
+- For example, if you want to monitor `linux OS`, you can just input the IP port account password or key on `HertzBeat` side.
+- For example, to monitor `linux OS`, just enter your ip/port account password or key in `HertzBeat`.
 
 **Password and other sensitive information is encrypted on all links**.
 
@@ -107,9 +106,9 @@ The principle of `HertzBeat` is to use different protocols to connect directly t
 
 > When the number of monitors rises exponentially, the collection performance drops or the environment is unstable and prone to single point of failure of the collectors, then our collector clusters come into play.
 
-* HertzBeat supports the deployment of collector clusters and the horizontal expansion of multiple collector clusters to exponentially increase the number of monitorable tasks and collection performance.
-* Monitoring tasks are self-scheduled in the collector cluster, single collector hangs without sensing the failure to migrate the collection tasks, and the newly added collector nodes are automatically scheduled to share the collection pressure.
-* It is very easy to switch between stand-alone mode and cluster mode without additional component deployment.
+- HertzBeat supports the deployment of collector clusters and the horizontal expansion of multiple collector clusters to exponentially increase the number of monitorable tasks and collection performance.
+- Monitoring tasks are self-scheduled in the collector cluster, single collector hangs without sensing the failure to migrate the collection tasks, and the newly added collector nodes are automatically scheduled to share the collection pressure.
+- It is very easy to switch between stand-alone mode and cluster mode without additional component deployment.
 
 ![HertzBeat](/img/docs/cluster-arch.png)
 
@@ -124,20 +123,20 @@ In an isolated network where multiple networks are not connected, we need to dep
 
 ### Easy to Use
 
-* Set **Monitoring+Alarm+Notification** All in one, no need to deploy multiple component services separately.
-* Full UI interface operation, no matter adding new monitor, modifying monitor template, or alarm threshold notification, all can be done in WEB interface, no need to modify files or scripts or reboot.
-* No Agent is needed, we only need to fill in the required IP, port, account, password and other parameters in the WEB interface.
-* Customization friendly, only need a monitoring template YML, automatically generate monitoring management page, data chart page, threshold configuration for corresponding monitoring types.
-* Threshold alarm notification friendly, based on the expression threshold configuration, a variety of alarm notification channels, support alarm silence, time label alarm level filtering and so on.
+- Set **Monitoring+Alarm+Notification*- All in one, no need to deploy multiple component services separately.
+- Full UI interface operation, no matter adding new monitor, modifying monitor template, or alarm threshold notification, all can be done in WEB interface, no need to modify files or scripts or reboot.
+- No Agent is needed, we only need to fill in the required IP, port, account, password and other parameters in the WEB interface.
+- Customization friendly, only need a monitoring template YML, automatically generate monitoring management page, data chart page, threshold configuration for corresponding monitoring types.
+- Threshold alarm notification friendly, based on the expression threshold configuration, a variety of alarm notification channels, support alarm silence, time label alarm level filtering and so on.
 
 ### Completely Open Source
 
-* An open source collaboration product using the `Apache2` protocol, maintained by a free and open source community.
-* No monitoring number `License`, monitoring type and other pseudo-open source restrictions .
-* Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
-* Dev based on HertzBeat need retain copyright.
+- An open source collaboration product using the `Apache2` protocol, maintained by a free and open source community.
+- No monitoring number `License`, monitoring type and other pseudo-open source restrictions .
+- Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
+- Dev based on HertzBeat need retain copyright.
 
-**HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
+**HertzBeat has been included in the [CNCF Observability And Analysis - Observability Landscape](https://landscape.cncf.io/?view-mode=card&classify=category&sort-by=name&sort-direction=asc#observability-and-analysis--observability)**
 
 ![cncf](/img/home/cncf-landscape-left-logo.svg)
 
@@ -154,27 +153,27 @@ Browser access `http://localhost:1157` default account password `admin/hertzbeat
 
 ### Landing Page
 
-* HertzBeat's user management is unified by the configuration file `sureness.yml`, which allows users to add, delete, and modify user information, user role permissions, and so on. Default password admin/hertzbeat
+- HertzBeat's user management is unified by the configuration file `sureness.yml`, which allows users to add, delete, and modify user information, user role permissions, and so on. Default password admin/hertzbeat
 
 ![HertzBeat](/img/home/0.png)
 
 ### Overview Page
 
-* The global overview page shows the distribution of current monitoring categories, users can visualize the current monitoring types and quantities and click to jump to the corresponding monitoring types for maintenance and management.
-* Show the status of currently registered collector clusters, including collector on-line status, monitoring tasks, startup time, IP address, name and so on.
-* Show the list of recent alarm messages, alarm level distribution etc.
+- The global overview page shows the distribution of current monitoring categories, users can visualize the current monitoring types and quantities and click to jump to the corresponding monitoring types for maintenance and management.
+- Show the status of currently registered collector clusters, including collector on-line status, monitoring tasks, startup time, IP address, name and so on.
+- Show the list of recent alarm messages, alarm level distribution etc.
 
 ![HertzBeat](/img/home/1.png)
 
 ### Monitoring Center
 
-* The monitoring portal supports the management of monitoring of application services, database, operating system, middleware, network, customization, etc. It displays the currently added monitors in the form of a list.
-* It displays the currently added monitors in the form of a list and supports adding, modifying, deleting, canceling, importing, exporting and batch management of monitors.
-* Support tag grouping, query filtering, view monitoring details portal.
+- The monitoring portal supports the management of monitoring of application services, database, operating system, middleware, network, customization, etc. It displays the currently added monitors in the form of a list.
+- It displays the currently added monitors in the form of a list and supports adding, modifying, deleting, canceling, importing, exporting and batch management of monitors.
+- Support tag grouping, query filtering, view monitoring details portal.
 
 Built-in support for monitoring types include:
 
-* [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
+- [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-port.yml),
   [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ping.yml),
   [Jvm](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-fullsite.yml),
   [Ssl Certificate](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-springboot2.yml),
@@ -183,7 +182,7 @@ Built-in support for monitoring types include:
   [Pop3](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ntp.yml),
   [Api Code](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-smtp.yml),
   [Nginx](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nginx.yml)
-* [Mysql](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-postgresql.yml),
+- [Mysql](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-postgresql.yml),
   [MariaDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis.yml),
   [ElasticSearch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-sqlserver.yml),
   [Oracle](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-oracle.yml), [MongoDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-mongodb.yml),
@@ -192,13 +191,13 @@ Built-in support for monitoring types include:
   [Redis Cluster](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_sentinel.yml),
   [Doris BE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_fe.yml),
   [Memcached](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-nebula_graph.yml)
-* [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ubuntu.yml),
+- [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-windows.yml),
   [EulerOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-coreos.yml),
   [OpenSUSE](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-rockylinux.yml),
   [Red Hat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-freebsd.yml),
   [AlmaLinux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-debian.yml)
-* [Tomcat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nacos.yml),
+- [Tomcat](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-nacos.yml),
   [Zookeeper](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-rabbitmq.yml),
   [Flink](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kafka.yml),
   [ShenYu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-dynamic_tp.yml),
@@ -206,8 +205,8 @@ Built-in support for monitoring types include:
   [Spring Gateway](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-emqx.yml),
   [AirFlow](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hive.yml),
   [Spark](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hadoop.yml)
-* [Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-docker.yml)
-* [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
+- [Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-docker.yml)
+- [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-hpe_switch.yml),
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-h3c_switch.yml)
 
@@ -215,18 +214,18 @@ Built-in support for monitoring types include:
 
 ### New Monitor
 
-* You can add or modify monitoring instances of a specific monitoring type, configure the IP, port and other parameters of the monitoring on the other end, set the collection period, collection task scheduling method, support detecting availability in advance, etc. The monitoring instances on the page are defined by the corresponding monitoring templates.
-* The monitoring parameters configured on the page are defined by the monitoring template of the corresponding monitoring type, and users can modify the configuration parameters on the page by modifying the monitoring template.
-* Support associated tags to manage monitoring grouping, alarm matching, and so on.
+- You can add or modify monitoring instances of a specific monitoring type, configure the IP, port and other parameters of the monitoring on the other end, set the collection period, collection task scheduling method, support detecting availability in advance, etc. The monitoring instances on the page are defined by the corresponding monitoring templates.
+- The monitoring parameters configured on the page are defined by the monitoring template of the corresponding monitoring type, and users can modify the configuration parameters on the page by modifying the monitoring template.
+- Support associated tags to manage monitoring grouping, alarm matching, and so on.
 
 ![HertzBeat](/img/home/10.png)
 
 ### Monitor Details
 
-* The monitoring data detail page shows the basic parameter information of the current monitoring, and the monitoring indicator data information.
-* Monitor Real-time Data Report displays the real-time values of all the currently monitored indicators in the form of a list of small cards, and users can configure alarm threshold rules based on the real-time values for reference.
-* Monitor Historical Data Report displays the historical values of the currently monitored metrics in the form of trend charts, supports querying hourly, daily and monthly historical data, and supports configuring the page refresh time.
-* ⚠️ Note that the monitoring history charts need to be configured with an external timing database in order to get the full functionality.
+- The monitoring data detail page shows the basic parameter information of the current monitoring, and the monitoring indicator data information.
+- Monitor Real-time Data Report displays the real-time values of all the currently monitored indicators in the form of a list of small cards, and users can configure alarm threshold rules based on the real-time values for reference.
+- Monitor Historical Data Report displays the historical values of the currently monitored metrics in the form of trend charts, supports querying hourly, daily and monthly historical data, and supports configuring the page refresh time.
+- ⚠️ Note that the monitoring history charts need to be configured with an external timing database in order to get the full functionality.
 
 ![HertzBeat](/img/home/3.png)
 
@@ -234,16 +233,16 @@ Built-in support for monitoring types include:
 
 ### Alarm Center
 
-* The management display page of triggered alarm messages enables users to visualize the current alarm situation.
-* Support alarm processing, alarm marking unprocessed, alarm deletion, clearing and other batch operations.
+- The management display page of triggered alarm messages enables users to visualize the current alarm situation.
+- Support alarm processing, alarm marking unprocessed, alarm deletion, clearing and other batch operations.
 
 ![HertzBeat](/img/home/7.png)
 
 ### Alarm Threshold
 
-* Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.
-* Support real-time threshold and scheduled threshold, real-time threshold can directly trigger the alarm when monitoring data is collected, scheduled threshold supports PromQL and other expressions to calculate the trigger alarm within a specified time period.
-* Support visual page configuration or more flexible expression rule configuration, support configuring trigger times, alarm levels, notification templates, associated specified monitoring and so on.
+- Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.
+- Support real-time threshold and scheduled threshold, real-time threshold can directly trigger the alarm when monitoring data is collected, scheduled threshold supports PromQL and other expressions to calculate the trigger alarm within a specified time period.
+- Support visual page configuration or more flexible expression rule configuration, support configuring trigger times, alarm levels, notification templates, associated specified monitoring and so on.
 
 ![HertzBeat](/img/home/6.png)
 
@@ -251,39 +250,39 @@ Built-in support for monitoring types include:
 
 ### Alarm Integration
 
-* Integration with third-party monitoring systems such as `Prometheus`, `WebHook`, `Skywalking`, `AlertManager`, etc. to receive alarm messages from these systems and perform alarm processing.
+- Integration with third-party monitoring systems such as `Prometheus`, `WebHook`, `Skywalking`, `AlertManager`, etc. to receive alarm messages from these systems and perform alarm processing.
 
 ![HertzBeat](/img/home/11.png)
 
 ### Alarm Grouping
 
-* Group convergence supports merging alarms for specified group labels by grouping. It deduplicates and converges the same repeated alarms in a time period.
-* When the threshold rule triggers an alarm or an external alarm is reported, it will enter the grouping convergence for alarm grouping and alarm deduplication to avoid alarm storms caused by a large number of alarm messages.
+- Group convergence supports merging alarms for specified group labels by grouping. It deduplicates and converges the same repeated alarms in a time period.
+- When the threshold rule triggers an alarm or an external alarm is reported, it will enter the grouping convergence for alarm grouping and alarm deduplication to avoid alarm storms caused by a large number of alarm messages.
 
 ![HertzBeat](/img/home/12.png)
 
 ### Alarm Inhibition
 
-* Alarm suppression is used to configure the suppression relationship between alarms. For example, high-level alarms suppress low-level alarms under the same instance.
-* When an alarm occurs, it can suppress the occurrence of other alarms. For example, when a server crashes, it can suppress all alarms on that server.
+- Alarm suppression is used to configure the suppression relationship between alarms. For example, high-level alarms suppress low-level alarms under the same instance.
+- When an alarm occurs, it can suppress the occurrence of other alarms. For example, when a server crashes, it can suppress all alarms on that server.
 
 ![HertzBeat](/img/home/13.png)
 
 ### Alarm Silence
 
-* When the alarm is triggered by the threshold rule, it will enter into the alarm silence, the alarm silence will be based on the rules of a specific one-time time period or periodic time period of the alarm message blocking silence, this time period does not send alarm messages.
-* This application scenario, such as users in the system maintenance, do not need to send known alarms. Users will only receive alarm messages on weekdays, and users need to avoid disturbances at night.
-* Alarm silence rules support one-time time period or periodic time period, support label matching and alarm level matching.
+- When the alarm is triggered by the threshold rule, it will enter into the alarm silence, the alarm silence will be based on the rules of a specific one-time time period or periodic time period of the alarm message blocking silence, this time period does not send alarm messages.
+- This application scenario, such as users in the system maintenance, do not need to send known alarms. Users will only receive alarm messages on weekdays, and users need to avoid disturbances at night.
+- Alarm silence rules support one-time time period or periodic time period, support label matching and alarm level matching.
 
 ![HertzBeat](/img/home/15.png)
 
 ### Message Notification
 
-* Message notification is a function to notify alarm messages to specified recipients through different media channels, so that the alarm messages can reach them in time.
-* It includes recipient information management and notification policy management. Recipient management maintains the information of recipients and their notification methods, while notification policy management maintains the policy rules of which recipients will be notified of the alert messages.
-* Notification methods support `Email` `Discord` `Slack` `Telegram` `Pinning` `WeChat` `Flybook` `SMS` `Webhook` and so on.
-* The notification policy supports tag matching and alert level matching, which makes it convenient to assign alerts with different tags and alert levels to different receivers and handlers.
-* Support notification templates, users can customize the content format of the templates to meet their own personalized notification display needs.
+- Message notification is a function to notify alarm messages to specified recipients through different media channels, so that the alarm messages can reach them in time.
+- It includes recipient information management and notification policy management. Recipient management maintains the information of recipients and their notification methods, while notification policy management maintains the policy rules of which recipients will be notified of the alert messages.
+- Notification methods support `Email` `Discord` `Slack` `Telegram` `Pinning` `WeChat` `Flybook` `SMS` `Webhook` and so on.
+- The notification policy supports tag matching and alert level matching, which makes it convenient to assign alerts with different tags and alert levels to different receivers and handlers.
+- Support notification templates, users can customize the content format of the templates to meet their own personalized notification display needs.
 
 ![HertzBeat](/img/home/16.png)
 
@@ -295,23 +294,23 @@ Built-in support for monitoring types include:
 
 ### Monitoring Template
 
-* HertzBeat makes `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` and other protocols configurable so that you can customize the metrics you want to collect using these protocols by simply configuring the monitoring template `YML` in your browser. Would you believe that you can instantly adapt a new monitoring type such as `K8s` or `Docker` just by configuring it?
-* All our built-in monitoring types (mysql, website, jvm, k8s) are also mapped to corresponding monitoring templates, so you can add and modify monitoring templates to customize your monitoring functions.
+- HertzBeat makes `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` and other protocols configurable so that you can customize the metrics you want to collect using these protocols by simply configuring the monitoring template `YML` in your browser. Would you believe that you can instantly adapt a new monitoring type such as `K8s` or `Docker` just by configuring it?
+- All our built-in monitoring types (mysql, website, jvm, k8s) are also mapped to corresponding monitoring templates, so you can add and modify monitoring templates to customize your monitoring functions.
 
 ![HertzBeat](/img/home/9.png)
 
 ### Collector Cluster
 
-* Users can configure collector clusters to achieve distributed collection of large-scale monitoring tasks.
-* The collector cluster supports multi-node deployment, automatic load balancing, automatic failover, etc.
-* Supports unified management of multiple isolated networks, cloud-edge collaboration.
+- Users can configure collector clusters to achieve distributed collection of large-scale monitoring tasks.
+- The collector cluster supports multi-node deployment, automatic load balancing, automatic failover, etc.
+- Supports unified management of multiple isolated networks, cloud-edge collaboration.
 
 ![HertzBeat](/img/home/18.png)
 
 ### Status Page
 
-* Based on HertzBeat, quickly build an external status page for your own product and easily convey the real-time status of your product service to users. For example, the service status page provided by Github <https://www.githubstatus.com>.
-* Support synchronization between the status of the status page component and the monitoring status, as well as the fault event maintenance management mechanism, etc. Improve your transparency, professionalism, and user trust, and reduce communication costs.
+- Based on HertzBeat, quickly build an external status page for your own product and easily convey the real-time status of your product service to users. For example, the service status page provided by Github <https://www.githubstatus.com>.
+- Support synchronization between the status of the status page component and the monitoring status, as well as the fault event maintenance management mechanism, etc. Improve your transparency, professionalism, and user trust, and reduce communication costs.
 
 ![HertzBeat](/img/home/19.png)
 

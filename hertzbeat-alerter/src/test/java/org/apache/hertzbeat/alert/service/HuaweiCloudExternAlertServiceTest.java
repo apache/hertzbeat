@@ -146,7 +146,42 @@ public class HuaweiCloudExternAlertServiceTest {
         verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
     }
 
+    @Test
+    void testSubscriptionUrlFail() {
+        HuaweiCloudExternAlert externAlert = new HuaweiCloudExternAlert();
+        externAlert.setSubscribeUrl("https://console.huaweicloud.com/smn/subscription/confirm?token=477a784601d744e4ab9ab83986502d31c4b938"
+                + "0ec0b64392b134e517c3aa17eb7b3a12dc9f3b4ab495e61c4dee654b435d7223ea934345bf8ae8901cef912b1d&topic_urn=urn:smn:cn-north-4"
+                + ":477a784601d744e4ab9ab83986502d31:CES_notification_group_bngJ2aMpX&region=cn-north-4");
+        externAlert.setSignature("ottf37C/2RdDgqimRQMIBU6i7XjUfPPMU760jJn71wwP3825YPoIT22uw2A9399rkm9Jrt1qUEFrDLuA5yHFLd5n/XoM4FghIgyFn7VIfgpuVM31a+co78s"
+                + "YBiZ1egOCE/AwFm2oygRhfIceUj9Kw9vmc06el9TXY6RtE5tAEF6qEmICtTh45KwtCO/WRs3DY72dQi5hm0w7/tktS4WFZ1iP4LHt5eCwFvnH0u29Y96cJNI0fLUQxI5MkhgjK"
+                + "77JkFK7UT6ZYJZhzgSp/B7OQGStOQx+3Duvx4T4CzccZQM3sca81Z0B0GFGWeVXuEHyCPLsayY/Iz+5Tco51elT8w==");
+        externAlert.setTopicUrn("urn:smn:cn-north-4:477a784601d744e4ab9ab83986502d31:CES_notification_group_bngJ2aMpX");
+        externAlert.setMessageId("242fac183d3a4936b5ead6c725a32ed0");
+        externAlert.setType("SubscriptionConfirmation");
+        externAlert.setMessage("You are invited to subscribe to topic: urn:smn:cn-north-4:477a784601d744e4ab9ab83986502d31:"
+                + "CES_notification_group_bngJ2aMpX. To confirm this subscription, please visit the subscribe_url included in this message. The subscribe_url is valid only within 48 hours.");
+        externAlert.setSigningCertUrl("https://xxxx.myhuaweicloud.com/smn/SMN_cn-north-4_b98100ca131b4116ab8ee7ccedbaae99.pem");
+        externAlert.setTimestamp("2025-06-07T15:07:14Z");
+        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+    }
 
-
+    @Test
+    void testCertUrlFailed() {
+        HuaweiCloudExternAlert externAlert = new HuaweiCloudExternAlert();
+        externAlert.setSignature("TImrLoeb0tV1JZJSPyA0rpC9mNqH3MmhwQ4tgpuHHa+JztfGVZFvkU//OthKKhzpDAoYiXOYG9DbzXCLb"
+                + "vaGePIRITakoynYyYr9zZIpdx9jXhQNlgF8np1+t0JxNeoIq0DYWgH52tsodwqOm+OnmkcHwCRo/1rFv85KrKAaX2gy3sNwX"
+                + "w1hKnAwAw0mJlxHHSf/N3+7j6GoxCNV7fN9K4CpJiLMGNvUa7zVmG0U9mPvt/7Lac155kPPQ9lYyeL7vVI0e4sfRbuQruz3E"
+                + "0ZP40TKx0afoeR0/Bx/IoZzRP1La7pKlbEISvkcM7TqW/IOGQTkhVsQ32RFRxZWO2snw==");
+        externAlert.setSubject("DCS Redis “dcs-h4tv” ");
+        externAlert.setTopicUrn("urn:smn:cn-north-4:477a784601d744e4ab9ab83986502d31:CES_notification_group_bngJ2aMpX");
+        externAlert.setMessageId("d3672d737bb742cf8c2aa3f0fd72d4d1");
+        externAlert.setType("Notification");
+        externAlert.setMessage("{}");
+        externAlert.setSigningCertUrl("https://xxx.myhuaweicloud.com/failedUrl");
+        externAlert.setTimestamp("2025-06-07T15:12:09Z");
+        externAlertService.addExternAlert(JsonUtil.toJson(externAlert));
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any(SingleAlert.class));
+    }
 
 }

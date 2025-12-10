@@ -25,6 +25,7 @@ import java.util.Enumeration;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.http.conn.util.InetAddressUtils;
 import org.springframework.util.StringUtils;
 
@@ -33,7 +34,7 @@ import org.springframework.util.StringUtils;
  */
 @Slf4j
 public final class IpDomainUtil {
-    
+
     private static final Pattern DOMAIN_PATTERN =
             Pattern.compile("^[-\\w]+(\\.[-\\w]+)*$");
 
@@ -82,6 +83,23 @@ public final class IpDomainUtil {
     }
 
     /**
+     * if instance has the port with mark
+     * @param instance instance ip:port
+     * @return true if has
+     */
+    public static boolean isHasPortWithMark(String instance) {
+        if (instance == null || !StringUtils.hasText(instance)) {
+            return false;
+        }
+        String[] parts = instance.split(SignConstants.DOUBLE_MARK);
+        if (parts.length >= 2) {
+            String port = parts[parts.length - 1];
+            return CommonUtil.isNumeric(port);
+        }
+        return false;
+    }
+
+    /**
      * get localhost IP.
      * @return ip
      */
@@ -106,7 +124,7 @@ public final class IpDomainUtil {
         }
         return null;
     }
-    
+
     /**
      * check IP address type.
      * @param ipDomain ip domain
@@ -118,7 +136,7 @@ public final class IpDomainUtil {
         }
         return NetworkConstants.IPV4;
     }
-    
+
     /**
      * get current local host name.
      * @return hostname
@@ -126,7 +144,7 @@ public final class IpDomainUtil {
     public static String getCurrentHostName() {
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();
-            return inetAddress.getHostName();   
+            return inetAddress.getHostName();
         } catch (UnknownHostException e) {
             return null;
         }

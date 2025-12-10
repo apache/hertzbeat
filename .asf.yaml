@@ -16,11 +16,15 @@
 #
 
 github:
-  description: Real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+  description: An AI-powered next-generation open source real-time observability system.
   homepage: https://hertzbeat.apache.org/
   labels:
-    - monitoring
+    - ai
+    - agent
+    - llm
+    - logs
     - monitor
+    - monitoring
     - notifications
     - alerting
     - self-hosted
@@ -30,15 +34,11 @@ github:
     - metrics
     - observability
     - uptime
-    - uptime-monitoring
     - status
     - status-page
-    - devops
     - server
     - linux
     - database
-    - mysql
-    - cloud
   enabled_merge_buttons:
     squash: true
     merge: false

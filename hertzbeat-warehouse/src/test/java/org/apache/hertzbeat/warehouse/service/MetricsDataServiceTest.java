@@ -95,7 +95,7 @@ public class MetricsDataServiceTest {
 
     @Test
     public void testGetMetricHistoryData() {
-        Long monitorId = 1L;
+        String instance = "127.0.0.1:8080";
         String app = "linux";
         String metrics = "disk";
         String metric = "used";
@@ -104,12 +104,12 @@ public class MetricsDataServiceTest {
         Boolean intervalFalse = false;
         Boolean intervalTrue = true;
 
-        when(historyDataReader.getHistoryMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, intervalFalse));
-        verify(historyDataReader, times(1)).getHistoryMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
+        when(historyDataReader.getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, intervalFalse));
+        verify(historyDataReader, times(1)).getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history));
 
-        when(historyDataReader.getHistoryIntervalMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(monitorId, app, metrics, metric, label, history, intervalTrue));
-        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric), eq(label), eq(history));
+        when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, intervalTrue));
+        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history));
     }
 }

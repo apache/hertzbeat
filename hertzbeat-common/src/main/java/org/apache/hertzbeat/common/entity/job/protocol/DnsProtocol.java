@@ -37,9 +37,10 @@ public class DnsProtocol implements CommonRequestProtocol, Protocol {
     private String timeout;
     private String tcp;
     private String queryClass;
+    private String recordType;
 
     public boolean isInvalid() {
-        return StringUtils.isAnyBlank(dnsServerIP, port, address, timeout, tcp, queryClass);
+        return StringUtils.isAnyBlank(dnsServerIP, port, address, timeout, tcp, queryClass, recordType);
     }
 
     @Override

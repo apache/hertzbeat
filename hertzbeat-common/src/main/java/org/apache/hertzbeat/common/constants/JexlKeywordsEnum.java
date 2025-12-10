@@ -24,23 +24,46 @@ import java.util.Arrays;
  */
 public enum JexlKeywordsEnum {
 
-    SIZE("size"),
-    EMPTY("empty"),
-    NEW("new"),
-    VAR("var"),
-    RETURN("return"),
-    IF("if"),
-    ELSE("else"),
-    ELSEIF("elseif"),
-    WHILE("while"),
-    DO("do"),
-    FOR("for"),
-    CONTINUE("continue"),
-    BREAK("break"),
+    /**
+     * Official reserved keywords
+     * @reference https://commons.apache.org/proper/commons-jexl/reference/syntax.html
+     */
+    OR("or"),
+    AND("and"),
+    EQ("eq"),
+    NE("ne"),
+    LT("lt"),
+    GT("gt"),
+    LE("le"),
+    GE("ge"),
+    DIV("div"),
+    MOD("mod"),
+    NOT("not"),
+    NULL("null"),
     TRUE("true"),
     FALSE("false"),
-    NULL("null"),
-    UNDEFINED("undefined");
+    NEW("new"),
+    VAR("var"),
+    DO("do"),
+    WHILE("while"),
+    BREAK("break"),
+    CONTINUE("continue"),
+    FUNCTION("function"),
+    RETURN("return"),
+
+    /**
+     * Syntax-reserved keywords
+     */
+    IF("if"),
+    ELSE("else"),
+    FOR("for"),
+
+    /**
+     * Built-in functions reserve keywords
+     */
+    SIZE("size"),
+    EMPTY("empty");
+
 
     private final String keyword;
 

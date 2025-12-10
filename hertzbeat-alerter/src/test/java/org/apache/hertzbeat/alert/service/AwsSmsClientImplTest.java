@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import org.apache.hertzbeat.alert.config.AwsSmsProperties;
+import org.apache.hertzbeat.common.entity.dto.sms.AwsSmsProperties;
 import org.apache.hertzbeat.alert.service.impl.AwsSmsClientImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

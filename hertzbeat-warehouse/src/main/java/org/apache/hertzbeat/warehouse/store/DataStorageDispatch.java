@@ -17,14 +17,19 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import java.util.List;
 import java.util.Optional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.support.exception.CommonDataQueueUnknownException;
+import org.apache.hertzbeat.common.util.BackoffUtils;
+import org.apache.hertzbeat.common.util.ExponentialBackoff;
 import org.apache.hertzbeat.plugin.PostCollectPlugin;
 import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
@@ -46,6 +51,7 @@ public class DataStorageDispatch {
     private final RealTimeDataWriter realTimeDataWriter;
     private final Optional<HistoryDataWriter> historyDataWriter;
     private final PluginRunner pluginRunner;
+    private static final int LOG_BATCH_SIZE = 1000;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -62,17 +68,20 @@ public class DataStorageDispatch {
         this.historyDataWriter = historyDataWriter;
         this.pluginRunner = pluginRunner;
         startPersistentDataStorage();
+        startLogDataStorage();
     }
 
     protected void startPersistentDataStorage() {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToStorage();
                     if (metricsData == null) {
                         continue;
                     }
+                    backoff.reset();
                     try {
                         calculateMonitorStatus(metricsData);
                         historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
@@ -82,8 +91,44 @@ public class DataStorageDispatch {
                     }
                 } catch (InterruptedException interruptedException) {
                     Thread.currentThread().interrupt();
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
+                        break;
+                    }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                }
+            }
+        };
+        workerPool.executeJob(runnable);
+    }
+
+    protected void startLogDataStorage() {
+        Runnable runnable = () -> {
+            ExponentialBackoff backoff = new ExponentialBackoff(50L, 1000L);
+            Thread.currentThread().setName("warehouse-log-data-storage");
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    List<LogEntry> logEntries = commonDataQueue.pollLogEntryToStorageBatch(LOG_BATCH_SIZE);
+                    if (logEntries == null || logEntries.isEmpty()) {
+                        continue;
+                    }
+                    backoff.reset();
+                    historyDataWriter.ifPresent(dataWriter -> {
+                        try {
+                            dataWriter.saveLogDataBatch(logEntries);
+                        } catch (Exception e) {
+                            log.error("Failed to save log entries batch: {}", e.getMessage(), e);
+                        }
+                    });
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                } catch (CommonDataQueueUnknownException ue) {
+                    if (!BackoffUtils.shouldContinueAfterBackoff(backoff)) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    log.error("Error in log data storage thread: {}", e.getMessage(), e);
                 }
             }
         };

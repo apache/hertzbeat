@@ -27,8 +27,14 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.KeyValue;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.hertzbeat.common.config.CommonProperties;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.serialize.RedisLogEntryCodec;
 import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,9 +52,13 @@ class RedisCommonDataQueueTest {
 
     @Mock
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
+    @Mock
+    private StatefulRedisConnection<String, LogEntry> logEntryConnection;
 
     @Mock
     private RedisCommands<String, CollectRep.MetricsData> syncCommands;
+    @Mock
+    private RedisCommands<String, LogEntry> logEntrySyncCommands;
     
     private RedisClient redisClient;
     private CommonProperties commonProperties;
@@ -65,12 +75,16 @@ class RedisCommonDataQueueTest {
         when(commonProperties.getQueue()).thenReturn(dataQueueProperties);
         when(dataQueueProperties.getRedis()).thenReturn(redisProperties);
         when(redisProperties.getMetricsDataQueueNameToAlerter()).thenReturn("metricsDataQueueToAlerter");
+        when(redisProperties.getLogEntryQueueName()).thenReturn("logEntryQueue");
+        when(redisProperties.getLogEntryToStorageQueueName()).thenReturn("logEntryToStorageQueue");
         when(redisProperties.getRedisHost()).thenReturn("localhost");
         when(redisProperties.getRedisPort()).thenReturn(6379);
-
+        when(redisProperties.getWaitTimeout()).thenReturn(1L);
         try (MockedStatic<RedisClient> mockedRedisClient = mockStatic(RedisClient.class)) {
             mockedRedisClient.when(() -> RedisClient.create(any(RedisURI.class))).thenReturn(redisClient);
             when(redisClient.connect(any(RedisMetricsDataCodec.class))).thenReturn(connection);
+            when(redisClient.connect(any(RedisLogEntryCodec.class))).thenReturn(logEntryConnection);
+            when(logEntryConnection.sync()).thenReturn(logEntrySyncCommands);
             when(connection.sync()).thenReturn(syncCommands);
 
             redisCommonDataQueue = new RedisCommonDataQueue(commonProperties);
@@ -82,11 +96,13 @@ class RedisCommonDataQueueTest {
         CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                 .setMetrics("test metrics")
                 .build();
+        String queueName = "metricsDataQueueToAlerter";
 
-        when(syncCommands.rpop("metricsDataQueueToAlerter")).thenReturn(metricsData);
+        when(syncCommands.brpop(1L, queueName)).thenReturn(KeyValue.just(queueName, metricsData));
 
         CollectRep.MetricsData actualMetricsData = redisCommonDataQueue.pollMetricsDataToAlerter();
         assertEquals(metricsData, actualMetricsData);
+        verify(syncCommands).brpop(1L, queueName);
     }
 
     @Test
@@ -101,9 +117,88 @@ class RedisCommonDataQueueTest {
     }
 
     @Test
+    public void testSendLogEntry() {
+        // Create a test log entry with comprehensive data
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("service.name", "hertzbeat");
+        attributes.put("service.version", "1.0.0");
+        
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(9) // INFO level
+                .severityText("INFO")
+                .body("Test log message for Redis queue")
+                .attributes(attributes)
+                .traceId("1234567890abcdef1234567890abcdef")
+                .spanId("1234567890abcdef")
+                .build();
+
+        // Test sending log entry
+        redisCommonDataQueue.sendLogEntry(logEntry);
+
+        // Verify that the Redis commands were called
+        verify(logEntrySyncCommands).lpush("logEntryQueue", logEntry);
+    }
+
+    @Test
+    public void testSendLogEntryToStorage() {
+        // Create a test log entry for storage
+        LogEntry logEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(17) // ERROR level
+                .severityText("ERROR")
+                .body("Error log message for storage via Redis")
+                .build();
+
+        // Test sending log entry to storage
+        redisCommonDataQueue.sendLogEntryToStorage(logEntry);
+
+        // Verify that the Redis commands were called
+        verify(logEntrySyncCommands).lpush("logEntryToStorageQueue", logEntry);
+    }
+
+    @Test
+    public void testPollLogEntry() throws Exception {
+        // Create test log entry
+        LogEntry expectedLogEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(13) // WARN level
+                .severityText("WARN")
+                .body("Test warning log message")
+                .build();
+        String queueName = "logEntryQueue";
+
+        when(logEntrySyncCommands.brpop(1L, queueName)).thenReturn(KeyValue.just(queueName, expectedLogEntry));
+
+        LogEntry result = redisCommonDataQueue.pollLogEntry();
+        
+        assertEquals(expectedLogEntry, result);
+        verify(logEntrySyncCommands).brpop(1L, "logEntryQueue");
+    }
+
+    @Test
+    public void testPollLogEntryToStorage() throws Exception {
+        // Create test log entry for storage
+        LogEntry expectedLogEntry = LogEntry.builder()
+                .timeUnixNano(Instant.now().toEpochMilli() * 1_000_000L)
+                .severityNumber(21) // FATAL level
+                .severityText("FATAL")
+                .body("Critical error log for storage")
+                .build();
+        String queueName = "logEntryToStorageQueue";
+
+        when(logEntrySyncCommands.brpop(1L, queueName)).thenReturn(KeyValue.just(queueName, expectedLogEntry));
+        LogEntry result = redisCommonDataQueue.pollLogEntryToStorage();
+        
+        assertEquals(expectedLogEntry, result);
+        verify(logEntrySyncCommands).brpop(1L, "logEntryToStorageQueue");
+    }
+
+    @Test
     public void testDestroy() {
         redisCommonDataQueue.destroy();
         verify(connection).close();
+        verify(logEntryConnection).close();
         verify(redisClient).shutdown();
     }
 }

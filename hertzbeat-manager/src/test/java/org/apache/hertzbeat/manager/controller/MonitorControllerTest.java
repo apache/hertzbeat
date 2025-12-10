@@ -60,7 +60,7 @@ class MonitorControllerTest {
         monitor.setJobId(43243543543L);
         monitor.setName("Api-TanCloud.cn");
         monitor.setName("TanCloud");
-        monitor.setHost("192.167.25.11");
+        monitor.setInstance("192.167.25.11:8989");
         monitor.setIntervals(600);
         monitor.setDescription("对SAAS网站TanCloud的可用性监控");
         monitor.setCreator("tom");
@@ -115,7 +115,7 @@ class MonitorControllerTest {
         monitor.setJobId(43243543543L);
         monitor.setName("Api-TanCloud.cn");
         monitor.setName("TanCloud");
-        monitor.setHost("192.167.25.11");
+        monitor.setInstance("192.167.25.11:8989");
         monitor.setIntervals(600);
         monitor.setDescription("对SAAS网站TanCloud的可用性监控");
         monitor.setCreator("tom");
@@ -142,7 +142,7 @@ class MonitorControllerTest {
         monitor.setJobId(43243543543L);
         monitor.setName("Api-TanCloud.cn");
         monitor.setName("TanCloud");
-        monitor.setHost("192.167.25.11");
+        monitor.setInstance("192.167.25.11:8989");
         monitor.setIntervals(600);
         monitor.setDescription("对SAAS网站TanCloud的可用性监控");
         monitor.setCreator("tom");

@@ -35,7 +35,7 @@ DEPLOY_DIR=`pwd`
 # absolute directory of external configuration files, if it is a directory, it should end with '/'，you can also directly specify a file.
 # if a directory is specified, spring will read all configuration files in the directory
 CONF_DIR=$DEPLOY_DIR/config
-MAIN_CLASS="org.apache.hertzbeat.manager.Manager"
+MAIN_CLASS="org.apache.hertzbeat.startup.HertzBeatApplication"
 EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
 CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
 # log dir

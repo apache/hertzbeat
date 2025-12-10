@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -64,7 +63,7 @@ public class CryptoUtils {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] digest = md.digest(data.getBytes(UTF8));
-            return DatatypeConverter.printHexBinary(digest).toLowerCase();
+            return bytesToHex(digest).toLowerCase();
         } catch (Exception e) {
             log.error("Failed to calculate SHA256: {}", e.getMessage());
             throw new RuntimeException("Failed to calculate SHA256", e);
@@ -89,7 +88,7 @@ public class CryptoUtils {
      * @return lowercase hexadecimal string
      */
     public static String hmacSha256Hex(String key, String data) {
-        return hmacSha256Hex(hmac256(key.getBytes(UTF8), data), data);
+        return hmacSha256Hex(key.getBytes(UTF8), data);
     }
 
     /**
@@ -101,6 +100,19 @@ public class CryptoUtils {
      */
     public static String hmacSha256Hex(byte[] key, String data) {
         byte[] hmacResult = hmac256(key, data);
-        return DatatypeConverter.printHexBinary(hmacResult).toLowerCase();
+        return bytesToHex(hmacResult).toLowerCase();
+    }
+
+    /**
+     * Convert byte array to hexadecimal string
+     * @param bytes byte array to convert
+     * @return hexadecimal string representation
+     */
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        for (byte byteValue : bytes) {
+            result.append(String.format("%02x", byteValue));
+        }
+        return result.toString();
     }
 } 

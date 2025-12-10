@@ -1,0 +1,246 @@
+<!--
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'log.help.stream' | i18n"
+  [guild_link]="'log.help.stream.link' | i18n"
+  [module_name]="'menu.log.stream'"
+  [icon_name]="'file-text'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<div class="log-stream-container">
+  <!-- Header with Controls and Filters -->
+  <nz-card [nzTitle]="'log.stream.title' | i18n" class="header-card">
+    <!-- Main Control Row -->
+    <div class="header-content">
+      <!-- Connection Status -->
+      <div class="connection-status">
+        <nz-tag [nzColor]="isConnected ? 'green' : isConnecting ? 'orange' : 'red'" class="status-tag">
+          <i nz-icon [nzType]="isConnected ? 'check-circle' : isConnecting ? 'loading' : 'close-circle'" [nzSpin]="isConnecting"> </i>
+          {{
+            isConnected
+              ? ('log.stream.connected' | i18n)
+              : isConnecting
+              ? ('log.stream.connecting' | i18n)
+              : ('log.stream.disconnected' | i18n)
+          }}
+        </nz-tag>
+
+        <span class="log-count">{{ logEntries.length }} {{ 'log.stream.logs' | i18n }}</span>
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="control-buttons">
+        <button nz-button nzType="default" (click)="onToggleFilters()" [nz-tooltip]="'log.stream.toggle-filters' | i18n">
+          <i nz-icon nzType="filter"></i>
+          {{ showFilters ? ('log.stream.hide-filters' | i18n) : ('log.stream.show-filters' | i18n) }}
+        </button>
+
+        <button
+          nz-button
+          [nzType]="isPaused ? 'primary' : 'default'"
+          (click)="onTogglePause()"
+          [nz-tooltip]="isPaused ? ('log.stream.resume' | i18n) : ('log.stream.pause' | i18n)"
+        >
+          <i nz-icon [nzType]="isPaused ? 'play-circle' : 'pause-circle'"></i>
+          {{ isPaused ? ('log.stream.resume' | i18n) : ('log.stream.pause' | i18n) }}
+        </button>
+
+        <button nz-button nzType="default" (click)="onClearLogs()" [nz-tooltip]="'log.stream.clear' | i18n">
+          <i nz-icon nzType="clear"></i>
+          {{ 'log.stream.clear' | i18n }}
+        </button>
+
+        <button
+          nz-button
+          nzType="default"
+          (click)="scrollToTop()"
+          [nz-tooltip]="'log.stream.scroll-to-top' | i18n"
+          [disabled]="logEntries.length === 0"
+        >
+          <i nz-icon nzType="vertical-align-top"></i>
+          Top
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Row -->
+    <div *ngIf="showFilters" class="filter-content">
+      <nz-divider class="filter-divider"></nz-divider>
+      <div class="filter-controls">
+        <div class="filter-item">
+          <label class="filter-label">{{ 'log.stream.severity-number' | i18n }}</label>
+          <nz-input-group [nzPrefix]="severityNumberTemplate" class="filter-input">
+            <input
+              type="number"
+              nz-input
+              [(ngModel)]="filterSeverityNumber"
+              [placeholder]="'log.stream.severity-number-placeholder' | i18n"
+            />
+          </nz-input-group>
+          <ng-template #severityNumberTemplate>
+            <i nz-icon nzType="number"></i>
+          </ng-template>
+        </div>
+
+        <div class="filter-item">
+          <label class="filter-label">{{ 'log.stream.severity-text' | i18n }}</label>
+          <nz-input-group [nzPrefix]="severityTextTemplate" class="filter-input">
+            <input
+              type="text"
+              nz-input
+              [(ngModel)]="filterSeverityText"
+              [placeholder]="'log.stream.severity-text-placeholder' | i18n"
+              [nzAutocomplete]="severityTextAuto"
+            />
+          </nz-input-group>
+          <ng-template #severityTextTemplate>
+            <i nz-icon nzType="file-text"></i>
+          </ng-template>
+
+          <nz-autocomplete #severityTextAuto>
+            <nz-auto-option nzValue="TRACE">TRACE</nz-auto-option>
+            <nz-auto-option nzValue="DEBUG">DEBUG</nz-auto-option>
+            <nz-auto-option nzValue="INFO">INFO</nz-auto-option>
+            <nz-auto-option nzValue="WARN">WARN</nz-auto-option>
+            <nz-auto-option nzValue="ERROR">ERROR</nz-auto-option>
+            <nz-auto-option nzValue="FATAL">FATAL</nz-auto-option>
+          </nz-autocomplete>
+        </div>
+
+        <div class="filter-item">
+          <label class="filter-label">{{ 'log.stream.trace-id' | i18n }}</label>
+          <nz-input-group [nzPrefix]="traceIdTemplate" class="filter-input">
+            <input type="text" nz-input [(ngModel)]="filterTraceId" [placeholder]="'log.stream.trace-id-placeholder' | i18n" />
+          </nz-input-group>
+          <ng-template #traceIdTemplate>
+            <i nz-icon nzType="link"></i>
+          </ng-template>
+        </div>
+
+        <div class="filter-item">
+          <label class="filter-label">{{ 'log.stream.span-id' | i18n }}</label>
+          <nz-input-group [nzPrefix]="spanIdTemplate" class="filter-input">
+            <input type="text" nz-input [(ngModel)]="filterSpanId" [placeholder]="'log.stream.span-id-placeholder' | i18n" />
+          </nz-input-group>
+          <ng-template #spanIdTemplate>
+            <i nz-icon nzType="apartment"></i>
+          </ng-template>
+        </div>
+
+        <div class="filter-actions">
+          <button nz-button nzType="default" (click)="onApplyFilters()" [nz-tooltip]="'log.stream.apply-filters-tooltip' | i18n">
+            <i nz-icon nzType="filter"></i>
+            {{ 'log.stream.apply-filters' | i18n }}
+          </button>
+          <button nz-button nzType="default" (click)="onClearFilters()" [nz-tooltip]="'log.stream.clear-filters-tooltip' | i18n">
+            <i nz-icon nzType="clear"></i>
+            {{ 'log.stream.clear-filters' | i18n }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="log-container" [class.paused]="isPaused">
+      <!-- Empty State -->
+      <div *ngIf="!isConnecting && logEntries.length === 0" class="empty-state">
+        <nz-empty [nzNotFoundContent]="'log.stream.no-logs' | i18n"> </nz-empty>
+      </div>
+
+      <!-- Log Entries with Virtual Scroll -->
+      <cdk-virtual-scroll-viewport itemSize="40" class="virtual-scroll-viewport">
+        <div *cdkVirtualFor="let logEntry of logEntries; trackBy: trackByLogEntry" class="log-entry" (click)="showLogDetails(logEntry)">
+          <div class="log-content">
+            <div class="log-meta">
+              <nz-tag [nzColor]="logEntry.severityColor" class="severity-tag">
+                {{ logEntry.original.severityText || ('log.stream.unknown' | i18n) }}
+              </nz-tag>
+
+              <span class="timestamp">
+                {{ logEntry.timestamp | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}
+              </span>
+            </div>
+
+            <div class="log-message">
+              {{ logEntry.displayText }}
+            </div>
+
+            <div class="log-actions">
+              <button
+                nz-button
+                nzSize="small"
+                nzType="text"
+                (click)="$event.stopPropagation(); copyToClipboard(logEntry.displayText)"
+                [nz-tooltip]="'log.stream.copy-message' | i18n"
+              >
+                <i nz-icon nzType="copy"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </cdk-virtual-scroll-viewport>
+    </div>
+  </nz-card>
+</div>
+
+<!-- Log Details Modal -->
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  [nzTitle]="'log.stream.log-entry-details' | i18n"
+  (nzOnCancel)="handleModalCancel()"
+  [nzFooter]="null"
+  [nzWidth]="800"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="selectedLogEntry" class="log-details-modal">
+      <!-- Basic Info Section -->
+      <nz-card [nzTitle]="'log.stream.basic-information' | i18n" [nzSize]="'small'" style="margin-bottom: 16px">
+        <div class="basic-info">
+          <div class="info-row">
+            <span class="info-label">{{ 'log.stream.severity' | i18n }}</span>
+            <nz-tag [nzColor]="selectedLogEntry.severityColor">
+              {{ selectedLogEntry.original.severityText || ('log.stream.unknown' | i18n) }}
+            </nz-tag>
+          </div>
+          <div class="info-row">
+            <span class="info-label">{{ 'log.stream.timestamp' | i18n }}</span>
+            <span>{{ selectedLogEntry.timestamp | date : 'yyyy-MM-dd HH:mm:ss.SSS' }}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedLogEntry.original.traceId">
+            <span class="info-label">{{ 'log.stream.trace-id-full' | i18n }}</span>
+            <span>{{ selectedLogEntry.original.traceId }}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedLogEntry.original.spanId">
+            <span class="info-label">{{ 'log.stream.span-id-full' | i18n }}</span>
+            <span>{{ selectedLogEntry.original.spanId }}</span>
+          </div>
+        </div>
+      </nz-card>
+
+      <!-- JSON Details Section -->
+      <nz-card [nzTitle]="'log.stream.complete-json-data' | i18n" [nzSize]="'small'">
+        <div class="json-content">
+          <pre>{{ getLogEntryJson(selectedLogEntry.original) }}</pre>
+        </div>
+      </nz-card>
+    </div>
+  </ng-container>
+</nz-modal>
