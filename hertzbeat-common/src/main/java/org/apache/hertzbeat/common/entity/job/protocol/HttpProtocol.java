@@ -101,6 +101,16 @@ public class HttpProtocol implements CommonRequestProtocol, Protocol {
      */
     private String enableUrlEncoding = "true";
 
+    @Override
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    @Override
+    public void setPort(String port) {
+        this.port = port;
+    }
+
     /**
      * authentication information
      */

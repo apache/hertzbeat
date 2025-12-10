@@ -301,6 +301,10 @@ public class Metrics {
      */
     private S7Protocol s7;
     /**
+     * Monitoring configuration information using the public milvus protocol
+     */
+    private HttpProtocol milvus;
+    /**
      * collector use - Temporarily store subTask metrics response data
      */
     @JsonIgnore
