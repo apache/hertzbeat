@@ -95,7 +95,7 @@ export class SqlEditorComponent implements OnDestroy, ControlValueAccessor {
     { name: 'instrumentation_scope', type: 'Json', description: 'Instrumentation scope information' },
     { name: 'dropped_attributes_count', type: 'Int32', description: 'Number of dropped attributes' }
   ];
-  
+
   ngOnDestroy(): void {
     if (this.completionProvider) {
       this.completionProvider.dispose();
