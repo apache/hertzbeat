@@ -26,7 +26,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * Duckdb configuration information
  * @param enabled use duckdb store metrics history data
- * @param expireTime save data expire
+ * @param expireTime save data expire time (supports formats like '30d', '90d', or milliseconds)
  * @param storePath duckdb database file path
  */
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
