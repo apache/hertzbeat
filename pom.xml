@@ -139,6 +139,7 @@
         <clickhouse.version>0.4.6</clickhouse.version>
         <damengc-driver.version>8.1.2.141</damengc-driver.version>
         <postgresql.version>42.5.5</postgresql.version>
+        <xugu-jdbc.version>12.3.5</xugu-jdbc.version>
         <h2.version>2.2.224</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
@@ -382,6 +383,11 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xugudb</groupId>
+                <artifactId>xugu-jdbc</artifactId>
+                <version>${xugu-jdbc.version}</version>
             </dependency>
             <!-- taos-jdbc driver -->
             <dependency>

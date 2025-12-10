@@ -521,6 +521,8 @@ public class JdbcCommonCollect extends AbstractCollect {
             case "mysql", "mariadb" -> "jdbc:mysql://" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
                     + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
+            case "xugu" -> "jdbc:xugu://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
             case "postgresql" -> "jdbc:postgresql://" + host + ":" + port
                     + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
             case "clickhouse" -> "jdbc:clickhouse://" + host + ":" + port
