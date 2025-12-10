@@ -50,7 +50,6 @@ export interface LogTableColumn {
 })
 export class SqlEditorComponent implements OnDestroy, ControlValueAccessor {
   @Input() height: string = '120px';
-  @Input() placeholder: string = '';
   @Input() tableName: string = 'hertzbeat_logs';
 
   @Output() readonly editorInit = new EventEmitter<any>();

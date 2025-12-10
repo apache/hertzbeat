@@ -318,7 +318,6 @@
   "alert.setting.rule.string-value.place-holder": "Please input string",
   "alert.setting.log.query": "Log Query",
   "alert.setting.log.query.tip": "Configure log query conditions to filter logs that need to be monitored",
-  "alert.setting.log.query.placeholder": "Please enter log query conditions",
   "alert.setting.log.expr": "Log Alert Expression",
   "alert.setting.log.expr.tip": "Configure log alert trigger conditions based on query results",
   "alert.setting.log.expr.placeholder": "Please enter alert expression, e.g.: count > 10",
