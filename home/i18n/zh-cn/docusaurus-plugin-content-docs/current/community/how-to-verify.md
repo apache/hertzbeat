@@ -15,7 +15,7 @@ sidebar_position: 4
 > 需要依赖gpg工具，如果没有，建议安装gpg2
 
 ```shell
-#如果本地有svn，可以clone到本地 
+#如果本地有svn，可以clone到本地
 svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/
 #或者 直接下载物料文件
 wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/xxx.xxx
@@ -70,9 +70,9 @@ Please decide how far you trust this user to correctly verify other users' keys
 
 Your decision? 5 #选择5
 Do you really want to set this key to ultimate trust? (y/N) y #选择y
-                                                            
-gpg> 
-     
+
+gpg>
+
 ```
 
 ##### 2.2.3 检查签名
@@ -150,23 +150,11 @@ cd apache-hertzbeat-${release_version}-incubating-src
 :::caution 注意
 回复的邮件一定要带上自己检查了那些项信息，仅仅回复`+1 approve`，是无效的。
 
-PPMC 在 <dev@hertzbeat.apache.org> HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
-
-IPMC 在 <general@incubator.apache.org> incubator 社区投票，请带上 binding 后缀，表示对 incubator 社区中的投票具有约束性投票，方便统计投票结果。
-:::
-
-:::caution 注意
-如果在<dev@hertzbeat.apache.org>已经投过票，在incubator社区进行投票回复时，可以直接带过去,<font color="red">需要注意约束性</font>  如:
-
-```html
-//incubator社区 投票时，只有IPMC成员才具有约束性 binding，PPMC需要注意约束性的变化
-Forward my +1 from dev@hertzbeat (non-binding)
-Copy my +1 from hertzbeat DEV ML (non-binding)
-```
+PMC 在 <dev@hertzbeat.apache.org> HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
 
 :::
 
-非PPMC/IPMC成员
+非PMC成员
 
 ```html
 +1 (non-binding)
@@ -174,20 +162,19 @@ I  checked:
     1. All download links are valid
     2. Checksum and signature are OK
     3. LICENSE and NOTICE are exist
-    4. Build successfully on macOS(Big Sur) 
+    4. Build successfully on macOS(Big Sur)
     5. ....
 ```
 
-PPMC/IPMC成员
+PMC成员
 
 ```html
-//incubator社区 投票时，只有IPMC成员才具有约束性 binding
 +1 (binding)
 I  checked:
     1. All download links are valid
     2. Checksum and signature are OK
     3. LICENSE and NOTICE are exist
-    4. Build successfully on macOS(Big Sur) 
+    4. Build successfully on macOS(Big Sur)
     5. ....
 ```
 

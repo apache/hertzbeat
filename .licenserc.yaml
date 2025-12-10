@@ -39,6 +39,7 @@ header:
     - '**/*.js'
     - '**/*.less'
     - '**/*.txt'
+    - '**/*.st'
     - '**/target/**'
     - '.gitattributes'
     - '**/.gitignore'

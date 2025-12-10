@@ -18,13 +18,20 @@
 <configuration scan="true">
     <springProperty scope="context" name="application_name" source="spring.application.name" defaultValue="collector"/>
     <!-- Output logs to ConsoleAppender -->
-    <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="CONSOLE_RAW" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <!--<pattern>%d %p (%file:%line\)- %m%n</pattern>-->
             <!-- Format output: %d for date, %thread for thread name, %-5level for level with 5 character width, %msg for log message, %n for new line -->
             <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
+    </appender>
+
+    <appender name="ConsoleAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>512</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="CONSOLE_RAW"/>
     </appender>
 
     <appender name="SystemOutFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -94,6 +101,7 @@
     <!-- Production environment configuration -->
     <springProfile name="prod">
         <root level="INFO">
+            <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
         </root>
@@ -101,6 +109,7 @@
 
     <springProfile name="cluster">
         <root level="INFO">
+            <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
         </root>

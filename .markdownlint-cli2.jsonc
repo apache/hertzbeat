@@ -31,7 +31,7 @@
     "MD025": true,
     "MD029": true,
     "MD033": {
-      "allowed_elements": ["table", "tr", "td", "a", "img", "sub", "b", "br", "img", "tbody", "mark", "font"]
+      "allowed_elements": ["table", "tr", "td", "a", "img", "sub", "b", "br", "img", "tbody", "mark", "font", "Tabs", "TabItem"]
     },
     "MD036": false,
     "MD040": true,

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.ai.tools;
 
 import java.util.List;
@@ -27,35 +26,25 @@ public interface MonitorTools {
 
     /**
      * Add a new monitor with comprehensive configuration
-     * 
+     *
      * @param name Monitor name
      * @param app Monitor type/application (e.g., 'linux', 'mysql', 'http')
-     * @param host Target host (IP address or domain name)
-     * @param port Target port (optional, depends on monitor type)
      * @param intervals Collection interval in seconds (default: 600)
-     * @param username Username for authentication (optional)
-     * @param password Password for authentication (optional)
-     * @param database Database name (for database monitors)
-     * @param additionalParams Additional app-specific parameters as JSON string (optional)
+     * @param params Monitor-specific parameters as JSON string (e.g., host, port, username, password, etc.)
      * @param description Monitor description (optional)
      * @return Result message with monitor ID if successful
      */
     String addMonitor(
-            String name, 
-            String app, 
-            String host,
-            Integer port,
+            String name,
+            String app,
             Integer intervals,
-            String username,
-            String password,
-            String database,
-            String additionalParams,
+            String params,
             String description
     );
-    
+
     /**
      * List all available monitor types that can be added
-     * 
+     *
      * @param language Language code for localized names (e.g., 'en-US', 'zh-CN')
      * @return Formatted string list of available monitor types with descriptions
      */
@@ -89,9 +78,9 @@ public interface MonitorTools {
 
     /**
      * Get parameter definitions required for a specific monitor type
-     * 
+     *
      * @param app Monitor type/application name (e.g., 'linux', 'mysql', 'redis')
      * @return Formatted string with parameter definitions including field names, types, and requirements
      */
-    String getMonitorAdditionalParams(String app);
+    String getMonitorParams(String app);
 }
