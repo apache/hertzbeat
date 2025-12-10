@@ -45,7 +45,7 @@
   },
   "sidebar.docs.category.server": {
     "message": "服务器监控",
-    "description": "The label for category Server in sidebar docs"
+    "description": "The label for category server in sidebar docs"
   },
   "sidebar.docs.category.mid": {
     "message": "中间件监控",
@@ -53,7 +53,7 @@
   },
   "sidebar.docs.category.alert": {
     "message": "阈值告警",
-    "description": "The label for category threshold in sidebar docs"
+    "description": "The label for category alert in sidebar docs"
   },
   "sidebar.docs.category.notice": {
     "message": "消息通知",
@@ -158,5 +158,9 @@
   "sidebar.docs.category.extern-deploy": {
     "message": "集成平台部署",
     "description": "The label for category extern-deploy in sidebar docs"
+  },
+  "sidebar.docs.category.log": {
+    "message": "日志监控",
+    "description": "The label for category log in sidebar docs"
   }
 }

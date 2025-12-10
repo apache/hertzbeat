@@ -115,6 +115,21 @@ public class CommonProperties {
          */
         private String alertsDataQueueName;
 
+        /**
+         * Queue name for log entry data
+         */
+        private String logEntryQueueName;
+
+        /**
+         * Queue name for log entry data to storage
+         */
+        private String logEntryToStorageQueueName;
+
+        /**
+         * Timeout for blocking wait in seconds (defaults to 1 second if not configured)
+         */
+        private Long waitTimeout;
+
     }
 
     /**
@@ -140,5 +155,13 @@ public class CommonProperties {
          * alerts data topic
          */
         private String alertsDataTopic;
+        /**
+         * log entry data topic
+         */
+        private String logEntryDataTopic;
+        /**
+         * log entry data to storage topic
+         */
+        private String logEntryDataToStorageTopic;
     }
 }

@@ -133,7 +133,7 @@ gpg:              unchanged: 1
 
 #### 2.4 将 gpg 公钥添加到 Apache SVN 项目仓库的 KEYS 文件中
 
-- Apache HertzBeat Dev 分支 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat>
+- Apache HertzBeat Dev 分支 <https://dist.apache.org/repos/dist/dev/hertzbeat>
 - Apache HertzBeat Release 分支 <https://dist.apache.org/repos/dist/release/incubator/hertzbeat>
 
 ##### 2.4.1 将公钥添加到dev分支的KEYS
@@ -341,7 +341,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 
 - 检查 Apache SVN 提交结果
 
-> 在浏览器中访问 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/> , 检查是否有新的版本内容
+> 在浏览器中访问 <https://dist.apache.org/repos/dist/dev/hertzbeat/> , 检查是否有新的版本内容
 
 ## 4. 进入社区投票阶段
 

@@ -17,11 +17,15 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.DisposableBean;
@@ -46,17 +50,23 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
+    private final LinkedBlockingQueue<LogEntry> logEntryQueue;
+    private final LinkedBlockingQueue<LogEntry> logEntryToStorageQueue;
 
     public InMemoryCommonDataQueue() {
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToStorageQueue = new LinkedBlockingQueue<>();
         serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
+        logEntryQueue = new LinkedBlockingQueue<>();
+        logEntryToStorageQueue = new LinkedBlockingQueue<>();
     }
 
     public Map<String, Integer> getQueueSizeMetricsInfo() {
         Map<String, Integer> metrics = new HashMap<>(8);
         metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
         metrics.put("metricsDataToStorageQueue", metricsDataToStorageQueue.size());
+        metrics.put("logEntryQueue", logEntryQueue.size());
+        metrics.put("logEntryToStorageQueue", logEntryToStorageQueue.size());
         return metrics;
     }
 
@@ -91,9 +101,73 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     @Override
+    public void sendLogEntry(LogEntry logEntry) {
+        logEntryQueue.offer(logEntry);
+    }
+
+    @Override
+    public LogEntry pollLogEntry() throws InterruptedException {
+        return logEntryQueue.take();
+    }
+
+    @Override
+    public void sendLogEntryToStorage(LogEntry logEntry) {
+        logEntryToStorageQueue.offer(logEntry);
+    }
+
+    @Override
+    public LogEntry pollLogEntryToStorage() throws InterruptedException {
+        return logEntryToStorageQueue.take();
+    }
+
+    @Override
+    public void sendLogEntryToAlertBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        for (LogEntry logEntry : logEntries) {
+            logEntryQueue.offer(logEntry);
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToAlertBatch(int maxBatchSize) throws InterruptedException {
+        List<LogEntry> batch = new ArrayList<>(maxBatchSize);
+        LogEntry first = logEntryQueue.poll(1, TimeUnit.SECONDS);
+        if (first != null) {
+            batch.add(first);
+            logEntryQueue.drainTo(batch, maxBatchSize - 1);
+        }
+        return batch;
+    }
+
+    @Override
+    public void sendLogEntryToStorageBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        for (LogEntry logEntry : logEntries) {
+            logEntryToStorageQueue.offer(logEntry);
+        }
+    }
+
+    @Override
+    public List<LogEntry> pollLogEntryToStorageBatch(int maxBatchSize) throws InterruptedException {
+        List<LogEntry> batch = new ArrayList<>(maxBatchSize);
+        LogEntry first = logEntryToStorageQueue.poll(1, TimeUnit.SECONDS);
+        if (first != null) {
+            batch.add(first);
+            logEntryToStorageQueue.drainTo(batch, maxBatchSize - 1);
+        }
+        return batch;
+    }
+
+    @Override
     public void destroy() {
         metricsDataToAlertQueue.clear();
         metricsDataToStorageQueue.clear();
         serviceDiscoveryDataQueue.clear();
+        logEntryQueue.clear();
+        logEntryToStorageQueue.clear();
     }
 }

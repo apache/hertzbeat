@@ -26,7 +26,7 @@
 
 3. 升级数据库脚本
 
-    打开[https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration)， 选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件在 Mysql 执行升级 sql。
+    打开[https://github.com/apache/hertzbeat/tree/master/hertzbeat-startup/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/hertzbeat-startup/src/main/resources/db/migration)， 选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件在 Mysql 执行升级 sql。
 
 4. 更换镜像重新启动 HertzBeat 容器
 

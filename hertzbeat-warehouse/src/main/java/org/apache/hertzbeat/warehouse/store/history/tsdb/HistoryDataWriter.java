@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb;
 
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+
+import java.util.List;
 
 /**
  * history data writer
@@ -34,4 +37,34 @@ public interface HistoryDataWriter {
      * @param metricsData metrics data
      */
     void saveData(CollectRep.MetricsData metricsData);
+
+    /**
+     * default save log data
+     * @param logEntry log entry
+     */
+    default void saveLogData(LogEntry logEntry) {
+        throw new UnsupportedOperationException("save log data is not supported");
+    }
+
+    /**
+     * Batch delete logs by time timestamps
+     * @param timeUnixNanos list of time timestamps to delete
+     * @return true if deletion is successful, false otherwise
+     */
+    default boolean batchDeleteLogs(List<Long> timeUnixNanos) {
+        throw new UnsupportedOperationException("batch delete logs is not supported");
+    }
+
+    /**
+     * Batch save log data
+     * @param logEntries list of log entries
+     */
+    default void saveLogDataBatch(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+        for (LogEntry logEntry : logEntries) {
+            saveLogData(logEntry);
+        }
+    }
 }

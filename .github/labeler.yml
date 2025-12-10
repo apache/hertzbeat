@@ -90,24 +90,24 @@ e2e:
 backend:
   - changed-files:
       - any-glob-to-any-file:
-          - "alerter/**/*"
-          - "collector/**/*"
-          - "common/**/*"
-          - "grafana/**/*"
-          - "manager/**/*"
-          - "push/**/*"
-          - "remoting/**/*"
-          - "warehouse/**/*"
+          - "hertzbeat-alerter/**/*"
+          - "hertzbeat-collector/**/*"
+          - "hertzbeat-common/**/*"
+          - "hertzbeat-grafana/**/*"
+          - "hertzbeat-manager/**/*"
+          - "hertzbeat-push/**/*"
+          - "hertzbeat-remoting/**/*"
+          - "hertzbeat-warehouse/**/*"
 
 collector:
   - changed-files:
       - any-glob-to-any-file:
-          - "collector/**/*"
+          - "hertzbeat-collector/**/*"
             
 monitoring-template:
   - changed-files:
       - any-glob-to-any-file:
-          - "manager/src/main/resources/define/**/*"
+          - "hertzbeat-manager/src/main/resources/define/**/*"
 
 HIP:
   - changed-files:

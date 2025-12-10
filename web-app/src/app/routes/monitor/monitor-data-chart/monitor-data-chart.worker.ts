@@ -125,9 +125,11 @@ const workerFun = () => {
         } else {
           // Multiple lines - use random gradient
           let gradientColors: [string, string, string];
+          let retryCount = 0;
           do {
             gradientColors = getRandomGradientTriple();
-          } while (usedColors.has(gradientColors[0]));
+            retryCount++;
+          } while (usedColors.has(gradientColors[0]) && retryCount < 3);
           usedColors.add(gradientColors[0]);
 
           lineStyle = {

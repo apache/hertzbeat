@@ -1,0 +1,374 @@
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+  
+    http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<app-help-message-show
+  [help_message_content]="'log.help.manage' | i18n"
+  [guild_link]="'log.help.manage.link' | i18n"
+  [module_name]="'menu.log.manage' | i18n"
+  [icon_name]="'database'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<!-- Combined Filter and Statistics Card -->
+<nz-card [nzTitle]="'log.manage.title' | i18n" class="manager-card">
+  <!-- Filters Section -->
+  <div class="filters-container">
+    <nz-space nzSize="middle" nzWrap>
+      <nz-range-picker *nzSpaceItem [(ngModel)]="timeRange" nzShowTime nzFormat="yyyy-MM-dd HH:mm:ss"></nz-range-picker>
+      <input *nzSpaceItem nz-input [placeholder]="'log.manage.trace-id' | i18n" [(ngModel)]="traceId" style="width: 100px" />
+      <input *nzSpaceItem nz-input [placeholder]="'log.manage.span-id' | i18n" [(ngModel)]="spanId" style="width: 100px" />
+      <input
+        *nzSpaceItem
+        nz-input
+        type="number"
+        [placeholder]="'log.manage.severity-number' | i18n"
+        [(ngModel)]="severityNumber"
+        style="width: 120px"
+      />
+      <input
+        *nzSpaceItem
+        type="text"
+        nz-input
+        [(ngModel)]="severityText"
+        [placeholder]="'log.manage.severity-text' | i18n"
+        [nzAutocomplete]="severityTextAuto"
+        style="width: 120px"
+      />
+      <nz-autocomplete #severityTextAuto>
+        <nz-auto-option nzValue="TRACE">TRACE</nz-auto-option>
+        <nz-auto-option nzValue="DEBUG">DEBUG</nz-auto-option>
+        <nz-auto-option nzValue="INFO">INFO</nz-auto-option>
+        <nz-auto-option nzValue="WARN">WARN</nz-auto-option>
+        <nz-auto-option nzValue="ERROR">ERROR</nz-auto-option>
+        <nz-auto-option nzValue="FATAL">FATAL</nz-auto-option>
+      </nz-autocomplete>
+      <button *nzSpaceItem nz-button nzType="primary" (click)="query()">
+        <i nz-icon nzType="search"></i> {{ 'log.manage.search' | i18n }}
+      </button>
+      <button *nzSpaceItem nz-button (click)="clearFilters()"> <i nz-icon nzType="clear"></i> {{ 'log.manage.clear' | i18n }} </button>
+      <button *nzSpaceItem nz-button nzType="default" (click)="toggleStatistics()">
+        <i nz-icon [nzType]="showStatistics ? 'up' : 'down'"></i>
+        {{ showStatistics ? ('log.manage.hide-statistics' | i18n) : ('log.manage.show-statistics' | i18n) }}
+      </button>
+      <button *nzSpaceItem nz-button nzType="primary" nzDanger [disabled]="setOfCheckedId.size === 0" (click)="batchDelete()">
+        <i nz-icon nzType="delete"></i>
+        {{ 'log.manage.batch-delete' | i18n }} <span *ngIf="setOfCheckedId.size > 0">({{ setOfCheckedId.size }})</span>
+      </button>
+      <button
+        *nzSpaceItem
+        nz-button
+        nzType="default"
+        nz-popover
+        [nzPopoverTitle]="'log.manage.column-control' | i18n"
+        [(nzPopoverVisible)]="columnControlVisible"
+        nzPopoverTrigger="click"
+        [nzPopoverContent]="columnControlTemplate"
+      >
+        <i nz-icon nzType="setting"></i>
+        {{ 'log.manage.column-setting' | i18n }} ({{ getVisibleColumnsCount() }}/{{ getColumnKeys().length }})
+      </button>
+    </nz-space>
+    <ng-template #columnControlTemplate>
+      <div class="column-control-container">
+        <nz-list nzSize="small">
+          <nz-list-item *ngFor="let item of getColumnKeys()">
+            <label nz-checkbox [ngModel]="getColumnVisibility()[item].visible" (ngModelChange)="toggleColumnVisibility(item)">
+              {{ getColumnVisibility()[item].label }}
+            </label>
+          </nz-list-item>
+        </nz-list>
+        <nz-divider></nz-divider>
+        <div class="column-control-reset-button">
+          <button nz-button nzSize="small" nzType="default" (click)="resetColumns()">
+            <i nz-icon nzType="reload"></i> {{ 'log.manage.reset-all-columns' | i18n }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Statistics Section (Collapsible) -->
+  <div *ngIf="showStatistics">
+    <!-- Statistics Overview -->
+    <div nz-row [nzGutter]="16" style="margin-bottom: 16px">
+      <div nz-col nzXs="12" nzSm="4">
+        <nz-card>
+          <nz-statistic
+            [nzValue]="overviewStats.totalCount"
+            [nzTitle]="'log.manage.overview.total-logs' | i18n"
+            [nzPrefix]="totalIconTemplate"
+            [nzValueStyle]="{ color: '#1890ff' }"
+          >
+          </nz-statistic>
+          <ng-template #totalIconTemplate><i nz-icon nzType="file-text"></i></ng-template>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="12" nzSm="4">
+        <nz-card>
+          <nz-statistic
+            [nzValue]="overviewStats.fatalCount"
+            [nzTitle]="'log.manage.overview.fatal-logs' | i18n"
+            [nzPrefix]="fatalIconTemplate"
+            [nzValueStyle]="{ color: '#722ed1' }"
+          >
+          </nz-statistic>
+          <ng-template #fatalIconTemplate><i nz-icon nzType="close-circle"></i></ng-template>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="12" nzSm="4">
+        <nz-card>
+          <nz-statistic
+            [nzValue]="overviewStats.errorCount"
+            [nzTitle]="'log.manage.overview.error-logs' | i18n"
+            [nzPrefix]="errorIconTemplate"
+            [nzValueStyle]="{ color: '#ff4d4f' }"
+          >
+          </nz-statistic>
+          <ng-template #errorIconTemplate><i nz-icon nzType="exclamation-circle"></i></ng-template>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="12" nzSm="4">
+        <nz-card>
+          <nz-statistic
+            [nzValue]="overviewStats.warnCount"
+            [nzTitle]="'log.manage.overview.warning-logs' | i18n"
+            [nzPrefix]="warnIconTemplate"
+            [nzValueStyle]="{ color: '#faad14' }"
+          >
+          </nz-statistic>
+          <ng-template #warnIconTemplate><i nz-icon nzType="warning"></i></ng-template>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="12" nzSm="4">
+        <nz-card>
+          <nz-statistic
+            [nzValue]="overviewStats.infoCount"
+            [nzTitle]="'log.manage.overview.info-logs' | i18n"
+            [nzPrefix]="infoIconTemplate"
+            [nzValueStyle]="{ color: '#1890ff' }"
+          >
+          </nz-statistic>
+          <ng-template #infoIconTemplate><i nz-icon nzType="info-circle"></i></ng-template>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="12" nzSm="4">
+        <nz-card>
+          <nz-statistic
+            [nzValue]="overviewStats.debugCount"
+            [nzTitle]="'log.manage.overview.debug-logs' | i18n"
+            [nzPrefix]="debugIconTemplate"
+            [nzValueStyle]="{ color: '#52c41a' }"
+          >
+          </nz-statistic>
+          <ng-template #debugIconTemplate><i nz-icon nzType="bug"></i></ng-template>
+        </nz-card>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div nz-row [nzGutter]="16">
+      <div nz-col nzXs="24" nzMd="8">
+        <nz-card [nzTitle]="'log.manage.chart.severity-distribution' | i18n" [nzSize]="'small'">
+          <div echarts [options]="severityOption" (chartInit)="onSeverityChartInit($event)" style="height: 300px"></div>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="24" nzMd="8">
+        <nz-card [nzTitle]="'log.manage.chart.trace-coverage' | i18n" [nzSize]="'small'">
+          <div echarts [options]="traceCoverageOption" (chartInit)="onTraceCoverageChartInit($event)" style="height: 300px"></div>
+        </nz-card>
+      </div>
+      <div nz-col nzXs="24" nzMd="8">
+        <nz-card [nzTitle]="'log.manage.chart.log-trend' | i18n" [nzSize]="'small'">
+          <div echarts [options]="trendOption" (chartInit)="onTrendChartInit($event)" style="height: 300px"></div>
+        </nz-card>
+      </div>
+    </div>
+  </div>
+</nz-card>
+
+<!-- Log Table -->
+<nz-table
+  #fixedTable
+  [nzData]="data"
+  [nzLoading]="loading"
+  nzSize="small"
+  [nzFrontPagination]="false"
+  [nzTotal]="totalElements"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  nzShowPagination="true"
+  [nzShowSizeChanger]="true"
+  [nzPageSizeOptions]="[10, 20, 50, 100]"
+  (nzQueryParams)="onTablePageChange($event)"
+  [nzScroll]="{ x: '1250px' }"
+  style="margin-top: 16px"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzWidth="50px">
+        <label nz-checkbox [(ngModel)]="checked" [nzIndeterminate]="indeterminate" (ngModelChange)="onAllChecked($event)"> </label>
+      </th>
+      <th *ngIf="columnVisibility.time.visible" nzAlign="center" nzWidth="110px">{{ 'log.manage.table.column.time' | i18n }}</th>
+      <th *ngIf="columnVisibility.observedTime.visible" nzAlign="center" nzWidth="110px">{{
+        'log.manage.table.column.observed-time' | i18n
+      }}</th>
+      <th *ngIf="columnVisibility.severity.visible" nzAlign="center" nzWidth="80px">{{ 'log.manage.table.column.severity' | i18n }}</th>
+      <th *ngIf="columnVisibility.body.visible" nzAlign="center" nzWidth="230px">{{ 'log.manage.table.column.body' | i18n }}</th>
+      <th *ngIf="columnVisibility.attributes.visible" nzAlign="center" nzWidth="140px">{{
+        'log.manage.table.column.attributes' | i18n
+      }}</th>
+      <th *ngIf="columnVisibility.resource.visible" nzAlign="center" nzWidth="140px">{{ 'log.manage.table.column.resource' | i18n }}</th>
+      <th *ngIf="columnVisibility.traceId.visible" nzAlign="center" nzWidth="85px">{{ 'log.manage.table.column.trace-id' | i18n }}</th>
+      <th *ngIf="columnVisibility.spanId.visible" nzAlign="center" nzWidth="85px">{{ 'log.manage.table.column.span-id' | i18n }}</th>
+      <th *ngIf="columnVisibility.traceFlags.visible" nzAlign="center" nzWidth="60px">{{
+        'log.manage.table.column.trace-flags' | i18n
+      }}</th>
+      <th *ngIf="columnVisibility.instrumentation.visible" nzAlign="center" nzWidth="100px">{{
+        'log.manage.table.column.instrumentation' | i18n
+      }}</th>
+      <th *ngIf="columnVisibility.droppedCount.visible" nzAlign="center" nzWidth="70px">{{
+        'log.manage.table.column.dropped-count' | i18n
+      }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let i of fixedTable.data" [title]="'log.manage.table.title' | i18n">
+      <td nzAlign="center">
+        <label
+          nz-checkbox
+          [ngModel]="setOfCheckedId.has(getLogId(i))"
+          (ngModelChange)="onItemChecked(getLogId(i), $event)"
+          (click)="$event.stopPropagation()"
+        >
+        </label>
+      </td>
+      <td *ngIf="columnVisibility.time.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <span [title]="(i.timeUnixNano || 0) / 1000000 | date : 'yyyy-MM-dd HH:mm:ss.SSS'">
+          {{ (i.timeUnixNano || 0) / 1000000 | date : 'yyyy-MM-dd HH:mm:ss' }}
+        </span>
+      </td>
+      <td *ngIf="columnVisibility.observedTime.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <span *ngIf="i.observedTimeUnixNano" [title]="(i.observedTimeUnixNano || 0) / 1000000 | date : 'yyyy-MM-dd HH:mm:ss.SSS'">
+          {{ (i.observedTimeUnixNano || 0) / 1000000 | date : 'yyyy-MM-dd HH:mm:ss' }}
+        </span>
+        <span *ngIf="!i.observedTimeUnixNano" class="text-muted">-</span>
+      </td>
+      <td *ngIf="columnVisibility.severity.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <nz-tag [nzColor]="getSeverityColor(i.severityNumber)">
+          {{ i.severityText || i.severityNumber || '-' }}
+        </nz-tag>
+      </td>
+      <td *ngIf="columnVisibility.body.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <div class="log-body" [title]="i.body | json">
+          {{ getBodyText(i.body) }}
+        </div>
+      </td>
+      <td *ngIf="columnVisibility.attributes.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <div *ngIf="i.attributes && getObjectText(i.attributes); else noAttributes" class="attributes-text" [title]="i.attributes | json">
+          {{ getObjectText(i.attributes) }}
+        </div>
+        <ng-template #noAttributes><span class="text-muted">-</span></ng-template>
+      </td>
+      <td *ngIf="columnVisibility.resource.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <div *ngIf="i.resource && getObjectText(i.resource); else noResource" class="resource-text" [title]="i.resource | json">
+          {{ getObjectText(i.resource) }}
+        </div>
+        <ng-template #noResource><span class="text-muted">-</span></ng-template>
+      </td>
+      <td *ngIf="columnVisibility.traceId.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <span *ngIf="i.traceId" class="trace-id" [title]="i.traceId">{{ i.traceId | slice : 0 : 8 }}...</span>
+        <span *ngIf="!i.traceId" class="text-muted">-</span>
+      </td>
+      <td *ngIf="columnVisibility.spanId.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <span *ngIf="i.spanId" class="span-id" [title]="i.spanId">{{ i.spanId | slice : 0 : 8 }}...</span>
+        <span *ngIf="!i.spanId" class="text-muted">-</span>
+      </td>
+      <td *ngIf="columnVisibility.traceFlags.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <span *ngIf="i.traceFlags !== undefined">{{ i.traceFlags }}</span>
+        <span *ngIf="i.traceFlags === undefined" class="text-muted">-</span>
+      </td>
+      <td *ngIf="columnVisibility.instrumentation.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <div
+          *ngIf="i.instrumentationScope && i.instrumentationScope.name; else noInstrumentation"
+          [title]="getInstrumentationText(i.instrumentationScope)"
+        >
+          {{ i.instrumentationScope.name }}
+          <small *ngIf="i.instrumentationScope.version">({{ i.instrumentationScope.version }})</small>
+        </div>
+        <ng-template #noInstrumentation><span class="text-muted">-</span></ng-template>
+      </td>
+      <td *ngIf="columnVisibility.droppedCount.visible" nzAlign="center" (click)="showLogDetails(i)">
+        <span *ngIf="i.droppedAttributesCount !== undefined">{{ i.droppedAttributesCount }}</span>
+        <span *ngIf="i.droppedAttributesCount === undefined" class="text-muted">-</span>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<!-- Log Details Modal -->
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  [nzTitle]="'log.manage.log-entry-details' | i18n"
+  (nzOnCancel)="handleModalCancel()"
+  [nzFooter]="null"
+  [nzWidth]="800"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="selectedLogEntry" class="log-details-modal">
+      <!-- Basic Info Section -->
+      <nz-card [nzTitle]="'log.manage.basic-information' | i18n" [nzSize]="'small'" class="basic-info-card">
+        <div class="basic-info">
+          <div class="info-row">
+            <span class="info-label">{{ 'log.manage.severity-text' | i18n }}:</span>
+            <nz-tag [nzColor]="getSeverityColor(selectedLogEntry.severityNumber)">
+              {{ selectedLogEntry.severityText || selectedLogEntry.severityNumber || '未知' }}
+            </nz-tag>
+          </div>
+          <div class="info-row">
+            <span class="info-label">{{ 'log.manage.timestamp' | i18n }}:</span>
+            <span>{{ formatTimestamp(selectedLogEntry.timeUnixNano) }}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedLogEntry.traceId">
+            <span class="info-label">{{ 'log.manage.trace-id' | i18n }}:</span>
+            <span class="info-value">{{ selectedLogEntry.traceId }}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedLogEntry.spanId">
+            <span class="info-label">{{ 'log.manage.span-id' | i18n }}:</span>
+            <span class="info-value">{{ selectedLogEntry.spanId }}</span>
+          </div>
+        </div>
+      </nz-card>
+
+      <!-- JSON Details Section -->
+      <nz-card [nzTitle]="'log.manage.complete-json-data' | i18n" [nzSize]="'small'">
+        <div class="json-content">
+          <button
+            nz-button
+            nzSize="small"
+            nzType="default"
+            (click)="copyToClipboard(getLogEntryJson(selectedLogEntry))"
+            class="copy-button"
+            nz-tooltip="复制到剪贴板"
+          >
+            <i nz-icon nzType="copy"></i>
+          </button>
+          <pre class="pre">{{ getLogEntryJson(selectedLogEntry) }}</pre>
+        </div>
+      </nz-card>
+    </div>
+  </ng-container>
+</nz-modal>

@@ -68,12 +68,13 @@ public class NoticeReceiver {
     private String name;
 
     @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot "
-            + "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
+            + "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message "
+            + "11-Slack 12-Discord 13-Gotify 14-FeiShu app message",
             description = "Notification information method: "
                     + "0-SMS 1-Email 2-webhook 3-WeChat Official Account "
                     + "4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot "
                     + "7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise "
-                    + "WeChat app message",
+                    + "WeChat app message 11-Slack 12-Discord 13-Gotify 14-FeiShu app message",
             accessMode = READ_WRITE)
     @Min(0)
     @NotNull(message = "type can not null")
@@ -94,9 +95,23 @@ public class NoticeReceiver {
     @Schema(title = "URL address: The notification method is valid for webhook",
             description = "URL address: The notification method is valid for webhook",
             example = "https://www.tancloud.cn", accessMode = READ_WRITE)
+    @Size(max = 1000)
+    @Column(length = 1000)
+    private String hookUrl;
+
+    @Schema(title = "Auth Type: WebHook Authorization Type",
+            description = "Auth Type: WebHook Authorization Type, one of the 'None', 'Basic' and 'Bearer'",
+            example = "None", accessMode = READ_ONLY)
     @Size(max = 300)
     @Column(length = 300)
-    private String hookUrl;
+    private String hookAuthType;
+
+    @Schema(title = "Auth Token: WebHook Authorization Token",
+            description = "Auth Token: WebHook Authorization Token",
+            example = "YWxpY2U6c3VwZXJtYW4", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String hookAuthToken;
 
     @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
             description = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
@@ -104,6 +119,12 @@ public class NoticeReceiver {
     @Size(max = 300)
     @Column(length = 300)
     private String wechatId;
+
+    @Schema(title = "FeiShu app id : The notification method is valid for FeiShu app message",
+            description = "FeiShu app id : The notification method is valid for FeiShu app message",
+            example = "34823984635647", accessMode = READ_WRITE)
+    @Size(max = 255)
+    private String appId;
 
     @Schema(title = "Access token : The notification method is valid for DingTalk robot",
             description = "Access token : The notification method is valid for DingTalk robot",
@@ -127,10 +148,20 @@ public class NoticeReceiver {
             example = "779294123", accessMode = READ_WRITE)
     private String tgMessageThreadId;
 
+    @Schema(title = "FeiShu app message receiveType: 0-user 1-chat 2-party 3-all",
+            description = "FeiShu app message receiveType: 0-user 1-chat 2-party 3-all",
+            example = "1", accessMode = READ_WRITE)
+    private Byte larkReceiveType;
+
     @Schema(title = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
             description = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
             example = "779294123", accessMode = READ_WRITE)
     private String userId;
+
+    @Schema(title = "FeiShu app message chatId: The notification method is valid for FeiShu app message",
+            description = "FeiShu app message chatId: The notification method is valid for FeiShu app message",
+            example = "779294123", accessMode = READ_WRITE)
+    private String chatId;
 
     @Schema(title = "URL address: The notification method is valid for Slack",
             description = "URL address: The notification method is valid for Slack",

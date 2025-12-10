@@ -1,3 +1,5 @@
+@import '@delon/theme/index';
+@import '../../../styles/theme.less';
 :host ::ng-deep {
   .ant-timeline {
     .ant-timeline-label {
@@ -54,11 +56,39 @@
         overflow-y: auto;
         margin-bottom: 12px;
       }
+      .ant-timeline{
+        margin-top: 20px !important;
+      }
     }
   }
-  .collectors {
+  .dashboard-chart-card{
     .ant-card-body {
-      padding: 6px;
+      padding: 10px !important;
+      height: inherit !important;
+    }
+  }
+  .dashboard-card-alert {
+    .ant-card-body {
+      padding: 20px 10px !important;
+    }
+  }
+  .dashboard-slider-tag{
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    padding:0 16px;
+  }
+  .slick-prev{
+    left: -12px;
+  }
+  .slick-next{
+    right: -12px;
+  }
+  .slick-prev,
+  .slick-next {
+    z-index:10;
+    &:before {
+      color: @primary-color !important;
     }
   }
 }
@@ -115,9 +145,13 @@
   }
 }
 
+.dashboard-rounded{
+  border-radius: 6px !important;
+}
+
 .hoverCard {
   &:hover {
-    transform: scale(104%);
+    transform: scale(101%);
     transition: 0.2s;
   }
 }

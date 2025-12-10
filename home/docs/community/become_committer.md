@@ -46,7 +46,7 @@ contributing to our community's success.
 
 ## Committer requirements
 
-There are no strict rules for becoming a committer or PPMC member.
+There are no strict rules for becoming a committer or new PMC member.
 Candidates for new committers are typically people that are active
 contributors and community members. Anyway, if the rules can be
 clarified a little bit, it can somehow clear the doubts in the minds

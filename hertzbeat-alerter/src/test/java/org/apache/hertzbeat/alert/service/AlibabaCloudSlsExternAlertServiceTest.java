@@ -28,9 +28,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.BeanUtils;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -145,6 +148,38 @@ public class AlibabaCloudSlsExternAlertServiceTest {
         alert.setSeverity(-99);
         externAlertService.addExternAlert(JsonUtil.toJson(alert));
         verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any(SingleAlert.class));
+    }
+
+    @Test
+    void testAddMergeExternAlert() {
+        String source = externAlertService.supportSource();
+        assertEquals("alibabacloud-sls", source);
+
+        AlibabaCloudSlsExternAlert externAlert = new AlibabaCloudSlsExternAlert();
+        externAlert.setAlertName("Test SLS alert");
+        externAlert.setFireTime((int) Instant.now().getEpochSecond());
+        externAlert.setAlertTime((int) Instant.now().getEpochSecond());
+        externAlert.setRegion("cn-hangzhou");
+        externAlert.setProject("project");
+        externAlert.setStatus("firing");
+        externAlert.setSeverity(AlibabaCloudSlsExternAlert.Severity.HIGH.getStatus());
+
+        Map<String, String> labels = new HashMap<>();
+        labels.put("labels-k", "labels-v");
+        externAlert.setLabels(labels);
+
+        Map<String, String> annotations = new HashMap<>();
+        annotations.put("annotations-k", "annotations-v");
+        externAlert.setAnnotations(annotations);
+
+        AlibabaCloudSlsExternAlert externAlert1 = new AlibabaCloudSlsExternAlert();
+        BeanUtils.copyProperties(externAlert, externAlert1);
+
+        List<AlibabaCloudSlsExternAlert> externAlerts = new ArrayList<>();
+        externAlerts.add(externAlert);
+        externAlerts.add(externAlert1);
+        externAlertService.addExternAlert(JsonUtil.toJson(externAlerts));
+        verify(alarmCommonReduce, times(2)).reduceAndSendAlarm(any(SingleAlert.class));
     }
 
 }

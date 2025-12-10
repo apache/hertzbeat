@@ -35,9 +35,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Yarn Install
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10
+    - name: Install
       working-directory: web-app
-      run: yarn
+      run: pnpm install
     - name: EsLint Test
       working-directory: web-app
-      run: yarn lint:ts
+      run: pnpm lint:ts

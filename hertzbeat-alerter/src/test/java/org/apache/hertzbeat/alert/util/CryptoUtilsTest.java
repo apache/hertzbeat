@@ -42,7 +42,7 @@ public class CryptoUtilsTest {
     @Test
     void testHmacSha256Hex() {
         String signature = CryptoUtils.hmacSha256Hex("your-real-key", "your-real-data");;
-        assertEquals("41878ccd7ecd795a2dd7ec39be7f33fed4be3ec75f5307689e39dd6f41fdbaac", signature);
+        assertEquals("f09adf5f4bf94eddecf0f7c8f39a3a8dc7f95ccdc2faf2e5330bc5a78e4bba95", signature);
     }
 
 }

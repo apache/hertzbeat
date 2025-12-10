@@ -113,6 +113,12 @@
             <artifactId>orai18n</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- db2 -->
+        <dependency>
+            <groupId>com.ibm.db2</groupId>
+            <artifactId>jcc</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!--redis-->
         <dependency>
             <groupId>io.lettuce</groupId>
@@ -154,7 +160,6 @@
             <artifactId>bcpkix-jdk15on</artifactId>
             <version>1.68</version>
         </dependency>
-
 
 
         <!--plc-->

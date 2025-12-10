@@ -28,7 +28,7 @@
 
 <nz-layout style="height: 100vh; overflow: hidden">
   <nz-sider [nzTheme]="theme == 'dark' ? 'dark' : 'light'" style="height: 100%; overflow: hidden" [nzTrigger]="null">
-    <app-monitor-select-menu
+    <app-monitor-select-list
       [loading]="menuLoading"
       [data]="appMenusArr"
       [selected]="currentApp"
@@ -62,7 +62,7 @@
           <i nz-icon nzType="eye" nzTheme="outline"></i>
         </button>
       </ng-template>
-    </app-monitor-select-menu>
+    </app-monitor-select-list>
   </nz-sider>
   <nz-content style="display: flex; flex-direction: column">
     <app-toolbar wrapperStyle="margin: 8px 8px 4px 8px">

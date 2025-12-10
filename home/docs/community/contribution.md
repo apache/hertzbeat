@@ -41,7 +41,7 @@ limitations under the License.
 
 - 💬**Suggestion**: You can also make some suggestions to the project or community to promote the healthy development of the community;
 
-More see [Contribution Types](https://allcontributors.org/docs/en/emoji-key)
+More see [Contribution Types](https://allcontributors.org/emoji-key)
 
 Even small corrections to typos are very welcome :)
 
@@ -53,22 +53,22 @@ Even small corrections to typos are very welcome :)
 #### Backend start
 
 1. Requires `maven3+`, `java17` and `lombok` environments
-2. (Optional) Modify the configuration file: `manager/src/main/resources/application.yml`
+2. (Optional) Modify the configuration file: `hertzbeat-startup/src/main/resources/application.yml`
 3. Execute under the project root directory: `mvn clean install -DskipTests`
 4. Add VM Options: `--add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED`
-5. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
+5. Start `springboot startup` service: `hertzbeat-startup/src/main/java/org/apache/hertzbeat/startup/HertzBeatApplication.java`
 
 #### Frontend start
 
-1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
+1. Need `Node pnpm` Environment, Make sure `Node.js >= 18`
 
 2. Cd to the `web-app` directory: `cd web-app`
 
-3. Install yarn if not existed `npm install -g yarn`
+3. Install pnpm if not existed `npm install -g pnpm`
 
-4. Install Dependencies: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+4. Install Dependencies: `pnpm install` or `pnpm install --registry=https://registry.npmmirror.com` in `web-app`
 
-5. After the local backend is started, start the local frontend in the web-app directory: `yarn start`
+5. After the local backend is started, start the local frontend in the web-app directory: `pnpm start`
 
 6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
@@ -143,7 +143,7 @@ git pull upstream master
 
 After your pr is merged, you can send an email  `dev@hertzbeat.apache.org` to request your Apache HertzBeat™ contributor electronic certificate.
 
-```
+```text
 Title: [Contributor] Request for a Contributor Certificate: <Your Full Name>
 Body:
 Hello,
@@ -165,7 +165,6 @@ Certificate Sample:
 
 ![cert](/img/docs/hertzbeat-cert.png)
 
-
 ### HertzBeat Improvement Proposal (HIP)
 
 If you have major new features(e.g., support metrics push gateway, support logs monitoring), you need to write a design document known as a HertzBeat Improvement Proposal (HIP). Before starting to write a HIP, make sure you follow the process [guide](https://github.com/apache/hertzbeat/tree/master/hip).
@@ -176,5 +175,4 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion
 
-[Discussion](contact) 
-
+[Discussion](contact)

@@ -48,6 +48,7 @@ import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -71,13 +72,13 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
 
     private static final String QUERY_HISTORY_WITH_INSTANCE_SQL =
-            "SELECT ts, instance, `%s` FROM `%s` WHERE instance = '%s' AND ts >= now - %s order by ts desc";
+            "SELECT ts, metric_labels, `%s` FROM `%s` WHERE metric_labels = '%s' AND ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_SQL =
-            "SELECT ts, instance, `%s` FROM `%s` WHERE ts >= now - %s order by ts desc";
+            "SELECT ts, metric_labels, `%s` FROM `%s` WHERE ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
-            "SELECT first(ts), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
+            "SELECT first(ts), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE metric_labels = '%s' AND ts >= now - %s interval(4h)";
     private static final String QUERY_INSTANCE_SQL =
-            "SELECT DISTINCT instance FROM `%s` WHERE ts >= now - 1w";
+            "SELECT DISTINCT metric_labels FROM `%s` WHERE ts >= now - 1w";
 
     private static final String TABLE_NOT_EXIST = "Table does not exist";
 
@@ -175,15 +176,17 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         if (metricsData.getValues().isEmpty()) {
 
             if (log.isInfoEnabled()) {
-                log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getId());
+                log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getInstance());
             }
 
             return;
         }
 
-        String monitorId = String.valueOf(metricsData.getId());
-        String superTable = metricsData.getApp() + "_" + metricsData.getMetrics() + "_super";
-        String table = metricsData.getApp() + "_" + metricsData.getMetrics() + "_" + monitorId;
+        String instance = metricsData.getInstance();
+        String app = metricsData.getApp();
+        String metrics = metricsData.getMetrics();
+        String superTable = getTable(app, metrics, "_super");
+        String table = getTable(app, metrics, instance);
         StringBuilder sqlBuffer = new StringBuilder();
         int i = 0;
 
@@ -243,7 +246,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 sqlBuffer.append(" ").append(String.format(sqlRowBuffer.toString(), formatStringValue(JsonUtil.toJson(labels))));
             }
 
-            String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, monitorId, sqlBuffer);
+            String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, instance, sqlBuffer);
 
             if (log.isDebugEnabled()) {
                 log.debug(insertDataSql);
@@ -261,7 +264,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     // stable not exists, create it
                     StringBuilder fieldSqlBuilder = new StringBuilder("(");
                     fieldSqlBuilder.append("ts TIMESTAMP, ");
-                    fieldSqlBuilder.append("instance NCHAR(").append(tableStrColumnDefineMaxLength).append("), ");
+                    fieldSqlBuilder.append("metric_labels NCHAR(").append(tableStrColumnDefineMaxLength).append("), ");
                     for (int index = 0; index < metricsData.getFields().size(); index++) {
                         CollectRep.Field field = metricsData.getFields().get(index);
                         String fieldName = field.getName();
@@ -314,6 +317,17 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
     }
 
+    @NotNull
+    private static String getTable(String app, String metrics, String instance) {
+        if (instance.contains(".") || instance.contains(":") || instance.contains("[")) {
+            instance = instance.replace(".", "_")
+                    .replace(":", "_")
+                    .replace("[", "_")
+                    .replace("]", "_");
+        }
+        return app + "_" + metrics + "_" + instance;
+    }
+
     private String formatStringValue(String value) {
         String formatValue = SQL_SPECIAL_STRING_PATTERN.matcher(value).replaceAll("\\\\$0");
         // bugfix Argument list too long
@@ -331,10 +345,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(Long monitorId, String app, String metrics, String metric, String label, String history) {
-        String table = app + "_" + metrics + "_" + monitorId;
-        String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
-                String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+        String table = getTable(app, metrics, instance);
+        String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
 
         if (log.isDebugEnabled()) {
             log.debug(selectSql);
@@ -384,47 +397,42 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
-                                                                 String metric, String label, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+                                                                 String metric, String history) {
         if (!serverAvailable) {
 
             INSTANCE_EXCEPTION_PRINT.run();
 
             return Collections.emptyMap();
         }
-        String table = app + "_" + metrics + "_" + monitorId;
+        String table = getTable(app, metrics, instance);
         List<String> instances = new LinkedList<>();
-        if (label != null) {
-            instances.add(label);
-        }
-        if (instances.isEmpty()) {
-            // need to confirm that how many instances of current metrics one week ago
-            String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
-            Connection connection = null;
-            try {
-                connection = hikariDataSource.getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(queryInstanceSql);
-                while (resultSet.next()) {
-                    String instanceValue = resultSet.getString(1);
-                    if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
-                        instances.add("''");
-                    } else {
-                        instances.add(instanceValue);
-                    }
+        // query all metric_labels from the table
+        String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
+        Connection connection = null;
+        try {
+            connection = hikariDataSource.getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(queryInstanceSql);
+            while (resultSet.next()) {
+                String instanceValue = resultSet.getString(1);
+                if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
+                    instances.add("''");
+                } else {
+                    instances.add(instanceValue);
                 }
+            }
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error(e.getMessage());
+            }
+        } finally {
+            try {
+                assert connection != null;
+                connection.close();
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
                     log.error(e.getMessage());
-                }
-            } finally {
-                try {
-                    assert connection != null;
-                    connection.close();
-                } catch (Exception e) {
-                    if (log.isErrorEnabled()) {
-                        log.error(e.getMessage());
-                    }
                 }
             }
         }
@@ -441,10 +449,10 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             }
 
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
-            Connection connection = null;
+            Connection conn = null;
             try {
-                connection = hikariDataSource.getConnection();
-                Statement statement = connection.createStatement();
+                conn = hikariDataSource.getConnection();
+                Statement statement = conn.createStatement();
                 ResultSet resultSet = statement.executeQuery(selectSql);
                 while (resultSet.next()) {
                     Timestamp ts = resultSet.getTimestamp(1);
@@ -470,8 +478,8 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 }
             } finally {
                 try {
-                    assert connection != null;
-                    connection.close();
+                    assert conn != null;
+                    conn.close();
                 } catch (Exception e) {
                     if (log.isErrorEnabled()) {
                         log.error(e.getMessage());

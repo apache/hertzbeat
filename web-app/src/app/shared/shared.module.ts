@@ -20,11 +20,12 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 // Icon to be used for registration
 const icons: IconDefinition[] = [RobotOutline, CloseOutline, SendOutline];
 
-import { AiBotComponent } from './components/ai-bot/ai-bot.component';
+import { AiChatModule } from './components/ai-chat/ai-chat.module';
 import { ConfigurableFieldComponent } from './components/configurable-field/configurable-field.component';
 import { FormFieldComponent } from './components/form-field/form-field.component';
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
 import { LabelSelectorComponent } from './components/label-selector/label-selector.component';
+import { MonitorSelectListComponent } from './components/monitor-select-list/monitor-select-list.component';
 import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
@@ -42,7 +43,7 @@ const COMPONENTS: Array<Type<void>> = [
   ConfigurableFieldComponent,
   FormFieldComponent,
   MonitorSelectMenuComponent,
-  AiBotComponent,
+  MonitorSelectListComponent,
   LabelSelectorComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
@@ -68,7 +69,8 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     NzButtonModule,
     NzInputModule,
     NzIconModule.forChild(icons),
-    NzSpinModule
+    NzSpinModule,
+    AiChatModule
   ],
   declarations: [...COMPONENTS, ...DIRECTIVES, HelpMessageShowComponent],
   exports: [
@@ -83,7 +85,8 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     ...SHARED_ZORRO_MODULES,
     ...ThirdModules,
     ...COMPONENTS,
-    ...DIRECTIVES
+    ...DIRECTIVES,
+    AiChatModule
   ]
 })
 export class SharedModule {}

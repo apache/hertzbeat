@@ -66,6 +66,8 @@
       "items": [
         "help/guide",
         "help/security_model",
+        "help/ai_agent",
+        "help/mcp_server",
         {
           "type": "category",
           "label": "use-case",
@@ -74,6 +76,15 @@
             "start/usecase/springboot-auto-practice",
             "start/usecase/linux-os-practice",
             "start/usecase/tdengine-practice"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "log",
+          "items": [
+            "help/log_integration",
+            "help/log_stream",
+            "help/log_manage"
           ]
         },
         {
@@ -102,6 +113,7 @@
             "help/alert_wework",
             "help/alert_dingtalk",
             "help/alert_feishu",
+            "help/alert_feishu_app",
             "help/alert_console",
             "help/alert_enterprise_wechat_app",
             "help/alert_smn",
@@ -129,7 +141,8 @@
             "help/ftp",
             "help/websocket",
             "help/mqtt",
-            "help/modbus"
+            "help/modbus",
+            "help/jenkins"
           ]
         },
         {
@@ -162,7 +175,8 @@
             "help/tidb",
             "help/mongodb",
             "help/mongodb_atlas",
-            "help/oceanbase"
+            "help/oceanbase",
+            "help/db2"
           ]
         },
         {
@@ -188,7 +202,9 @@
             "help/fedora",
             "help/linux_script",
             "help/windows_script",
-            "help/macos"
+            "help/macos",
+            "help/darwin",
+            "help/nvidia"
           ]
         },
         {
@@ -199,7 +215,8 @@
             "help/hikvision_isapi",
             "help/dahua",
             "help/uniview",
-            "help/synology_nas"
+            "help/synology_nas",
+            "help/idrac"
           ]
         },
         {
@@ -215,7 +232,8 @@
             "help/rocketmq",
             "help/shenyu",
             "help/spring_gateway",
-            "help/zookeeper"
+            "help/zookeeper",
+            "help/apollo"
           ]
         },
         {
@@ -261,7 +279,7 @@
         {
           "type": "category",
           "label": "llm",
-          "items": ["help/openai"]
+          "items": ["help/openai","help/deepseek"]
         },
         {
           "type": "category",
@@ -273,13 +291,13 @@
           "label": "custom",
           "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
+        "help/status",
         "help/bulletin",
         "help/plugin",
         "help/time_expression",
         "help/grafana_dashboard",
-        "help/mcp_sse_server",
         "help/collector",
-        "help/ai_config",
+        "help/risc-v",
         "help/issue"
       ]
     },

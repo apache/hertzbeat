@@ -30,3 +30,5 @@
 ./home/docs/community/how-to-release.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/community/how-to-release.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.6.x/community/how-to-release.md
+./home/docs/help/dolphinscheduler.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/help/dolphinscheduler.md

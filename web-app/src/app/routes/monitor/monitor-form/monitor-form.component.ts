@@ -18,7 +18,7 @@
  */
 
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges, Inject } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, FormControl } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -50,6 +50,7 @@ export class MonitorFormComponent implements OnChanges {
   @Input() sdParams!: Param[];
   @Input() labelKeys!: string[];
   @Input() labelMap!: { [key: string]: string[] };
+  @Input() labelIsCustom!: boolean;
 
   @Output() readonly formSubmit = new EventEmitter<any>();
   @Output() readonly formCancel = new EventEmitter<any>();
@@ -59,10 +60,21 @@ export class MonitorFormComponent implements OnChanges {
   @Output() readonly collectorChange = new EventEmitter<string>();
 
   hasAdvancedParams: boolean = false;
+  hostParam: Param | undefined;
 
   constructor(private notifySvc: NzNotificationService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   ngOnChanges(changes: SimpleChanges) {
+    // Initialize scheduleType and cronExpression if not present
+    if (this.monitor && !this.monitor.scheduleType) {
+      this.monitor.scheduleType = 'interval';
+      this.monitor.cronExpression = '';
+    }
+
+    if (changes.params && this.params) {
+      this.hostParam = this.params.find(param => param.field === 'host');
+    }
+
     if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
       for (const advancedParam of changes.advancedParams.currentValue) {
         if (advancedParam.display !== false) {
@@ -92,13 +104,8 @@ export class MonitorFormComponent implements OnChanges {
       });
       return;
     }
-    this.monitor.host = this.monitor.host ? this.monitor.host.trim() : '';
     this.monitor.name = this.monitor.name.trim();
-    // todo Set the host property value separately for now
     this.params.forEach(param => {
-      if (param.field === 'host') {
-        param.paramValue = this.monitor.host;
-      }
       if (param.paramValue != null && typeof param.paramValue == 'string') {
         param.paramValue = (param.paramValue as string).trim();
       }
@@ -113,6 +120,13 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
+
+    // Set monitor.instance to host param value, let backend handle the port concatenation
+    const hostParam = this.params.find(param => param.field === 'host');
+    if (hostParam) {
+      this.monitor.instance = hostParam.paramValue;
+    }
+
     this.formDetect.emit({
       monitor: this.monitor,
       sdParams: this.sdParams,
@@ -132,13 +146,16 @@ export class MonitorFormComponent implements OnChanges {
       });
       return;
     }
-    this.monitor.host = this.monitor.host?.trim();
-    this.monitor.name = this.monitor.name?.trim();
-    // todo Set the host property value separately for now
-    this.params.forEach(param => {
-      if (param.field === 'host') {
-        param.paramValue = this.monitor.host;
+
+    // Validate cron expression if scheduleType is cron
+    if (this.monitor.scheduleType === 'cron') {
+      if (!this.monitor.cronExpression || !this.isValidCronExpression(this.monitor.cronExpression)) {
+        this.notifySvc.error(this.i18nSvc.fanyi('common.error'), this.i18nSvc.fanyi('monitor.cronExpression.invalid'));
+        return;
       }
+    }
+    this.monitor.name = this.monitor.name?.trim();
+    this.params.forEach(param => {
       if (param.paramValue != null && typeof param.paramValue == 'string') {
         param.paramValue = (param.paramValue as string).trim();
       }
@@ -153,6 +170,13 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
+
+    // Set monitor.instance to host param value, let backend handle the port concatenation
+    const hostParam = this.params.find(param => param.field === 'host');
+    if (hostParam) {
+      this.monitor.instance = hostParam.paramValue;
+    }
+
     this.formSubmit.emit({
       monitor: this.monitor,
       sdParams: this.sdParams,
@@ -255,5 +279,27 @@ export class MonitorFormComponent implements OnChanges {
         console.log(error);
       };
     }
+  }
+
+  /**
+   * Validate if the given string is a valid cron expression
+   *
+   * @param cronExpression The cron expression to validate
+   * @returns True if the cron expression is valid, false otherwise
+   */
+  isValidCronExpression(cronExpression: string): boolean {
+    if (!cronExpression || cronExpression.trim() === '') {
+      return false;
+    }
+
+    // Enhanced cron expression validation supporting common syntax:
+    // - Standard 5-field and 6-field cron expressions
+    // - Step values (0/30, */30)
+    // - Question mark (?) for day of month/week in Quartz-style expressions
+    // - Ranges (1-5), lists (1,3,5), and wildcards (*)
+    const cronRegex =
+      /^\s*(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?)(\s+(\*|\*\/[0-9]+|[0-9]+(\/[0-9]+)?|[0-9]+-[0-9]+(\/[0-9]+)?|\?))?\s*$/;
+
+    return cronRegex.test(cronExpression);
   }
 }
