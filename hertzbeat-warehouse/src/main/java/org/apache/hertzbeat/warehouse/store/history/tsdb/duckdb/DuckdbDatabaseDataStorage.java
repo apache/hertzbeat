@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.duckdb;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -33,7 +35,6 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -59,18 +60,17 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     private static final String DRIVER_NAME = "org.duckdb.DuckDBDriver";
     private static final String URL_PREFIX = "jdbc:duckdb:";
-    private static final String DEFAULT_DB_FILE = "data/history.duckdb";
 
     // Ideal number of data points for charting (avoids frontend lag)
     private static final int TARGET_CHART_POINTS = 800;
 
-    @org.springframework.beans.factory.annotation.Value("${warehouse.store.duckdb.expire-time:30d}")
-    private String expireTimeStr;
-
+    private final String expireTimeStr;
     private final String dbPath;
+    private HikariDataSource dataSource;
 
-    public DuckdbDatabaseDataStorage() {
-        this.dbPath = DEFAULT_DB_FILE;
+    public DuckdbDatabaseDataStorage(DuckdbProperties duckdbProperties) {
+        this.dbPath = duckdbProperties.storePath();
+        this.expireTimeStr = duckdbProperties.expireTime();
         this.serverAvailable = initDuckDb();
         if (this.serverAvailable) {
             startExpiredDataCleaner();
@@ -80,9 +80,24 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
     private boolean initDuckDb() {
         try {
             Class.forName(DRIVER_NAME);
-            try (Connection connection = DriverManager.getConnection(URL_PREFIX + dbPath);
+
+            // Initialize HikariCP
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(URL_PREFIX + dbPath);
+            config.setDriverClassName(DRIVER_NAME);
+            config.setPoolName("DuckDB-Pool");
+            // Important: Maintain at least one connection to keep the DB file lock held
+            // and avoid frequent open/close of the embedded DB file which causes lock errors.
+            config.setMinimumIdle(1);
+            config.setMaximumPoolSize(10);
+            config.setConnectionTimeout(30000);
+            config.setConnectionTestQuery("SELECT 1");
+
+            this.dataSource = new HikariDataSource(config);
+
+            try (Connection connection = this.dataSource.getConnection();
                  Statement statement = connection.createStatement()) {
-                // instance app metrics metric metric_type int32_value double_value str_value record_time labels
+
                 String createTableSql = """
                         CREATE TABLE IF NOT EXISTS hzb_history (
                         instance VARCHAR,
@@ -96,16 +111,16 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                         record_time BIGINT,
                         labels VARCHAR)""";
                 statement.execute(createTableSql);
-                // Add composite index for query performance
-                String createCompositeIndexSql = "CREATE INDEX IF NOT EXISTS idx_hzb_history_composite ON hzb_history(instance, app, metrics, metric, record_time)";
-                statement.execute(createCompositeIndexSql);
-                // Add index for cleanup performance
-                String createRecordTimeIndexSql = "CREATE INDEX IF NOT EXISTS idx_hzb_history_record_time ON hzb_history(record_time)";
-                statement.execute(createRecordTimeIndexSql);
+                // Re-add indexes for performance on queries and cleanup
+                statement.execute("CREATE INDEX IF NOT EXISTS idx_hzb_history_composite ON hzb_history (instance, app, metrics, metric, record_time)");
+                statement.execute("CREATE INDEX IF NOT EXISTS idx_hzb_history_record_time ON hzb_history (record_time)");
                 return true;
             }
         } catch (Exception e) {
             log.error("Failed to init duckdb: {}", e.getMessage(), e);
+            if (this.dataSource != null) {
+                this.dataSource.close();
+            }
             return false;
         }
     }
@@ -116,12 +131,14 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             thread.setDaemon(true);
             return thread;
         });
+        // Run every 1 hour
         scheduledExecutor.scheduleAtFixedRate(() -> {
+            log.info("[duckdb] start data cleaner and checkpoint...");
             long expireTime;
             try {
                 if (NumberUtils.isParsable(expireTimeStr)) {
                     expireTime = NumberUtils.toLong(expireTimeStr);
-                    expireTime = (ZonedDateTime.now().toEpochSecond() + expireTime) * 1000L;
+                    expireTime = (ZonedDateTime.now().toEpochSecond() - expireTime) * 1000L;
                 } else {
                     TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(expireTimeStr);
                     ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
@@ -132,13 +149,23 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                 ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofDays(30));
                 expireTime = dateTime.toEpochSecond() * 1000L;
             }
-            try (Connection connection = DriverManager.getConnection(URL_PREFIX + dbPath);
-                 PreparedStatement statement = connection.prepareStatement("DELETE FROM hzb_history WHERE record_time < ?")) {
-                statement.setLong(1, expireTime);
-                int rows = statement.executeUpdate();
-                if (rows > 0) {
-                    log.info("[duckdb] delete {} expired records.", rows);
+
+            try (Connection connection = this.dataSource.getConnection()) {
+                // 1. Delete expired data
+                try (PreparedStatement statement = connection.prepareStatement("DELETE FROM hzb_history WHERE record_time < ?")) {
+                    statement.setLong(1, expireTime);
+                    int rows = statement.executeUpdate();
+                    if (rows > 0) {
+                        log.info("[duckdb] delete {} expired records.", rows);
+                    }
                 }
+
+                // 2. Force Checkpoint to compress data and flush WAL
+                // This is crucial for keeping file size small and moving data from WAL to column store
+                try (Statement statement = connection.createStatement()) {
+                    statement.execute("CHECKPOINT");
+                }
+
             } catch (Exception e) {
                 log.error("[duckdb] clean expired data error: {}", e.getMessage(), e);
             }
@@ -155,7 +182,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
         String metrics = metricsData.getMetrics();
         String insertSql = "INSERT INTO hzb_history VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection connection = DriverManager.getConnection(URL_PREFIX + dbPath);
+        try (Connection connection = this.dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(insertSql)) {
 
             RowWrapper rowWrapper = metricsData.readRow();
@@ -200,12 +227,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                                 }
                                 case CommonConstants.TYPE_TIME -> {
                                     preparedStatement.setShort(5, (short) CommonConstants.TYPE_TIME);
-                                    try {
-                                        preparedStatement.setInt(6, Integer.parseInt(columnValue));
-                                    } catch (NumberFormatException nfe) {
-                                        log.warn("Failed to parse columnValue '{}' as integer for metric '{}'. Setting value to null.", columnValue, metric, nfe);
-                                        preparedStatement.setObject(6, null);
-                                    }
+                                    preparedStatement.setInt(6, Integer.parseInt(columnValue));
                                     preparedStatement.setObject(7, null);
                                     preparedStatement.setObject(8, null);
                                 }
@@ -240,9 +262,18 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             return instanceValuesMap;
         }
 
-        // Raw data query - limit to avoid memory issues
-        StringBuilder sqlBuilder = new StringBuilder("SELECT record_time, metric_type, int32_value, double_value,"
-                + " str_value, labels FROM hzb_history WHERE instance = ? AND app = ? AND metrics = ? AND metric = ?");
+        StringBuilder sqlBuilder = new StringBuilder("""
+            SELECT record_time,
+            metric_type,
+            int32_value,
+            double_value,
+            str_value,
+            labels FROM hzb_history
+            WHERE instance = ?
+            AND app = ?
+            AND metrics = ?
+            AND metric = ?
+            """);
 
         long timeBefore = 0;
         if (history != null) {
@@ -257,7 +288,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
         }
         sqlBuilder.append(" ORDER BY record_time DESC LIMIT 20000"); // Add safety limit for raw data
 
-        try (Connection connection = DriverManager.getConnection(URL_PREFIX + dbPath);
+        try (Connection connection = this.dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sqlBuilder.toString())) {
 
             preparedStatement.setString(1, instance);
@@ -330,7 +361,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
                 GROUP BY ts_bucket, metric_type, labels
                 ORDER BY ts_bucket""";
 
-        try (Connection connection = DriverManager.getConnection(URL_PREFIX + dbPath);
+        try (Connection connection = this.dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setLong(1, interval);
@@ -398,5 +429,8 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     @Override
     public void destroy() throws Exception {
+        if (this.dataSource != null) {
+            this.dataSource.close();
+        }
     }
 }

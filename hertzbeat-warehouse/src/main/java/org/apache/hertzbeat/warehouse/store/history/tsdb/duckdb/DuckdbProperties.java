@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,14 +26,15 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * Duckdb configuration information
  * @param enabled use duckdb store metrics history data
- * @param expireTime save data expire time(ms)
+ * @param expireTime save data expire time (supports formats like '30d', '90d', or milliseconds)
+ * @param storePath duckdb database file path
  */
-
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
-		+ SignConstants.DOT
-		+ WarehouseConstants.STORE
-		+ SignConstants.DOT
-		+ WarehouseConstants.HistoryName.DUCKDB)
+    + SignConstants.DOT
+    + WarehouseConstants.STORE
+    + SignConstants.DOT
+    + WarehouseConstants.HistoryName.DUCKDB)
 public record DuckdbProperties(@DefaultValue("true") boolean enabled,
-                                @DefaultValue("90d") String expireTime) {
+                               @DefaultValue("90d") String expireTime,
+                               @DefaultValue("data/history.duckdb") String storePath) {
 }

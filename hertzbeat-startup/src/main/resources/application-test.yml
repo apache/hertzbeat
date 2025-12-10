@@ -52,12 +52,13 @@ spring:
 common:
   queue:
     type: memory
-    
+
 warehouse:
   store:
     duckdb:
       enabled: true
       expire-time: 90d
+      store-path: data/history.duckdb
     victoria-metrics:
       enabled: false
       url: http://localhost:8428
