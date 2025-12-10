@@ -35,6 +35,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
     + SignConstants.DOT
     + WarehouseConstants.HistoryName.DUCKDB)
 public record DuckdbProperties(@DefaultValue("true") boolean enabled,
-                               @DefaultValue("30d") String expireTime,
+                               @DefaultValue("90d") String expireTime,
                                @DefaultValue("data/history.duckdb") String storePath) {
 }
