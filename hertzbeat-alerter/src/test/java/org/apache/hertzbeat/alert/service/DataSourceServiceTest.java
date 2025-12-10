@@ -48,7 +48,7 @@ class DataSourceServiceTest {
 
     @BeforeEach
     void setUp() {
-        dataSourceService = new DataSourceServiceImpl();
+        dataSourceService = new DataSourceServiceImpl(null);
     }
 
     @Test

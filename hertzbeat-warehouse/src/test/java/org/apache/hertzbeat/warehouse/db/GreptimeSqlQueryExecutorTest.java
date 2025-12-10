@@ -21,7 +21,7 @@ package org.apache.hertzbeat.warehouse.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -62,7 +62,7 @@ class GreptimeSqlQueryExecutorTest {
         when(greptimeProperties.database()).thenReturn("hertzbeat");
         when(greptimeProperties.username()).thenReturn("username");
         when(greptimeProperties.password()).thenReturn("password");
-        
+
         greptimeSqlQueryExecutor = new GreptimeSqlQueryExecutor(greptimeProperties, restTemplate);
     }
 
@@ -70,7 +70,7 @@ class GreptimeSqlQueryExecutorTest {
     void testExecuteSuccess() {
         // Mock successful response
         GreptimeSqlQueryContent mockResponse = createMockResponse();
-        ResponseEntity<GreptimeSqlQueryContent> responseEntity = 
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity =
             new ResponseEntity<>(mockResponse, HttpStatus.OK);
 
         when(restTemplate.exchange(
@@ -101,11 +101,7 @@ class GreptimeSqlQueryExecutorTest {
         )).thenThrow(new RuntimeException("Connection error"));
 
         // Execute
-        List<Map<String, Object>> result = greptimeSqlQueryExecutor.execute("SELECT * FROM metrics");
-
-        // Verify returns empty list on error
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        assertThrows(RuntimeException.class, () -> greptimeSqlQueryExecutor.execute("SELECT * FROM metrics"));
     }
 
     private GreptimeSqlQueryContent createMockResponse() {
@@ -117,7 +113,7 @@ class GreptimeSqlQueryExecutorTest {
         columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema("metric_name", "String"));
         columnSchemas.add(new GreptimeSqlQueryContent.Output.Records.Schema.ColumnSchema("value", "Float64"));
 
-        GreptimeSqlQueryContent.Output.Records.Schema schema = 
+        GreptimeSqlQueryContent.Output.Records.Schema schema =
             new GreptimeSqlQueryContent.Output.Records.Schema();
         schema.setColumnSchemas(columnSchemas);
 
@@ -126,7 +122,7 @@ class GreptimeSqlQueryExecutorTest {
         rows.add(List.of("cpu", 85.5));
 
         // Build response structure
-        GreptimeSqlQueryContent.Output.Records records = 
+        GreptimeSqlQueryContent.Output.Records records =
             new GreptimeSqlQueryContent.Output.Records();
         records.setSchema(schema);
         records.setRows(rows);

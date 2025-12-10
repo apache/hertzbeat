@@ -61,6 +61,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.Base64Util;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.vm.PromQlQueryContent;
 import org.apache.hertzbeat.warehouse.db.GreptimeSqlQueryExecutor;
@@ -90,7 +91,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_FIELD = "__field__";
     private static final String LABEL_KEY_INSTANCE = "instance";
-    private static final String LOG_TABLE_NAME = "hertzbeat_logs";
+    private static final String LOG_TABLE_NAME = WarehouseConstants.LOG_TABLE_NAME;
     private static final String LABEL_KEY_START_TIME = "start";
     private static final String LABEL_KEY_END_TIME = "end";
     private static final int LOG_BATCH_SIZE = 500;

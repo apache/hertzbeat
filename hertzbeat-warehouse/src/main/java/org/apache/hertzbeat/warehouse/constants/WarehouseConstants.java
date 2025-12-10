@@ -68,4 +68,6 @@ public interface WarehouseConstants {
 
     String INSTANT = "instant";
 
+    String LOG_TABLE_NAME = "hertzbeat_logs";
+
 }
