@@ -189,6 +189,7 @@ Apache-2.0 licenses
 ========================================================================
 The following components are provided under the Apache-2.0 License. See project link for details.
 The text of each license is the standard Apache 2.0 license.
+    https://mvnrepository.com/artifact/com.xugudb/xugu-jdbc/12.3.5 Apache-2.0
     https://mvnrepository.com/artifact/cn.afterturn/easypoi-spring-boot-starter/4.3.0 Apache-2.0
     https://mvnrepository.com/artifact/cn.afterturn/easypoi-web/4.3.0 Apache-2.0
     https://mvnrepository.com/artifact/cn.afterturn/easypoi-base/4.3.0 Apache-2.0
