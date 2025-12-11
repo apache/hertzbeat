@@ -82,8 +82,14 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
             url += "?db=" + greptimeProperties.database();
         }
 
-        ResponseEntity<GreptimeSqlQueryContent> responseEntity = restTemplate.exchange(url,
-                HttpMethod.POST, httpEntity, GreptimeSqlQueryContent.class);
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity;
+        try {
+            responseEntity = restTemplate.exchange(url,
+                    HttpMethod.POST, httpEntity, GreptimeSqlQueryContent.class);
+        } catch (Exception e) {
+            log.error("Exception occurred while querying GreptimeDB SQL: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to execute GreptimeDB SQL query", e);
+        }
 
         if (responseEntity.getStatusCode().is2xxSuccessful()) {
             GreptimeSqlQueryContent responseBody = responseEntity.getBody();
