@@ -733,7 +733,13 @@
       <nz-form-item *ngIf="define.type == 'periodic_log'">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <app-sql-editor [(ngModel)]="define.expr" name="periodic_expr" [height]="'150px'" tableName="hertzbeat_logs" required></app-sql-editor>
+          <app-sql-editor
+            [(ngModel)]="define.expr"
+            name="periodic_expr"
+            [height]="'150px'"
+            tableName="hertzbeat_logs"
+            required
+          ></app-sql-editor>
           <button nz-button nzType="primary" style="width: 100%; margin-top: 10px; margin-bottom: 10px" (click)="onPreviewLogExpr()">
             <i nz-icon nzType="eye" nzTheme="outline"></i>
             {{ 'common.preview.button' | i18n }}
