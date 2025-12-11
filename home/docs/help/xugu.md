@@ -1,6 +1,6 @@
 ---
 id: xugu
-title: Monitoring xuguDB Database Monitoring
+title: xuguDB Database Monitoring
 sidebar_label: xugu Database
 keywords: [ Open Source Monitoring System, Open Source Database Monitoring, xugu Database Monitoring ]
 ---
