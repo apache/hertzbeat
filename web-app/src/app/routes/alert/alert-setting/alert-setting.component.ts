@@ -353,7 +353,7 @@ export class AlertSettingComponent implements OnInit {
     this.resetQbDataDefault();
     this.clearPreview();
 
-    // Second: Init state  when switching data source type
+    // Second: Init state when switching data source type
     if (this.alertType === 'realtime' && this.dataType === 'metric') {
       this.define.type = 'realtime_metric';
     } else if (this.alertType === 'realtime' && this.dataType === 'log') {
