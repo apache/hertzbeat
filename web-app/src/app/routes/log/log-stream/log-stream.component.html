@@ -127,6 +127,16 @@
         </div>
 
         <div class="filter-item">
+          <label class="filter-label">{{ 'log.stream.content' | i18n }}</label>
+          <nz-input-group [nzPrefix]="contentTemplate" class="filter-input">
+            <input type="text" nz-input [(ngModel)]="filterLogContent" [placeholder]="'log.stream.content-placeholder' | i18n" />
+          </nz-input-group>
+          <ng-template #contentTemplate>
+            <i nz-icon nzType="search"></i>
+          </ng-template>
+        </div>
+
+        <div class="filter-item">
           <label class="filter-label">{{ 'log.stream.trace-id' | i18n }}</label>
           <nz-input-group [nzPrefix]="traceIdTemplate" class="filter-input">
             <input type="text" nz-input [(ngModel)]="filterTraceId" [placeholder]="'log.stream.trace-id-placeholder' | i18n" />

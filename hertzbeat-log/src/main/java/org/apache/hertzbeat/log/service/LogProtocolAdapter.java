@@ -28,7 +28,7 @@ package org.apache.hertzbeat.log.service;
 public interface LogProtocolAdapter {
 
     /**
-     * Ingest raw log payload pushed from external system.
+     * Ingest log payload pushed from external system.
      *
      * @param content raw request body string
      */

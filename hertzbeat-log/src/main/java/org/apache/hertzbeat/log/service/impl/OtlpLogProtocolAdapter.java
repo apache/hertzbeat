@@ -39,7 +39,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Adapter for OpenTelemetry OTLP/HTTP JSON log ingestion.
+ * Adapter for OpenTelemetry OTLP/HTTP log ingestion.
+ * Supports both JSON-encoded and binary-encoded Protobuf formats.
+ * 
+ * @see <a href="https://opentelemetry.io/docs/specs/otlp/#otlphttp">OTLP/HTTP Specification</a>
  */
 @Slf4j
 @Service
@@ -58,24 +61,45 @@ public class OtlpLogProtocolAdapter implements LogProtocolAdapter {
     @Override
     public void ingest(String content) {
         if (content == null || content.isEmpty()) {
-            log.warn("Received empty OTLP log payload - skip processing.");
+            log.warn("Received empty OTLP JSON log payload - skip processing.");
             return;
         }
         ExportLogsServiceRequest.Builder builder = ExportLogsServiceRequest.newBuilder();
         try {
             JsonFormat.parser().ignoringUnknownFields().merge(content, builder);
             ExportLogsServiceRequest request = builder.build();
-            
-            // Extract LogEntry instances from the request
-            List<LogEntry> logEntries = extractLogEntries(request);
-            log.debug("Successfully extracted {} log entries from OTLP payload {}", logEntries.size(), content);
-            commonDataQueue.sendLogEntryToStorageBatch(logEntries);
-            commonDataQueue.sendLogEntryToAlertBatch(logEntries);
-            logEntries.forEach(logSseManager::broadcast);
+            processLogsRequest(request, "JSON");
         } catch (InvalidProtocolBufferException e) {
-            log.error("Failed to parse OTLP log payload: {}", e.getMessage());
-            throw new IllegalArgumentException("Invalid OTLP log content", e);
+            log.error("Failed to parse OTLP JSON log payload: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid OTLP JSON log content", e);
         }
+    }
+
+    /**
+     * Ingest binary-encoded Protobuf log payload (OTLP-specific).
+     *
+     * @param content binary-encoded ExportLogsServiceRequest
+     */
+    public void ingestBinary(byte[] content) {
+        if (content == null || content.length == 0) {
+            log.warn("Received empty OTLP binary log payload - skip processing.");
+            return;
+        }
+        try {
+            ExportLogsServiceRequest request = ExportLogsServiceRequest.parseFrom(content);
+            processLogsRequest(request, "binary");
+        } catch (InvalidProtocolBufferException e) {
+            log.error("Failed to parse OTLP binary log payload: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid OTLP binary log content", e);
+        }
+    }
+
+    private void processLogsRequest(ExportLogsServiceRequest request, String format) {
+        List<LogEntry> logEntries = extractLogEntries(request);
+        log.debug("Successfully extracted {} log entries from OTLP {} payload", logEntries.size(), format);
+        commonDataQueue.sendLogEntryToStorageBatch(logEntries);
+        commonDataQueue.sendLogEntryToAlertBatch(logEntries);
+        logEntries.forEach(logSseManager::broadcast);
     }
 
     /**
