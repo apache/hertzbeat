@@ -1,6 +1,6 @@
 ---
 id: xugu
-title: Monitoring xuguDB Database Monitoring
+title: xuguDB Database Monitoring
 sidebar_label: xugu Database
 keywords: [ Open Source Monitoring System, Open Source Database Monitoring, xugu Database Monitoring ]
 ---
@@ -62,7 +62,7 @@ keywords: [ Open Source Monitoring System, Open Source Database Monitoring, xugu
 
 | Metric Name       | Unit | Description                         |
 |-------------------|------|-------------------------------------|
-| DISK_READ_NUM     | N/A  | Number of disk block read operations |
-| DISK_WRITE_NUM    | N/A  | Number of disk block write operations |
+| DISK_READ_NUM     | Times  | Number of disk block read operations |
+| DISK_WRITE_NUM    | Times  | Number of disk block write operations |
 | DISK_READ_BYTES   | B    | Number of bytes read from disk       |
 | DISK_WRITE_BYTES  | B    | Number of bytes written to disk      |

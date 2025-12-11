@@ -23,7 +23,7 @@ name:
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 虚谷 数据库的通用性能指标(会话 信息、内存 信息、磁盘 信息)进行采集监控，支持版本为 XuguDB V12。<br>您可以点击“<i>新建 虚谷数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> The JDBC protocol enables the collection and monitoring of general performance metrics (session information, memory information, disk information) for ​​Xugu Database​​ by configuring SQL. It supports ​​XuguDB V12​​..
+  en-US: HertzBeat uses the <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'>JDBC protocol</a> to collect and monitor general performance metrics (session information, memory information, disk information) for Xugu Database by configuring SQL. It supports XuguDB V12.
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/xugu
   en-US: https://hertzbeat.apache.org/docs/help/xugu
@@ -160,7 +160,7 @@ metrics:
       timeout: ^_^timeout^_^
       queryType: columns
       # sql
-      sql: SELECT CASE status  WHEN 112 THEN 'Idle_Connection'  WHEN 114 THEN 'Active_Connections'  WHEN 111 THEN 'Connection_being_created'  WHEN 113 THEN 'Null_Read_Connection'  WHEN 115 THEN 'Complete_data_input_connection'  ELSE 'Other' END AS 状态, COUNT(*) AS 数量  FROM  sys_sessions  GROUP BY  status;
+      sql: SELECT CASE status  WHEN 112 THEN 'Idle_Connection'  WHEN 114 THEN 'Active_Connections'  WHEN 111 THEN 'Connection_being_created'  WHEN 113 THEN 'Null_Read_Connection'  WHEN 115 THEN 'Complete_data_input_connection'  ELSE 'Other' END AS status_type, COUNT(*) AS count  FROM  sys_sessions  GROUP BY  status;
       # JDBC url
       url: ^_^url^_^
 

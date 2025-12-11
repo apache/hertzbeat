@@ -62,7 +62,7 @@ keywords: [ 开源监控系统, 开源数据库监控, xugu数据库监控 ]
 
 | 指标名称             | 指标单位 | 指标帮助描述    |
 |------------------|------|-----------|
-| DISK_READ_NUM    | 无    | 数据块磁盘读取次数 |
-| DISK_WRITE_NUM   | 无    | 磁盘写入数据块次数 |
+| DISK_READ_NUM    | 次    | 数据块磁盘读取次数 |
+| DISK_WRITE_NUM   | 次    | 磁盘写入数据块次数 |
 | DISK_READ_BYTES  | B    | 磁盘读取字节数   |
 | DISK_WRITE_BYTES | B    | 磁盘写入字节数   |
