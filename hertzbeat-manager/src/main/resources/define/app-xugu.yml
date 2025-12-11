@@ -160,7 +160,7 @@ metrics:
       timeout: ^_^timeout^_^
       queryType: columns
       # sql
-      sql: SELECT CASE status  WHEN 112 THEN 'Idle_Connection'  WHEN 114 THEN 'Active_Connections'  WHEN 111 THEN 'Connection_being_created'  WHEN 113 THEN 'Null_Read_Connection'  WHEN 115 THEN 'Complete_data_input_connection'  ELSE 'Other' END AS 状态, COUNT(*) AS 数量  FROM  sys_sessions  GROUP BY  status;
+      sql: SELECT CASE status  WHEN 112 THEN 'Idle_Connection'  WHEN 114 THEN 'Active_Connections'  WHEN 111 THEN 'Connection_being_created'  WHEN 113 THEN 'Null_Read_Connection'  WHEN 115 THEN 'Complete_data_input_connection'  ELSE 'Other' END AS status_type, COUNT(*) AS count  FROM  sys_sessions  GROUP BY  status;
       # JDBC url
       url: ^_^url^_^
 
