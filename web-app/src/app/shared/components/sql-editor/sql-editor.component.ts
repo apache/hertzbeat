@@ -158,86 +158,115 @@ export class SqlEditorComponent implements OnDestroy, ControlValueAccessor {
     }, 500);
   }
 
+  /**
+   * SQL Security Validator - Simple regex-based validation
+   * Mirrors backend SqlSecurityValidator security policy:
+   * 1. Only SELECT statements are allowed
+   * 2. Table must be in whitelist
+   * 3. Dangerous patterns (subqueries, UNION, CTE) are blocked
+   * Note: This is for UX feedback only, real security is enforced by backend
+   */
   private validateSql(sql: string): SqlValidationError[] {
     const errors: SqlValidationError[] = [];
     if (!sql || !sql.trim()) {
       return errors;
     }
 
-    const upperSql = sql.toUpperCase().trim();
     const lines = sql.split('\n');
+    const lastLine = lines.length;
+    const lastCol = lines[lastLine - 1].length + 1;
 
-    if (!upperSql.startsWith('SELECT')) {
+    // Remove string literals and comments to avoid false positives
+    const sanitizedSql = this.removeStringsAndComments(sql);
+    const upperSql = sanitizedSql.toUpperCase().trim();
+
+    // Helper to create error
+    const addError = (message: string) => {
       errors.push({
-        message: 'SQL query must start with SELECT',
+        message,
         startLine: 1,
         startColumn: 1,
-        endLine: 1,
-        endColumn: Math.min(sql.indexOf(' ') + 1 || sql.length, lines[0].length + 1)
-      });
-    }
-
-    if (!upperSql.includes('FROM')) {
-      const lastLine = lines.length;
-      const lastLineLength = lines[lastLine - 1].length;
-      errors.push({
-        message: 'SQL query must contain FROM clause',
-        startLine: lastLine,
-        startColumn: 1,
         endLine: lastLine,
-        endColumn: lastLineLength + 1
+        endColumn: lastCol
       });
+    };
+
+    // 1. Must start with SELECT
+    if (!upperSql.startsWith('SELECT')) {
+      addError('Only SELECT statements are allowed');
+      return errors;
     }
 
-    if (upperSql.includes('FROM')) {
-      const tablePattern = new RegExp(`FROM\\s+${this.tableName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
-      if (!tablePattern.test(sql)) {
-        const fromIndex = upperSql.indexOf('FROM');
-        let lineNum = 1;
-        let colNum = 1;
-        let charCount = 0;
-        for (let i = 0; i < lines.length; i++) {
-          if (charCount + lines[i].length >= fromIndex) {
-            lineNum = i + 1;
-            colNum = fromIndex - charCount + 1;
-            break;
-          }
-          charCount += lines[i].length + 1;
-        }
-        errors.push({
-          message: `Table must be '${this.tableName}'`,
-          startLine: lineNum,
-          startColumn: colNum,
-          endLine: lineNum,
-          endColumn: colNum + 20
-        });
+    // 2. Check for dangerous statements
+    const dangerousPatterns = [
+      { pattern: /\b(INSERT|UPDATE|DELETE|DROP|TRUNCATE|ALTER|CREATE|GRANT|REVOKE)\b/i, message: 'Only SELECT statements are allowed' },
+      { pattern: /\bUNION\b/i, message: 'UNION is not allowed' },
+      { pattern: /\bINTERSECT\b/i, message: 'INTERSECT is not allowed' },
+      { pattern: /\bEXCEPT\b/i, message: 'EXCEPT is not allowed' },
+      { pattern: /^\s*WITH\b/i, message: 'CTE (WITH clause) is not allowed' }
+    ];
+
+    for (const { pattern, message } of dangerousPatterns) {
+      if (pattern.test(sanitizedSql)) {
+        addError(message);
+        return errors;
       }
     }
 
-    const openParens = (sql.match(/\(/g) || []).length;
-    const closeParens = (sql.match(/\)/g) || []).length;
-    if (openParens !== closeParens) {
-      errors.push({
-        message: 'Mismatched parentheses',
-        startLine: 1,
-        startColumn: 1,
-        endLine: lines.length,
-        endColumn: lines[lines.length - 1].length + 1
-      });
+    // 3. Check for subqueries (SELECT inside parentheses, but not in function calls)
+    if (this.hasSubquery(sanitizedSql)) {
+      addError('Subqueries are not allowed');
+      return errors;
     }
 
-    const quotes = (sql.match(/'/g) || []).length;
-    if (quotes % 2 !== 0) {
-      errors.push({
-        message: 'Unclosed string literal (missing quote)',
-        startLine: 1,
-        startColumn: 1,
-        endLine: lines.length,
-        endColumn: lines[lines.length - 1].length + 1
-      });
+    // 4. Must have FROM clause
+    if (!/\bFROM\b/i.test(sanitizedSql)) {
+      addError('SQL query must contain FROM clause');
+      return errors;
+    }
+
+    // 5. Validate table name
+    const tableMatch = sanitizedSql.match(/\bFROM\s+([a-zA-Z_][a-zA-Z0-9_]*)/i);
+    if (tableMatch) {
+      const tableName = tableMatch[1];
+      if (tableName.toLowerCase() !== this.tableName.toLowerCase()) {
+        addError(`Access to table '${tableName}' is not allowed. Allowed table: ${this.tableName}`);
+      }
+    }
+
+    // 6. Basic syntax checks
+    const openParens = (sanitizedSql.match(/\(/g) || []).length;
+    const closeParens = (sanitizedSql.match(/\)/g) || []).length;
+    if (openParens !== closeParens) {
+      addError('Mismatched parentheses');
     }
 
     return errors;
+  }
+
+  /**
+   * Remove string literals and comments to avoid false positives in pattern matching
+   */
+  private removeStringsAndComments(sql: string): string {
+    return sql
+      // Remove single-quoted strings (handle escaped quotes)
+      .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+      // Remove double-quoted strings
+      .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+      // Remove single-line comments
+      .replace(/--.*$/gm, '')
+      // Remove multi-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+  }
+
+  /**
+   * Check for subqueries (nested SELECT statements)
+   * Detects SELECT inside parentheses that's not part of IN(...values...)
+   */
+  private hasSubquery(sql: string): boolean {
+    // Pattern to detect SELECT inside parentheses
+    const subqueryPattern = /\(\s*SELECT\b/i;
+    return subqueryPattern.test(sql);
   }
 
   private setEditorMarkers(errors: SqlValidationError[]): void {
