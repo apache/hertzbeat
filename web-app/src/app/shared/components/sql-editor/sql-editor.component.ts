@@ -190,7 +190,7 @@ export class SqlEditorComponent implements OnDestroy, ControlValueAccessor {
     }
 
     if (upperSql.includes('FROM')) {
-      const tablePattern = new RegExp(`FROM\\s+${this.tableName}`, 'i');
+      const tablePattern = new RegExp(`FROM\\s+${this.tableName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
       if (!tablePattern.test(sql)) {
         const fromIndex = upperSql.indexOf('FROM');
         let lineNum = 1;
