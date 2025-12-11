@@ -248,15 +248,17 @@ export class SqlEditorComponent implements OnDestroy, ControlValueAccessor {
    * Remove string literals and comments to avoid false positives in pattern matching
    */
   private removeStringsAndComments(sql: string): string {
-    return sql
-      // Remove single-quoted strings (handle escaped quotes)
-      .replace(/'(?:[^'\\]|\\.)*'/g, "''")
-      // Remove double-quoted strings
-      .replace(/"(?:[^"\\]|\\.)*"/g, '""')
-      // Remove single-line comments
-      .replace(/--.*$/gm, '')
-      // Remove multi-line comments
-      .replace(/\/\*[\s\S]*?\*\//g, '');
+    return (
+      sql
+        // Remove single-quoted strings (handle escaped quotes)
+        .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+        // Remove double-quoted strings
+        .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+        // Remove single-line comments
+        .replace(/--.*$/gm, '')
+        // Remove multi-line comments
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+    );
   }
 
   /**
