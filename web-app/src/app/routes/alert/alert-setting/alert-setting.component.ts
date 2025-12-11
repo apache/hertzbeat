@@ -1029,7 +1029,9 @@ export class AlertSettingComponent implements OnInit {
   onManageModalCancel() {
     this.cascadeValues = [];
     this.isExpr = false;
-    this.dataType = 'metric';
+    if (this.isManageModalAdd) {
+      this.dataType = 'metric';
+    }
     this.resetQbDataDefault();
     this.isManageModalVisible = false;
   }
