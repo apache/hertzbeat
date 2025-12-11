@@ -123,12 +123,12 @@
       <nz-form-item *ngIf="label.name != undefined">
         <nz-form-label [nzSpan]="7" nzFor="color">{{ 'label.display' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-tag *ngIf="label.tagValue == undefined || label.tagValue.trim() == ''" [nzColor]="getLabelColor(label.name)">{{
-            label.name
-          }}</nz-tag>
-          <nz-tag *ngIf="label.tagValue != undefined && label.tagValue.trim() != ''" [nzColor]="getLabelColor(label.name)">{{
-            label.name + ':' + label.tagValue
-          }}</nz-tag>
+          <nz-tag *ngIf="label.tagValue == undefined || label.tagValue.trim() == ''" [nzColor]="getLabelColor(label.name)" class="wrap-tag">
+            {{ label.name }}
+          </nz-tag>
+          <nz-tag *ngIf="label.tagValue != undefined && label.tagValue.trim() != ''" [nzColor]="getLabelColor(label.name)" class="wrap-tag">
+            {{ label.name + ':' + label.tagValue }}
+          </nz-tag>
         </nz-form-control>
       </nz-form-item>
     </form>
