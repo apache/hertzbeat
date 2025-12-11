@@ -106,7 +106,7 @@ params:
 # collect metrics config list
 metrics:
   # metrics - basic
-  - name: Session Information
+  - name: session_information
     priority: 0
     i18n:
       zh-CN: 会话 信息
