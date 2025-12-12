@@ -58,8 +58,8 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   lineHistoryTheme!: EChartsOption;
   loading: string | null = null;
   echartsInstance!: any;
-  // Default historical data period is last 30 minutes
-  timePeriod: string = '30m';
+  // Default historical data period is last 1 hour
+  timePeriod: string = '1h';
   isInViewport = false;
   private debounceTimer: any = undefined;
   private worker$: any = null;
@@ -148,7 +148,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
               }
             },
             onclick: () => {
-              this.loadData('1D');
+              this.loadData('1d');
             }
           },
           myPeriod1w: {
@@ -161,20 +161,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
               }
             },
             onclick: () => {
-              this.loadData('1W', true);
-            }
-          },
-          myPeriod4w: {
-            show: true,
-            title: this.i18nSvc.fanyi('monitor.detail.chart.query-1m'),
-            icon: 'path://M827.871087 196.128913C743.498468 111.756293 631.321596 65.290005 512 65.290005c-119.319549 0-231.499491 46.465265-315.871087 130.837884S65.290005 392.680451 65.290005 512s46.465265 231.499491 130.837884 315.871087 196.551538 130.837884 315.871087 130.837884c119.321596 0 231.499491-46.465265 315.871087-130.837884S958.708971 631.319549 958.708971 512 912.243707 280.500509 827.871087 196.128913zM531.556405 917.246651l0-74.145697c0-11.31572-9.174963-20.491707-20.491707-20.491707-11.316743 0-20.491707 9.174963-20.491707 20.491707l0 74.059739C283.276738 906.322857 116.693746 739.164766 106.755396 531.634176l72.351841 0c11.31572 0 20.491707-9.174963 20.491707-20.491707 0-11.31572-9.174963-20.491707-20.491707-20.491707l-72.273047 0c10.769274-206.737528 177.01253-373.005342 383.740848-383.813502l0 72.346725c0 11.316743 9.174963 20.491707 20.491707 20.491707 11.31572 0 20.491707-9.17394 20.491707-20.491707L531.558451 106.752326c207.593012 9.901511 374.807385 176.539762 385.609405 383.89946l-74.142627 0c-11.316743 0-20.491707 9.174963-20.491707 20.491707 0 11.316743 9.174963 20.491707 20.491707 20.491707l74.220399 0C907.275555 739.78796 739.720422 907.317511 531.556405 917.246651z;M532.098757 503.118726 532.098757 258.240529c0-11.316743-9.174963-20.491707-20.491707-20.491707-11.31572 0-20.491707 9.17394-20.491707 20.491707l0 254.66612c0 7.858992 4.429893 14.677281 10.924817 18.114566L693.447539 722.42757c4.002151 4.000104 9.245572 6.001691 14.490016 6.001691s10.487865-2.001587 14.490016-6.001691c8.002254-8.002254 8.002254-20.977777 0-28.980032L532.098757 503.118726z',
-            emphasis: {
-              iconStyle: {
-                textPosition: 'left'
-              }
-            },
-            onclick: () => {
-              this.loadData('4W', true);
+              this.loadData('4w', true);
             }
           },
           myPeriod3m: {
@@ -187,22 +174,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
               }
             },
             onclick: () => {
-              this.loadData('12W', true);
-            }
-          },
-          myForecast: {
-            show: true,
-            title: 'Forecast (Beta)',
-            icon: 'path://M10,20 C10,20 15,10 20,20 C20,20 25,30 30,20 C30,20 35,10 40,20',
-            emphasis: {
-              iconStyle: {
-                textPosition: 'left',
-                borderColor: '#1890ff',
-                borderWidth: 1
-              }
-            },
-            onclick: () => {
-              this.loadPredictionData();
+              this.loadData('3m', true);
             }
           },
           myRefresh: {
@@ -341,7 +313,10 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
     if (!isAuto) {
       this.loading = 'Forecasting...';
     }
-    // Update call to use this.instance instead of this.monitorId
+
+    // CRITICAL FIX: Pass 'this.timePeriod' so backend knows the view context (1h, 6h, 1d, 1w)
+    // and can calculate appropriate forecast duration (e.g. 1/5 of view length).
+    // We pass null for predictTime to rely on backend auto-calculation.
     let predictionData$ = this.monitorSvc
       .getMonitorMetricsPredictionData(this.instance, this.app, this.metrics, this.metric, this.timePeriod)
       .pipe(
@@ -360,6 +335,10 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
             const newSeries = [...currentSeries];
 
             let hasData = false;
+            // Get translations for chart legend
+            const forecastName = this.i18nSvc.fanyi('monitor.detail.chart.forecast');
+            const confidenceName = this.i18nSvc.fanyi('monitor.detail.chart.confidence.interval');
+
             // Iterate over prediction results
             for (const [instance, results] of Object.entries(message.data)) {
               const predictions = results as any[];
@@ -385,7 +364,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
 
               // 1. Confidence Interval Base (Transparent)
               newSeries.push({
-                name: `Confidence-Base-${instance}`,
+                name: `${confidenceName}-${instance}`,
                 type: 'line',
                 data: lowerBoundData,
                 stack: `confidence-band-${instance}`,
@@ -397,7 +376,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
 
               // 2. Confidence Interval Band
               newSeries.push({
-                name: `Confidence-Band-${instance}`,
+                name: `${confidenceName}-${instance}`,
                 type: 'line',
                 data: upperBoundData,
                 stack: `confidence-band-${instance}`,
@@ -412,7 +391,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
 
               // 3. Forecast Main Line
               newSeries.push({
-                name: `Forecast-${instance}`,
+                name: `${forecastName}-${instance}`,
                 type: 'line',
                 data: forecastLineData,
                 smooth: true,

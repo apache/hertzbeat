@@ -193,7 +193,6 @@ export class MonitorService {
     history: string
   ): Observable<Message<any>> {
     let httpParams = new HttpParams();
-    httpParams = httpParams.append('history', history);
     httpParams = httpParams.append('forecastCount', 10);
     const options = { params: httpParams };
     // Use instance in path instead of monitorId

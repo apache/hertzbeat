@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.analysis.algorithm.NLinearModel;
 import org.apache.hertzbeat.analysis.algorithm.PredictionResult;
 import org.apache.hertzbeat.analysis.algorithm.TimeSeriesPreprocessor;
-import org.apache.hertzbeat.analysis.algorithm.TinyProphet;
 import org.apache.hertzbeat.analysis.service.AnalysisService;
 import org.apache.hertzbeat.common.entity.warehouse.History;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,9 +38,6 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Autowired
     private TimeSeriesPreprocessor preprocessor;
-
-    @Autowired
-    private TinyProphet prophetModel;
 
     @Override
     public List<PredictionResult> forecast(List<History> historyData, long stepMillis, int forecastCount) {
@@ -67,30 +64,26 @@ public class AnalysisServiceImpl implements AnalysisService {
         // 2. Preprocess Data
         double[] y = preprocessor.preprocess(historyData, stepMillis, startTime, endTime);
 
-        // 3. Prepare Time Points (x)
-        double[] x = new double[y.length];
-        for (int i = 0; i < y.length; i++) {
-            x[i] = i;
-        }
+        // 3. Train Model (Stateful, so create a new instance for each request)
+        NLinearModel model = new NLinearModel();
+        model.train(y);
 
-        // 4. Train Model (Calculates coefficients and sigma)
-        prophetModel.train(x, y);
+        // 4. Forecast
+        PredictionResult[] predictions = model.predict(y, forecastCount);
 
-        // 5. Forecast
+        // 5. Convert and add timestamps
         List<PredictionResult> forecastResult = new ArrayList<>(forecastCount);
-        int lastIndex = x.length - 1;
 
         // Use the actual last timestamp from preprocessing as the base for future time
         // Note: endTime calculated above is the timestamp of the last bucket
         long lastTimestamp = endTime;
 
-        for (int i = 1; i <= forecastCount; i++) {
-            double futureT = lastIndex + i;
-            // predict() returns object with forecast/upper/lower
-            PredictionResult result = prophetModel.predict(futureT);
+        for (int i = 0; i < predictions.length; i++) {
+            PredictionResult result = predictions[i];
 
             // Critical: Set the absolute timestamp for the frontend
-            result.setTime(lastTimestamp + (i * stepMillis));
+            // i=0 is the first future point, so time = lastTimestamp + 1 * step
+            result.setTime(lastTimestamp + ((i + 1) * stepMillis));
 
             forecastResult.add(result);
         }

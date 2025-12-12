@@ -23,14 +23,14 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
-import org.springframework.stereotype.Component;
 
 /**
  * Industrial-grade Robust NLinear Model.
  * Uses Ridge Regression (L2 Regularization) to prevent overfitting and handle singular matrices.
+ * Note: This class is stateful and not thread-safe. A new instance should be created for each prediction task.
  */
-@Component
 public class NLinearModel {
 
     private static final int LOOKBACK_WINDOW = 30;
@@ -47,23 +47,39 @@ public class NLinearModel {
     private double lastValue = 0.0;
 
     public void train(double[] historyValues) {
-        if (historyValues == null || historyValues.length < LOOKBACK_WINDOW + 5) {
+        if (historyValues == null || historyValues.length == 0) {
             return;
         }
 
-        // 1. Pre-check: Flat Line Detection
+        // 1. Critical Fix: Always capture the last value first.
+        // This ensures that even if we don't have enough data to train the full model,
+        // we can still fallback to a naive "last-value" prediction instead of returning 0.
+        this.lastValue = historyValues[historyValues.length - 1];
+
+        // Check if we have enough data for the sliding window approach
+        if (historyValues.length < LOOKBACK_WINDOW + 5) {
+            // Fallback: Calculate simple standard deviation for confidence interval
+            if (historyValues.length > 1) {
+                StandardDeviation stdDevCalc = new StandardDeviation();
+                this.stdDeviation = stdDevCalc.evaluate(historyValues);
+            } else {
+                this.stdDeviation = 0.0;
+            }
+            return;
+        }
+
+        // 2. Pre-check: Flat Line Detection
         // If variance is 0 (or very close), logic is simple: prediction = last value
         StandardDeviation stdDevCalc = new StandardDeviation();
         double historyStd = stdDevCalc.evaluate(historyValues);
         if (historyStd < 0.0001) {
             this.isFlatLine = true;
-            this.lastValue = historyValues[historyValues.length - 1];
             this.stdDeviation = 0.0;
             return;
         }
         this.isFlatLine = false;
 
-        // 2. Prepare Data for Ridge Regression
+        // 3. Prepare Data for Ridge Regression
         int n = historyValues.length;
         int numSamples = n - LOOKBACK_WINDOW;
         int numFeatures = LOOKBACK_WINDOW + 1; // +1 for Intercept
@@ -88,7 +104,7 @@ public class NLinearModel {
             }
         }
 
-        // 3. Solve Ridge Regression: W = (X'X + lambda*I)^-1 * X'Y
+        // 4. Solve Ridge Regression: W = (X'X + lambda*I)^-1 * X'Y
         try {
             RealMatrix X = new Array2DRowRealMatrix(xData);
             RealVector Y = new ArrayRealVector(yData);
@@ -108,7 +124,7 @@ public class NLinearModel {
 
             this.weights = W.toArray();
 
-            // 4. Calculate Training Error (Residual StdDev)
+            // 5. Calculate Training Error (Residual StdDev)
             double sumSquaredErrors = 0.0;
             for (int i = 0; i < numSamples; i++) {
                 double prediction = 0.0;
@@ -124,7 +140,6 @@ public class NLinearModel {
         } catch (RuntimeException e) {
             // Fallback strategy: just predict the last value
             this.isFlatLine = true;
-            this.lastValue = historyValues[historyValues.length - 1];
             this.stdDeviation = historyStd; // Use global std as uncertainty
         }
     }
@@ -144,6 +159,7 @@ public class NLinearModel {
         }
 
         if (recentHistory.length < LOOKBACK_WINDOW) {
+            // Should not happen if training succeeded, but as a safeguard
             return new PredictionResult[0];
         }
 
