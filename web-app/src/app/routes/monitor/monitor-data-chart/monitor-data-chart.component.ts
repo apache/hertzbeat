@@ -337,7 +337,12 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
             let hasData = false;
             // Get translations for chart legend
             const forecastName = this.i18nSvc.fanyi('monitor.detail.chart.forecast');
-            const confidenceName = this.i18nSvc.fanyi('monitor.detail.chart.confidence.interval');
+            // Separate names for clarity
+            const confidenceLowerName = this.i18nSvc.fanyi('monitor.detail.chart.confidence.lower');
+            const confidenceUpperName = this.i18nSvc.fanyi('monitor.detail.chart.confidence.upper');
+            // Fallback if translation keys don't exist
+            const lowerName = confidenceLowerName.includes('monitor.detail') ? 'Lower Bound' : confidenceLowerName;
+            const upperName = confidenceUpperName.includes('monitor.detail') ? 'Upper Bound' : confidenceUpperName;
 
             // Iterate over prediction results
             for (const [instance, results] of Object.entries(message.data)) {
@@ -348,6 +353,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
               // Parse prediction data
               const forecastLineData = [];
               const lowerBoundData = [];
+              const diffData = [];
               const upperBoundData = [];
 
               for (const p of predictions) {
@@ -357,50 +363,80 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
                 const t = p.time;
 
                 forecastLineData.push([t, val]);
+                // Basic data for lower bound
                 lowerBoundData.push([t, lower]);
-                // ECharts stack logic for band
-                upperBoundData.push([t, upper - lower]);
+                // Diff data for the stacked band (upper - lower)
+                diffData.push([t, upper - lower]);
+                // Actual upper bound data for separate invisible series
+                upperBoundData.push([t, upper]);
               }
 
-              // 1. Confidence Interval Base (Transparent)
+              // 1. Lower Bound Series (Base of the stack)
+              // This series serves two purposes:
+              // a) It is the bottom edge of the band.
+              // b) It shows the correct "Lower Bound" value in the tooltip.
               newSeries.push({
-                name: `${confidenceName}-${instance}`,
+                name: lowerName,
                 type: 'line',
                 data: lowerBoundData,
-                stack: `confidence-band-${instance}`,
+                stack: `confidence-band`,
                 symbol: 'none',
                 lineStyle: { opacity: 0 },
                 areaStyle: { opacity: 0 },
-                silent: true
+                // Show tooltip for this series
+                tooltip: { show: true },
+                silent: false // Allow hover to trigger tooltip
               });
 
-              // 2. Confidence Interval Band
+              // 2. Band Width Series (Stacked on top of Lower Bound)
+              // This series draws the filled area.
+              // It MUST be hidden from tooltip because its value is the "difference", not the absolute value.
               newSeries.push({
-                name: `${confidenceName}-${instance}`,
+                name: 'Confidence Band', // Internal name
                 type: 'line',
-                data: upperBoundData,
-                stack: `confidence-band-${instance}`,
+                data: diffData,
+                stack: `confidence-band`,
                 symbol: 'none',
                 lineStyle: { opacity: 0 },
                 areaStyle: {
                   opacity: 0.3,
                   color: '#A6C8FF'
                 },
-                silent: true
+                // CRITICAL: Hide this series from tooltip so users don't see the diff value
+                tooltip: { show: false },
+                silent: true // Ignore mouse events so it doesn't trigger tooltip
               });
 
-              // 3. Forecast Main Line
+              // 3. Upper Bound Series (Invisible, Non-Stacked)
+              // This series is purely for the Tooltip. It shows the correct "Upper Bound" value.
               newSeries.push({
-                name: `${forecastName}-${instance}`,
+                name: upperName,
+                type: 'line',
+                data: upperBoundData,
+                // Do NOT stack this series
+                stack: null,
+                symbol: 'none',
+                lineStyle: { opacity: 0 }, // Invisible line
+                areaStyle: { opacity: 0 }, // No area
+                // Show tooltip for this series
+                tooltip: { show: true },
+                silent: false
+              });
+
+              // 4. Forecast Main Line
+              newSeries.push({
+                name: `${forecastName}`,
                 type: 'line',
                 data: forecastLineData,
                 smooth: true,
                 lineStyle: {
                   type: 'dashed',
-                  width: 2
+                  width: 2,
+                  color: '#ffa318'
                 },
                 itemStyle: {
-                  opacity: 0
+                  opacity: 0,
+                  color: '#ffa318'
                 },
                 symbol: 'none',
                 z: 5
