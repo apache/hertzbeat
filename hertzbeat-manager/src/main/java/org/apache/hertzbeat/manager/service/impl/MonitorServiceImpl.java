@@ -552,7 +552,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String search, Byte status, String sort,
-                                     String order, int pageIndex, int pageSize, String labels) {
+            String order, int pageIndex, int pageSize, String labels) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (!CollectionUtils.isEmpty(monitorIds)) {
@@ -724,11 +724,11 @@ public class MonitorServiceImpl implements MonitorService {
             appCount.setApp(item.getApp());
             switch (item.getStatus()) {
                 case CommonConstants.MONITOR_UP_CODE ->
-                        appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
+                    appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
                 case CommonConstants.MONITOR_DOWN_CODE ->
-                        appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
+                    appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
                 case CommonConstants.MONITOR_PAUSED_CODE ->
-                        appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
+                    appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
                 default -> {
                 }
             }
