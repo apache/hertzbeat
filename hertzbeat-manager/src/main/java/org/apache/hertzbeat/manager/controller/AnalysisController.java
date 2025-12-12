@@ -75,8 +75,7 @@ public class AnalysisController {
         @Parameter(description = "App Type", example = "linux") @PathVariable String app,
         @Parameter(description = "Metrics Name", example = "cpu") @PathVariable String metrics,
         @Parameter(description = "Metric Name", example = "usage") @PathVariable String metric,
-        @Parameter(description = "History time range", example = "6h") @RequestParam(required = false) String history,
-        @Parameter(description = "Forecast count", example = "10") @RequestParam(required = false, defaultValue = "10") Integer forecastCount
+        @Parameter(description = "History time range", example = "6h") @RequestParam(required = false) String history
     ) {
         // 1. Context Analysis
         // We separate "User View Window" (history) from "Model Training Window" (dbQueryTime).
@@ -183,7 +182,7 @@ public class AnalysisController {
                 if (dynamicCount < 5) dynamicCount = 5; // Minimum 5 points
                 if (dynamicCount > 2000) dynamicCount = 2000; // Safety cap
 
-                log.info("[Predict] View: {}ms, Forecast: {}ms ({} steps), Step: {}ms",
+                log.debug("[Predict] View: {}ms, Forecast: {}ms ({} steps), Step: {}ms",
                     viewWindowMillis, forecastDuration, dynamicCount, step);
 
                 List<PredictionResult> forecast = analysisService.forecast(validHistory, step, dynamicCount);
