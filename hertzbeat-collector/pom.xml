@@ -41,6 +41,7 @@
         <module>hertzbeat-collector-nebulagraph</module>
         <module>hertzbeat-collector-rocketmq</module>
         <module>hertzbeat-collector-kafka</module>
+        <module>hertzbeat-collector-milvus</module>
     </modules>
 
     <dependencyManagement>
