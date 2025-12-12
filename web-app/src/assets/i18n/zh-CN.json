@@ -318,7 +318,6 @@
   "alert.setting.rule.string-value.place-holder": "请输入匹配字符串",
   "alert.setting.log.query": "日志查询",
   "alert.setting.log.query.tip": "配置日志查询条件，用于筛选需要监控的日志",
-  "alert.setting.log.query.placeholder": "请输入日志查询条件",
   "alert.setting.log.expr": "日志告警表达式",
   "alert.setting.log.expr.tip": "配置日志告警触发条件，基于查询结果进行告警判断",
   "alert.setting.log.expr.placeholder": "请输入告警表达式，例如: count > 10",

@@ -303,7 +303,6 @@
   "alert.setting.rule.string-value.place-holder": "文字列を入力してください",
   "alert.setting.log.query": "ログクエリ",
   "alert.setting.log.query.tip": "監視するログをフィルタリングするためのログクエリ条件を設定",
-  "alert.setting.log.query.placeholder": "ログクエリ条件を入力してください",
   "alert.setting.log.expr": "ログアラート式",
   "alert.setting.log.expr.tip": "クエリ結果に基づいてログアラートトリガー条件を設定",
   "alert.setting.log.expr.placeholder": "アラート式を入力してください。例: count > 10",

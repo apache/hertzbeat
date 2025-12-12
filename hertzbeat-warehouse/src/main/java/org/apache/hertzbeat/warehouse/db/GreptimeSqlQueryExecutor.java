@@ -63,61 +63,64 @@ public class GreptimeSqlQueryExecutor extends SqlQueryExecutor {
     @Override
     public List<Map<String, Object>> execute(String queryString) {
         List<Map<String, Object>> results = new LinkedList<>();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        if (StringUtils.hasText(greptimeProperties.username())
+                && StringUtils.hasText(greptimeProperties.password())) {
+            String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
+            String encodedAuth = Base64Util.encode(authStr);
+            headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
+        }
+
+        String requestBody = "sql=" + queryString;
+        HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
+
+        String url = greptimeProperties.httpEndpoint() + QUERY_PATH;
+        if (StringUtils.hasText(greptimeProperties.database())) {
+            url += "?db=" + greptimeProperties.database();
+        }
+
+        ResponseEntity<GreptimeSqlQueryContent> responseEntity;
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(greptimeProperties.username())
-                    && StringUtils.hasText(greptimeProperties.password())) {
-                String authStr = greptimeProperties.username() + ":" + greptimeProperties.password();
-                String encodedAuth = Base64Util.encode(authStr);
-                headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
-            }
-
-            String requestBody = "sql=" + queryString;
-            HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
-
-            String url = greptimeProperties.httpEndpoint() + QUERY_PATH;
-            if (StringUtils.hasText(greptimeProperties.database())) {
-                url += "?db=" + greptimeProperties.database();
-            }
-
-            ResponseEntity<GreptimeSqlQueryContent> responseEntity = restTemplate.exchange(url,
+            responseEntity = restTemplate.exchange(url,
                     HttpMethod.POST, httpEntity, GreptimeSqlQueryContent.class);
+        } catch (Exception e) {
+            log.error("Exception occurred while querying GreptimeDB SQL: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to execute GreptimeDB SQL query", e);
+        }
 
-            if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                GreptimeSqlQueryContent responseBody = responseEntity.getBody();
-                if (responseBody != null && responseBody.getCode() == 0
-                        && responseBody.getOutput() != null && !responseBody.getOutput().isEmpty()) {
+        if (responseEntity.getStatusCode().is2xxSuccessful()) {
+            GreptimeSqlQueryContent responseBody = responseEntity.getBody();
+            if (responseBody != null && responseBody.getCode() == 0
+                    && responseBody.getOutput() != null && !responseBody.getOutput().isEmpty()) {
 
-                    for (GreptimeSqlQueryContent.Output output : responseBody.getOutput()) {
-                        if (output.getRecords() != null && output.getRecords().getRows() != null) {
-                            GreptimeSqlQueryContent.Output.Records.Schema schema = output.getRecords().getSchema();
-                            List<List<Object>> rows = output.getRecords().getRows();
+                for (GreptimeSqlQueryContent.Output output : responseBody.getOutput()) {
+                    if (output.getRecords() != null && output.getRecords().getRows() != null) {
+                        GreptimeSqlQueryContent.Output.Records.Schema schema = output.getRecords().getSchema();
+                        List<List<Object>> rows = output.getRecords().getRows();
 
-                            for (List<Object> row : rows) {
-                                Map<String, Object> rowMap = new HashMap<>();
-                                if (schema != null && schema.getColumnSchemas() != null) {
-                                    for (int i = 0; i < Math.min(schema.getColumnSchemas().size(), row.size()); i++) {
-                                        String columnName = schema.getColumnSchemas().get(i).getName();
-                                        Object value = row.get(i);
-                                        rowMap.put(columnName, value);
-                                    }
-                                } else {
-                                    for (int i = 0; i < row.size(); i++) {
-                                        rowMap.put("col_" + i, row.get(i));
-                                    }
+                        for (List<Object> row : rows) {
+                            Map<String, Object> rowMap = new HashMap<>();
+                            if (schema != null && schema.getColumnSchemas() != null) {
+                                for (int i = 0; i < Math.min(schema.getColumnSchemas().size(), row.size()); i++) {
+                                    String columnName = schema.getColumnSchemas().get(i).getName();
+                                    Object value = row.get(i);
+                                    rowMap.put(columnName, value);
                                 }
-                                results.add(rowMap);
+                            } else {
+                                for (int i = 0; i < row.size(); i++) {
+                                    rowMap.put("col_" + i, row.get(i));
+                                }
                             }
+                            results.add(rowMap);
                         }
                     }
                 }
-            } else {
-                log.error("query metrics data from greptime failed. {}", responseEntity);
             }
-        } catch (Exception e) {
-            log.error("query metrics data from greptime error. {}", e.getMessage(), e);
+        } else {
+            log.error("query metrics data from greptime failed. {}", responseEntity);
         }
         return results;
     }
