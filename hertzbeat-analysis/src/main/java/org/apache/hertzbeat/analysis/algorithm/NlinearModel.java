@@ -23,7 +23,6 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 
 /**
@@ -31,7 +30,7 @@ import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
  * Uses Ridge Regression (L2 Regularization) to prevent overfitting and handle singular matrices.
  * Note: This class is stateful and not thread-safe. A new instance should be created for each prediction task.
  */
-public class NLinearModel {
+public class NlinearModel {
 
     private static final int LOOKBACK_WINDOW = 30;
 
@@ -86,52 +85,52 @@ public class NLinearModel {
 
         // Matrix X: [Samples x Features]
         // Vector Y: [Samples]
-        double[][] xData = new double[numSamples][numFeatures];
-        double[] yData = new double[numSamples];
+        double[][] inputSamples = new double[numSamples][numFeatures];
+        double[] targetValues = new double[numSamples];
 
         for (int i = 0; i < numSamples; i++) {
             double target = historyValues[i + LOOKBACK_WINDOW];
-            double xLast = historyValues[i + LOOKBACK_WINDOW - 1]; // RevIN anchor
+            double anchorValue = historyValues[i + LOOKBACK_WINDOW - 1]; // RevIN anchor
 
-            yData[i] = target - xLast; // Normalize Y
+            targetValues[i] = target - anchorValue; // Normalize Y
 
             // Intercept term (always 1.0)
-            xData[i][0] = 1.0;
+            inputSamples[i][0] = 1.0;
 
             // Features (Past L points)
             for (int j = 0; j < LOOKBACK_WINDOW; j++) {
-                xData[i][j + 1] = historyValues[i + j] - xLast; // Normalize X
+                inputSamples[i][j + 1] = historyValues[i + j] - anchorValue; // Normalize X
             }
         }
 
         // 4. Solve Ridge Regression: W = (X'X + lambda*I)^-1 * X'Y
         try {
-            RealMatrix X = new Array2DRowRealMatrix(xData);
-            RealVector Y = new ArrayRealVector(yData);
+            RealMatrix designMatrix = new Array2DRowRealMatrix(inputSamples);
+            RealVector targetVector = new ArrayRealVector(targetValues);
 
-            RealMatrix XTrans = X.transpose();
-            RealMatrix XTransX = XTrans.multiply(X);
+            RealMatrix transposedMatrix = designMatrix.transpose();
+            RealMatrix gramMatrix = transposedMatrix.multiply(designMatrix);
 
             // Add Lambda to Diagonal (Ridge Regularization)
             for (int i = 0; i < numFeatures; i++) {
-                XTransX.addToEntry(i, i, RIDGE_LAMBDA);
+                gramMatrix.addToEntry(i, i, RIDGE_LAMBDA);
             }
 
             // Solve
-            RealVector XTransY = XTrans.operate(Y);
+            RealVector momentVector = transposedMatrix.operate(targetVector);
             // LUDecomposition is fast and stable for square matrices
-            RealVector W = new LUDecomposition(XTransX).getSolver().solve(XTransY);
+            RealVector weightVector = new LUDecomposition(gramMatrix).getSolver().solve(momentVector);
 
-            this.weights = W.toArray();
+            this.weights = weightVector.toArray();
 
             // 5. Calculate Training Error (Residual StdDev)
             double sumSquaredErrors = 0.0;
             for (int i = 0; i < numSamples; i++) {
                 double prediction = 0.0;
                 for (int j = 0; j < numFeatures; j++) {
-                    prediction += xData[i][j] * weights[j];
+                    prediction += inputSamples[i][j] * weights[j];
                 }
-                double error = yData[i] - prediction;
+                double error = targetValues[i] - prediction;
                 sumSquaredErrors += error * error;
             }
             // StdDev of residuals
@@ -167,18 +166,18 @@ public class NLinearModel {
         double[] buffer = Arrays.copyOfRange(recentHistory, recentHistory.length - LOOKBACK_WINDOW, recentHistory.length);
 
         for (int i = 0; i < steps; i++) {
-            double xLast = buffer[buffer.length - 1];
+            double anchorValue = buffer[buffer.length - 1];
 
             // Apply Weights
             // weights[0] is Intercept
             double predictionNorm = weights[0];
 
             for (int j = 0; j < LOOKBACK_WINDOW; j++) {
-                double feat = buffer[j] - xLast; // RevIN
+                double feat = buffer[j] - anchorValue; // RevIN
                 predictionNorm += weights[j + 1] * feat;
             }
 
-            double prediction = predictionNorm + xLast;
+            double prediction = predictionNorm + anchorValue;
             double interval = 3.0 * stdDeviation;
 
             results[i] = PredictionResult.builder()

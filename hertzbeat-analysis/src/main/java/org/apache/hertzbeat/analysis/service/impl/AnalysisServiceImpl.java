@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.analysis.algorithm.NLinearModel;
+import org.apache.hertzbeat.analysis.algorithm.NlinearModel;
 import org.apache.hertzbeat.analysis.algorithm.PredictionResult;
 import org.apache.hertzbeat.analysis.algorithm.TimeSeriesPreprocessor;
 import org.apache.hertzbeat.analysis.service.AnalysisService;
@@ -65,7 +65,7 @@ public class AnalysisServiceImpl implements AnalysisService {
         double[] y = preprocessor.preprocess(historyData, stepMillis, startTime, endTime);
 
         // 3. Train Model (Stateful, so create a new instance for each request)
-        NLinearModel model = new NLinearModel();
+        NlinearModel model = new NlinearModel();
         model.train(y);
 
         // 4. Forecast
