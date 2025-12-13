@@ -136,7 +136,7 @@ export class AlertSettingComponent implements OnInit {
   previewData: any[] = [];
   previewColumns: Array<{ title: string; key: string; width?: string }> = [];
   previewTableLoading = false;
-
+  private defaultSql = `SELECT count(*) AS errorCount FROM hertzbeat_logs WHERE time_unix_nano >= NOW() - INTERVAL '30 second' AND severity_text = 'ERROR' HAVING count(*) > 2`;
   /**
    * Initialize log fields(todo: from backend api)
    */
@@ -346,7 +346,14 @@ export class AlertSettingComponent implements OnInit {
   }
 
   private updateAlertDefineType() {
-    // Combine main type with data type
+    // First: Reset form state when switching data source type
+    this.userExpr = '';
+    this.cascadeValues = [];
+    this.currentMetrics = [];
+    this.resetQbDataDefault();
+    this.clearPreview();
+
+    // Second: Init state when switching data source type
     if (this.alertType === 'realtime' && this.dataType === 'metric') {
       this.define.type = 'realtime_metric';
     } else if (this.alertType === 'realtime' && this.dataType === 'log') {
@@ -358,14 +365,9 @@ export class AlertSettingComponent implements OnInit {
     } else if (this.alertType === 'periodic' && this.dataType === 'log') {
       this.define.type = 'periodic_log';
       this.define.datasource = 'sql';
+      this.define.expr = this.defaultSql;
       this.updateLogQbConfig();
     }
-
-    // Reset form state when switching data source type
-    this.userExpr = '';
-    this.cascadeValues = [];
-    this.currentMetrics = [];
-    this.resetQbDataDefault();
   }
 
   onSelectTypeModalCancel() {
@@ -1027,6 +1029,9 @@ export class AlertSettingComponent implements OnInit {
   onManageModalCancel() {
     this.cascadeValues = [];
     this.isExpr = false;
+    if (this.isManageModalAdd) {
+      this.dataType = 'metric';
+    }
     this.resetQbDataDefault();
     this.isManageModalVisible = false;
   }

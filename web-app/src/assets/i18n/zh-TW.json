@@ -298,7 +298,6 @@
   "alert.setting.rule.string-value.place-holder": "請輸入匹配字符串",
   "alert.setting.log.query": "日誌查詢",
   "alert.setting.log.query.tip": "配置日誌查詢條件，用於篩選需要監控的日誌",
-  "alert.setting.log.query.placeholder": "請輸入日誌查詢條件",
   "alert.setting.log.expr": "日誌告警表達式",
   "alert.setting.log.expr.tip": "配置日誌告警觸發條件，基於查詢結果進行告警判斷",
   "alert.setting.log.expr.placeholder": "請輸入告警表達式，例如: count > 10",
