@@ -263,7 +263,17 @@ public class AnalysisController {
     }
 
     /**
-     * Estimate time step from history data (simple median)
+     * Estimates the time step (interval) between consecutive history data points by calculating
+     * the median of the time differences between their timestamps.
+     * <p>
+     * Only the first 100 data points are considered for efficiency and because this is typically
+     * sufficient for a reliable estimation.
+     * <p>
+     * If there are fewer than 2 data points, or if all time differences are non-positive,
+     * a default value of 60000 milliseconds (1 minute) is returned.
+     *
+     * @param data the list of history data points, assumed to be sorted by time ascending
+     * @return the estimated time step in milliseconds (median of positive time differences)
      */
     private long estimateStep(List<History> data) {
         if (data.size() < 2) {
