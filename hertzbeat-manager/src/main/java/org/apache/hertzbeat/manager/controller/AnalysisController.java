@@ -56,6 +56,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AnalysisController {
 
+    private static final long MAX_DURATION_MS = 10L * 365 * 24 * 3600 * 1000;
+
     @Autowired
     private MetricsDataService metricsDataService;
 
@@ -224,7 +226,6 @@ public class AnalysisController {
     private long parseSimpleDuration(String timeToken) {
         if (timeToken == null) return 0;
         // Define maximum allowed duration: 10 years in milliseconds
-        final long MAX_DURATION_MS = 10L * 365 * 24 * 3600 * 1000;
         try {
             String lower = timeToken.toLowerCase().trim();
             if (lower.length() < 2) return 0;
