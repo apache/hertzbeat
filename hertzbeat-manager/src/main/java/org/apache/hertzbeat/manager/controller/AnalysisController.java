@@ -197,7 +197,29 @@ public class AnalysisController {
     }
 
     /**
-     * Simple parser for standard time tokens (1h, 6h, 1d, 1w, 4w, 12w)
+     * Parses a simple duration string (e.g., "1h", "6h", "1d", "1w", "4w", "12w") into milliseconds.
+     * <p>
+     * Supported time units are:
+     * <ul>
+     *   <li><b>s</b> - seconds (e.g., "30s")</li>
+     *   <li><b>m</b> - minutes (e.g., "15m")</li>
+     *   <li><b>h</b> - hours (e.g., "1h", "6h")</li>
+     *   <li><b>d</b> - days (e.g., "1d")</li>
+     *   <li><b>w</b> - weeks (e.g., "4w", "12w")</li>
+     * </ul>
+     * <p>
+     * Examples of valid input:
+     * <ul>
+     *   <li>"1h" -&gt; 3,600,000</li>
+     *   <li>"6h" -&gt; 21,600,000</li>
+     *   <li>"1d" -&gt; 86,400,000</li>
+     *   <li>"4w" -&gt; 2,419,200,000</li>
+     * </ul>
+     * <p>
+     * If the input is invalid or cannot be parsed, returns 0.
+     *
+     * @param timeToken the duration string to parse
+     * @return the duration in milliseconds, or 0 if input is invalid
      */
     private long parseSimpleDuration(String timeToken) {
         if (timeToken == null) return 0;
