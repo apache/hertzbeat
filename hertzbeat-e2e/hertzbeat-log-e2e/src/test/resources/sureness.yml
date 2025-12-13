@@ -16,7 +16,7 @@
 ## -- sureness.yml account source -- ##
 
 # config the resource restful api that need auth protection, base rbac
-# rule: api===method===role 
+# rule: api===method===role
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
@@ -71,9 +71,10 @@ resourceRole:
   - /api/chat/**===get===[admin,user]
   - /api/chat/**===post===[admin,user]
   - /api/logs/ingest/**===post===[admin,user]
+  - /api/analysis/**===get===[admin,user]
 
 # config the resource restful api that need bypass auth protection
-# rule: api===method 
+# rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alert/sse/**===*
