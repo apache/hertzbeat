@@ -358,7 +358,7 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
             const upperName = confidenceUpperName.includes('monitor.detail') ? 'Upper Bound' : confidenceUpperName;
 
             // Iterate over prediction results
-            for (const [instance, results] of Object.entries(message.data)) {
+            for (const results of Object.values(message.data)) {
               const predictions = results as any[];
               if (!predictions || predictions.length === 0) continue;
               hasData = true;
