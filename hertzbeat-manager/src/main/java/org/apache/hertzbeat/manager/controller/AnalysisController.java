@@ -201,17 +201,43 @@ public class AnalysisController {
      */
     private long parseSimpleDuration(String timeToken) {
         if (timeToken == null) return 0;
+        // Define maximum allowed duration: 10 years in milliseconds
+        final long MAX_DURATION_MS = 10L * 365 * 24 * 3600 * 1000;
         try {
-            String lower = timeToken.toLowerCase();
-            if (lower.endsWith("s")) return Long.parseLong(lower.replace("s", "")) * 1000;
-            if (lower.endsWith("m")) return Long.parseLong(lower.replace("m", "")) * 60 * 1000;
-            if (lower.endsWith("h")) return Long.parseLong(lower.replace("h", "")) * 3600 * 1000;
-            if (lower.endsWith("d")) return Long.parseLong(lower.replace("d", "")) * 24 * 3600 * 1000;
-            if (lower.endsWith("w")) return Long.parseLong(lower.replace("w", "")) * 7 * 24 * 3600 * 1000;
+            String lower = timeToken.toLowerCase().trim();
+            if (lower.length() < 2) return 0;
+            char unit = lower.charAt(lower.length() - 1);
+            String numberPart = lower.substring(0, lower.length() - 1);
+            // Only allow digits, and limit length to 12 digits (trillion)
+            if (!numberPart.matches("\\d{1,12}")) return 0;
+            long value = Long.parseLong(numberPart);
+            long durationMs = 0;
+            switch (unit) {
+                case 's':
+                    durationMs = value * 1000L;
+                    break;
+                case 'm':
+                    durationMs = value * 60L * 1000L;
+                    break;
+                case 'h':
+                    durationMs = value * 3600L * 1000L;
+                    break;
+                case 'd':
+                    durationMs = value * 24L * 3600L * 1000L;
+                    break;
+                case 'w':
+                    durationMs = value * 7L * 24L * 3600L * 1000L;
+                    break;
+                default:
+                    return 0;
+            }
+            if (durationMs < 0 || durationMs > MAX_DURATION_MS) {
+                return 0;
+            }
+            return durationMs;
         } catch (NumberFormatException e) {
             return 0;
         }
-        return 0;
     }
 
     /**
