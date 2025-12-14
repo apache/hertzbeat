@@ -58,14 +58,18 @@
         <div class="label-content">
           <div class="label-header">
             <a routerLink="/monitors" [queryParams]="{ labels: formatLabelName(data) }">
-              <nz-tag class="label-name" [nzColor]="getLabelColor(data.name)">
-                {{ formatLabelName(data) }}
-              </nz-tag>
+              <span nz-tooltip [nzTooltipTitle]="formatLabelName(data)" class="tag-tooltip-wrapper">
+                <nz-tag class="label-name label-text-ellipsis" [nzColor]="getLabelColor(data.name)">
+                  {{ formatLabelName(data) }}
+                </nz-tag>
+              </span>
             </a>
           </div>
 
           <div class="label-description" *ngIf="data.description">
-            {{ data.description }}
+            <span nz-tooltip [nzTooltipTitle]="data.description" class="tag-tooltip-wrapper">
+              {{ data.description }}
+            </span>
           </div>
         </div>
 

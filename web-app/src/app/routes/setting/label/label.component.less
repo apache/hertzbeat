@@ -51,6 +51,16 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 8px;
+    a{
+      max-width: 100%;
+    }
+  }
+  .label-text-ellipsis {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .label-description {
     font-size: 12px;
@@ -69,6 +79,7 @@
   min-height: 80px;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
 }
 
 .label-name {
