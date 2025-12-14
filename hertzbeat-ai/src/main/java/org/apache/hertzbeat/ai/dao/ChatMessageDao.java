@@ -21,10 +21,25 @@ import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * Repository interface for Message entities
  */
 @Repository
 public interface ChatMessageDao extends JpaRepository<ChatMessage, Long> {
-    
+
+    /**
+     * Find all messages by conversation id, ordered by create time
+     * @param conversationId conversation id
+     * @return list of messages
+     */
+    List<ChatMessage> findByConversationIdOrderByGmtCreateAsc(Long conversationId);
+
+    /**
+     * Find all messages by conversation ids, ordered by create time
+     * @param conversationIds list of conversation ids
+     * @return list of messages
+     */
+    List<ChatMessage> findByConversationIdInOrderByGmtCreateAsc(List<Long> conversationIds);
 }
