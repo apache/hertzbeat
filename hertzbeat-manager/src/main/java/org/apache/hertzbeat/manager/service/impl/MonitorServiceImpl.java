@@ -575,7 +575,7 @@ public class MonitorServiceImpl implements MonitorService {
 
             List<Predicate> orList = new ArrayList<>();
             if (StringUtils.hasText(search)) {
-                Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + search + "%");
+                Predicate predicateHost = criteriaBuilder.like(root.get("instance"), "%" + search + "%");
                 Predicate predicateName = criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
                         "%" + search.toLowerCase() + "%");
                 Long id = Longs.tryParse(search);

@@ -36,7 +36,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -48,7 +51,7 @@ class DataSourceServiceTest {
 
     @BeforeEach
     void setUp() {
-        dataSourceService = new DataSourceServiceImpl();
+        dataSourceService = new DataSourceServiceImpl(null);
     }
 
     @Test
@@ -638,5 +641,157 @@ class DataSourceServiceTest {
         assertEquals(1307, result.get(0).get("__value__"));
 
         assertThrows(AlertExpressionException.class, () -> dataSourceService.calculate("promql", "http_server_requests_seconds_count{!@~!!#$%^&}"));
+    }
+
+    @Test
+    void query1() {
+        List<Map<String, Object>> sqlData = List.of(
+                new HashMap<>(Map.of("count", 10, "severity_text", "ERROR"))
+        );
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(sqlData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        String validSql = "SELECT count(*) FROM hertzbeat_logs WHERE severity_text = 'ERROR'";
+        List<Map<String, Object>> result = dataSourceService.query("sql", validSql);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(mockExecutor).execute(anyString());
+    }
+
+    @Test
+    void query2() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "INSERT INTO hertzbeat_logs (body) VALUES ('test')"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query3() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "DELETE FROM hertzbeat_logs WHERE id = 1"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query4() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "UPDATE hertzbeat_logs SET body = 'hacked' WHERE id = 1"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query5() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "DROP TABLE hertzbeat_logs"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query6() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELECT * FROM hertzbeat_logs UNION SELECT * FROM users"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query7() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELECT * FROM hertzbeat_logs WHERE id IN (SELECT id FROM other_table)"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query8() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELECT * FROM users"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query9() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "WITH cte AS (SELECT * FROM hertzbeat_logs) SELECT * FROM cte"));
+        verify(mockExecutor, never()).execute(anyString());
+    }
+
+    @Test
+    void query10() {
+        List<Map<String, Object>> sqlData = List.of(
+                new HashMap<>(Map.of("errorCount", 5))
+        );
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(sqlData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        String complexSql = "SELECT count(*) AS errorCount FROM hertzbeat_logs "
+                + "WHERE time_unix_nano >= NOW() AND severity_text = 'ERROR' "
+                + "GROUP BY severity_text HAVING count(*) > 2 ORDER BY errorCount LIMIT 10";
+
+        List<Map<String, Object>> result = dataSourceService.query("sql", complexSql);
+        assertNotNull(result);
+        verify(mockExecutor).execute(anyString());
+    }
+
+    @Test
+    void query11() {
+        List<Map<String, Object>> prometheusData = List.of(
+                new HashMap<>(Map.of("__value__", 100.0))
+        );
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("promql")).thenReturn(true);
+        when(mockExecutor.execute(anyString())).thenReturn(prometheusData);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        List<Map<String, Object>> result = dataSourceService.query("promql", "node_cpu_seconds_total > 50");
+
+        assertNotNull(result);
+        verify(mockExecutor).execute(anyString());
+    }
+
+    @Test
+    void query12() {
+        QueryExecutor mockExecutor = Mockito.mock(QueryExecutor.class);
+        when(mockExecutor.support("sql")).thenReturn(true);
+        dataSourceService.setExecutors(List.of(mockExecutor));
+
+        assertThrows(AlertExpressionException.class,
+                () -> dataSourceService.query("sql", "SELEC * FORM hertzbeat_logs"));
+        verify(mockExecutor, never()).execute(anyString());
     }
 }

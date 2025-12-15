@@ -38,7 +38,6 @@
   "alert.setting.rule.string-value.place-holder": "Digite o texto",
   "alert.setting.log.query": "Consulta de Log",
   "alert.setting.log.query.tip": "Configure condições de consulta de log para filtrar logs que precisam ser monitorados",
-  "alert.setting.log.query.placeholder": "Digite as condições de consulta de log",
   "alert.setting.log.expr": "Expressão de Alerta de Log",
   "alert.setting.log.expr.tip": "Configure condições de disparo de alerta de log baseadas nos resultados da consulta",
   "alert.setting.log.expr.placeholder": "Digite a expressão de alerta, ex: count > 10",
