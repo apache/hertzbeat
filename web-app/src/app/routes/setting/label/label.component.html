@@ -58,14 +58,18 @@
         <div class="label-content">
           <div class="label-header">
             <a routerLink="/monitors" [queryParams]="{ labels: formatLabelName(data) }">
-              <nz-tag class="label-name" [nzColor]="getLabelColor(data.name)">
-                {{ formatLabelName(data) }}
-              </nz-tag>
+              <span nz-tooltip nzTooltipPlacement="leftTop" [nzTooltipTitle]="formatLabelName(data)" class="tag-tooltip-wrapper">
+                <nz-tag class="label-name label-text-ellipsis" [nzColor]="getLabelColor(data.name)">
+                  {{ formatLabelName(data) }}
+                </nz-tag>
+              </span>
             </a>
           </div>
 
           <div class="label-description" *ngIf="data.description">
-            {{ data.description }}
+            <span nz-tooltip nzTooltipPlacement="leftTop" [nzTooltipTitle]="data.description" class="tag-tooltip-wrapper">
+              {{ data.description }}
+            </span>
           </div>
         </div>
 
@@ -123,12 +127,12 @@
       <nz-form-item *ngIf="label.name != undefined">
         <nz-form-label [nzSpan]="7" nzFor="color">{{ 'label.display' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-tag *ngIf="label.tagValue == undefined || label.tagValue.trim() == ''" [nzColor]="getLabelColor(label.name)">{{
-            label.name
-          }}</nz-tag>
-          <nz-tag *ngIf="label.tagValue != undefined && label.tagValue.trim() != ''" [nzColor]="getLabelColor(label.name)">{{
-            label.name + ':' + label.tagValue
-          }}</nz-tag>
+          <nz-tag *ngIf="label.tagValue == undefined || label.tagValue.trim() == ''" [nzColor]="getLabelColor(label.name)" class="wrap-tag">
+            {{ label.name }}
+          </nz-tag>
+          <nz-tag *ngIf="label.tagValue != undefined && label.tagValue.trim() != ''" [nzColor]="getLabelColor(label.name)" class="wrap-tag">
+            {{ label.name + ':' + label.tagValue }}
+          </nz-tag>
         </nz-form-control>
       </nz-form-item>
     </form>
