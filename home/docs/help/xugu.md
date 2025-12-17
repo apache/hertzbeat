@@ -7,12 +7,6 @@ keywords: [ Open Source Monitoring System, Open Source Database Monitoring, xugu
 
 > Collect and monitor common performance metrics of the xugu database. Supports xuguDB.v12.
 
-### Note: You must add the xugu JDBC driver JAR
-
-- Download the xugu JDBC driver JAR, for example: xugu-jdbc-12.3.5.jar. <https://mvnrepository.com/artifact/com.xugudb/xugu-jdbc/12.3.5>
-- Copy this JAR file to the `ext-lib` directory under the HertzBeat installation directory.
-- Restart the HertzBeat service.
-
 ### Configuration Parameters
 
 | Parameter Name | Description                                                                 |

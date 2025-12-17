@@ -7,11 +7,6 @@ keywords: [ 开源监控系统, 开源数据库监控, xugu数据库监控 ]
 
 > 对xugu数据库的通用性能指标进行采集监控。支持xuguDB.v12。
 
-### 注意，必须添加 xugu jdbc 驱动 jar
-
-- 下载 xugu jdbc driver jar, 例如 xugu-jdbc-12.3.5.jar. <https://mvnrepository.com/artifact/com.xugudb/xugu-jdbc/12.3.5>
-- 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
-- 重启 HertzBeat 服务。
 
 ### 配置参数
 
