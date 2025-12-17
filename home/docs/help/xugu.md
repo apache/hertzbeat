@@ -40,23 +40,23 @@ keywords: [ Open Source Monitoring System, Open Source Database Monitoring, xugu
 
 | Metric Name | Unit | Description                         |
 |------------|------|-------------------------------------|
-| G_MEM      | B    | Global memory consumption            |
-| CATA_MEM   | B    | CATALOG memory consumption           |
-| TRAN_MEM   | B    | Transaction memory consumption       |
-| NET_MEM    | B    | User connection memory consumption   |
-| TASK_MEM   | B    | Task thread memory consumption       |
-| MSG_MEM    | B    | Internal communication message memory consumption |
-| LOCK_MEM   | B    | Local lock memory consumption        |
-| GLOCK_MEM  | B    | Global lock memory consumption       |
-| DLCHK_MEM  | B    | Deadlock detection memory consumption|
-| MODI_MEM   | B    | Change log memory consumption        |
-| PROC_MEM   | B    | Procedure execution engine memory consumption |
+| G_MEM      | MB   | Global memory consumption            |
+| CATA_MEM   | MB   | CATALOG memory consumption           |
+| TRAN_MEM   | MB   | Transaction memory consumption       |
+| NET_MEM    | MB   | User connection memory consumption   |
+| TASK_MEM   | MB   | Task thread memory consumption       |
+| MSG_MEM    | MB   | Internal communication message memory consumption |
+| LOCK_MEM   | MB   | Local lock memory consumption        |
+| GLOCK_MEM  | MB   | Global lock memory consumption       |
+| DLCHK_MEM  | MB   | Deadlock detection memory consumption|
+| MODI_MEM   | MB   | Change log memory consumption        |
+| PROC_MEM   | MB   | Procedure execution engine memory consumption |
 
 #### Metric Set: Disk Information
 
-| Metric Name       | Unit | Description                         |
-|-------------------|------|-------------------------------------|
-| DISK_READ_NUM     | Times  | Number of disk block read operations |
-| DISK_WRITE_NUM    | Times  | Number of disk block write operations |
-| DISK_READ_BYTES   | B    | Number of bytes read from disk       |
-| DISK_WRITE_BYTES  | B    | Number of bytes written to disk      |
+| Metric Name       | Unit  | Description                         |
+|-------------------|-------|-------------------------------------|
+| DISK_READ_NUM     | Times | Number of disk block read operations |
+| DISK_WRITE_NUM    | Times | Number of disk block write operations |
+| DISK_READ_BYTES   | MB    | Number of bytes read from disk       |
+| DISK_WRITE_BYTES  | MB    | Number of bytes written to disk      |

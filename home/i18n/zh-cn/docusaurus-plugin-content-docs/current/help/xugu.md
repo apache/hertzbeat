@@ -41,17 +41,17 @@ keywords: [ 开源监控系统, 开源数据库监控, xugu数据库监控 ]
 
 | 指标名称      | 指标单位 | 指标帮助描述      |
 |-----------|------|-------------|
-| G_MEM     | B    | 全局内存消耗      |
-| CATA_MEM  | B    | CATALOG内存消耗 |
-| TRAN_MEM  | B    | 事务内存消耗      |
-| NET_MEM   | B    | 用户连接用内存消耗   |
-| TASK_MEM  | B    | 任务线程消耗      |
-| MSG_MEM   | B    | 内部通讯消息内存消耗  |
-| LOCK_MEM  | B    | 局部锁内存消耗     |
-| GLOCK_MEM | B    | 全局锁内存消耗     |
-| DLCHK_MEM | B    | 死锁检测内存消耗    |
-| MODI_MEM  | B    | 变更日志内存消耗    |
-| PROC_MEM  | B    | 过程执行机内存消耗   |
+| G_MEM     | MB   | 全局内存消耗      |
+| CATA_MEM  | MB   | CATALOG内存消耗 |
+| TRAN_MEM  | MB   | 事务内存消耗      |
+| NET_MEM   | MB   | 用户连接用内存消耗   |
+| TASK_MEM  | MB   | 任务线程消耗      |
+| MSG_MEM   | MB   | 内部通讯消息内存消耗  |
+| LOCK_MEM  | MB   | 局部锁内存消耗     |
+| GLOCK_MEM | MB   | 全局锁内存消耗     |
+| DLCHK_MEM | MB   | 死锁检测内存消耗    |
+| MODI_MEM  | MB   | 变更日志内存消耗    |
+| PROC_MEM  | MB   | 过程执行机内存消耗   |
 
 #### 指标集合：磁盘 信息
 
@@ -59,5 +59,5 @@ keywords: [ 开源监控系统, 开源数据库监控, xugu数据库监控 ]
 |------------------|------|-----------|
 | DISK_READ_NUM    | 次    | 数据块磁盘读取次数 |
 | DISK_WRITE_NUM   | 次    | 磁盘写入数据块次数 |
-| DISK_READ_BYTES  | B    | 磁盘读取字节数   |
-| DISK_WRITE_BYTES | B    | 磁盘写入字节数   |
+| DISK_READ_BYTES  | MB   | 磁盘读取字节数   |
+| DISK_WRITE_BYTES | MB   | 磁盘写入字节数   |
