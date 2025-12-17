@@ -173,70 +173,82 @@ metrics:
     fields:
       - field: G_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 全局内存消耗
           en-US: Global Memory Consumption
       - field: CATA_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: CATALOG内存消耗
           en-US: CATALOG memory consumption
       - field: TRAN_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 事务内存消耗
           en-US: Transactional memory consumption
       - field: NET_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 用户连接用内存消耗
           en-US: Memory consumption for user connections
       - field: TASK_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 任务线程消耗
           en-US: Task Thread Consumption
       - field: MSG_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 内部通讯消息内存消耗
           en-US: Internal communication message memory consumption
       - field: LOCK_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 局部锁内存消耗
           en-US: Local lock memory consumption
       - field: GLOCK_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 全局锁内存消耗
           en-US: Global lock memory consumption
       - field: DLCHK_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 死锁检测内存消耗
           en-US: Deadlock detection memory consumption
       - field: MODI_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 变更日志内存消耗
           en-US: Change Log Memory Consumption
       - field: PROC_MEM
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 过程执行机内存消耗
           en-US: Process Execution Machine Memory Consumption
+    units:
+      - G_MEM=B->MB
+      - CATA_MEM=B->MB
+      - TRAN_MEM=B->MB
+      - NET_MEM=B->MB
+      - TASK_MEM=B->MB
+      - MSG_MEM=B->MB
+      - LOCK_MEM=B->MB
+      - GLOCK_MEM=B->MB
+      - DLCHK_MEM=B->MB
+      - MODI_MEM=B->MB
+      - PROC_MEM=B->MB
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jdbc
     # the config content when protocol is jdbc
@@ -282,16 +294,19 @@ metrics:
           en-US: Number of data blocks written to disk
       - field: DISK_READ_BYTES
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 磁盘读取字节数
           en-US: Disk read bytes
       - field: DISK_WRITE_BYTES
         type: 0
-        unit: B
+        unit: MB
         i18n:
           zh-CN: 磁盘写入字节数
           en-US: Bytes written to disk
+    units:
+      - DISK_READ_BYTES=B->MB
+      - DISK_WRITE_BYTES=B->MB
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
