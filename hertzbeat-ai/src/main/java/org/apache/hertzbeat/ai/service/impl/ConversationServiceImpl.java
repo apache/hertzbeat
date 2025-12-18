@@ -30,11 +30,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of the ConversationService interface for managing chat conversations.
@@ -42,13 +46,13 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class ConversationServiceImpl implements ConversationService {
-    
+
     @Autowired
     private ChatConversationDao conversationDao;
-    
+
     @Autowired
     private ChatMessageDao messageDao;
-    
+
     @Autowired
     private ChatClientProviderService chatClientProviderService;
 
@@ -67,12 +71,13 @@ public class ConversationServiceImpl implements ConversationService {
         }
 
         log.info("Starting streaming conversation: {}", conversationId);
+        ChatConversation conversation = conversationDao.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationId));
 
-        // Add user message to conversation
-        ChatMessage chatMessage = ChatMessage.builder().conversationId(conversationId)
-                .content(message).role("user").build();
-        chatMessage = messageDao.save(chatMessage);
-        ChatConversation conversation = conversationDao.getReferenceById(conversationId);
+        // Manually load messages for conversation history
+        List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
+        conversation.setMessages(messages);
+
         if (conversation.getTitle().startsWith("conversation")) {
             // Auto-generate title from first user message
             String title = message.length() > 30 ? message.substring(0, 27) + "..." : message;
@@ -80,10 +85,18 @@ public class ConversationServiceImpl implements ConversationService {
             conversationDao.save(conversation);
         }
 
+        // Add user message to conversation
+        ChatMessage chatMessage = ChatMessage.builder()
+            .conversationId(conversationId)
+            .content(message)
+            .role("user")
+            .build();
+        chatMessage = messageDao.save(chatMessage);
+
         ChatRequestContext context = ChatRequestContext.builder()
                 .message(message)
                 .conversationId(conversationId)
-                .conversationHistory(CollectionUtils.isEmpty(conversation.getMessages()) ? null 
+                .conversationHistory(CollectionUtils.isEmpty(conversation.getMessages()) ? null
                         : conversation.getMessages().subList(0, conversation.getMessages().size() - 1))
                 .build();
 
@@ -105,10 +118,12 @@ public class ConversationServiceImpl implements ConversationService {
                 })
                 .concatWith(Flux.defer(() -> {
                     // Add the complete AI response to conversation
-                    ChatMessage assistantMessage = ChatMessage.builder().conversationId(conversationId)
-                            .content(fullResponse.toString()).role("assistant").build();
+                    ChatMessage assistantMessage = ChatMessage.builder()
+                        .conversationId(conversationId)
+                        .content(fullResponse.toString())
+                        .role("assistant")
+                        .build();
                     assistantMessage = messageDao.save(assistantMessage);
-                    
                     ChatResponseChunk finalResponse = ChatResponseChunk.builder()
                             .conversationId(conversationId)
                             .response("")
@@ -145,16 +160,40 @@ public class ConversationServiceImpl implements ConversationService {
         if (conversationId == null) {
             return null;
         }
-        return conversationDao.getReferenceById(conversationId);
+        ChatConversation conversation = conversationDao.findById(conversationId).orElse(null);
+        if (conversation != null) {
+            List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
+            conversation.setMessages(messages);
+        }
+        return conversation;
     }
 
     @Override
     public List<ChatConversation> getAllConversations() {
-        return conversationDao.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        List<ChatConversation> conversations = conversationDao.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        if (conversations.isEmpty()) {
+            return conversations;
+        }
+        List<Long> conversationIds = conversations.stream()
+                .map(ChatConversation::getId)
+                .toList();
+        List<ChatMessage> allMessages = messageDao.findByConversationIdInOrderByGmtCreateAsc(conversationIds);
+        Map<Long, List<ChatMessage>> messagesByConversationId = allMessages.stream()
+                .collect(Collectors.groupingBy(ChatMessage::getConversationId));
+        for (ChatConversation conversation : conversations) {
+            List<ChatMessage> messages = messagesByConversationId.getOrDefault(conversation.getId(), Collections.emptyList());
+            conversation.setMessages(messages);
+        }
+        return conversations;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteConversation(Long conversationId) {
+        List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
+        if (!messages.isEmpty()) {
+            messageDao.deleteAll(messages);
+        }
         conversationDao.deleteById(conversationId);
     }
 }
