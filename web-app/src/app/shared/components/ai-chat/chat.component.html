@@ -117,6 +117,14 @@
           <div class="message-text">
             <div *ngIf="message.role === 'user'" [innerHTML]="message.content"></div>
             <markdown *ngIf="message.role === 'assistant'" [data]="message.content"></markdown>
+            <button
+              *ngIf="message.securityForm && message.securityForm.show"
+              (click)="openSecurityForm(message.securityForm)"
+              nz-button
+              nzType="primary"
+            >
+              填写私密参数</button
+            >
           </div>
           <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
             <span>{{ 'ai.chat.typing' | i18n }}</span>
@@ -226,6 +234,28 @@
           <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- Security Form Modal -->
+<nz-modal
+  [(nzVisible)]="showSecurityFormModal"
+  [nzTitle]="'plugin.edit' | i18n"
+  (nzOnCancel)="onSecurityFormCancel()"
+  (nzOnOk)="onSecurityFormSubmit()"
+  nzMaskClosable="false"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #form="ngForm">
+      <ng-container *ngFor="let paramDefine of securityParamDefine; let i = index">
+        <nz-form-item>
+          <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field">{{ paramDefine.name }}</nz-form-label>
+          <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+            <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="securityParams[paramDefine.field].paramValue" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
     </form>
   </div>
 </nz-modal>

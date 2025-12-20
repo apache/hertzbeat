@@ -28,6 +28,13 @@ export interface ChatMessage {
   content: string;
   role: 'user' | 'assistant';
   gmtCreate: Date;
+  securityForm: SecurityForm;
+}
+
+export interface SecurityForm {
+  show: Boolean;
+  param: string;
+  content: string;
 }
 
 export interface ChatConversation {
@@ -121,7 +128,7 @@ export class AiChatService {
         const decoder = new TextDecoder();
         let buffer = '';
 
-        function readStream(): Promise<void> {
+        const readStream = (): Promise<void> => {
           if (!reader) {
             return Promise.resolve();
           }
@@ -148,6 +155,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: data.response || '',
                         role: 'assistant',
+                        securityForm: { show: false, param: '', content: '' },
                         gmtCreate: data.timestamp ? new Date(data.timestamp) : new Date()
                       });
                     }
@@ -157,6 +165,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: jsonStr,
                         role: 'assistant',
+                        securityForm: { show: false, param: '', content: '' },
                         gmtCreate: new Date()
                       });
                     }
@@ -167,7 +176,7 @@ export class AiChatService {
 
             return readStream();
           });
-        }
+        };
 
         return readStream();
       })

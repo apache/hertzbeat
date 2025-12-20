@@ -54,13 +54,13 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     private final ApplicationContext applicationContext;
 
     private final GeneralConfigDao generalConfigDao;
-    
+
     @Autowired
     private ToolCallbackProvider toolCallbackProvider;
-    
+
     private boolean isConfigured = false;
 
-    @Value("classpath:/prompt/system-message.st")
+    @Value("classpath:/prompt/system-message-improve.st")
     private Resource systemResource;
 
     @Autowired
@@ -74,7 +74,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         try {
             // Get the current (potentially refreshed) ChatClient instance
             ChatClient chatClient = applicationContext.getBean("openAiChatClient", ChatClient.class);
-            
+
             List<Message> messages = new ArrayList<>();
 
             // Add conversation history if available
@@ -112,7 +112,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         if (!isConfigured) {
             GeneralConfig providerConfig = generalConfigDao.findByType("provider");
             ModelProviderConfig modelProviderConfig = JsonUtil.fromJson(providerConfig.getContent(), ModelProviderConfig.class);
-            isConfigured = modelProviderConfig != null && modelProviderConfig.getApiKey() != null;   
+            isConfigured = modelProviderConfig != null && modelProviderConfig.getApiKey() != null;
         }
         return isConfigured;
     }

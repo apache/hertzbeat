@@ -24,7 +24,8 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
-import { AiChatService, ChatMessage, ChatConversation } from '../../../service/ai-chat.service';
+import { ParamDefine } from '../../../pojo/ParamDefine';
+import { AiChatService, ChatMessage, ChatConversation, SecurityForm } from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
@@ -51,8 +52,12 @@ export class ChatComponent implements OnInit, OnDestroy {
   isAiProviderConfigured = false;
   showConfigModal = false;
   configLoading = false;
+  showSecurityFormModal = false;
   aiProviderConfig: ModelProviderConfig = new ModelProviderConfig();
   providerOptions: ProviderOption[] = PROVIDER_OPTIONS;
+
+  securityParamDefine: ParamDefine[] = [];
+  securityParams: any = {};
 
   constructor(
     private aiChatService: AiChatService,
@@ -192,6 +197,12 @@ export class ChatComponent implements OnInit, OnDestroy {
 
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
+          //计算所有 message 的 securityForm
+          this.messages.forEach(message => {
+            message.securityForm = this.calculateShowSecurityForm(message.content);
+            message.content = message.securityForm.content;
+            console.log('securityForm:', message.securityForm);
+          });
           this.cdr.detectChanges();
           this.scrollToBottom();
         } else {
@@ -254,6 +265,23 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * calculate if the security form should be shown for the given message content
+   *
+   * @param content
+   */
+  calculateShowSecurityForm(content: string): SecurityForm {
+    const regex = /```json\s*SecureForm:((?:.+\s)+)```/gm;
+    if (!content) return { show: false, param: '', content: content };
+    const match = content.match(regex);
+    if (!match || match.length === 0) {
+      return { show: false, param: '', content: content };
+    }
+    // @ts-ignore
+    const result = match[0].replace(/```json\s*SecureForm:/gm, '').replace(/```/, '');
+    return { show: true, param: result, content: content.replace(regex, '') };
+  }
+
+  /**
    * Send a message
    */
   sendMessage(): void {
@@ -264,6 +292,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const userMessage: ChatMessage = {
       content: this.newMessage.trim(),
       role: 'user',
+      securityForm: { show: false, param: '', content: '' },
       gmtCreate: new Date()
     };
 
@@ -282,6 +311,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         const offlineMessage: ChatMessage = {
           content: this.i18nSvc.fanyi('ai.chat.offline.response'),
           role: 'assistant',
+          securityForm: { show: false, param: '', content: '' },
           gmtCreate: new Date()
         };
         this.messages.push(offlineMessage);
@@ -296,6 +326,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const assistantMessage: ChatMessage = {
       content: '',
       role: 'assistant',
+      securityForm: { show: false, param: '', content: '' },
       gmtCreate: new Date()
     };
     this.messages.push(assistantMessage);
@@ -311,7 +342,6 @@ export class ChatComponent implements OnInit, OnDestroy {
           // Accumulate the content for streaming effect
           lastMessage.content += chunk.content;
           lastMessage.gmtCreate = chunk.gmtCreate;
-
           this.cdr.detectChanges();
           this.scrollToBottom();
         }
@@ -332,6 +362,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         const errorMessage: ChatMessage = {
           content: this.i18nSvc.fanyi('ai.chat.error.processing'),
           role: 'assistant',
+          securityForm: { show: false, param: '', content: '' },
           gmtCreate: new Date()
         };
         this.messages.push(errorMessage);
@@ -342,6 +373,10 @@ export class ChatComponent implements OnInit, OnDestroy {
       complete: () => {
         this.isSendingMessage = false;
         this.cdr.detectChanges();
+
+        const lastMessage = this.messages[this.messages.length - 1];
+        lastMessage.securityForm = this.calculateShowSecurityForm(lastMessage.content);
+        console.log('securityForm:', lastMessage.securityForm);
 
         // Refresh current conversation to get updated data (only if not fallback)
         if (this.currentConversation && this.currentConversation.id !== 0) {
@@ -617,5 +652,38 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.aiProviderConfig.baseUrl = selectedProvider.defaultBaseUrl;
       this.aiProviderConfig.model = selectedProvider.defaultModel;
     }
+  }
+
+  /**
+   *  111
+   *
+   * @param event
+   */
+  onSecurityFormSubmit(): void {
+    this.showSecurityFormModal = false;
+  }
+
+  /**
+   * 1111
+   */
+  onSecurityFormCancel(): void {
+    this.showSecurityFormModal = false;
+  }
+
+  openSecurityForm(securityForm: SecurityForm): void {
+    debugger;
+    this.securityParamDefine = JSON.parse(securityForm.param).privateParams.map((i: any) => {
+      this.securityParams[i.field] = {
+        // Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
+        type: i.type === 'number' ? 0 : i.type === 'text' || i.type === 'string' ? 1 : i.type === 'json' ? 3 : 2,
+        field: i.field,
+        paramValue: null
+      };
+      i.name = i.name[this.i18nSvc.defaultLang];
+      return i;
+    });
+
+    console.log('this.securityParamDefine:', this.securityParamDefine);
+    this.showSecurityFormModal = true;
   }
 }
