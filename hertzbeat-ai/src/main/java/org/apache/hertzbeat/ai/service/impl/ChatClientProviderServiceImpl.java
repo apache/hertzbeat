@@ -18,6 +18,8 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
@@ -92,9 +94,12 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             log.info("Starting streaming chat for conversation: {}", context.getConversationId());
 
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("conversationId", context.getConversationId());
+            log.info(SystemPromptTemplate.builder().resource(systemResource).build().createMessage(metadata).getText());
             return chatClient.prompt()
                     .messages(messages)
-                    .system(SystemPromptTemplate.builder().resource(systemResource).build().getTemplate())
+                    .system(SystemPromptTemplate.builder().resource(systemResource).build().create(metadata).getContents())
                     .toolCallbacks(toolCallbackProvider)
                     .stream()
                     .content()

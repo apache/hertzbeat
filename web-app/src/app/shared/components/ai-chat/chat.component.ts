@@ -25,7 +25,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 
 import { ModelProviderConfig, PROVIDER_OPTIONS, ProviderOption } from '../../../pojo/ModelProviderConfig';
 import { ParamDefine } from '../../../pojo/ParamDefine';
-import { AiChatService, ChatMessage, ChatConversation, SecurityForm } from '../../../service/ai-chat.service';
+import { AiChatService, ChatMessage, ChatConversation, SecurityForm, DEFAULT_SECURITY_FORM } from '../../../service/ai-chat.service';
 import { GeneralConfigService } from '../../../service/general-config.service';
 import { ThemeService } from '../../../service/theme.service';
 
@@ -198,11 +198,13 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
           //计算所有 message 的 securityForm
-          this.messages.forEach(message => {
-            message.securityForm = this.calculateShowSecurityForm(message.content);
+          for (let i = 0; i < this.messages.length; i++) {
+            const message = this.messages[i];
+            const next = i < this.messages.length - 1 ? this.messages[i + 1].content : '';
+            message.securityForm = this.calculateShowSecurityForm(message.content, next);
             message.content = message.securityForm.content;
-            console.log('securityForm:', message.securityForm);
-          });
+          }
+
           this.cdr.detectChanges();
           this.scrollToBottom();
         } else {
@@ -267,18 +269,21 @@ export class ChatComponent implements OnInit, OnDestroy {
   /**
    * calculate if the security form should be shown for the given message content
    *
-   * @param content
+   * @param content current message content
+   * @param next next message content
    */
-  calculateShowSecurityForm(content: string): SecurityForm {
+  calculateShowSecurityForm(content: string, next: string): SecurityForm {
+    const completeMessage: String[] = ['表单填写完成', '表單已完成', 'Formulário concluído', 'フォームが完了しました', 'Form completed'];
+    const complete = completeMessage.includes(next);
     const regex = /```json\s*SecureForm:((?:.+\s)+)```/gm;
-    if (!content) return { show: false, param: '', content: content };
+    if (!content) return { show: false, param: '', content: content, complete: complete };
     const match = content.match(regex);
     if (!match || match.length === 0) {
-      return { show: false, param: '', content: content };
+      return { show: false, param: '', content: content, complete: complete };
     }
     // @ts-ignore
     const result = match[0].replace(/```json\s*SecureForm:/gm, '').replace(/```/, '');
-    return { show: true, param: result, content: content.replace(regex, '') };
+    return { show: true, param: result, content: content.replace(regex, ''), complete: complete };
   }
 
   /**
@@ -292,7 +297,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const userMessage: ChatMessage = {
       content: this.newMessage.trim(),
       role: 'user',
-      securityForm: { show: false, param: '', content: '' },
+      securityForm: DEFAULT_SECURITY_FORM,
       gmtCreate: new Date()
     };
 
@@ -311,7 +316,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         const offlineMessage: ChatMessage = {
           content: this.i18nSvc.fanyi('ai.chat.offline.response'),
           role: 'assistant',
-          securityForm: { show: false, param: '', content: '' },
+          securityForm: DEFAULT_SECURITY_FORM,
           gmtCreate: new Date()
         };
         this.messages.push(offlineMessage);
@@ -326,7 +331,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     const assistantMessage: ChatMessage = {
       content: '',
       role: 'assistant',
-      securityForm: { show: false, param: '', content: '' },
+      securityForm: { show: false, param: '', content: '', complete: false },
       gmtCreate: new Date()
     };
     this.messages.push(assistantMessage);
@@ -362,7 +367,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         const errorMessage: ChatMessage = {
           content: this.i18nSvc.fanyi('ai.chat.error.processing'),
           role: 'assistant',
-          securityForm: { show: false, param: '', content: '' },
+          securityForm: DEFAULT_SECURITY_FORM,
           gmtCreate: new Date()
         };
         this.messages.push(errorMessage);
@@ -375,8 +380,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
 
         const lastMessage = this.messages[this.messages.length - 1];
-        lastMessage.securityForm = this.calculateShowSecurityForm(lastMessage.content);
-        console.log('securityForm:', lastMessage.securityForm);
+        lastMessage.securityForm = this.calculateShowSecurityForm(lastMessage.content, '');
+        lastMessage.content = lastMessage.securityForm.content;
 
         // Refresh current conversation to get updated data (only if not fallback)
         if (this.currentConversation && this.currentConversation.id !== 0) {
@@ -660,6 +665,23 @@ export class ChatComponent implements OnInit, OnDestroy {
    * @param event
    */
   onSecurityFormSubmit(): void {
+    this.aiChatService
+      .saveSecurityData({
+        securityData: JSON.stringify(Object.values(this.securityParams)),
+        conversationId: this.currentConversation?.id
+      })
+      .subscribe((message: any) => {
+        if (message.code === 0) {
+          const lastMessage = this.messages[this.messages.length - 1];
+          lastMessage.securityForm.complete = true;
+          const tmpMessage = this.newMessage;
+          this.newMessage = this.i18nSvc.fanyi('ai.chat.security.form.default.callback');
+          this.sendMessage();
+          this.newMessage = tmpMessage;
+        } else {
+          console.log('Error saving security data:');
+        }
+      });
     this.showSecurityFormModal = false;
   }
 
@@ -671,7 +693,6 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   openSecurityForm(securityForm: SecurityForm): void {
-    debugger;
     this.securityParamDefine = JSON.parse(securityForm.param).privateParams.map((i: any) => {
       this.securityParams[i.field] = {
         // Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map

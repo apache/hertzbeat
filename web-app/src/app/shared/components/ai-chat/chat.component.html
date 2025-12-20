@@ -81,7 +81,7 @@
       <!-- Welcome message -->
       <div *ngIf="messages.length === 0 && !isLoadingConversations" class="welcome-message">
         <div class="welcome-content">
-          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
+          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon"/>
           <h3 class="welcome-title">{{ 'ai.chat.welcome.title' | i18n }}</h3>
           <p class="welcome-description">
             {{ 'ai.chat.welcome.description' | i18n }}
@@ -119,12 +119,13 @@
             <markdown *ngIf="message.role === 'assistant'" [data]="message.content"></markdown>
             <button
               *ngIf="message.securityForm && message.securityForm.show"
+              [disabled]="message.securityForm.complete"
               (click)="openSecurityForm(message.securityForm)"
               nz-button
               nzType="primary"
             >
-              填写私密参数</button
-            >
+              {{ (message.securityForm.complete ? 'ai.chat.security.form.complete' : 'ai.chat.security.form.button') | i18n }}
+            </button>
           </div>
           <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
             <span>{{ 'ai.chat.typing' | i18n }}</span>
@@ -198,7 +199,7 @@
       <nz-form-item>
         <nz-form-label nzRequired="true">{{ 'ai.chat.config.api-key' | i18n }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'ai.chat.config.api-key.required' | i18n">
-          <input nz-input [(ngModel)]="aiProviderConfig.apiKey" name="apiKey" type="password" placeholder="sk-..." required />
+          <input nz-input [(ngModel)]="aiProviderConfig.apiKey" name="apiKey" type="password" placeholder="sk-..." required/>
           <p class="form-help">{{ 'ai.chat.config.api-key.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
@@ -208,7 +209,7 @@
         <nz-form-label>{{ 'ai.chat.config.base-url' | i18n }}</nz-form-label>
         <nz-form-control>
           <nz-input-group [nzSuffix]="resetBtn">
-            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1" />
+            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1"/>
             <ng-template #resetBtn>
               <button
                 nz-button
@@ -230,7 +231,7 @@
       <nz-form-item>
         <nz-form-label>{{ 'ai.chat.config.model' | i18n }}</nz-form-label>
         <nz-form-control>
-          <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" placeholder="gpt-4" />
+          <input nz-input [(ngModel)]="aiProviderConfig.model" name="model" placeholder="gpt-4"/>
           <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
@@ -241,7 +242,7 @@
 <!-- Security Form Modal -->
 <nz-modal
   [(nzVisible)]="showSecurityFormModal"
-  [nzTitle]="'plugin.edit' | i18n"
+  [nzTitle]="'ai.chat.security.form.title' | i18n"
   (nzOnCancel)="onSecurityFormCancel()"
   (nzOnOk)="onSecurityFormSubmit()"
   nzMaskClosable="false"
@@ -252,7 +253,7 @@
         <nz-form-item>
           <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field">{{ paramDefine.name }}</nz-form-label>
           <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="securityParams[paramDefine.field].paramValue" />
+            <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="securityParams[paramDefine.field].paramValue"/>
           </nz-form-control>
         </nz-form-item>
       </ng-container>

@@ -17,11 +17,13 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.dao.ChatConversationDao;
 import org.apache.hertzbeat.ai.dao.ChatMessageDao;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
+import org.apache.hertzbeat.ai.pojo.dto.SecurityData;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.service.ConversationService;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
@@ -62,17 +64,17 @@ public class ConversationServiceImpl implements ConversationService {
         // Check if provider is properly configured
         if (!chatClientProviderService.isConfigured()) {
             ChatResponseChunk errorResponse = ChatResponseChunk.builder()
-                    .conversationId(conversationId)
-                    .response("Provider is not configured. Please configure your AI Provider.")
-                    .build();
+                .conversationId(conversationId)
+                .response("Provider is not configured. Please configure your AI Provider.")
+                .build();
             return Flux.just(ServerSentEvent.builder(errorResponse)
-                    .event("error")
-                    .build());
+                .event("error")
+                .build());
         }
 
         log.info("Starting streaming conversation: {}", conversationId);
         ChatConversation conversation = conversationDao.findById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationId));
+            .orElseThrow(() -> new IllegalArgumentException("Conversation not found: " + conversationId));
 
         // Manually load messages for conversation history
         List<ChatMessage> messages = messageDao.findByConversationIdOrderByGmtCreateAsc(conversationId);
@@ -94,58 +96,59 @@ public class ConversationServiceImpl implements ConversationService {
         chatMessage = messageDao.save(chatMessage);
 
         ChatRequestContext context = ChatRequestContext.builder()
-                .message(message)
-                .conversationId(conversationId)
-                .conversationHistory(CollectionUtils.isEmpty(conversation.getMessages()) ? null
-                        : conversation.getMessages().subList(0, conversation.getMessages().size() - 1))
-                .build();
+            .message(message)
+            .conversationId(conversationId)
+            .conversationHistory(CollectionUtils.isEmpty(conversation.getMessages()) ? null
+                : conversation.getMessages().subList(0, conversation.getMessages().size() - 1))
+            .build();
 
         // Stream response from AI service
         StringBuilder fullResponse = new StringBuilder();
         ChatMessage finalChatMessage = chatMessage;
         return chatClientProviderService.streamChat(context)
-                .map(chunk -> {
-                    fullResponse.append(chunk);
-                    ChatResponseChunk responseChunk = ChatResponseChunk.builder()
-                            .conversationId(conversationId)
-                            .userMessageId(finalChatMessage.getId())
-                            .response(chunk)
-                            .build();
+            .map(chunk -> {
+                fullResponse.append(chunk);
+                ChatResponseChunk responseChunk = ChatResponseChunk.builder()
+                    .conversationId(conversationId)
+                    .userMessageId(finalChatMessage.getId())
+                    .response(chunk)
+                    .build();
 
-                    return ServerSentEvent.builder(responseChunk)
-                            .event("message")
-                            .build();
-                })
-                .concatWith(Flux.defer(() -> {
-                    // Add the complete AI response to conversation
-                    ChatMessage assistantMessage = ChatMessage.builder()
-                        .conversationId(conversationId)
-                        .content(fullResponse.toString())
-                        .role("assistant")
-                        .build();
-                    assistantMessage = messageDao.save(assistantMessage);
-                    ChatResponseChunk finalResponse = ChatResponseChunk.builder()
-                            .conversationId(conversationId)
-                            .response("")
-                            .assistantMessageId(assistantMessage.getId())
-                            .build();
+                return ServerSentEvent.builder(responseChunk)
+                    .event("message")
+                    .build();
+            })
+            .concatWith(Flux.defer(() -> {
+                // Add the complete AI response to conversation
+                ChatMessage assistantMessage = ChatMessage.builder()
+                    .conversationId(conversationId)
+                    .content(fullResponse.toString())
+                    .role("assistant")
+                    .build();
+                assistantMessage = messageDao.save(assistantMessage);
+                ChatResponseChunk finalResponse = ChatResponseChunk.builder()
+                    .conversationId(conversationId)
+                    .response("")
+                    .assistantMessageId(assistantMessage.getId())
+                    .build();
 
-                    return Flux.just(ServerSentEvent.builder(finalResponse)
-                            .event("complete")
-                            .build());
-                }))
-                .doOnComplete(() -> log.info("Streaming completed for conversation: {}", conversationId))
-                .doOnError(error -> log.error("Error in streaming chat for conversation {}: {}", conversationId, error.getMessage(), error))
-                .onErrorResume(error -> {
-                    ChatResponseChunk errorResponse = ChatResponseChunk.builder()
-                            .conversationId(conversationId)
-                            .response("An error occurred: " + error.getMessage())
-                            .userMessageId(finalChatMessage.getId())
-                            .build();
-                    return Flux.just(ServerSentEvent.builder(errorResponse)
-                            .event("error")
-                            .build());
-                });
+                return Flux.just(ServerSentEvent.builder(finalResponse)
+                    .event("complete")
+                    .build());
+            }))
+            .doOnComplete(() -> log.info("Streaming completed for conversation: {}", conversationId))
+            .doOnError(error -> log.error("Error in streaming chat for conversation {}: {}", conversationId,
+                error.getMessage(), error))
+            .onErrorResume(error -> {
+                ChatResponseChunk errorResponse = ChatResponseChunk.builder()
+                    .conversationId(conversationId)
+                    .response("An error occurred: " + error.getMessage())
+                    .userMessageId(finalChatMessage.getId())
+                    .build();
+                return Flux.just(ServerSentEvent.builder(errorResponse)
+                    .event("error")
+                    .build());
+            });
     }
 
     @Override
@@ -175,13 +178,14 @@ public class ConversationServiceImpl implements ConversationService {
             return conversations;
         }
         List<Long> conversationIds = conversations.stream()
-                .map(ChatConversation::getId)
-                .toList();
+            .map(ChatConversation::getId)
+            .toList();
         List<ChatMessage> allMessages = messageDao.findByConversationIdInOrderByGmtCreateAsc(conversationIds);
         Map<Long, List<ChatMessage>> messagesByConversationId = allMessages.stream()
-                .collect(Collectors.groupingBy(ChatMessage::getConversationId));
+            .collect(Collectors.groupingBy(ChatMessage::getConversationId));
         for (ChatConversation conversation : conversations) {
-            List<ChatMessage> messages = messagesByConversationId.getOrDefault(conversation.getId(), Collections.emptyList());
+            List<ChatMessage> messages = messagesByConversationId.getOrDefault(conversation.getId(),
+                Collections.emptyList());
             conversation.setMessages(messages);
         }
         return conversations;
@@ -195,5 +199,23 @@ public class ConversationServiceImpl implements ConversationService {
             messageDao.deleteAll(messages);
         }
         conversationDao.deleteById(conversationId);
+    }
+
+    @Override
+    public Boolean saveSecurityData(SecurityData securityData) {
+        Optional<ChatConversation> chatConversation = conversationDao.findById(securityData.getConversationId());
+        if (chatConversation.isPresent()) {
+            ChatConversation conversation = chatConversation.get();
+            conversation.setSecurityData(securityData.getSecurityData());
+            conversationDao.save(conversation);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public String getSecurityData(Long conversationId) {
+        Optional<ChatConversation> chatConversation = conversationDao.findById(conversationId);
+        return chatConversation.map(ChatConversation::getSecurityData).orElse(null);
     }
 }

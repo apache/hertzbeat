@@ -19,6 +19,7 @@
 package org.apache.hertzbeat.ai.service;
 
 import org.apache.hertzbeat.ai.pojo.dto.ChatResponseChunk;
+import org.apache.hertzbeat.ai.pojo.dto.SecurityData;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
@@ -33,7 +34,7 @@ public interface ConversationService {
     /**
      * Send a message and receive a streaming response
      *
-     * @param message The user's message
+     * @param message        The user's message
      * @param conversationId Optional conversation ID for continuing a chat
      * @return Flux of ServerSentEvent for streaming the response
      */
@@ -67,4 +68,19 @@ public interface ConversationService {
      * @param conversationId Conversation ID to delete
      */
     void deleteConversation(Long conversationId);
+
+    /**
+     * save security data for a conversation
+     *
+     * @param securityData   securityData
+     * @return save result
+     */
+    Boolean saveSecurityData(SecurityData securityData);
+
+    /**
+     * query security data by conversationId
+     * @param conversationId conversationId
+     * @return securityData
+     */
+    String getSecurityData(Long conversationId);
 }

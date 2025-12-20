@@ -35,7 +35,15 @@ export interface SecurityForm {
   show: Boolean;
   param: string;
   content: string;
+  complete: boolean;
 }
+
+export const DEFAULT_SECURITY_FORM: SecurityForm = {
+  show: false,
+  param: '',
+  content: '',
+  complete: false
+};
 
 export interface ChatConversation {
   id: number;
@@ -155,7 +163,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: data.response || '',
                         role: 'assistant',
-                        securityForm: { show: false, param: '', content: '' },
+                        securityForm: DEFAULT_SECURITY_FORM,
                         gmtCreate: data.timestamp ? new Date(data.timestamp) : new Date()
                       });
                     }
@@ -165,7 +173,7 @@ export class AiChatService {
                       responseSubject.next({
                         content: jsonStr,
                         role: 'assistant',
-                        securityForm: { show: false, param: '', content: '' },
+                        securityForm: DEFAULT_SECURITY_FORM,
                         gmtCreate: new Date()
                       });
                     }
@@ -186,5 +194,9 @@ export class AiChatService {
       });
 
     return responseSubject.asObservable();
+  }
+
+  saveSecurityData(body: any): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${chat_uri}/security`, body);
   }
 }

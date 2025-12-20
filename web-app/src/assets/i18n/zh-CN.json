@@ -1136,5 +1136,9 @@
   "ai.chat.error.chat.response": "获取 AI 回复失败：",
   "ai.chat.error.processing": "处理您的请求时出错。请检查 AI 智能体服务是否正在运行，然后重试。",
   "ai.chat.offline.mode": "AI 聊天服务不可用。正在离线模式下运行。",
-  "ai.chat.offline.response": "抱歉，AI 聊天服务当前不可用。请确保 HertzBeat AI 模块正在运行，稍后再试。"
+  "ai.chat.offline.response": "抱歉，AI 聊天服务当前不可用。请确保 HertzBeat AI 模块正在运行，稍后再试。",
+  "ai.chat.security.form.title": "安全表单",
+  "ai.chat.security.form.button": "填写私密参数",
+  "ai.chat.security.form.complete": "已填写",
+  "ai.chat.security.form.default.callback": "表单填写完成"
 }

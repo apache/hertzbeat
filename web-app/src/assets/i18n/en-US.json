@@ -1133,5 +1133,9 @@
   "ai.chat.error.chat.response": "Failed to get AI response:",
   "ai.chat.error.processing": "Sorry, there was an error processing your request. Please check if the AI Agent service is running and try again.",
   "ai.chat.offline.mode": "AI Chat service unavailable. Running in offline mode.",
-  "ai.chat.offline.response": "I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI module is running and try again later."
+  "ai.chat.offline.response": "I apologize, but the AI Chat service is currently unavailable. Please ensure the HertzBeat AI module is running and try again later.",
+  "ai.chat.security.form.title": "Security Form",
+  "ai.chat.security.form.button": "Enter private parameters",
+  "ai.chat.security.form.complete": "Complete",
+  "ai.chat.security.form.default.callback": "Form completed"
 }

@@ -1093,5 +1093,9 @@
   "ai.chat.error.chat.response": "AI の応答の取得に失敗しました：",
   "ai.chat.error.processing": "申し訳ございませんが、リクエストの処理中にエラーが発生しました。AI エージェントサービスが実行されているかご確認の上、再度お試しください。",
   "ai.chat.offline.mode": "AI チャットサービスが利用できません。オフラインモードで実行中です。",
-  "ai.chat.offline.response": "申し訳ございませんが、AI チャットサービスは現在利用できません。HertzBeat AI モジュールが実行されていることを確認して、後でもう一度お試しください。"
+  "ai.chat.offline.response": "申し訳ございませんが、AI チャットサービスは現在利用できません。HertzBeat AI モジュールが実行されていることを確認して、後でもう一度お試しください。",
+  "ai.chat.security.form.title": "セキュアフォーム",
+  "ai.chat.security.form.button": "プライベートパラメータを入力してください",
+  "ai.chat.security.form.complete": "完了",
+  "ai.chat.security.form.default.callback": "フォームが完了しました"
 }
