@@ -32,10 +32,10 @@
     </properties>
 
     <dependencies>
-        <!-- hertzbeat common -->
+        <!-- hertzbeat base -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-common</artifactId>
+            <artifactId>hertzbeat-base</artifactId>
         </dependency>
         <!-- hertzbeat warehouse -->
         <dependency>
