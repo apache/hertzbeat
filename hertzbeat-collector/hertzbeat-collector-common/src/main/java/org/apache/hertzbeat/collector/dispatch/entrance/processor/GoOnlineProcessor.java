@@ -35,9 +35,9 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
  */
 @Slf4j
 public class GoOnlineProcessor implements NettyRemotingProcessor {
-    
+
     private TimerDispatch timerDispatch;
-    
+
     @Override
     public ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message) {
         if (this.timerDispatch == null) {
@@ -53,7 +53,9 @@ public class GoOnlineProcessor implements NettyRemotingProcessor {
                 AesUtil.setDefaultSecretKey(serverInfo.getAesSecret());
             }
         }
-        timerDispatch.goOnline();
+        if (ClusterMsg.Direction.REQUEST.equals(message.getDirection())) {
+            timerDispatch.goOnline();
+        }
         log.info("receive online message and handle success");
         return ClusterMsg.Message.newBuilder()
                 .setIdentity(message.getIdentity())

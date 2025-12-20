@@ -860,7 +860,7 @@
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
             <div *ngIf="define.type === 'realtime_metric' || define.type === 'realtime_log'" class="draggable-vars-container">
-              <div *ngIf="define.type === 'realtime_metric'">
+              <div *ngIf="define.type === 'realtime_metric'" class="draggable-box">
                 <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
                   <div class="key-value-block">
                     <span class="var-key">{{ env.name }}</span>
@@ -875,7 +875,7 @@
                   </div>
                 </div>
               </div>
-              <div *ngIf="define.type === 'realtime_log'">
+              <div *ngIf="define.type === 'realtime_log'" class="draggable-box">
                 <div *ngFor="let field of logFields" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, field)">
                   <div class="key-value-block">
                     <span class="var-key">{{ '${' + field.value + '}' }}</span>
