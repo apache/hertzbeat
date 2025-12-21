@@ -11,7 +11,7 @@ H2 is **not** designed to run in an adversarial environment, and HertzBeat's H2 
 
 If an attacker can access your H2 database (for example via an exposed H2 Web Console or any other path that allows executing SQL), H2 features such as `CREATE ALIAS` can be abused to execute arbitrary Java code and potentially take full control of the HertzBeat server.
 
-For background, see the H2 security documentation: https://h2database.com/html/security.html
+For background, see the H2 security documentation: [H2 security documentation](https://h2database.com/html/security.html)
 :::
 
 ## Recommendation for production
@@ -45,6 +45,7 @@ spring:
 ```
 
 > Notes
+>
 > - The defaults may vary by version and packaging.
 > - If you run via Docker, you should mount the `data/` directory so your local test data persists.
 

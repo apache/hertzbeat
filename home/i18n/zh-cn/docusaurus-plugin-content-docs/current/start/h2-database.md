@@ -11,7 +11,7 @@ H2 并非设计为在对抗性环境中运行，HertzBeat 的 H2 用法不建议
 
 如果攻击者可以访问您的 H2 数据库（例如通过暴露的 H2 Web 控制台或任何其他允许执行 SQL 的路径），则 H2 的 `CREATE ALIAS` 等功能可能会被滥用以执行任意 Java 代码，并可能完全控制 HertzBeat 服务器。
 
-有关背景信息，请参阅 H2 安全文档：https://h2database.com/html/security.html
+有关背景信息，请参阅 H2 安全文档：[H2 安全文档](https://h2database.com/html/security.html)
 :::
 
 ## 生产建议
@@ -45,8 +45,9 @@ spring:
 ```
 
 > 注
+>
 > - 默认值可能因版本和打包而异。
->  - 如果您通过 Docker 运行，则应装载 `data/` 目录，以便您的本地测试数据持久存在。
+> - 如果您通过 Docker 运行，则应装载 `data/` 目录，以便您的本地测试数据持久存在。
 
 ## H2 Web 控制台（高风险）
 
