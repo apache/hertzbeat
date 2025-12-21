@@ -9,6 +9,7 @@ import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCodeEditorModule } from 'ng-zorro-antd/code-editor';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -28,6 +29,7 @@ import { LabelSelectorComponent } from './components/label-selector/label-select
 import { MonitorSelectListComponent } from './components/monitor-select-list/monitor-select-list.component';
 import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
+import { SqlEditorComponent } from './components/sql-editor/sql-editor.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
@@ -44,7 +46,8 @@ const COMPONENTS: Array<Type<void>> = [
   FormFieldComponent,
   MonitorSelectMenuComponent,
   MonitorSelectListComponent,
-  LabelSelectorComponent
+  LabelSelectorComponent,
+  SqlEditorComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
@@ -70,6 +73,7 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     NzInputModule,
     NzIconModule.forChild(icons),
     NzSpinModule,
+    NzCodeEditorModule,
     AiChatModule
   ],
   declarations: [...COMPONENTS, ...DIRECTIVES, HelpMessageShowComponent],

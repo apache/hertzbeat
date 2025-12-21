@@ -198,7 +198,7 @@
         </nz-form-control>
       </nz-form-item>
       <!-- Data Type Selection -->
-      <nz-form-item>
+      <nz-form-item *ngIf="isManageModalAdd">
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="dataType" [nzTooltipTitle]="'alert.setting.datatype.tip' | i18n">
           {{ 'alert.setting.datatype' | i18n }}
         </nz-form-label>
@@ -733,19 +733,14 @@
       <nz-form-item *ngIf="define.type == 'periodic_log'">
         <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="periodic_expr"></nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-textarea-count [nzMaxCharacterCount]="100">
-            <textarea
-              [(ngModel)]="define.expr"
-              required
-              rows="3"
-              nz-input
-              name="periodic_expr"
-              id="periodic_expr"
-              [placeholder]="'alert.setting.log.query.placeholder' | i18n"
-            >
-            </textarea>
-          </nz-textarea-count>
-          <button nz-button nzType="primary" style="width: 100%; margin-bottom: 10px" (click)="onPreviewLogExpr()">
+          <app-sql-editor
+            [(ngModel)]="define.expr"
+            name="periodic_expr"
+            [height]="'150px'"
+            tableName="hertzbeat_logs"
+            required
+          ></app-sql-editor>
+          <button nz-button nzType="primary" style="width: 100%; margin-top: 10px; margin-bottom: 10px" (click)="onPreviewLogExpr()">
             <i nz-icon nzType="eye" nzTheme="outline"></i>
             {{ 'common.preview.button' | i18n }}
           </button>
@@ -865,7 +860,7 @@
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <div class="template-input-wrapper">
             <div *ngIf="define.type === 'realtime_metric' || define.type === 'realtime_log'" class="draggable-vars-container">
-              <div *ngIf="define.type === 'realtime_metric'">
+              <div *ngIf="define.type === 'realtime_metric'" class="draggable-box">
                 <div *ngFor="let env of templateEnvVars" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, env)">
                   <div class="key-value-block">
                     <span class="var-key">{{ env.name }}</span>
@@ -880,7 +875,7 @@
                   </div>
                 </div>
               </div>
-              <div *ngIf="define.type === 'realtime_log'">
+              <div *ngIf="define.type === 'realtime_log'" class="draggable-box">
                 <div *ngFor="let field of logFields" class="draggable-tag" draggable="true" (dragstart)="onDragStart($event, field)">
                   <div class="key-value-block">
                     <span class="var-key">{{ '${' + field.value + '}' }}</span>

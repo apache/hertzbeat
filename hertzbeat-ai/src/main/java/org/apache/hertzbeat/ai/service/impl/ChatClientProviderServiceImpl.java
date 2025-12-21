@@ -60,7 +60,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     
     private boolean isConfigured = false;
 
-    @Value("classpath:/prompts/system-message.st")
+    @Value("classpath:/prompt/system-message.st")
     private Resource systemResource;
 
     @Autowired

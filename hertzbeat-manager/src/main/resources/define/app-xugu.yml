@@ -1,0 +1,321 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: db
+app: xugu
+# The monitoring i18n name
+name:
+  zh-CN: 虚谷数据库
+  en-US: Xugu DB
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 虚谷 数据库的通用性能指标(会话 信息、内存 信息、磁盘 信息)进行采集监控，支持版本为 XuguDB V12。<br>您可以点击“<i>新建 虚谷数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses the <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'>JDBC protocol</a> to collect and monitor general performance metrics (session information, memory information, disk information) for Xugu Database by configuring SQL. It supports XuguDB V12.
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/xugu
+  en-US: https://hertzbeat.apache.org/docs/help/xugu
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 5138
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[400,200000]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 6000
+  # field-param field key
+  - field: database
+    # name-param field display i18n name
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # field-param field key
+
+# collect metrics config list
+metrics:
+  # metrics - basic
+  - name: session_information
+    priority: 0
+    i18n:
+      zh-CN: 会话 信息
+      en-US: Session Info
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: Idle_Connection
+        type: 0
+        label: true
+        i18n:
+          zh-CN: 空闲连接
+          en-US: Idle Connection
+      - field: Active_Connections
+        type: 0
+        i18n:
+          zh-CN: 活跃连接
+          en-US: Active Connections
+      - field: Connection_being_created
+        type: 0
+        i18n:
+          zh-CN: 正在创建的连接
+          en-US: Connection being created
+      - field: Null_Read_Connection
+        type: 0
+        i18n:
+          zh-CN: 空读连接
+          en-US: Null Read Connection
+      - field: Complete_data_input_connection
+        type: 0
+        i18n:
+          zh-CN: 完成数据输入连接
+          en-US: Complete data input connection
+      - field: Other
+        type: 0
+        i18n:
+          zh-CN: 其他
+          en-US: Other
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: xugu
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # database name
+      database: ^_^database^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      queryType: columns
+      # sql
+      sql: SELECT CASE status  WHEN 112 THEN 'Idle_Connection'  WHEN 114 THEN 'Active_Connections'  WHEN 111 THEN 'Connection_being_created'  WHEN 113 THEN 'Null_Read_Connection'  WHEN 115 THEN 'Complete_data_input_connection'  ELSE 'Other' END AS status_type, COUNT(*) AS count  FROM  sys_sessions  GROUP BY  status;
+      # JDBC url
+      url: ^_^url^_^
+
+  - name: Memory
+    priority: 1
+    # collect metrics content
+    i18n:
+      zh-CN: 内存 信息
+      en-US: Memory Info
+    fields:
+      - field: G_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 全局内存消耗
+          en-US: Global Memory Consumption
+      - field: CATA_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: CATALOG内存消耗
+          en-US: CATALOG memory consumption
+      - field: TRAN_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 事务内存消耗
+          en-US: Transactional memory consumption
+      - field: NET_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 用户连接用内存消耗
+          en-US: Memory consumption for user connections
+      - field: TASK_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 任务线程消耗
+          en-US: Task Thread Consumption
+      - field: MSG_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 内部通讯消息内存消耗
+          en-US: Internal communication message memory consumption
+      - field: LOCK_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 局部锁内存消耗
+          en-US: Local lock memory consumption
+      - field: GLOCK_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 全局锁内存消耗
+          en-US: Global lock memory consumption
+      - field: DLCHK_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 死锁检测内存消耗
+          en-US: Deadlock detection memory consumption
+      - field: MODI_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 变更日志内存消耗
+          en-US: Change Log Memory Consumption
+      - field: PROC_MEM
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 过程执行机内存消耗
+          en-US: Process Execution Machine Memory Consumption
+    units:
+      - G_MEM=B->MB
+      - CATA_MEM=B->MB
+      - TRAN_MEM=B->MB
+      - NET_MEM=B->MB
+      - TASK_MEM=B->MB
+      - MSG_MEM=B->MB
+      - LOCK_MEM=B->MB
+      - GLOCK_MEM=B->MB
+      - DLCHK_MEM=B->MB
+      - MODI_MEM=B->MB
+      - PROC_MEM=B->MB
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jdbc
+    # the config content when protocol is jdbc
+    jdbc:
+      # jdbc host
+      # jdbchost
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # platform name
+      platform: xugu
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # database name
+      database: ^_^database^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      # SQL Query Method：oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: SELECT targ_name,targ_value from sys_monitors where targ_name like '%MEM';
+      url: ^_^url^_^
+
+  - name: Disk
+    priority: 1
+    i18n:
+      zh-CN: 磁盘 信息
+      en-US: Disk Info
+    fields:
+      - field: DISK_READ_NUM
+        type: 0
+        unit: Times
+        i18n:
+          zh-CN: 数据块磁盘读取次数
+          en-US: Number of data block disk reads
+      - field: DISK_WRITE_NUM
+        type: 0
+        unit: Times
+        i18n:
+          zh-CN: 磁盘写入数据块次数
+          en-US: Number of data blocks written to disk
+      - field: DISK_READ_BYTES
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 磁盘读取字节数
+          en-US: Disk read bytes
+      - field: DISK_WRITE_BYTES
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 磁盘写入字节数
+          en-US: Bytes written to disk
+    units:
+      - DISK_READ_BYTES=B->MB
+      - DISK_WRITE_BYTES=B->MB
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: xugu
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: SELECT targ_name,targ_value from sys_monitors where targ_name like 'DISK_%';
+      url: ^_^url^_^

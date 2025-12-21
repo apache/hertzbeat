@@ -31,12 +31,16 @@ import org.apache.hertzbeat.alert.expr.AlertExpressionLexer;
 import org.apache.hertzbeat.alert.expr.AlertExpressionParser;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
+import org.apache.hertzbeat.common.support.valid.SqlSecurityException;
+import org.apache.hertzbeat.common.support.valid.SqlSecurityValidator;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.apache.hertzbeat.warehouse.db.QueryExecutor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -49,11 +53,17 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class DataSourceServiceImpl implements DataSourceService {
 
+    /**
+     * Default allowed tables for SQL queries
+     */
+    private static final List<String> DEFAULT_ALLOWED_TABLES = List.of(WarehouseConstants.LOG_TABLE_NAME);
+
     protected ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
     @Setter
-    @Autowired(required = false)
     private List<QueryExecutor> executors;
+
+    private final SqlSecurityValidator sqlSecurityValidator;
 
     @Getter
     private final Cache<String, ParseTree> expressionCache = Caffeine.newBuilder()
@@ -68,6 +78,11 @@ public class DataSourceServiceImpl implements DataSourceService {
             .expireAfterWrite(30, TimeUnit.MINUTES)
             .recordStats()
             .build();
+
+    public DataSourceServiceImpl(@Autowired(required = false) List<QueryExecutor> executors) {
+        this.executors = executors != null ? executors : Collections.emptyList();
+        this.sqlSecurityValidator = new SqlSecurityValidator(DEFAULT_ALLOWED_TABLES);
+    }
 
     @Override
     public List<Map<String, Object>> calculate(String datasource, String expr) {
@@ -110,11 +125,36 @@ public class DataSourceServiceImpl implements DataSourceService {
         }
         // replace all white space
         expr = expr.replaceAll("\\s+", " ");
+
+        // SQL security validation for SQL-based datasources
+        if (isSqlDatasource(datasource)) {
+            validateSqlSecurity(expr);
+        }
+
         try {
             return executor.execute(expr);
         } catch (Exception e) {
             log.error("Error executing query on datasource {}: {}", datasource, e.getMessage());
-            throw new RuntimeException("Query execution failed", e);
+            throw new AlertExpressionException(e.getMessage());
+        }
+    }
+
+    /**
+     * Check if the datasource is SQL-based
+     */
+    private boolean isSqlDatasource(String datasource) {
+        return datasource != null && datasource.equalsIgnoreCase(WarehouseConstants.SQL);
+    }
+
+    /**
+     * Validate SQL statement for security
+     */
+    private void validateSqlSecurity(String sql) {
+        try {
+            sqlSecurityValidator.validate(sql);
+        } catch (SqlSecurityException e) {
+            log.warn("SQL security validation failed: {}", e.getMessage());
+            throw new AlertExpressionException("SQL security validation failed: " + e.getMessage());
         }
     }
 
