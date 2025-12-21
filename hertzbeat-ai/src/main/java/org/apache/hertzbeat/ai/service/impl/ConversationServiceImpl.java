@@ -28,6 +28,7 @@ import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.service.ConversationService;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.ServerSentEvent;
@@ -206,7 +207,7 @@ public class ConversationServiceImpl implements ConversationService {
         Optional<ChatConversation> chatConversation = conversationDao.findById(securityData.getConversationId());
         if (chatConversation.isPresent()) {
             ChatConversation conversation = chatConversation.get();
-            conversation.setSecurityData(securityData.getSecurityData());
+            conversation.setSecurityData(AesUtil.aesEncode(securityData.getSecurityData()));
             conversationDao.save(conversation);
             return true;
         }

@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.ai.config.McpContextHolder;
 import org.apache.hertzbeat.ai.dao.ChatConversationDao;
 import org.apache.hertzbeat.common.entity.ai.ChatConversation;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.MonitorService;
@@ -273,7 +274,8 @@ public class MonitorToolsImpl implements MonitorTools {
             // Query and add sensitive parameters
             Optional<ChatConversation> chatConversation = conversationDao.findById(conversationId);
             if (chatConversation.isPresent() && StringUtils.isNotEmpty(chatConversation.get().getSecurityData())) {
-                List<Param> securityParams = JsonUtil.fromJson(chatConversation.get().getSecurityData(),
+                List<Param> securityParams = JsonUtil.fromJson(
+                    AesUtil.aesDecode(chatConversation.get().getSecurityData()),
                     new TypeReference<List<Param>>() {
                     });
                 if (CollectionUtils.isNotEmpty(securityParams)) {
