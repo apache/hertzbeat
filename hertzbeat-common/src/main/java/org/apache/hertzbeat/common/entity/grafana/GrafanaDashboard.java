@@ -34,7 +34,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "hzb_grafana_dashboard")
 @Data
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Grafana dashboard entity")
