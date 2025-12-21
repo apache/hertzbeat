@@ -154,6 +154,11 @@ public class ChatController {
         return ResponseEntity.ok(Message.success());
     }
 
+    /**
+     * Save data submitted by secure form
+     * @param securityData security data
+     * @return save result
+     */
     @PostMapping(path = "/security")
     @Operation(summary = "save security data", description = "Save security data")
     public ResponseEntity<Message<Boolean>> commitSecurityData(@Valid @RequestBody SecurityData securityData) {

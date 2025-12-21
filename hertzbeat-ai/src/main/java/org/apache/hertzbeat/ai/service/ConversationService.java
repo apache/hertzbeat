@@ -77,10 +77,4 @@ public interface ConversationService {
      */
     Boolean saveSecurityData(SecurityData securityData);
 
-    /**
-     * query security data by conversationId
-     * @param conversationId conversationId
-     * @return securityData
-     */
-    String getSecurityData(Long conversationId);
 }

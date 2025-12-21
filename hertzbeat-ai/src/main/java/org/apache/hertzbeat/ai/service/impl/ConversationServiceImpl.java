@@ -214,9 +214,4 @@ public class ConversationServiceImpl implements ConversationService {
         return false;
     }
 
-    @Override
-    public String getSecurityData(Long conversationId) {
-        Optional<ChatConversation> chatConversation = conversationDao.findById(conversationId);
-        return chatConversation.map(ChatConversation::getSecurityData).orElse(null);
-    }
 }

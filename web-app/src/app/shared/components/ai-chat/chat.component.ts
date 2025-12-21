@@ -197,7 +197,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
         if (response.code === 0 && response.data) {
           this.messages = response.data.messages || [];
-          //计算所有 message 的 securityForm
+          //calculate security form for each message
           for (let i = 0; i < this.messages.length; i++) {
             const message = this.messages[i];
             const next = i < this.messages.length - 1 ? this.messages[i + 1].content : '';
@@ -660,9 +660,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   *  111
+   * handle security form submit
    *
-   * @param event
    */
   onSecurityFormSubmit(): void {
     this.aiChatService
@@ -686,12 +685,17 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * 1111
+   *  handle security form cancel
    */
   onSecurityFormCancel(): void {
     this.showSecurityFormModal = false;
   }
 
+  /**
+   * handle open security form
+   *
+   * @param securityForm
+   */
   openSecurityForm(securityForm: SecurityForm): void {
     this.securityParamDefine = JSON.parse(securityForm.param).privateParams.map((i: any) => {
       this.securityParams[i.field] = {
