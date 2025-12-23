@@ -1137,5 +1137,9 @@
   "ai.chat.security.form.title": "Security Form",
   "ai.chat.security.form.button": "Enter private parameters",
   "ai.chat.security.form.complete": "Complete",
-  "ai.chat.security.form.default.callback": "Form completed"
+  "ai.chat.security.form.default.callback": "Form completed",
+  "ai.chat.config.participation.model": "AI Participation Mode",
+  "ai.chat.config.participation.model.help": "Trusted Mode: All data is sent to the LLM for processing. Protected Mode: Restricts some AI capabilities, such as preventing private data from being sent to the LLM for processing.",
+  "ai.chat.config.participation.model.protected": "Protected",
+  "ai.chat.config.participation.model.trusted": "Trusted"
 }

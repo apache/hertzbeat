@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -26,9 +27,11 @@ import lombok.Data;
 @Data
 public class SecurityData {
 
+    @NotNull
     @Schema(description = "Conversation ID", example = "123")
     private Long conversationId;
 
+    @NotNull
     @Schema(description = "security data", example = "{\"password\":\"xxxxx\"}")
     private String securityData;
 

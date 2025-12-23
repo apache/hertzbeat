@@ -1097,5 +1097,9 @@
   "ai.chat.security.form.title": "セキュアフォーム",
   "ai.chat.security.form.button": "プライベートパラメータを入力してください",
   "ai.chat.security.form.complete": "完了",
-  "ai.chat.security.form.default.callback": "フォームが完了しました"
+  "ai.chat.security.form.default.callback": "フォームが完了しました",
+  "ai.chat.config.participation.model": "AI参加モード",
+  "ai.chat.config.participation.model.help": "信頼モード：すべてのデータが大規模モデルに送信され、処理されます。保護モード：プライベートデータが大規模モデルに送信され、処理されるのを防ぐなど、一部のAI機能を制限します。",
+  "ai.chat.config.participation.model.protected": "保護モード",
+  "ai.chat.config.participation.model.trusted": "信頼モード"
 }

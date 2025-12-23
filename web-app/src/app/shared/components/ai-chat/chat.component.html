@@ -235,6 +235,22 @@
           <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
+      <!-- AI Participation Mode -->
+      <nz-form-item>
+        <nz-form-label>{{ 'ai.chat.config.participation.model' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            class="mobile-hide"
+            name="participationModel"
+            [nzPlaceHolder]="'ai.chat.config.participation.model' | i18n"
+            [(ngModel)]="aiProviderConfig.participationModel"
+          >
+            <nz-option [nzLabel]="'ai.chat.config.participation.model.protected' | i18n" [nzValue]="'PROTECTED'"></nz-option>
+            <nz-option [nzLabel]="'ai.chat.config.participation.model.trusted' | i18n" [nzValue]="'TRUSTED'"></nz-option>
+          </nz-select>
+          <p class="form-help">{{ 'ai.chat.config.participation.model.help' | i18n }}</p>
+        </nz-form-control>
+      </nz-form-item>
     </form>
   </div>
 </nz-modal>

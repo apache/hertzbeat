@@ -1111,5 +1111,9 @@
   "ai.chat.security.form.title": "安全表單",
   "ai.chat.security.form.button": "輸入私有參數",
   "ai.chat.security.form.complete": "完成",
-  "ai.chat.security.form.default.callback": "表單已完成"
+  "ai.chat.security.form.default.callback": "表單已完成",
+  "ai.chat.config.participation.model": "AI參與模式",
+   "ai.chat.config.participation.model.help": "信任模式：所有的資料都會傳送到大模型處理，受保護模式：限制一些AI能力，如私密資料不傳送給大模型處理",
+  "ai.chat.config.participation.model.protected": "受保護模式",
+  "ai.chat.config.participation.model.trusted": "信任模式"
 }

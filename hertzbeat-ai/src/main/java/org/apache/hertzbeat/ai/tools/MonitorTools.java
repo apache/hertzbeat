@@ -35,6 +35,25 @@ public interface MonitorTools {
      * @return Result message with monitor ID if successful
      */
     String addMonitor(
+        String name,
+        String app,
+        Integer intervals,
+        String params,
+        String description
+    );
+
+    /**
+     * Add a new monitor with comprehensive configuration, methods specifically for hertzbeat ai
+     *
+     * @param conversationId Conversation ID
+     * @param name        Monitor name
+     * @param app         Monitor type/application (e.g., 'linux', 'mysql', 'http')
+     * @param intervals   Collection interval in seconds (default: 600)
+     * @param params      Monitor-specific parameters as JSON string (e.g., host, port, username, password, etc.)
+     * @param description Monitor description (optional)
+     * @return Result message with monitor ID if successful
+     */
+    String addMonitorProtected(
         Long conversationId,
         String name,
         String app,

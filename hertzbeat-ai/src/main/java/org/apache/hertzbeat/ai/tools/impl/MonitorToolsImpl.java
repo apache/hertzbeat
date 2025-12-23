@@ -240,7 +240,6 @@ public class MonitorToolsImpl implements MonitorTools {
         - Redis: {"host":"redis.server.com", "port":"6379", "password":"xxx"}
         """)
     public String addMonitor(
-        @ToolParam(description = "The id for current conversation", required = true) Long conversationId,
         @ToolParam(description = "Monitor name (required)", required = true) String name,
         @ToolParam(description = "Monitor type: website, mysql, postgresql, redis, linux, windows, etc.", required = true) String app,
         @ToolParam(description = "Collection interval in seconds (default: 600)", required = false) Integer intervals,
@@ -249,7 +248,51 @@ public class MonitorToolsImpl implements MonitorTools {
             + "Example: {\"host\":\"192.168.1.1\", \"port\":\"22\", \"username\":\"root\"}",
             required = true) String params,
         @ToolParam(description = "Monitor description (optional)", required = false) String description) {
+        return addMonitorProtected(null, name, app, intervals, params, description);
+    }
 
+    @Override
+    @Tool(name = "add_monitor_protected", description = """
+        HertzBeat: Add a new monitoring target to HertzBeat with comprehensive configuration.
+        This tool dynamically handles different parameter requirements for each monitor type.
+
+        This tool creates monitors with proper app-specific parameters.
+
+        *********
+        VERY IMPORTANT:
+        ALWAYS use get_monitor_additional_params to check the additional required parameters for the chosen type before adding a monitor or even mentioning it.
+        Use list_monitor_types tool to see available monitor type names to use here in the app parameter.
+        Use the information obtained from this to query user for parameters.
+        If the User has not given any parameters, ask them to provide the necessary parameters, until all the necessary parameters are provided.
+        If the conversation ID is unknown, please call the `add_monitor` method.
+        **********
+
+        Examples of natural language requests this tool handles:
+        - "Monitor website example.com with HTTPS on port 443"
+        - "Add MySQL monitoring for database server at 192.168.1.10 with user admin"
+        - "Monitor Linux server health on host server.company.com via SSH"
+        - "Set up Redis monitoring on localhost port 6379 with password"
+
+        PARAMETER MAPPING: Use the 'params' parameter to pass all monitor-specific configuration.
+        The params should be a JSON string containing key-value pairs for the monitor type.
+        Use get_monitor_additional_params tool to see what parameters are required for each monitor type.
+
+        PARAMS EXAMPLES:
+        - Website: {"host":"example.com", "port":"443", "uri":"/api/health", "ssl":"true", "method":"GET"}
+        - Linux: {"host":"192.168.1.10", "port":"22", "username":"root", "password":"xxx"}
+        - MySQL: {"host":"db.server.com", "port":"3306", "username":"admin", "password":"xxx", "database":"mydb"}
+        - Redis: {"host":"redis.server.com", "port":"6379", "password":"xxx"}
+        """)
+    public String addMonitorProtected(
+        @ToolParam(description = "The id for current conversation (required)", required = true) Long conversationId,
+        @ToolParam(description = "Monitor name (required)", required = true) String name,
+        @ToolParam(description = "Monitor type: website, mysql, postgresql, redis, linux, windows, etc.", required = true) String app,
+        @ToolParam(description = "Collection interval in seconds (default: 600)", required = false) Integer intervals,
+        @ToolParam(description = "Monitor-specific parameters as JSON string. "
+            + "Use get_monitor_additional_params to see required fields. "
+            + "Example: {\"host\":\"192.168.1.1\", \"port\":\"22\", \"username\":\"root\"}",
+            required = true) String params,
+        @ToolParam(description = "Monitor description (optional)", required = false) String description) {
         try {
             log.info("Adding monitor: name={}, app={}", name, app);
 
@@ -272,14 +315,16 @@ public class MonitorToolsImpl implements MonitorTools {
             List<Param> paramList = parseParams(params);
 
             // Query and add sensitive parameters
-            Optional<ChatConversation> chatConversation = conversationDao.findById(conversationId);
-            if (chatConversation.isPresent() && StringUtils.isNotEmpty(chatConversation.get().getSecurityData())) {
-                List<Param> securityParams = JsonUtil.fromJson(
-                    AesUtil.aesDecode(chatConversation.get().getSecurityData()),
-                    new TypeReference<List<Param>>() {
-                    });
-                if (CollectionUtils.isNotEmpty(securityParams)) {
-                    paramList.addAll(securityParams);
+            if (conversationId != null) {
+                Optional<ChatConversation> chatConversation = conversationDao.findById(conversationId);
+                if (chatConversation.isPresent() && StringUtils.isNotEmpty(chatConversation.get().getSecurityData())) {
+                    List<Param> securityParams = JsonUtil.fromJson(
+                        AesUtil.aesDecode(chatConversation.get().getSecurityData()),
+                        new TypeReference<List<Param>>() {
+                        });
+                    if (CollectionUtils.isNotEmpty(securityParams)) {
+                        paramList.addAll(securityParams);
+                    }
                 }
             }
             String host = paramList.stream()
