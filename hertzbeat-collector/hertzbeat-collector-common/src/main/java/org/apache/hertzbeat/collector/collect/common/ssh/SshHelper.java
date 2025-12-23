@@ -27,11 +27,17 @@ import org.apache.hertzbeat.collector.collect.common.cache.GlobalConnectionCache
 import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
 import org.apache.hertzbeat.collector.util.PrivateKeyUtils;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
+import org.apache.sshd.client.ClientBuilder;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.config.hosts.HostConfigEntry;
+import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import org.apache.sshd.common.kex.BuiltinDHFactories;
 import org.apache.sshd.common.util.security.SecurityUtils;
+import org.apache.sshd.core.CoreModuleProperties;
 import org.springframework.util.StringUtils;
 
 import java.io.FileInputStream;
@@ -136,71 +142,125 @@ public class SshHelper {
                 return clientSession;
             }
         }
-        SshClient sshClient = CommonSshClient.getSshClient();
-        HostConfigEntry proxyConfig = new HostConfigEntry();
-        if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
-            String proxySpec = String.format("%s@%s:%d", sshProtocol.getProxyUsername(), sshProtocol.getProxyHost(), Integer.parseInt(sshProtocol.getProxyPort()));
-            proxyConfig.setHostName(sshProtocol.getHost());
-            proxyConfig.setHost(sshProtocol.getHost());
-            proxyConfig.setPort(Integer.parseInt(sshProtocol.getPort()));
-            proxyConfig.setUsername(sshProtocol.getUsername());
-            proxyConfig.setProxyJump(proxySpec);
 
-            // Apache SSHD requires the password for the proxy to be preloaded into the sshClient instance before connecting
-            if (StringUtils.hasText(sshProtocol.getProxyPassword())) {
-                sshClient.addPasswordIdentity(sshProtocol.getProxyPassword());
-                log.debug("Loaded proxy server password authentication: {}@{}", sshProtocol.getProxyUsername(), sshProtocol.getProxyHost());
-            }
-            if (StringUtils.hasText(sshProtocol.getProxyPrivateKey())) {
-                proxyConfig.setIdentities(List.of(sshProtocol.getProxyPrivateKey()));
-                log.debug("Proxy private key loaded into HostConfigEntry");
-            }
+        SshClient sshClient;
+        boolean isScopedClient = false;
+        if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
+            // create a dedicated client instance to avoid contaminating the global singleton
+            sshClient = SshClient.setUpDefaultClient();
+            // accept all server key verifier, will print warn log : Server at {} presented unverified {} key: {}
+            AcceptAllServerKeyVerifier verifier = AcceptAllServerKeyVerifier.INSTANCE;
+            sshClient.setServerKeyVerifier(verifier);
+            // set connection heartbeat interval time 2000ms, wait for heartbeat response timeout 300_000ms
+            PropertyResolverUtils.updateProperty(
+                sshClient, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 2000);
+            PropertyResolverUtils.updateProperty(
+                sshClient, CoreModuleProperties.HEARTBEAT_NO_REPLY_MAX.getName(), 30);
+            PropertyResolverUtils.updateProperty(
+                sshClient, CoreModuleProperties.SOCKET_KEEPALIVE.getName(), true);
+            // set support all KeyExchange
+            sshClient.setKeyExchangeFactories(NamedFactory.setUpTransformedFactories(
+                false,
+                BuiltinDHFactories.VALUES,
+                ClientBuilder.DH2KEX
+            ));
+            sshClient.start();
+            isScopedClient = true;
+            log.debug("Created scoped SshClient for proxy connection to avoid race condition.");
+        } else {
+            sshClient = CommonSshClient.getSshClient();
         }
 
-        if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
-            try {
+        try {
+            HostConfigEntry proxyConfig = new HostConfigEntry();
+            if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
+                String proxySpec = String.format("%s@%s:%d", sshProtocol.getProxyUsername(), sshProtocol.getProxyHost(),
+                                                 Integer.parseInt(sshProtocol.getProxyPort()));
+                proxyConfig.setHostName(sshProtocol.getHost());
+                proxyConfig.setHost(sshProtocol.getHost());
+                proxyConfig.setPort(Integer.parseInt(sshProtocol.getPort()));
+                proxyConfig.setUsername(sshProtocol.getUsername());
+                proxyConfig.setProxyJump(proxySpec);
+
+                // Apache SSHD requires the password for the proxy to be preloaded into the sshClient instance before connecting
+                if (StringUtils.hasText(sshProtocol.getProxyPassword())) {
+                    sshClient.addPasswordIdentity(sshProtocol.getProxyPassword());
+                    log.debug("Loaded proxy server password authentication: {}@{}", sshProtocol.getProxyUsername(),
+                              sshProtocol.getProxyHost());
+                }
+                if (StringUtils.hasText(sshProtocol.getProxyPrivateKey())) {
+                    proxyConfig.setIdentities(List.of(sshProtocol.getProxyPrivateKey()));
+                    log.debug("Proxy private key loaded into HostConfigEntry");
+                }
+            }
+
+            if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
                 clientSession = sshClient.connect(proxyConfig)
                                          .verify(timeout, TimeUnit.MILLISECONDS).getSession();
+            } else {
+                clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
+                                         .verify(timeout, TimeUnit.MILLISECONDS).getSession();
             }
-            finally {
-                sshClient.removePasswordIdentity(sshProtocol.getProxyPassword());
-            }
-        } else {
-            clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
-                                     .verify(timeout, TimeUnit.MILLISECONDS).getSession();
-        }
 
-        if (StringUtils.hasText(sshProtocol.getPassword())) {
-            clientSession.addPasswordIdentity(sshProtocol.getPassword());
-        } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
-            var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
-            try (InputStream keyStream = new FileInputStream(resourceKey)) {
-                FilePasswordProvider passwordProvider = (session, resource, index) -> {
-                    if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
-                        return sshProtocol.getPrivateKeyPassphrase();
+            if (StringUtils.hasText(sshProtocol.getPassword())) {
+                clientSession.addPasswordIdentity(sshProtocol.getPassword());
+            } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
+                var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
+                try (InputStream keyStream = new FileInputStream(resourceKey)) {
+                    FilePasswordProvider passwordProvider = (session, resource, index) -> {
+                        if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
+                            return sshProtocol.getPrivateKeyPassphrase();
+                        }
+                        return null;
+                    };
+                    Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, keyStream,
+                                                                                     passwordProvider);
+                    if (keyPairs != null) {
+                        keyPairs.forEach(clientSession::addPublicKeyIdentity);
+                    } else {
+                        log.error("Failed to load private key pairs from: {}", resourceKey);
                     }
-                    return null;
-                };
-                Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, keyStream, passwordProvider);
-                if (keyPairs != null) {
-                    keyPairs.forEach(clientSession::addPublicKeyIdentity);
-                } else {
-                    log.error("Failed to load private key pairs from: {}", resourceKey);
+                } catch (IOException e) {
+                    log.error("Error reading private key file: {}", e.getMessage());
                 }
-            } catch (IOException e) {
-                log.error("Error reading private key file: {}", e.getMessage());
-            }
-        }  // else auth with localhost private public key certificates
+            }  // else auth with localhost private public key certificates
 
-        // auth
-        if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            clientSession.close();
-            throw new IllegalArgumentException("ssh auth failed.");
+            // auth
+            if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
+                clientSession.close();
+                if (isScopedClient) {
+                    sshClient.stop();
+                }
+                throw new IllegalArgumentException("ssh auth failed.");
+            }
+            if (isScopedClient) {
+                clientSession.addCloseFutureListener(future -> {
+                    try {
+                        log.debug("Session closed, stopping scoped SshClient.");
+                        sshClient.stop();
+                    } catch (Exception e) {
+                        log.error("Failed to stop scoped SshClient", e);
+                    }
+                });
+            }
+            if (reuseConnection || useProxy) {
+                SshConnect sshConnect = new SshConnect(clientSession);
+                CONNECTION_COMMON_CACHE.addCache(identifier, sshConnect);
+            }
+            return clientSession;
+        } catch (Exception e) {
+            if (isScopedClient && sshClient.isStarted()) {
+                try {
+                    // If the session has been established but an error occurs afterward, session.close() will trigger the above listener.
+                    // If the session has not been established yet, manually stop
+                    if (clientSession == null || clientSession.isClosed()) {
+                        sshClient.stop();
+                    }
+                } catch (Exception ex) {
+                    log.warn("Error stopping scoped client on failure", ex);
+                }
+            }
+            throw e;
         }
-        if (reuseConnection || useProxy) {
-            SshConnect sshConnect = new SshConnect(clientSession);
-            CONNECTION_COMMON_CACHE.addCache(identifier, sshConnect);
-        }
-        return clientSession;
     }
 }
