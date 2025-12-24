@@ -49,6 +49,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * data storage by duckdb
@@ -63,6 +65,9 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     // Ideal number of data points for charting (avoids frontend lag)
     private static final int TARGET_CHART_POINTS = 800;
+
+    // Regex to strictly match days format, e.g., "90d", "7D". Group 1 captures the digits.
+    private static final Pattern DAY_PATTERN = Pattern.compile("^(\\d+)[dD]$");
 
     private final String expireTimeStr;
     private final String dbPath;
@@ -136,11 +141,21 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
             log.info("[duckdb] start data cleaner and checkpoint...");
             long expireTime;
             try {
-                if (NumberUtils.isParsable(expireTimeStr)) {
-                    expireTime = NumberUtils.toLong(expireTimeStr);
+                // Ensure no whitespace issues
+                String cleanExpireStr = expireTimeStr == null ? "" : expireTimeStr.trim();
+                Matcher dayMatcher = DAY_PATTERN.matcher(cleanExpireStr);
+
+                if (NumberUtils.isParsable(cleanExpireStr)) {
+                    expireTime = NumberUtils.toLong(cleanExpireStr);
                     expireTime = (ZonedDateTime.now().toEpochSecond() - expireTime) * 1000L;
+                } else if (dayMatcher.matches()) {
+                    // Strictly matched "90d" or "90D" format
+                    long days = Long.parseLong(dayMatcher.group(1));
+                    ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofDays(days));
+                    expireTime = dateTime.toEpochSecond() * 1000L;
                 } else {
-                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(expireTimeStr);
+                    // Fallback to existing utility for other units (h, m, s, etc.)
+                    TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(cleanExpireStr);
                     ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
                     expireTime = dateTime.toEpochSecond() * 1000L;
                 }
