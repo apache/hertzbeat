@@ -17,17 +17,15 @@
 
 package org.apache.hertzbeat.grafana.service;
 
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DASHBOARD_API;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DASHBOARD_API;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.INSTANCE;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.KIOSK;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.REFRESH;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
+import org.apache.hertzbeat.common.constants.ThemeEnum;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.common.GrafanaConstants;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
@@ -42,7 +40,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import lombok.extern.slf4j.Slf4j;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.INSTANCE;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.KIOSK;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.REFRESH;
 
 /**
  * Service for managing Grafana dashboards.
@@ -65,6 +73,11 @@ public class DashboardService {
 
     @Autowired
     private DatasourceService datasourceService;
+
+    @Autowired
+    private GeneralConfigDao generalConfigDao;
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * Creates or updates a dashboard in Grafana.
@@ -225,7 +238,16 @@ public class DashboardService {
      * @return GrafanaDashboard object
      */
     public GrafanaDashboard getDashboardByMonitorId(Long monitorId) {
-        return dashboardDao.findByMonitorId(monitorId);
+        GrafanaDashboard dashboard = dashboardDao.findByMonitorId(monitorId);
+        if (null != dashboard
+            && StringUtils.isNotBlank(dashboard.getUrl())
+            && !dashboard.getUrl().contains(GrafanaConstants.THEME)) {
+            String theme = loadThemeConfig();
+            return dashboard.toBuilder()
+                    .url(dashboard.getUrl() + GrafanaConstants.THEME + theme)
+                    .build();
+        }
+        return dashboard;
     }
 
     /**
@@ -247,5 +269,22 @@ public class DashboardService {
         } else {
             log.warn("No Grafana dashboard record found for monitorId {} to disable.", monitorId);
         }
+    }
+
+    private String loadThemeConfig() {
+        try {
+            GeneralConfig config = generalConfigDao.findByType(GeneralConfigTypeEnum.system.name());
+            if (config != null && config.getContent() != null) {
+                JsonNode root = OBJECT_MAPPER.readTree(config.getContent());
+                JsonNode node = root.get("theme");
+                if (node != null && !node.isNull()) {
+                    return ThemeEnum.convert(node.asText());
+                }
+                return ThemeEnum.LIGHT.getValue();
+            }
+        } catch (Exception e) {
+            log.error("Failed to load database theme configuration", e);
+        }
+        return ThemeEnum.LIGHT.getValue();
     }
 }

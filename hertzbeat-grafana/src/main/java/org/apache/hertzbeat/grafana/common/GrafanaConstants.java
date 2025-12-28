@@ -33,6 +33,8 @@ public interface GrafanaConstants {
 
     String INSTANCE = "&var-instance=";
 
+    String THEME = "&theme=";
+
     String CREATE_DASHBOARD_API = "/api/dashboards/db";
 
     String DELETE_DASHBOARD_API = "/api/dashboards/uid/%s";
