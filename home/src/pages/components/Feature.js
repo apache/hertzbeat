@@ -5,7 +5,7 @@ import styles from '../styles.module.css'
 export default function Feature({ title, description, index = 0 }) {
     return (
         <div
-            className={clsx('featureCard', styles.featureCard)}
+            className={clsx('featureCard', styles.featureCard, styles.animateFadeInUp)}
             style={{
                 animationDelay: `${index * 0.1}s`
             }}
