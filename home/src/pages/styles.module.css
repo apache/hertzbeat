@@ -148,10 +148,6 @@
     }
 }
 
-.animateFadeInUp {
-    animation: fadeInUp 0.6s var(--md-easing) forwards;
-}
-
 .featureCard {
     background: var(--md-surface-container);
     border-radius: 24px;
