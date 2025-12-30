@@ -402,7 +402,7 @@
               </span>
             </ng-template>
             <nz-card-tab>
-              <nz-tabset nzSize="small" [(nzSelectedIndex)]="collectorsTabSelectedIndex">
+              <nz-tabset nzSize="small" [(nzSelectedIndex)]="collectorsTabSelectedIndexes[i]">
                 <nz-tab [nzTitle]="'collector.status' | i18n" />
                 <nz-tab [nzTitle]="'collector.task' | i18n" />
                 <nz-tab [nzTitle]="'collector.start-time' | i18n" />
@@ -410,7 +410,7 @@
                 <nz-tab [nzTitle]="'collector.node' | i18n" />
               </nz-tabset>
             </nz-card-tab>
-            <ng-container *ngIf="collectorsTabSelectedIndex === 0">
+            <ng-container *ngIf="collectorsTabSelectedIndexes[i] === 0">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
                   {{
@@ -419,7 +419,7 @@
                 </span>
               </div>
             </ng-container>
-            <ng-container *ngIf="collectorsTabSelectedIndex === 1">
+            <ng-container *ngIf="collectorsTabSelectedIndexes[i] === 1">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: xxx-large; font-weight: bolder">
                   {{ item.pinMonitorNum + item.dispatchMonitorNum }}
@@ -431,19 +431,19 @@
                 >
               </div>
             </ng-container>
-            <ng-container *ngIf="collectorsTabSelectedIndex === 2">
+            <ng-container *ngIf="collectorsTabSelectedIndexes[i] === 2">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: x-large; font-weight: bolder">{{
                   (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
                 }}</span>
               </div>
             </ng-container>
-            <ng-container *ngIf="collectorsTabSelectedIndex === 3">
+            <ng-container *ngIf="collectorsTabSelectedIndexes[i] === 3">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: x-large; font-weight: bolder">{{ item.collector.ip }}</span>
               </div>
             </ng-container>
-            <ng-container *ngIf="collectorsTabSelectedIndex === 4">
+            <ng-container *ngIf="collectorsTabSelectedIndexes[i] === 4">
               <div class="rounded-lg" style="text-align: center; width: 100%; background-color: transparent; padding: 2%">
                 <span style="font-size: x-large; font-weight: bolder">{{ item.collector.name }}</span>
               </div>
