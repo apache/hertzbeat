@@ -29,7 +29,7 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
 
     ```shell
     ./configure --prefix=/usr/local/nginx --with-http_stub_status_module
-    
+
     make && make install
     ```
 
@@ -66,15 +66,15 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
     ```shell
     # install `ngx_http_reqstat_module`
     wget https://github.com/zls0424/ngx_req_status/archive/master.zip -O ngx_req_status.zip
-    
+
     unzip ngx_req_status.zip
-    
+
     patch -p1 < ../ngx_req_status-master/write_filter.patch
-    
+
     ./configure --prefix=/usr/local/nginx --add-module=/path/to/ngx_req_status-master
-    
+
     make -j2
-    
+
     make install
     ```
 
@@ -87,9 +87,9 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
     http {
         req_status_zone server_name $server_name 256k;
         req_status_zone server_addr $server_addr 256k;
-    
+
         req_status server_name server_addr;
-    
+
         server {
             location /req-status {
                 req_status_show on;
@@ -108,6 +108,7 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
 
 4. 在浏览器访问 `http://localhost/req-status` 即可查看 Nginx 监控状态信息。
 
+<!-- markdown-link-check-disable -->
 **参考文档： <https://blog.csdn.net/weixin_55985097/article/details/116722309>**
 
 **⚠️注意监控模块的端点路径为 `/nginx-status` `/req-status`**
