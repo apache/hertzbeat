@@ -279,7 +279,7 @@ module.exports = {
       },
       copyright:
         `
-        <div style="text-align: left;margin-top:20px">         
+        <div style="text-align: left;margin-top:20px">
           <a href="https://apache.org/" style="display: flex; align-items: center; justify-content:center">
             <img src="/img/icons/asf_logo.svg" alt="Apache logo" style="width:auto;height:140px">
           </a>
@@ -399,5 +399,15 @@ module.exports = {
       },
     ],
   ],
-  themes: ['@docusaurus/theme-live-codeblock']
+  themes: ['@docusaurus/theme-live-codeblock'],
+  scripts: [
+    {
+      src: "https://widget.kapa.ai/kapa-widget.bundle.js",
+      "data-website-id": "cb9dd0e9-5736-4572-be75-fd2ebe7443b0",
+      "data-project-name": "Apache HertzBeat",
+      "data-project-color": "#444FD9",
+      "data-project-logo": "https://hertzbeat.apache.org/zh-cn/assets/files/hertzbeat-logo-f92c500146ae43b9cb901600cd274d67.png",
+      async: true,
+    },
+  ],
 }
