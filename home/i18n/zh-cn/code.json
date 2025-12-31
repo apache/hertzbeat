@@ -1,12 +1,12 @@
 {
   "convenient": {
-    "message": "开箱即用"
+    "message": "简单易用"
   },
   "custom-multi-support": {
-    "message": "高性能与自定义"
+    "message": "高性能可扩展"
   },
   "opensource": {
-    "message": "拥抱开源"
+    "message": "开源社区"
   },
   "theme.ErrorPageContent.title": {
     "message": "页面已崩溃。",
@@ -431,13 +431,13 @@
     "description": "The live editor label of the live codeblocks"
   },
   "convenient-content": {
-    "message": "{docker} {br}集监控-告警-通知为一体，支持应用服务，Web，数据库，缓存，操作系统，中间件，大数据，云原生，网络等监控阈值告警通知一步到位。{br} 易用友好，无需Agent，全WEB页面操作，鼠标点一点就能监控告警，无需学习成本。{br}安全是最重要的，数据密钥全链路加密。"
+    "message": "{docker} {br}集监控、告警、通知于一体，支持 Web 服务、数据库、缓存、操作系统、中间件、大数据、云原生、网络等全方位监控。{br}无需 Agent，全 Web 可视化操作，点点鼠标即可上手。{br}企业级安全保障，敏感数据全链路加密。"
   },
   "custom-multi-support-content": {
-    "message": "将 Http,Jmx,Ssh,Snmp,Jdbc 等协议规范可配置模板化，只需在线配置YML就可自定义监控指标。{br} 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。{br}灵活的告警阈值规则，邮箱，短信，钉钉，企业微信，飞书，Webhook等消息及时送达。{br} 您相信只需配置下就能适配新K8s监控类型吗？"
+    "message": "支持 HTTP、JMX、SSH、SNMP、JDBC 等协议可配置化，在线配置 YAML 即可自定义监控指标。{br}高性能架构，支持多采集器集群横向扩展、多网络隔离监控、云边协同。{br}灵活的告警规则，支持邮箱、短信、钉钉、企业微信、飞书、Webhook 等多种通知方式。"
   },
   "opensource-content": {
-    "message": "Apache HertzBeat™ 是开源的，拥有一个包容开放的社区。{br}欢迎任何对此有兴趣的同学参与其中，无论是代码文档或者错别字，尊重社区的每一位，一起进步成长。{br}我们的代码正被部署到全球成千上万机器上。"
+    "message": "Apache HertzBeat™ 是开源项目，拥有开放包容的社区。{br}欢迎任何形式的贡献，无论是代码、文档还是问题反馈，尊重每位贡献者，共同成长。{br}已部署至全球数千台服务器。"
   },
   "slogan": {
     "message": "AI 驱动的下一代开源观测系统"
