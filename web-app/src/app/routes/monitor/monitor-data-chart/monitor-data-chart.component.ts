@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -22,6 +22,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { EChartsOption } from 'echarts';
 import { InViewportAction } from 'ng-in-viewport';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { MonitorService } from '../../../service/monitor.service';
@@ -57,13 +58,17 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   lineHistoryTheme!: EChartsOption;
   loading: string | null = null;
   echartsInstance!: any;
-  // Default historical data period is last 30 minutes
-  timePeriod: string = '30m';
+  // Default historical data period is last 1 hour
+  timePeriod: string = '1h';
   isInViewport = false;
   private debounceTimer: any = undefined;
   private worker$: any = null;
 
-  constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+  constructor(
+    private monitorSvc: MonitorService,
+    private notifySvc: NzNotificationService,
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
+  ) {}
 
   handleViewportAction(event: InViewportAction) {
     if (this.debounceTimer) {
@@ -287,6 +292,8 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
                 this.worker$.unsubscribe();
                 this.worker$ = null;
                 this.loading = null;
+                // Auto load prediction data silently after main data loaded
+                setTimeout(() => this.loadPredictionData(true), 500);
               } else if (rsp.progress > 0) {
                 this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-processing')} ${rsp.progress}%`;
               }
@@ -312,6 +319,171 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
         },
         error => {
           console.error(error.msg);
+        }
+      );
+  }
+
+  loadPredictionData(isAuto: boolean = false) {
+    if (!isAuto) {
+      this.loading = 'Forecasting...';
+    }
+
+    // CRITICAL FIX: Pass 'this.timePeriod' so backend knows the view context (1h, 6h, 1d, 1w)
+    // and can calculate appropriate forecast duration (e.g. 1/5 of view length).
+    // We pass null for predictTime to rely on backend auto-calculation.
+    let predictionData$ = this.monitorSvc
+      .getMonitorMetricsPredictionData(this.instance, this.app, this.metrics, this.metric, this.timePeriod)
+      .pipe(
+        finalize(() => {
+          if (!isAuto) {
+            this.loading = null;
+          }
+          predictionData$.unsubscribe();
+        })
+      )
+      .subscribe(
+        (message: any) => {
+          if (message.code === 0 && message.data) {
+            // Get current series to append forecast data
+            const currentSeries = (this.eChartOption.series as any[]) || [];
+            const newSeries = [...currentSeries];
+
+            let hasData = false;
+            // Get translations for chart legend
+            const forecastName = this.i18nSvc.fanyi('monitor.detail.chart.forecast');
+            // Separate names for clarity
+            const confidenceLowerName = this.i18nSvc.fanyi('monitor.detail.chart.confidence.lower');
+            const confidenceUpperName = this.i18nSvc.fanyi('monitor.detail.chart.confidence.upper');
+            // Fallback if translation keys don't exist
+            const lowerName = confidenceLowerName.includes('monitor.detail') ? 'Lower Bound' : confidenceLowerName;
+            const upperName = confidenceUpperName.includes('monitor.detail') ? 'Upper Bound' : confidenceUpperName;
+
+            // Iterate over prediction results
+            for (const results of Object.values(message.data)) {
+              const predictions = results as any[];
+              if (!predictions || predictions.length === 0) continue;
+              hasData = true;
+
+              // Parse prediction data
+              const forecastLineData = [];
+              const lowerBoundData = [];
+              const diffData = [];
+              const upperBoundData = [];
+
+              for (const p of predictions) {
+                const val = p.forecast;
+                const upper = p.upperBound;
+                const lower = p.lowerBound;
+                const t = p.time;
+
+                forecastLineData.push([t, val]);
+                // Basic data for lower bound
+                lowerBoundData.push([t, lower]);
+                // Diff data for the stacked band (upper - lower)
+                diffData.push([t, upper - lower]);
+                // Actual upper bound data for separate invisible series
+                upperBoundData.push([t, upper]);
+              }
+
+              // 1. Lower Bound Series (Base of the stack)
+              // This series serves two purposes:
+              // a) It is the bottom edge of the band.
+              // b) It shows the correct "Lower Bound" value in the tooltip.
+              newSeries.push({
+                name: lowerName,
+                type: 'line',
+                data: lowerBoundData,
+                stack: `confidence-band`,
+                symbol: 'none',
+                lineStyle: { opacity: 0 },
+                areaStyle: { opacity: 0 },
+                // Show tooltip for this series
+                tooltip: { show: true },
+                silent: false // Allow hover to trigger tooltip
+              });
+
+              // 2. Band Width Series (Stacked on top of Lower Bound)
+              // This series draws the filled area.
+              // It MUST be hidden from tooltip because its value is the "difference", not the absolute value.
+              newSeries.push({
+                name: 'Confidence Band', // Internal name
+                type: 'line',
+                data: diffData,
+                stack: `confidence-band`,
+                symbol: 'none',
+                lineStyle: { opacity: 0 },
+                areaStyle: {
+                  opacity: 0.3,
+                  color: '#A6C8FF'
+                },
+                // CRITICAL: Hide this series from tooltip so users don't see the diff value
+                tooltip: { show: false },
+                silent: true // Ignore mouse events so it doesn't trigger tooltip
+              });
+
+              // 3. Upper Bound Series (Invisible, Non-Stacked)
+              // This series is purely for the Tooltip. It shows the correct "Upper Bound" value.
+              newSeries.push({
+                name: upperName,
+                type: 'line',
+                data: upperBoundData,
+                // Do NOT stack this series
+                stack: null,
+                symbol: 'none',
+                lineStyle: { opacity: 0 }, // Invisible line
+                areaStyle: { opacity: 0 }, // No area
+                // Show tooltip for this series
+                tooltip: { show: true },
+                silent: false
+              });
+
+              // 4. Forecast Main Line
+              newSeries.push({
+                name: `${forecastName}`,
+                type: 'line',
+                data: forecastLineData,
+                smooth: true,
+                lineStyle: {
+                  type: 'dashed',
+                  width: 2,
+                  color: '#ffa318'
+                },
+                itemStyle: {
+                  opacity: 0,
+                  color: '#ffa318'
+                },
+                symbol: 'none',
+                z: 5
+              });
+            }
+
+            if (hasData) {
+              this.eChartOption.series = newSeries;
+              if (this.echartsInstance) {
+                this.echartsInstance.setOption({
+                  series: newSeries
+                });
+              }
+              if (!isAuto) {
+                this.notifySvc.success(this.i18nSvc.fanyi('common.notify.success'), 'Forecast data loaded.');
+              }
+            } else {
+              if (!isAuto) {
+                this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.warning'), 'Insufficient history data for prediction.');
+              }
+            }
+          } else {
+            console.warn(`Prediction failed or no data returned: ${message.msg}`);
+            if (!isAuto) {
+              this.notifySvc.error(this.i18nSvc.fanyi('common.notify.error'), message.msg || 'Prediction failed.');
+            }
+          }
+        },
+        error => {
+          console.error(error);
+          if (!isAuto) {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.error'), error.msg || 'Network error during prediction.');
+          }
         }
       );
   }
