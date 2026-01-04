@@ -117,6 +117,15 @@
           <div class="message-text">
             <div *ngIf="message.role === 'user'" [innerHTML]="message.content"></div>
             <markdown *ngIf="message.role === 'assistant'" [data]="message.content"></markdown>
+            <button
+              *ngIf="message.securityForm && message.securityForm.show"
+              [disabled]="message.securityForm.complete"
+              (click)="openSecurityForm(message.securityForm)"
+              nz-button
+              nzType="primary"
+            >
+              {{ (message.securityForm.complete ? 'ai.chat.security.form.complete' : 'ai.chat.security.form.button') | i18n }}
+            </button>
           </div>
           <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
             <span>{{ 'ai.chat.typing' | i18n }}</span>
@@ -226,6 +235,44 @@
           <p class="form-help">{{ 'ai.chat.config.model.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
+      <!-- AI Participation Mode -->
+      <nz-form-item>
+        <nz-form-label>{{ 'ai.chat.config.participation.model' | i18n }}</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            class="mobile-hide"
+            name="participationModel"
+            [nzPlaceHolder]="'ai.chat.config.participation.model' | i18n"
+            [(ngModel)]="aiProviderConfig.participationModel"
+          >
+            <nz-option [nzLabel]="'ai.chat.config.participation.model.protected' | i18n" [nzValue]="'PROTECTED'"></nz-option>
+            <nz-option [nzLabel]="'ai.chat.config.participation.model.trusted' | i18n" [nzValue]="'TRUSTED'"></nz-option>
+          </nz-select>
+          <p class="form-help">{{ 'ai.chat.config.participation.model.help' | i18n }}</p>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- Security Form Modal -->
+<nz-modal
+  [(nzVisible)]="showSecurityFormModal"
+  [nzTitle]="'ai.chat.security.form.title' | i18n"
+  (nzOnCancel)="onSecurityFormCancel()"
+  (nzOnOk)="onSecurityFormSubmit()"
+  nzMaskClosable="false"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #form="ngForm">
+      <ng-container *ngFor="let paramDefine of securityParamDefine">
+        <nz-form-item>
+          <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field">{{ paramDefine.name }}</nz-form-label>
+          <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+            <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="securityParams[paramDefine.field].paramValue" />
+          </nz-form-control>
+        </nz-form-item>
+      </ng-container>
     </form>
   </div>
 </nz-modal>
