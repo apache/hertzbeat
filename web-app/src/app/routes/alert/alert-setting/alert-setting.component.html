@@ -910,6 +910,9 @@
               field: 'labels',
               type: 'label-selector'
             }"
+            [extra]="{
+              labelIsCustom: labelIsCustom
+            }"
             [name]="'labels'"
             [(ngModel)]="define.labels"
           />

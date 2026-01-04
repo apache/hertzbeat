@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.base.service;
 
 import java.util.HashSet;
 import java.util.List;

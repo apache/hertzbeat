@@ -29,11 +29,14 @@ import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.service.DataSourceService;
+import org.apache.hertzbeat.base.dao.LabelDao;
+import org.apache.hertzbeat.base.service.LabelService;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.manager.Label;
 import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -69,9 +73,15 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Autowired
     private AlertDefineDao alertDefineDao;
-    
+
     @Autowired
     private PeriodicAlertRuleScheduler periodicAlertRuleScheduler;
+
+    @Resource
+    private LabelService labelService;
+
+    @Resource
+    private LabelDao labelDao;
 
     private final DataSourceService dataSourceService;
 
@@ -93,7 +103,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                     JexlExpressionRunner.compile(alertDefine.getExpr());
                 } catch (Exception e) {
                     throw new IllegalArgumentException("alert expr error: " + e.getMessage());
-                }   
+                }
             }
         }
         // the name of the alarm rule is unique
@@ -107,6 +117,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void addAlertDefine(AlertDefine alertDefine) throws RuntimeException {
+        saveNewCustomLabel(alertDefine);
         alertDefine = alertDefineDao.saveAndFlush(alertDefine);
         periodicAlertRuleScheduler.updateSchedule(alertDefine);
         CacheFactory.clearAlertDefineCache();
@@ -114,9 +125,22 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void modifyAlertDefine(AlertDefine alertDefine) throws RuntimeException {
+        saveNewCustomLabel(alertDefine);
         alertDefineDao.saveAndFlush(alertDefine);
         periodicAlertRuleScheduler.updateSchedule(alertDefine);
         CacheFactory.clearAlertDefineCache();
+    }
+
+    private void saveNewCustomLabel(AlertDefine alertDefine) {
+        Map<String, String> labels = alertDefine.getLabels();
+        if (labels == null) {
+            labels = new HashMap<>(8);
+            alertDefine.setLabels(labels);
+        }
+        List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
+        if (!addLabels.isEmpty()) {
+            labelDao.saveAll(addLabels);
+        }
     }
 
     @Override
@@ -256,7 +280,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         if (!StringUtils.hasText(type)) {
             throw new IllegalArgumentException("Alert definition type cannot be null or empty");
         }
-        
+
         switch (type) {
             case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_REALTIME:
             case CommonConstants.METRIC_ALERT_THRESHOLD_TYPE_PERIODIC:
@@ -267,7 +291,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             default:
                 throw new IllegalArgumentException("Unsupported alert definition type: " + type);
         }
-        
+
         // Query enabled alert definitions by type
         return alertDefineDao.findAlertDefinesByTypeAndEnableTrue(type);
     }

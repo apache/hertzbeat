@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.manager.Label;
-import org.apache.hertzbeat.manager.dao.LabelDao;
+import org.apache.hertzbeat.base.dao.LabelDao;
 import org.apache.hertzbeat.startup.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

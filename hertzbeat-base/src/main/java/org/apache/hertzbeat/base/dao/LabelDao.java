@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.dao;
+package org.apache.hertzbeat.base.dao;
 
 import java.util.Optional;
 import java.util.Set;
@@ -33,7 +33,7 @@ public interface LabelDao extends JpaRepository<Label, Long>, JpaSpecificationEx
      * @param ids id list
      */
     void deleteLabelsByIdIn(Set<Long> ids);
-    
+
     /**
      * find Label by name and value
      * @param name Label name
@@ -41,5 +41,5 @@ public interface LabelDao extends JpaRepository<Label, Long>, JpaSpecificationEx
      * @return Label
      */
     Optional<Label> findLabelByNameAndTagValue(String name, String value);
-    
+
 }

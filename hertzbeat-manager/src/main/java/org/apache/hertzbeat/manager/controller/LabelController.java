@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Label;
-import org.apache.hertzbeat.manager.service.LabelService;
+import org.apache.hertzbeat.base.service.LabelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(path = "/api/label", produces = {APPLICATION_JSON_VALUE})
 public class LabelController {
-    
+
     @Autowired
     private LabelService labelService;
 
