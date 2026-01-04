@@ -201,7 +201,12 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
         }
       },
       tooltip: {
-        trigger: 'axis'
+        trigger: 'axis',
+        extraCssText: 'max-width: 580px; max-height: 400px; overflow-y: auto;',
+        enterable: true,
+        renderMode: 'html',
+        appendToBody: true,
+        confine: false
       },
       grid: {
         left: '2',
