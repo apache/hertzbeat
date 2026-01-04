@@ -156,45 +156,62 @@ public class SshHelper {
             }
         }
 
-        if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
-            clientSession = sshClient.connect(proxyConfig)
-                                     .verify(timeout, TimeUnit.MILLISECONDS).getSession();
-        } else {
-            clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
-                                     .verify(timeout, TimeUnit.MILLISECONDS).getSession();
-        }
-
-        if (StringUtils.hasText(sshProtocol.getPassword())) {
-            clientSession.addPasswordIdentity(sshProtocol.getPassword());
-        } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
-            var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
-            try (InputStream keyStream = new FileInputStream(resourceKey)) {
-                FilePasswordProvider passwordProvider = (session, resource, index) -> {
-                    if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
-                        return sshProtocol.getPrivateKeyPassphrase();
-                    }
-                    return null;
-                };
-                Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, keyStream, passwordProvider);
-                if (keyPairs != null) {
-                    keyPairs.forEach(clientSession::addPublicKeyIdentity);
-                } else {
-                    log.error("Failed to load private key pairs from: {}", resourceKey);
-                }
-            } catch (IOException e) {
-                log.error("Error reading private key file: {}", e.getMessage());
+        try {
+            if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
+                clientSession = sshClient.connect(proxyConfig)
+                        .verify(timeout, TimeUnit.MILLISECONDS).getSession();
+            } else {
+                clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
+                        .verify(timeout, TimeUnit.MILLISECONDS).getSession();
             }
-        }  // else auth with localhost private public key certificates
+    
+            // Add target host credentials
+            if (StringUtils.hasText(sshProtocol.getPassword())) {
+                clientSession.addPasswordIdentity(sshProtocol.getPassword());
+            } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
+                var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
+                try (InputStream keyStream = new FileInputStream(resourceKey)) {
+                    FilePasswordProvider passwordProvider = (session, resource, index) -> {
+                        if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
+                            return sshProtocol.getPrivateKeyPassphrase();
+                        }
+                        return null;
+                    };
+                    Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, keyStream, passwordProvider);
+                    if (keyPairs != null) {
+                        keyPairs.forEach(clientSession::addPublicKeyIdentity);
+                    }
+                }
+            }
+    
+            // Authenticate
+            if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
+                throw new IllegalArgumentException("ssh auth failed.");
+            }
+    
+            // ✅ FIX: Only cache the session (not the client)
+            if (reuseConnection && !useProxy) {
+                SshConnect sshConnect = new SshConnect(clientSession);
+                CONNECTION_COMMON_CACHE.addCache(identifier, sshConnect);
+            }
+    
+            return clientSession;
 
-        // auth
-        if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            clientSession.close();
-            throw new IllegalArgumentException("ssh auth failed.");
+        } catch (Exception e) {
+            // Cleanup on failure
+            if (clientSession != null && clientSession.isOpen()) {
+                clientSession.close();
+            }
+            throw e;
+        } finally {
+            // ✅ FIX: ALWAYS close the client if session is NOT cached
+            if (!reuseConnection || useProxy) {
+                try {
+                    sshClient.stop();
+                    sshClient.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close SshClient: {}", e.getMessage());
+                }
+            }
         }
-        if (reuseConnection && !useProxy) {
-            SshConnect sshConnect = new SshConnect(clientSession);
-            CONNECTION_COMMON_CACHE.addCache(identifier, sshConnect);
-        }
-        return clientSession;
     }
-}
