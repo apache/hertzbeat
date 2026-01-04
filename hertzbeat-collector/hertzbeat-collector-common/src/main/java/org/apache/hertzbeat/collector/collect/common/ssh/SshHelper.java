@@ -81,6 +81,7 @@ public class SshHelper {
 
         clientSession = sshClient.connect(username, host, Integer.parseInt(port))
                 .verify(timeout, TimeUnit.MILLISECONDS).getSession();
+        clientSession.addCloseFutureListener(future -> sshClient.close());
         if (StringUtils.hasText(password)) {
             clientSession.addPasswordIdentity(password);
         } else if (StringUtils.hasText(privateKey)) {
@@ -114,7 +115,8 @@ public class SshHelper {
                                                     .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
                                                     .build();
         ClientSession clientSession = null;
-        // When using ProxyJump, force connection reuse:
+        // NOTE: ProxyJump sessions must NOT be reused to avoid authentication state leakage
+
         // Apache MINA SSHD will pass the proxy password error to the target host in proxy scenarios, causing the first connection to fail.
         // Reusing connections can skip duplicate authentication and avoid this problem.
         if (reuseConnection && !useProxy) {
