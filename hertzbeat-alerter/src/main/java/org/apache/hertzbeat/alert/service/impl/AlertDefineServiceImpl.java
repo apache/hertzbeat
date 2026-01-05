@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Alarm definition management interface implementation
@@ -137,10 +138,17 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             labels = new HashMap<>(8);
             alertDefine.setLabels(labels);
         }
-        List<Label> addLabels = labelService.determineNewLabels(labels.entrySet());
+        Map<String, String> customLabels = labels.entrySet().stream()
+            .filter(entry -> !isSystemBuiltInLabel(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        List<Label> addLabels = labelService.determineNewLabels(customLabels.entrySet());
         if (!addLabels.isEmpty()) {
             labelDao.saveAll(addLabels);
         }
+    }
+
+    private boolean isSystemBuiltInLabel(String labelKey) {
+        return CommonConstants.ALERT_MODE_LABEL.equals(labelKey) || CommonConstants.LABEL_ALERT_SEVERITY.contains(labelKey);
     }
 
     @Override
