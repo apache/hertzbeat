@@ -215,20 +215,35 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         return rules.stream()
                 .filter(rule -> {
                     if (!rule.isFilterAll()) {
-                        // filter labels
                         if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
+                    
                             boolean labelMatch = rule.getLabels().entrySet().stream().allMatch(labelItem -> {
-                                if (!alert.getCommonLabels().containsKey(labelItem.getKey())) {
-                                    return false;
+                    
+                                // 1. Check common labels
+                                if (alert.getCommonLabels() != null &&
+                                    Objects.equals(alert.getCommonLabels().get(labelItem.getKey()), labelItem.getValue())) {
+                                    return true;
                                 }
-                                String alertLabelValue = alert.getCommonLabels().get(labelItem.getKey());
-                                return Objects.equals(labelItem.getValue(), alertLabelValue);
+                    
+                                // 2. Check group labels
+                                if (alert.getGroupLabels() != null &&
+                                    Objects.equals(alert.getGroupLabels().get(labelItem.getKey()), labelItem.getValue())) {
+                                    return true;
+                                }
+                    
+                                // 3. Check single alert labels (MOST IMPORTANT)
+                                return alert.getAlerts() != null && alert.getAlerts().stream().anyMatch(singleAlert ->
+                                    singleAlert.getLabels() != null &&
+                                    Objects.equals(singleAlert.getLabels().get(labelItem.getKey()), labelItem.getValue())
+                                );
                             });
+                    
                             if (!labelMatch) {
                                 return false;
                             }
                         }
                     }
+
                     
                     LocalDateTime nowDate = LocalDateTime.now();
                     // filter day
