@@ -50,11 +50,11 @@ public class SshHelper {
 
     public static ClientSession getConnectSession(String host, String port, String username, String password, String privateKey,
                                                   String privateKeyPassphrase, int timeout, boolean reuseConnection)
-            throws IOException, GeneralSecurityException {
+        throws IOException, GeneralSecurityException {
         CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(host).port(port)
-                .username(username).password(password)
-                .build();
+            .ip(host).port(port)
+            .username(username).password(password)
+            .build();
         ClientSession clientSession = null;
         if (reuseConnection) {
             Optional<AbstractConnection<?>> cacheOption = CONNECTION_COMMON_CACHE.getCache(identifier, true);
@@ -76,10 +76,12 @@ public class SshHelper {
                 return clientSession;
             }
         }
-        SshClient sshClient = CommonSshClient.getSshClient();
+        SshClient sshClient = SshClient.setUpDefaultClient();
+        sshClient.start();
 
         clientSession = sshClient.connect(username, host, Integer.parseInt(port))
-                .verify(timeout, TimeUnit.MILLISECONDS).getSession();
+            .verify(timeout, TimeUnit.MILLISECONDS).getSession();
+        clientSession.addCloseFutureListener(future -> sshClient.close());
         if (StringUtils.hasText(password)) {
             clientSession.addPasswordIdentity(password);
         } else if (StringUtils.hasText(privateKey)) {
@@ -91,10 +93,10 @@ public class SshHelper {
                 return null;
             };
             SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, new FileInputStream(resourceKey), passwordProvider)
-                    .forEach(clientSession::addPublicKeyIdentity);
+                .forEach(clientSession::addPublicKeyIdentity);
         }  // else auth with localhost private public key certificates
 
-        // auth
+            // auth
         if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
             clientSession.close();
             throw new IllegalArgumentException("ssh auth failed.");
@@ -107,16 +109,18 @@ public class SshHelper {
     }
 
     public static ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection, boolean useProxy)
-            throws IOException, GeneralSecurityException {
+        throws IOException, GeneralSecurityException {
         CacheIdentifier identifier = CacheIdentifier.builder()
-                                                    .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
-                                                    .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
-                                                    .build();
+            .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
+            .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
+            .build();
         ClientSession clientSession = null;
         // When using ProxyJump, force connection reuse:
+        // NOTE: ProxyJump sessions must NOT be reused to avoid authentication state leakage
+
         // Apache MINA SSHD will pass the proxy password error to the target host in proxy scenarios, causing the first connection to fail.
         // Reusing connections can skip duplicate authentication and avoid this problem.
-        if (reuseConnection || useProxy) {
+        if (reuseConnection && !useProxy) {
             Optional<AbstractConnection<?>> cacheOption = CONNECTION_COMMON_CACHE.getCache(identifier, true);
             if (cacheOption.isPresent()) {
                 SshConnect sshConnect = (SshConnect) cacheOption.get();
@@ -136,7 +140,8 @@ public class SshHelper {
                 return clientSession;
             }
         }
-        SshClient sshClient = CommonSshClient.getSshClient();
+        SshClient sshClient = SshClient.setUpDefaultClient();
+        sshClient.start();
         HostConfigEntry proxyConfig = new HostConfigEntry();
         if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
             String proxySpec = String.format("%s@%s:%d", sshProtocol.getProxyUsername(), sshProtocol.getProxyHost(), Integer.parseInt(sshProtocol.getProxyPort()));
@@ -147,60 +152,70 @@ public class SshHelper {
             proxyConfig.setProxyJump(proxySpec);
 
             // Apache SSHD requires the password for the proxy to be preloaded into the sshClient instance before connecting
-            if (StringUtils.hasText(sshProtocol.getProxyPassword())) {
-                sshClient.addPasswordIdentity(sshProtocol.getProxyPassword());
-                log.debug("Loaded proxy server password authentication: {}@{}", sshProtocol.getProxyUsername(), sshProtocol.getProxyHost());
-            }
+
             if (StringUtils.hasText(sshProtocol.getProxyPrivateKey())) {
                 proxyConfig.setIdentities(List.of(sshProtocol.getProxyPrivateKey()));
                 log.debug("Proxy private key loaded into HostConfigEntry");
             }
         }
 
-        if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
-            try {
+        try {
+            if (useProxy && StringUtils.hasText(sshProtocol.getProxyHost())) {
                 clientSession = sshClient.connect(proxyConfig)
-                                         .verify(timeout, TimeUnit.MILLISECONDS).getSession();
+                    .verify(timeout, TimeUnit.MILLISECONDS).getSession();
+            } else {
+                clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
+                    .verify(timeout, TimeUnit.MILLISECONDS).getSession();
             }
-            finally {
-                sshClient.removePasswordIdentity(sshProtocol.getProxyPassword());
-            }
-        } else {
-            clientSession = sshClient.connect(sshProtocol.getUsername(), sshProtocol.getHost(), Integer.parseInt(sshProtocol.getPort()))
-                                     .verify(timeout, TimeUnit.MILLISECONDS).getSession();
-        }
 
-        if (StringUtils.hasText(sshProtocol.getPassword())) {
-            clientSession.addPasswordIdentity(sshProtocol.getPassword());
-        } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
-            var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
-            try (InputStream keyStream = new FileInputStream(resourceKey)) {
-                FilePasswordProvider passwordProvider = (session, resource, index) -> {
-                    if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
-                        return sshProtocol.getPrivateKeyPassphrase();
+            // Add target host credentials
+            if (StringUtils.hasText(sshProtocol.getPassword())) {
+                clientSession.addPasswordIdentity(sshProtocol.getPassword());
+            } else if (StringUtils.hasText(sshProtocol.getPrivateKey())) {
+                var resourceKey = PrivateKeyUtils.writePrivateKey(sshProtocol.getHost(), sshProtocol.getPrivateKey());
+                try (InputStream keyStream = new FileInputStream(resourceKey)) {
+                    FilePasswordProvider passwordProvider = (session, resource, index) -> {
+                        if (StringUtils.hasText(sshProtocol.getPrivateKeyPassphrase())) {
+                            return sshProtocol.getPrivateKeyPassphrase();
+                        }
+                        return null;
+                    };
+                    Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, keyStream, passwordProvider);
+                    if (keyPairs != null) {
+                        keyPairs.forEach(clientSession::addPublicKeyIdentity);
                     }
-                    return null;
-                };
-                Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(null, () -> resourceKey, keyStream, passwordProvider);
-                if (keyPairs != null) {
-                    keyPairs.forEach(clientSession::addPublicKeyIdentity);
-                } else {
-                    log.error("Failed to load private key pairs from: {}", resourceKey);
                 }
-            } catch (IOException e) {
-                log.error("Error reading private key file: {}", e.getMessage());
             }
-        }  // else auth with localhost private public key certificates
 
-        // auth
-        if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
-            clientSession.close();
-            throw new IllegalArgumentException("ssh auth failed.");
+            // Authenticate
+            if (!clientSession.auth().verify(timeout, TimeUnit.MILLISECONDS).isSuccess()) {
+                throw new IllegalArgumentException("ssh auth failed.");
+            }
+
+            // ✅ FIX: Only cache the session (not the client)
+            if (reuseConnection && !useProxy) {
+                SshConnect sshConnect = new SshConnect(clientSession);
+                CONNECTION_COMMON_CACHE.addCache(identifier, sshConnect);
+            }
+
+            return clientSession;
+
+        } catch (Exception e) {
+        // Cleanup on failure
+            if (clientSession != null && clientSession.isOpen()) {
+                clientSession.close();
+            }
+            throw e;
+        } finally {
+            // ✅ FIX: ALWAYS close the client if session is NOT cached
+            if (!reuseConnection || useProxy) {
+                try {
+                    sshClient.stop();
+                    sshClient.close();
+                } catch (Exception e) {
+                    log.warn("Failed to close SshClient: {}", e.getMessage());
+                }
+            }
         }
-        if (reuseConnection || useProxy) {
-            SshConnect sshConnect = new SshConnect(clientSession);
-            CONNECTION_COMMON_CACHE.addCache(identifier, sshConnect);
-        }
-        return clientSession;
     }
 }
