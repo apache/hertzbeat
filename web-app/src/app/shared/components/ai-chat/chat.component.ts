@@ -709,7 +709,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         field: i.field,
         paramValue: null
       };
-      i.name = i.name[this.i18nSvc.defaultLang];
+      i.name = i.name[this.i18nSvc.defaultLang] || i.name['en-US'] || i.name;
       return i;
     });
 
