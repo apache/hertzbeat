@@ -211,32 +211,46 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             CacheFactory.setNoticeCache(rules);
         }
 
-        // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
         return rules.stream()
             .filter(rule -> {
+
+                // ---------------------------
+                // 1. Label filtering
+                // ---------------------------
                 if (!rule.isFilterAll()) {
                     if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
 
-                        boolean labelMatch = rule.getLabels().entrySet().stream().allMatch(labelItem -> {
+                        boolean labelMatch = rule.getLabels().entrySet().stream()
+                            .allMatch(labelItem -> {
 
-                            // 1. Check common labels
-                            if (alert.getCommonLabels() != null &&
-                                Objects.equals(alert.getCommonLabels().get(labelItem.getKey()), labelItem.getValue())) {
-                                return true;
-                            }
+                                // 1. common labels
+                                if (alert.getCommonLabels() != null &&
+                                    Objects.equals(
+                                        alert.getCommonLabels().get(labelItem.getKey()),
+                                        labelItem.getValue()
+                                    )) {
+                                    return true;
+                                }
 
-                            // 2. Check group labels
-                            if (alert.getGroupLabels() != null &&
-                                Objects.equals(alert.getGroupLabels().get(labelItem.getKey()), labelItem.getValue())) {
-                                return true;
-                            }
+                                // 2. group labels
+                                if (alert.getGroupLabels() != null &&
+                                    Objects.equals(
+                                        alert.getGroupLabels().get(labelItem.getKey()),
+                                        labelItem.getValue()
+                                    )) {
+                                    return true;
+                                }
 
-                            // 3. Check single alert labels (MOST IMPORTANT)
-                            return alert.getAlerts() != null && alert.getAlerts().stream().anyMatch(singleAlert ->
-                                singleAlert.getLabels() != null &&
-                                    Objects.equals(singleAlert.getLabels().get(labelItem.getKey()), labelItem.getValue())
-                            );
-                        });
+                                // 3. single alert labels
+                                return alert.getAlerts() != null &&
+                                    alert.getAlerts().stream().anyMatch(singleAlert ->
+                                        singleAlert.getLabels() != null &&
+                                            Objects.equals(
+                                                singleAlert.getLabels().get(labelItem.getKey()),
+                                                labelItem.getValue()
+                                            )
+                                    );
+                            });
 
                         if (!labelMatch) {
                             return false;
@@ -244,28 +258,54 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                     }
                 }
 
-
+                // ---------------------------
+                // 2. Day filtering
+                // ---------------------------
                 LocalDateTime nowDate = LocalDateTime.now();
-                // filter day
                 int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
+
                 if (rule.getDays() != null && !rule.getDays().isEmpty()) {
-                    boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
+                    boolean dayMatch = rule.getDays().stream()
+                        .anyMatch(day -> day == currentDayOfWeek);
                     if (!dayMatch) {
                         return false;
                     }
                 }
-                // filter time
+
+                // ---------------------------
+                // 3. Time filtering (FIXED)
+                // ---------------------------
                 LocalTime nowTime = nowDate.toLocalTime();
-                boolean startMatch = rule.getPeriodStart() == null
-                    || nowTime.isAfter(rule.getPeriodStart().toLocalTime())
-                    || (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd())
-                    && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
-                boolean endMatch = rule.getPeriodEnd() == null
-                    || nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
-                return startMatch && endMatch;
+                LocalTime startTime = rule.getPeriodStart() != null
+                    ? rule.getPeriodStart().toLocalTime()
+                    : null;
+                LocalTime endTime = rule.getPeriodEnd() != null
+                    ? rule.getPeriodEnd().toLocalTime()
+                    : null;
+
+                boolean timeMatch;
+
+                if (startTime == null && endTime == null) {
+                    timeMatch = true;
+                } else if (startTime != null && endTime == null) {
+                    timeMatch = !nowTime.isBefore(startTime);
+                } else if (startTime == null) {
+                    timeMatch = !nowTime.isAfter(endTime);
+                } else if (!startTime.isAfter(endTime)) {
+                    // same-day period
+                    timeMatch = !nowTime.isBefore(startTime)
+                        && !nowTime.isAfter(endTime);
+                } else {
+                    // overnight period (跨天)
+                    timeMatch = !nowTime.isBefore(startTime)
+                        || !nowTime.isAfter(endTime);
+                }
+
+                return timeMatch;
             })
             .collect(Collectors.toList());
     }
+
 
     @Override
     public NoticeTemplate getOneTemplateById(Long id) {
