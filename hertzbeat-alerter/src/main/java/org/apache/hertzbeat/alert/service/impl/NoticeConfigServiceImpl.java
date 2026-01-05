@@ -69,18 +69,18 @@ import java.util.stream.Collectors;
 @Transactional(rollbackFor = Exception.class)
 @Slf4j
 public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLineRunner {
-    
+
     private static final Map<Byte, NoticeTemplate> PRESET_TEMPLATE = new HashMap<>(16);
-    
+
     @Autowired
     private NoticeReceiverDao noticeReceiverDao;
 
     @Autowired
     private NoticeRuleDao noticeRuleDao;
-    
+
     @Autowired
     private NoticeTemplateDao noticeTemplateDao;
-    
+
     @Autowired
     @Lazy
     private AlertNoticeDispatch dispatcherAlarm;
@@ -91,7 +91,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             Predicate predicate = criteriaBuilder.conjunction();
             if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                    criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                 );
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -113,9 +113,9 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
             // Filter by name (case-insensitive)
             List<NoticeTemplate> filteredDefaultTemplates = defaultTemplates.stream()
-                    .filter(template -> StringUtils.isBlank(name)
-                            || template.getName().toLowerCase().contains(name.toLowerCase()))
-                    .collect(Collectors.toList());
+                .filter(template -> StringUtils.isBlank(name)
+                    || template.getName().toLowerCase().contains(name.toLowerCase()))
+                .collect(Collectors.toList());
 
             // Pagination logic
             int totalItems = filteredDefaultTemplates.size();
@@ -134,7 +134,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                 Predicate predicate = criteriaBuilder.conjunction();
                 if (StringUtils.isNotBlank(name)) {
                     Predicate predicateName = criteriaBuilder.like(
-                            criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                     );
                     predicate = criteriaBuilder.and(predicateName);
                 }
@@ -160,7 +160,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             Predicate predicate = criteriaBuilder.conjunction();
             if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
+                    criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%"
                 );
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -213,43 +213,58 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
         return rules.stream()
-                .filter(rule -> {
-                    if (!rule.isFilterAll()) {
-                        // filter labels
-                        if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
-                            boolean labelMatch = rule.getLabels().entrySet().stream().allMatch(labelItem -> {
-                                if (!alert.getCommonLabels().containsKey(labelItem.getKey())) {
-                                    return false;
-                                }
-                                String alertLabelValue = alert.getCommonLabels().get(labelItem.getKey());
-                                return Objects.equals(labelItem.getValue(), alertLabelValue);
-                            });
-                            if (!labelMatch) {
-                                return false;
+            .filter(rule -> {
+                if (!rule.isFilterAll()) {
+                    if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
+
+                        boolean labelMatch = rule.getLabels().entrySet().stream().allMatch(labelItem -> {
+
+                            // 1. Check common labels
+                            if (alert.getCommonLabels() != null &&
+                                Objects.equals(alert.getCommonLabels().get(labelItem.getKey()), labelItem.getValue())) {
+                                return true;
                             }
-                        }
-                    }
-                    
-                    LocalDateTime nowDate = LocalDateTime.now();
-                    // filter day
-                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
-                    if (rule.getDays() != null && !rule.getDays().isEmpty()) {
-                        boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
-                        if (!dayMatch) {
+
+                            // 2. Check group labels
+                            if (alert.getGroupLabels() != null &&
+                                Objects.equals(alert.getGroupLabels().get(labelItem.getKey()), labelItem.getValue())) {
+                                return true;
+                            }
+
+                            // 3. Check single alert labels (MOST IMPORTANT)
+                            return alert.getAlerts() != null && alert.getAlerts().stream().anyMatch(singleAlert ->
+                                singleAlert.getLabels() != null &&
+                                    Objects.equals(singleAlert.getLabels().get(labelItem.getKey()), labelItem.getValue())
+                            );
+                        });
+
+                        if (!labelMatch) {
                             return false;
                         }
                     }
-                    // filter time
-                    LocalTime nowTime = nowDate.toLocalTime();
-                    boolean startMatch = rule.getPeriodStart() == null
-                            || nowTime.isAfter(rule.getPeriodStart().toLocalTime())
-                            || (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd())
-                                    && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
-                    boolean endMatch = rule.getPeriodEnd() == null
-                            || nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
-                    return startMatch && endMatch;
-                })
-                .collect(Collectors.toList());
+                }
+
+
+                LocalDateTime nowDate = LocalDateTime.now();
+                // filter day
+                int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
+                if (rule.getDays() != null && !rule.getDays().isEmpty()) {
+                    boolean dayMatch = rule.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
+                    if (!dayMatch) {
+                        return false;
+                    }
+                }
+                // filter time
+                LocalTime nowTime = nowDate.toLocalTime();
+                boolean startMatch = rule.getPeriodStart() == null
+                    || nowTime.isAfter(rule.getPeriodStart().toLocalTime())
+                    || (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd())
+                    && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
+                boolean endMatch = rule.getPeriodEnd() == null
+                    || nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
+                return startMatch && endMatch;
+            })
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -308,31 +323,31 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         Map<String, String> annotations = new HashMap<>(8);
         annotations.put("suggest", "Please check the CPU usage of the server");
         SingleAlert singleAlert1 = SingleAlert.builder()
-                .labels(labels)
-                .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
-                .startAt(System.currentTimeMillis())
-                .activeAt(System.currentTimeMillis())
-                .endAt(System.currentTimeMillis())
-                .triggerTimes(2)
-                .annotations(annotations)
-                .status("firing")
-                .build();
+            .labels(labels)
+            .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
+            .startAt(System.currentTimeMillis())
+            .activeAt(System.currentTimeMillis())
+            .endAt(System.currentTimeMillis())
+            .triggerTimes(2)
+            .annotations(annotations)
+            .status("firing")
+            .build();
         SingleAlert singleAlert2 = SingleAlert.builder()
-                .labels(labels)
-                .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
-                .startAt(System.currentTimeMillis())
-                .activeAt(System.currentTimeMillis())
-                .endAt(System.currentTimeMillis())
-                .triggerTimes(4)
-                .annotations(annotations)
-                .status("firing")
-                .build();
+            .labels(labels)
+            .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
+            .startAt(System.currentTimeMillis())
+            .activeAt(System.currentTimeMillis())
+            .endAt(System.currentTimeMillis())
+            .triggerTimes(4)
+            .annotations(annotations)
+            .status("firing")
+            .build();
         GroupAlert groupAlert = GroupAlert.builder()
-                .commonLabels(Map.of(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert"))
-                .commonAnnotations(annotations)
-                .alerts(List.of(singleAlert1, singleAlert2))
-                .status("firing")
-                .build();
+            .commonLabels(Map.of(CommonConstants.LABEL_ALERT_NAME, "CPU Usage Alert"))
+            .commonAnnotations(annotations)
+            .alerts(List.of(singleAlert1, singleAlert2))
+            .status("firing")
+            .build();
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, groupAlert);
     }
 
@@ -380,3 +395,5 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         }
     }
 }
+
+
