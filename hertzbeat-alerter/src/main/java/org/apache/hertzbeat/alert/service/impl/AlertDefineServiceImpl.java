@@ -90,6 +90,15 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     private static final String CONTENT_TYPE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
 
+    private static final Set<String> SYSTEM_BUILT_IN_LABELS = Set.of(
+            CommonConstants.LABEL_INSTANCE,
+            CommonConstants.LABEL_DEFINE_ID,
+            CommonConstants.LABEL_ALERT_NAME,
+            CommonConstants.LABEL_INSTANCE_NAME,
+            CommonConstants.LABEL_ALERT_SEVERITY,
+            CommonConstants.ALERT_MODE_LABEL
+    );
+    
     public AlertDefineServiceImpl(List<AlertDefineImExportService> alertDefineImExportServiceList, DataSourceService dataSourceService) {
         alertDefineImExportServiceList.forEach(it -> alertDefineImExportServiceMap.put(it.type(), it));
         this.dataSourceService = dataSourceService;
@@ -148,7 +157,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     private boolean isSystemBuiltInLabel(String labelKey) {
-        return CommonConstants.ALERT_MODE_LABEL.equals(labelKey) || CommonConstants.LABEL_ALERT_SEVERITY.contains(labelKey);
+        return SYSTEM_BUILT_IN_LABELS.contains(labelKey);
     }
 
     @Override
