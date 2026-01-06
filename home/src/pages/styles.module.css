@@ -21,7 +21,7 @@
     padding: 3rem 0 5rem;
     text-align: center;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 
 @media screen and (max-width: 966px) {
@@ -37,6 +37,11 @@
         var(--md-surface-container) 100%);
     padding: 3rem 0;
     overflow: hidden;
+}
+
+.swiperInner {
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
 .swiperContainer::before {
@@ -66,6 +71,12 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
+    width: 100%;
+}
+
+.swiperContainer .swiper-wrapper {
+    display: flex;
+    width: 100%;
 }
 
 .swiperContainer .swiper-slide img {
@@ -82,13 +93,6 @@
     transform: scale(1.01);
 }
 
-@media (max-width: 1200px) {
-    .swiperContainer .swiper-slide img {
-        max-width: 100%;
-        border-radius: 16px;
-    }
-}
-
 @media (max-width: 768px) {
     .swiperContainer {
         padding: 2rem 0;
@@ -99,6 +103,7 @@
     background: var(--md-surface);
     padding: 5rem 0;
     position: relative;
+    overflow: hidden;
 }
 
 .featuresSection::before {

@@ -67,7 +67,7 @@ function Home() {
 
             {/* Swiper Carousel Section */}
             <div className={styles.swiperContainer}>
-              <div className="container">
+              <div className={styles.swiperInner}>
                 <Swiper
                     modules={[Autoplay]}
                     grabCursor
