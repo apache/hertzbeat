@@ -1,2 +1,2 @@
-# CSP permissions for hertzbeat.apache.org - Adding 3rd party service Algolia.
-SetEnv CSP_PROJECT_DOMAINS "https://*.algolia.net/ https://*.algolianet.com/ https://*.algolia.io/"
+# CSP permissions for hertzbeat.apache.org - Adding 3rd party service Algolia & Kapa.ai
+SetEnv CSP_PROJECT_DOMAINS "https://*.algolia.net/ https://*.algolianet.com/ https://*.algolia.io/ https://widget.kapa.ai/ https://api.kapa.ai/ https://*.kapa.ai/"
