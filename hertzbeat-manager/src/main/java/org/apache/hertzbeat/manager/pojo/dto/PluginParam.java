@@ -45,8 +45,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * PluginParam
  */
 @Entity
-@Table(name = "hzb_plugin_param", indexes = { @Index(columnList = "pluginMetadataId") },
-        uniqueConstraints = @UniqueConstraint(columnNames = {"pluginMetadataId", "field"}))
+@Table(name = "hzb_plugin_param", indexes = { @Index(columnList = "plugin_metadata_id") },
+        uniqueConstraints = @UniqueConstraint(columnNames = {"plugin_metadata_id", "field"}))
 @Data
 @Builder
 @AllArgsConstructor

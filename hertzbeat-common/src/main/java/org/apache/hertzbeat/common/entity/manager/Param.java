@@ -46,8 +46,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * Monitor parameter values
  */
 @Entity
-@Table(name = "hzb_param", indexes = { @Index(columnList = "monitorId") },
-        uniqueConstraints = @UniqueConstraint(columnNames = {"monitorId", "field"}))
+@Table(name = "hzb_param", indexes = {@Index(columnList = "monitor_id")},
+    uniqueConstraints = @UniqueConstraint(columnNames = {"monitor_id", "field"}))
 @Data
 @Builder
 @AllArgsConstructor
