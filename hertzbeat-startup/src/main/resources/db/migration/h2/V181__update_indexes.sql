@@ -226,6 +226,42 @@ CALL UPDATE_MONITOR_BIND_INDEXES();
 DROP ALIAS UPDATE_MONITOR_BIND_INDEXES;
 
 -- ========================================
+-- hzb_status_page_incident_component_bind table
+-- Special handling: component_id might have auto-created index from FK
+-- ========================================
+CREATE ALIAS UPDATE_STATUS_PAGE_INCIDENT_COMPONENT_BIND_INDEXES AS $$
+void updateStatusPageIncidentComponentBindIndexes(java.sql.Connection conn) throws java.sql.SQLException {
+    boolean tableExists = false;
+    try (java.sql.ResultSet rs = conn.getMetaData().getTables(null, null, "HZB_STATUS_PAGE_INCIDENT_COMPONENT_BIND", null)) {
+        if (rs.next()) tableExists = true;
+    }
+
+    if (tableExists) {
+        try (java.sql.Statement stmt = conn.createStatement()) {
+            // Check if component_id column already has any index
+            boolean hasComponentIdIndex = false;
+            try (java.sql.ResultSet rs = conn.getMetaData().getIndexInfo(null, null, "HZB_STATUS_PAGE_INCIDENT_COMPONENT_BIND", false, false)) {
+                while (rs.next()) {
+                    String columnName = rs.getString("COLUMN_NAME");
+                    if (columnName != null && "COMPONENT_ID".equalsIgnoreCase(columnName)) {
+                        hasComponentIdIndex = true;
+                        break;
+                    }
+                }
+            }
+
+            // Create index on component_id only if no index exists on this column
+            if (!hasComponentIdIndex) {
+                stmt.execute("CREATE INDEX IDX_INCIDENT_COMPONENT_COMPONENT_ID ON HZB_STATUS_PAGE_INCIDENT_COMPONENT_BIND(COMPONENT_ID)");
+            }
+        }
+    }
+}
+$$;
+CALL UPDATE_STATUS_PAGE_INCIDENT_COMPONENT_BIND_INDEXES();
+DROP ALIAS UPDATE_STATUS_PAGE_INCIDENT_COMPONENT_BIND_INDEXES;
+
+-- ========================================
 -- hzb_push_metrics table
 -- ========================================
 CREATE ALIAS UPDATE_PUSH_METRICS_INDEXES AS $$

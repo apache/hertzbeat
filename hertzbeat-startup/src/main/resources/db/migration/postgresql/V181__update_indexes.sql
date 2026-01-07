@@ -102,6 +102,25 @@ BEGIN
 END $$;
 
 -- ========================================
+-- hzb_status_page_incident_component_bind table
+-- Special handling: component_id might have auto-created index from FK
+-- ========================================
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'hzb_status_page_incident_component_bind') THEN
+        -- Check if component_id column already has any index, create if not
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_indexes
+            WHERE tablename = 'hzb_status_page_incident_component_bind'
+            AND indexdef LIKE '%component_id%'
+            AND indexname NOT LIKE '%_pkey'
+        ) THEN
+            CREATE INDEX idx_incident_component_component_id ON hzb_status_page_incident_component_bind(component_id);
+        END IF;
+    END IF;
+END $$;
+
+-- ========================================
 -- hzb_push_metrics table
 -- ========================================
 DO $$

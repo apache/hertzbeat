@@ -188,6 +188,40 @@ CALL UpdateMonitorBindIndexes();
 DROP PROCEDURE IF EXISTS UpdateMonitorBindIndexes;
 
 -- ========================================
+-- hzb_status_page_incident_component_bind table
+-- Special handling: component_id might have auto-created index from FK
+-- ========================================
+DELIMITER //
+CREATE PROCEDURE UpdateStatusPageIncidentComponentBindIndexes()
+BEGIN
+    DECLARE table_exists INT;
+    DECLARE component_id_has_index INT;
+
+    SELECT COUNT(*) INTO table_exists
+    FROM INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hzb_status_page_incident_component_bind';
+
+    IF table_exists = 1 THEN
+        -- Check if component_id column already has any index (including auto-created by FK)
+        SELECT COUNT(*) INTO component_id_has_index
+        FROM INFORMATION_SCHEMA.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'hzb_status_page_incident_component_bind'
+        AND COLUMN_NAME = 'component_id'
+        AND INDEX_NAME != 'PRIMARY';
+
+        -- Create index on component_id only if no index exists on this column
+        IF component_id_has_index = 0 THEN
+            CREATE INDEX idx_incident_component_component_id ON hzb_status_page_incident_component_bind(component_id);
+        END IF;
+    END IF;
+END //
+DELIMITER ;
+
+CALL UpdateStatusPageIncidentComponentBindIndexes();
+DROP PROCEDURE IF EXISTS UpdateStatusPageIncidentComponentBindIndexes;
+
+-- ========================================
 -- hzb_push_metrics table
 -- ========================================
 DELIMITER //
