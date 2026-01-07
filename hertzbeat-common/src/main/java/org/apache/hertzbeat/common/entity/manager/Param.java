@@ -46,8 +46,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * Monitor parameter values
  */
 @Entity
-@Table(name = "hzb_param", indexes = {@Index(columnList = "monitor_id")},
-    uniqueConstraints = @UniqueConstraint(columnNames = {"monitor_id", "field"}))
+@Table(
+    name = "hzb_param",
+    indexes = {@Index(name = "idx_hzb_param_monitor_id", columnList = "monitor_id")},
+    uniqueConstraints = {@UniqueConstraint(name = "uk_hzb_param_monitor_field", columnNames = {"monitor_id", "field"})}
+)
 @Data
 @Builder
 @AllArgsConstructor
@@ -68,6 +71,7 @@ public class Param {
      * Monitor ID
      */
     @Schema(title = "Monitor task ID", example = "875846754543", accessMode = READ_WRITE)
+    @Column(name = "monitor_id")
     private Long monitorId;
 
     /**
@@ -75,6 +79,7 @@ public class Param {
      */
     @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
     @Size(max = 100)
+    @Column(name = "field")
     @NotBlank(message = "field can not null")
     private String field;
 
