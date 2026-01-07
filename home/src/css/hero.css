@@ -2,7 +2,7 @@
     --ifm-hero-background-color: var(--md-surface);
     --ifm-hero-text-color: var(--md-on-surface);
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     min-height: 600px;
     display: flex;
     align-items: center;
