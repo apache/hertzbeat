@@ -147,14 +147,14 @@
   <div *nzModalContent class="-inner-content">
     <form [formGroup]="pluginForm" nz-form>
       <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired="true" nzFor="name">{{ 'plugin.name' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="8" nzRequired="true" nzFor="name">{{ 'plugin.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="14" [nzErrorTip]="'validation.required' | i18n">
           <input nz-input formControlName="name" id="name" />
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired="true" nzFor="jarFile">{{ 'plugin.jar.file' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="8" nzRequired="true" nzFor="jarFile">{{ 'plugin.jar.file' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="14" [nzErrorTip]="'validation.required' | i18n">
           <nz-upload
             nzAccept=".jar"
@@ -175,7 +175,7 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired="true" nzFor="enableStatus">{{ 'plugin.status' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="8" nzRequired="true" nzFor="enableStatus">{{ 'plugin.status' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="14">
           <nz-switch formControlName="enableStatus" required></nz-switch>
         </nz-form-control>
