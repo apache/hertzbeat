@@ -32,7 +32,13 @@
     >
       <nz-option *ngFor="let keyOption of labelKeys" [nzLabel]="keyOption" [nzValue]="keyOption"></nz-option>
       <nz-option
-        *ngIf="labelIsCustom && customInputKey && !hasMatchingOption(customInputKey, labelKeys)"
+        *ngIf="
+          labelIsCustom &&
+          activeSearchIndex === i &&
+          activeSearchType === 'key' &&
+          customInputKey &&
+          !hasMatchingOption(customInputKey, labelKeys)
+        "
         [nzLabel]="customInputKey"
         [nzValue]="customInputKey"
       ></nz-option>
@@ -53,7 +59,13 @@
     >
       <nz-option *ngFor="let valueOption of getLabelValues(value[i].key)" [nzLabel]="valueOption" [nzValue]="valueOption"></nz-option>
       <nz-option
-        *ngIf="labelIsCustom && customInputValue && !hasMatchingOption(customInputValue, getLabelValues(value[i].key))"
+        *ngIf="
+          labelIsCustom &&
+          activeSearchIndex === i &&
+          activeSearchType === 'value' &&
+          customInputValue &&
+          !hasMatchingOption(customInputValue, getLabelValues(value[i].key))
+        "
         [nzLabel]="customInputValue"
         [nzValue]="customInputValue"
       ></nz-option>

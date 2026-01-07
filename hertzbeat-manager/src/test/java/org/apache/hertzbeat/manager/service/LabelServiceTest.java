@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import org.apache.hertzbeat.base.service.LabelService;
 import org.junit.jupiter.api.Assertions;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,7 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.hertzbeat.common.entity.manager.Label;
-import org.apache.hertzbeat.manager.dao.LabelDao;
+import org.apache.hertzbeat.base.dao.LabelDao;
 import org.apache.hertzbeat.manager.service.impl.LabelServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
