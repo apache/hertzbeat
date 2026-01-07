@@ -46,31 +46,104 @@ export class LabelSelectorComponent implements ControlValueAccessor, OnInit {
   value: Array<{ key: string; value: string }> = [];
   customInputKey: string = '';
   customInputValue: string = '';
+  // Track the active search input to prevent cross-row pollution of custom options
+  activeSearchIndex: number | null = null;
+  activeSearchType: 'key' | 'value' | null = null;
 
   _onChange = (_: any) => {};
   _onTouched = () => {};
 
   writeValue(value: any): void {
-    this.value = value && value.length > 0 ? value : [{ key: '', value: '' }];
+    // Validate and initialize: use valid array if provided, otherwise initialize with empty key-value pair
+    if (!value || !Array.isArray(value) || value.length === 0) {
+      this.value = [{ key: '', value: '' }];
+      return;
+    }
+    this.value = value;
+    // Build labelKeys and labelMap for autocomplete from the provided values
+    this.value.forEach(item => {
+      // Skip invalid items
+      if (!item || typeof item !== 'object' || !item.key) {
+        return;
+      }
+
+      const key = String(item.key).trim();
+      const val = item.value ? String(item.value).trim() : '';
+      // Skip empty keys
+      if (!key) {
+        return;
+      }
+      // Add new key to labelKeys
+      if (!this.labelKeys.includes(key)) {
+        this.labelKeys.push(key);
+      }
+      // Initialize value array for this key
+      if (!this.labelMap[key]) {
+        this.labelMap[key] = [];
+      }
+      // Add value to labelMap (with deduplication)
+      if (val && !this.labelMap[key].includes(val)) {
+        this.labelMap[key].push(val);
+      }
+    });
   }
 
+  /**
+   * Handle key change: clear the corresponding value and add new key to labelKeys for reuse
+   */
   onKeyChange(index: number, value: string) {
+    // Clear the value when key changes
     this.value[index].value = '';
+
+    // Add new key to labelKeys so other rows can see this custom key
+    if (value && !this.labelKeys.includes(value)) {
+      this.labelKeys.push(value);
+    }
+
+    // Initialize value array for this key
+    if (value && !this.labelMap[value]) {
+      this.labelMap[value] = [];
+    }
+
     this._onChange(this.value);
     this._onTouched();
   }
 
+  /**
+   * Handle value change: add new value to the corresponding key's labelMap for reuse
+   */
   onValueChange(index: number, value: string) {
+    const key = this.value[index].key;
+
+    // Add new value to labelMap so other rows can see this custom value
+    if (key && value && this.labelMap[key] && !this.labelMap[key].includes(value)) {
+      this.labelMap[key].push(value);
+    }
+
     this._onChange(this.value);
     this._onTouched();
   }
 
+  /**
+   * Handle search event: track the active input to ensure custom options only show in the corresponding field
+   */
   onSearch(value: string, index: number, type: 'key' | 'value'): void {
+    // Track the currently active search input
+    this.activeSearchIndex = index;
+    this.activeSearchType = type;
+
     if (value) {
       if (type === 'key') {
         this.customInputKey = value;
       } else {
         this.customInputValue = value;
+      }
+    } else {
+      // Clear custom input value when search is empty
+      if (type === 'key') {
+        this.customInputKey = '';
+      } else {
+        this.customInputValue = '';
       }
     }
   }
