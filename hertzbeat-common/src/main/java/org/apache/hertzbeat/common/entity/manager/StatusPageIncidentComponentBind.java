@@ -40,8 +40,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Table(name = "hzb_status_page_incident_component_bind", indexes = {
-        @Index(name = "idx_incident_component_incident_id", columnList = "incident_id"),
-        @Index(name = "idx_incident_component_component_id", columnList = "component_id")
+        @Index(name = "index_incident_component", columnList = "incident_id"),
 })
 @Data
 @Builder

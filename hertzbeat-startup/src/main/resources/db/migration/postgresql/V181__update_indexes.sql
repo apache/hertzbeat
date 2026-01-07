@@ -102,28 +102,6 @@ BEGIN
 END $$;
 
 -- ========================================
--- hzb_status_page_incident_component_bind table
--- ========================================
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'hzb_status_page_incident_component_bind') THEN
-        -- Drop old index if exists
-        IF EXISTS (SELECT 1 FROM pg_indexes WHERE tablename = 'hzb_status_page_incident_component_bind' AND indexname = 'index_incident_component') THEN
-            DROP INDEX IF EXISTS index_incident_component;
-        END IF;
-
-        -- Create new indexes if not exist
-        IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE tablename = 'hzb_status_page_incident_component_bind' AND indexname = 'idx_incident_component_incident_id') THEN
-            CREATE INDEX idx_incident_component_incident_id ON hzb_status_page_incident_component_bind(incident_id);
-        END IF;
-
-        IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE tablename = 'hzb_status_page_incident_component_bind' AND indexname = 'idx_incident_component_component_id') THEN
-            CREATE INDEX idx_incident_component_component_id ON hzb_status_page_incident_component_bind(component_id);
-        END IF;
-    END IF;
-END $$;
-
--- ========================================
 -- hzb_push_metrics table
 -- ========================================
 DO $$
