@@ -577,6 +577,7 @@ export class AlertSettingComponent implements OnInit {
   userExpr!: string;
   severity!: string;
   alertMode!: string;
+  labelIsCustom: boolean = true;
   logFields: any[] = [];
 
   editAlertDefine(alertDefineId: number) {
