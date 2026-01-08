@@ -18,9 +18,11 @@
 
 package org.apache.hertzbeat.ai.service.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
@@ -69,8 +71,8 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     @Value("classpath:/prompt/system-message.st")
     private Resource systemResource;
 
-    @Value("classpath:/prompt/system-message-protected.st")
-    private Resource systemResourceProtected;
+    @Value("classpath:/prompt/extra-message-protected.st")
+    private Resource extraResourceProtected;
 
 
     @Autowired
@@ -116,11 +118,14 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
         }
     }
 
+    @SneakyThrows
     private String generateSystemMessage(ChatRequestContext context) {
         if (Objects.equals(modelProviderConfig.getParticipationModel(), "PROTECTED")) {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("conversationId", context.getConversationId());
-            return SystemPromptTemplate.builder().resource(systemResourceProtected).build().create(metadata)
+            String systemMessage = systemResource.getContentAsString(StandardCharsets.UTF_8);
+            return systemMessage + SystemPromptTemplate.builder().resource(extraResourceProtected).build()
+                .create(metadata)
                 .getContents();
         }
         return SystemPromptTemplate.builder().resource(systemResource).build().getTemplate();
