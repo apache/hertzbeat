@@ -200,13 +200,13 @@
     "description": "The live editor label of the live codeblocks"
   },
   "convenient": {
-    "message": "Convenient Used"
+    "message": "Easy to Use"
   },
   "custom-multi-support": {
-    "message": "High Performance and Custom"
+    "message": "High Performance & Extensible"
   },
   "opensource": {
-    "message": "Opensource Friendly"
+    "message": "Open Source & Community Driven"
   },
   "theme.ErrorPageContent.title": {
     "message": "This page crashed.",
@@ -257,13 +257,13 @@
     "description": "The label used by the button on the collapsible TOC component"
   },
   "convenient-content": {
-    "message": "{docker} {br} Monitoring-alarm-notify all in one. Support monitoring web service, database, cache, os, web-server, middleware, bigdata, cloud-native, network etc. {br} Easy to use and agentless, full web-based operations with just a click of a mouse. {br} Security is the most important, encrypt the whole secret data."
+    "message": "{docker} {br} All-in-one monitoring, alerting, and notification system. Supports web services, databases, caching, OS, middleware, big data, cloud-native, and network monitoring. {br} Agentless with full web-based operations, simply point-and-click to get started. {br} Enterprise-grade security with end-to-end encryption for all sensitive data."
   },
   "custom-multi-support-content": {
-    "message": "Makes protocols such as Http, Jmx, Ssh, Snmp, Jdbc configurable, you can collect any metrics by simply configuring the yml online. {br} High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration. {br} Flexible threshold rules and timely notifications delivered via discord slack email webhook more."
+    "message": "Configurable protocols including HTTP, JMX, SSH, SNMP, and JDBC. Define custom metrics with simple online YAML configuration. {br} High-performance architecture with horizontal scaling for collector clusters, multi-network isolation, and cloud-edge collaboration. {br} Flexible alerting rules with timely notifications via Discord, Slack, email, Webhook, and more."
   },
   "opensource-content": {
-    "message": "Apache HertzBeat™ is open source, has an inclusive and open community. Unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a code document or a typo, respect everyone and grow together. {br} Our code is being deployed on thousands of machines worldwide."
+    "message": "Apache HertzBeat™ is open source with an inclusive community. We welcome contributions of all sizes—code, documentation, or bug reports. {br} Respect every contributor and grow together. {br} Deployed on thousands of servers worldwide."
   },
   "slogan": {
     "message": "AI-powered Open Source Observability System"

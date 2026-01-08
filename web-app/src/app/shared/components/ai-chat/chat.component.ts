@@ -669,18 +669,23 @@ export class ChatComponent implements OnInit, OnDestroy {
         securityData: JSON.stringify(Object.values(this.securityParams)),
         conversationId: this.currentConversation?.id
       })
-      .subscribe((message: any) => {
-        if (message.code === 0) {
-          const lastMessage = this.messages[this.messages.length - 1];
-          lastMessage.securityForm.complete = true;
-          const tmpMessage = this.newMessage;
-          this.newMessage = this.i18nSvc.fanyi('ai.chat.security.form.default.callback');
-          this.sendMessage();
-          this.newMessage = tmpMessage;
-        } else {
-          console.log('Error saving security data:');
+      .subscribe(
+        (message: any) => {
+          if (message.code === 0) {
+            const lastMessage = this.messages[this.messages.length - 1];
+            lastMessage.securityForm.complete = true;
+            const tmpMessage = this.newMessage;
+            this.newMessage = this.i18nSvc.fanyi('ai.chat.security.form.default.callback');
+            this.sendMessage();
+            this.newMessage = tmpMessage;
+          } else {
+            console.log('Error saving security data:');
+          }
+        },
+        (error: any) => {
+          console.error('Error saving security data:', error);
         }
-      });
+      );
     this.showSecurityFormModal = false;
   }
 
@@ -704,7 +709,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         field: i.field,
         paramValue: null
       };
-      i.name = i.name[this.i18nSvc.defaultLang];
+      i.name = i.name[this.i18nSvc.defaultLang] || i.name['en-US'] || i.name;
       return i;
     });
 

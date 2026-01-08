@@ -21,7 +21,7 @@ sidebar_label: Docker Compose方式安装
 
    :::tip
 
-   - `apache-hertzbeat-xxx-docker-compose.tar.gz` 解压后包含多个部署方案，这里我们推荐选择 `hertzbeat-postgresql-victoria-metrics` 方案。
+   - `apache-hertzbeat-${version}-docker-compose.tar.gz` 解压后包含多个部署方案，这里我们推荐选择 `hertzbeat-postgresql-victoria-metrics` 方案。
    - 其它部署方式请详细阅读各个部署方案的 README.md 文件, MySQL 方案需要自行准备 MySQL 驱动包。
 
    :::
@@ -29,13 +29,13 @@ sidebar_label: Docker Compose方式安装
    - 解压脚本包
 
    ```shell
-   tar zxvf apache-hertzbeat-1.6.0-docker-compose.tar.gz
+   tar zxvf apache-hertzbeat-${version}-docker-compose.tar.gz
    ```
 
    - 进入解压目录, 选择 `HertzBeat + PostgreSQL + VictoriaMetrics` 一键部署
 
    ```shell
-   cd apache-hertzbeat-1.6.0-docker-compose    
+   cd apache-hertzbeat-${version}-docker-compose
    cd hertzbeat-postgresql-victoria-metrics
    ```
 

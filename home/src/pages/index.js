@@ -7,16 +7,14 @@ import useBaseUrl from '@docusaurus/useBaseUrl'
 import Translate from '@docusaurus/Translate'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { EffectFade, Navigation, Autoplay } from 'swiper'
+import { Autoplay } from 'swiper'
 import 'swiper/css'
-import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
 import Feature from './components/Feature'
-import Section from './components/Section'
 
 import styles from './styles.module.css'
-import {features} from '../constants'
+import { features } from '../constants'
 
 function Home() {
   const context = useDocusaurusContext()
@@ -28,13 +26,13 @@ function Home() {
             title={`${siteConfig.title} · ${siteConfig.tagline}`}
             description={`${siteConfig.tagline}`}
         >
+          {/* Hero Section */}
           <header className={clsx('hero--primary', styles.heroBanner)}>
             <div className="container">
               <h1 className="hero__title">
                 <img
-                    style={{ width: '500px', marginTop: '100px' }}
                     src={'/img/hertzbeat-brand.svg'}
-                    alt={'#'}
+                    alt={'HertzBeat Logo'}
                 />
               </h1>
               <p className="hero__subtitle">
@@ -52,79 +50,67 @@ function Home() {
               </div>
             </div>
           </header>
-          <main>
-            <div>
-              <Swiper
-                  modules={[Autoplay, EffectFade, Navigation]}
-                  watchSlidesProgress={true}
-                  navigation={{
-                    nextEl: '.user-swiper-button-next',
-                    prevEl: '.user-swiper-button-prev',
-                  }}
-                  grabCursor
-                  // effect will disable when auto scroll
-                  // effect={'fade'}
-                  // fadeEffect={{
-                  //   crossFade: true
-                  // }}
-                  // slidesPerView={1}
-                  // auto scroll
-                  loop={true}
-                  speed={0}
-                  autoplay={{
-                    delay: 6000,
-                    disableOnInteraction: false,
-                    waitForTransition: false,
-                  }}
-              >
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/docs/hertzbeat-arch.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/status.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/0.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/1.png')}
-                  />
-                </SwiperSlide>
-                <SwiperSlide>
-                  <img
-                      style={{ width: '1400px', display: 'block', margin: '0 auto' }}
-                      src={useBaseUrl('/img/home/9.png')}
-                  />
-                </SwiperSlide>
-              </Swiper>
-            </div>
 
-            <div
-                className="swiper-button-prev user-swiper-button-prev"
-                style={{ top: '880px', left: '50px', color: '#000033' }}
-            />
-            <div
-                className="swiper-button-next user-swiper-button-next"
-                style={{ top: '880px', right: '50px', color: '#000033' }}
-            />
+          <main>
+            {/* Features Section */}
             {features && features.length > 0 && (
-                <Section>
-                  {features.map((props, idx) => (
-                      <Feature key={idx} {...props} />
-                  ))}
-                </Section>
+                <section className={styles.featuresSection}>
+                  <div className="container">
+                    <div className={styles.featuresRow}>
+                      {features.map((props, idx) => (
+                          <Feature key={idx} {...props} index={idx} />
+                      ))}
+                    </div>
+                  </div>
+                </section>
             )}
+
+            {/* Swiper Carousel Section */}
+            <div className={styles.swiperContainer}>
+              <div className={styles.swiperInner}>
+                <Swiper
+                    modules={[Autoplay]}
+                    grabCursor
+                    loop={true}
+                    speed={600}
+                    autoplay={{
+                      delay: 6000,
+                      disableOnInteraction: false,
+                    }}
+                >
+                  <SwiperSlide>
+                    <img
+                        src={useBaseUrl('/img/docs/hertzbeat-arch.png')}
+                        alt="HertzBeat Architecture"
+                    />
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <img
+                        src={useBaseUrl('/img/home/status.png')}
+                        alt="Monitoring Status"
+                    />
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <img
+                        src={useBaseUrl('/img/home/0.png')}
+                        alt="Dashboard Overview"
+                    />
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <img
+                        src={useBaseUrl('/img/home/1.png')}
+                        alt="Feature Demo"
+                    />
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <img
+                        src={useBaseUrl('/img/home/9.png')}
+                        alt="Advanced Features"
+                    />
+                  </SwiperSlide>
+                </Swiper>
+              </div>
+            </div>
           </main>
         </Layout>
       </>

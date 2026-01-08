@@ -174,7 +174,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // collector list
   collectorsLoading: boolean = false;
   collectors!: CollectorSummary[];
-  collectorsTabSelectedIndex = 0;
+  collectorsTabSelectedIndexes: { [key: number]: number } = {};
 
   // alert list
   alerts!: SingleAlert[];
