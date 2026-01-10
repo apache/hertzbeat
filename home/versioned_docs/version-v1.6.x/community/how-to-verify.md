@@ -22,9 +22,9 @@ If the network is poor, downloading may be time-consuming. The download is compl
 
 ```shell
 #If there is svn locally, you can clone to the local
-$ svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/
+$ svn co https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/
 #or download the material file directly
-$ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/xxx.xxx
+$ wget https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/xxx.xxx
 ```
 
 ### 2. Verify that the uploaded version is compliant
@@ -47,7 +47,7 @@ First import the publisher's public key. Import KEYS from the svn repository to 
 ##### 2.2.1 Import public key
 
 ```shell
-curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # Download KEYS
+-curl  https://downloads.apache.org/hertzbeat/KEYS > KEYS # Download KEYS
 gpg --import KEYS # Import KEYS to local
 ```
 
@@ -75,9 +75,9 @@ Please decide how far you trust this user to correctly verify other users' keys
 
 Your decision? 5 #choose 5
 Do you really want to set this key to ultimate trust? (y/N) y  #choose y
-                                                            
+
 gpg>
-         
+
 ```
 
 ##### 2.2.3 Check the gpg signature
@@ -177,7 +177,7 @@ I checked:
      2. Checksum and signature are OK
      3. LICENSE and NOTICE are exist
      4. Build successfully on macOS(Big Sur)
-     5. 
+     5.
 ```
 
 PPMC/IPMC member:
@@ -190,7 +190,7 @@ I checked:
      2. Checksum and signature are OK
      3. LICENSE and NOTICE are exist
      4. Build successfully on macOS(Big Sur)
-     5. 
+     5.
 ```
 
 ---

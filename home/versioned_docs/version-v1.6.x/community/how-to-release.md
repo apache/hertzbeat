@@ -71,7 +71,7 @@ some other action (type on the keyboard, move the mouse, utilize the
 disks) during the prime generation; this gives the random number
 generator a better chance to gain enough entropy.
 
-# At this time, a dialog box will pop up, asking you to enter the key for this gpg. 
+# At this time, a dialog box will pop up, asking you to enter the key for this gpg.
 # you need to remember that it will be used in subsequent steps.
 ┌─────────────────────────────────────────────────────┐
 │ Please enter this passphrase to                     │
@@ -142,11 +142,11 @@ Or enter <https://keyserver.ubuntu.com/> address in the browser, enter the name 
 $ mkdir -p svn/dev
 $ cd svn/dev
 
-$ svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
+$ svn co https://dist.apache.org/repos/dist/dev/hertzbeat
 $ cd svn/dev/hertzbeat
 
 # Append the KEY you generated to the file KEYS, and check if it is added correctly
-$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
+$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS
 
 $ svn ci -m "add gpg key for muchunjin"
 ```
@@ -161,7 +161,7 @@ $ svn co https://dist.apache.org/repos/dist/release/incubator/hertzbeat
 $ cd svn/release/hertzbeat
 
 # Append the KEY you generated to the file KEYS, and check if it is added correctly
-$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
+$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS
 
 $ svn ci -m "add gpg key for muchunjin"
 ```
@@ -306,15 +306,15 @@ apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 
 ```shell
 # Check out the dev directory of the Apache SVN to the svn/dev directory under dist in the root directory of the Apache HertzBeat project
-svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat svn/dev
+svn co https://dist.apache.org/repos/dist/dev/hertzbeat svn/dev
 
-svn co --depth empty https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
+svn co --depth empty https://dist.apache.org/repos/dist/dev/hertzbeat
 ```
 
 - Copy the material package to the dev directory
 
-Create a version number directory and name it in the form of ${release_version}-${RC_version}. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail.  
-If it needs to be corrected, it needs to iterate the RC version , the RC version number needs to be +1. For example: Vote for version 1.6.0-RC1. If the vote passes without any problems, the RC1 version material will be released as the final version material.  
+Create a version number directory and name it in the form of ${release_version}-${RC_version}. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail.
+If it needs to be corrected, it needs to iterate the RC version , the RC version number needs to be +1. For example: Vote for version 1.6.0-RC1. If the vote passes without any problems, the RC1 version material will be released as the final version material.
 If there is a problem (when the hertzbeat/incubator community votes, the voters will strictly check various release requirements and compliance issues) and need to be corrected, then re-initiate the vote after the correction, and the candidate version for the next vote is 1.6.0- RC2.
 
 ```shell
@@ -364,13 +364,13 @@ Release notes:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The release candidates:
-https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
+https://dist.apache.org/repos/dist/dev/hertzbeat/1.6.0-RC1/
 
 Git tag for the release:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The artifacts signed with PGP key [33545C76], corresponding to [muchunjin@apache.org], that can be found in keys file:
-https://downloads.apache.org/incubator/hertzbeat/KEYS
+https://downloads.apache.org/hertzbeat/KEYS
 
 The vote will be open for at least 72 hours or until the necessary number of votes are reached.
 
@@ -460,13 +460,13 @@ Vote result thread:
 https://lists.apache.org/thread/t5z58mvrs1drgzfyc48c9lhmd8skswn7
 
 The release candidate:
-https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
+https://dist.apache.org/repos/dist/dev/hertzbeat/1.6.0-RC1/
 
 Git tag for the release:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The artifacts signed with PGP key [33545C76], corresponding to [muchunjin@apache.org], that can be found in keys file:
-https://downloads.apache.org/incubator/hertzbeat/KEYS
+https://downloads.apache.org/hertzbeat/KEYS
 
 The vote will be open for at least 72 hours or until the necessary number of votes are reached.
 
@@ -542,7 +542,7 @@ Wait a day to see if the tutor has any other comments, if not, send the followin
 ### 5.1 Migrating source and binary packages
 
 ```shell
-svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/1.6.0  -m "transfer packages for 1.6.0-RC1"
+svn mv https://dist.apache.org/repos/dist/dev/hertzbeat/1.6.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/1.6.0  -m "transfer packages for 1.6.0-RC1"
 ```
 
 #### 4.2 Add the new version download address to the official website
@@ -592,17 +592,17 @@ The rename the release-1.6.0-rc1 branch to release-1.6.0.
 Hi Community,
 
 We are glad to announce the release of Apache HertzBeat 1.6.0.
-Thanks again for your help. 
+Thanks again for your help.
 
 Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-Download Link: 
+Download Link:
 https://hertzbeat.apache.org/docs/download/
 
-Release Note: 
+Release Note:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0
 
-Website: 
+Website:
 https://hertzbeat.apache.org/
 
 HertzBeat Resources:
