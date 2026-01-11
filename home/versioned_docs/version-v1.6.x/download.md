@@ -9,7 +9,7 @@ sidebar_label: Download
 
 :::tip
 
-- Please verify the release with corresponding hashes(sha512), signatures and [project release KEYS](https://downloads.apache.org/incubator/hertzbeat/KEYS).
+- Please verify the release with corresponding hashes(sha512), signatures and [project release KEYS](https://downloads.apache.org/hertzbeat/KEYS).
 - Refer to [How to Verify](https://www.apache.org/dyn/closer.cgi#verify) for how to check the hashes and signatures.
 
 :::

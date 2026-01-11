@@ -16,9 +16,9 @@ sidebar_position: 4
 
 ```shell
 #如果本地有svn，可以clone到本地
-svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/
+svn co https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/
 #或者 直接下载物料文件
-wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/xxx.xxx
+wget https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/xxx.xxx
 
 ```
 
@@ -42,7 +42,7 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 ##### 2.2.1 导入公钥
 
 ```shell
-curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
+curl  https://downloads.apache.org/hertzbeat/KEYS > KEYS # 下载KEYS
 gpg --import KEYS # 导入KEYS到本地
 ```
 
