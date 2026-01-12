@@ -15,10 +15,10 @@ sidebar_position: 4
 > 需要依赖gpg工具，如果没有，建议安装gpg2
 
 ```shell
-#如果本地有svn，可以clone到本地 
-svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/
+#如果本地有svn，可以clone到本地
+svn co https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/
 #或者 直接下载物料文件
-wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/xxx.xxx
+wget https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/xxx.xxx
 
 ```
 
@@ -42,7 +42,7 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 ##### 2.2.1 导入公钥
 
 ```shell
-curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
+curl  https://downloads.apache.org/hertzbeat/KEYS > KEYS # 下载KEYS
 gpg --import KEYS # 导入KEYS到本地
 ```
 
@@ -70,9 +70,9 @@ Please decide how far you trust this user to correctly verify other users' keys
 
 Your decision? 5 #选择5
 Do you really want to set this key to ultimate trust? (y/N) y #选择y
-                                                            
-gpg> 
-     
+
+gpg>
+
 ```
 
 ##### 2.2.3 检查签名
@@ -174,7 +174,7 @@ I  checked:
     1. All download links are valid
     2. Checksum and signature are OK
     3. LICENSE and NOTICE are exist
-    4. Build successfully on macOS(Big Sur) 
+    4. Build successfully on macOS(Big Sur)
     5. ....
 ```
 
@@ -187,7 +187,7 @@ I  checked:
     1. All download links are valid
     2. Checksum and signature are OK
     3. LICENSE and NOTICE are exist
-    4. Build successfully on macOS(Big Sur) 
+    4. Build successfully on macOS(Big Sur)
     5. ....
 ```
 
