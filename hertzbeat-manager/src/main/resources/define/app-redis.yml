@@ -1656,3 +1656,61 @@ metrics:
         privateKey: ^_^sshPrivateKey^_^
         privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
         shareConnection: ^_^sshShareConnection^_^
+
+  # metrics - slowlog
+  - name: slowlog
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    priority: 9
+    i18n:
+      zh-CN: 慢查询日志
+      en-US: Slow Query Log
+    # collect metrics content
+    fields:
+      - field: id
+        type: 0
+        i18n:
+          zh-CN: ID
+          en-US: ID
+      - field: timestamp
+        type: 0
+        i18n:
+          zh-CN: 时间戳
+          en-US: Timestamp
+      - field: execution_time
+        type: 0
+        unit: μs
+        i18n:
+          zh-CN: 执行时间
+          en-US: Execution Time
+      - field: command
+        type: 1
+        i18n:
+          zh-CN: 命令
+          en-US: Command
+      - field: client_ip
+        type: 1
+        i18n:
+          zh-CN: 客户端IP
+          en-US: Client IP
+      - field: client_name
+        type: 1
+        i18n:
+          zh-CN: 客户端名称
+          en-US: Client Name
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+      sshTunnel:
+        enable: ^_^enableSshTunnel^_^
+        host: ^_^sshHost^_^
+        port: ^_^sshPort^_^
+        timeout: ^_^sshTimeout^_^
+        username: ^_^sshUsername^_^
+        password: ^_^sshPassword^_^
+        privateKey: ^_^sshPrivateKey^_^
+        privateKeyPassphrase: ^_^sshPrivateKeyPassphrase^_^
+        shareConnection: ^_^sshShareConnection^_^
