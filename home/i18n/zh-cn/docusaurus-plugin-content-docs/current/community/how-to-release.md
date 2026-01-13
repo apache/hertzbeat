@@ -71,7 +71,7 @@ some other action (type on the keyboard, move the mouse, utilize the
 disks) during the prime generation; this gives the random number
 generator a better chance to gain enough entropy.
 
-# At this time, a dialog box will pop up, asking you to enter the key for this gpg. 
+# At this time, a dialog box will pop up, asking you to enter the key for this gpg.
 # you need to remember that it will be used in subsequent steps.
 ┌─────────────────────────────────────────────────────┐
 │ Please enter this passphrase to                     │
@@ -146,7 +146,7 @@ $ svn co https://dist.apache.org/repos/dist/dev/hertzbeat
 $ cd svn/dev/hertzbeat
 
 # 将生成的KEY追加到KEYS文件中，检查是否添加正确
-$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
+$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS
 
 $ svn ci -m "add gpg key for muchunjin"
 ```
@@ -161,7 +161,7 @@ $ svn co https://dist.apache.org/repos/dist/release/hertzbeat
 $ cd svn/release/hertzbeat
 
 # 将生成的KEY追加到KEYS文件中，检查是否添加正确
-$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
+$ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS
 
 $ svn ci -m "add gpg key for muchunjin"
 ```
@@ -374,7 +374,7 @@ Git tag for the release:
 https://github.com/apache/hertzbeat/releases/tag/v1.7.3-rc1
 
 The artifacts signed with PGP key [33545C76], corresponding to [muchunjin@apache.org], that can be found in keys file:
-https://downloads.apache.org/incubator/hertzbeat/KEYS
+https://downloads.apache.org/hertzbeat/KEYS
 
 The vote will be open for at least 72 hours or until the necessary number of votes are reached.
 
@@ -492,17 +492,17 @@ release note: xxx
 Hi Community,
 
 We are glad to announce the release of Apache HertzBeat 1.7.3.
-Thanks again for your help. 
+Thanks again for your help.
 
 Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time observability system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-Download Link: 
+Download Link:
 https://hertzbeat.apache.org/docs/download/
 
-Release Note: 
+Release Note:
 https://github.com/apache/hertzbeat/releases/tag/v1.7.3
 
-Website: 
+Website:
 https://hertzbeat.apache.org/
 
 HertzBeat Resources:
