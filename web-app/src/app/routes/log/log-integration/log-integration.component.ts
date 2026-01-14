@@ -147,17 +147,6 @@ export class LogIntegrationComponent implements OnInit {
     el.select();
     document.execCommand('copy');
     document.body.removeChild(el);
-    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(this.token)
-        .then(() => {
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), this.i18nSvc.fanyi('log.integration.token.notice'));
-        })
-        .catch(() => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.copy-fail'), this.i18nSvc.fanyi('log.integration.token.notice'));
-        });
-    } else {
-      this.notifySvc.error(this.i18nSvc.fanyi('common.notify.copy-fail'), this.i18nSvc.fanyi('log.integration.token.notice'));
-    }
+    this.notifySvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), this.i18nSvc.fanyi('log.integration.token.notice'));
   }
 }
