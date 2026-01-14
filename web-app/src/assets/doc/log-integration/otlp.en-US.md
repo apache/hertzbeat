@@ -80,6 +80,13 @@ exporters:
     encoding: json
     headers:
       Authorization: "Bearer {token}"
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]
 ```
 
 ### Configuration Verification
