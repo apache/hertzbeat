@@ -319,7 +319,6 @@ public class StatusPageServiceImpl implements StatusPageService {
             end = end.minusDays(1);
         }
 
-
         componentStatus.setHistory(histories);
         return componentStatus;
     }
