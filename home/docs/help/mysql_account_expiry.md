@@ -6,7 +6,7 @@ configure alerts.
 
 ---
 
-## Metric: account_expiry
+## Metric: `account_expiry`
 
 This metric collects password expiration information for all MySQL users.
 
@@ -14,24 +14,37 @@ This metric collects password expiration information for all MySQL users.
 
 | Field | Description |
 |------|-------------|
-| user | MySQL user name |
-| host | Host from which the user can connect |
-| days_left | Remaining days before password expires. NULL means no expiry policy |
-| password_expired | Whether the password is already expired (Y or N) |
+| user | MySQL username |
+| host | Allowed host |
+| password_lifetime | Password validity in days |
+| password_last_changed | When the password was last changed |
+| password_expired | Whether the account is expired |
+| days_left | Remaining days before expiration |
 
 ---
 
 ## SQL
 
-The metric is collected using:
-
 ```sql
 SELECT
   user,
   host,
+  password_lifetime,
+  password_last_changed,
   password_expired,
   IF(password_lifetime IS NULL,
      NULL,
      password_lifetime - DATEDIFF(NOW(), password_last_changed)
   ) AS days_left
 FROM mysql.user;
+
+```
+
+This enables alerts on:
+
+1.Expired accounts
+
+2.Accounts expiring soon
+
+3.Security risks from stale credentials
+
