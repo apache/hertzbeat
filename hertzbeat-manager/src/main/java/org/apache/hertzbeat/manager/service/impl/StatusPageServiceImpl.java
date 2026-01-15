@@ -269,7 +269,7 @@ public class StatusPageServiceImpl implements StatusPageService {
 
         histories.add(todayStatus);
 
-        // Previous 29 days
+        // Previous HISTORY_SPAN_DAYS days (excluding today)
         long preTimestamp = now
             .atZone(zoneId)
             .toLocalDate()
