@@ -155,7 +155,6 @@ public class StatusPageServiceImpl implements StatusPageService {
                 .toInstant()
                 .toEpochMilli();
 
-
             List<StatusPageHistory> history = statusPageHistoryDao
                     .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), preTimestamp, todayStartTimestamp);
             LinkedList<StatusPageHistory> historyList = new LinkedList<>(history);
