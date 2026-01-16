@@ -1,3 +1,11 @@
 <IfModule mod_headers.c>
-    Header set Content-Security-Policy "default-src data: blob: 'self' *.apache.org *.kapa.ai *.githubusercontent.com *.googleapis.com *.google.com *.run.app *.gstatic.com *.github.com https://hcaptcha.com https://*.hcaptcha.com *.algolia.net *.algolianet.com *.apachecon.com *.communityovercode.org 'unsafe-inline' 'unsafe-eval'; frame-src *; frame-ancestors 'self' *.google.com; worker-src 'self' data: blob:; img-src 'self' blob: data: https:; font-src 'self' data: blob:; object-src 'none'"
+    Header set Content-Security-Policy "default-src 'self' data: blob: *.apache.org *.kapa.ai *.githubusercontent.com *.googleapis.com *.google.com *.run.app *.gstatic.com *.github.com https://hcaptcha.com https://*.hcaptcha.com *.algolia.net *.algolianet.com *.apachecon.com *.communityovercode.org 'unsafe-inline' 'unsafe-eval'; \
+script-src 'self' 'unsafe-inline' 'unsafe-eval' widget.kapa.ai www.google.com https://hcaptcha.com https://*.hcaptcha.com https://www.gstatic.com; \
+connect-src 'self' proxy.kapa.ai kapa-widget-proxy-la7dkmplpq-uc.a.run.app metrics.kapa.ai *.algolia.net *.algolianet.com https://hcaptcha.com https://*.hcaptcha.com www.google.com; \
+frame-src 'self' * www.google.com https://hcaptcha.com https://*.hcaptcha.com; \
+frame-ancestors 'self' *.google.com; \
+worker-src 'self' data: blob:; \
+img-src 'self' blob: data: https:; \
+font-src 'self' data: blob:; \
+object-src 'none'"
 </IfModule>
