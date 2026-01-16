@@ -78,6 +78,15 @@ exporters:
     logs_endpoint: http://{hertzbeat_host}:1157/api/logs/ingest/otlp
     compression: none
     encoding: json
+    headers:
+      Authorization: "Bearer {token}"
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]
 ```
 
 ### 配置验证

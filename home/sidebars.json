@@ -122,6 +122,18 @@
         },
         {
           "type": "category",
+          "label": "service-discovery",
+          "items": [
+            "help/eureka_sd",
+            "help/nacos_sd",
+            "help/consul_sd",
+            "help/zookeeper_sd",
+            "help/http_sd",
+            "help/dns_sd"
+          ]
+        },
+        {
+          "type": "category",
           "label": "service",
           "items": [
             "help/prometheus",
