@@ -134,20 +134,21 @@ The vote is ***successful/not successful***
 ### Committer邀请模板
 
 ```text
-To: ${NEW_COMMITTER_EMAIL}
+To: NewCommiter@domain.com
 Cc: private@hertzbeat.apache.org
-Subject: Invitation to become HertzBeat committer: ${NEW_COMMITTER_NAME}
+Subject: Invitation to become HertzBeat committer: [Candidate Name]
+
 ```
 
 ```text
-Hello ${NEW_COMMITTER_NAME},
+Hello [Candidate Name],
 
 The HertzBeat Project Management Committee (PMC)
-hereby offers you committer privileges to the project.
+hereby offers you committer privileges to the project
 
-These privileges are offered on the understanding that
-you'll use them reasonably and with common sense.
-We like to work on trust rather than unnecessary constraints.
+These privileges are offered on the understanding that you'll use them
+reasonably and with common sense. We like to work on trust
+rather than unnecessary constraints.
 
 Being a committer enables you to more easily make
 changes without needing to go through the patch
@@ -163,6 +164,8 @@ contributor, participating as you do now.
 
 This personal invitation is a chance for you to accept or decline in private.
 Please let us know in reply to this message whether you accept or decline.
+Also, please refrain from sharing that you were invited before the official
+announcement by the PMC.
 
 If you accept, you will need an Apache account (id) with privileges.
 Please follow these instructions.
@@ -197,7 +200,7 @@ B. If there is not already an ICLA on file, you need to submit an ICLA:
     that should be kept private.
 
     3. When you complete the ICLA form, be sure to include in the form
-    the Apache [Project] project and choose a
+    the Apache HertzBeat project and choose a
     unique Apache ID. Look to see if your preferred
     ID is already taken at
     https://people.apache.org/committer-index.html
