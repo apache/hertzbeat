@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkhertzbeat=globalThis.webpackChunkhertzbeat||[]).push([[24247],{65767(e){e.exports=JSON.parse('{"label":"opensource","permalink":"/zh-cn/blog/tags/opensource","allTagsPath":"/zh-cn/blog/tags","count":57}')}}]);

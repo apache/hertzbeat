@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkhertzbeat=globalThis.webpackChunkhertzbeat||[]).push([[99518],{76019:e=>{e.exports=JSON.parse('{"permalink":"/blog/tags/practice/page/9","page":9,"postsPerPage":1,"totalPages":42,"totalCount":42,"previousPage":"/blog/tags/practice/page/8","nextPage":"/blog/tags/practice/page/10","blogDescription":"Blog","blogTitle":"Blog"}')}}]);
