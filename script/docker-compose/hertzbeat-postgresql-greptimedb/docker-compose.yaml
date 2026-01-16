@@ -64,7 +64,7 @@ services:
       - "14002:4002"
       - "14003:4003"
     volumes:
-      - ./dbdata/tsdbdata:/greptimedb_data
+      - greptime-tsdb-data:/greptimedb_data
     command:
       - "standalone"
       - "start"

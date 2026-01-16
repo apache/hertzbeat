@@ -72,13 +72,6 @@ public class DataSourceServiceImpl implements DataSourceService {
             .recordStats()
             .build();
 
-    @Getter
-    private final Cache<String, CommonTokenStream> tokenStreamCache = Caffeine.newBuilder()
-            .maximumSize(512)
-            .expireAfterWrite(30, TimeUnit.MINUTES)
-            .recordStats()
-            .build();
-
     public DataSourceServiceImpl(@Autowired(required = false) List<QueryExecutor> executors) {
         this.executors = executors != null ? executors : Collections.emptyList();
         this.sqlSecurityValidator = new SqlSecurityValidator(DEFAULT_ALLOWED_TABLES);
@@ -159,10 +152,12 @@ public class DataSourceServiceImpl implements DataSourceService {
     }
 
     private List<Map<String, Object>> evaluate(String expr, QueryExecutor executor) {
-        CommonTokenStream tokens = tokenStreamCache.get(expr, this::createTokenStream);
+        CommonTokenStream tokens = createTokenStream(expr);
         AlertExpressionParser parser = new AlertExpressionParser(tokens);
         ParseTree tree = expressionCache.get(expr, e -> parser.expr());
-        if (null != tokens && tokens.LA(1) != Token.EOF) {
+        // Validate EOF only during the first parsing (when tokens.index > 0)
+        // Skip EOF check when cache hit, as it has already been validated on the first pass.
+        if (tokens.index() > 0 && tokens.LA(1) != Token.EOF) {
             throw new AlertExpressionException(bundle.getString("alerter.calculate.parse.error"));
         }
         AlertExpressionEvalVisitor visitor = new AlertExpressionEvalVisitor(executor, tokens);
