@@ -37,14 +37,9 @@ SELECT
      password_lifetime - DATEDIFF(NOW(), password_last_changed)
   ) AS days_left
 FROM mysql.user;
-
 ```
-
 This enables alerts on:
 
-1.Expired accounts
-
-2.Accounts expiring soon
-
-3.Security risks from stale credentials
-
+- Expired accounts
+- Accounts expiring soon
+- Security risks from stale credentials
