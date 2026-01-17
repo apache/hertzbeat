@@ -48,8 +48,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Table(name = "hzb_alert_define_monitor_bind", indexes = {
-        @Index(name = "index_alert_define_monitor", columnList = "alertDefineId"),
-        @Index(name = "index_alert_define_monitor", columnList = "monitor_id")
+        @Index(name = "idx_alert_define_id", columnList = "alert_define_id"),
+        @Index(name = "idx_monitor_id", columnList = "monitor_id")
 })
 @Data
 @Builder

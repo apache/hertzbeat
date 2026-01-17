@@ -51,9 +51,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Table(name = "hzb_monitor", indexes = {
-        @Index(name = "monitor_query_index", columnList = "app"),
-        @Index(name = "monitor_query_index", columnList = "instance"),
-        @Index(name = "monitor_query_index", columnList = "name")
+        @Index(name = "idx_hzb_monitor_app", columnList = "app"),
+        @Index(name = "idx_hzb_monitor_instance", columnList = "instance"),
+        @Index(name = "idx_hzb_monitor_name", columnList = "name")
 })
 @Data
 @Builder
@@ -62,51 +62,51 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Schema(description = "Monitor Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class Monitor {
-    
+
     @Id
     @Schema(title = "Monitor task ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
-    
+
     @Schema(title = "Collect task ID", example = "43243543543", accessMode = READ_ONLY)
     private Long jobId;
-    
+
     @Schema(title = "task name", example = "Api-TanCloud.cn", accessMode = READ_WRITE)
     @Size(max = 100)
     private String name;
-    
+
     @Schema(title = "Type of monitoring", example = "TanCloud", accessMode = READ_WRITE)
     @Size(max = 100)
     private String app;
-    
+
     @Schema(title = "Scrape type: static | http_sd | dns_sd | zookeeper_sd", example = "static", accessMode = READ_WRITE)
     @Size(max = 100)
     private String scrape;
-    
+
     @Schema(title = "the monitor target: ip/domain+port or ip/domain", example = "192.167.25.11:8081", accessMode = READ_WRITE)
     @Size(max = 100)
     @HostValid
     private String instance;
-    
+
     @Schema(title = "Monitoring of the acquisition interval time in seconds", example = "600", accessMode = READ_WRITE)
     @Min(10)
     private Integer intervals;
-    
+
     @Schema(title = "Schedule type: interval | cron", example = "interval", accessMode = READ_WRITE)
     @Size(max = 20)
     private String scheduleType;
-    
+
     @Schema(title = "Cron expression when scheduleType is cron", example = "0/5 * * * * ?", accessMode = READ_WRITE)
     @Size(max = 100)
     private String cronExpression;
-    
+
     @Schema(title = "Task status 0: Paused, 1: Up, 2: Down", accessMode = READ_WRITE)
     @Min(0)
     @Max(4)
     private byte status;
-    
+
     @Schema(title = "Task type 0: Normal, 1: push auto create, 2: discovery auto create")
     private byte type;
-    
+
     @Schema(title = "task label", example = "{env:test}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 4096)
@@ -116,23 +116,23 @@ public class Monitor {
     @Convert(converter = JsonMapAttributeConverter.class)
     @Column(length = 4096)
     private Map<String, String> annotations;
-    
+
     @Schema(title = "Monitor note description", example = "Availability monitoring of the SAAS website TanCloud", accessMode = READ_WRITE)
     @Size(max = 255)
     private String description;
-    
+
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy
     private String creator;
-    
+
     @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_ONLY)
     @LastModifiedBy
     private String modifier;
-    
+
     @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
-    
+
     @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;

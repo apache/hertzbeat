@@ -42,8 +42,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Table(name = "hzb_collector_monitor_bind", indexes = {
-        @Index(name = "index_collector_monitor", columnList = "collector"),
-        @Index(name = "index_collector_monitor", columnList = "monitor_id")
+        @Index(name = "idx_collector_monitor_collector", columnList = "collector"),
+        @Index(name = "idx_collector_monitor_monitor_id", columnList = "monitor_id")
 })
 @Data
 @Builder
