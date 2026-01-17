@@ -5,8 +5,8 @@ sidebar_label: Alarm Threshold
 ---
 
 :::tip
-Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.  
-Threshold rules support real-time threshold and scheduled threshold, and can be applied to **monitoring metrics** and **log data** data types. Real-time thresholds can directly trigger alerts when monitoring data is collected, and scheduled thresholds support PromQL, SQL and other expressions to calculate trigger alerts within a specified time period.  
+Alarm Threshold are the core function of `HertzBeat`, users can configure the trigger conditions of the alarm through the threshold rules.
+Threshold rules support real-time threshold and scheduled threshold, and can be applied to **monitoring metrics** and **log data** data types. Real-time thresholds can directly trigger alerts when monitoring data is collected, and scheduled thresholds support PromQL, SQL and other expressions to calculate trigger alerts within a specified time period.
 Support visual page configuration or more flexible expression rule configuration, support configuring trigger times, alarm levels, notification templates, associated specified monitoring and so on. Notification templates support object nested access, which can display alarm information more flexibly.
 :::
 
@@ -31,13 +31,13 @@ Configure the threshold, for example: Select the SSL certificate metric object, 
 Configuration item details:
 
 - **Threshold Name**: Unique name defining this threshold rule
-- **Data Type**: Select monitoring metrics or log data  
+- **Data Type**: Select monitoring metrics or log data
 - **Metric Object**: Select the monitoring metric object for which we need to configure the threshold. For example: Under website monitoring type -> response time metric
 - **Threshold Rule**: Configure the alarm trigger rules for specific indicators, support graphical interface and expression rules. For expression environment variables and operators, see the page prompts. For detailed help on threshold expressions, see [Threshold Expression Help](alert_threshold_expr)
 - **Associated Monitors**: Apply this threshold rule to the specified monitoring object (support direct binding and label association). If not configured, it will be applied to all monitoring objects that meet this threshold type rule
 - **Alert Level**: The alert level triggered by the threshold, from low to high: warning, critical, emergency
 - **Trigger Count**: Set how many times the threshold must be triggered before the alert is actually triggered
-- **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page, supports object nested access. For example: ``__instancename__` `__metric__` metric value is `responseTime`, which is greater than 50 triggering the alert`, also supports accessing object properties like `${log.attributes.hostname}`
+- **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page, supports object nested access. For example: `__instancename__` `__metric__` metric value is `responseTime`, which is greater than 50 triggering the alert`, also supports accessing object properties like `${log.attributes.hostname}`
 - **Additional Labels**: Add labels to this threshold rule. When an alert is generated, these labels will also be attached to the alert
 - **Additional Annotations**: Add annotation information to this threshold rule (the annotation content supports environment variables). When an alarm is generated, this annotation information will be rendered and attached to the alarm
 - **Enable Alert**: Enable or disable this alert threshold configuration
@@ -121,15 +121,15 @@ Supports standard SQL syntax to query log data and filter data, allowing aggrega
 
 ```sql
 -- Query error log count
-SELECT COUNT(*) as error_count 
-FROM hertzbeat_logs 
-WHERE level = 'ERROR' 
+SELECT COUNT(*) as error_count
+FROM hertzbeat_logs
+WHERE level = 'ERROR'
 AND timestamp >= NOW() - INTERVAL 5 MINUTE
 
 -- Group by service to count errors
 SELECT service_name, COUNT(*) as error_count
-FROM hertzbeat_logs 
-WHERE level = 'ERROR' 
+FROM hertzbeat_logs
+WHERE level = 'ERROR'
 GROUP BY service_name
 HAVING COUNT(*) > 10
 ```
@@ -177,7 +177,7 @@ Configuration Items Explained:
 - **Log Query Expression**: Use standard SQL syntax to query log data, supporting aggregation functions, grouping, filtering and other operations. For example:
 
 ```sql
-SELECT COUNT(*) as error_count FROM hertzbeat_logs 
+SELECT COUNT(*) as error_count FROM hertzbeat_logs
 WHERE level = 'ERROR' AND timestamp >= NOW() - INTERVAL 5 MINUTE
 ```
 

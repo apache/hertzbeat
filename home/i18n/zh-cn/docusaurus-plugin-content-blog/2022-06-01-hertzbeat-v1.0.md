@@ -51,7 +51,7 @@ Bug修复.
 5. [[collector]bugfix: 修复 warehouse data queue 未消费异常 #153](https://github.com/apache/hertzbeat/pull/153).  issue by @daqianxiaoyao
 6. [[web-app]bugfix: 修复黑暗主题时页面输入框校验出错时不可见 #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
 
-Online: https://console.tancloud.cn
+Online: <https://console.tancloud.cn>
 
 -----------------------
 
@@ -67,5 +67,5 @@ Online: https://console.tancloud.cn
 
 **仓库地址**
 
-[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) https://gitee.com/hertzbeat/hertzbeat
+[Github](https://github.com/apache/hertzbeat) [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)

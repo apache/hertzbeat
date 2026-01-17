@@ -25,9 +25,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![HertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ### HertzBeat's 1.4.1 version is coming
 
@@ -83,58 +83,58 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
 
-* bugfix npe when get undefined name monitor template yml by @tomsun28 in https://github.com/apache/hertzbeat/pull/1173
-* [bug fixed]When importing and exporting monitoring, support export collectors, configure collectors when importing by @zqr10159 in https://github.com/apache/hertzbeat/pull/1178
-* support alert threshold rule config system value row count by @tomsun28 in https://github.com/apache/hertzbeat/pull/1180
-* Update README.md by @zqr10159 in https://github.com/apache/hertzbeat/pull/1182
-* support config alert threshold tags bind by @tomsun28 in https://github.com/apache/hertzbeat/pull/1181
-* the back-end of help component has been built by @YutingNie in https://github.com/apache/hertzbeat/pull/1160
-* support enable alert threshold auto resolved notice by @tomsun28 in https://github.com/apache/hertzbeat/pull/1185
-* Delete tag of the dashboard's homepage on the top four pages by @Ceilzcx in https://github.com/apache/hertzbeat/pull/1189
-* replace obsolete `registry.npm.taobao.org` to`registry.npmmirror.com` by @zqr10159 in https://github.com/apache/hertzbeat/pull/1192
-* refactor MonitorServiceImpl by @Carpe-Wang in https://github.com/apache/hertzbeat/pull/1190
-* config default system timezone and fix monitor status auto recover by @tomsun28 in https://github.com/apache/hertzbeat/pull/1187
-* update-doc-doris by @zqr10159 in https://github.com/apache/hertzbeat/pull/1193
-* [manager] support tidb database monitoring  by @luxx-lq in https://github.com/apache/hertzbeat/pull/733
-* refactor fix potential npe by @Carpe-Wang in https://github.com/apache/hertzbeat/pull/1197
-* [ospp] support ui help massage component  by @YutingNie in https://github.com/apache/hertzbeat/pull/1199
-* support monitor metrics name i18n by @tomsun28 in https://github.com/apache/hertzbeat/pull/1198
-* support google analytics by @tomsun28 in https://github.com/apache/hertzbeat/pull/1202
-* refactor code and fix some npe  by @Carpe-Wang in https://github.com/apache/hertzbeat/pull/1201
-* bugfix fix found 2 dataQueue bean when not config common.queue param by @tomsun28 in https://github.com/apache/hertzbeat/pull/1205
-* Help component update by @YutingNie in https://github.com/apache/hertzbeat/pull/1207
-* bugfix enterprise wechat push display content is too cumbersome by @l646505418 in https://github.com/apache/hertzbeat/pull/1149
-* bugfix WeChatAppAlertNotifyHandlerImpl by @LINGLUOJUN in https://github.com/apache/hertzbeat/pull/1208
-* add LINGLUOJUN as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1209
-* fix jmx jndi inject vulnerability by @luelueking in https://github.com/apache/hertzbeat/pull/1215
-* add luelueking as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1217
-* bugfix monitoring param number limit range by @qyaaaa in https://github.com/apache/hertzbeat/pull/1216
-* add qyaaaa as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1218
-* add app-ping i18n by @qyaaaa in https://github.com/apache/hertzbeat/pull/1220
-* some codes opt by @LINGLUOJUN in https://github.com/apache/hertzbeat/pull/1214
-* support deploy hertzbeat by kubernetes helm charts by @tomsun28 in https://github.com/apache/hertzbeat/pull/1221
-* bugfix threshold setting template variables has repeated parameters by @qyaaaa in https://github.com/apache/hertzbeat/pull/1223
-* support display metrics i18n label when threshold setting by @tomsun28 in https://github.com/apache/hertzbeat/pull/1225
-* bugfix user role display not correctly on webui by @tomsun28 in https://github.com/apache/hertzbeat/pull/1227
-* add hertzbeat about msg card by @tomsun28 in https://github.com/apache/hertzbeat/pull/1229
-* add app-api i18n by @novohit in https://github.com/apache/hertzbeat/pull/1236
-* add novohit as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1238
-* [feature]Add `getAlertDefinesByName`. by @zqr10159 in https://github.com/apache/hertzbeat/pull/1237
-* thread pool executor support shutdown gracefully by @LINGLUOJUN in https://github.com/apache/hertzbeat/pull/1240
-* fix: expression injection RCE by @mikezzb in https://github.com/apache/hertzbeat/pull/1241
-* [bugfix]Replace schema `"{key1:value1}"` to `"{\"key1\":\"value1\"}"` by @zqr10159 in https://github.com/apache/hertzbeat/pull/1245
-* [Refactor] Use static methods instead of constructors for Message.java by @gcdd1993 in https://github.com/apache/hertzbeat/pull/1247
-* bugfix snake yaml decode rce by @tomsun28 in https://github.com/apache/hertzbeat/pull/1239
-* bugfix jackson deserialize localDatetime error by @tomsun28 in https://github.com/apache/hertzbeat/pull/1249
-* netty as an independent module, add new feature about collector list by @Ceilzcx in https://github.com/apache/hertzbeat/pull/1244
-* support show deploy collector script in web by @tomsun28 in https://github.com/apache/hertzbeat/pull/1251
-* bugfix mongodb collect extra metrics npe by @tomsun28 in https://github.com/apache/hertzbeat/pull/1257
-* bugfix fix collector run cyclic when connect auth failed by @tomsun28 in https://github.com/apache/hertzbeat/pull/1256
-* update webapp login ui by @tomsun28 in https://github.com/apache/hertzbeat/pull/1260
-* bugfix collector can not auto reconnect when channel idle by @tomsun28 in https://github.com/apache/hertzbeat/pull/1259
-* update alarm notice wework app send content ui by @tomsun28 in https://github.com/apache/hertzbeat/pull/1258
-* [hertzbeat] release hertzbeat version v1.4.1 by @tomsun28 in https://github.com/apache/hertzbeat/pull/1261
-* auto split webhook token when user input hook url by @tomsun28 in https://github.com/apache/hertzbeat/pull/1262
+* bugfix npe when get undefined name monitor template yml by @tomsun28 in [#1173](https://github.com/apache/hertzbeat/pull/1173)
+* [bug fixed]When importing and exporting monitoring, support export collectors, configure collectors when importing by @zqr10159 in [#1178](https://github.com/apache/hertzbeat/pull/1178)
+* support alert threshold rule config system value row count by @tomsun28 in [#1180](https://github.com/apache/hertzbeat/pull/1180)
+* Update README.md by @zqr10159 in [#1182](https://github.com/apache/hertzbeat/pull/1182)
+* support config alert threshold tags bind by @tomsun28 in [#1181](https://github.com/apache/hertzbeat/pull/1181)
+* the back-end of help component has been built by @YutingNie in [#1160](https://github.com/apache/hertzbeat/pull/1160)
+* support enable alert threshold auto resolved notice by @tomsun28 in [#1185](https://github.com/apache/hertzbeat/pull/1185)
+* Delete tag of the dashboard's homepage on the top four pages by @Ceilzcx in [#1189](https://github.com/apache/hertzbeat/pull/1189)
+* replace obsolete `registry.npm.taobao.org` to`registry.npmmirror.com` by @zqr10159 in [#1192](https://github.com/apache/hertzbeat/pull/1192)
+* refactor MonitorServiceImpl by @Carpe-Wang in [#1190](https://github.com/apache/hertzbeat/pull/1190)
+* config default system timezone and fix monitor status auto recover by @tomsun28 in [#1187](https://github.com/apache/hertzbeat/pull/1187)
+* update-doc-doris by @zqr10159 in [#1193](https://github.com/apache/hertzbeat/pull/1193)
+* [manager] support tidb database monitoring  by @luxx-lq in [#733](https://github.com/apache/hertzbeat/pull/733)
+* refactor fix potential npe by @Carpe-Wang in [#1197](https://github.com/apache/hertzbeat/pull/1197)
+* [ospp] support ui help massage component  by @YutingNie in [#1199](https://github.com/apache/hertzbeat/pull/1199)
+* support monitor metrics name i18n by @tomsun28 in [#1198](https://github.com/apache/hertzbeat/pull/1198)
+* support google analytics by @tomsun28 in [#1202](https://github.com/apache/hertzbeat/pull/1202)
+* refactor code and fix some npe  by @Carpe-Wang in [#1201](https://github.com/apache/hertzbeat/pull/1201)
+* bugfix fix found 2 dataQueue bean when not config common.queue param by @tomsun28 in [#1205](https://github.com/apache/hertzbeat/pull/1205)
+* Help component update by @YutingNie in [#1207](https://github.com/apache/hertzbeat/pull/1207)
+* bugfix enterprise wechat push display content is too cumbersome by @l646505418 in [#1149](https://github.com/apache/hertzbeat/pull/1149)
+* bugfix WeChatAppAlertNotifyHandlerImpl by @LINGLUOJUN in [#1208](https://github.com/apache/hertzbeat/pull/1208)
+* add LINGLUOJUN as a contributor for code by @allcontributors in [#1209](https://github.com/apache/hertzbeat/pull/1209)
+* fix jmx jndi inject vulnerability by @luelueking in [#1215](https://github.com/apache/hertzbeat/pull/1215)
+* add luelueking as a contributor for code by @allcontributors in [#1217](https://github.com/apache/hertzbeat/pull/1217)
+* bugfix monitoring param number limit range by @qyaaaa in [#1216](https://github.com/apache/hertzbeat/pull/1216)
+* add qyaaaa as a contributor for code by @allcontributors in [#1218](https://github.com/apache/hertzbeat/pull/1218)
+* add app-ping i18n by @qyaaaa in [#1220](https://github.com/apache/hertzbeat/pull/1220)
+* some codes opt by @LINGLUOJUN in [#1214](https://github.com/apache/hertzbeat/pull/1214)
+* support deploy hertzbeat by kubernetes helm charts by @tomsun28 in [#1221](https://github.com/apache/hertzbeat/pull/1221)
+* bugfix threshold setting template variables has repeated parameters by @qyaaaa in [#1223](https://github.com/apache/hertzbeat/pull/1223)
+* support display metrics i18n label when threshold setting by @tomsun28 in [#1225](https://github.com/apache/hertzbeat/pull/1225)
+* bugfix user role display not correctly on webui by @tomsun28 in [#1227](https://github.com/apache/hertzbeat/pull/1227)
+* add hertzbeat about msg card by @tomsun28 in [#1229](https://github.com/apache/hertzbeat/pull/1229)
+* add app-api i18n by @novohit in [#1236](https://github.com/apache/hertzbeat/pull/1236)
+* add novohit as a contributor for code by @allcontributors in [#1238](https://github.com/apache/hertzbeat/pull/1238)
+* [feature]Add `getAlertDefinesByName`. by @zqr10159 in [#1237](https://github.com/apache/hertzbeat/pull/1237)
+* thread pool executor support shutdown gracefully by @LINGLUOJUN in [#1240](https://github.com/apache/hertzbeat/pull/1240)
+* fix: expression injection RCE by @mikezzb in [#1241](https://github.com/apache/hertzbeat/pull/1241)
+* [bugfix]Replace schema `"{key1:value1}"` to `"{\"key1\":\"value1\"}"` by @zqr10159 in [#1245](https://github.com/apache/hertzbeat/pull/1245)
+* [Refactor] Use static methods instead of constructors for Message.java by @gcdd1993 in [#1247](https://github.com/apache/hertzbeat/pull/1247)
+* bugfix snake yaml decode rce by @tomsun28 in [#1239](https://github.com/apache/hertzbeat/pull/1239)
+* bugfix jackson deserialize localDatetime error by @tomsun28 in [#1249](https://github.com/apache/hertzbeat/pull/1249)
+* netty as an independent module, add new feature about collector list by @Ceilzcx in [#1244](https://github.com/apache/hertzbeat/pull/1244)
+* support show deploy collector script in web by @tomsun28 in [#1251](https://github.com/apache/hertzbeat/pull/1251)
+* bugfix mongodb collect extra metrics npe by @tomsun28 in [#1257](https://github.com/apache/hertzbeat/pull/1257)
+* bugfix fix collector run cyclic when connect auth failed by @tomsun28 in [#1256](https://github.com/apache/hertzbeat/pull/1256)
+* update webapp login ui by @tomsun28 in [#1260](https://github.com/apache/hertzbeat/pull/1260)
+* bugfix collector can not auto reconnect when channel idle by @tomsun28 in [#1259](https://github.com/apache/hertzbeat/pull/1259)
+* update alarm notice wework app send content ui by @tomsun28 in [#1258](https://github.com/apache/hertzbeat/pull/1258)
+* [hertzbeat] release hertzbeat version v1.4.1 by @tomsun28 in [#1261](https://github.com/apache/hertzbeat/pull/1261)
+* auto split webhook token when user input hook url by @tomsun28 in [#1262](https://github.com/apache/hertzbeat/pull/1262)
 
 ---
 
@@ -151,5 +151,5 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 
 ---
 
-**Github: https://github.com/apache/hertzbeat**
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**

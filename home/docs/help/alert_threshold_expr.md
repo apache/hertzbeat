@@ -1,6 +1,6 @@
 ---
-id: alert_threshold_expr  
-title: Threshold Trigger Expression  
+id: alert_threshold_expr
+title: Threshold Trigger Expression
 sidebar_label: Threshold Trigger Expression
 ---
 
@@ -27,21 +27,21 @@ sidebar_label: Threshold Trigger Expression
 
 #### Expression Function Library List
 
-|          Supported Function Library          |                                        Description                                         |
-|----------------------------------------------|--------------------------------------------------------------------------------------------|
-| condition ? trueExpression : falseExpression | Ternary operator                                                                           |
-| toDouble(str)                                | Convert string to Double type                                                              |
-| toBoolean(str)                               | Convert string to Boolean type                                                             |
-| toInteger(str)                               | Convert string to Integer type                                                             |
-| array[n]                                     | Retrieve the nth element of an array                                                       |
-| *                                            | Multiplication                                                                             |
-| /                                            | Division                                                                                   |
-| %                                            | Modulo                                                                                     |
-| ( and )                                      | Parentheses for controlling the order of operations in logical or mathematical expressions |
-| +                                            | Addition                                                                                   |
-| -                                            | Subtraction                                                                                |
-| &&                                           | Logical AND operator                                                                       |
-| `||`                                         | Logical OR operator                                                                        |
+| Supported Function Library                 |                                        Description                                       |
+|--------------------------------------------|------------------------------------------------------------------------------------------|
+| condition ? trueExpression : falseExpression | Ternary operator                                                                         |
+| toDouble(str)                              | Convert string to Double type                                                            |
+| toBoolean(str)                             | Convert string to Boolean type                                                           |
+| toInteger(str)                             | Convert string to Integer type                                                           |
+| array[n]                                   | Retrieve the nth element of an array                                                     |
+| *                                          | Multiplication                                                                           |
+| /                                          | Division                                                                                 |
+| %                                          | Modulo                                                                                   |
+| ( and )                                    | Parentheses for controlling the order of operations in logical or mathematical expressions |
+| +                                          | Addition                                                                                 |
+| -                                          | Subtraction                                                                              |
+| &&                                         | Logical AND operator                                                                     |
+| \|\|                                       | Logical OR operator                                                                        |
 
 #### Supported Environment Variables
 
