@@ -52,6 +52,7 @@
         {
           "type": "category",
           "label": "use-case",
+          "key": "quickstart-use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
             "start/usecase/springboot-auto-practice",
@@ -71,6 +72,7 @@
         {
           "type": "category",
           "label": "use-case",
+          "key": "guides-use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
             "start/usecase/springboot-auto-practice",
@@ -301,6 +303,7 @@
         {
           "type": "category",
           "label": "custom",
+          "key": "help-custom",
           "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
         "help/status",
@@ -316,6 +319,7 @@
     {
       "type": "category",
       "label": "custom",
+      "key": "advanced-custom",
       "items": [
         "advanced/extend-point",
         "advanced/extend-tutorial",
