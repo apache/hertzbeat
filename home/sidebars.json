@@ -51,7 +51,7 @@
         },
         {
           "type": "category",
-          "label": "use-case",
+          "label": "Use Case",
           "key": "quickstart-use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
@@ -71,7 +71,7 @@
         "help/mcp_server",
         {
           "type": "category",
-          "label": "use-case",
+          "label": "Use Case",
           "key": "guides-use-case",
           "items": [
             "start/usecase/ssl-cert-practice",
@@ -302,7 +302,7 @@
         },
         {
           "type": "category",
-          "label": "custom",
+          "label": "Custom",
           "key": "help-custom",
           "items": ["help/kafka_promql", "help/influxdb_promql", "help/tdengine_promql"]
         },
@@ -318,7 +318,7 @@
     },
     {
       "type": "category",
-      "label": "custom",
+      "label": "Custom",
       "key": "advanced-custom",
       "items": [
         "advanced/extend-point",
