@@ -69,17 +69,17 @@ NEW_COMMITTER_NAME 这须是真实名字，而非 Github 名称或 Id
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [VOTE] New committer: ${NEW_COMMITTER_NAME}
+Subject: [VOTE] New committer: `NEW_COMMITTER_NAME`
 ```
 
 ```text
 Hi HertzBeat PPMC,
 
-This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our community new committer.
+This is a formal vote about inviting `NEW_COMMITTER_NAME` as our community new committer.
 
 Work list: https://github.com/apache/hertzbeat/commits?author=xxx
 
-Here is the list of ${NEW_COMMITTER_NAME}'s contributions in HertzBeat Community:
+Here is the list of `NEW_COMMITTER_NAME`'s contributions in HertzBeat Community:
 
 > [27 commits](https://github.com/apache/hertzbeat/commits?author=xxx)
 >
@@ -96,7 +96,7 @@ Submitted Issues (18 commits)
 
 Please vote:
 
-+1: I support this proposal and will welcome ${NEW_COMMITTER_NAME} as a committer.
++1: I support this proposal and will welcome `NEW_COMMITTER_NAME` as a committer.
 +0: I don't care.
 -1: I object to this proposal and here are my reasons.
 
@@ -114,7 +114,7 @@ ttt
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [RESULT] [VOTE] New committer: ${NEW_COMMITTER_NAME}
+Subject: [RESULT] [VOTE] New committer: `NEW_COMMITTER_NAME`
 ```
 
 ```text
@@ -134,31 +134,31 @@ The vote is ***successful/not successful***
 ### Committer邀请模板
 
 ```text
-To: ${NEW_COMMITTER_EMAIL}
+To: `NEW_COMMITTER_EMAIL`
 Cc: private@hertzbeat.apache.org
-Subject: Invitation to become HertzBeat committer: ${NEW_COMMITTER_NAME}
+Subject: Invitation to become HertzBeat committer: `NEW_COMMITTER_NAME`
 ```
 
 ```text
-Hello ${NEW_COMMITTER_NAME},
+Hello `NEW_COMMITTER_NAME`,
 
-The HertzBeat Project Management Committee (PMC) 
+The HertzBeat Project Management Committee (PMC)
 hereby offers you committer privileges to the project.
 
 These privileges are offered on the understanding that
 you'll use them reasonably and with common sense.
-We like to work on trust rather than unnecessary constraints. 
+We like to work on trust rather than unnecessary constraints.
 
-Being a committer enables you to more easily make 
-changes without needing to go through the patch 
+Being a committer enables you to more easily make
+changes without needing to go through the patch
 submission process.
 
-Being a committer does not require you to 
-participate any more than you already do. It does 
-tend to make one even more committed.  You will 
+Being a committer does not require you to
+participate any more than you already do. It does
+tend to make one even more committed.  You will
 probably find that you spend more time here.
 
-Of course, you can decline and instead remain as a 
+Of course, you can decline and instead remain as a
 contributor, participating as you do now.
 
 This personal invitation is a chance for you to accept or decline in private.
@@ -213,7 +213,7 @@ establishing you as a committer.
 ### Committer接受模板
 
 ```text
-To: ${NEW_COMMITTER_EMAIL}
+To: `NEW_COMMITTER_EMAIL`
 Cc: private@hertzbeat.apache.org
 Subject: Re: invitation to become HertzBeat committer
 ```
@@ -232,10 +232,10 @@ You need to choose a preferred ASF user name and alternatives.
 In order to ensure it is available you can view a list of taken IDs at
 https://people.apache.org/committer-index.html
 
-Please notify us when you have submitted the CLA and by what means 
+Please notify us when you have submitted the CLA and by what means
 you did so. This will enable us to monitor its progress.
 
-We will arrange for your Apache user account when the CLA has 
+We will arrange for your Apache user account when the CLA has
 been recorded.
 
 After that is done, please make followup replies to the dev@hertzbeat.apache.org list.
@@ -263,18 +263,18 @@ The Apache HertzBeat PPMC
 ### Announce New Committer Template
 
 ```text
-To: dev@hertzbeat.apache.org, ${NEW_COMMITTER_EMAIL}
-Subject: [ANNOUNCE] New committer: ${NEW_COMMITTER_NAME}
+To: dev@hertzbeat.apache.org, `NEW_COMMITTER_EMAIL`
+Subject: [ANNOUNCE] New committer: `NEW_COMMITTER_NAME`
 ```
 
 ```text
 Hello Community,
 
 The Podling Project Management Committee (PPMC) for Apache HertzBeat
-has invited ${NEW_COMMITTER_NAME} to become a committer and we are pleased to
+has invited `NEW_COMMITTER_NAME` to become a committer and we are pleased to
 announce that he has accepted.
 
-${NEW_COMMITTER_NAME} is active in the Apache HertzBeat community, hope to see your
+`NEW_COMMITTER_NAME` is active in the Apache HertzBeat community, hope to see your
 further interactions with the community!
 Thanks for your contributions.
 
@@ -402,7 +402,7 @@ hi, i accept. Thanks for invitaion.
 
   **发送模板**
 
-  主题：`Accept to become a Hertzbeat(incubating) committer`
+  主题：`Accept to become a Hertzbeat committer`
 
   正文:
 
@@ -428,9 +428,9 @@ hi, i accept. Thanks for invitaion.
 
 ### 将Apache账号和GitHub账号关联
 
-访问: <https://whimsy.apache.org/roster/committer/${APACHE_ID}>
+访问: [https://whimsy.apache.org/roster/committer/`APACHE_ID`](https://whimsy.apache.org/roster/committer/`APACHE_ID`)
 
-- `${APACHE_ID}`替换成你的Apache ID
+- ``APACHE_ID``替换成你的Apache ID
 
 登录后可以看到这个内容`Link GitHub username to ASF id`，点击跳转
 

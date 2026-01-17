@@ -50,12 +50,12 @@ HertzBeat notification templates are based on FreeMarker syntax, supporting vari
 ## Template Variables and Syntax Explanation
 
 - **Global Variables**：
-  - `${status}`：Alert status (e.g., alert, recovery, etc.)
-  - `${groupKey}`：Unique identifier for the group
+  - ``status``：Alert status (e.g., alert, recovery, etc.)
+  - ``groupKey``：Unique identifier for the group
   - `${commonLabels.xxx}`、`${commonAnnotations.xxx}`：Common labels and annotations, accessed via `xxx`
 
 - **Alert Details List**：
-  - `${alerts}`：Collection of alert details, usually traversed with `<#list alerts as alert>`
+  - ``alerts``：Collection of alert details, usually traversed with `<#list alerts as alert>`
   - `${alert.labels.xxx}`、`${alert.annotations.xxx}`：Labels and annotations for a single alert
   - `${alert.content}`：Alert content
   - `${alert.triggerTimes}`：Number of triggers
@@ -88,7 +88,7 @@ HertzBeat notification templates are based on FreeMarker syntax, supporting vari
       "labels": {
         <#if alert.labels?? && alert.labels?size gt 0>
         <#list alert.labels?keys as key>
-        "${key}": "${alert.labels[key]?json_string}"<#if key?has_next>,</#if>
+        "`key`": "${alert.labels[key]?json_string}"<#if key?has_next>,</#if>
         </#list>
         </#if>
       },
@@ -106,7 +106,7 @@ HertzBeat notification templates are based on FreeMarker syntax, supporting vari
       <#if alert.annotations?? && alert.annotations?size gt 0>
       "annotations": {
         <#list alert.annotations?keys as key>
-        "${key}": "${alert.annotations[key]?json_string}"<#if key?has_next>,</#if>
+        "`key`": "${alert.annotations[key]?json_string}"<#if key?has_next>,</#if>
         </#list>
       }
       </#if>
@@ -117,7 +117,7 @@ HertzBeat notification templates are based on FreeMarker syntax, supporting vari
   "commonAnnotations": {
     <#if commonAnnotations?? && commonAnnotations?size gt 0>
     <#list commonAnnotations?keys as key>
-    "${key}": "${commonAnnotations[key]?json_string}"<#if key?has_next>,</#if>
+    "`key`": "${commonAnnotations[key]?json_string}"<#if key?has_next>,</#if>
     </#list>
     </#if>
   }

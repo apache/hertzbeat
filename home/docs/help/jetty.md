@@ -24,9 +24,9 @@ keywords: [open source monitoring tool, open source jetty web server monitoring 
     java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
     ```
 
-    Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file
+    Successful command execution will create ``JETTY_BASE`/start.d/jmx-remote.ini` configuration file
 
-2. Edit the `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file to modify the JMX IP port and other parameters.
+2. Edit the ``JETTY_BASE`/start.d/jmx-remote.ini` configuration file to modify the JMX IP port and other parameters.
 
     **`localhost` needs to be modified to expose the IP**
 

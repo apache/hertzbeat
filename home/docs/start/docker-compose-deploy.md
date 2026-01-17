@@ -56,7 +56,7 @@ Run the `docker compose version` command to check if you have a Docker Compose e
       ```
 
 3. Start exploring HertzBeat
-   Access <http://ip:1157/> in the browser to start exploring and using it. The default account password is admin/hertzbeat.
+   Access [http://ip:1157/](http://ip:1157/) in the browser to start exploring and using it. The default account password is admin/hertzbeat.
 
 **HAVE FUN**
 

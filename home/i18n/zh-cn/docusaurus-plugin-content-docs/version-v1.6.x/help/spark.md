@@ -13,7 +13,7 @@ keywords: [开源监控工具，开源Java spark监控工具，监控spark指标
 
 1. 应用启动时添加Spark参数 ⚠️注意可自定义暴露端口,对外IP
 
-参考文档: <https://spark.apache.org/docs/latest/spark-standalone.html>
+参考文档: [https://spark.apache.org/docs/latest/spark-standalone.html](https://spark.apache.org/docs/latest/spark-standalone.html)
 
 **监控配置spark的监控主要分为Master、Worker、driver、executor监控。Master和Worker的监控在spark集群运行时即可监控，Driver和Excutor的监控需要针对某一个app来进行监控。**
 **如果都要监控，需要根据以下步骤来配置**

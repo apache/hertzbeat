@@ -69,17 +69,17 @@ NEW_COMMITTER_NAME This Must Be Public Name, Not Github Name Or Id.
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [VOTE] New committer: ${NEW_COMMITTER_NAME}
+Subject: [VOTE] New committer: `NEW_COMMITTER_NAME`
 ```
 
 ```text
 Hi HertzBeat PMC,
 
-This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our community new committer.
+This is a formal vote about inviting `NEW_COMMITTER_NAME` as our community new committer.
 
 Work list: https://github.com/apache/hertzbeat/commits?author=xxx
 
-Here is the list of ${NEW_COMMITTER_NAME}'s contributions in HertzBeat Community:
+Here is the list of `NEW_COMMITTER_NAME`'s contributions in HertzBeat Community:
 
 > [27 commits](https://github.com/apache/hertzbeat/commits?author=xxx)
 >
@@ -96,7 +96,7 @@ Submitted Issues (18 commits)
 
 Please vote:
 
-+1: I support this proposal and will welcome ${NEW_COMMITTER_NAME} as a committer.
++1: I support this proposal and will welcome `NEW_COMMITTER_NAME` as a committer.
 +0: I don't care.
 -1: I object to this proposal and here are my reasons.
 
@@ -117,7 +117,7 @@ Note that, Voting ends one week from today, i.e.
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [RESULT] [VOTE] New committer: ${NEW_COMMITTER_NAME}
+Subject: [RESULT] [VOTE] New committer: `NEW_COMMITTER_NAME`
 ```
 
 ```text
@@ -218,7 +218,7 @@ establishing you as a committer.
 ### Committer Accept Template
 
 ```text
-To: ${NEW_COMMITTER_EMAIL}
+To: `NEW_COMMITTER_EMAIL`
 Cc: private@hertzbeat.apache.org
 Subject: Re: invitation to become HertzBeat committer
 ```
@@ -268,18 +268,18 @@ The Apache HertzBeat new PMC
 ### Announce New Committer Template
 
 ```text
-To: dev@hertzbeat.apache.org, ${NEW_COMMITTER_EMAIL}
-Subject: [ANNOUNCE] New committer: ${NEW_COMMITTER_NAME}
+To: dev@hertzbeat.apache.org, `NEW_COMMITTER_EMAIL`
+Subject: [ANNOUNCE] New committer: `NEW_COMMITTER_NAME`
 ```
 
 ```text
 Hello Community,
 
 The Podling Project Management Committee (new PMC) for Apache HertzBeat
-has invited ${NEW_COMMITTER_NAME} to become a committer and we are pleased to
+has invited `NEW_COMMITTER_NAME` to become a committer and we are pleased to
 announce that he has accepted.
 
-${NEW_COMMITTER_NAME} is active in the Apache HertzBeat community, hope to see your
+`NEW_COMMITTER_NAME` is active in the Apache HertzBeat community, hope to see your
 further interactions with the community!
 Thanks for your contributions.
 

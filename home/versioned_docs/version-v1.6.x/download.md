@@ -30,8 +30,8 @@ Previous releases of HertzBeat may be affected by security issues, please use th
 
 > Apache HertzBeat™ provides a docker image for each release. You can pull the image from the [Docker Hub](https://hub.docker.com/r/apache/hertzbeat).
 
-- HertzBeat <https://hub.docker.com/r/apache/hertzbeat>
-- HertzBeat Collector <https://hub.docker.com/r/apache/hertzbeat-collector>
+- HertzBeat [https://hub.docker.com/r/apache/hertzbeat](https://hub.docker.com/r/apache/hertzbeat)
+- HertzBeat Collector [https://hub.docker.com/r/apache/hertzbeat-collector](https://hub.docker.com/r/apache/hertzbeat-collector)
 
 ## All Archived Releases
 

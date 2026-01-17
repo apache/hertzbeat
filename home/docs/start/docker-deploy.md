@@ -52,7 +52,7 @@ It is necessary to have Docker environment in your environment. If not installed
    :::
 
 2. Start to explore HertzBeat  
-   Access <http://ip:1157/> using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
+   Access [http://ip:1157/](http://ip:1157/) using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
 
 ### Deploy HertzBeat Collector Cluster(Optional)
 
@@ -112,7 +112,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
    > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.  
    > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`
 
-2. According to the process deploy，visit <http://ip:1157/> no interface
+2. According to the process deploy，visit [http://ip:1157/](http://ip:1157/) no interface
    Please refer to the following points to troubleshoot issues：
 
    > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.  

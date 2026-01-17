@@ -20,7 +20,7 @@ keywords: [告警 Telegram 通知, 开源告警系统, 开源监控告警系统]
 2. 获取接收人的 `User ID`
 
     **使用您要通知的接收人账户给刚创建 Bot 账户随便发送一个信息**,
-    访问 ```https://api.telegram.org/bot<TOKEN>/getUpdates``` , **`使用上一步的 Bot Token 替换其中的<TOKEN>`**, 响应`Json`数据中第一个`result.message.from.id` 值即为接收人的 `User ID`
+    访问 ```https://api.telegram.org/bot`<TOKEN>`/getUpdates``` , **`使用上一步的 Bot Token 替换其中的<TOKEN>`**, 响应`Json`数据中第一个`result.message.from.id` 值即为接收人的 `User ID`
 
     ```json
     {

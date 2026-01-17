@@ -19,7 +19,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 - **功能页面帮助信息模块和阈值表达式增强** 开源之夏和GLCC课题 @YutingNie @mikezzb
 - **新的控制台登陆界面和欢迎页面**
 - **监控指标名称国际化** 用户可以看指标的中英文名称啦，欢迎一起完善监控模板里面的i18n国际化资源
-- **支持kubernetes helm charts一键部署** 见 <https://artifacthub.io/packages/search?repo=hertzbeat>
+- **支持kubernetes helm charts一键部署** 见 https://artifacthub.io/packages/search?repo=hertzbeat
 
 **更多的特性和BUG修复，稳定性提示** 感谢 @zqr10159 @Carpe-Wang @luxx-lq @l646505418 @LINGLUOJUN @luelueking @qyaaaa @novohit @gcdd1993
 
@@ -61,9 +61,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### 尝试部署
 
@@ -109,5 +109,5 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: https://github.com/apache/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**

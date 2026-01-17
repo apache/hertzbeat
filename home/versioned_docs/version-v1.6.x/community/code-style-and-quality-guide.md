@@ -129,7 +129,7 @@ Error code description:
 1. Prioritize selecting nouns for variable naming, it's easier to distinguish between `variables` or `methods`.
 
    ```java
-   Cache<String> publicKeyCache;
+   Cache`<String>` publicKeyCache;
    ```
 
 2. Pinyin abbreviations are prohibited for variables (excluding nouns such as place names), such as chengdu.
@@ -210,7 +210,7 @@ Error code description:
 
    - The referenced `package` or `resource` name doesn't need to be extracted as constant.
 
-3. Variables that have not been reassigned must also be declared as <mark> final </mark> types.
+3. Variables that have not been reassigned must also be declared as `<mark>` final `</mark>` types.
 
 4. About the arrangement order of `constant/variable` lines
 
@@ -229,7 +229,7 @@ Error code description:
 
    For example, if the parameter cannot be null, it is best to add a `@Nonnull` annotation. If the returned value can be null, the `@Nullable` annotation should be added first.
 
-   <mark> Note: that the package name is <b>javax.validation.requirements</b> </mark>
+   `<mark>` Note: that the package name is `<b>`javax.validation.requirements`</b>` `</mark>`
 
 3. If there are too many lines of code in the method, please have a try on using multiple sub methods at appropriate points to segment the method body.
 
@@ -245,9 +245,9 @@ Error code description:
 ### 3.4 Collection Rule
 
 1. For `collection` returned values, unless there are special `concurrent` (such as thread safety), always return the `interface`, such as:
-   - returns <mark> List </mark> if use `ArrayList`
-   - returns <mark> Map </mark> if use `HashMap`
-   - returns <mark> Set </mark> if use `HashSet`
+   - returns `<mark>` List `</mark>` if use `ArrayList`
+   - returns `<mark>` Map `</mark>` if use `HashMap`
+   - returns `<mark>` Set `</mark>` if use `HashSet`
 2. If there are multiple threads, the following declaration or returned types can be used:
 
     ```java
@@ -276,7 +276,7 @@ Error code description:
 
 1. The `thread pool` needs to be managed, using a unified entry point to obtain the `thread pool`.
 
-   <mark> Note: During the evolution process, we will provide additional examples for developers to have a clearer reference and understanding. </mark>
+   `<mark>` Note: During the evolution process, we will provide additional examples for developers to have a clearer reference and understanding. `</mark>`
 
 2. `Thread pool` needs to be resource constrained to prevent resource leakage caused by improper handling
 
@@ -618,7 +618,7 @@ public void process(String input) {
 
      ```java
      // ignored declaration lines.
-     List<User> userList = getUsersByBatch(1000);
+     List`<User>` userList = getUsersByBatch(1000);
      LOG.debug("All users: {}", getAllUserIds(userList));
      ```
 
@@ -628,7 +628,7 @@ public void process(String input) {
 
      ```java
      // ignored declaration lines.
-     List<User> userList = getUsersByBatch(1000);
+     List`<User>` userList = getUsersByBatch(1000);
      if (LOG.isDebugEnabled()) {
        LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
      }
@@ -642,8 +642,8 @@ public void process(String input) {
 
 ## References
 
-- <https://site.mockito.org/>
-- <https://alibaba.github.io/p3c/>
-- <https://rules.sonarsource.com/java/>
-- <https://junit.org/junit5/>
-- <https://streampark.apache.org/>
+- [https://site.mockito.org/](https://site.mockito.org/)
+- [https://alibaba.github.io/p3c/](https://alibaba.github.io/p3c/)
+- [https://rules.sonarsource.com/java/](https://rules.sonarsource.com/java/)
+- [https://junit.org/junit5/](https://junit.org/junit5/)
+- [https://streampark.apache.org/](https://streampark.apache.org/)

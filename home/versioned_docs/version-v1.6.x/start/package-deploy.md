@@ -55,7 +55,7 @@ Since version 1.6.0 uses `Java 17` and the installation package no longer provid
 
 5. Begin to explore HertzBeat
 
-   Access <http://ip:1157/> using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
+   Access [http://ip:1157/](http://ip:1157/) using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
 
 ### Deploy HertzBeat Collector Cluster(Optional)
 
@@ -129,7 +129,7 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 
    ```
 
-2. According to the process deploy，visit <http://ip:1157/> no interface
+2. According to the process deploy，visit [http://ip:1157/](http://ip:1157/) no interface
    Please refer to the following points to troubleshoot issues:
 
    > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.  

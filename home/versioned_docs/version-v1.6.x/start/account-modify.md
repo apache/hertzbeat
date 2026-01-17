@@ -155,4 +155,4 @@ sureness:
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
 ```
 
-**Restart HertzBeat, access <http://ip:1157/> to explore**
+**Restart HertzBeat, access [http://ip:1157/](http://ip:1157/) to explore**

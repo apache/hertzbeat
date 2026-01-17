@@ -8,7 +8,7 @@ sidebar_position: 4
 
 For detailed check list, please refer to the official [check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-Version content accessible in browser <https://dist.apache.org/repos/dist/dev/hertzbeat/>
+Version content accessible in browser [https://dist.apache.org/repos/dist/dev/hertzbeat/](https://dist.apache.org/repos/dist/dev/hertzbeat/)
 
 ### 1. Download the candidate version
 
@@ -22,9 +22,9 @@ If the network is poor, downloading may be time-consuming. The download is compl
 
 ```shell
 #If there is svn locally, you can clone to the local
-$ svn co https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/
+$ svn co https://dist.apache.org/repos/dist/dev/hertzbeat/`release_version`-`rc_version`/
 #or download the material file directly
-$ wget https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/xxx.xxx
+$ wget https://dist.apache.org/repos/dist/dev/hertzbeat/`release_version`-`rc_version`/xxx.xxx
 ```
 
 ### 2. Verify that the uploaded version is compliant
@@ -125,10 +125,10 @@ check as follows:
 
 > If the binary/web-binary package is uploaded, check the binary package.
 
-Unzip `apache-hertzbeat-${release_version}-src.tar.gz`
+Unzip `apache-hertzbeat-`release_version`-src.tar.gz`
 
 ```shell
-cd apache-hertzbeat-${release_version}-src
+cd apache-hertzbeat-`release_version`-src
 ```
 
 compile the source code: [Build HertzBeat Binary Package](https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package)
@@ -153,7 +153,7 @@ If you initiate a posting vote, you can refer to this response example to reply 
 :::caution Attention
 When replying to the email, you must bring the information that you have checked by yourself. Simply replying to `+1 approve` is invalid.
 
-When new PMC votes in the <dev@hertzbeat.apache.org> hertzbeat community, Please bring the binding suffix to indicate that it has a binding vote for the vote in the hertzbeat community, and it is convenient to count the voting results.
+When new PMC votes in the [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) hertzbeat community, Please bring the binding suffix to indicate that it has a binding vote for the vote in the hertzbeat community, and it is convenient to count the voting results.
 :::
 
 Non-PMC member:

@@ -25,9 +25,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ### 集群版来啦
 
@@ -102,53 +102,53 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 > 更多版本新功能更新欢迎探索，感谢社区小伙伴们的辛苦贡献，爱心💗!
 
-- [doc] add v1.3.2 publish doc by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1075>
-- remove elasticsearch unused param index by @Ceilzcx in <https://github.com/apache/hertzbeat/pull/1080>
-- feature support monitoring apache airflow by @luoxuanzao in <https://github.com/apache/hertzbeat/pull/1081>
-- add luoxuanzao as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1083>
-- [collector] bugfix sshd cannot use private key to connect by @gcdd1993 in <https://github.com/apache/hertzbeat/pull/1084>
-- bugfix update dashboard alerts cards height not consist by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1087>
-- Feature#serverchan by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1092>
-- bugfix dm database monitoring connect error  by @lisongning in <https://github.com/apache/hertzbeat/pull/1094>
-- add lisongning as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1096>
-- update alert rule operator display "<=" to ">=" by @Ceilzcx in <https://github.com/apache/hertzbeat/pull/1097>
-- [doc]  add custom monitoring relate document by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1098>
-- add YutingNie as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1103>
-- Remove unreachable status by @YutingNie in <https://github.com/apache/hertzbeat/pull/1102>
-- 139 auto update alert status by @l646505418 in <https://github.com/apache/hertzbeat/pull/1104>
-- feat: aviator fn for str contains, exists & matches by @mikezzb in <https://github.com/apache/hertzbeat/pull/1106>
-- add mikezzb as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1107>
-- bugfix common alarm do not need monitorId tag existed by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1108>
-- bugfix extern alert do not have labels mapping inner monitor by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1111>
-- feature: support apache spark metrics monitoring by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1114>
-- add a-little-fool as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1116>
-- [Feature]Add third report of TenCloud by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1113>
-- [Feature]Add third report of TenCloud (#1113) by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1119>
-- [manager] fix: can query by tags when tagValue is null by @l646505418 in <https://github.com/apache/hertzbeat/pull/1118>
-- bugfix the notification template environment variable display error by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1120>
-- add littlezhongzer as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1127>
-- feature:monitor brearer token api, ignore letter case to comparison by @littlezhongzer in <https://github.com/apache/hertzbeat/pull/1122>
-- docs: enhance README by @mikezzb in <https://github.com/apache/hertzbeat/pull/1128>
-- Update app-oracle.yml by @ChenXiangxxxxx in <https://github.com/apache/hertzbeat/pull/1129>
-- add ChenXiangxxxxx as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1130>
-- fix alarm silence strategy setting failed by @Ceilzcx in <https://github.com/apache/hertzbeat/pull/1131>
-- support run sql script file in jdbc protocol config by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1117>
-- bugfix return old cache json file when upgrade version by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1137>
-- support ssh protocol config choose if reuse connection by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1136>
-- feat(web): alert threshold UI support matches & contains by @mikezzb in <https://github.com/apache/hertzbeat/pull/1138>
-- support hertzbeat metrics collector cluster by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1101>
-- add collector card in dashboard by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1147>
-- bugfix: linux collect warning: bad syntax, perhaps a bogus '-' by @Mr-zhou315 in <https://github.com/apache/hertzbeat/pull/1151>
-- add Mr-zhou315 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1157>
-- support config timezone locale language region on web ui by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1154>
-- bugfix monitoring template app name already exists by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1152>
-- bugfix can not startup when error monitoring template yml file by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1153>
-- tags also deleted when the monitor is deleted by @Ceilzcx in <https://github.com/apache/hertzbeat/pull/1159>
-- monitoring param host with http head will not be error reported by @littlezhongzer in <https://github.com/apache/hertzbeat/pull/1155>
-- [script] feature update build.sh and Dockerfile: detect app version a… by @XimfengYao in <https://github.com/apache/hertzbeat/pull/1162>
-- add XimfengYao as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1163>
-- [doc] add collector clusters document by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1161>
-- [hertzbeat] release hertzbeat version v1.4.0 by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1168>
+- [doc] add v1.3.2 publish doc by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1075](https://github.com/apache/hertzbeat/pull/1075)
+- remove elasticsearch unused param index by @Ceilzcx in [https://github.com/apache/hertzbeat/pull/1080](https://github.com/apache/hertzbeat/pull/1080)
+- feature support monitoring apache airflow by @luoxuanzao in [https://github.com/apache/hertzbeat/pull/1081](https://github.com/apache/hertzbeat/pull/1081)
+- add luoxuanzao as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1083](https://github.com/apache/hertzbeat/pull/1083)
+- [collector] bugfix sshd cannot use private key to connect by @gcdd1993 in [https://github.com/apache/hertzbeat/pull/1084](https://github.com/apache/hertzbeat/pull/1084)
+- bugfix update dashboard alerts cards height not consist by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1087](https://github.com/apache/hertzbeat/pull/1087)
+- Feature#serverchan by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1092](https://github.com/apache/hertzbeat/pull/1092)
+- bugfix dm database monitoring connect error  by @lisongning in [https://github.com/apache/hertzbeat/pull/1094](https://github.com/apache/hertzbeat/pull/1094)
+- add lisongning as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1096](https://github.com/apache/hertzbeat/pull/1096)
+- update alert rule operator display display from "&lt;=" to ">=" by @Ceilzcx in [https://github.com/apache/hertzbeat/pull/1097](https://github.com/apache/hertzbeat/pull/1097)
+- [doc]  add custom monitoring relate document by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1098](https://github.com/apache/hertzbeat/pull/1098)
+- add YutingNie as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1103](https://github.com/apache/hertzbeat/pull/1103)
+- Remove unreachable status by @YutingNie in [https://github.com/apache/hertzbeat/pull/1102](https://github.com/apache/hertzbeat/pull/1102)
+- 139 auto update alert status by @l646505418 in [https://github.com/apache/hertzbeat/pull/1104](https://github.com/apache/hertzbeat/pull/1104)
+- feat: aviator fn for str contains, exists & matches by @mikezzb in [https://github.com/apache/hertzbeat/pull/1106](https://github.com/apache/hertzbeat/pull/1106)
+- add mikezzb as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1107](https://github.com/apache/hertzbeat/pull/1107)
+- bugfix common alarm do not need monitorId tag existed by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1108](https://github.com/apache/hertzbeat/pull/1108)
+- bugfix extern alert do not have labels mapping inner monitor by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1111](https://github.com/apache/hertzbeat/pull/1111)
+- feature: support apache spark metrics monitoring by @a-little-fool in [https://github.com/apache/hertzbeat/pull/1114](https://github.com/apache/hertzbeat/pull/1114)
+- add a-little-fool as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1116](https://github.com/apache/hertzbeat/pull/1116)
+- [Feature]Add third report of TenCloud by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1113](https://github.com/apache/hertzbeat/pull/1113)
+- [Feature]Add third report of TenCloud (#1113) by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1119](https://github.com/apache/hertzbeat/pull/1119)
+- [manager] fix: can query by tags when tagValue is null by @l646505418 in [https://github.com/apache/hertzbeat/pull/1118](https://github.com/apache/hertzbeat/pull/1118)
+- bugfix the notification template environment variable display error by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1120](https://github.com/apache/hertzbeat/pull/1120)
+- add littlezhongzer as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1127](https://github.com/apache/hertzbeat/pull/1127)
+- feature:monitor brearer token api, ignore letter case to comparison by @littlezhongzer in [https://github.com/apache/hertzbeat/pull/1122](https://github.com/apache/hertzbeat/pull/1122)
+- docs: enhance README by @mikezzb in [https://github.com/apache/hertzbeat/pull/1128](https://github.com/apache/hertzbeat/pull/1128)
+- Update app-oracle.yml by @ChenXiangxxxxx in [https://github.com/apache/hertzbeat/pull/1129](https://github.com/apache/hertzbeat/pull/1129)
+- add ChenXiangxxxxx as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1130](https://github.com/apache/hertzbeat/pull/1130)
+- fix alarm silence strategy setting failed by @Ceilzcx in [https://github.com/apache/hertzbeat/pull/1131](https://github.com/apache/hertzbeat/pull/1131)
+- support run sql script file in jdbc protocol config by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1117](https://github.com/apache/hertzbeat/pull/1117)
+- bugfix return old cache json file when upgrade version by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1137](https://github.com/apache/hertzbeat/pull/1137)
+- support ssh protocol config choose if reuse connection by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1136](https://github.com/apache/hertzbeat/pull/1136)
+- feat(web): alert threshold UI support matches & contains by @mikezzb in [https://github.com/apache/hertzbeat/pull/1138](https://github.com/apache/hertzbeat/pull/1138)
+- support hertzbeat metrics collector cluster by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1101](https://github.com/apache/hertzbeat/pull/1101)
+- add collector card in dashboard by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1147](https://github.com/apache/hertzbeat/pull/1147)
+- bugfix: linux collect warning: bad syntax, perhaps a bogus '-' by @Mr-zhou315 in [https://github.com/apache/hertzbeat/pull/1151](https://github.com/apache/hertzbeat/pull/1151)
+- add Mr-zhou315 as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1157](https://github.com/apache/hertzbeat/pull/1157)
+- support config timezone locale language region on web ui by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1154](https://github.com/apache/hertzbeat/pull/1154)
+- bugfix monitoring template app name already exists by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1152](https://github.com/apache/hertzbeat/pull/1152)
+- bugfix can not startup when error monitoring template yml file by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1153](https://github.com/apache/hertzbeat/pull/1153)
+- tags also deleted when the monitor is deleted by @Ceilzcx in [https://github.com/apache/hertzbeat/pull/1159](https://github.com/apache/hertzbeat/pull/1159)
+- monitoring param host with http head will not be error reported by @littlezhongzer in [https://github.com/apache/hertzbeat/pull/1155](https://github.com/apache/hertzbeat/pull/1155)
+- [script] feature update build.sh and Dockerfile: detect app version a… by @XimfengYao in [https://github.com/apache/hertzbeat/pull/1162](https://github.com/apache/hertzbeat/pull/1162)
+- add XimfengYao as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1163](https://github.com/apache/hertzbeat/pull/1163)
+- [doc] add collector clusters document by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1161](https://github.com/apache/hertzbeat/pull/1161)
+- [hertzbeat] release hertzbeat version v1.4.0 by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1168](https://github.com/apache/hertzbeat/pull/1168)
 
 ---
 
@@ -172,5 +172,5 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 欢迎star一波来支持我们哦。
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**

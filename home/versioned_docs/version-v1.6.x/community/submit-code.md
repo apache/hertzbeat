@@ -20,7 +20,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-* First from the remote repository <https://github.com/apache/hertzbeat.git> fork a copy of the code into your own repository
+* First from the remote repository [https://github.com/apache/hertzbeat.git](https://github.com/apache/hertzbeat.git) fork a copy of the code into your own repository
 
 * The remote dev and merge branch is `master`.
 

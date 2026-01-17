@@ -131,7 +131,7 @@ limitations under the License.
 1. 优先为变量命名选择名词，这样更容易区分`变量`或`方法`。
 
    ```java
-   Cache<String> publicKeyCache;
+   Cache`<String>` publicKeyCache;
    ```
 
 2. 变量的拼音缩写是禁止的（排除地名等名词），例如chengdu。
@@ -212,7 +212,7 @@ limitations under the License.
 
    - 被引用的 `package` 或 `resource` 名称不需要提取为常量。
 
-3. 未被重新分配的变量也必须声明为 <mark> final </mark> 类型。
+3. 未被重新分配的变量也必须声明为 `<mark>` final `</mark>` 类型。
 
 4. 关于 `constant/variable` 行的排序顺序
 
@@ -231,7 +231,7 @@ limitations under the License.
 
    例如，如果参数不能为 null，最好添加一个 `@Nonnull` 注释。如果返回值可以为 null，则应首先添加 `@Nullable` 注释。
 
-   <mark> 注意：包名为 <b>javax.validation.requirements</b> </mark>
+   `<mark>` 注意：包名为 `<b>`javax.validation.requirements`</b>` `</mark>`
 
 3. 如果方法中的代码行数太多，请尝试在适当的点上使用多个子方法来分段方法体。
 
@@ -247,9 +247,9 @@ limitations under the License.
 ### 3.4 集合规则
 
 1. 对于返回的 `collection` 值，除非有特殊的 `concurrent` (如线程安全)，总是返回 `interface`，例如：
-   - 如果使用 `ArrayList`，则返回 <mark> List </mark>
-   - 如果使用 `HashMap`，则返回 <mark> Map </mark>
-   - 如果使用 `HashSet`，则返回 <mark> Set </mark>
+   - 如果使用 `ArrayList`，则返回 `<mark>` List `</mark>`
+   - 如果使用 `HashMap`，则返回 `<mark>` Map `</mark>`
+   - 如果使用 `HashSet`，则返回 `<mark>` Set `</mark>`
 2. 如果存在多线程，可以使用以下声明或返回类型：
 
     ```java
@@ -278,7 +278,7 @@ limitations under the License.
 
 1. 需要管理 `线程池`，使用统一的入口点获取 `线程池`。
 
-   <mark> 注意：在演变过程中，我们将为开发者提供更多的示例，以便他们有更清晰的参考和理解。 </mark>
+   `<mark>` 注意：在演变过程中，我们将为开发者提供更多的示例，以便他们有更清晰的参考和理解。 `</mark>`
 
 2. `线程池` 需要进行资源约束，以防止因处理不当导致的资源泄露。
 
@@ -619,7 +619,7 @@ public void process(String input) {
 
      ```java
      // 忽略声明行。
-     List<User> userList = getUsersByBatch(1000);
+     List`<User>` userList = getUsersByBatch(1000);
      LOG.debug("All users: {}", getAllUserIds(userList));
      ```
 
@@ -629,7 +629,7 @@ public void process(String input) {
 
      ```java
      // 忽略声明行。
-     List<User> userList = getUsersByBatch(1000);
+     List`<User>` userList = getUsersByBatch(1000);
      if (LOG.isDebugEnabled()) {
         LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
      }
@@ -643,8 +643,8 @@ public void process(String input) {
 
 ## 参考资料
 
-- <https://site.mockito.org/>
-- <https://alibaba.github.io/p3c/>
-- <https://rules.sonarsource.com/java/>
-- <https://junit.org/junit5/>
-- <https://streampark.apache.org/>
+- [https://site.mockito.org/](https://site.mockito.org/)
+- [https://alibaba.github.io/p3c/](https://alibaba.github.io/p3c/)
+- [https://rules.sonarsource.com/java/](https://rules.sonarsource.com/java/)
+- [https://junit.org/junit5/](https://junit.org/junit5/)
+- [https://streampark.apache.org/](https://streampark.apache.org/)

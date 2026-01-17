@@ -73,4 +73,4 @@ CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Djava.rmi.server.h
 ```
 
 <!-- markdown-link-check-disable -->
-参考: <https://blog.csdn.net/weixin_41924764/article/details/108694239>
+参考: [https://blog.csdn.net/weixin_41924764/article/details/108694239](https://blog.csdn.net/weixin_41924764/article/details/108694239)

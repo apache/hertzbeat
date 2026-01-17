@@ -34,25 +34,25 @@ Assume the HTTP API returns the following XML data:
     <CPUList>
         <CPU>
             <cpuUtilization>36.400002</cpuUtilization>
-        </CPU>
-    </CPUList>
+        <CPU>
+    <CPUList>
     <MemoryList>
         <Memory>
             <memoryUsage>399640</memoryUsage>
             <memoryAvailable>98792</memoryAvailable>
             <cacheSize>228492</cacheSize>
-        </Memory>
-    </MemoryList>
+        <Memory>
+    <MemoryList>
     <NetPortStatusList>
         <NetPortStatus>
             <id>1</id>
             <workSpeed>1000</workSpeed>
-        </NetPortStatus>
+        <NetPortStatus>
         <NetPortStatus>
             <id>2</id>
             <workSpeed>0</workSpeed>
-        </NetPortStatus>
-    </NetPortStatusList>
+        <NetPortStatus>
+    <NetPortStatusList>
     <bootTime>2025-01-06 10:27:48</bootTime>
     <deviceUpTime>87天0时55分59秒</deviceUpTime>
     <lastCalibrationTime>2025-04-03 11:09:18</lastCalibrationTime>
@@ -64,7 +64,7 @@ Assume the HTTP API returns the following XML data:
     </uploadTimeConsumingList>
     <lastCalibrationTimeMode>NTP</lastCalibrationTimeMode>
     <lastCalibrationTimeAddress>34.191.45.101</lastCalibrationTimeAddress>
-</DeviceStatus>
+<DeviceStatus>
 ```
 
 We want to monitor the device status and extract various metrics.

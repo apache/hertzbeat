@@ -37,7 +37,7 @@ Configuration item details:
 - **Associated Monitors**: Apply this threshold rule to the specified monitoring object (support direct binding and label association). If not configured, it will be applied to all monitoring objects that meet this threshold type rule
 - **Alert Level**: The alert level triggered by the threshold, from low to high: warning, critical, emergency
 - **Trigger Count**: Set how many times the threshold must be triggered before the alert is actually triggered
-- **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page, supports object nested access. For example: `${__instancename__} ${__metric__} metric value is ${responseTime}, which is greater than 50 triggering the alert`, also supports accessing object properties like `${log.attributes.hostname}`
+- **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page, supports object nested access. For example: ``__instancename__` `__metric__` metric value is `responseTime`, which is greater than 50 triggering the alert`, also supports accessing object properties like `${log.attributes.hostname}`
 - **Additional Labels**: Add labels to this threshold rule. When an alert is generated, these labels will also be attached to the alert
 - **Additional Annotations**: Add annotation information to this threshold rule (the annotation content supports environment variables). When an alarm is generated, this annotation information will be rendered and attached to the alarm
 - **Enable Alert**: Enable or disable this alert threshold configuration
@@ -64,7 +64,7 @@ Configuration item details:
   - **Individual Mode (individual)**: Send each log that meets the conditions as a separate alert
 - **Trigger Count**: Set how many logs that meet the conditions within the time window will trigger the alert
 - **Notification Template**: The template for the notification message sent after the alert is triggered, supports object nested access:
-  - Basic variables: `${__instancename__}`, `${__alertname__}`, etc.
+  - Basic variables: ``__instancename__``, ``__alertname__``, etc.
   - Log fields: `${log.level}`, `${log.message}`, `${log.timestamp}`, etc.
   - Nested attributes: `${log.attributes.hostname}`, `${log.resource.service.name}`, etc.
 - **Additional Labels**: Add labels to this threshold rule. When an alert is generated, these labels will also be attached to the alert
@@ -140,7 +140,7 @@ HAVING COUNT(*) > 10
 
 #### Monitoring Metrics Scheduled Threshold
 
-Configure scheduled thresholds for monitoring metrics. For example: define the expression `cpu_usage{instance="server1"} > 80` for a group of CPU metrics, and trigger an alert when the expression is satisfied.
+Configure scheduled thresholds for monitoring metrics. For example: define the expression `cpu_usage{instance="server1"}` > 80` for a group of CPU metrics, and trigger an alert when the expression is satisfied.
 
 ![threshold](/img/docs/help/alert-threshold-2.png)
 
@@ -188,8 +188,8 @@ WHERE level = 'ERROR' AND timestamp >= NOW() - INTERVAL 5 MINUTE
   - **Individual Mode (individual)**: Send each row in the query result as a separate alert
 - **Trigger Count**: The number of consecutive times the query result meets the alert condition before an alert is actually triggered
 - **Notification Template**: The message template sent when an alert is triggered, supports accessing fields in the query result, for example:
-  - Query result fields: `${error_count}`, `${service_name}`, etc.
-  - Basic variables: `${__alertname__}`, `${__severity__}`, etc.
+  - Query result fields: ``error_count``, ``service_name``, etc.
+  - Basic variables: ``__alertname__``, ``__severity__``, etc.
 - **Additional Labels**: Custom labels that will be attached to the alert when it is generated
 - **Additional Annotations**: Custom annotation information (supports environment variables) that will be rendered and attached to the alert
 - **Enable Alerting**: Controls whether this threshold rule is active or not

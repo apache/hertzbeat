@@ -13,8 +13,8 @@ We are thrilled to announce the official release of Apache HertzBeat™ version 
 
 ## Downloads and Documentation
 
-- **Apache HertzBeat™ 1.7.2 Download Link**: <https://hertzbeat.apache.org/docs/download>
-- **Apache HertzBeat™ Documentation**: <https://hertzbeat.apache.org/docs/>
+- **Apache HertzBeat™ 1.7.2 Download Link**: [https://hertzbeat.apache.org/docs/download](https://hertzbeat.apache.org/docs/download)
+- **Apache HertzBeat™ Documentation**: [https://hertzbeat.apache.org/docs/](https://hertzbeat.apache.org/docs/)
 
 ## Major Updates
 
@@ -167,31 +167,31 @@ Special thanks to the following community members for their collaborative effort
 
 ## New Contributors
 
-- @Duansg made their first contribution in <https://github.com/apache/hertzbeat/pull/3380>
-- @lx1229 made their first contribution in <https://github.com/apache/hertzbeat/pull/3431>
-- @RainBondsongyg made their first contribution in <https://github.com/apache/hertzbeat/pull/3440>
+- @Duansg made their first contribution in [https://github.com/apache/hertzbeat/pull/3380](https://github.com/apache/hertzbeat/pull/3380)
+- @lx1229 made their first contribution in [https://github.com/apache/hertzbeat/pull/3431](https://github.com/apache/hertzbeat/pull/3431)
+- @RainBondsongyg made their first contribution in [https://github.com/apache/hertzbeat/pull/3440](https://github.com/apache/hertzbeat/pull/3440)
 
 ## Apache Hertzbeat
 
 **Repository URL:**
 
-<https://github.com/apache/hertzbeat>
+[https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 **Official Website:**
 
-<https://hertzbeat.apache.org/>
+[https://hertzbeat.apache.org/](https://hertzbeat.apache.org/)
 
 **Apache HertzBeat™ Download Link:**
 
-<https://hertzbeat.apache.org/docs/download>
+[https://hertzbeat.apache.org/docs/download](https://hertzbeat.apache.org/docs/download)
 
 **Apache HertzBeat™ Docker Images:**
 
 Apache HertzBeat™ provides Docker images for each release, available on Docker Hub:
 
-- HertzBeat: <https://hub.docker.com/r/apache/hertzbeat>
-- HertzBeat Collector: <https://hub.docker.com/r/apache/hertzbeat-collector>
+- HertzBeat: [https://hub.docker.com/r/apache/hertzbeat](https://hub.docker.com/r/apache/hertzbeat)
+- HertzBeat Collector: [https://hub.docker.com/r/apache/hertzbeat-collector](https://hub.docker.com/r/apache/hertzbeat-collector)
 
 **How to Contribute to the Apache HertzBeat™ Open Source Community?**
 
-<https://hertzbeat.apache.org/docs/community/contribution>
+[https://hertzbeat.apache.org/docs/community/contribution](https://hertzbeat.apache.org/docs/community/contribution)

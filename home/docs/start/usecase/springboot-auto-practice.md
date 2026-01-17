@@ -16,7 +16,7 @@ This article introduces an integrated solution using the HertzBeat monitoring sy
 
 Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
 
-**github: <https://github.com/apache/hertzbeat>**
+**github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
 ## Install HertzBeat
 
@@ -127,8 +127,8 @@ Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring 
 
     > After starting SpringBoot application, request the following URL:
     >
-    > * `http://<your-host>:<port>/actuator`: Verify the enabled endpoints.
-    > * `http://<your-host>:<port>/actuator/prometheus`: Should return metric data in Prometheus format.
+    > * `http://<your-host>:<port>`/actuator`: Verify the enabled endpoints.
+    > * `http://<your-host>:<port>`/actuator/prometheus`: Should return metric data in Prometheus format.
 
 ## Monitor SpringBoot Application
 
@@ -201,7 +201,7 @@ Apache HertzBeat is a real-time monitoring tool with powerful custom monitoring 
 
 2. Set Threshold Rule
 
-    > For example, to monitor the CPU usage of the SpringBoot application, add a threshold rule like: `system_cpu_usage{job="Jolly_Vulture_43vT"} > 0.01`
+    > For example, to monitor the CPU usage of the SpringBoot application, add a threshold rule like: `system_cpu_usage{job="Jolly_Vulture_43vT"}` > 0.01`
     >
     >You can create many combinations of threshold rules. Users can set up richer alarm rules based on their specific needs.
 
@@ -240,6 +240,6 @@ That concludes this practical guide on monitoring SpringBoot applications with H
 
 **Making monitoring simpler, looking forward to building the ecosystem together!** 💝
 
-**GitHub: <https://github.com/apache/hertzbeat>**
+**GitHub: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**

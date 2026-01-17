@@ -56,7 +56,7 @@ sidebar_label: Docker Compose方式安装
    ```
 
 3. 开始探索 HertzBeat
-   浏览器访问 <http://ip:1157/> 即可开始探索使用，默认账户密码 admin/hertzbeat。
+   浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用，默认账户密码 admin/hertzbeat。
 
 **HAVE FUN**
 

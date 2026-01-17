@@ -49,10 +49,10 @@ What keysize do you want? (3072) 4096 # Please enter 4096 here
 Requested keysize is 4096 bits
 Please specify how long the key should be valid.
 0 = key does not expire
-<n> = key expires in n days
-<n>w = key expires in n weeks
-<n>m = key expires in n months
-<n>y = key expires in n years
+`<n>` = key expires in n days
+`<n>`w = key expires in n weeks
+`<n>`m = key expires in n months
+`<n>`y = key expires in n years
 Key is valid for? (0) 0 # Please enter 0
 Key does not expire at all
 Is this correct? (y/N) y # Please enter y here
@@ -63,7 +63,7 @@ Real name: muchunjin # Please enter 'gpg real name'
 Email address: muchunjin@apache.org # Please enter your apache email address here
 Comment: apache key # Please enter some comments here
 You selected this USER-ID:
-    "muchunjin (apache key) <muchunjin@apache.org>"
+    "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)"
 
 Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? O # Please enter O here
 We need to generate a lot of random bytes. It is a good idea to perform
@@ -79,7 +79,7 @@ generator a better chance to gain enough entropy.
 │                                                     │
 │ Passphrase: _______________________________________ │
 │                                                     │
-│     <OK>                    <Cancel>                │
+│     `<OK>`                    `<Cancel>`                │
 └─────────────────────────────────────────────────────┘
 
 # Here you need to re-enter the password in the previous step.
@@ -88,7 +88,7 @@ generator a better chance to gain enough entropy.
 │                                                     │
 │ Passphrase: _______________________________________ │
 │                                                     │
-│     <OK>                    <Cancel>                │
+│     `<OK>`                    `<Cancel>`                │
 └─────────────────────────────────────────────────────┘
 gpg: key ACFB69E705016886 marked as ultimately trusted
 gpg: revocation certificate stored as '/root/.gnupg/openpgp-revocs.d/DC12398CCC33A5349EB9663DF9D970AB18C9EDF6.rev'
@@ -96,7 +96,7 @@ public and secret key created and signed.
 
 pub   rsa4096 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid                      muchunjin (apache key) <muchunjin@apache.org>
+uid                      muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)
 sub   rsa4096 2023-05-01 [E]
 ```
 
@@ -110,7 +110,7 @@ $ gpg --keyid-format SHORT --list-keys
 ------------------------
 pub   rsa4096/05016886 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid         [ultimate] muchunjin (apache key) <muchunjin@apache.org>
+uid         [ultimate] muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)
 sub   rsa4096/0C5A4E1C 2023-05-01 [E]
 
 # Send public key to keyserver via key id
@@ -124,17 +124,17 @@ $ gpg --keyserver keyserver.ubuntu.com --send-key 05016886
 
 ```shell
 $ gpg --keyserver keyserver.ubuntu.com --recv-keys 05016886   # If the following content appears, it means success
-gpg: key ACFB69E705016886: "muchunjin (apache key) <muchunjin@apache.org>" not changed
+gpg: key ACFB69E705016886: "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" not changed
 gpg: Total number processed: 1
 gpg:              unchanged: 1
 ```
 
-或者进入 <https://keyserver.ubuntu.com/> 网址，输入密钥的名称，然后点击'Search key' 按钮，查看是否有对应名称的密钥。
+或者进入 [https://keyserver.ubuntu.com/](https://keyserver.ubuntu.com/) 网址，输入密钥的名称，然后点击'Search key' 按钮，查看是否有对应名称的密钥。
 
 #### 2.4 将 gpg 公钥添加到 Apache SVN 项目仓库的 KEYS 文件中
 
-- Apache HertzBeat Dev 分支 <https://dist.apache.org/repos/dist/dev/hertzbeat>
-- Apache HertzBeat Release 分支 <https://dist.apache.org/repos/dist/release/hertzbeat>
+- Apache HertzBeat Dev 分支 [https://dist.apache.org/repos/dist/dev/hertzbeat](https://dist.apache.org/repos/dist/dev/hertzbeat)
+- Apache HertzBeat Release 分支 [https://dist.apache.org/repos/dist/release/hertzbeat](https://dist.apache.org/repos/dist/release/hertzbeat)
 
 ##### 2.4.1 将公钥添加到dev分支的KEYS
 
@@ -170,7 +170,7 @@ $ svn ci -m "add gpg key for muchunjin"
 
 ### 准备发布物料
 
-#### 3.1 基于 master 分支，创建一个名为 release-${release_version}-rcx 的分支，例如 release-1.7.3-rc1。并基于 release-1.7.3-rc1 分支创建一个名为 v1.7.3-rc1 的标签，并将此标签设置为预发布
+#### 3.1 基于 master 分支，创建一个名为 release-`release_version`-rcx 的分支，例如 release-1.7.3-rc1。并基于 release-1.7.3-rc1 分支创建一个名为 v1.7.3-rc1 的标签，并将此标签设置为预发布
 
 ```shell
 git checkout master
@@ -279,19 +279,19 @@ $ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 apache-hertzbeat-1.7.3-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:35 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 apache-hertzbeat-1.7.3-docker-compose.tar.gz
 gpg: Signature made Tue May  2 12:16:36 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 apache-hertzbeat-1.7.3-src.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 apache-hertzbeat-collector-1.7.3-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 
 # 验证 SHA512
 $ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
@@ -319,7 +319,7 @@ svn co --depth empty https://dist.apache.org/repos/dist/dev/hertzbeat
 
 - 复制物料包到 SVN 仓库
 
-创建一个版本号目录，并以${release_version}-${RC_version}的形式命名。RC_version从1开始，即候选版本从RC1开始。在发布过程中，如果出现导致投票失败的问题，需要进行修正，那么RC版本需要迭代，RC版本号需要+1。例如：为版本1.7.3-RC1投票。如果投票顺利通过，那么RC1版本的资料将作为最终版本的资料发布。如果出现问题并需要纠正，那么修正后重新启动投票，下一次的候选版本为1.7.3-RC2。
+创建一个版本号目录，并以`release_version`-`RC_version`的形式命名。RC_version从1开始，即候选版本从RC1开始。在发布过程中，如果出现导致投票失败的问题，需要进行修正，那么RC版本需要迭代，RC版本号需要+1。例如：为版本1.7.3-RC1投票。如果投票顺利通过，那么RC1版本的资料将作为最终版本的资料发布。如果出现问题并需要纠正，那么修正后重新启动投票，下一次的候选版本为1.7.3-RC2。
 
 ```shell
 mkdir -p svn/dev/1.7.3-RC1
@@ -345,7 +345,7 @@ svn commit -m "release for HertzBeat 1.7.3-RC1"
 
 - 检查 Apache SVN 提交结果
 
-> 在浏览器中访问 <https://dist.apache.org/repos/dist/dev/hertzbeat/> , 检查是否有新的版本内容
+> 在浏览器中访问 [https://dist.apache.org/repos/dist/dev/hertzbeat/](https://dist.apache.org/repos/dist/dev/hertzbeat/) , 检查是否有新的版本内容
 
 ## 4. 进入社区投票阶段
 
@@ -353,7 +353,7 @@ svn commit -m "release for HertzBeat 1.7.3-RC1"
 
 发送社区投票邮件需要至少三个`+1`，且无`-1`。
 
-> `Send to`: <dev@hertzbeat.apache.org> <br />
+> `Send to`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
 > `Title`: [VOTE] Release Apache HertzBeat 1.7.3 rc1 <br />
 > `Body`:
 
@@ -406,7 +406,7 @@ Thanks!
 
 在72小时后，将统计投票结果，并发送投票结果邮件，如下所示。
 
-> `Send to`: <dev@hertzbeat.apache.org> <br />
+> `Send to`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
 > `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat 1.7.3-rc1 <br />
 > `Body`:
 
@@ -435,7 +435,7 @@ Best,
 ChunJin Mu
 ```
 
-邮件内容中的一项是`Vote thread`，在 <https://lists.apache.org/list.html?dev@hertzbeat.apache.org> 查看获取
+邮件内容中的一项是`Vote thread`，在 [https://lists.apache.org/list.html?dev@hertzbeat.apache.org](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) 查看获取
 
 ## 4. 完成最终发布步骤
 
@@ -447,10 +447,10 @@ svn mv https://dist.apache.org/repos/dist/dev/hertzbeat/1.7.3-RC1 https://dist.a
 
 ### 4.2 添加新版本下载地址到官网
 
-<https://github.com/apache/hertzbeat/blob/master/home/docs/download.md>
-<https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md>
+[https://github.com/apache/hertzbeat/blob/master/home/docs/download.md](https://github.com/apache/hertzbeat/blob/master/home/docs/download.md)
+[https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md](https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md)
 
-完成后打开官网地址 <https://hertzbeat.apache.org/docs/download/> 查看是否有新版本的下载
+完成后打开官网地址 [https://hertzbeat.apache.org/docs/download/](https://hertzbeat.apache.org/docs/download/) 查看是否有新版本的下载
 
 > 需要注意的是，下载链接可能需要一个小时后才会生效，请注意。
 
@@ -483,8 +483,8 @@ release note: xxx
 
 ### 4.4 发送新版本公告邮件
 
-> `Send to`: <announce@apache.org> <br />
-> `cc`: <dev@hertzbeat.apache.org> <br />
+> `Send to`: [announce@apache.org](mailto:announce@apache.org) <br />
+> `cc`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
 > `Title`: [ANNOUNCE] Apache HertzBeat 1.7.3 released <br />
 > `Body`:
 

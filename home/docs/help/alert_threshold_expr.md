@@ -19,9 +19,9 @@ sidebar_label: Threshold Trigger Expression
 | Exists                          | exists(obj)                         | String, Numeric, Time | Check if value exists                      |
 | Not Exists                      | !exists(obj)                        | String, Numeric, Time | Check if value does not exist              |
 | Greater than                    | obj1 > obj2                         | Numeric, Time         | Check if value is greater than             |
-| Less than                       | obj1 < obj2                         | Numeric, Time         | Check if value is less than                |
+| Less than                       | `obj1 < obj2`                         | Numeric, Time         | Check if value is less than                |
 | Greater than or Equal to        | obj1 >= obj2                        | Numeric, Time         | Check if value is greater than or equal to |
-| Less than or Equal to           | obj1 <= obj2                        | Numeric, Time         | Check if value is less than or equal to    |
+| Less than or Equal to           | `obj1 <= obj2`                        | Numeric, Time         | Check if value is less than or equal to    |
 | Not Equal to                    | obj1 != obj2                        | Numeric, Time         | Check if values are not equal              |
 | Equal to                        | obj1 == obj2                        | Numeric, Time         | Check if values are equal                  |
 
@@ -58,7 +58,7 @@ This variable is mainly used for calculations involving multiple instances. For 
    `responseTime>=400`
 2. API Monitoring -> Alert when response time is greater than 3000ms
    `responseTime>3000`
-3. Overall Monitoring -> Alert when response time for URL (instance) path '<https://baidu.com>' is greater than 200ms
+3. Overall Monitoring -> Alert when response time for URL (instance) path '[https://baidu.com](https://baidu.com)' is greater than 200ms
    `equals(instance,"https://baidu.com")&&responseTime>200`
 4. MYSQL Monitoring -> Alert when 'threads_running' metric under 'status' exceeds 7
    `threads_running>7`

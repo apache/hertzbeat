@@ -53,7 +53,7 @@ mysql  Ver 8.0.25 for Linux on x86_64 (MySQL Community Server - GPL)
 
 ### Add MYSQL jdbc driver jar
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. <https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip>
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. [https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip)
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 
 ### Modify hertzbeat's configuration file application.yml and switch data source
@@ -110,4 +110,4 @@ spring:
 
 > Note: The above applies to the method of downloading and installing the package. For local data source switching, simply complete the [Database creation](./mysql-change#database-creation) and modify the configuration in `hertzbeat-startup/src/main/resources/application.yml`.
 
-**Start HertzBeat  visit <http://ip:1157/> on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**
+**Start HertzBeat  visit [http://ip:1157/](http://ip:1157/) on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**

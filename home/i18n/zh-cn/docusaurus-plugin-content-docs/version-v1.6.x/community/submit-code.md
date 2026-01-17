@@ -20,7 +20,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-* 首先从远程仓库 <https://github.com/apache/hertzbeat.git> 将代码的一份副本 fork 到您自己的仓库
+* 首先从远程仓库 [https://github.com/apache/hertzbeat.git](https://github.com/apache/hertzbeat.git) 将代码的一份副本 fork 到您自己的仓库
 
 * 远程仓库开发合并分支：`master`
 

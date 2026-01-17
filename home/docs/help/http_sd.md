@@ -198,7 +198,7 @@ public class ServiceDiscoveryController {
 
     @GetMapping("/services")
     public Map<String, Object> getServices() {
-        List<String> targets = Arrays.asList(
+        List`<String>` targets = Arrays.asList(
             "192.168.1.10:8080",
             "192.168.1.11:8080",
             "192.168.1.12:8080"

@@ -1,6 +1,6 @@
 ---
-id: introduce  
-title: Apache HertzBeat™     
+id: introduce
+title: Apache HertzBeat™
 sidebar_label: 介绍
 slug: /
 ---
@@ -16,9 +16,9 @@ slug: /
 [![QQ](https://img.shields.io/badge/QQ-1035688434-orange)](https://qm.qq.com/q/FltGGGIX2m)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
-## 🎡 <font color="green">介绍</font>
+## 🎡 介绍
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) (incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。
+[Apache HertzBeat](https://github.com/apache/hertzbeat) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。
 
 ### 特点
 
@@ -126,7 +126,7 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 
 - `HertzBeat` 支持部署边缘采集器集群，与主 `HertzBeat` 服务云边协同提升采集能力。
 
-在多个网络不相通的隔离网络中，在以往方案中我们需要在每个网络都部署一套监控系统，这导致数据不互通，管理部署维护都不方便。  
+在多个网络不相通的隔离网络中，在以往方案中我们需要在每个网络都部署一套监控系统，这导致数据不互通，管理部署维护都不方便。
 `HertzBeat` 提供的云边协同能力，可以在多个隔离网络部署边缘采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主服务统一调度管理展示。
 
 ![HertzBeat](/img/docs/cluster-arch.png)
@@ -304,4 +304,4 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
