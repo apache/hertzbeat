@@ -69,9 +69,9 @@ management:
 #### metric Collection: threads
 
 | Metric Name | metric unit |      Metrics help describe       |
-|-------------|-------------|----------------------------------|-------------------|
+|-------------|-------------|----------------------------------|
 | state       | None        | Thread status                    |
-| number      | None        | This thread state corresponds to | number of threads |
+| number      | None        | This thread state corresponds to number of threads |
 
 #### metric Collection: memory_used
 

@@ -41,7 +41,7 @@ sidebar_label: Threshold Trigger Expression
 | +                                            | Addition                                                                                   |
 | -                                            | Subtraction                                                                                |
 | &&                                           | Logical AND operator                                                                       |
-| \|\|                                         | Logical OR operator                                                                        |
+| `||`                                         | Logical OR operator                                                                        |
 
 #### Supported Environment Variables
 

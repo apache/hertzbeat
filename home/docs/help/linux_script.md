@@ -14,10 +14,10 @@ If the collector is installed using Docker, it will cause the collector to be un
 ### Configuration Parameters
 
 | Parameter Name |               Parameter Description                |
-|:---------------|-----------------------------------------------------|---|
+|:---------------|-----------------------------------------------------|
 | Monitor Host   | The IPv4, IPv6, or domain of the monitored endpoint. Note ⚠️ Do not include protocol headers (e.g., https://, http://). |
 | Task Name      | The name identifying this monitoring task, which needs to be unique. |
-| Collector          | Specifies which collector will be used for data collection in this monitoring task. |
+| Collector      | Specifies which collector will be used for data collection in this monitoring task. |
 | Monitoring Interval | The time interval for periodic data collection, in seconds. |
 | Binding Tag    | Classification management tags for monitoring resources. |
 | Description Notes | Additional notes to describe this monitoring task. Users can add remarks here. |

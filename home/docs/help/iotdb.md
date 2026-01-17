@@ -48,7 +48,7 @@ The main steps are as follows:
 ### Configuration parameters
 
 | Parameter name | Parameter help description |
-|--------|----------------------------------------- --------------|
+|----------------|---------------------------------------------------|
 | Monitoring Host | The peer IPV4, IPV6 or domain name to be monitored. Note ⚠️Without protocol header (eg: https://, http://). |
 | Monitoring name | The name that identifies this monitoring, and the name needs to be unique. |
 | Port | The port provided by the IoTDB Metric interface, which is 9091 by default. |
@@ -100,14 +100,14 @@ The main steps are as follows:
 #### Metric collection: cache_hit cache
 
 | Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|------------------------------ ----------------------|
+| ----------- |------|-------------------------------|
 | name | None | Cache name chunk/timeSeriesMeta/bloomFilter |
 | value | % | chunk/timeSeriesMeta cache hit rate, bloomFilter interception rate |
 
 #### Metric collection: queue task queue
 
 | Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|------------------------------ ---------------------|
+| ----------- |------|------------------------------|
 | name | None | Queue name compaction_inner/compaction_cross/flush |
 | status | none | status running/waiting |
 | value | None | Number of tasks at current time |

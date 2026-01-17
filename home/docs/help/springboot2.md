@@ -1,6 +1,6 @@
 ---
-id: springboot2  
-Title: Monitoring SpringBoot 2.0      
+id: springboot2
+Title: Monitoring SpringBoot 2.0
 sidebar_label: SpringBoot 2.0
 keywords: [open source monitoring tool, open source springboot2 monitoring tool, monitoring springboot2 metrics]
 ---
@@ -52,14 +52,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 ### Configure parameters
 
 |       Parameter name        |                                                    Parameter Help describes the                                                     |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitor Host                | THE MONITORED PEER IPV4, IPV6 OR DOMAIN NAME. Note ⚠️ that there are no protocol headers (eg: https://, http://).                   |
 | Monitoring Name             | A name that identifies this monitoring that needs to be unique.                                                                     |
 | Port                        | The default port provided by the database is 8080.                                                                                  |
 | Enable HTTPS                | Whether to access the website through HTTPS, please note that ⚠️ when HTTPS is enabled, the default port needs to be changed to 443 |
-| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                  |
-| Whether to probe the        | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation    | will continue only if the probe is successful |
-| Description Comment         | For more information identifying and describing the remarks for this monitoring, users can remark the information here              |
+| Collection interval         | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                  |
+| Whether to probe            | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation    |
+| Description remarks          | For more information identifying and describing the remarks for this monitoring, users can remark the information here              |
 
 ### Collect metrics
 
@@ -83,13 +83,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 #### metric Collection: threads
 
 | Metric Name | metric unit |      Metrics help describe       |
-|-------------|-------------|----------------------------------|-------------------|
+|-------------|-------------|----------------------------------|
 | state       | None        | Thread status                    |
-| number      | None        | This thread state corresponds to | number of threads |
+| number      | None        | This thread state corresponds to	number of threads |
 
 #### metric Collection: memory_used
 
-| Metric Name | metric unit |        Metrics help describe         |
-|-------------|-------------|--------------------------------------|
-| space       | None        | Memory space name                    |
-| mem_used    | MB          | This space occupies a memory size of |
+| Metric Name | metric unit |        Metrics help describe              |
+|-------------|-------------|------------------------------------------|
+| space       | None        | Memory space name                       |
+| mem_used    | MB          | This space occupies a memory size of     |

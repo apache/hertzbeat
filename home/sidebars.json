@@ -80,7 +80,7 @@
         },
         {
           "type": "category",
-          "label": "log",
+          "label": "Log (Beta)",
           "items": [
             "help/log_integration",
             "help/log_stream",

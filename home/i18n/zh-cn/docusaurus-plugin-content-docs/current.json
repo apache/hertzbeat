@@ -59,6 +59,10 @@
     "message": "消息通知",
     "description": "The label for category notice in sidebar docs"
   },
+  "sidebar.docs.category.service-discovery": {
+    "message": "服务发现",
+    "description": "The label for category service-discovery in sidebar docs"
+  },
   "sidebar.docs.category.Others": {
     "message": "其它",
     "description": "The label for category Others in sidebar docs"
@@ -160,7 +164,7 @@
     "description": "The label for category extern-deploy in sidebar docs"
   },
   "sidebar.docs.category.log": {
-    "message": "日志监控",
+    "message": "日志监控 (Beta)",
     "description": "The label for category log in sidebar docs"
   }
 }

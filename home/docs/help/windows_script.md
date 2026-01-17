@@ -14,7 +14,7 @@ keywords: [open source monitoring system, open source network monitoring, using 
 ### Configuration Parameters
 
 | Parameter Name |               Parameter Description                |
-|:---------------|-----------------------------------------------------|---|
+|:---------------|-----------------------------------------------------|
 | Monitor Host   | The IPv4, IPv6, or domain of the monitored endpoint. Note ⚠️ Do not include protocol headers (e.g., https://, http://). |
 | Task Name      | The name identifying this monitoring task, which needs to be unique. |
 | Collector      | Specifies which collector will be used for data collection in this monitoring task. |
