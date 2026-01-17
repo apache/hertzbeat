@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.alert.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.hertzbeat.alert.service.impl.DataSourceServiceImpl;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
@@ -557,13 +556,11 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
         String expr = "node_cpu_seconds_total > 50";
         Cache<String, ParseTree> expressionCache = dataSourceService.getExpressionCache();
-        Cache<String, CommonTokenStream> tokenStreamCache = dataSourceService.getTokenStreamCache();
         expressionCache.invalidateAll();
-        tokenStreamCache.invalidateAll();
-        long beforeHits = tokenStreamCache.stats().hitCount();
+        long beforeHits = expressionCache.stats().hitCount();
         dataSourceService.calculate("promql", expr);
         dataSourceService.calculate("promql", expr);
-        long actualHits = tokenStreamCache.stats().hitCount() - beforeHits;
+        long actualHits = expressionCache.stats().hitCount() - beforeHits;
         assertEquals(1, actualHits, "expression cache should hit but miss");
     }
 
@@ -578,9 +575,7 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
         dataSourceService.calculate("promql", "node_cpu_seconds_total > 50");
         Cache<String, ParseTree> expressionCache = dataSourceService.getExpressionCache();
-        Cache<String, CommonTokenStream> tokenStreamCache = dataSourceService.getTokenStreamCache();
         expressionCache.invalidateAll();
-        tokenStreamCache.invalidateAll();
         String expr1 = "node_cpu_seconds_total > 30";
         String expr2 = "node_cpu_seconds_total > 50";
         long beforeHits = expressionCache.stats().hitCount();
@@ -601,15 +596,13 @@ class DataSourceServiceTest {
         dataSourceService.setExecutors(List.of(mockExecutor));
         dataSourceService.calculate("promql", "node_cpu_seconds_total > 50");
         Cache<String, ParseTree> expressionCache = dataSourceService.getExpressionCache();
-        Cache<String, CommonTokenStream> tokenStreamCache = dataSourceService.getTokenStreamCache();
         expressionCache.invalidateAll();
-        tokenStreamCache.invalidateAll();
         String expr1 = "node_cpu_seconds_total > 30";
         String expr2 = "node_cpu_seconds_total > 50";
-        long beforeHits = tokenStreamCache.stats().hitCount();
+        long beforeHits = expressionCache.stats().hitCount();
         dataSourceService.calculate("promql", expr1);
         dataSourceService.calculate("promql", expr2);
-        long actualHits = tokenStreamCache.stats().hitCount() - beforeHits;
+        long actualHits = expressionCache.stats().hitCount() - beforeHits;
         assertEquals(0, actualHits, "expression cache should miss but hit");
     }
 
