@@ -225,6 +225,25 @@ warehouse:
       password: root
       expire-time: '30d'
       replication: 1
+    doris:
+      enabled: false
+      url: jdbc:mysql://127.0.0.1:9030
+      username: root
+      password:
+      table-config:
+        enable-partition: false
+        partition-time-unit: DAY
+        partition-retention-days: 30
+        partition-future-days: 3
+        buckets: 8
+        replication-num: 1
+      pool-config:
+        minimum-idle: 5
+        maximum-pool-size: 20
+        connection-timeout: 30000
+      write-config:
+        batch-size: 1000
+        flush-interval: 5
   # store real-time metrics data, enable only one below
   real-time:
     memory:
