@@ -142,14 +142,14 @@ keywords: [Open Source Monitoring System, Open Source Database Monitoring, DORIS
 | Metric Name  | Metric Unit |                   Metric help description                   |
 |-------|------|--------------------------------------------|
 | path  | None    | Specify data directory                                    |
-| value | Bytes   | {path="/path1/"} represents the remaining disk space of the /path1 directory's disk. |
+| value | Bytes   | `{path="/path1/"}` represents the remaining disk space of the /path1 directory's disk. |
 
 #### Metric Set:doris_be_disks_total_capacity
 
 | Metric Name  | Metric Unit |                   Metric help description                   |
 |-------|------|--------------------------------------------|
 | path  | None    | Specify data directory                                    |
-| value | Bytes   | {path="/path1/"} represents the total disk space of the disk where the /path1 directory is located. |
+| value | Bytes   | `{path="/path1/"}` represents the total disk space of the disk where the /path1 directory is located. |
 
 #### Metric Set:doris_be_local_bytes_read_total
 

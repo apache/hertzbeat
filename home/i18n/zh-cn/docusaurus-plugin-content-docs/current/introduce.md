@@ -7,7 +7,7 @@ slug: /
 
 **官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**
 
-## 🎡 <font color="green">介绍</font>
+## 🎡 介绍
 
 [Apache HertzBeat™](https://github.com/apache/hertzbeat) 是 AI 驱动的下一代开源实时观测系统。指标日志统一收集，告警一站分发，智能管控分析。无需 Agent，高性能集群，提供强大的自定义监控和状态页构建能力。
 
@@ -310,7 +310,7 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ### 状态页面
 
-- 基于 HertzBeat 快速构建自己产品的对外状态页，轻松向用户传达您产品服务的实时状态。例如 Github 提供的服务状态页 <https://www.githubstatus.com>。
+- 基于 HertzBeat 快速构建自己产品的对外状态页，轻松向用户传达您产品服务的实时状态。例如 Github 提供的服务状态页 [https://www.githubstatus.com](https://www.githubstatus.com)。
 - 支持状态页组件状态和监控状态联动同步，故障事件维护管理机制等。提高您的透明度，专业度和用户信任，降低沟通成本。
 
 ![HertzBeat](/img/home/19.png)
@@ -323,6 +323,6 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Home: <https://hertzbeat.apache.org/>**
+**Home: [https://hertzbeat.apache.org/](https://hertzbeat.apache.org/)**

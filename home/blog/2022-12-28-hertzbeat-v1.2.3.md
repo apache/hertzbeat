@@ -48,6 +48,6 @@ Bugfix.
 7. [监控k8s问题issue描述与解决方案 #511](https://github.com/apache/hertzbeat/pull/511) @MrAndyMing
 8. [[manager] springboot2 monitor support base path config #515](https://github.com/apache/hertzbeat/pull/515)
 
-Online <https://console.tancloud.cn>.
+Online [https://console.tancloud.cn](https://console.tancloud.cn).
 
 Have Fun!

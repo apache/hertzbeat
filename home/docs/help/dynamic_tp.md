@@ -63,15 +63,15 @@ keywords: [open source monitoring tool, open source dynamicTp monitoring tool, m
 
 ### Configuration parameters
 
-| Parameter name | Parameter help description |
-| ------------ |------------------------------------ ------------------|
-| Monitoring Host | The peer IPV4, IPV6 or domain name to be monitored. Note ⚠️Without protocol header (eg: https://, http://). |
-| Monitoring name | The name that identifies this monitoring, and the name needs to be unique. |
-| Port | The port provided by the application service, the default is 8080. |
-| Enable HTTPS | Whether to access the website through HTTPS, note ⚠️Enable HTTPS, the default corresponding port needs to be changed to 443 |
-| Base Path | Exposed interface path prefix, default /actuator |
+| Parameter name     | Parameter help description                                              |
+|-------------------|-------------------------------------------------------------------------|
+| Monitoring Host     | The peer IPV4, IPV6 or domain name to be monitored. Note ⚠️Without protocol header (eg: https://, http://). |
+| Monitoring name     | The name that identifies this monitoring, and the name needs to be unique. |
+| Port                | The port provided by the application service, the default is 8080. |
+| Enable HTTPS        | Whether to access the website through HTTPS, note ⚠️Enable HTTPS, the default corresponding port needs to be changed to 443 |
+| Base Path           | Exposed interface path prefix, default /actuator |
 | Acquisition Interval | Interval time for monitoring periodic data collection, in seconds, the minimum interval that can be set is 30 seconds |
-| Whether to detect | Whether to detect and check the availability of monitoring before adding monitoring, and the operation of adding and modifying will continue after the detection is successful |
+| Whether to detect   | Whether to detect and check the availability of monitoring before adding monitoring, and the operation of adding and modifying will continue after the detection is successful |
 | Description Remarks | More remark information to identify and describe this monitoring, users can remark information here |
 
 ### Collect metrics

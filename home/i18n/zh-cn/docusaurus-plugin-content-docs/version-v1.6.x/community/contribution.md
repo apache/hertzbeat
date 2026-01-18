@@ -89,7 +89,7 @@ limitations under the License.
 2. 然后 用 git 命令 将代码下载到本地:
 
     ```shell
-    git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
+    git clone git@github.com:`YOUR_USERNAME`/hertzbeat.git #Recommended  
     ```
 
 3. 下载完成后，请参考目标仓库的入门指南或者 README 文件对项目进行初始化。

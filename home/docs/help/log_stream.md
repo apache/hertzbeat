@@ -1,11 +1,15 @@
 ---
 id: log_stream
-title: Log Stream
-sidebar_label: Log Stream
+title: Log Stream (Beta)
+sidebar_label: Log Stream (Beta)
 keywords: [open source monitoring, log stream, real-time logs, log filtering]
 ---
 
 > HertzBeat's log stream feature provides real-time log viewing and filtering capabilities, including real-time log monitoring, multi-dimensional filtering, and log detail viewing. Users can monitor system logs in real-time and perform precise filtering based on different conditions to quickly locate issues and analyze system status.
+
+:::warning
+The log stream feature is currently in Beta (experimental) stage. There may be potential defects and limitations. The feature is under active development and iteration.
+:::
 
 ## Feature Overview
 

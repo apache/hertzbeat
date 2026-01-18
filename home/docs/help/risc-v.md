@@ -20,7 +20,7 @@ sudo apt install opensbi qemu-system-misc u-boot-qemu
 
 **2. Download Ubuntu Image for RISC-V Architecture**
 
-Download link: <https://ubuntu.com/download/risc-v>
+Download link: [https://ubuntu.com/download/risc-v](https://ubuntu.com/download/risc-v)
 Select the `QEMU Emulator` version and download your preferred release.
 
 **3. Install Ubuntu on QEMU**
@@ -51,7 +51,7 @@ Reference: [Ubuntu Official Documentation](https://canonical-ubuntu-boards.readt
 > Configure a JDK that supports RISC-V architecture. Here we use Temurin JDK 17.
 
 **1. Download Temurin JDK**
-Download link: <https://adoptium.net/temurin/releases>
+Download link: [https://adoptium.net/temurin/releases](https://adoptium.net/temurin/releases)
 
 **2. Configure JDK Environment**
 

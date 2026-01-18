@@ -26,7 +26,7 @@ keywords: [告警 Webhook 回调通知, 开源告警系统, 开源监控告警�
 ```json
 {
   "alarmId": 76456,
-  "target": "${target}",
+  "target": "`target`",
   "thresholdId": 33455,
   "priority": 0,
   "content": "udp_port monitoring availability alert, code is FAIL",
@@ -54,7 +54,7 @@ keywords: [告警 Webhook 回调通知, 开源告警系统, 开源监控告警�
 | status      | string($byte) title: Alarm status: 0-normal alarm (to be processed) 1-threshold triggered but not reached the number of alarms 2-recovered alarm 3-processed 告警状态: 0-正常告警(待处理) 1-阈值触发但未达到告警次数 2-恢复告警 3-已处理             |
 | times       | integer($int32) title: Alarm threshold trigger times 告警阈值触发次数                                                                                                                                                          |
 | triggerTime | integer($int64) title: Alarm trigger time (timestamp in milliseconds) 首次告警触发时间(毫秒时间戳)                                                                                                                                  |
-| tags        | example: {key1:value1}                                                                                                                                                                                                 |
+| tags        | example: `{key1:value1}`                                                                                                                                                                                                 |
 
 ### webhook通知常见问题
 

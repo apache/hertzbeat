@@ -19,7 +19,7 @@ sidebar_label: Common issues
 
    > The deployment of the installation package requires configuring the root permission of the Java virtual machine to start hertzbeat to use ICMP. If the root permission is not enabled, judge whether port 7 of telnet opposite end is opened.  
    > When you install HertzBeat via DockerDocker root is enabled by default. No such problem.  
-   > See <https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address>
+   > See [https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address](https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address)
 
 ### Docker Deployment common issues
 
@@ -29,7 +29,7 @@ sidebar_label: Common issues
    > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.  
    > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`
 
-2. **According to the process deploy，visit <http://ip:1157/> no interface**
+2. **According to the process deploy，visit [http://ip:1157/](http://ip:1157/) no interface**
    Please refer to the following points to troubleshoot issues：
 
    > one：Whether the MySQL database and tdengine database as dependent services have been successfully started, whether the corresponding hertzbeat database has been created, and whether the SQL script has been executed.
@@ -43,7 +43,7 @@ sidebar_label: Common issues
 
 ### Package Deployment common issues
 
-1. **According to the process deploy，visit <http://ip:1157/> no interface**
+1. **According to the process deploy，visit [http://ip:1157/](http://ip:1157/) no interface**
    Please refer to the following points to troubleshoot issues:
 
    > one：Whether the MySQL database and tdengine database as dependent services have been successfully started, whether the corresponding hertzbeat database has been created, and whether the SQL script has been executed.  

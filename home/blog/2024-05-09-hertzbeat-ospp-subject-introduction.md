@@ -13,9 +13,9 @@ HertzBeat is a powerful custom monitoring capabilities, high-performance cluster
 - High-performance, supports horizontal expansion of multiple collector clusters, supports multi-isolated network monitoring, and cloud edge collaboration.
 - Free alarm threshold rules, `mail,` `Discord,` `Slack,` `Telegram,` `Dingding,` `wechat,` `Feibook,` `SMS,` `Webhook,` `Server sauce,` and other ways to send messages in a timely manner.
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ## What is Open Source Summer?
 

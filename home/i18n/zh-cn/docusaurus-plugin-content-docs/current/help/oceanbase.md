@@ -9,7 +9,7 @@ keywords: [开源监控系统, 开源数据库监控, OceanBase 数据库监控]
 
 ### 注意，必须添加 MYSQL jdbc 驱动 jar
 
-- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.1.0.jar. <https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0>
+- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.1.0.jar. [https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0](https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0)
 - 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
 - 重启 HertzBeat 服务。
 

@@ -38,14 +38,14 @@ kubectl create token --duration=1000h cluster-admin
 ### Configure parameters
 
 |       Parameter name        |                                                            Parameter Help describes the                                                             |
-|-----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitor Host                | THE MONITORED PEER IPV4, IPV6 OR DOMAIN NAME. Note ⚠️ that there are no protocol headers (eg: https://, http://).                                   |
 | Monitoring Name             | A name that identifies this monitoring that needs to be unique.                                                                                     |
 | APiServer port              | K8s APiServer port, default 6443                                                                                                                    |
 | token                       | Authorize the Access Token                                                                                                                          |
-| URL                         | The database connection URL is optional, if configured, the database name, user name and password parameters in the URL will override the parameter | configured above                              |
-| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                                  |
-| Whether to probe the        | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation                    | will continue only if the probe is successful |
+| URL                         | The database connection URL is optional, if configured, the database name, user name and password parameters in the URL will override the parameter configured above                              |
+| Collection interval         | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                                  |
+| Whether to probe            | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation                    |
 | Description Comment         | For more information identifying and describing the remarks for this monitoring, users can remark the information here                              |
 
 ### Collect metrics
@@ -53,13 +53,13 @@ kubectl create token --duration=1000h cluster-admin
 #### metric collection: nodes
 
 |    Metric Name     | metric unit | Metrics help describe |
-|--------------------|-------------|-----------------------|-----------|
+|--------------------|-------------|-----------------------|
 | node_name          | None        | Node name             |
 | is_ready           | None        | Node Status           |
 | capacity_cpu       | None        | CPU capacity          |
-| allocatable_cpu    | None        | CPU                   | allotted  |
+| allocatable_cpu    | None        | CPU allotted          |
 | capacity_memory    | None        | Memory capacity       |
-| allocatable_memory | None        | Memory                | allocated |
+| allocatable_memory | None        | Memory allocated       |
 | creation_time      | None        | Node creation time    |
 | uid                | None        | UUID unique identifier|
 
@@ -75,9 +75,9 @@ kubectl create token --duration=1000h cluster-admin
 #### metric collection: pods
 
 |  Metric Name  | metric unit |     Metrics help describe     |
-|---------------|-------------|-------------------------------|--------------------------|
+|---------------|-------------|-------------------------------|
 | pod           | None        | Pod name                      |
-| namespace     | None        | The namespace                 | to which the pod belongs |
+| namespace     | None        | The namespace to which the pod belongs |
 | status        | None        | Pod status                    |
 | restart       | None        | Number of restarts            |
 | host_ip       | None        | The IP address of the host is |
@@ -89,9 +89,9 @@ kubectl create token --duration=1000h cluster-admin
 #### metric Collection: services
 
 |  Metric Name  | metric unit |                   Metrics help describe                   |
-|---------------|-------------|-----------------------------------------------------------|------------------------------|
+|---------------|-------------|-----------------------------------------------------------|
 | service       | None        | Service Name                                              |
-| namespace     | None        | The namespace                                             | to which the service belongs |
+| namespace     | None        | The namespace to which the service belongs |
 | type          | None        | Service Type ClusterIP NodePort LoadBalancer ExternalName |
 | cluster_ip    | None        | cluster ip                                                |
 | selector      | None        | tag selector matches                                      |

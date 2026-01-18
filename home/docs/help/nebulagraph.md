@@ -18,7 +18,7 @@ nebulaGraph_stats is nebulaGraph's statistics, and rocksdb_stats is rocksdb's st
 
 1.1、 If you only need to get nebulaGraph_stats, you need to ensure that you have access to stats, or you'll get errors.
 
-The default port is 19669 and the access address is <http://ip:19669/stats>
+The default port is 19669 and the access address is [http://ip:19669/stats](http://ip:19669/stats)
 
 1.2、If you need to obtain additional parameters for rocksdb stats, you need to ensure that you have access to rocksdb
 stats, otherwise an error will be reported.
@@ -26,11 +26,11 @@ stats, otherwise an error will be reported.
 Once you connect to NebulaGraph for the first time, you must first register your Storage service in order to properly
 query your data.
 
-**There is help_doc: <https://docs.nebula-graph.com.cn/3.4.3/4.deployment-and-installation/connect-to-nebula-graph/>**
+**There is help_doc: [https://docs.nebula-graph.com.cn/3.4.3/4.deployment-and-installation/connect-to-nebula-graph/](https://docs.nebula-graph.com.cn/3.4.3/4.deployment-and-installation/connect-to-nebula-graph/)**
 
-**<https://docs.nebula-graph.com.cn/3.4.3/2.quick-start/3.quick-start-on-premise/3.1add-storage-hosts/>**
+**[https://docs.nebula-graph.com.cn/3.4.3/2.quick-start/3.quick-start-on-premise/3.1add-storage-hosts/](https://docs.nebula-graph.com.cn/3.4.3/2.quick-start/3.quick-start-on-premise/3.1add-storage-hosts/)**
 
-The default port is 19779 and the access address is:<http://ip:19779/rocksdb_stats>
+The default port is 19779 and the access address is:[http://ip:19779/rocksdb_stats](http://ip:19779/rocksdb_stats)
 
 ### Configuration parameter
 
@@ -51,7 +51,7 @@ The default port is 19779 and the access address is:<http://ip:19779/rocksdb_sta
 #### Metrics Set：nebulaGraph_stats
 
 Too many indicators, related links are as follows
-**<https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/1.query-performance-metrics/>**
+**[https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/1.query-performance-metrics/](https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/1.query-performance-metrics/)**
 
 |              Metric name              | Metric unit |                   Metric help description                    |
 |---------------------------------------|-------------|--------------------------------------------------------------|
@@ -63,7 +63,7 @@ Too many indicators, related links are as follows
 #### Metrics Set：rocksdb_stats
 
 Too many indicators, related links are as follows
-**<https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/2.rocksdb-statistics/>**
+**[https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/2.rocksdb-statistics/](https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/2.rocksdb-statistics/)**
 
 |        Metric name         | Metric unit |                   Metric help description                   |
 |----------------------------|-------------|-------------------------------------------------------------|

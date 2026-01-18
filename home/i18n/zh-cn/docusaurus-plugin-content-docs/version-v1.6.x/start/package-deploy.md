@@ -54,7 +54,7 @@ Apache HertzBeat 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM
    ```
 
 5. 开始探索HertzBeat
-   浏览器访问 <http://ip:1157/> 即刻开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
+   浏览器访问 [http://ip:1157/](http://ip:1157/) 即刻开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
 
 ### 部署 HertzBeat Collector 集群(可选)
 
@@ -107,7 +107,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    ```
 
 4. 开始探索 HertzBeat Collector  
-   浏览器访问 <http://ip:1157/> 即可开始探索使用，默认账户密码 admin/hertzbeat。
+   浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用，默认账户密码 admin/hertzbeat。
 
 **HAVE FUN**
 
@@ -131,7 +131,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
    ```
 
-2. 按照流程部署，访问 <http://ip:1157/> 无界面
+2. 按照流程部署，访问 [http://ip:1157/](http://ip:1157/) 无界面
    请参考下面几点排查问题：
 
    > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功  

@@ -65,17 +65,17 @@ limitations under the License.
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [VOTE] New PPMC member candidate: ${NEW_PMC_NAME}
+Subject: [VOTE] New PPMC member candidate: `NEW_PMC_NAME`
 ```
 
 ```text
 Hi HertzBeat PPMC,
 
-This is a formal vote about inviting ${NEW_PMC_NAME} as our new PPMC member.
+This is a formal vote about inviting `NEW_PMC_NAME` as our new PPMC member.
 
 ${Work list}[1]
 
-[1] https://github.com/apache/hertzbeat/commits?author=${NEW_PMC_NAME}
+[1] https://github.com/apache/hertzbeat/commits?author=`NEW_PMC_NAME`
 ```
 
 注意，投票将在今天一周后结束，即
@@ -86,7 +86,7 @@ ${Work list}[1]
 
 ```text
 To: private@hertzbeat.apache.org
-Subject: [RESULT] [VOTE] New PPMC member: ${NEW_PMC_NAME}
+Subject: [RESULT] [VOTE] New PPMC member: `NEW_PMC_NAME`
 ```
 
 ```text
@@ -107,12 +107,12 @@ The vote is ***successful/not successful***
 
 ```text
 To: board@apache.org
-Cc: private@<project>.apache.org
-Subject: [NOTICE] ${NEW_PMC_NAME} for HertzBeat PPMC member
+Cc: private@`<project>`.apache.org
+Subject: [NOTICE] `NEW_PMC_NAME` for HertzBeat PPMC member
 ```
 
 ```text
-HertzBeat proposes to invite ${NEW_PMC_NAME} to join the PMC.
+HertzBeat proposes to invite `NEW_PMC_NAME` to join the PMC.
 
 The vote result is available here: https://lists.apache.org/...
 ```
@@ -122,13 +122,13 @@ The vote result is available here: https://lists.apache.org/...
 ### PMC成员邀请模板
 
 ```text
-To: ${NEW_PMC_EMAIL}
+To: `NEW_PMC_EMAIL`
 Cc: private@hertzbeat.apache.org
-Subject: Invitation to become HertzBeat PPMC member: ${NEW_PMC_NAME}
+Subject: Invitation to become HertzBeat PPMC member: `NEW_PMC_NAME`
 ```
 
 ```text
-Hello ${NEW_PMC_NAME},
+Hello `NEW_PMC_NAME`,
 
 The HertzBeat Project Management Committee (PMC) 
 hereby offers you committer privileges to the project
@@ -176,7 +176,7 @@ establishing you as a PPMC member.
 ### PMC成员接受模板
 
 ```text
-To: ${NEW_PMC_EMAIL}
+To: `NEW_PMC_EMAIL`
 Cc: private@hertzbeatv.apache.org
 Subject: Re: invitation to become HertzBeat PPMC member
 ```
@@ -226,13 +226,13 @@ The Apache HertzBeat PPMC
 ### PMC成员完成模板
 
 ```text
-To: private@hertzbeat.apache.org, ${NEW_PMC_EMAIL}
-Subject: account request: ${NEW_PMC_NAME}
+To: private@hertzbeat.apache.org, `NEW_PMC_EMAIL`
+Subject: account request: `NEW_PMC_NAME`
 ```
 
 ```text
-${NEW_PMC_EMAIL}, as you know, the ASF Infrastructure has set up your
-committer account with the username '${NEW_PMC_APACHE_NAME}'.
+`NEW_PMC_EMAIL`, as you know, the ASF Infrastructure has set up your
+committer account with the username '`NEW_PMC_APACHE_NAME`'.
 
 Please follow the instructions to set up your SSH,
 svn password, svn configuration, email forwarding, etc.
@@ -261,19 +261,19 @@ A PPMC member will announce your election to the dev list soon.
 
 ```text
 To: dev@hertzbeat.apache.org
-[ANNONCE] New PPMC member: ${NEW_PMC_NAME}
+[ANNONCE] New PPMC member: `NEW_PMC_NAME`
 ```
 
 ```text
 Hi HertzBeat Community,
 
 The Podling Project Management Committee (PPMC) for Apache HertzBeat
-has invited ${NEW_PMC_NAME} to become our PPMC member and
+has invited `NEW_PMC_NAME` to become our PPMC member and
 we are pleased to announce that he has accepted.
 
 ### add specific details here ###
 
-Please join me in congratulating ${NEW_PMC_NAME}!
+Please join me in congratulating `NEW_PMC_NAME`!
 
 Being a committer enables easier contribution to the
 project since there is no need to go via the patch

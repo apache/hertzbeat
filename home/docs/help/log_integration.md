@@ -1,11 +1,15 @@
 ---
 id: log_integration
-title: Log Integration
-sidebar_label: Log Integration
+title: Log Integration (Beta)
+sidebar_label: Log Integration (Beta)
 keywords: [open source monitoring, log integration, log management, multi-source logs]
 ---
 
 > HertzBeat's log integration module aims to achieve unified reception, standardized processing of log data from different third-party log systems and observability platforms. As a centralized "log center", HertzBeat can efficiently integrate log information from external systems and provide real-time log monitoring and analysis capabilities.
+
+:::warning
+The log integration feature is currently in Beta (experimental) stage. There may be potential defects and limitations. The feature is under active development and iteration.
+:::
 
 ### Core Capabilities
 

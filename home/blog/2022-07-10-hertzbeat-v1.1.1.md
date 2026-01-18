@@ -39,7 +39,7 @@ Bugfix.
 8. [[manager] 修改监控页面取消监控功能再启动监控导致多生成jobId，原有监控项目并没有真实取消 #215](https://github.com/apache/hertzbeat/pull/215) contribute by @yangshihui
 9. [[warehouse] bugfix exception when tdengine create table SQL contain special char #220](https://github.com/apache/hertzbeat/pull/220)
 
-Online <https://console.tancloud.cn>.
+Online [https://console.tancloud.cn](https://console.tancloud.cn).
 
 Have Fun!
 
@@ -57,5 +57,5 @@ Have Fun!
 
 **If you like HertzBeat, star us on GitHub**
 
-[Github](https://github.com/apache/hertzbeat) <https://github.com/apache/hertzbeat>
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) <https://gitee.com/hertzbeat/hertzbeat>
+[Github](https://github.com/apache/hertzbeat) [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)

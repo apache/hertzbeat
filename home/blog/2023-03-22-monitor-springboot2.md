@@ -21,7 +21,7 @@ keywords: [opensource monitoring, SpringBoot monitoring, alert]
 >
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
 
-Github: <https://github.com/apache/hertzbeat>
+Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 ### Monitoring SpringBoot2 Metrics with HertzBeat in 5 minutes
 
@@ -93,7 +93,7 @@ Github: <https://github.com/apache/hertzbeat>
 2. Configure the parameters required for new monitoring SpringBoot2
 
     Fill in the SpringBoot2 application **peer IP**, **service port** (default 8080), **account password, etc.** on the monitoring page, and finally click OK to add.
-    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.apache.org/docs/help/>
+    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document [https://hertzbeat.apache.org/docs/help/](https://hertzbeat.apache.org/docs/help/)
 
     ![HertzBeat](/img/blog/monitor-springboot2-2.png)
 
@@ -141,7 +141,7 @@ Of course, it is impossible to manually check the metrics in real time. Monitori
 
     Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-    - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+    - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) [https://hertzbeat.apache.org/docs/help/alert_dingtalk](https://hertzbeat.apache.org/docs/help/alert_dingtalk) to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
     - Configure the receiver parameters in HertzBeat as follows.
 
     【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
@@ -208,5 +208,5 @@ This practical article took us to experience how to use the open source real-tim
 
 ----
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**

@@ -85,7 +85,7 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 2. Then download the code locally with git command:
 
     ```shell
-    git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
+    git clone git@github.com:`YOUR_USERNAME`/hertzbeat.git #Recommended  
     ```
 
 3. After the download is complete, please refer to the getting started guide or README file of the target repository to initialize the project.

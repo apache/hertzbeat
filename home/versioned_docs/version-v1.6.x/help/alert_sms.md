@@ -84,7 +84,7 @@ alerter:
    - Create a template with the following format:
 
    ```text
-   Monitor: ${instance}, Alert Level: ${priority}. Content: ${content}
+   Monitor: `instance`, Alert Level: `priority`. Content: `content`
    ```
 
    - Submit the template for review

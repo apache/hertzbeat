@@ -309,7 +309,7 @@ Built-in support for monitoring types include:
 
 ### Status Page
 
-- Based on HertzBeat, quickly build an external status page for your own product and easily convey the real-time status of your product service to users. For example, the service status page provided by Github <https://www.githubstatus.com>.
+- Based on HertzBeat, quickly build an external status page for your own product and easily convey the real-time status of your product service to users. For example, the service status page provided by Github [https://www.githubstatus.com](https://www.githubstatus.com).
 - Support synchronization between the status of the status page component and the monitoring status, as well as the fault event maintenance management mechanism, etc. Improve your transparency, professionalism, and user trust, and reduce communication costs.
 
 ![HertzBeat](/img/home/19.png)
@@ -322,6 +322,6 @@ Built-in support for monitoring types include:
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Home: <https://hertzbeat.apache.org/>**
+**Home: [https://hertzbeat.apache.org/](https://hertzbeat.apache.org/)**

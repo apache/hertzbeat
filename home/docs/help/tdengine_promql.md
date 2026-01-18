@@ -67,13 +67,11 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, TD
 ### Indicator set: Dnode information
 
 | Indicator name | indicator unit | Indicators help describe |
-| --- | | --- |
-| taos_d_info_status | Ready indicates normal, offline indicates offline, and unknown indicates unknown. | dnode
-status |
+| --- | --- | --- |
+| taos_d_info_status | Ready indicates normal, offline indicates offline, and unknown indicates unknown. | dnode status |
 | taos_dnodes_info_uptime | s | The startup time of this dnode |
 | taos_dnodes_info_cpu_engine | none | The percentage of CPU used by the process of this dnode. |
-| taos_dnodes_info_cpu_system | none | The percentage of CPU used by the system of the node where the dnode is
-located. |
+| taos_dnodes_info_cpu_system | none | The percentage of CPU used by the system of the node where the dnode is located. |
 | taos_dnodes_info_mem_engine | KB | Memory used by the process of this dnode |
 | taos_dnodes_info_mem_system | KB | The memory used by the system of the node where the dnode is located. |
 | taos_dnodes_info_disk_total | Byte | The total disk capacity of the node where the dnode is located. |

@@ -83,7 +83,7 @@ alerter:
    - 创建如下格式的模板：
 
    ```text
-   监控项：${instance}，告警级别：${priority}。内容：${content}
+   监控项：`instance`，告警级别：`priority`。内容：`content`
    ```
 
    - 提交模板等待审核

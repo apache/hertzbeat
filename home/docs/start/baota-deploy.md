@@ -36,7 +36,7 @@ Install aaPanel, go to the [aaPanel](https://www.aapanel.com/new/download.html#i
 ## Access HertzBeat
 
 - If you have set a domain name, please enter the domain name directly in the browser address bar to access, such as `http://demo.hertzbeat.apache.org`, you can access the `HertzBeat` console.
-- If you choose to access via `IP+Port`, please enter the domain name in the browser address bar to access `http://<aaPanelIP>:1157`, you can access the `HertzBeat` console.
+- If you choose to access via `IP+Port`, please enter the domain name in the browser address bar to access `http://\<aaPanelIP>:1157`, you can access the `HertzBeat` console.
 
 ![HertzBeat](/img/home/0.png)
 

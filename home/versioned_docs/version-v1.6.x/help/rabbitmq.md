@@ -18,7 +18,7 @@ keywords: [open source monitoring tool, open source rabbitmq monitoring tool, mo
     rabbitmq-plugins enable rabbitmq_management
     ```
 
-2. Access <http://ip:15672/> with a browser, and the default account password is `guest/guest`. Successful login means that it is successfully opened.
+2. Access [http://ip:15672/](http://ip:15672/) with a browser, and the default account password is `guest/guest`. Successful login means that it is successfully opened.
 
 3. Just add the corresponding RabbitMQ monitoring in HertzBeat, the parameters use the IP port of Management, and the default account password.
 
@@ -106,7 +106,7 @@ keywords: [open source monitoring tool, open source rabbitmq monitoring tool, mo
 |------------------------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | name                         | None        | The name of the queue with non-ASCII characters escaped as in C.                                                                     |
 | node                         | None        | The queue on the node name                                                                                                           |
-| state                        | None        | The state of the queue. Normally "running", but may be "{syncing, message_count}" if the queue is synchronising.                     |
+| state                        | None        | The state of the queue. Normally "running", but may be `{syncing, message_count}` if the queue is synchronising.                     |
 | type                         | None        | Queue type, one of: quorum, stream, classic.                                                                                         |
 | vhost                        | None        | vhost path                                                                                                                           |
 | auto_delete                  | None        | Whether the queue will be deleted automatically when no longer used                                                                  |

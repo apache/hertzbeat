@@ -8,7 +8,7 @@ sidebar_position: 4
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/hertzbeat/>
+在浏览器中可访问版本内容 [https://dist.apache.org/repos/dist/dev/hertzbeat/](https://dist.apache.org/repos/dist/dev/hertzbeat/)
 
 ### 1. 下载候选版本到本地
 
@@ -16,9 +16,9 @@ sidebar_position: 4
 
 ```shell
 #如果本地有svn，可以clone到本地
-svn co https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/
+svn co https://dist.apache.org/repos/dist/dev/hertzbeat/`release_version`-`rc_version`/
 #或者 直接下载物料文件
-wget https://dist.apache.org/repos/dist/dev/hertzbeat/${release_version}-${rc_version}/xxx.xxx
+wget https://dist.apache.org/repos/dist/dev/hertzbeat/`release_version`-`rc_version`/xxx.xxx
 
 ```
 
@@ -119,17 +119,17 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 - [ ] 如果依赖的是Apache许可证并且存在`NOTICE`文件，那么这些`NOTICE`文件也需要加入到版本的`NOTICE`文件中
 - [ ] .....
 
-参考: <https://apache.org/legal/resolved.html>
+参考: [https://apache.org/legal/resolved.html](https://apache.org/legal/resolved.html)
 
 #### 2.5. 源码编译验证
 
-解压缩 `apache-hertzbeat-${release_version}-incubating-src.tar.gz`
+解压缩 `apache-hertzbeat-`release_version`-incubating-src.tar.gz`
 
 ```shell
-cd apache-hertzbeat-${release_version}-incubating-src
+cd apache-hertzbeat-`release_version`-incubating-src
 ```
 
-编译源码: <https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package>
+编译源码: [https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package](https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package)
 
 进行如下检查:
 
@@ -141,7 +141,7 @@ cd apache-hertzbeat-${release_version}-incubating-src
 - [ ] 能够正确编译
 - [ ] .....
 
-参考: <https://apache.org/legal/resolved.html>
+参考: [https://apache.org/legal/resolved.html](https://apache.org/legal/resolved.html)
 
 ### 3. 邮件回复
 
@@ -150,7 +150,7 @@ cd apache-hertzbeat-${release_version}-incubating-src
 :::caution 注意
 回复的邮件一定要带上自己检查了那些项信息，仅仅回复`+1 approve`，是无效的。
 
-PMC 在 <dev@hertzbeat.apache.org> HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
+PMC 在 [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
 
 :::
 

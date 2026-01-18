@@ -32,7 +32,7 @@ Configuration item details:
 - **Associated Monitors**：Apply this threshold rule to the specified monitoring object (support direct binding and label association). If not configured, it will be applied to all monitoring objects that meet this threshold type rule.
 - **Alert Level**: The alert level triggered by the threshold, from low to high: warning, critical, emergency.
 - **Trigger Count**: Set how many times the threshold must be triggered before the alert is actually triggered.
-- **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page. For example: `${app}.${metrics}.${metric} metric value is ${responseTime}, which is greater than 50 triggering the alert`.
+- **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page. For example: ``app`.`metrics`.`metric` metric value is `responseTime`, which is greater than 50 triggering the alert`.
 - **Bind Label**: Select the label we need to apply. If no label is selected, it will apply to all services corresponding to the set metric object.
 - **Bing Annotation**：Add annotation information to this threshold rule (the annotation content supports environment variables). When an alarm is generated, this annotation information will be rendered and attached to the alarm.
 - **Enable Alert**: Enable or disable this alert threshold configuration.

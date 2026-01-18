@@ -11,7 +11,7 @@ keywords: [ open source monitoring tool, open source SMTP monitoring tool, monit
 通过 SMTP 的 hello 命令确定服务器是否可用
 ```
 
-> 详见 <https://datatracker.ietf.org/doc/html/rfc821#page-13>
+> 详见 [https://datatracker.ietf.org/doc/html/rfc821#page-13](https://datatracker.ietf.org/doc/html/rfc821#page-13)
 
 **协议使用：SMTP**
 

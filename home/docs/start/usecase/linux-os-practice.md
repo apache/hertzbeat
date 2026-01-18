@@ -8,9 +8,9 @@ This article describes how to use the Hertzbeat monitoring system to collect and
 
 ## What's HertzBeat
 
-Apache HertzBeat™ (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring,  port availability, database, operating system, threshold alarms, alarm notification (email, WeChat, DingTalk, Feishu).
+Apache HertzBeat™ is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring,  port availability, database, operating system, threshold alarms, alarm notification (email, WeChat, DingTalk, Feishu).
 
-github: <https://github.com/apache/hertzbeat>
+github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 ## Install
 
@@ -85,10 +85,10 @@ Finally, you can see the triggered alarm in the alarm center.
 
 When the threshold is triggered, we can receive the corresponding alarm message. If there is no notification, you can also view the alarm information in the alarm center.
 
-----  
+----
 
 ## Summary
 
 The practice of monitoring linux operating system is here. Of course, for Hertzbeat, this function is just the tip of the iceberg. If you think Hertzbeat is a good open source project, please give us a Star on GitHub, thanks for your support.
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**

@@ -50,7 +50,7 @@ sidebar_label: Docker方式安装
    :::
 
 2. 开始探索 HertzBeat  
-   浏览器访问 <http://ip:1157/> 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
+   浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
 
 ### 部署 HertzBeat Collector 集群(可选)
 
@@ -93,7 +93,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    :::
 
 2. 开始探索 HertzBeat Collector  
-   浏览器访问 <http://ip:1157/> 即可开始探索使用，默认账户密码 admin/hertzbeat。
+   浏览器访问 [http://ip:1157/](http://ip:1157/) 即可开始探索使用，默认账户密码 admin/hertzbeat。
 
 **HAVE FUN**
 
@@ -109,7 +109,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    > 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP  
    > 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`
 
-2. 按照流程部署，访问 <http://ip:1157/> 无界面
+2. 按照流程部署，访问 [http://ip:1157/](http://ip:1157/) 无界面
    请参考下面几点排查问题：
 
    > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功  

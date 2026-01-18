@@ -49,10 +49,10 @@ What keysize do you want? (3072) 4096 # Please enter 4096 here
 Requested keysize is 4096 bits
 Please specify how long the key should be valid.
 0 = key does not expire
-<n> = key expires in n days
-<n>w = key expires in n weeks
-<n>m = key expires in n months
-<n>y = key expires in n years
+`<n>` = key expires in n days
+`<n>`w = key expires in n weeks
+`<n>`m = key expires in n months
+`<n>`y = key expires in n years
 Key is valid for? (0) 0 # Please enter 0
 Key does not expire at all
 Is this correct? (y/N) y # Please enter y here
@@ -63,7 +63,7 @@ Real name: muchunjin # Please enter 'gpg real name'
 Email address: muchunjin@apache.org # Please enter your apache email address here
 Comment: apache key # Please enter some comments here
 You selected this USER-ID:
-    "muchunjin (apache key) <muchunjin@apache.org>"
+    "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)"
 
 Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? O # Please enter O here
 We need to generate a lot of random bytes. It is a good idea to perform
@@ -79,7 +79,7 @@ generator a better chance to gain enough entropy.
 │                                                     │
 │ Passphrase: _______________________________________ │
 │                                                     │
-│     <OK>                    <Cancel>                │
+│     `<OK>`                    `<Cancel>`                │
 └─────────────────────────────────────────────────────┘
 
 # Here you need to re-enter the password in the previous step.
@@ -88,7 +88,7 @@ generator a better chance to gain enough entropy.
 │                                                     │
 │ Passphrase: _______________________________________ │
 │                                                     │
-│     <OK>                    <Cancel>                │
+│     `<OK>`                    `<Cancel>`                │
 └─────────────────────────────────────────────────────┘
 gpg: key ACFB69E705016886 marked as ultimately trusted
 gpg: revocation certificate stored as '/root/.gnupg/openpgp-revocs.d/DC12398CCC33A5349EB9663DF9D970AB18C9EDF6.rev'
@@ -96,7 +96,7 @@ public and secret key created and signed.
 
 pub   rsa4096 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid                      muchunjin (apache key) <muchunjin@apache.org>
+uid                      muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)
 sub   rsa4096 2023-05-01 [E]
 ```
 
@@ -110,7 +110,7 @@ $ gpg --keyid-format SHORT --list-keys
 ------------------------
 pub   rsa4096/05016886 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid         [ultimate] muchunjin (apache key) <muchunjin@apache.org>
+uid         [ultimate] muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)
 sub   rsa4096/0C5A4E1C 2023-05-01 [E]
 
 # Send public key to keyserver via key id
@@ -124,17 +124,17 @@ Verify whether it is synchronized to the public network, it will take about a mi
 
 ```shell
 $ gpg --keyserver keyserver.ubuntu.com --recv-keys 05016886   # If the following content appears, it means success
-gpg: key ACFB69E705016886: "muchunjin (apache key) <muchunjin@apache.org>" not changed
+gpg: key ACFB69E705016886: "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" not changed
 gpg: Total number processed: 1
 gpg:              unchanged: 1
 ```
 
-Or enter <https://keyserver.ubuntu.com/> address in the browser, enter the name of the key and click 'Search key' to search if existed.
+Or enter [https://keyserver.ubuntu.com/](https://keyserver.ubuntu.com/) address in the browser, enter the name of the key and click 'Search key' to search if existed.
 
 #### 2.4 Add the gpg public key to the KEYS file of the Apache SVN project repo
 
-- Apache HertzBeat™ Branch Dev <https://dist.apache.org/repos/dist/dev/hertzbeat>
-- Apache HertzBeat™ Branch Release <https://dist.apache.org/repos/dist/release/hertzbeat>
+- Apache HertzBeat™ Branch Dev [https://dist.apache.org/repos/dist/dev/hertzbeat](https://dist.apache.org/repos/dist/dev/hertzbeat)
+- Apache HertzBeat™ Branch Release [https://dist.apache.org/repos/dist/release/hertzbeat](https://dist.apache.org/repos/dist/release/hertzbeat)
 
 ##### 2.4.1 Add public key to KEYS in dev branch
 
@@ -170,7 +170,7 @@ $ svn ci -m "add gpg key for muchunjin"
 
 ### Build Package
 
-#### 3.1 Based on the master branch, create a release-${release_version}-rcx branch, such as release-1.7.3-rc1, And create a tag named v1.7.3-rc1 based on the release-1.7.3-rc1 branch, and set this tag as pre-release
+#### 3.1 Based on the master branch, create a release-`release_version`-rcx branch, such as release-1.7.3-rc1, And create a tag named v1.7.3-rc1 based on the release-1.7.3-rc1 branch, and set this tag as pre-release
 
 ```shell
 git checkout master
@@ -277,19 +277,19 @@ $ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 apache-hertzbeat-1.7.3-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:35 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 apache-hertzbeat-1.7.3-docker-compose.tar.gz
 gpg: Signature made Tue May  2 12:16:36 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 apache-hertzbeat-1.7.3-src.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 apache-hertzbeat-collector-1.7.3-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+gpg: Good signature from "muchunjin (apache key) [muchunjin@apache.org](mailto:muchunjin@apache.org)" [ultimate]
 
 # Verify SHA512
 $ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
@@ -317,7 +317,7 @@ svn co --depth empty https://dist.apache.org/repos/dist/dev/hertzbeat
 
 - Copy the material package to the dev directory
 
-Create a version number directory and name it in the form of ${release_version}-${RC_version}. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail.
+Create a version number directory and name it in the form of `release_version`-`RC_version`. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail.
 If it needs to be corrected, it needs to iterate the RC version , the RC version number needs to be +1. For example: Vote for version 1.7.3-RC1. If the vote passes without any problems, the RC1 version material will be released as the final version material.
 If there is a problem (when the hertzbeat/incubator community votes, the voters will strictly check various release requirements and compliance issues) and need to be corrected, then re-initiate the vote after the correction, and the candidate version for the next vote is 1.7.3- RC2.
 
@@ -345,7 +345,7 @@ svn commit -m "release for HertzBeat 1.7.3"
 
 - Check Apache SVN Commit Results
 
-> Visit the address <https://dist.apache.org/repos/dist/dev/hertzbeat/> in the browser, check if existed the new material package
+> Visit the address [https://dist.apache.org/repos/dist/dev/hertzbeat/](https://dist.apache.org/repos/dist/dev/hertzbeat/) in the browser, check if existed the new material package
 
 ## 4. Enter the community voting stage
 
@@ -353,7 +353,7 @@ svn commit -m "release for HertzBeat 1.7.3"
 
 Send a voting email in the community requires at least three `+1` and no `-1`.
 
-> `Send to`: <dev@hertzbeat.apache.org> <br />
+> `Send to`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
 > `Title`: [VOTE] Release Apache HertzBeat™ 1.7.3 rc1 <br />
 > `Body`:
 
@@ -406,7 +406,7 @@ Thanks!
 
 After 72 hours, the voting results will be counted, and the voting result email will be sent, as follows.
 
-> `Send to`: <dev@hertzbeat.apache.org> <br />
+> `Send to`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
 > `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat™ 1.7.3-rc1 <br />
 > `Body`:
 
@@ -435,7 +435,7 @@ Best,
 ChunJin Mu
 ```
 
-One item of the email content is `Vote thread`, and the link is obtained here: <https://lists.apache.org/list.html?dev@hertzbeat.apache.org>
+One item of the email content is `Vote thread`, and the link is obtained here: [https://lists.apache.org/list.html?dev@hertzbeat.apache.org](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)
 
 ## 4. Complete the final publishing steps
 
@@ -447,10 +447,10 @@ svn mv https://dist.apache.org/repos/dist/dev/hertzbeat/1.7.3-RC1 https://dist.a
 
 #### 4.2 Add the new version download address to the official website
 
-<https://github.com/apache/hertzbeat/blob/master/home/docs/download.md>
-<https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md>
+[https://github.com/apache/hertzbeat/blob/master/home/docs/download.md](https://github.com/apache/hertzbeat/blob/master/home/docs/download.md)
+[https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md](https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md)
 
-Open the official website address <https://hertzbeat.apache.org/docs/download/> to see if there is a new version of the download
+Open the official website address [https://hertzbeat.apache.org/docs/download/](https://hertzbeat.apache.org/docs/download/) to see if there is a new version of the download
 
 > It should be noted that the download link may take effect after an hour, so please pay attention to it.
 
@@ -483,8 +483,8 @@ The rename the release-1.7.3-rc1 branch to release-1.7.3.
 
 #### 4.5 Send new version announcement email
 
-> `Send to`: <announce@apache.org> <br />
-> `cc`: <dev@hertzbeat.apache.org> <br />
+> `Send to`: [announce@apache.org](mailto:announce@apache.org) <br />
+> `cc`: [dev@hertzbeat.apache.org](mailto:dev@hertzbeat.apache.org) <br />
 > `Title`: [ANNOUNCE] Apache HertzBeat™ 1.7.3 released <br />
 > `Body`:
 

@@ -24,9 +24,9 @@ keywords: [开源监控系统, 开源中间件监控, Jetty应用服务器监控
     java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
     ```
 
-    命令执行成功会创建出 `${JETTY_BASE}/start.d/jmx-remote.ini` 配置文件
+    命令执行成功会创建出 ``JETTY_BASE`/start.d/jmx-remote.ini` 配置文件
 
-2. 编辑 `${JETTY_BASE}/start.d/jmx-remote.ini` 配置文件，修改 JMX 的 IP 端口等参数。
+2. 编辑 ``JETTY_BASE`/start.d/jmx-remote.ini` 配置文件，修改 JMX 的 IP 端口等参数。
 
     **`localhost` 需修改为对外暴露 IP**
 

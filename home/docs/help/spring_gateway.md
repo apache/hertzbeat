@@ -1,5 +1,5 @@
 ---
-id: spring_gateway 
+id: spring_gateway
 Title: Monitoring Spring Cloud Gateway
 sidebar_label: Spring Cloud Gateway
 keywords: [open source monitoring tool, open source Spring Cloud Gateway monitoring tool, monitoring Spring Cloud Gateway metrics]
@@ -69,9 +69,9 @@ management:
 #### metric Collection: threads
 
 | Metric Name | metric unit |      Metrics help describe       |
-|-------------|-------------|----------------------------------|-------------------|
+|-------------|-------------|----------------------------------|
 | state       | None        | Thread status                    |
-| number      | None        | This thread state corresponds to | number of threads |
+| number      | None        | This thread state corresponds to number of threads |
 
 #### metric Collection: memory_used
 

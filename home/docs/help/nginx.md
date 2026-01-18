@@ -111,7 +111,7 @@ If you want to monitor information in 'Nginx' with this monitoring type, you nee
 
 4. Access `http://localhost/req-status` in the browser to view the Nginx monitoring status information.
 
-**Refer Doc: <https://github.com/zls0424/ngx_req_status>**
+**Refer Doc: [https://github.com/zls0424/ngx_req_status](https://github.com/zls0424/ngx_req_status)**
 
 **⚠️Attention: The endpoint path of the monitoring module is `/nginx-status` `/req-status`**
 

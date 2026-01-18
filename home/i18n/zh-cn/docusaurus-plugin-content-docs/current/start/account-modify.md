@@ -156,4 +156,4 @@ sureness:
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
 ```
 
-**重启 HertzBeat 浏览器访问 <http://ip:1157/> 即可探索使用 HertzBeat**
+**重启 HertzBeat 浏览器访问 [http://ip:1157/](http://ip:1157/) 即可探索使用 HertzBeat**

@@ -32,7 +32,7 @@ Bugfixes:
 3. [[monitor] bugfix: Fix for Elasticsearch monitoring failure under basic authentication #174](https://github.com/apache/hertzbeat/pull/174) Contributed by @weifuqing
 4. [Fix for monitoring failure due to ambiguous Oracle monitoring parameter "database name" #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
-Online at <https://console.tancloud.cn>.
+Online at [https://console.tancloud.cn](https://console.tancloud.cn).
 
 ---
 
@@ -68,5 +68,5 @@ Have Fun!
 
 **Repository Addresses**
 
-[Github](https://github.com/apache/hertzbeat) <https://github.com/apache/hertzbeat>
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) <https://gitee.com/hertzbeat/hertzbeat>
+[Github](https://github.com/apache/hertzbeat) [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)

@@ -18,17 +18,17 @@ nebulaGraph_stats 是 NebulaGraph 的统计信息，rocksdb_stats 是 RocksDB �
 
 1.1、如果只需要获取 nebulaGraph_stats，需要确保可以访问 stats，否则会出现错误。
 
-默认端口是 19669，访问地址为 <http://ip:19669/stats>
+默认端口是 19669，访问地址为 [http://ip:19669/stats](http://ip:19669/stats)
 
 1.2、如果需要获取 rocksdb stats 的附加参数，需要确保可以访问 rocksdb stats，否则会报错。
 
 首次连接 NebulaGraph 时，必须先注册 Storage 服务，以便正确查询数据。
 
-**有帮助文档：<https://docs.nebula-graph.com.cn/3.4.3/4.deployment-and-installation/connect-to-nebula-graph/>**
+**有帮助文档：[https://docs.nebula-graph.com.cn/3.4.3/4.deployment-and-installation/connect-to-nebula-graph/](https://docs.nebula-graph.com.cn/3.4.3/4.deployment-and-installation/connect-to-nebula-graph/)**
 
-**<https://docs.nebula-graph.com.cn/3.4.3/2.quick-start/3.quick-start-on-premise/3.1add-storage-hosts/>**
+**[https://docs.nebula-graph.com.cn/3.4.3/2.quick-start/3.quick-start-on-premise/3.1add-storage-hosts/](https://docs.nebula-graph.com.cn/3.4.3/2.quick-start/3.quick-start-on-premise/3.1add-storage-hosts/)**
 
-默认端口是 19779，访问地址为：<http://ip:19779/rocksdb_stats>
+默认端口是 19779，访问地址为：[http://ip:19779/rocksdb_stats](http://ip:19779/rocksdb_stats)
 
 ### 配置参数
 
@@ -49,7 +49,7 @@ nebulaGraph_stats 是 NebulaGraph 的统计信息，rocksdb_stats 是 RocksDB �
 #### 指标集：nebulaGraph_stats
 
 指标太多，相关链接如下
-**<https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/1.query-performance-metrics/>**
+**[https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/1.query-performance-metrics/](https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/1.query-performance-metrics/)**
 
 |                              指标名称                              | 指标单位 | 指标帮助描述 |
 |----------------------------------------------------------------|------|--------|
@@ -112,7 +112,7 @@ nebulaGraph_stats 是 NebulaGraph 的统计信息，rocksdb_stats 是 RocksDB �
 #### 指标集：rocksdb_stats
 
 指标太多，相关链接如下
-**<https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/2.rocksdb-statistics/>**
+**[https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/2.rocksdb-statistics/](https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/2.rocksdb-statistics/)**
 
 |            指标名称            | 指标单位 |         指标帮助描述         |
 |----------------------------|------|------------------------|

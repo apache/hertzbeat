@@ -18,7 +18,7 @@ keywords: [open source monitoring tool, open source alerter, open source Telegra
 2. Get the `User ID` of the recipient
 
     **Use the recipient account you want to notify to send a message to the newly created Bot account**,
-    Visit ```https://api.telegram.org/bot<TOKEN>/getUpdates```, **`use the Bot Token from the previous step to replace the <TOKEN>`**, and respond to the first in the `Json` data A `result.message.from.id` value is the recipient's `User ID`
+    Visit ```https://api.telegram.org/bot`<TOKEN>`/getUpdates```, **`use the Bot Token from the previous step to replace the <TOKEN>`**, and respond to the first in the `Json` data A `result.message.from.id` value is the recipient's `User ID`
 
     ```json
     {

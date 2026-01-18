@@ -33,4 +33,4 @@ keywords: [开源监控系统, 开源网络监控, 网络PING监控]
 
 > 安装包部署需要配置java虚拟机root权限启动hertzbeat从而使用ICMP，若未启用root权限则是判断telnet对端7号端口是否开通
 > docker安装默认启用无此问题
-> 详见 <https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address>
+> 详见 [https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address](https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address)

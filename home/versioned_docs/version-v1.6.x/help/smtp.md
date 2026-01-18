@@ -11,7 +11,7 @@ keywords: [ open source monitoring tool, open source SMTP monitoring tool, monit
 Determine whether the server is available through the hello command in SMTP
 ```
 
-> see <https://datatracker.ietf.org/doc/html/rfc821#page-13>
+> see [https://datatracker.ietf.org/doc/html/rfc821#page-13](https://datatracker.ietf.org/doc/html/rfc821#page-13)
 
 **Protocol Use：SMTP**
 

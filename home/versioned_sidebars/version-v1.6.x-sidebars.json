@@ -242,6 +242,7 @@
         {
           "type": "category",
           "label": "custom",
+          "key": "help-custom",
           "items": [
             "help/kafka_promql",
             "help/influxdb_promql"
@@ -292,6 +293,7 @@
     {
       "type": "category",
       "label": "custom",
+      "key": "advanced-custom",
       "items": [
         "advanced/extend-point",
         "advanced/extend-tutorial",

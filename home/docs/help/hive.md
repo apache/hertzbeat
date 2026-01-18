@@ -26,13 +26,13 @@ hive --service hiveserver2 &
 ### Configure parameters
 
 |       Parameter name        |                                                    Parameter Help describes the                                                     |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitor Host                | THE MONITORED PEER IPV4, IPV6 OR DOMAIN NAME. Note ⚠️ that there are no protocol headers (eg: https://, http://).                   |
 | Monitoring Name             | A name that identifies this monitoring that needs to be unique.                                                                     |
 | Port                        | The default port provided by the database is 10002.                                                                                 |
 | Enable HTTPS                | Whether to access the website through HTTPS, please note that ⚠️ when HTTPS is enabled, the default port needs to be changed to 443 |
-| The acquisition interval is | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                  |
-| Whether to probe the        | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation    | will continue only if the probe is successful |
+| Collection interval         | Monitor the periodic data acquisition interval, in seconds, and the minimum interval that can be set is 30 seconds                  |
+| Whether to probe            | Whether to check the availability of the monitoring before adding a monitoring is successful, and the new modification operation    |
 | Description Comment         | For more information identifying and describing the remarks for this monitoring, users can remark the information here              |
 
 ### Collect metrics

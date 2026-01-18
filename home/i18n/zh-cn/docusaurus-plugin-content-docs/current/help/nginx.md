@@ -109,7 +109,7 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
 4. 在浏览器访问 `http://localhost/req-status` 即可查看 Nginx 监控状态信息。
 
 <!-- markdown-link-check-disable -->
-**参考文档： <https://blog.csdn.net/weixin_55985097/article/details/116722309>**
+**参考文档： [https://blog.csdn.net/weixin_55985097/article/details/116722309](https://blog.csdn.net/weixin_55985097/article/details/116722309)**
 
 **⚠️注意监控模块的端点路径为 `/nginx-status` `/req-status`**
 

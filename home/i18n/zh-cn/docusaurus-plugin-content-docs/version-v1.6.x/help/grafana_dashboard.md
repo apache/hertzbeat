@@ -19,7 +19,7 @@ keywords: [Grafana, 历史图表]
 
 ### 启用Grafana 可嵌入功能, 并开启匿名访问
 
-参考: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>
+参考: [https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/](https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/)
 修改配置文件`grafana.ini`中的`allow_embedding = true`
 修改配置文件`grafana.ini`中的`[auth.anonymous]` 为 `true`
 
@@ -45,8 +45,8 @@ grafana:
 ### 在HertzBeat监控中上传Grafana监控模板json文件
 
 在`HertzBeat`新建或编辑`Prometheus`类型监控时,点击启用Grafana模板,选择Grafana模板json文件上传。
-监控模板json文件可以在 <https://grafana.com/grafana/dashboards/> 下载。
-比如,在`HertzBeat`中新建一个关于`VictoriaMetrics`单节点的监控,然后打开 <https://grafana.com/grafana/dashboards/10229-victoriametrics-single-node/> ,点击右侧 `Download JSON`按钮,下载模板json文件。在`HertzBeat`监控中上传模板json文件,保存。
+监控模板json文件可以在 [https://grafana.com/grafana/dashboards/](https://grafana.com/grafana/dashboards/) 下载。
+比如,在`HertzBeat`中新建一个关于`VictoriaMetrics`单节点的监控,然后打开 [https://grafana.com/grafana/dashboards/10229-victoriametrics-single-node/](https://grafana.com/grafana/dashboards/10229-victoriametrics-single-node/) ,点击右侧 `Download JSON`按钮,下载模板json文件。在`HertzBeat`监控中上传模板json文件,保存。
     ![grafana-1.png](/img/docs/help/grafana-1.png)
 
 ### 查看Grafana历史图表

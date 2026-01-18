@@ -18,7 +18,7 @@ keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间
     rabbitmq-plugins enable rabbitmq_management 
     ```
 
-2. 浏览器访问 <http://ip:15672/> ，默认账户密码 `guest/guest`. 成功登录即开启成功。
+2. 浏览器访问 [http://ip:15672/](http://ip:15672/) ，默认账户密码 `guest/guest`. 成功登录即开启成功。
 
 3. 在 HertzBeat 添加对应 RabbitMQ 监控即可，参数使用 Management 的 IP 端口，默认账户密码。
 
@@ -106,7 +106,7 @@ keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间
 |------------------------------|------|--------------------------------------------------------------------------------------------------------------------------------------|
 | name                         | 无    | The name of the queue with non-ASCII characters escaped as in C.                                                                     |
 | node                         | 无    | The queue on the node name                                                                                                           |
-| state                        | 无    | The state of the queue. Normally "running", but may be "{syncing, message_count}" if the queue is synchronising.                     |
+| state                        | 无    | The state of the queue. Normally "running", but may be `{syncing, message_count}` if the queue is synchronising.                     |
 | type                         | 无    | Queue type, one of: quorum, stream, classic.                                                                                         |
 | vhost                        | 无    | vhost path                                                                                                                           |
 | auto_delete                  | 无    | Whether the queue will be deleted automatically when no longer used                                                                  |
