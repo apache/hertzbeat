@@ -35,8 +35,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Table(name = "hzb_push_metrics", indexes = {
-        @Index(name = "push_query_index", columnList = "monitorId"),
-        @Index(name = "push_query_index", columnList = "time")
+        @Index(name = "idx_push_metrics_monitor_id", columnList = "monitor_id"),
+        @Index(name = "idx_push_metrics_time", columnList = "time")
 })
 @Data
 @Builder
