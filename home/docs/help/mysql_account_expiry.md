@@ -1,45 +1,24 @@
-# MySQL Account Expiry
-
-HertzBeat supports monitoring of MySQL database account password expiration,
-allowing administrators to detect expired or soon-to-expire accounts and
-configure alerts.
-
+---
+id: mysql_account_expiry
+title: "Monitoring: MySQL Account Expiry"
+sidebar_label: "MySQL Account Expiry"
+keywords:
+  - mysql account expiry
+  - mysql password expiration
+  - mysql security monitoring
 ---
 
-## Metric: `account_expiry`
+> Monitor MySQL database account password expiration information.
 
-This metric collects password expiration information for all MySQL users.
+### Collection Metric
 
-### Fields
+#### Metric set：account_expiry
 
-| Field | Description |
-|------|-------------|
-| user | MySQL username |
-| host | Allowed host |
-| password_lifetime | Password validity in days |
-| password_last_changed | When the password was last changed |
-| password_expired | Whether the account is expired |
-| days_left | Remaining days before expiration |
-
----
-
-## SQL
-
-```sql
-SELECT
-  user,
-  host,
-  password_lifetime,
-  password_last_changed,
-  password_expired,
-  IF(password_lifetime IS NULL,
-     NULL,
-     password_lifetime - DATEDIFF(NOW(), password_last_changed)
-  ) AS days_left
-FROM mysql.user;
-```
-This enables alerts on:
-
-- Expired accounts
-- Accounts expiring soon
-- Security risks from stale credentials
+| Metric name           | Metric unit | Metric help description                              |
+|-----------------------|-------------|------------------------------------------------------|
+| user                  | none        | MySQL account username                               |
+| host                  | none        | Host from which the account is allowed to connect    |
+| password_lifetime     | day         | Password validity period in days                     |
+| password_last_changed | timestamp   | Time when the password was last changed              |
+| password_expired      | none        | Whether the account password is expired (true/false) |
+| days_left             | day         | Remaining days before password expiration            |
