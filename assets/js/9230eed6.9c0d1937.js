@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkhertzbeat=globalThis.webpackChunkhertzbeat||[]).push([[46459],{60262(a){a.exports=JSON.parse('{"label":"practice","permalink":"/blog/tags/practice","allTagsPath":"/blog/tags","count":42}')}}]);

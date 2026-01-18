@@ -1,1 +1,0 @@
-"use strict";(globalThis.webpackChunkhertzbeat=globalThis.webpackChunkhertzbeat||[]).push([[76307],{62178(e){e.exports=JSON.parse('{"label":"release","permalink":"/zh-cn/blog/tags/release","allTagsPath":"/zh-cn/blog/tags","count":4}')}}]);
