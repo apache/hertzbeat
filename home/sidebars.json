@@ -83,6 +83,7 @@
         {
           "type": "category",
           "label": "Log (Beta)",
+          "key": "log",
           "items": [
             "help/log_integration",
             "help/log_stream",
