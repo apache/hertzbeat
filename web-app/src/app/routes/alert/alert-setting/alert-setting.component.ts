@@ -340,8 +340,7 @@ export class AlertSettingComponent implements OnInit {
             loaded: true
           };
           // Check if periodic alert is enabled (requires at least one executor)
-          this.isPeriodicAlertEnabled =
-            this.datasourceStatus.hasPromqlExecutor || this.datasourceStatus.hasSqlExecutor;
+          this.isPeriodicAlertEnabled = this.datasourceStatus.hasPromqlExecutor || this.datasourceStatus.hasSqlExecutor;
         }
       },
       error: err => {

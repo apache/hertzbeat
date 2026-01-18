@@ -472,7 +472,7 @@
           <div class="template-input-wrapper">
             <a nz-dropdown [nzDropdownMenu]="logExprMenu" class="env-vars-dropdown" nzTrigger="click" [nzPlacement]="'bottomRight'">
               <button nz-button nzType="link" nz-tooltip [nzTooltipTitle]="'alert.setting.log.expr.tip' | i18n">
-                <i nz-icon nzType="snippets" nzTheme="outline"></i>
+                <i nz-icon nzType="unordered-list" nzTheme="outline"></i>
               </button>
             </a>
             <nz-dropdown-menu #logExprMenu="nzDropdownMenu">
@@ -669,7 +669,13 @@
             <label nz-radio-button [nzValue]="'promql'" [nzDisabled]="false">
               {{ 'alert.setting.query.language.promql' | i18n }}
             </label>
-            <label nz-radio-button [nzValue]="'sql'" [nzDisabled]="true" nz-tooltip [nzTooltipTitle]="'alert.setting.query.language.sql.not.support.metric' | i18n">
+            <label
+              nz-radio-button
+              [nzValue]="'sql'"
+              [nzDisabled]="true"
+              nz-tooltip
+              [nzTooltipTitle]="'alert.setting.query.language.sql.not.support.metric' | i18n"
+            >
               {{ 'alert.setting.query.language.sql' | i18n }}
             </label>
           </nz-radio-group>
@@ -740,7 +746,13 @@
             name="datasource"
             id="datasource"
           >
-            <label nz-radio-button [nzValue]="'promql'" [nzDisabled]="true" nz-tooltip [nzTooltipTitle]="'alert.setting.query.language.promql.not.support.log' | i18n">
+            <label
+              nz-radio-button
+              [nzValue]="'promql'"
+              [nzDisabled]="true"
+              nz-tooltip
+              [nzTooltipTitle]="'alert.setting.query.language.promql.not.support.log' | i18n"
+            >
               {{ 'alert.setting.query.language.promql' | i18n }}
             </label>
             <label nz-radio-button [nzValue]="'sql'" [nzDisabled]="false">
@@ -1144,7 +1156,12 @@
         <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
         <h3>{{ 'alert.setting.type.periodic' | i18n }}</h3>
         <p>{{ 'alert.setting.type.periodic.desc' | i18n }}</p>
-        <div *ngIf="!isPeriodicAlertEnabled" class="alert-type-disabled-tip" nz-tooltip [nzTooltipTitle]="'alert.setting.type.periodic.not.configured' | i18n">
+        <div
+          *ngIf="!isPeriodicAlertEnabled"
+          class="alert-type-disabled-tip"
+          nz-tooltip
+          [nzTooltipTitle]="'alert.setting.type.periodic.not.configured' | i18n"
+        >
           <i nz-icon nzType="exclamation-circle" nzTheme="outline"></i>
           <span>{{ 'alert.setting.type.periodic.not.available.short' | i18n }}</span>
         </div>
