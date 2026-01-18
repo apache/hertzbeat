@@ -507,7 +507,7 @@
                 nz-input
                 name="logExpr"
                 id="logExpr"
-                [placeholder]="'alert.setting.log.expr.example' | i18n"
+                [placeholder]="'alert.setting.log.expr.placeholder' | i18n"
               >
               </textarea>
             </nz-textarea-count>
@@ -656,16 +656,29 @@
       </nz-form-item>
       <nz-form-item *ngIf="define.type == 'periodic_metric'" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzFor="datasource" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
-          {{ 'alert.setting.rule' | i18n }}
+          {{ 'alert.setting.query.language' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
-            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" name="datasource" id="datasource">
-              <label nz-radio-button [nzValue]="'promql'">
-                {{ 'PromQL' | i18n }}
-              </label>
-            </nz-radio-group>
-          </ng-container>
+          <nz-radio-group
+            [(ngModel)]="define.datasource"
+            (ngModelChange)="onDatasourceChange()"
+            nzButtonStyle="solid"
+            name="datasource"
+            id="datasource"
+          >
+            <label nz-radio-button [nzValue]="'promql'" [nzDisabled]="false">
+              {{ 'alert.setting.query.language.promql' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="'sql'" [nzDisabled]="true" nz-tooltip [nzTooltipTitle]="'alert.setting.query.language.sql.not.support.metric' | i18n">
+              {{ 'alert.setting.query.language.sql' | i18n }}
+            </label>
+          </nz-radio-group>
+          <div class="datasource-tip" *ngIf="define.datasource === 'promql'">
+            <small [innerHTML]="'alert.setting.promql.description' | i18n"></small>
+          </div>
+          <div class="datasource-tip" *ngIf="define.datasource === 'sql'">
+            <small [innerHTML]="'alert.setting.sql.description' | i18n"></small>
+          </div>
         </nz-form-control>
       </nz-form-item>
       <!-- Metric query and alert expression -->
@@ -717,16 +730,29 @@
       </nz-form-item>
       <nz-form-item *ngIf="define.type == 'periodic_log'" [ngStyle]="{ marginBottom: '5px' }">
         <nz-form-label [nzSpan]="7" nzRequired="true" nzFor="periodic_expr" [nzTooltipTitle]="'alert.setting.log.query.tip' | i18n">
-          {{ 'alert.setting.log.query' | i18n }}
+          {{ 'alert.setting.query.language' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <ng-container *ngIf="cascadeValues[1] !== 'availability'">
-            <nz-radio-group [(ngModel)]="define.datasource" nzButtonStyle="solid" name="datasource" id="datasource">
-              <label nz-radio-button [nzValue]="'sql'">
-                {{ 'SQL' | i18n }}
-              </label>
-            </nz-radio-group>
-          </ng-container>
+          <nz-radio-group
+            [(ngModel)]="define.datasource"
+            (ngModelChange)="onDatasourceChange()"
+            nzButtonStyle="solid"
+            name="datasource"
+            id="datasource"
+          >
+            <label nz-radio-button [nzValue]="'promql'" [nzDisabled]="true" nz-tooltip [nzTooltipTitle]="'alert.setting.query.language.promql.not.support.log' | i18n">
+              {{ 'alert.setting.query.language.promql' | i18n }}
+            </label>
+            <label nz-radio-button [nzValue]="'sql'" [nzDisabled]="false">
+              {{ 'alert.setting.query.language.sql' | i18n }}
+            </label>
+          </nz-radio-group>
+          <div class="datasource-tip" *ngIf="define.datasource === 'promql'">
+            <small [innerHTML]="'alert.setting.promql.description' | i18n"></small>
+          </div>
+          <div class="datasource-tip" *ngIf="define.datasource === 'sql'">
+            <small [innerHTML]="'alert.setting.sql.description' | i18n"></small>
+          </div>
         </nz-form-control>
       </nz-form-item>
       <!-- Log query expression -->
@@ -1109,10 +1135,19 @@
         <h3>{{ 'alert.setting.type.realtime' | i18n }}</h3>
         <p>{{ 'alert.setting.type.realtime.desc' | i18n }}</p>
       </nz-card>
-      <nz-card (click)="onSelectAlertType('periodic')" class="alert-type-card" [nzHoverable]="true">
+      <nz-card
+        (click)="onSelectAlertType('periodic')"
+        class="alert-type-card"
+        [nzHoverable]="isPeriodicAlertEnabled"
+        [class.alert-type-card-disabled]="!isPeriodicAlertEnabled"
+      >
         <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
         <h3>{{ 'alert.setting.type.periodic' | i18n }}</h3>
         <p>{{ 'alert.setting.type.periodic.desc' | i18n }}</p>
+        <div *ngIf="!isPeriodicAlertEnabled" class="alert-type-disabled-tip" nz-tooltip [nzTooltipTitle]="'alert.setting.type.periodic.not.configured' | i18n">
+          <i nz-icon nzType="exclamation-circle" nzTheme="outline"></i>
+          <span>{{ 'alert.setting.type.periodic.not.available.short' | i18n }}</span>
+        </div>
       </nz-card>
     </div>
   </div>

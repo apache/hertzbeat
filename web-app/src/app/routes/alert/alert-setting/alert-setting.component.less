@@ -149,6 +149,11 @@
 
     .alert-type-card {
       width: 200px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       text-align: center;
       cursor: pointer;
 
@@ -367,5 +372,42 @@
   .scroll-container {
     height: 200px;
     overflow-y: auto;
+  }
+
+  .alert-type-card-disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+
+    &:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  }
+
+  .alert-type-disabled-tip {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+    width: 100%;
+    text-align: center;
+
+    i {
+      margin-right: 4px;
+      color: #faad14;
+    }
+
+    span {
+      color: #8c8c8c;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+  }
+
+  .datasource-tip {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #f6f6f6;
+    border-radius: 4px;
+    line-height: 1.5;
   }
 }

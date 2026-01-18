@@ -133,6 +133,14 @@ export class AlertSettingComponent implements OnInit {
   dataType: string = 'metric'; // Default to metric
   alertType: string = 'realtime'; // Default to realtime
 
+  // Datasource status
+  datasourceStatus = {
+    hasPromqlExecutor: false,
+    hasSqlExecutor: false,
+    loaded: false
+  };
+  isPeriodicAlertEnabled = true;
+
   previewData: any[] = [];
   previewColumns: Array<{ title: string; key: string; width?: string }> = [];
   previewTableLoading = false;
@@ -208,6 +216,7 @@ export class AlertSettingComponent implements OnInit {
 
   ngOnInit(): void {
     this.initLogFields();
+    this.loadDatasourceStatus();
     this.loadAlertDefineTable();
     // query monitoring hierarchy
     const getHierarchy$ = this.appDefineSvc
@@ -321,7 +330,41 @@ export class AlertSettingComponent implements OnInit {
     this.isSelectTypeModalVisible = true;
   }
 
+  loadDatasourceStatus() {
+    this.alertDefineSvc.getDatasourceStatus().subscribe({
+      next: res => {
+        if (res.code === 0 && res.data) {
+          this.datasourceStatus = {
+            hasPromqlExecutor: res.data.hasPromqlExecutor || false,
+            hasSqlExecutor: res.data.hasSqlExecutor || false,
+            loaded: true
+          };
+          // Check if periodic alert is enabled (requires at least one executor)
+          this.isPeriodicAlertEnabled =
+            this.datasourceStatus.hasPromqlExecutor || this.datasourceStatus.hasSqlExecutor;
+        }
+      },
+      error: err => {
+        console.warn('Failed to load datasource status:', err);
+        // If failed to load, still enable periodic alerts
+        this.isPeriodicAlertEnabled = true;
+        this.datasourceStatus.loaded = true;
+      }
+    });
+  }
+
+  onDatasourceChange() {
+    // Update placeholder when datasource changes
+    // Placeholder is already set in template with dynamic binding
+  }
+
   onSelectAlertType(type: string) {
+    // Check if periodic alert is enabled
+    if (type === 'periodic' && !this.isPeriodicAlertEnabled) {
+      this.notifySvc.warning(this.i18nSvc.fanyi('alert.setting.type.periodic.not.available'), '');
+      return;
+    }
+
     this.isSelectTypeModalVisible = false;
     this.alertType = type;
     this.define = new AlertDefine();
@@ -1442,7 +1485,10 @@ export class AlertSettingComponent implements OnInit {
 
   // Handle variable click event
   onExprVarClick(item: { value: string; description?: string }) {
-    const textarea = document.getElementById('expr') as HTMLTextAreaElement;
+    // Determine the correct textarea ID based on alert type
+    const textareaId = this.define.type === 'realtime_log' ? 'logExpr' : 'expr';
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement;
+
     if (textarea) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
@@ -1460,7 +1506,12 @@ export class AlertSettingComponent implements OnInit {
         }
       }
 
-      this.userExpr = `${before} ${insertText} ${after}`;
+      // Update the appropriate expression variable
+      if (this.define.type === 'realtime_log') {
+        this.userExpr = `${before} ${insertText} ${after}`;
+      } else {
+        this.userExpr = `${before} ${insertText} ${after}`;
+      }
 
       // Restore cursor position
       setTimeout(() => {
