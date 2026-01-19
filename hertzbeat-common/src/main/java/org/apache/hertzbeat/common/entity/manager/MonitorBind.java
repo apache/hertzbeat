@@ -42,7 +42,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Entity
 @Table(name = "hzb_monitor_bind", indexes = {
-        @Index(name = "index_monitor_bind", columnList = "bizId"),
+        @Index(name = "index_monitor_bind", columnList = "biz_id"),
         @Index(name = "index_monitor_bin", columnList = "monitor_id")
 })
 @Data
@@ -59,7 +59,7 @@ public class MonitorBind {
 
     @Schema(title = "key string: ip:port")
     private String keyStr;
-    
+
     @Schema(title = "connect bind id", example = "87432674384")
     private Long bizId;
 
