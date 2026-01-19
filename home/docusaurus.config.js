@@ -303,11 +303,10 @@ module.exports = {
           remarkPlugins: [
             [require('@docusaurus/remark-plugin-npm2yarn'), { sync: true }],
           ],
-          lastVersion: 'current',
+          lastVersion: '1.7.x',
           versions: {
             current: {
-              label: 'current',
-              path: '',
+              label: 'dev',
             },
           },
         },
@@ -347,7 +346,7 @@ module.exports = {
       {
         debug: false,
         offlineModeActivationStrategies: ['appInstalled', 'queryString'],
-        // swRegister: false,
+        swRegister: false,
         pwaHead: [
           {
             tagName: 'link',
