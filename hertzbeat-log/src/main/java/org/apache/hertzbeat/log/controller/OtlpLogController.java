@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.log.controller;
 
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.google.rpc.Status;
@@ -37,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
  * OTLP Log Ingestion Controller
  * Implements OTLP/HTTP specification for log ingestion.
  * Supports both binary-encoded Protobuf (application/x-protobuf) and JSON-encoded Protobuf (application/json).
- * 
+ *
  * @see <a href="https://opentelemetry.io/docs/specs/otlp/#otlphttp">OTLP/HTTP Specification</a>
  */
 @Tag(name = "OTLP Log Controller")
@@ -47,7 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class OtlpLogController {
 
     private static final String CONTENT_TYPE_PROTOBUF = "application/x-protobuf";
-    
+
     private static final ExportLogsServiceResponse EMPTY_RESPONSE = ExportLogsServiceResponse.newBuilder().build();
 
     private final OtlpLogProtocolAdapter otlpLogProtocolAdapter;
@@ -59,7 +60,7 @@ public class OtlpLogController {
     /**
      * OTLP/HTTP standard endpoint for logs with JSON-encoded Protobuf payload.
      * Content-Type: application/json
-     * 
+     *
      * Response follows OTLP specification:
      * - Success: HTTP 200 with ExportLogsServiceResponse (JSON encoded)
      * - Failure: HTTP 400 with google.rpc.Status (JSON encoded)
@@ -74,9 +75,13 @@ public class OtlpLogController {
         try {
             otlpLogProtocolAdapter.ingest(content);
             return ResponseEntity.ok(toJsonResponse(EMPTY_RESPONSE));
-        } catch (Exception e) {
-            log.error("Failed to ingest OTLP JSON logs: {}", e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(toJsonErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            // Server-side errors - unexpected failure
+            log.error("Unexpected error ingesting OTLP JSON logs: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(toJsonErrorResponse(e.getMessage()));
         }
     }
@@ -84,7 +89,7 @@ public class OtlpLogController {
     /**
      * OTLP/HTTP standard endpoint for logs with binary-encoded Protobuf payload.
      * Content-Type: application/x-protobuf
-     * 
+     *
      * Response follows OTLP specification:
      * - Success: HTTP 200 with ExportLogsServiceResponse (binary encoded)
      * - Failure: HTTP 400 with google.rpc.Status (binary encoded)
@@ -99,9 +104,14 @@ public class OtlpLogController {
         try {
             otlpLogProtocolAdapter.ingestBinary(content);
             return ResponseEntity.ok(EMPTY_RESPONSE.toByteArray());
-        } catch (Exception e) {
-            log.error("Failed to ingest OTLP binary logs: {}", e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            // Client-side validation errors - malformed request
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createBinaryErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            // Server-side errors - unexpected failure
+            log.error("Unexpected error ingesting OTLP binary logs: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createBinaryErrorResponse(e.getMessage()));
         }
     }
@@ -110,6 +120,7 @@ public class OtlpLogController {
         try {
             return JsonFormat.printer().print(response);
         } catch (InvalidProtocolBufferException e) {
+            log.error("Failed to convert ExportLogsServiceResponse to JSON: {}", e.getMessage(), e);
             return "{}";
         }
     }
@@ -125,15 +136,19 @@ public class OtlpLogController {
         }
     }
 
+    /**
+     * Escapes a string value for safe inclusion in JSON.
+     *
+     * @param message the string to escape
+     * @return the escaped string, or empty string if message is null
+     */
     private String escapeJson(String message) {
         if (message == null) {
             return "";
         }
-        return message.replace("\\", "\\\\")
-                      .replace("\"", "\\\"")
-                      .replace("\n", "\\n")
-                      .replace("\r", "\\r")
-                      .replace("\t", "\\t");
+
+        char[] escaped = JsonStringEncoder.getInstance().quoteAsString(message);
+        return new String(escaped);
     }
 
     private byte[] createBinaryErrorResponse(String message) {
