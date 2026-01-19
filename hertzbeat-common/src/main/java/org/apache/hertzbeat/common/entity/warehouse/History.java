@@ -37,10 +37,10 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "hzb_history", indexes = {
-        @Index(name = "history_query_index", columnList = "instance"),
-        @Index(name = "history_query_index", columnList = "app"),
-        @Index(name = "history_query_index", columnList = "metrics"),
-        @Index(name = "history_query_index", columnList = "metric")
+        @Index(name = "idx_hzb_history_instance", columnList = "instance"),
+        @Index(name = "idx_hzb_history_app", columnList = "app"),
+        @Index(name = "idx_hzb_history_metrics", columnList = "metrics"),
+        @Index(name = "idx_hzb_history_metric", columnList = "metric")
 })
 @Data
 @Builder
@@ -65,7 +65,7 @@ public class History {
 
     @Schema(title = "Monitoring Metric usage speed count")
     private String metric;
-    
+
     @Column(length = 5000)
     private String metricLabels;
 
