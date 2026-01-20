@@ -367,7 +367,7 @@
   "alert.setting.query.language.sql": "SQL",
   "alert.setting.query.language.sql.not.support.metric": "SQL queries are not supported for periodic metric alerts yet",
   "alert.setting.query.language.promql.not.support.log": "PromQL queries are not supported for periodic log alerts yet",
-  "alert.setting.promql.description": "PromQL Query Language<br/><br/>Examples:<br/>• <code>cpu_usage > 80</code><br/>• <code>cpu_usage{instance='server1'} > 80</code><br/>• <code>rate(http_requests_total[5m]) > 100</code><br/>• <code>cpu > 80 and memory > 70</code>",
+  "alert.setting.promql.description": "PromQL Query Language<br/><br/>Examples:<br/>• <code>cpu_usage > 80</code><br/>• <code>cpu_usage{instance=\"server1\"} > 80</code><br/>• <code>rate(http_requests_total[5m]) > 100</code><br/>• <code>cpu > 80 and memory > 70</code>",
   "alert.setting.sql.description": "SQL Query Language<br/><br/>Examples:<br/>• <code>SELECT COUNT(*) FROM hertzbeat_logs WHERE severity_text = 'ERROR'</code><br/>• <code>SELECT service_name, COUNT(*) FROM hertzbeat_logs GROUP BY service_name</code><br/>• <code>SELECT * FROM hertzbeat_logs WHERE time_unix_nano >= NOW() - INTERVAL '5 minute'</code>",
   "alert.setting.type.realtime": "Real-time Alert",
   "alert.setting.type.periodic": "Periodic Alert",
