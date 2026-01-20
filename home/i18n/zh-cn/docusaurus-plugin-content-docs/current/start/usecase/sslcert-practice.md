@@ -14,7 +14,7 @@ sidebar_label: SSL 证书过期监控案例
 
 Apache HertzBeat™ 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
 
-github: <https://github.com/apache/hertzbeat>
+github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 ## 安装 HertzBeat
 
@@ -25,7 +25,7 @@ github: <https://github.com/apache/hertzbeat>
 2. 安装成功浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 :::note
-生产环境建议完整部署方式, 参考 <https://hertzbeat.apache.org/docs/start/docker-compose-deploy>
+生产环境建议完整部署方式, 参考 [https://hertzbeat.apache.org/docs/start/docker-compose-deploy](https://hertzbeat.apache.org/docs/start/docker-compose-deploy)
 :::
 
 ## 监控 SSL 证书
@@ -77,7 +77,7 @@ github: <https://github.com/apache/hertzbeat>
 
     钉钉微信飞书等 token 配置可以参考帮助文档
 
-    <https://hertzbeat.apache.org/docs/help/alert_feishu>
+    [https://hertzbeat.apache.org/docs/help/alert_feishu](https://hertzbeat.apache.org/docs/help/alert_feishu)
 
     > 消息通知 -> 通知策略 -> 新增告警通知策略 -> 将刚才配置的接收人启用通知
 
@@ -91,4 +91,4 @@ github: <https://github.com/apache/hertzbeat>
 
 监控SSL证书的实践就到这里，当然对hertzbeat来说这个功能只是冰山一角，如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
-**github: <https://github.com/apache/hertzbeat>**
+**github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
