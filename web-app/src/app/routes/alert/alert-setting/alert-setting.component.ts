@@ -1505,12 +1505,8 @@ export class AlertSettingComponent implements OnInit {
         }
       }
 
-      // Update the appropriate expression variable
-      if (this.define.type === 'realtime_log') {
-        this.userExpr = `${before} ${insertText} ${after}`;
-      } else {
-        this.userExpr = `${before} ${insertText} ${after}`;
-      }
+      // Update the expression variable
+      this.userExpr = `${before} ${insertText} ${after}`;
 
       // Restore cursor position
       setTimeout(() => {
