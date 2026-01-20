@@ -25,7 +25,6 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
@@ -310,14 +309,11 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            Instant end = Instant.now();
-            Duration duration = Duration.ofHours(Long.parseLong(history.replace("h", "")));
-            Instant start = end.minus(duration);
-            String exportUrl =  vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), EXPORT_PATH);
+            String exportUrl = vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), EXPORT_PATH);
             URI uri = UriComponentsBuilder.fromUriString(exportUrl)
-                    .queryParam("match", URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
-                    .queryParam("start", String.valueOf(start.getEpochSecond()))
-                    .queryParam("end", String.valueOf(end.getEpochSecond()))
+                    .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
+                    .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
+                    .queryParam("end", "now")
                     .build(true).toUri();
             ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,
                     String.class);
@@ -368,7 +364,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                                                                  String metric, String history) {
         if (!serverAvailable) {
             log.error("""
-                    
+
                     \t---------------VictoriaMetrics Init Failed---------------
                     \t--------------Please Config VictoriaMetrics--------------
                     \t----------Can Not Use Metric History Now----------
@@ -412,9 +408,9 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            String rangeUrl = VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), QUERY_RANGE_PATH);
+            String rangeUrl = vmClusterProps.select().url() + VM_SELECT_BASE_PATH.formatted(vmClusterProps.accountID(), QUERY_RANGE_PATH);
             URI uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                    .queryParam("query", URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
+                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
                     .queryParam("end", endTime)
@@ -455,7 +451,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             }
             // max
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                    .queryParam("query", URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
+                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
                     .queryParam("end", endTime)
@@ -494,7 +490,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             }
             // min
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                    .queryParam("query", URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
+                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
                     .queryParam("end", endTime)
@@ -533,7 +529,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             }
             // avg
             uri = UriComponentsBuilder.fromUriString(rangeUrl)
-                    .queryParam("query", URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
+                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
                     .queryParam("end", endTime)
