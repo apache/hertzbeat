@@ -17,7 +17,7 @@ keywords: [Open source monitoring tool, operating system monitoring, Linux monit
 - It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. You only need to configure YML to use these protocols to customize and collect any metrics you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 - HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
-Github: <https://github.com/apache/hertzbeat>
+Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 ### Get Linux Monitoring Done in HertzBeat in 5 Minutes
 
@@ -36,7 +36,7 @@ Github: <https://github.com/apache/hertzbeat>
 2. Configure the parameters required for new monitoring Linux
 
     Fill in the Linux **peer IP**, **SSH port** (default 22), **account password, etc.** on the monitoring page, and finally click OK to add.
-    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.apache.org/docs/help/mysql/>
+    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document [https://hertzbeat.apache.org/docs/help/mysql/](https://hertzbeat.apache.org/docs/help/mysql/)
 
     ![HertzBeat](/img/blog/monitor-linux-2.png)
 
@@ -88,7 +88,7 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
     Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-    - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+    - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) [https://hertzbeat.apache.org/docs/help/alert_dingtalk](https://hertzbeat.apache.org/docs/help/alert_dingtalk) to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
     - Configure the receiver parameters in HertzBeat as follows.
 
     【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
@@ -132,8 +132,8 @@ This practical article took us to experience how to use the open source real-tim
 >
 > The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ## ⛄ Supported
 

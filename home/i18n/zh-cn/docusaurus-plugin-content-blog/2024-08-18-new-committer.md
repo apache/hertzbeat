@@ -33,7 +33,7 @@ Apache 软件基金会起初是由开发 [Apache HTTPd](https://httpd.apache.org
 
 ### 获得提名，成为 Committer
 
-此次提名是 Apache HertzbeatP(Incubating) 的 PPMC Member [Logic](https://github.com/zqr10159) 举荐的，感谢 Apache HertzBeat™ Team。顺利提名成为了 Hertzbeat Committer，有了自己的 Apache 邮箱。
+此次提名是 Apache Hertzbeat 的 PPMC Member [Logic](https://github.com/zqr10159) 举荐的，感谢 Apache HertzBeat™ Team。顺利提名成为了 Hertzbeat Committer，有了自己的 Apache 邮箱。
 
 ![Apache ID Email](/img/blog/committer/yuluo-yx/3.jpg)
 

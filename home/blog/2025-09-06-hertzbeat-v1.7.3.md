@@ -13,8 +13,8 @@ We are thrilled to announce the official release of Apache HertzBeat™ 1.7.3. T
 
 ## Downloads and Documentation
 
-- **Apache HertzBeat™ 1.7.3 Download Link**: <https://hertzbeat.apache.org/zh-cn/docs/download>
-- **Apache HertzBeat™ Documentation**: <https://hertzbeat.apache.org/zh-cn/docs/>
+- **Apache HertzBeat™ 1.7.3 Download Link**: [https://hertzbeat.apache.org/zh-cn/docs/download](https://hertzbeat.apache.org/zh-cn/docs/download)
+- **Apache HertzBeat™ Documentation**: [https://hertzbeat.apache.org/zh-cn/docs/](https://hertzbeat.apache.org/zh-cn/docs/)
 
 ## Major Updates
 
@@ -218,36 +218,36 @@ Special thanks to the following community members for their collaborative effort
 
 ## New Contributors
 
-- @yy549159265 made their first contribution in <https://github.com/apache/hertzbeat/pull/3474>
-- @cto-huhang made their first contribution in <https://github.com/apache/hertzbeat/pull/3594>
-- @Saramanda9988 made their first contribution in <https://github.com/apache/hertzbeat/pull/3598>
-- @delei made their first contribution in <https://github.com/apache/hertzbeat/pull/3608>
-- @chingjustwe made their first contribution in <https://github.com/apache/hertzbeat/pull/3622>
-- @rowankid made their first contribution in <https://github.com/apache/hertzbeat/pull/3690>
-- @tuzuy made their first contribution in <https://github.com/apache/hertzbeat/pull/3668>
-- @carlpinto25 made their first contribution in <https://github.com/apache/hertzbeat/pull/3726>
+- @yy549159265 made their first contribution in [https://github.com/apache/hertzbeat/pull/3474](https://github.com/apache/hertzbeat/pull/3474)
+- @cto-huhang made their first contribution in [https://github.com/apache/hertzbeat/pull/3594](https://github.com/apache/hertzbeat/pull/3594)
+- @Saramanda9988 made their first contribution in [https://github.com/apache/hertzbeat/pull/3598](https://github.com/apache/hertzbeat/pull/3598)
+- @delei made their first contribution in [https://github.com/apache/hertzbeat/pull/3608](https://github.com/apache/hertzbeat/pull/3608)
+- @chingjustwe made their first contribution in [https://github.com/apache/hertzbeat/pull/3622](https://github.com/apache/hertzbeat/pull/3622)
+- @rowankid made their first contribution in [https://github.com/apache/hertzbeat/pull/3690](https://github.com/apache/hertzbeat/pull/3690)
+- @tuzuy made their first contribution in [https://github.com/apache/hertzbeat/pull/3668](https://github.com/apache/hertzbeat/pull/3668)
+- @carlpinto25 made their first contribution in [https://github.com/apache/hertzbeat/pull/3726](https://github.com/apache/hertzbeat/pull/3726)
 
 ## Apache Hertzbeat
 
 **Repository URL:**
 
-<https://github.com/apache/hertzbeat>
+[https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 **Official Website:**
 
-<https://hertzbeat.apache.org/>
+[https://hertzbeat.apache.org/](https://hertzbeat.apache.org/)
 
 **Apache HertzBeat™ Download Link:**
 
-<https://hertzbeat.apache.org/docs/download>
+[https://hertzbeat.apache.org/docs/download](https://hertzbeat.apache.org/docs/download)
 
 **Apache HertzBeat™ Docker Images:**
 
 Apache HertzBeat™ provides Docker images for each release, available on Docker Hub:
 
-- HertzBeat: <https://hub.docker.com/r/apache/hertzbeat>
-- HertzBeat Collector: <https://hub.docker.com/r/apache/hertzbeat-collector>
+- HertzBeat: [https://hub.docker.com/r/apache/hertzbeat](https://hub.docker.com/r/apache/hertzbeat)
+- HertzBeat Collector: [https://hub.docker.com/r/apache/hertzbeat-collector](https://hub.docker.com/r/apache/hertzbeat-collector)
 
 **How to Contribute to the Apache HertzBeat™ Open Source Community?**
 
-<https://hertzbeat.apache.org/docs/community/contribution>
+[https://hertzbeat.apache.org/docs/community/contribution](https://hertzbeat.apache.org/docs/community/contribution)
