@@ -152,10 +152,18 @@
       min-height: 160px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       text-align: center;
       cursor: pointer;
+
+      ::ng-deep .ant-card-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        padding-top: 30px;
+      }
 
       i {
         font-size: 24px;
@@ -384,22 +392,26 @@
     }
   }
 
-  .alert-type-disabled-tip {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #f0f0f0;
-    width: 100%;
-    text-align: center;
+  .disabled-corner-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(45deg, transparent 50%, #faad14 50%);
+    pointer-events: none;
+    z-index: 10;
 
     i {
-      margin-right: 4px;
-      color: #faad14;
-    }
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      color: #fff;
 
-    span {
-      color: #8c8c8c;
-      font-size: 11px;
-      line-height: 1.4;
+      svg {
+        width: 22px;
+        height: 22px;
+      }
     }
   }
 

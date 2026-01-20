@@ -1156,14 +1156,8 @@
         <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
         <h3>{{ 'alert.setting.type.periodic' | i18n }}</h3>
         <p>{{ 'alert.setting.type.periodic.desc' | i18n }}</p>
-        <div
-          *ngIf="!isPeriodicAlertEnabled"
-          class="alert-type-disabled-tip"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.setting.type.periodic.not.configured' | i18n"
-        >
-          <i nz-icon nzType="exclamation-circle" nzTheme="outline"></i>
-          <span>{{ 'alert.setting.type.periodic.not.available.short' | i18n }}</span>
+        <div *ngIf="!isPeriodicAlertEnabled" class="disabled-corner-indicator">
+          <i nz-icon nzType="info-circle" nzTheme="outline"></i>
         </div>
       </nz-card>
     </div>
