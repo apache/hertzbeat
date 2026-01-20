@@ -156,7 +156,7 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
 
         String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getInstance());
         List<Point> points = new ArrayList<>();
-        
+
         try {
             RowWrapper rowWrapper = metricsData.readRow();
 
@@ -196,7 +196,10 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
+        }
         String table = this.generateTable(app, metrics, instance);
         String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
@@ -226,7 +229,10 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
+        }
         String table = this.generateTable(app, metrics, instance);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
         Set<String> instances = new HashSet<>(8);
@@ -263,7 +269,7 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
                             Value.ValueBuilder valueBuilder = Value.builder();
                             long time = this.parseTimeToMillis(value.get(0));
                             valueBuilder.time(time);
-                            
+
                             if (value.get(1) != null) {
                                 valueBuilder.origin(this.parseDoubleValue(value.get(1).toString()));
                             } else {

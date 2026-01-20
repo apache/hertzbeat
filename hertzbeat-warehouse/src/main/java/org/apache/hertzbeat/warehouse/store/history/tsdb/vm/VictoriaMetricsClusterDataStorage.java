@@ -287,7 +287,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric,
                                                          String history) {
         String labelName = metrics + SPILT + metric;
         if (CommonConstants.PROMETHEUS.equals(app)) {
@@ -364,11 +364,11 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics,
                                                                  String metric, String history) {
         if (!serverAvailable) {
             log.error("""
-                    
+
                     \t---------------VictoriaMetrics Init Failed---------------
                     \t--------------Please Config VictoriaMetrics--------------
                     \t----------Can Not Use Metric History Now----------

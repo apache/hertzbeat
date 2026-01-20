@@ -165,6 +165,7 @@ export class MonitorService {
 
   public getMonitorMetricHistoryData(
     instance: string,
+    monitorName: string,
     app: string,
     metrics: string,
     metric: string,
@@ -178,7 +179,7 @@ export class MonitorService {
       interval: interval
     });
     const options = { params: httpParams };
-    return this.http.get<Message<any>>(`${monitor_uri}/${instance}/metric/${metricFull}`, options);
+    return this.http.get<Message<any>>(`${monitor_uri}/${instance}/metric/${monitorName}/${metricFull}`, options);
   }
 
   public getAppsMonitorSummary(): Observable<Message<any>> {

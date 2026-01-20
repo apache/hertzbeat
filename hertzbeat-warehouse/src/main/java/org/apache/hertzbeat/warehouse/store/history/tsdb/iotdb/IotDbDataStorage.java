@@ -197,7 +197,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                     schema.setType(TSDataType.DOUBLE);
                 } else if (type == CommonConstants.TYPE_STRING) {
                     schema.setType(TSDataType.TEXT);
-                } 
+                }
                 schemaList.add(schema);
             });
 
@@ -259,17 +259,20 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric,
                                                          String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             log.error("""
-                    
+
                     \t---------------IotDb Init Failed---------------
                     \t--------------Please Config IotDb--------------
                     \t----------Can Not Use Metric History Now----------
                     """);
             return instanceValuesMap;
+        }
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
         }
         String deviceId = getDeviceId(app, metrics, instance, null, true);
         String selectSql = "";
@@ -315,17 +318,20 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics,
                                                                  String metric, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             log.error("""
-                    
+
                     \t---------------IotDb Init Failed---------------
                     \t--------------Please Config IotDb--------------
                     \t----------Can Not Use Metric History Now----------
                     """);
             return instanceValuesMap;
+        }
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
         }
         String deviceId = getDeviceId(app, metrics, instance, null, true);
         String selectSql;

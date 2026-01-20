@@ -209,7 +209,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric,
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric,
                                                          String history) {
         Map<String, Long> timeRange = getTimeRange(history);
         Long start = timeRange.get(LABEL_KEY_START_TIME);
@@ -225,7 +225,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics,
                                                                  String metric, String history) {
         Map<String, Long> timeRange = getTimeRange(history);
         Long start = timeRange.get(LABEL_KEY_START_TIME);

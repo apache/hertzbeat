@@ -35,27 +35,29 @@ public interface HistoryDataReader {
     /**
      * query history range metrics data from tsdb
      *
-     * @param instance instance e.g. ip:port or ip or domain
-     * @param app      monitor type
-     * @param metrics  metrics
-     * @param metric   metric
-     * @param history  range
+     * @param instance    instance e.g. ip:port or ip or domain
+     * @param monitorName monitor name (would be deprecated in the future)
+     * @param app         monitor type
+     * @param metrics     metrics
+     * @param metric      metric
+     * @param history     range
      * @return metrics data
      */
-    Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history);
+    Map<String, List<Value>> getHistoryMetricData(String instance, @Deprecated String monitorName, String app, String metrics, String metric, String history);
 
     /**
      * query history range interval metrics data from tsdb
      * max min mean metrics value
      *
-     * @param instance instance e.g. ip:port or ip or domain
-     * @param app      monitor type
-     * @param metrics  metrics
-     * @param metric   metric
-     * @param history  history range
+     * @param instance    instance e.g. ip:port or ip or domain
+     * @param monitorName monitor name (would be deprecated in the future)
+     * @param app         monitor type
+     * @param metrics     metrics
+     * @param metric      metric
+     * @param history     history range
      * @return metrics data
      */
-    Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history);
+    Map<String, List<Value>> getHistoryIntervalMetricData(String instance, @Deprecated String monitorName, String app, String metrics, String metric, String history);
 
     /**
      * Query logs with multiple filter conditions

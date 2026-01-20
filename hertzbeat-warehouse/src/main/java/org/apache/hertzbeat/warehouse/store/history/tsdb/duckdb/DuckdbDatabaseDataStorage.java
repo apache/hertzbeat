@@ -271,7 +271,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             return instanceValuesMap;
@@ -332,7 +332,7 @@ public class DuckdbDatabaseDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
             return instanceValuesMap;

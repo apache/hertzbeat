@@ -185,7 +185,10 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
+        }
         String table = this.generateTable(app, metrics, instance);
         String dateAdd = getDateAdd(history);
         String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, dateAdd);
@@ -225,7 +228,10 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
+        }
         String table = this.generateTable(app, metrics, instance);
         String dateAdd = getDateAdd(history);
         Map<String, List<Value>> instanceValueMap = new HashMap<>(8);
@@ -338,17 +344,17 @@ public class QuestdbDataStorage extends AbstractHistoryDataStorage {
         int count = Integer.parseInt(history.substring(0, history.length() - 1));
         String unit;
         switch (unitChar) {
-            case 'd': 
-                unit = "d"; 
+            case 'd':
+                unit = "d";
                 break;
-            case 'h': 
-                unit = "h"; 
+            case 'h':
+                unit = "h";
                 break;
             case 'm': // minute
-                unit = "m"; 
+                unit = "m";
                 break;
-            case 's': 
-                unit = "s"; 
+            case 's':
+                unit = "s";
                 break;
             default: throw new IllegalArgumentException("Invalid history unit: " + unitChar);
         }

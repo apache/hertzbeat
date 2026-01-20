@@ -75,11 +75,13 @@ public class MetricsDataController {
         return ResponseEntity.ok(Message.success(metricsData));
     }
 
-    @GetMapping("/api/monitor/{instance}/metric/{metricFull}")
+    @GetMapping("/api/monitor/{instance}/metric/{monitorName}/{metricFull}")
     @Operation(summary = "Queries historical data for a specified metric for monitoring", description = "Queries historical data for a specified metric under monitoring")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
             @Parameter(description = "monitor instance", example = "127.0.0.1:8080")
             @PathVariable String instance,
+            @Parameter(description = "monitor name", example = "test")
+            @PathVariable String monitorName,
             @Parameter(description = "monitor metric full path", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
             @Parameter(description = "query historical time period, default 6h-6 hours: s-seconds, M-minutes, h-hours, d-days, w-weeks", example = "6h")
@@ -97,7 +99,7 @@ public class MetricsDataController {
         String app = names[0];
         String metrics = names[1];
         String metric = names[2];
-        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, interval);
+        MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, monitorName, app, metrics, metric, history, interval);
         return ResponseEntity.ok(Message.success(historyData));
     }
 }

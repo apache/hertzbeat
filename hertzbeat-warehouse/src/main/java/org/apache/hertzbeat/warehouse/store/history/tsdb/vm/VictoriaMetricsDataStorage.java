@@ -105,7 +105,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private final VictoriaMetricsProperties victoriaMetricsProp;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
-    
+
     private HashedWheelTimer metricsFlushTimer = null;
     private final VictoriaMetricsProperties.InsertConfig insertConfig;
     private final AtomicBoolean draining = new AtomicBoolean(false);
@@ -264,7 +264,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
         String labelName = metrics + SPILT + metric;
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
@@ -333,11 +333,11 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics,
                                                                  String metric, String history) {
         if (!serverAvailable) {
             log.error("""
-                    
+
                     \t---------------VictoriaMetrics Init Failed---------------
                     \t--------------Please Config VictoriaMetrics--------------
                     \t----------Can Not Use Metric History Now----------

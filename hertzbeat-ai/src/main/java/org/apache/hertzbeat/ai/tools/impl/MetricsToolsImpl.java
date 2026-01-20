@@ -55,10 +55,10 @@ public class MetricsToolsImpl implements MetricsTools {
             User might ask about specific metrics like 'cpu usage', 'memory used', 'disk available', etc.
             So use this tool to get the real-time metrics data for the monitor- user asked the specific metrics for, along with any logical or numeric conditions if the user mentions
             In case of multiple monitors matching the user's description, you might have to call query_realtime_metrics tool mutliple times with different parameters.
-            
-            
+
+
             EXAMPLE WORKFLOW
-            
+
             If the user asks for 'cpu usage' for a particular monitor or multiple matching monitors like 'web server', 'database server', etc.
             Get the closest matching monitor name from list_monitor_types tool.
             Call query_monitors tool to get the monitor ID/IDs with the obtained monitor type
@@ -151,13 +151,14 @@ public class MetricsToolsImpl implements MetricsTools {
             Ask user to provide the filters for labels, history and interval aggregation
             """)
     public String getHistoricalMetrics(
-            @ToolParam(description = "Instance identifier (e.g., 'ip:port', 'ip', or 'domain')") String instance,
-            @ToolParam(description = "Monitor type (e.g., 'linux', 'mysql', 'http')", required = true) String app,
-            @ToolParam(description = "Metrics name (e.g., 'target', 'cpu', 'memory')", required = true) String metrics,
-            @ToolParam(description = "Field Parameter (e.g., 'usage', 'used', 'available')", required = false) String fieldParameter,
-            @ToolParam(description = "Label filter for specific instances", required = false) String label,
-            @ToolParam(description = "Time range (e.g., '1h', '6h', '24h', '7d')", required = false) String history,
-            @ToolParam(description = "Whether to aggregate data with intervals", required = false) Boolean interval) {
+        @ToolParam(description = "Instance identifier (e.g., 'ip:port', 'ip', or 'domain')") String instance,
+        @ToolParam(description = "Monitor name for querying historical metrics") String monitorName,
+        @ToolParam(description = "Monitor type (e.g., 'linux', 'mysql', 'http')", required = true) String app,
+        @ToolParam(description = "Metrics name (e.g., 'target', 'cpu', 'memory')", required = true) String metrics,
+        @ToolParam(description = "Field Parameter (e.g., 'usage', 'used', 'available')", required = false) String fieldParameter,
+        @ToolParam(description = "Label filter for specific instances", required = false) String label,
+        @ToolParam(description = "Time range (e.g., '1h', '6h', '24h', '7d')", required = false) String history,
+        @ToolParam(description = "Whether to aggregate data with intervals", required = false) Boolean interval) {
 
         try {
             log.info("Getting historical metrics for monitor instance {} and metrics {}", instance, metrics);
@@ -169,8 +170,8 @@ public class MetricsToolsImpl implements MetricsTools {
                 interval = true;
             }
 
-            MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance,
-                    app, metrics, fieldParameter, history, interval);
+            MetricsHistoryData historyData = metricsDataService.getMetricHistoryData(instance, monitorName,
+                app, metrics, fieldParameter, history, interval);
 
             if (historyData == null) {
                 return String.format("No historical metrics data found for monitor %s and metrics '%s'", instance, metrics);
@@ -183,20 +184,20 @@ public class MetricsToolsImpl implements MetricsTools {
 
             if (historyData.getValues() != null && !historyData.getValues().isEmpty()) {
                 response.append("Field: ").append(historyData.getField() != null ? historyData.getField().getName() : "Unknown").append("\n");
-                
+
                 // Calculate total data points
                 int totalPoints = historyData.getValues().values().stream()
                         .mapToInt(List::size)
                         .sum();
                 response.append("Data Points: ").append(totalPoints).append("\n");
-                
+
                 // Show sample data points (first 10) from all value lists
                 int count = 0;
                 response.append("\nSample Data Points:\n");
                 for (Map.Entry<String, List<Value>> entry : historyData.getValues().entrySet()) {
                     String labelKey = entry.getKey();
                     List<Value> values = entry.getValue();
-                    
+
                     for (Value value : values) {
                         if (count >= 10) break;
                         response.append("Label: ").append(labelKey)
@@ -206,7 +207,7 @@ public class MetricsToolsImpl implements MetricsTools {
                     }
                     if (count >= 10) break;
                 }
-                
+
                 if (totalPoints > 10) {
                     response.append("... and ").append(totalPoints - 10).append(" more data points\n");
                 }

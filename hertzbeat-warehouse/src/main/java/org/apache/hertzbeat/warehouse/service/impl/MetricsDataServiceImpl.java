@@ -107,15 +107,15 @@ public class MetricsDataServiceImpl implements MetricsDataService {
     }
 
     @Override
-    public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String history, Boolean interval) {
+    public MetricsHistoryData getMetricHistoryData(String instance, String monitorName, String app, String metrics, String metric, String history, Boolean interval) {
         if (history == null) {
             history = "6h";
         }
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataReader.get().getHistoryMetricData(instance, app, metrics, metric, history);
+            instanceValuesMap = historyDataReader.get().getHistoryMetricData(instance, monitorName, app, metrics, metric, history);
         } else {
-            instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(instance, app, metrics, metric, history);
+            instanceValuesMap = historyDataReader.get().getHistoryIntervalMetricData(instance, monitorName, app, metrics, metric, history);
         }
         if (instanceValuesMap.containsKey("{}")) {
             instanceValuesMap.put("", instanceValuesMap.get("{}"));

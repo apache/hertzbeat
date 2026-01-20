@@ -42,13 +42,14 @@ public interface MetricsDataService {
     /**
      * Queries historical data for a specified metric for monitoring
      *
-     * @param instance Instance e.g. ip:port or ip or domain
-     * @param app      Monitor Type
-     * @param metrics  Metrics Name
-     * @param metric   Metrics Field Name
-     * @param history  Query Historical Time Period
-     * @param interval aggregate data calc
+     * @param instance    Instance e.g. ip:port or ip or domain
+     * @param monitorName Monitor Name (would be deprecated in the future)
+     * @param app         Monitor Type
+     * @param metrics     Metrics Name
+     * @param metric      Metrics Field Name
+     * @param history     Query Historical Time Period
+     * @param interval    aggregate data calc
      * @return metrics history data
      */
-    MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric, String history, Boolean interval);
+    MetricsHistoryData getMetricHistoryData(String instance, @Deprecated String monitorName, String app, String metrics, String metric, String history, Boolean interval);
 }

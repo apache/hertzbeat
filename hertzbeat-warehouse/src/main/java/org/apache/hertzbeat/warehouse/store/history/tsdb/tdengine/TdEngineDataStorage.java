@@ -356,7 +356,10 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
+    public Map<String, List<Value>> getHistoryMetricData(String instance, String monitorName, String app, String metrics, String metric, String history) {
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
+        }
         String table = getTable(app, metrics, instance);
         String selectSql = String.format(QUERY_HISTORY_SQL, metric, table, history);
 
@@ -408,13 +411,16 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
-    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String app, String metrics,
+    public Map<String, List<Value>> getHistoryIntervalMetricData(String instance, String monitorName, String app, String metrics,
                                                                  String metric, String history) {
         if (!serverAvailable) {
 
             INSTANCE_EXCEPTION_PRINT.run();
 
             return Collections.emptyMap();
+        }
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            app = CommonConstants.PROMETHEUS_APP_PREFIX + monitorName;
         }
         String table = getTable(app, metrics, instance);
         List<String> instances = new LinkedList<>();
