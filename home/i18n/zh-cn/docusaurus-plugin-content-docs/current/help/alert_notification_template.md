@@ -50,12 +50,12 @@ HertzBeat 通知模板基于 FreeMarker 语法，支持变量占位符、条件�
 ## 模板变量与语法说明
 
 - **全局变量**：
-  - `${status}`：告警状态（如告警、恢复等）
-  - `${groupKey}`：分组唯一标识
+  - ``status``：告警状态（如告警、恢复等）
+  - ``groupKey``：分组唯一标识
   - `${commonLabels.xxx}`、`${commonAnnotations.xxx}`：公共标签和注解，可通过 `xxx` 访问具体字段
 
 - **告警明细列表**：
-  - `${alerts}`：告警明细集合，通常配合 `<#list alerts as alert>` 进行遍历
+  - ``alerts``：告警明细集合，通常配合 `<#list alerts as alert>` 进行遍历
   - `${alert.labels.xxx}`、`${alert.annotations.xxx}`：单条告警的标签和注解
   - `${alert.content}`：告警内容
   - `${alert.triggerTimes}`：触发次数
@@ -88,7 +88,7 @@ HertzBeat 通知模板基于 FreeMarker 语法，支持变量占位符、条件�
       "labels": {
         <#if alert.labels?? && alert.labels?size gt 0>
         <#list alert.labels?keys as key>
-        "${key}": "${alert.labels[key]?json_string}"<#if key?has_next>,</#if>
+        "`key`": "${alert.labels[key]?json_string}"<#if key?has_next>,</#if>
         </#list>
         </#if>
       },
@@ -106,7 +106,7 @@ HertzBeat 通知模板基于 FreeMarker 语法，支持变量占位符、条件�
       <#if alert.annotations?? && alert.annotations?size gt 0>
       "annotations": {
         <#list alert.annotations?keys as key>
-        "${key}": "${alert.annotations[key]?json_string}"<#if key?has_next>,</#if>
+        "`key`": "${alert.annotations[key]?json_string}"<#if key?has_next>,</#if>
         </#list>
       }
       </#if>
@@ -117,7 +117,7 @@ HertzBeat 通知模板基于 FreeMarker 语法，支持变量占位符、条件�
   "commonAnnotations": {
     <#if commonAnnotations?? && commonAnnotations?size gt 0>
     <#list commonAnnotations?keys as key>
-    "${key}": "${commonAnnotations[key]?json_string}"<#if key?has_next>,</#if>
+    "`key`": "${commonAnnotations[key]?json_string}"<#if key?has_next>,</#if>
     </#list>
     </#if>
   }

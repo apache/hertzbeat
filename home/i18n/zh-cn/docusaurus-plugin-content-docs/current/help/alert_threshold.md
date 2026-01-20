@@ -1,12 +1,12 @@
 ---
-id: alert_threshold  
-title: 告警阈值规则配置  
+id: alert_threshold
+title: 告警阈值规则配置
 sidebar_label: 阈值规则
 ---
 
 :::tip
-告警阈值规则是 `HertzBeat` 的核心功能，用户可以通过阈值规则来配置告警的触发条件。  
-阈值规则支持实时阈值和计划阈值，可应用于**监控指标**和**日志数据**两种数据类型。实时阈值可以在监控数据采集时直接触发告警，计划阈值支持 PromQL、SQL 等表达式在指定时间段内计算触发告警。  
+告警阈值规则是 `HertzBeat` 的核心功能，用户可以通过阈值规则来配置告警的触发条件。
+阈值规则支持实时阈值和计划阈值，可应用于**监控指标**和**日志数据**两种数据类型。实时阈值可以在监控数据采集时直接触发告警，计划阈值支持 PromQL、SQL 等表达式在指定时间段内计算触发告警。
 支持可视化页面配置或更高灵活性的表达式规则配置，支持配置触发次数，告警级别，通知模板，关联指定监控等。通知模板已支持对象嵌套访问，可以更灵活地展示告警信息。
 :::
 
@@ -35,7 +35,7 @@ sidebar_label: 阈值规则
 - **关联监控**：应用此阈值规则到指定的监控对象(支持直接绑定和标签关联)，若未配置，则应用到所有符合此阈值类型规则的监控对象上。
 - **告警级别**：触发阈值的告警级别,从低到高依次为:警告-warning，严重-critical，紧急-emergency
 - **触发次数**：设置触发阈值多少次之后才会真正的触发告警
-- **通知模板**：告警触发后发送的通知信息模板,模板环境变量见页面提示，支持对象嵌套访问，例如：`${__instancename__} ${__metric__} 指标的值为 ${responseTime}，大于 50 触发告警`，也可以访问对象属性如 `${log.attributes.hostname}`
+- **通知模板**：告警触发后发送的通知信息模板,模板环境变量见页面提示，支持对象嵌套访问，例如：`__instancename__` 指标的值为 `responseTime`，大于 50 触发告警，也可以访问对象属性如 `${log.attributes.hostname}`
 - **附加标签**：给此阈值规则附加标签，当产生告警时，此标签也会附加到告警上。
 - **附加声明**：给此阈值规则附加声明信息(声明内容支持环境变量)，当产生告警时，此声明信息会被渲染并附加到告警上。
 - **启用告警**：此告警阈值配置开启生效或关闭
@@ -56,14 +56,14 @@ sidebar_label: 阈值规则
   - **图形界面**：可视化配置日志字段条件，支持 `log.level`、`log.message`、`log.attributes.*`、`log.resource.*` 等字段
   - **表达式规则**：使用自定义表达式，支持对象嵌套访问，例如：`equals(log.level,"ERROR")` 或 `contains(log.attributes.hostname,"server-01")`
 - **时间窗口**：设置日志聚合的时间窗口，单位为秒，最小60秒。在此时间窗口内的日志会被聚合处理
-- **告警级别**：触发阈值的告警级别,从低到高依次为:警告-warning，严重-critical，紧急-emergency  
+- **告警级别**：触发阈值的告警级别,从低到高依次为:警告-warning，严重-critical，紧急-emergency
 - **告警模式**：选择告警发送方式：
   - **窗口组模式（group）**：将时间窗口内满足条件的所有日志作为一个告警发送
   - **单条模式（individual）**：每条满足条件的日志都单独发送告警
 - **触发次数**：设置在时间窗口内满足条件的日志数量达到多少次后才触发告警
 - **通知模板**：告警触发后发送的通知信息模板，支持对象嵌套访问：
-  - 基本变量：`${__instancename__}`、`${__alertname__}` 等
-  - 日志字段：`${log.level}`、`${log.message}`、`${log.timestamp}` 等  
+  - 基本变量：``__instancename__``、``__alertname__`` 等
+  - 日志字段：`${log.level}`、`${log.message}`、`${log.timestamp}` 等
   - 嵌套属性：`${log.attributes.hostname}`、`${log.resource.service.name}` 等
 - **附加标签**：给此阈值规则附加标签，当产生告警时，此标签也会附加到告警上
 - **附加声明**：给此阈值规则附加声明信息(声明内容支持环境变量)，当产生告警时，此声明信息会被渲染并附加到告警上
@@ -88,7 +88,7 @@ sidebar_label: 阈值规则
 
     ```text
         cpu_usage
-        memory{\__field\__="field1"}
+        memory{__field__="field1"}
     ```
 
 2. **比较表达式**: 将值与阈值进行比较
@@ -119,15 +119,15 @@ sidebar_label: 阈值规则
 
 ```sql
 -- 查询错误日志数量
-SELECT COUNT(*) as error_count 
-FROM hertzbeat_logs 
-WHERE level = 'ERROR' 
+SELECT COUNT(*) as error_count
+FROM hertzbeat_logs
+WHERE level = 'ERROR'
 AND timestamp >= NOW() - INTERVAL 5 MINUTE
 
 -- 按服务分组统计错误数
 SELECT service_name, COUNT(*) as error_count
-FROM hertzbeat_logs 
-WHERE level = 'ERROR' 
+FROM hertzbeat_logs
+WHERE level = 'ERROR'
 GROUP BY service_name
 HAVING COUNT(*) > 10
 ```
@@ -138,7 +138,7 @@ HAVING COUNT(*) > 10
 
 #### 监控指标计划阈值
 
-针对监控指标配置计划阈值，例如：针对一组 CPU 指标，设定表达式 `cpu_usage{instance="server1"} > 80`，当满足该表达式时触发告警。
+针对监控指标配置计划阈值，例如：针对一组 CPU 指标，设定表达式 `cpu_usage{instance="server1"}` > 80`，当满足该表达式时触发告警。
 
 ![threshold](/img/docs/help/alert-threshold-2.png)
 
@@ -175,7 +175,7 @@ HAVING COUNT(*) > 10
 - **日志查询表达式**：使用标准 SQL 语法查询日志数据，支持聚合函数、分组、过滤等操作。例如：
 
 ```sql
-SELECT COUNT(*) as error_count FROM hertzbeat_logs 
+SELECT COUNT(*) as error_count FROM hertzbeat_logs
 WHERE level = 'ERROR' AND timestamp >= NOW() - INTERVAL 5 MINUTE
 ```
 
@@ -186,8 +186,8 @@ WHERE level = 'ERROR' AND timestamp >= NOW() - INTERVAL 5 MINUTE
   - **单条模式（individual）**：查询结果中的每行数据都单独发送告警
 - **触发次数**：查询结果连续满足告警条件的次数，超过该次数后才实际触发告警
 - **通知模板**：当告警被触发后发送的通知内容模板，支持访问查询结果中的字段，例如：
-  - 查询结果字段：`${error_count}`、`${service_name}` 等
-  - 基本变量：`${__alertname__}`、`${__severity__}` 等
+  - 查询结果字段：``error_count``、``service_name`` 等
+  - 基本变量：``__alertname__``、``__severity__`` 等
 - **附加标签**：给此阈值规则附加标签，当产生告警时，此标签也会附加到告警上
 - **附加声明**：给此阈值规则附加声明信息(声明内容支持环境变量)，当产生告警时，此声明信息会被渲染并附加到告警上
 - **启用告警**：用于控制该阈值规则是否启用
