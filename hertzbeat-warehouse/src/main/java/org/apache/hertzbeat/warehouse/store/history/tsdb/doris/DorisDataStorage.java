@@ -58,7 +58,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Apache Doris data storage.
- * Uses MySQL protocol for communication with Doris FE.
+ * Supports two write modes:
+ * - jdbc: Traditional JDBC batch insert (default, suitable for small to medium scale)
+ * - stream: HTTP Stream Load API (high throughput, suitable for large scale)
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.store.doris", name = "enabled", havingValue = "true")
@@ -66,9 +68,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DorisDataStorage extends AbstractHistoryDataStorage {
 
     private static final String DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
-    // Todo: 动态表生成
     private static final String DATABASE_NAME = "hertzbeat";
     private static final String TABLE_NAME = "hzb_history";
+    private static final String WRITE_MODE_JDBC = "jdbc";
+    private static final String WRITE_MODE_STREAM = "stream";
 
     /**
      * Metric type constants
@@ -88,9 +91,13 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
 
     private final BlockingQueue<DorisMetricRow> metricsBufferQueue;
     private final DorisProperties.WriteConfig writeConfig;
+    private String writeMode;
     private final AtomicBoolean draining = new AtomicBoolean(false);
     private volatile boolean flushThreadRunning = true;
     private Thread flushThread;
+
+    // Stream Load writer (only used when writeMode is "stream")
+    private DorisStreamLoadWriter streamLoadWriter;
 
     public DorisDataStorage(DorisProperties dorisProperties) {
         if (dorisProperties == null) {
@@ -99,18 +106,23 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         }
         this.properties = dorisProperties;
         this.writeConfig = dorisProperties.writeConfig();
+        this.writeMode = writeConfig.writeMode();
         this.metricsBufferQueue = new LinkedBlockingQueue<>(writeConfig.batchSize() * 10);
 
         serverAvailable = initDorisConnection();
         if (serverAvailable) {
-            initTable();
+            // Initialize Stream Load writer if using stream mode
+            if (WRITE_MODE_STREAM.equals(writeMode)) {
+                initStreamLoadWriter();
+            }
             startFlushThread();
         }
+
+        log.info("[Doris] Initialized with write mode: {}", writeMode);
     }
 
     /**
-     * Initialize Doris connection using HikariCP.
-     * First connects without database to create it, then reconnects with database specified.
+     * Initialize Doris connection and table in one go.
      */
     private boolean initDorisConnection() {
         try {
@@ -119,119 +131,70 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             DorisProperties.PoolConfig poolConfig = properties.poolConfig();
             String baseUrl = properties.url();
 
-            // Step 1: Connect without database to create it if needed
-            String urlWithoutDb = ensureUrlHasNoDatabase(baseUrl);
-
-            HikariConfig tempConfig = new HikariConfig();
-            tempConfig.setJdbcUrl(urlWithoutDb);
-            tempConfig.setUsername(properties.username());
-            tempConfig.setPassword(properties.password());
-            tempConfig.setDriverClassName(DRIVER_NAME);
-            tempConfig.setMinimumIdle(1);
-            tempConfig.setMaximumPoolSize(1);
-            tempConfig.setConnectionTestQuery("SELECT 1");
-            tempConfig.setPoolName("Doris-HikariCP-Temp");
-
-            HikariDataSource tempDataSource = new HikariDataSource(tempConfig);
-
-            try (Connection conn = tempDataSource.getConnection();
-                 Statement stmt = conn.createStatement()) {
+            // Step 1: First connect without database to create it if needed
+            try (Connection initConn = java.sql.DriverManager.getConnection(
+                    baseUrl, properties.username(), properties.password());
+                 Statement stmt = initConn.createStatement()) {
+                // Create database if not exists
                 stmt.execute("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME);
-                log.info("[Doris] Database {} ensured.", DATABASE_NAME);
-            } catch (SQLException e) {
-                log.error("[Doris] Failed to create database: {}", e.getMessage(), e);
-                tempDataSource.close();
-                return false;
+                log.info("[Doris] Database {} ensured", DATABASE_NAME);
             }
-            tempDataSource.close();
 
-            // Step 2: Create connection pool with database specified
-            String urlWithDb = ensureUrlHasDatabase(baseUrl, DATABASE_NAME);
+            // Step 2: Build URL with database
+            String urlWithDb = baseUrl.endsWith("/") ? baseUrl + DATABASE_NAME : baseUrl + "/" + DATABASE_NAME;
 
+            // Step 3: Create connection pool with database
             HikariConfig config = new HikariConfig();
             config.setJdbcUrl(urlWithDb);
             config.setUsername(properties.username());
             config.setPassword(properties.password());
             config.setDriverClassName(DRIVER_NAME);
-
             config.setMinimumIdle(poolConfig.minimumIdle());
             config.setMaximumPoolSize(poolConfig.maximumPoolSize());
             config.setConnectionTimeout(poolConfig.connectionTimeout());
             config.setMaxLifetime(poolConfig.maxLifetime());
             config.setIdleTimeout(poolConfig.idleTimeout());
-
             config.setConnectionTestQuery("SELECT 1");
             config.setPoolName("Doris-HikariCP");
 
             this.dataSource = new HikariDataSource(config);
 
-            // Test connection
-            try (Connection conn = dataSource.getConnection()) {
-                log.info("[Doris] Connection pool initialized successfully with database: {}", DATABASE_NAME);
-                return true;
+            // Step 4: Create table
+            try (Connection conn = dataSource.getConnection();
+                 Statement stmt = conn.createStatement()) {
+                stmt.execute(buildCreateTableSql());
+                log.info("[Doris] Table {} ensured", TABLE_NAME);
             }
+
+            log.info("[Doris] Initialized: {}", urlWithDb);
+            return true;
         } catch (ClassNotFoundException e) {
-            log.error("[Doris] MySQL JDBC driver not found. Please add mysql-connector-j dependency.", e);
+            log.error("[Doris] MySQL JDBC driver not found.", e);
         } catch (Exception e) {
-            log.error("[Doris] Failed to initialize connection pool: {}", e.getMessage(), e);
+            log.error("[Doris] Failed to initialize: {}", e.getMessage(), e);
         }
         return false;
     }
 
     /**
-     * Ensure URL has no database specified (remove trailing /db_name)
+     * Initialize Stream Load writer
      */
-    private String ensureUrlHasNoDatabase(String url) {
-        if (url.endsWith("/")) {
-            return url.substring(0, url.length() - 1);
-        }
-        // Check if URL contains a database path (e.g., jdbc:mysql://host:port/database)
-        int lastSlashIndex = url.lastIndexOf('/');
-        if (lastSlashIndex > 8 && lastSlashIndex == url.indexOf('/', url.indexOf("://") + 3)) {
-            // This is a port slash like :9030/, not a database path
-            return url;
-        }
-        // If there's content after the last slash that looks like a database name, remove it
-        String[] parts = url.split("/");
-        if (parts.length > 3) {
-            // Reconstruct URL without the database part
-            return String.join("/", java.util.Arrays.copyOf(parts, 3));
-        }
-        return url;
-    }
-
-    /**
-     * Ensure URL has database specified
-     */
-    private String ensureUrlHasDatabase(String url, String dbName) {
-        String cleanUrl = ensureUrlHasNoDatabase(url);
-        if (!cleanUrl.endsWith("/")) {
-            cleanUrl += "/";
-        }
-        return cleanUrl + dbName;
-    }
-
-    /**
-     * Initialize table structure
-     */
-    private void initTable() {
-        try (Connection conn = dataSource.getConnection();
-                Statement stmt = conn.createStatement()) {
-
-            // Check if table exists (database is already set from JDBC URL)
-            boolean tableExists = checkTableExists(conn, TABLE_NAME);
-
-            if (!tableExists) {
-                String createTableSql = buildCreateTableSql();
-                stmt.execute(createTableSql);
-                log.info("[Doris] Table {} created successfully.", TABLE_NAME);
+    private void initStreamLoadWriter() {
+        try {
+            this.streamLoadWriter = new DorisStreamLoadWriter(
+                    DATABASE_NAME, TABLE_NAME, properties.url(),
+                    properties.username(), properties.password(),
+                    writeConfig.streamLoadConfig()
+            );
+            if (streamLoadWriter.isAvailable()) {
+                log.info("[Doris] Stream Load writer initialized.");
             } else {
-                log.info("[Doris] Table {} already exists.", TABLE_NAME);
+                log.warn("[Doris] Stream Load writer failed, fallback to JDBC.");
+                this.writeMode = WRITE_MODE_JDBC;
             }
-
-        } catch (SQLException e) {
-            log.error("[Doris] Failed to initialize table: {}", e.getMessage(), e);
-            serverAvailable = false;
+        } catch (Exception e) {
+            log.error("[Doris] Stream Load init failed: {}", e.getMessage(), e);
+            this.writeMode = WRITE_MODE_JDBC;
         }
     }
 
@@ -284,17 +247,6 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * Check if table exists
-     */
-    private boolean checkTableExists(Connection conn, String tableName) throws SQLException {
-        String sql = "SHOW TABLES LIKE '" + tableName + "'";
-        try (Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
-            return rs.next();
-        }
-    }
-
-    /**
      * Start the background flush thread
      */
     private void startFlushThread() {
@@ -331,6 +283,13 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         log.info("[Doris] Started metrics flush thread with interval {} seconds", writeConfig.flushInterval());
     }
 
+    private String normalizeApp(String app) {
+        if (app != null && app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
+            return CommonConstants.PROMETHEUS;
+        }
+        return app;
+    }
+
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
@@ -343,7 +302,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         }
 
         String instance = metricsData.getInstance();
-        String app = metricsData.getApp();
+        String app = normalizeApp(metricsData.getApp());
         String metrics = metricsData.getMetrics();
         long timestamp = metricsData.getTime();
 
@@ -483,8 +442,30 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
 
     /**
      * Actually save data to Doris
+     * Uses either JDBC batch insert or Stream Load based on writeMode configuration
      */
     private void doSaveData(List<DorisMetricRow> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+
+        if (WRITE_MODE_STREAM.equals(writeMode) && streamLoadWriter != null) {
+            // Use Stream Load for high-throughput writes
+            boolean success = streamLoadWriter.write(rows);
+            if (!success) {
+                log.warn("[Doris] Stream Load failed, falling back to JDBC for this batch");
+                doSaveDataJdbc(rows);
+            }
+        } else {
+            // Use JDBC batch insert (default)
+            doSaveDataJdbc(rows);
+        }
+    }
+
+    /**
+     * Save data using JDBC batch insert
+     */
+    private void doSaveDataJdbc(List<DorisMetricRow> rows) {
         if (rows == null || rows.isEmpty()) {
             return;
         }
@@ -816,21 +797,12 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             dataSource.close();
             log.info("[Doris] Connection pool closed.");
         }
+
+        // Close Stream Load writer
+        if (streamLoadWriter != null) {
+            streamLoadWriter.close();
+            log.info("[Doris] Stream Load writer closed.");
+        }
     }
 
-    /**
-     * Internal class to represent a metric row
-     */
-    private static class DorisMetricRow {
-        String instance;
-        String app;
-        String metrics;
-        String metric;
-        byte metricType;
-        Integer int32Value;
-        Double doubleValue;
-        String strValue;
-        Timestamp recordTime;
-        String labels;
-    }
 }

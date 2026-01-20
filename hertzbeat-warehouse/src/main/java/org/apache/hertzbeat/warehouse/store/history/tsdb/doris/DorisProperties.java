@@ -107,17 +107,58 @@ public record DorisProperties(
      * Write configuration
      */
     public record WriteConfig(
-            // Batch write size
+            // Write mode: jdbc (batch insert) or stream (HTTP stream load)
+            @DefaultValue("jdbc") String writeMode,
+            // Batch write size (for jdbc mode)
             @DefaultValue("1000") int batchSize,
-            // Batch write flush interval in seconds
-            @DefaultValue("5") int flushInterval) {
+            // Batch write flush interval in seconds (for jdbc mode)
+            @DefaultValue("5") int flushInterval,
+            // Stream load configuration (for stream mode)
+            StreamLoadConfig streamLoadConfig) {
         public WriteConfig {
+            if (!"jdbc".equals(writeMode) && !"stream".equals(writeMode)) {
+                writeMode = "jdbc";
+            }
             if (batchSize <= 0) {
                 batchSize = 1000;
             }
             if (flushInterval <= 0) {
                 flushInterval = 5;
             }
+            if (streamLoadConfig == null) {
+                streamLoadConfig = StreamLoadConfig.createDefault();
+            }
+        }
+    }
+
+    /**
+     * Stream Load configuration for HTTP-based streaming writes
+     */
+    public record StreamLoadConfig(
+            // Doris FE HTTP port for Stream Load API
+            @DefaultValue(":8030") String httpPort,
+            // Stream load timeout in seconds
+            @DefaultValue("60") int timeout,
+            // Max batch size in bytes for stream load
+            @DefaultValue("10485760") int maxBytesPerBatch,
+            // Enable data compression for stream load
+            @DefaultValue("true") boolean enableCompression,
+            // Load to single tablet (better for small batches)
+            @DefaultValue("true") boolean loadToSingleTablet) {
+        public StreamLoadConfig {
+            if (timeout <= 0) {
+                timeout = 60;
+            }
+            if (maxBytesPerBatch <= 0) {
+                maxBytesPerBatch = 10485760; // 10MB
+            }
+        }
+
+        /**
+         * Factory method to create default StreamLoadConfig
+         */
+        public static StreamLoadConfig createDefault() {
+            return new StreamLoadConfig(":8030", 60, 10485760, true, false);
         }
     }
 
@@ -130,7 +171,7 @@ public record DorisProperties(
             poolConfig = new PoolConfig(5, 20, 30000, 0, 600000);
         }
         if (writeConfig == null) {
-            writeConfig = new WriteConfig(1000, 5);
+            writeConfig = new WriteConfig("jdbc", 1000, 5, StreamLoadConfig.createDefault());
         }
     }
 }
