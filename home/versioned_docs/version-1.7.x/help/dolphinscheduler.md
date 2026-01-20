@@ -13,6 +13,7 @@ keywords: [ Open Source Monitoring System, Monitor Apache DolphinScheduler ]
 
 You need to create a token in Apache DolphinScheduler.
 
+<!-- markdown-link-check-disable -->
 Please refer to [Open API](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/guide/api/open-api) to create a new token.The main steps are as follows
 
 1. Log in to the Apache DolphinScheduler system, click "Security", then click "Token manage" on the left, and click "Create token" to create a token.

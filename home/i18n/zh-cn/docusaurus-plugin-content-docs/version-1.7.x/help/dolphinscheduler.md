@@ -13,6 +13,7 @@ keywords: [ 开源监控系统, 监控 Apache DolphinScheduler ]
 
 您需在 Apache DolphinScheduler 中创建令牌。
 
+<!-- markdown-link-check-disable -->
 可参考 [API 调用](https://dolphinscheduler.apache.org/zh-cn/docs/3.2.2/guide/api/open-api) 创建一个新令牌，具体步骤如下：
 
 1. 登录 Apache DolphinScheduler 系统，点击 "安全中心"，再点击左侧的 "令牌管理"，点击 "令牌管理" 创建令牌。
