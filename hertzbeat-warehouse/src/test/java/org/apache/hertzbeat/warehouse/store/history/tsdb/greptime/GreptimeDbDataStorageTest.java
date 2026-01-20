@@ -82,7 +82,7 @@ class GreptimeDbDataStorageTest {
 
     @Mock
     private GreptimeDB greptimeDb;
-    
+
     private GreptimeDbDataStorage greptimeDbDataStorage;
 
     @BeforeEach
@@ -120,14 +120,14 @@ class GreptimeDbDataStorageTest {
     void testSaveData() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
-            
+
             // Mock the write result
             @SuppressWarnings("unchecked")
             Result<WriteOk, Err> mockResult = mock(Result.class);
             when(mockResult.isOk()).thenReturn(true);
             CompletableFuture<Result<WriteOk, Err>> mockFuture = CompletableFuture.completedFuture(mockResult);
             when(greptimeDb.write(any(Table.class))).thenReturn(mockFuture);
-            
+
             greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
 
             // Test with valid metrics data
@@ -153,14 +153,14 @@ class GreptimeDbDataStorageTest {
     @Test
     void testGetHistoryMetricData() {
         greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
-        
+
         PromQlQueryContent content = createMockPromQlQueryContent();
         ResponseEntity<PromQlQueryContent> responseEntity = new ResponseEntity<>(content, HttpStatus.OK);
 
         when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(PromQlQueryContent.class)))
                 .thenReturn(responseEntity);
 
-        Map<String, List<Value>> result = greptimeDbDataStorage.getHistoryMetricData("127.0.0.1:8080", "test_app", "test_metrics", "test_metric", "6h");
+        Map<String, List<Value>> result = greptimeDbDataStorage.getHistoryMetricData("127.0.0.1:8080", "test_monitor", "test_app", "test_metrics", "test_metric", "6h");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -172,14 +172,14 @@ class GreptimeDbDataStorageTest {
     void testSaveLogData() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
-            
+
             // Mock the write result
             @SuppressWarnings("unchecked")
             Result<WriteOk, Err> mockResult = mock(Result.class);
             when(mockResult.isOk()).thenReturn(true);
             CompletableFuture<Result<WriteOk, Err>> mockFuture = CompletableFuture.completedFuture(mockResult);
             when(greptimeDb.write(any(Table.class))).thenReturn(mockFuture);
-            
+
             greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
 
             LogEntry logEntry = createMockLogEntry();
@@ -196,7 +196,7 @@ class GreptimeDbDataStorageTest {
             greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
             List<Map<String, Object>> mockLogRows = createMockLogRows();
             when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(mockLogRows);
-            
+
             // Test basic query
             List<LogEntry> result = greptimeDbDataStorage.queryLogsByMultipleConditions(
                     System.currentTimeMillis() - 3600000, System.currentTimeMillis(), "trace123", "span456", 1, "INFO"
@@ -212,21 +212,21 @@ class GreptimeDbDataStorageTest {
                     System.currentTimeMillis() - 3600000, System.currentTimeMillis(), null, null, null, null
             );
             assertEquals(5L, count);
-            
+
             // Test count query with executor error
             when(greptimeSqlQueryExecutor.execute(anyString())).thenThrow(new RuntimeException("Database error"));
             long errorCount = greptimeDbDataStorage.countLogsByMultipleConditions(System.currentTimeMillis() - 3600000, System.currentTimeMillis(), null, null, null, null);
             assertEquals(0L, errorCount);
         }
     }
-    
+
     @Test
     void testQueryLogsWithPagination() {
         try (MockedStatic<GreptimeDB> mockedStatic = mockStatic(GreptimeDB.class)) {
             mockedStatic.when(() -> GreptimeDB.create(any())).thenReturn(greptimeDb);
             greptimeDbDataStorage = new GreptimeDbDataStorage(greptimeProperties, restTemplate, greptimeSqlQueryExecutor);
             when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(createMockLogRows());
-            
+
             ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
 
             greptimeDbDataStorage.queryLogsByMultipleConditionsWithPagination(
@@ -236,7 +236,7 @@ class GreptimeDbDataStorageTest {
 
             verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
             String capturedSql = sqlCaptor.getValue();
-            
+
             assertTrue(capturedSql.toLowerCase().contains("limit 10"));
             assertTrue(capturedSql.toLowerCase().contains("offset 1"));
         }
@@ -299,7 +299,7 @@ class GreptimeDbDataStorageTest {
         lenient().when(mockMetricsData.getCode()).thenReturn(CollectRep.Code.SUCCESS);
         lenient().when(mockMetricsData.getMetrics()).thenReturn("cpu");
         lenient().when(mockMetricsData.getId()).thenReturn(1L);
-        
+
         if (!hasValues) {
             lenient().when(mockMetricsData.getValues()).thenReturn(Collections.emptyList());
             return mockMetricsData;
@@ -311,36 +311,36 @@ class GreptimeDbDataStorageTest {
         lenient().when(mockField1.getName()).thenReturn("usage");
         lenient().when(mockField1.getLabel()).thenReturn(false);
         lenient().when(mockField1.getType()).thenReturn((int) CommonConstants.TYPE_NUMBER);
-        
+
         CollectRep.Field mockField2 = mock(CollectRep.Field.class);
         lenient().when(mockField2.getName()).thenReturn("instance");
         lenient().when(mockField2.getLabel()).thenReturn(true);
         lenient().when(mockField2.getType()).thenReturn((int) CommonConstants.TYPE_STRING);
-        
+
         lenient().when(mockMetricsData.getFields()).thenReturn(List.of(mockField1, mockField2));
-        
+
         // Create ValueRow mock
         CollectRep.ValueRow mockValueRow = mock(CollectRep.ValueRow.class);
         lenient().when(mockValueRow.getColumnsList()).thenReturn(List.of("server1", "85.5"));
-        
+
         lenient().when(mockMetricsData.getValues()).thenReturn(List.of(mockValueRow));
 
         // Mock RowWrapper for readRow()
         RowWrapper mockRowWrapper = mock(RowWrapper.class);
         lenient().when(mockRowWrapper.hasNextRow()).thenReturn(true, false);
         lenient().when(mockRowWrapper.nextRow()).thenReturn(mockRowWrapper);
-        
+
         // Mock cell stream
         ArrowCell mockCell1 = mock(ArrowCell.class);
         lenient().when(mockCell1.getValue()).thenReturn("85.5");
         lenient().when(mockCell1.getMetadataAsBoolean(any())).thenReturn(false);
         lenient().when(mockCell1.getMetadataAsByte(any())).thenReturn(CommonConstants.TYPE_NUMBER);
-        
+
         ArrowCell mockCell2 = mock(ArrowCell.class);
         lenient().when(mockCell2.getValue()).thenReturn("server1");
         lenient().when(mockCell2.getMetadataAsBoolean(any())).thenReturn(true);
         lenient().when(mockCell2.getMetadataAsByte(any())).thenReturn(CommonConstants.TYPE_STRING);
-        
+
         lenient().when(mockRowWrapper.cellStream()).thenReturn(java.util.stream.Stream.of(mockCell1, mockCell2));
         lenient().when(mockMetricsData.readRow()).thenReturn(mockRowWrapper);
 
@@ -384,7 +384,7 @@ class GreptimeDbDataStorageTest {
         row.put("body", "\"Test log message\"");
         row.put("trace_id", "trace123");
         row.put("span_id", "span456");
-        
+
         return List.of(row);
     }
 }

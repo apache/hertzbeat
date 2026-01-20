@@ -104,12 +104,12 @@ public class MetricsDataServiceTest {
         Boolean intervalFalse = false;
         Boolean intervalTrue = true;
 
-        when(historyDataReader.getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, intervalFalse));
-        verify(historyDataReader, times(1)).getHistoryMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history));
+        when(historyDataReader.getHistoryMetricData(eq(instance), eq("test_monitor"), eq(app), eq(metrics), eq(metric), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, "test_monitor", app, metrics, metric, history, intervalFalse));
+        verify(historyDataReader, times(1)).getHistoryMetricData(eq(instance), eq("test_monitor"), eq(app), eq(metrics), eq(metric), eq(history));
 
-        when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history))).thenReturn(new HashMap<>());
-        assertNotNull(metricsDataService.getMetricHistoryData(instance, app, metrics, metric, history, intervalTrue));
-        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history));
+        when(historyDataReader.getHistoryIntervalMetricData(eq(instance), eq("test_monitor"), eq(app), eq(metrics), eq(metric), eq(history))).thenReturn(new HashMap<>());
+        assertNotNull(metricsDataService.getMetricHistoryData(instance, "test_monitor", app, metrics, metric, history, intervalTrue));
+        verify(historyDataReader, times(1)).getHistoryIntervalMetricData(eq(instance), eq("test_monitor"), eq(app), eq(metrics), eq(metric), eq(history));
     }
 }

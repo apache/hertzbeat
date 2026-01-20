@@ -117,6 +117,7 @@ class MetricsDataControllerTest {
     @Test
     void getMetricHistoryData() throws Exception {
         final String instance = "127.0.0.1:8081";
+        final String monitorName = "test_monitor";
         final String app = "linux";
         final String metrics = "cpu";
         final String metric = "usage";
@@ -125,8 +126,8 @@ class MetricsDataControllerTest {
         final String label = "disk2";
         final String history = "6h";
         final Boolean interval = false;
-        final String getUrl = "/api/monitor/" + instance + "/metric/" + metricFull;
-        final String getUrlFail = "/api/monitor/" + instance + "/metric/" + metricFullFail;
+        final String getUrl = "/api/monitor/" + instance + "/metric/" + monitorName + "/" + metricFull;
+        final String getUrlFail = "/api/monitor/" + instance + "/metric/" + monitorName + "/" + metricFullFail;
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("instance", instance);
@@ -156,7 +157,7 @@ class MetricsDataControllerTest {
                 .field(Field.builder().name(metric).type(CommonConstants.TYPE_NUMBER).build())
                 .build();
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(true);
-        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(app), eq(metrics), eq(metric), eq(history), eq(interval)))
+        lenient().when(metricsDataService.getMetricHistoryData(eq(instance), eq(monitorName), eq(app), eq(metrics), eq(metric), eq(history), eq(interval)))
                 .thenReturn(metricsHistoryData);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
