@@ -345,9 +345,14 @@ export class AlertSettingComponent implements OnInit {
       },
       error: err => {
         console.warn('Failed to load datasource status:', err);
-        // If failed to load, still enable periodic alerts
-        this.isPeriodicAlertEnabled = true;
-        this.datasourceStatus.loaded = true;
+        // If failed to load, disable periodic alerts and use a safe fallback status
+        this.isPeriodicAlertEnabled = false;
+        this.datasourceStatus = {
+          hasPromqlExecutor: false,
+          hasSqlExecutor: false,
+          loaded: true
+        };
+        this.notifySvc.warning('Failed to load datasource status. Periodic alerts are disabled.', '');
       }
     });
   }
