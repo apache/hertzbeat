@@ -50,6 +50,7 @@
           "type": "category",
           "label": "change-db",
           "items": [
+            "start/h2-database",
             "start/victoria-metrics-init",
             "start/iotdb-init",
             "start/influxdb-init",
