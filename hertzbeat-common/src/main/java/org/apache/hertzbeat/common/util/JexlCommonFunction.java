@@ -113,7 +113,7 @@ public class JexlCommonFunction {
                 return matcher.group(groupIndex);
             }
         } catch (Exception e) {
-            // 正则表达式错误时返回null
+            // Return null when regular expression is incorrect
         }
         return null;
     }
