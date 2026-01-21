@@ -209,13 +209,13 @@ class GreptimeDbDataStorageTest {
             List<Map<String, Object>> mockCountResult = List.of(Map.of("count", 5L));
             when(greptimeSqlQueryExecutor.execute(anyString())).thenReturn(mockCountResult);
             long count = greptimeDbDataStorage.countLogsByMultipleConditions(
-                    System.currentTimeMillis() - 3600000, System.currentTimeMillis(), null, null, null, null
+                    System.currentTimeMillis() - 3600000, System.currentTimeMillis(), null, null, null, null, null
             );
             assertEquals(5L, count);
 
             // Test count query with executor error
             when(greptimeSqlQueryExecutor.execute(anyString())).thenThrow(new RuntimeException("Database error"));
-            long errorCount = greptimeDbDataStorage.countLogsByMultipleConditions(System.currentTimeMillis() - 3600000, System.currentTimeMillis(), null, null, null, null);
+            long errorCount = greptimeDbDataStorage.countLogsByMultipleConditions(System.currentTimeMillis() - 3600000, System.currentTimeMillis(), null, null, null, null, null);
             assertEquals(0L, errorCount);
         }
     }
@@ -231,7 +231,7 @@ class GreptimeDbDataStorageTest {
 
             greptimeDbDataStorage.queryLogsByMultipleConditionsWithPagination(
                     System.currentTimeMillis() - 3600000, System.currentTimeMillis(),
-                    null, null, null, null, 1, 10
+                    null, null, null, null, null, 1, 10
             );
 
             verify(greptimeSqlQueryExecutor).execute(sqlCaptor.capture());
