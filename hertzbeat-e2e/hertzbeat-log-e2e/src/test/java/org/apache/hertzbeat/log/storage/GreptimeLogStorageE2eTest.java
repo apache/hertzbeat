@@ -161,6 +161,6 @@ public class GreptimeLogStorageE2eTest {
         long startTime = endTime - Duration.ofMinutes(5).toMillis(); // Look back 5 minutes
         
         return greptimeDbDataStorage.queryLogsByMultipleConditions(
-                startTime, endTime, null, null, null, null);
+                startTime, endTime, null, null, null, null, null);
     }
 }
