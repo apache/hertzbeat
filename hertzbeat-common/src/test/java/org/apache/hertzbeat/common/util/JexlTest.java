@@ -502,6 +502,19 @@ public class JexlTest {
     }
 
     @Test
+    void testGroupFunctionWithRegexWithGroupIndex() {
+        Map<String, Object> functions = Maps.newLinkedHashMap();
+        functions.put("sys", new JexlCommonFunction());
+        jexlBuilder.namespaces(functions);
+        JexlEngine jexl = jexlBuilder.create();
+        JexlContext context = new MapContext();
+        context.set("x", "akka.tcp://flink@hdp-hadoop3:45534/user/rpc/taskmanager_0");
+        JexlExpression e = jexl.createExpression("sys:group(x, '@([^:]+):',1)");
+        Object o = e.evaluate(context);
+        Assertions.assertEquals("hdp-hadoop3", o);
+    }
+
+    @Test
     void testMatchesFunctionWithRegexAndSpace() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
         functions.put("sys", new JexlCommonFunction());

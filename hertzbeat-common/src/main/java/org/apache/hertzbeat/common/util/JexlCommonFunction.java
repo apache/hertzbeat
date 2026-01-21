@@ -19,11 +19,12 @@
 
 package org.apache.hertzbeat.common.util;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * the common function for jexl str equals, match, contains, etc.
- * sys:now() 
+ * sys:now()
  */
 public class JexlCommonFunction {
 
@@ -94,5 +95,27 @@ public class JexlCommonFunction {
         }
         return Pattern.compile(regex).matcher(str).matches();
     }
-    
+
+    /**
+     * Extracting groups from strings using regular expressions
+     * @param str Input string
+     * @param regex regular expression pattern
+     * @param groupIndex The group index to be extracted (0 for the entire match, 1 for the first group)
+     * @ return The extracted string does not match and returns null
+     */
+    public String group(String str, String regex, int groupIndex) {
+        if (str == null || regex == null) {
+            return null;
+        }
+        try {
+            Matcher matcher = Pattern.compile(regex).matcher(str);
+            if (matcher.find() && groupIndex <= matcher.groupCount()) {
+                return matcher.group(groupIndex);
+            }
+        } catch (Exception e) {
+            // 正则表达式错误时返回null
+        }
+        return null;
+    }
+
 }
