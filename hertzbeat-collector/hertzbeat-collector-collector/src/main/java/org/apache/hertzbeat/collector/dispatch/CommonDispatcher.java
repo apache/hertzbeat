@@ -202,13 +202,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
                     collectorIdentity, unitConvertList);
             jobRequestQueue.addJob(metricsCollect);
-            if (metrics.getPrometheus() != null) {
-                metricsTimeoutMonitorMap.put(String.valueOf(job.getId()),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
-            } else {
-                metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
-                        new MetricsTime(System.currentTimeMillis(), metrics, timeout));
-            }
+            metricsTimeoutMonitorMap.put(job.getId() + "-" + metrics.getName(),
+                    new MetricsTime(System.currentTimeMillis(), metrics, timeout));
         });
     }
 
@@ -345,7 +340,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     public void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList) {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
-        MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
+        MetricsTime metricsTime = metricsTimeoutMonitorMap.remove(job.getId() + "-" + metrics.getName());
         if (metricsTime != null && metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
             // For a list, we consider it a success if at least one item is successful.
