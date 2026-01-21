@@ -149,8 +149,21 @@
 
     .alert-type-card {
       width: 200px;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
       text-align: center;
       cursor: pointer;
+
+      ::ng-deep .ant-card-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        padding-top: 30px;
+      }
 
       i {
         font-size: 24px;
@@ -367,5 +380,46 @@
   .scroll-container {
     height: 200px;
     overflow-y: auto;
+  }
+
+  .alert-type-card-disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+
+    &:hover {
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  }
+
+  .disabled-corner-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(45deg, transparent 50%, #faad14 50%);
+    pointer-events: none;
+    z-index: 10;
+
+    i {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      color: #fff;
+
+      svg {
+        width: 22px;
+        height: 22px;
+      }
+    }
+  }
+
+  .datasource-tip {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #f6f6f6;
+    border-radius: 4px;
+    line-height: 1.5;
   }
 }

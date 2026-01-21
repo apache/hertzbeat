@@ -16,7 +16,7 @@ sidebar_label: SpringBoot Web应用监控案例
 
 Apache HertzBeat 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
 
-**github: <https://github.com/apache/hertzbeat>**
+**github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
 ## 安装 HertzBeat
 
@@ -123,16 +123,16 @@ Apache HertzBeat 一个拥有强大自定义监控能力，无需Agent的实时�
                    .antMatchers("/trace").permitAll()
                    .antMatchers("/heapdump").permitAll()
                    // ...
-       }
-   }
+       \}
+   \}
    ```
 
 2. 验证端点
 
    > SpringBoot 程序启动后，请求URL:
    >
-   > - `http://<your-host>:<port>/actuator`: 验证已启用的端点，
-   > - `http://<your-host>:<port>/actuator/prometheus`: 应返回指标数据。
+   > - `http://<your-host>:<port>`/actuator`: 验证已启用的端点，
+   > - `http://<your-host>:<port>`/actuator/prometheus`: 应返回指标数据。
 
 ## 监控 SpringBoot 应用
 
@@ -209,7 +209,7 @@ Apache HertzBeat 一个拥有强大自定义监控能力，无需Agent的实时�
 
 2. 设置阈值规则
 
-   > 比如监测 SpringBoot 应用程序的 CPU 占用，添加阈值规则：`system_cpu_usage{job="Jolly_Vulture_43vT"} > 0.01`
+   > 比如监测 SpringBoot 应用程序的 CPU 占用，添加阈值规则：`system_cpu_usage{job="Jolly_Vulture_43vT"}` > 0.01`
    >
    > 可以设置的阈值规则组合有很多，用户可以根据自身需要设置更丰富的告警规则。
 
@@ -251,6 +251,6 @@ Apache HertzBeat 一个拥有强大自定义监控能力，无需Agent的实时�
 
 **让监控更简单，期待与您共建生态！** 💝
 
-**github: <https://github.com/apache/hertzbeat>**
+**github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**

@@ -168,4 +168,34 @@ public class DataSourceServiceImpl implements DataSourceService {
         AlertExpressionLexer lexer = new AlertExpressionLexer(CharStreams.fromString(expr));
         return new CommonTokenStream(lexer);
     }
+
+    @Override
+    public Map<String, Object> getAvailableExecutors() {
+        boolean hasPromqlExecutor = false;
+        boolean hasSqlExecutor = false;
+        java.util.Set<String> availableExecutors = new java.util.HashSet<>();
+
+        if (executors != null) {
+            for (QueryExecutor executor : executors) {
+                String datasource = executor.getDatasource();
+                availableExecutors.add(datasource);
+
+                // Check if executor supports promql
+                if (executor.support(WarehouseConstants.PROMQL)) {
+                    hasPromqlExecutor = true;
+                }
+                // Check if executor supports sql
+                if (executor.support(WarehouseConstants.SQL)) {
+                    hasSqlExecutor = true;
+                }
+            }
+        }
+
+        Map<String, Object> result = new java.util.HashMap<>(8);
+        result.put("hasPromqlExecutor", hasPromqlExecutor);
+        result.put("hasSqlExecutor", hasSqlExecutor);
+        result.put("availableExecutors", availableExecutors);
+
+        return result;
+    }
 }

@@ -32,7 +32,7 @@ Bugfix.
 3. [[monitor] bugfix: 修复elasticsearch监控在basic认证情况下采集失败 #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
 4. [修改oracle监控参数[数据库名称]有歧义导致的监控失败 #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
-Online <https://console.tancloud.cn>.
+Online [https://console.tancloud.cn](https://console.tancloud.cn).
 
 ---
 
@@ -68,5 +68,5 @@ Have Fun!
 
 **仓库地址**
 
-[Github](https://github.com/apache/hertzbeat) <https://github.com/apache/hertzbeat>
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) <https://gitee.com/hertzbeat/hertzbeat>
+[Github](https://github.com/apache/hertzbeat) [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)
