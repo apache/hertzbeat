@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.AlertExpressionException;
@@ -56,6 +57,9 @@ public class AlertDefineController {
 
     @Autowired
     private AlertDefineService alertDefineService;
+
+    @Autowired
+    private DataSourceService dataSourceService;
 
     @PostMapping
     @Operation(summary = "New Alarm Definition", description = "Added an alarm definition")
@@ -110,6 +114,14 @@ public class AlertDefineController {
         } catch (AlertExpressionException ae) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Message.fail(FAIL_CODE, ae.getMessage()));
         }
+    }
+
+    @GetMapping(path = "/datasource/status")
+    @Operation(summary = "Get available datasource executors status",
+            description = "Get status of available datasource executors for periodic alerts")
+    public ResponseEntity<Message<Map<String, Object>>> getDatasourceStatus() {
+        Map<String, Object> status = dataSourceService.getAvailableExecutors();
+        return ResponseEntity.ok(Message.successWithData(status));
     }
 
 }
