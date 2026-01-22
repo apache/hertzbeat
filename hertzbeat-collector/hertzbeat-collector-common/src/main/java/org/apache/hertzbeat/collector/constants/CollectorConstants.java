@@ -49,4 +49,28 @@ public interface CollectorConstants extends NetworkConstants {
 
     String STATUS_CODE = "statusCode";
 
+    /**
+     * Maximum XML response size in bytes (10MB) to prevent DoS attacks
+     */
+    int MAX_XML_RESPONSE_SIZE = 10 * 1024 * 1024;
+
+    /**
+     * Maximum number of nodes returned by XPath query to prevent excessive resource consumption
+     */
+    int MAX_XPATH_RESULT_NODES = 1000;
+
+    /**
+     * Dangerous XPath expression patterns that could cause DoS attacks
+     * These patterns match expressions that traverse the entire XML document
+     */
+    String[] DANGEROUS_XPATH_PATTERNS = {
+        "//\\*\\s*\\|\\s*//@\\*\\s*\\|\\s*//text\\(\\)",   // //* | //@* | //text()
+        "//\\*\\s*\\|",                                      // //* | ...
+        "//@\\*\\s*\\|",                                     // //@* | ...
+        "//node\\(\\)\\s*\\|",                               // //node() | ...
+        "descendant-or-self::node\\(\\)\\s*\\|",            // descendant-or-self::node() | ...
+        "/descendant-or-self::node\\(\\)",                   // /descendant-or-self::node()
+        "//\\*[\\s\\S]*//\\*"                                // //** with multiple wildcards
+    };
+
 }

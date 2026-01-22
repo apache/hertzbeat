@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -100,12 +101,29 @@ import java.util.regex.Pattern;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * http https collect
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
+
+    /**
+     * Pre-compiled regex patterns for dangerous XPath detection.
+     * Compiled once at class load for performance.
+     */
+    private static final List<Pattern> DANGEROUS_XPATH_PATTERNS;
+
+    static {
+        List<Pattern> patterns = new ArrayList<>();
+        for (String pattern : CollectorConstants.DANGEROUS_XPATH_PATTERNS) {
+            // Use CASE_INSENSITIVE to prevent bypass via case variations (e.g., //TEXT() vs //text())
+            patterns.add(Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.DOTALL));
+        }
+        DANGEROUS_XPATH_PATTERNS = Collections.unmodifiableList(patterns);
+    }
+
     private final Set<Integer> defaultSuccessStatusCodes = Set.of(
             HttpStatus.SC_OK,
             HttpStatus.SC_CREATED,
@@ -357,21 +375,83 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
+    /**
+     * Validates the XPath expression to prevent DoS attacks.
+     * Checks for dangerous patterns that could traverse the entire XML document.
+     * Uses pre-compiled patterns for performance and case-insensitive matching for security.
+     *
+     * @param xpathExpression the XPath expression to validate
+     * @throws IllegalArgumentException if the expression contains dangerous patterns
+     */
+    private void validateXPathExpression(String xpathExpression) throws IllegalArgumentException {
+        if (!StringUtils.hasText(xpathExpression)) {
+            return;
+        }
+
+        // Check against dangerous patterns using pre-compiled regex
+        for (Pattern pattern : DANGEROUS_XPATH_PATTERNS) {
+            Matcher matcher = pattern.matcher(xpathExpression);
+            if (matcher.find()) {
+                throw new IllegalArgumentException(
+                    "XPath expression contains dangerous pattern that may cause DoS: " + pattern.pattern()
+                );
+            }
+        }
+
+        // Check for excessive wildcard usage (more than 3 // or * operators)
+        long descendantAxisCount = xpathExpression.chars().filter(ch -> ch == '/').count();
+        long wildcardCount = xpathExpression.chars().filter(ch -> ch == '*').count();
+
+        if (descendantAxisCount > 10 || wildcardCount > 5) {
+            throw new IllegalArgumentException(
+                "XPath expression contains too many wildcards or descendant axes, potential DoS risk"
+            );
+        }
+
+        log.debug("XPath expression validation passed: {}", xpathExpression);
+    }
+
     private void parseResponseByXmlPath(String resp, Metrics metrics,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         HttpProtocol http = metrics.getHttp();
         List<String> aliasFields = metrics.getAliasFields();
         String xpathExpression = http.getParseScript();
+
+        // Layer 1: Validate XPath expression is not empty
         if (!StringUtils.hasText(xpathExpression)) {
             log.warn("Http collect parse type is xmlPath, but the xpath expression is empty.");
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("XPath expression is empty");
             return;
         }
+
+        // Layer 2: Check XML response size to prevent memory exhaustion
+        if (resp != null && resp.length() > CollectorConstants.MAX_XML_RESPONSE_SIZE) {
+            log.warn("XML response size {} bytes exceeds maximum allowed size {} bytes",
+                resp.length(), CollectorConstants.MAX_XML_RESPONSE_SIZE);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("XML response exceeds maximum allowed size of "
+                + (CollectorConstants.MAX_XML_RESPONSE_SIZE / 1024 / 1024) + "MB");
+            return;
+        }
+
+        // Layer 3: Validate XPath expression for dangerous patterns
+        try {
+            validateXPathExpression(xpathExpression);
+        } catch (IllegalArgumentException e) {
+            log.warn("XPath expression validation failed: {}", e.getMessage());
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(e.getMessage());
+            return;
+        }
+
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
 
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+            // Layer 4: Enable XML secure processing and XXE protection
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
             dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
@@ -408,7 +488,16 @@ public class HttpCollectImpl extends AbstractCollect {
                 return;
             }
 
-            for (int i = 0; i < nodeList.getLength(); i++) {
+            // Layer 5: Limit the number of results to prevent excessive resource consumption
+            int resultSize = nodeList.getLength();
+            int maxResults = CollectorConstants.MAX_XPATH_RESULT_NODES;
+            if (resultSize > maxResults) {
+                log.warn("XPath expression returned {} nodes, exceeding limit of {}. Processing first {} nodes only.",
+                    resultSize, maxResults, maxResults);
+                resultSize = maxResults;
+            }
+
+            for (int i = 0; i < resultSize; i++) {
                 Node node = nodeList.item(i);
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
 
