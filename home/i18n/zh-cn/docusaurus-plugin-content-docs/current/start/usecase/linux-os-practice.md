@@ -8,9 +8,9 @@ sidebar_label: Linux 操作系统监控案例
 
 ## HertzBeat 是什么
 
-Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需 Agent 的实时监控工具。网站监测，端口可用性，数据库，操作系统，阈值告警，告警通知(邮件微信钉钉飞书)。
+Apache HertzBeat 一个拥有强大自定义监控能力，无需 Agent 的实时监控工具。网站监测，端口可用性，数据库，操作系统，阈值告警，告警通知(邮件微信钉钉飞书)。
 
-github: <https://github.com/apache/hertzbeat>
+github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 ## 安装
 
@@ -85,10 +85,10 @@ github: <https://github.com/apache/hertzbeat>
 
 当阈值触发后就可以收到对应告警消息，如果没有配置消息通知，也可以在**告警中心**查看告警信息。
 
-----  
+----
 
 ## 总结
 
 监控 Linux 操作系统的实践就到这里，当然对 Hertzbeat 来说这个功能只是冰山一角，如果您觉得 Hertzbeat 这个开源项目不错的话欢迎给我们 Star 哦，非常感谢各位的支持！
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**

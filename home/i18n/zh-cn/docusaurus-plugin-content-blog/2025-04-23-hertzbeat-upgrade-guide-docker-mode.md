@@ -7,8 +7,8 @@
     - 备份数据库，将 mysql 数据手动做备份，按需备份
 
       ```bash
-      mysqldump -h<HOST-IP> -P<PORT> -uroot -p"PASSWORD" <库名> hertzbeat_backup-`date +%Y-%m-%d`.sql #单库备份
-      mysqldump -h<HOST-IP> -P<PORT> -uroot -p"PASSWORD" > hertzbeat_backup-`date +%Y-%m-%d`.sql # 整库备份
+      mysqldump -h<HOST-IP> -P`<PORT>` -uroot -p"PASSWORD" <库名> hertzbeat_backup-`date +%Y-%m-%d`.sql #单库备份
+      mysqldump -h<HOST-IP> -P`<PORT>` -uroot -p"PASSWORD" > hertzbeat_backup-`date +%Y-%m-%d`.sql # 整库备份
       ```
 
     - 备份配置文件及数据目录

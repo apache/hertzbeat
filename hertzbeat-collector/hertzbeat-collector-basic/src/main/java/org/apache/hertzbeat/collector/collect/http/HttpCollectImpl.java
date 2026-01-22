@@ -39,6 +39,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -106,6 +107,22 @@ import java.util.Collections;
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
+
+    /**
+     * Pre-compiled regex patterns for dangerous Xpath detection.
+     * Compiled once at class load for performance.
+     */
+    private static final List<Pattern> DANGEROUS_XPATH_PATTERNS;
+
+    static {
+        List<Pattern> patterns = new ArrayList<>();
+        for (String pattern : CollectorConstants.DANGEROUS_XPATH_PATTERNS) {
+            // Use CASE_INSENSITIVE to prevent bypass via case variations (e.g., //TEXT() vs //text())
+            patterns.add(Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.DOTALL));
+        }
+        DANGEROUS_XPATH_PATTERNS = Collections.unmodifiableList(patterns);
+    }
+
     private final Set<Integer> defaultSuccessStatusCodes = Set.of(
             HttpStatus.SC_OK,
             HttpStatus.SC_CREATED,
@@ -357,21 +374,83 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
+    /**
+     * Validates the Xpath expression to prevent DoS attacks.
+     * Checks for dangerous patterns that could traverse the entire XML document.
+     * Uses pre-compiled patterns for performance and case-insensitive matching for security.
+     *
+     * @param xpathExpression the Xpath expression to validate
+     * @throws IllegalArgumentException if the expression contains dangerous patterns
+     */
+    private void validateXpathExpression(String xpathExpression) throws IllegalArgumentException {
+        if (!StringUtils.hasText(xpathExpression)) {
+            return;
+        }
+
+        // Check against dangerous patterns using pre-compiled regex
+        for (Pattern pattern : DANGEROUS_XPATH_PATTERNS) {
+            Matcher matcher = pattern.matcher(xpathExpression);
+            if (matcher.find()) {
+                throw new IllegalArgumentException(
+                    "Xpath expression contains dangerous pattern that may cause DoS: " + pattern.pattern()
+                );
+            }
+        }
+
+        // Check for excessive wildcard usage (more than 3 // or * operators)
+        long descendantAxisCount = xpathExpression.chars().filter(ch -> ch == '/').count();
+        long wildcardCount = xpathExpression.chars().filter(ch -> ch == '*').count();
+
+        if (descendantAxisCount > 10 || wildcardCount > 5) {
+            throw new IllegalArgumentException(
+                "Xpath expression contains too many wildcards or descendant axes, potential DoS risk"
+            );
+        }
+
+        log.debug("Xpath expression validation passed: {}", xpathExpression);
+    }
+
     private void parseResponseByXmlPath(String resp, Metrics metrics,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         HttpProtocol http = metrics.getHttp();
         List<String> aliasFields = metrics.getAliasFields();
         String xpathExpression = http.getParseScript();
+
+        // Layer 1: Validate Xpath expression is not empty
         if (!StringUtils.hasText(xpathExpression)) {
             log.warn("Http collect parse type is xmlPath, but the xpath expression is empty.");
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("XPath expression is empty");
+            builder.setMsg("Xpath expression is empty");
             return;
         }
+
+        // Layer 2: Check XML response size to prevent memory exhaustion
+        if (resp != null && resp.length() > CollectorConstants.MAX_XML_RESPONSE_SIZE) {
+            log.warn("XML response size {} bytes exceeds maximum allowed size {} bytes",
+                resp.length(), CollectorConstants.MAX_XML_RESPONSE_SIZE);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("XML response exceeds maximum allowed size of "
+                + (CollectorConstants.MAX_XML_RESPONSE_SIZE / 1024 / 1024) + "MB");
+            return;
+        }
+
+        // Layer 3: Validate Xpath expression for dangerous patterns
+        try {
+            validateXpathExpression(xpathExpression);
+        } catch (IllegalArgumentException e) {
+            log.warn("Xpath expression validation failed: {}", e.getMessage());
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(e.getMessage());
+            return;
+        }
+
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
 
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+            // Layer 4: Enable XML secure processing and XXE protection
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
             dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
@@ -387,7 +466,7 @@ public class HttpCollectImpl extends AbstractCollect {
             NodeList nodeList = (NodeList) xpath.evaluate(xpathExpression, document, XPathConstants.NODESET);
 
             if (nodeList == null || nodeList.getLength() == 0) {
-                log.debug("XPath expression '{}' returned no nodes.", xpathExpression);
+                log.debug("Xpath expression '{}' returned no nodes.", xpathExpression);
                 boolean requestedSummaryFields = aliasFields.stream()
                         .anyMatch(alias -> NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)
                                 || CollectorConstants.KEYWORD.equalsIgnoreCase(alias));
@@ -408,7 +487,16 @@ public class HttpCollectImpl extends AbstractCollect {
                 return;
             }
 
-            for (int i = 0; i < nodeList.getLength(); i++) {
+            // Layer 5: Limit the number of results to prevent excessive resource consumption
+            int resultSize = nodeList.getLength();
+            int maxResults = CollectorConstants.MAX_XPATH_RESULT_NODES;
+            if (resultSize > maxResults) {
+                log.warn("Xpath expression returned {} nodes, exceeding limit of {}. Processing first {} nodes only.",
+                    resultSize, maxResults, maxResults);
+                resultSize = maxResults;
+            }
+
+            for (int i = 0; i < resultSize; i++) {
                 Node node = nodeList.item(i);
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
 
@@ -422,7 +510,7 @@ public class HttpCollectImpl extends AbstractCollect {
                             String value = (String) xpath.evaluate(alias, node, XPathConstants.STRING);
                             valueRowBuilder.addColumn(StringUtils.hasText(value) ? value : CommonConstants.NULL_VALUE);
                         } catch (XPathExpressionException e) {
-                            log.warn("Failed to evaluate XPath '{}' for node [{}]: {}", alias, node.getNodeName(), e.getMessage());
+                            log.warn("Failed to evaluate Xpath '{}' for node [{}]: {}", alias, node.getNodeName(), e.getMessage());
                             valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                         }
                     }
@@ -431,7 +519,7 @@ public class HttpCollectImpl extends AbstractCollect {
             }
 
         } catch (Exception e) {
-            log.warn("Failed to parse XML response with XPath '{}': {}", xpathExpression, e.getMessage(), e);
+            log.warn("Failed to parse XML response with Xpath '{}': {}", xpathExpression, e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Failed to parse XML response: " + e.getMessage());
         }

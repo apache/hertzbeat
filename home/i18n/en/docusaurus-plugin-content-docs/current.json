@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "v1.7.x",
+    "message": "dev",
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
@@ -54,6 +54,10 @@
   "sidebar.docs.category.notice": {
     "message": "Notification",
     "description": "The label for category notice in sidebar docs"
+  },
+  "sidebar.docs.category.service-discovery": {
+    "message": "Service Discovery",
+    "description": "The label for category service-discovery in sidebar docs"
   },
   "sidebar.docs.category.mid": {
     "message": "Middleware Monitor",
@@ -148,7 +152,7 @@
     "description": "The label for category change-db in sidebar docs"
   },
   "sidebar.docs.category.use-case": {
-    "message": "UseCase",
+    "message": "Use Case",
     "description": "The label for category use-case in sidebar docs"
   },
   "sidebar.docs.category.extern-deploy": {

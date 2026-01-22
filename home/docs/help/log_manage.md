@@ -1,11 +1,15 @@
 ---
 id: log_manage
-title: Log Management
-sidebar_label: Log Management
+title: Log Management (Beta)
+sidebar_label: Log Management (Beta)
 keywords: [open source monitoring, log management, log query, log statistics, log deletion]
 ---
 
 > HertzBeat's log management feature provides comprehensive log data management capabilities, including log querying, statistical analysis, and batch deletion operations. Users can precisely search logs through various filter conditions, view detailed statistical charts, and clean up unnecessary log data.
+
+:::warning
+The log management feature is currently in Beta (experimental) stage. There may be potential defects and limitations. The feature is under active development and iteration.
+:::
 
 ## Prerequisites
 
