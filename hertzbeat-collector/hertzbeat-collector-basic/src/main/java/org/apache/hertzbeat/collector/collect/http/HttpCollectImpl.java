@@ -109,7 +109,7 @@ import java.util.Collections;
 public class HttpCollectImpl extends AbstractCollect {
 
     /**
-     * Pre-compiled regex patterns for dangerous XPath detection.
+     * Pre-compiled regex patterns for dangerous Xpath detection.
      * Compiled once at class load for performance.
      */
     private static final List<Pattern> DANGEROUS_XPATH_PATTERNS;
@@ -375,14 +375,14 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     /**
-     * Validates the XPath expression to prevent DoS attacks.
+     * Validates the Xpath expression to prevent DoS attacks.
      * Checks for dangerous patterns that could traverse the entire XML document.
      * Uses pre-compiled patterns for performance and case-insensitive matching for security.
      *
-     * @param xpathExpression the XPath expression to validate
+     * @param xpathExpression the Xpath expression to validate
      * @throws IllegalArgumentException if the expression contains dangerous patterns
      */
-    private void validateXPathExpression(String xpathExpression) throws IllegalArgumentException {
+    private void validateXpathExpression(String xpathExpression) throws IllegalArgumentException {
         if (!StringUtils.hasText(xpathExpression)) {
             return;
         }
@@ -392,7 +392,7 @@ public class HttpCollectImpl extends AbstractCollect {
             Matcher matcher = pattern.matcher(xpathExpression);
             if (matcher.find()) {
                 throw new IllegalArgumentException(
-                    "XPath expression contains dangerous pattern that may cause DoS: " + pattern.pattern()
+                    "Xpath expression contains dangerous pattern that may cause DoS: " + pattern.pattern()
                 );
             }
         }
@@ -403,11 +403,11 @@ public class HttpCollectImpl extends AbstractCollect {
 
         if (descendantAxisCount > 10 || wildcardCount > 5) {
             throw new IllegalArgumentException(
-                "XPath expression contains too many wildcards or descendant axes, potential DoS risk"
+                "Xpath expression contains too many wildcards or descendant axes, potential DoS risk"
             );
         }
 
-        log.debug("XPath expression validation passed: {}", xpathExpression);
+        log.debug("Xpath expression validation passed: {}", xpathExpression);
     }
 
     private void parseResponseByXmlPath(String resp, Metrics metrics,
@@ -416,11 +416,11 @@ public class HttpCollectImpl extends AbstractCollect {
         List<String> aliasFields = metrics.getAliasFields();
         String xpathExpression = http.getParseScript();
 
-        // Layer 1: Validate XPath expression is not empty
+        // Layer 1: Validate Xpath expression is not empty
         if (!StringUtils.hasText(xpathExpression)) {
             log.warn("Http collect parse type is xmlPath, but the xpath expression is empty.");
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("XPath expression is empty");
+            builder.setMsg("Xpath expression is empty");
             return;
         }
 
@@ -434,11 +434,11 @@ public class HttpCollectImpl extends AbstractCollect {
             return;
         }
 
-        // Layer 3: Validate XPath expression for dangerous patterns
+        // Layer 3: Validate Xpath expression for dangerous patterns
         try {
-            validateXPathExpression(xpathExpression);
+            validateXpathExpression(xpathExpression);
         } catch (IllegalArgumentException e) {
-            log.warn("XPath expression validation failed: {}", e.getMessage());
+            log.warn("Xpath expression validation failed: {}", e.getMessage());
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
             return;
@@ -466,7 +466,7 @@ public class HttpCollectImpl extends AbstractCollect {
             NodeList nodeList = (NodeList) xpath.evaluate(xpathExpression, document, XPathConstants.NODESET);
 
             if (nodeList == null || nodeList.getLength() == 0) {
-                log.debug("XPath expression '{}' returned no nodes.", xpathExpression);
+                log.debug("Xpath expression '{}' returned no nodes.", xpathExpression);
                 boolean requestedSummaryFields = aliasFields.stream()
                         .anyMatch(alias -> NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)
                                 || CollectorConstants.KEYWORD.equalsIgnoreCase(alias));
@@ -491,7 +491,7 @@ public class HttpCollectImpl extends AbstractCollect {
             int resultSize = nodeList.getLength();
             int maxResults = CollectorConstants.MAX_XPATH_RESULT_NODES;
             if (resultSize > maxResults) {
-                log.warn("XPath expression returned {} nodes, exceeding limit of {}. Processing first {} nodes only.",
+                log.warn("Xpath expression returned {} nodes, exceeding limit of {}. Processing first {} nodes only.",
                     resultSize, maxResults, maxResults);
                 resultSize = maxResults;
             }
@@ -510,7 +510,7 @@ public class HttpCollectImpl extends AbstractCollect {
                             String value = (String) xpath.evaluate(alias, node, XPathConstants.STRING);
                             valueRowBuilder.addColumn(StringUtils.hasText(value) ? value : CommonConstants.NULL_VALUE);
                         } catch (XPathExpressionException e) {
-                            log.warn("Failed to evaluate XPath '{}' for node [{}]: {}", alias, node.getNodeName(), e.getMessage());
+                            log.warn("Failed to evaluate Xpath '{}' for node [{}]: {}", alias, node.getNodeName(), e.getMessage());
                             valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                         }
                     }
@@ -519,7 +519,7 @@ public class HttpCollectImpl extends AbstractCollect {
             }
 
         } catch (Exception e) {
-            log.warn("Failed to parse XML response with XPath '{}': {}", xpathExpression, e.getMessage(), e);
+            log.warn("Failed to parse XML response with Xpath '{}': {}", xpathExpression, e.getMessage(), e);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Failed to parse XML response: " + e.getMessage());
         }

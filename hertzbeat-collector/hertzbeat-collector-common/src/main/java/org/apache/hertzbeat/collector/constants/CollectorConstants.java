@@ -55,12 +55,12 @@ public interface CollectorConstants extends NetworkConstants {
     int MAX_XML_RESPONSE_SIZE = 10 * 1024 * 1024;
 
     /**
-     * Maximum number of nodes returned by XPath query to prevent excessive resource consumption
+     * Maximum number of nodes returned by Xpath query to prevent excessive resource consumption
      */
     int MAX_XPATH_RESULT_NODES = 1000;
 
     /**
-     * Dangerous XPath expression patterns that could cause DoS attacks
+     * Dangerous Xpath expression patterns that could cause DoS attacks
      * These patterns match expressions that traverse the entire XML document
      */
     String[] DANGEROUS_XPATH_PATTERNS = {
