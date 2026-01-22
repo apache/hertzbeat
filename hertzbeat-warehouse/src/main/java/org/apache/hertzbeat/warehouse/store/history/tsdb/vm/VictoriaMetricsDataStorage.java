@@ -105,7 +105,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private final VictoriaMetricsProperties victoriaMetricsProp;
     private final RestTemplate restTemplate;
     private final BlockingQueue<VictoriaMetricsDataStorage.VictoriaMetricsContent> metricsBufferQueue;
-    
+
     private HashedWheelTimer metricsFlushTimer = null;
     private final VictoriaMetricsProperties.InsertConfig insertConfig;
     private final AtomicBoolean draining = new AtomicBoolean(false);
@@ -266,12 +266,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
         String labelName = metrics + SPILT + metric;
-        if (CommonConstants.PROMETHEUS.equals(app)) {
+        if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
-                + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
+                + (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -337,7 +337,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                                                                  String metric, String history) {
         if (!serverAvailable) {
             log.error("""
-                    
+
                     \t---------------VictoriaMetrics Init Failed---------------
                     \t--------------Please Config VictoriaMetrics--------------
                     \t----------Can Not Use Metric History Now----------
@@ -361,12 +361,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             startTime = dateTime.toEpochSecond();
         }
         String labelName = metrics + SPILT + metric;
-        if (CommonConstants.PROMETHEUS.equals(app)) {
+        if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
                 + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
-                + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
+                + (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
