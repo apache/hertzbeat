@@ -22,7 +22,7 @@ The log integration feature is currently in Beta (experimental) stage. There may
 
 HertzBeat currently supports data integration from the following third-party log platforms:
 
-- **OTLP**: Support standard OpenTelemetry Log Protocol (OTLP) HTTP/JSON format, can directly receive log data from OpenTelemetry Collector and various applications that support OTLP.
+- **OTLP**: Support standard OpenTelemetry Log Protocol (OTLP) HTTP format, can directly receive log data from OpenTelemetry Collector and various applications that support OTLP.
 - **More Protocol Support**: HertzBeat is actively expanding its log integration support, including Filebeat, Vector, Loki, etc. If you can't find the integration you need temporarily, the active community can also help you add it.
 
 You can view specific integration methods and configuration examples through HertzBeat's "Log Integration" interface.
@@ -31,32 +31,24 @@ You can view specific integration methods and configuration examples through Her
 
 ## OpenTelemetry OTLP Protocol Integration
 
-### API Endpoints
+### API Endpoint
 
-HertzBeat provides the following interfaces for receiving OTLP log data:
-
-**Protocol-specific Interface**:
+HertzBeat provides the following interface for receiving OTLP log data:
 
 ```text
-POST /api/logs/ingest/otlp
-```
-
-**Default Interface** (automatically uses OTLP protocol):
-
-```text
-POST /api/logs/ingest
+POST /api/logs/otlp/v1/logs
 ```
 
 ### Request Configuration
 
 #### Request Headers
 
-- `Content-Type`: `application/json`
+- `Content-Type`: `application/json` or `application/x-protobuf`
 - `Authorization`: `Bearer {token}`
 
 #### Request Body Format
 
-Support standard OTLP JSON format log data:
+Supports standard OTLP JSON-Protobuf format or Binary Protobuf format log data:
 
 ```json
 {
@@ -120,7 +112,7 @@ Add HertzBeat as a log export target in the OpenTelemetry Collector configuratio
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/ingest/otlp
+    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
     compression: none
     encoding: json
     headers:
@@ -172,7 +164,7 @@ Application and environment information can be set through `resource.attributes`
 
 #### Log Format Error
 
-- **OTLP Format**: Ensure standard OTLP JSON format is sent
+- **OTLP Format**: Ensure standard OTLP JSON-Protobuf or Binary Protobuf format is sent
 - **Timestamp Format**: Check if timestamp format is Unix timestamp with nanosecond precision
 - **Log Level**: Verify severityNumber value range (1-24)
 - **Data Type**: Ensure data types of each field comply with OTLP specification

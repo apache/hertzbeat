@@ -49,7 +49,13 @@ public class LogSseFilterCriteria {
      */
     @Schema(description = "The severity text (also known as log level).", example = "INFO", accessMode = READ_WRITE)
     private String severityText;
-    
+
+    /**
+     * Log content text filtering (case-insensitive contains match).
+     */
+    @Schema(description = "Log content text filtering", example = "error occurred", accessMode = READ_WRITE)
+    private String logContent;
+
     /**
      * A unique identifier for a trace.
      * All spans from the same trace share the same trace_id.
@@ -77,18 +83,30 @@ public class LogSseFilterCriteria {
         if (StringUtils.hasText(severityText) && !severityText.equalsIgnoreCase(log.getSeverityText())) {
             return false;
         }
-        
+
         // Check severity number match (if both are present)
         if (severityNumber != null && log.getSeverityNumber() != null
                 && !severityNumber.equals(log.getSeverityNumber())) {
             return false;
         }
-        
+
+        // Check log content match
+        if (StringUtils.hasText(logContent)) {
+            Object body = log.getBody();
+            if (body == null) {
+                return false;
+            }
+            String bodyStr = body.toString();
+            if (!StringUtils.hasText(bodyStr) || !bodyStr.toLowerCase().contains(logContent.toLowerCase())) {
+                return false;
+            }
+        }
+
         // Check trace ID match
         if (StringUtils.hasText(traceId) && !traceId.equalsIgnoreCase(log.getTraceId())) {
             return false;
         }
-        
+
         // Check span ID match
         if (StringUtils.hasText(spanId) && !spanId.equalsIgnoreCase(log.getSpanId())) {
             return false;

@@ -96,6 +96,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   // Filter properties
   filterSeverityNumber: string = '';
   filterSeverityText: string = '';
+  filterLogContent: string = '';
   filterTraceId: string = '';
   filterSpanId: string = '';
 
@@ -218,6 +219,10 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (this.filterSeverityText && this.filterSeverityText.trim()) {
       params.append('severityText', this.filterSeverityText);
+    }
+
+    if (this.filterLogContent && this.filterLogContent.trim()) {
+      params.append('logContent', this.filterLogContent);
     }
 
     if (this.filterTraceId && this.filterTraceId.trim()) {
@@ -376,6 +381,7 @@ export class LogStreamComponent implements OnInit, OnDestroy, AfterViewInit {
   onClearFilters(): void {
     this.filterSeverityNumber = '';
     this.filterSeverityText = '';
+    this.filterLogContent = '';
     this.filterTraceId = '';
     this.filterSpanId = '';
     this.resetState();
