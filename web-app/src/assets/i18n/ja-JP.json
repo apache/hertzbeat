@@ -657,6 +657,8 @@
   "log.stream.severity-number-placeholder": "重大度番号を入力",
   "log.stream.severity-text": "重大度:",
   "log.stream.severity-text-placeholder": "重大度を入力",
+  "log.stream.content": "ログ内容",
+  "log.stream.content-placeholder": "ログ内容を入力してください",
   "log.stream.show-filters": "フィルターを表示",
   "log.stream.span": "スパン:",
   "log.stream.span-id": "Span ID:",

@@ -81,6 +81,47 @@ class OtlpLogProtocolAdapterTest {
     }
 
     @Test
+    void testIngestBinaryWithNullContent() {
+        adapter.ingestBinary(null);
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestBinaryWithEmptyContent() {
+        adapter.ingestBinary(new byte[0]);
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
+    void testIngestBinaryWithValidOtlpLogData() throws Exception {
+        byte[] binaryPayload = createValidOtlpLogBinaryPayload();
+        
+        adapter.ingestBinary(binaryPayload);
+        
+        ArgumentCaptor<List<LogEntry>> listCaptor = ArgumentCaptor.forClass(List.class);
+        verify(commonDataQueue, times(1)).sendLogEntryToStorageBatch(listCaptor.capture());
+        verify(commonDataQueue, times(1)).sendLogEntryToAlertBatch(anyList());
+        verify(logSseManager, times(1)).broadcast(any(LogEntry.class));
+        
+        List<LogEntry> capturedList = listCaptor.getValue();
+        assertNotNull(capturedList);
+        assertEquals(1, capturedList.size());
+        
+        LogEntry capturedEntry = capturedList.get(0);
+        assertEquals("binary-test-service", capturedEntry.getResource().get("service_name"));
+        assertEquals("binary log message", capturedEntry.getBody());
+        assertEquals("INFO", capturedEntry.getSeverityText());
+    }
+
+    @Test
+    void testIngestBinaryWithInvalidContent() {
+        byte[] invalidBinary = "not a valid protobuf".getBytes();
+        
+        assertThrows(IllegalArgumentException.class, () -> adapter.ingestBinary(invalidBinary));
+        verifyNoInteractions(commonDataQueue, logSseManager);
+    }
+
+    @Test
     void testIngestWithValidOtlpLogData() throws Exception {
         String otlpPayload = createValidOtlpLogPayload();
         
@@ -314,5 +355,33 @@ class OtlpLogProtocolAdapterTest {
     private String createEmptyResourceLogsPayload() throws Exception {
         ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder().build();
         return JsonFormat.printer().print(request);
+    }
+
+    private byte[] createValidOtlpLogBinaryPayload() {
+        ExportLogsServiceRequest request = ExportLogsServiceRequest.newBuilder()
+            .addResourceLogs(ResourceLogs.newBuilder()
+                .setResource(Resource.newBuilder()
+                    .addAttributes(KeyValue.newBuilder()
+                        .setKey("service.name")
+                        .setValue(AnyValue.newBuilder().setStringValue("binary-test-service").build())
+                        .build())
+                    .build())
+                .addScopeLogs(ScopeLogs.newBuilder()
+                    .setScope(InstrumentationScope.newBuilder()
+                        .setName("binary-test-scope")
+                        .setVersion("1.0.0")
+                        .build())
+                    .addLogRecords(LogRecord.newBuilder()
+                        .setTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setObservedTimeUnixNano(System.currentTimeMillis() * 1_000_000)
+                        .setSeverityNumberValue(9)
+                        .setSeverityText("INFO")
+                        .setBody(AnyValue.newBuilder().setStringValue("binary log message").build())
+                        .build())
+                    .build())
+                .build())
+            .build();
+        
+        return request.toByteArray();
     }
 }
