@@ -2,20 +2,16 @@
 
 ### 接口端点
 
-`POST /api/logs/ingest/otlp`
-
-或使用默认接口（自动使用OTLP协议）：
-
-`POST /api/logs/ingest`
+`POST /api/logs/otlp/v1/logs`
 
 ### 请求头
 
-- `Content-Type`: `application/json`
+- `Content-Type`: `application/json` or `application/x-protobuf`
 - `Authorization`: `Bearer {token}`
 
 ### 请求体
 
-支持标准的 OTLP JSON 格式日志数据：
+支持标准的 OTLP JSON-Protobuf 格式日志数据或者 Binary Protobuf 格式日志数据:
 
 ```json
 {
@@ -75,7 +71,7 @@
 ```yaml
 exporters:
   otlphttp:
-    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/ingest/otlp
+    logs_endpoint: http://{hertzbeat_host}:1157/api/logs/otlp/v1/logs
     compression: none
     encoding: json
     headers:
@@ -100,10 +96,8 @@ service:
 #### 日志发送失败
 - 确保HertzBeat服务地址可以被外部系统访问
 - 检查Token是否正确配置
-- 验证请求头Content-Type设置为application/json
 
 #### 日志格式错误
-- 确保发送的是标准OTLP JSON格式
 - 检查时间戳格式是否为纳秒精度
 - 验证severityNumber值范围（1-24）
 

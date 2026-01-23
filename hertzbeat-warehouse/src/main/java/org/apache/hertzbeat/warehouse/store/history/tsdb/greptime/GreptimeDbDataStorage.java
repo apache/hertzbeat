@@ -541,10 +541,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                                         String spanId, Integer severityNumber,
-                                                        String severityText) {
+                                                        String severityText, String searchContent) {
         try {
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
             sql.append(" ORDER BY time_unix_nano DESC");
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
@@ -558,10 +558,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
                                                                       String spanId, Integer severityNumber,
-                                                                      String severityText, Integer offset, Integer limit) {
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit) {
         try {
             StringBuilder sql = new StringBuilder("SELECT * FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
             sql.append(" ORDER BY time_unix_nano DESC");
 
             // Add pagination
@@ -583,10 +584,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     @Override
     public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
                                              String spanId, Integer severityNumber,
-                                             String severityText) {
+                                             String severityText, String searchContent) {
         try {
             StringBuilder sql = new StringBuilder("SELECT COUNT(*) as count FROM ").append(LOG_TABLE_NAME);
-            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText);
+            buildWhereConditions(sql, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
 
             List<Map<String, Object>> rows = greptimeSqlQueryExecutor.execute(sql.toString());
             if (rows != null && !rows.isEmpty()) {
@@ -623,7 +624,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
      * @param severityNumber severity number
      */
     private void buildWhereConditions(StringBuilder sql, Long startTime, Long endTime, String traceId,
-                                     String spanId, Integer severityNumber, String severityText) {
+                                     String spanId, Integer severityNumber, String severityText, String searchContent) {
         List<String> conditions = new ArrayList<>();
 
         // Time range condition
@@ -649,6 +650,11 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         // SeverityText condition
         if (StringUtils.hasText(severityText)) {
             conditions.add("severity_text = '" + safeString(severityText) + "'");
+        }
+
+        // Search content condition - search in body field
+        if (StringUtils.hasText(searchContent)) {
+            conditions.add("body LIKE '%" + safeString(searchContent) + "%'");
         }
 
         // Add WHERE clause if there are conditions

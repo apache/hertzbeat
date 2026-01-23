@@ -661,6 +661,8 @@
   "log.stream.severity-number-placeholder": "輸入日誌等級編號",
   "log.stream.severity-text": "日誌等級:",
   "log.stream.severity-text-placeholder": "輸入日誌等級",
+  "log.stream.content": "日誌內容",
+  "log.stream.content-placeholder": "輸入日誌內容",
   "log.stream.show-filters": "顯示過濾器",
   "log.stream.span": "跨度:",
   "log.stream.span-id": "Span ID:",
