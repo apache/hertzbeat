@@ -107,4 +107,8 @@ export class AlertDefineService {
       responseType: 'blob'
     });
   }
+
+  public getDatasourceStatus(): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${alert_define_uri}/datasource/status`);
+  }
 }

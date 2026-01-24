@@ -40,4 +40,10 @@ public interface DataSourceService {
      * @return result
      */
     List<Map<String, Object>> query(String datasource, String expr);
+
+    /**
+     * Get available datasource executors status
+     * @return map containing available executors by type (promql, sql)
+     */
+    Map<String, Object> getAvailableExecutors();
 } 

@@ -56,7 +56,7 @@ github：[wang1027-wqh](https://github.com/wang1027-wqh)
 
 现从事：某互联网公司Java开发工程师
 
-email：<1758619238@qq.com>
+email：[1758619238@qq.com](mailto:1758619238@qq.com)
 
 Hertzbeat Committer
 

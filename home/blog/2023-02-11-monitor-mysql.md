@@ -39,7 +39,7 @@ Keywords: [Open source monitoring tool, open source database monitoring, Mysql d
 2. Configure the parameters required for the new monitoring Mysql database
 
    On the monitoring page, fill in Mysql **service IP**, **monitoring port** (default 3306), **account password, etc.**, and finally click OK to add.
-   For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.apache.org/docs/help/mysql/) <https://hertzbeat.apache.org/docs/help> /mysql/
+   For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.apache.org/docs/help/mysql/) [https://hertzbeat.apache.org/docs/help](https://hertzbeat.apache.org/docs/help) /mysql/
 
    ![HertzBeat](/img/blog/monitor-mysql-2.png)
 
@@ -87,7 +87,7 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
    Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-   - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Refer to this [Help Documentation](https://hertzbeat.apache.org/docs/help/alert_dingtalk) [https://hertzbeat.apache.org/docs/help/alert_dingtalk](https://hertzbeat.apache.org/docs/help/alert_dingtalk) to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
    - Configure the receiver parameters in HertzBeat as follows.
 
    【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
@@ -118,8 +118,8 @@ Content details: mysql db query_cache_hit_rate is too low, now is 20.
 This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Mysql database metric data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
 :::
 
-Mysql Github: <https://github.com/mysql/mysql-server>
-HertzBeat Github: <https://github.com/apache/hertzbeat>
+Mysql Github: [https://github.com/mysql/mysql-server](https://github.com/mysql/mysql-server)
+HertzBeat Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 **Welcome to learn, use and star!**
 
