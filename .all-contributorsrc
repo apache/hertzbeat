@@ -2685,6 +2685,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Sahil-Shadwal",
+      "name": "Sahil Shadwal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119167601?v=4",
+      "profile": "https://shadwal.space/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

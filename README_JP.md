@@ -546,6 +546,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/KOYR"><img src="https://avatars.githubusercontent.com/u/53216619?v=4?s=100" width="100px;" alt="KOYR"/><br /><sub><b>KOYR</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=KOYR" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Lathika226"><img src="https://avatars.githubusercontent.com/u/178710568?v=4?s=100" width="100px;" alt="LathikaBaddam"/><br /><sub><b>LathikaBaddam</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Lathika226" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://shadwal.space/"><img src="https://avatars.githubusercontent.com/u/119167601?v=4?s=100" width="100px;" alt="Sahil Shadwal"/><br /><sub><b>Sahil Shadwal</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Sahil-Shadwal" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
