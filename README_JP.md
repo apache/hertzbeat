@@ -549,6 +549,7 @@ Thanks these wonderful people, welcome to join us:
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://shadwal.space/"><img src="https://avatars.githubusercontent.com/u/119167601?v=4?s=100" width="100px;" alt="Sahil Shadwal"/><br /><sub><b>Sahil Shadwal</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Sahil-Shadwal" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/BhanuNidumolu"><img src="https://avatars.githubusercontent.com/u/180380413?v=4?s=100" width="100px;" alt="N.Bhanu Prasad"/><br /><sub><b>N.Bhanu Prasad</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=BhanuNidumolu" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://prakashh-portfolio.vercel.app/"><img src="https://avatars.githubusercontent.com/u/183058331?v=4?s=100" width="100px;" alt="Prakash Kumar"/><br /><sub><b>Prakash Kumar</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Prakash1185" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
