@@ -544,6 +544,7 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pentium100"><img src="https://avatars.githubusercontent.com/u/27917?v=4?s=100" width="100px;" alt="pentium100"/><br /><sub><b>pentium100</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pentium100" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dedyks"><img src="https://avatars.githubusercontent.com/u/23741665?v=4?s=100" width="100px;" alt="Dedy Kurniawan Santoso"/><br /><sub><b>Dedy Kurniawan Santoso</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=dedyks" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/KOYR"><img src="https://avatars.githubusercontent.com/u/53216619?v=4?s=100" width="100px;" alt="KOYR"/><br /><sub><b>KOYR</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=KOYR" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Lathika226"><img src="https://avatars.githubusercontent.com/u/178710568?v=4?s=100" width="100px;" alt="LathikaBaddam"/><br /><sub><b>LathikaBaddam</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Lathika226" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
