@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -86,7 +85,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private static final String IMPORT_PATH = "/api/v1/import";
     /**
      * <a href="https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-export-data-in-json-line-format">
-     *     https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-export-data-in-json-line-format
+     * https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html#how-to-export-data-in-json-line-format
      * </a>
      */
     private static final String EXPORT_PATH = "/api/v1/export";
@@ -119,7 +118,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         victoriaMetricsProp = victoriaMetricsProperties;
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
         insertConfig = victoriaMetricsProperties.insert() == null ? new VictoriaMetricsProperties.InsertConfig(100, 3,
-                new VictoriaMetricsProperties.Compression(false)) : victoriaMetricsProperties.insert();
+            new VictoriaMetricsProperties.Compression(false)) : victoriaMetricsProperties.insert();
         metricsBufferQueue = new LinkedBlockingQueue<>(insertConfig.bufferSize());
         initializeFlushTimer();
     }
@@ -139,14 +138,14 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         try {
             HttpHeaders headers = new HttpHeaders();
             if (StringUtils.hasText(victoriaMetricsProp.username())
-                    && StringUtils.hasText(victoriaMetricsProp.password())) {
+                && StringUtils.hasText(victoriaMetricsProp.password())) {
                 String authStr = victoriaMetricsProp.username() + SignConstants.DOUBLE_MARK + victoriaMetricsProp.password();
                 String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             ResponseEntity<String> responseEntity = restTemplate.exchange(victoriaMetricsProp.url() + STATUS_PATH,
-                    HttpMethod.GET, httpEntity, String.class);
+                HttpMethod.GET, httpEntity, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.info("check victoria metrics server status success.");
                 return true;
@@ -168,7 +167,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         }
         if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse victoria-metrics] flush metrics data {} {} {} is null, ignore.",
-                    metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
+                metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
         }
         Map<String, String> defaultLabels = Maps.newHashMapWithExpectedSize(8);
@@ -178,7 +177,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             isPrometheusAuto = true;
             defaultLabels.remove(MONITOR_METRICS_KEY);
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp()
-                    .substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));
+                .substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));
         } else {
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
@@ -220,7 +219,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         try {
                             labels.putAll(defaultLabels);
                             String labelName = isPrometheusAuto ? metricsData.getMetrics()
-                                    : metricsData.getMetrics() + SPILT + entry.getKey();
+                                : metricsData.getMetrics() + SPILT + entry.getKey();
                             labels.put(LABEL_KEY_NAME, labelName);
                             if (!isPrometheusAuto) {
                                 labels.put(MONITOR_METRIC_KEY, entry.getKey());
@@ -232,10 +231,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                                 labels.putAll(customizedLabels);
                             }
                             VictoriaMetricsContent content = VictoriaMetricsContent.builder()
-                                    .metric(new HashMap<>(labels))
-                                    .values(new Double[]{entry.getValue()})
-                                    .timestamps(timestamp)
-                                    .build();
+                                .metric(new HashMap<>(labels))
+                                .values(new Double[]{entry.getValue()})
+                                .timestamps(timestamp)
+                                .build();
                             contentList.add(content);
                         } catch (Exception e) {
                             log.error("combine metrics data error: {}.", e.getMessage(), e);
@@ -278,25 +277,27 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
             if (StringUtils.hasText(victoriaMetricsProp.username())
-                    && StringUtils.hasText(victoriaMetricsProp.password())) {
+                && StringUtils.hasText(victoriaMetricsProp.password())) {
                 String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                 String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + EXPORT_PATH)
-                    .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
-                    .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
-                    .queryParam("end", "now")
-                    .build(true).toUri();
+                .queryParam("match[]", "{" + timeSeriesSelector + "}")
+                .queryParam("start", "now-" + history)
+                .queryParam("end", "now")
+                .build()
+                .encode()
+                .toUri();
             ResponseEntity<String> responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, String.class);
+                HttpMethod.GET, httpEntity, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from victoria-metrics success. {}", uri);
                 if (StringUtils.hasText(responseEntity.getBody())) {
                     String[] contentJsonArr = responseEntity.getBody().split("\n");
                     List<VictoriaMetricsContent> contents = Arrays.stream(contentJsonArr).map(
-                            item ->  JsonUtil.fromJson(item, VictoriaMetricsContent.class)
+                        item ->  JsonUtil.fromJson(item, VictoriaMetricsContent.class)
                     ).toList();
                     for (VictoriaMetricsContent content : contents) {
                         Map<String, String> labels = content.getMetric();
@@ -373,25 +374,27 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
             if (StringUtils.hasText(victoriaMetricsProp.username())
-                    && StringUtils.hasText(victoriaMetricsProp.password())) {
+                && StringUtils.hasText(victoriaMetricsProp.password())) {
                 String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                 String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC
-                        + SignConstants.BLANK + encodedAuth);
+                    + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h")
-                    .queryParam("start", startTime)
-                    .queryParam("end", endTime)
-                    .build(true).toUri();
+                .queryParam("query", "{" + timeSeriesSelector + "}")
+                .queryParam("step", "4h")
+                .queryParam("start", startTime)
+                .queryParam("end", endTime)
+                .build()
+                .encode()
+                .toUri();
             ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from victoria-metrics success. {}", uri);
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                        && responseEntity.getBody().getData().getResult() != null) {
+                    && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
@@ -418,16 +421,18 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             }
             // max
             uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h")
-                    .queryParam("start", startTime)
-                    .queryParam("end", endTime)
-                    .build(true).toUri();
+                .queryParam("query", "max_over_time({" + timeSeriesSelector + "})")
+                .queryParam("step", "4h")
+                .queryParam("start", startTime)
+                .queryParam("end", endTime)
+                .build()
+                .encode()
+                .toUri();
             responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                        && responseEntity.getBody().getData().getResult() != null) {
+                    && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
@@ -454,16 +459,18 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             }
             // min
             uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h")
-                    .queryParam("start", startTime)
-                    .queryParam("end", endTime)
-                    .build(true).toUri();
+                .queryParam("query", "min_over_time({" + timeSeriesSelector + "})")
+                .queryParam("step", "4h")
+                .queryParam("start", startTime)
+                .queryParam("end", endTime)
+                .build()
+                .encode()
+                .toUri();
             responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                        && responseEntity.getBody().getData().getResult() != null) {
+                    && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
@@ -490,16 +497,18 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             }
             // avg
             uri = UriComponentsBuilder.fromUriString(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
-                    .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
-                    .queryParam("step", "4h")
-                    .queryParam("start", startTime)
-                    .queryParam("end", endTime)
-                    .build(true).toUri();
+                .queryParam("query", "avg_over_time({" + timeSeriesSelector + "})")
+                .queryParam("step", "4h")
+                .queryParam("start", startTime)
+                .queryParam("end", endTime)
+                .build()
+                .encode()
+                .toUri();
             responseEntity = restTemplate.exchange(uri,
-                    HttpMethod.GET, httpEntity, PromQlQueryContent.class);
+                HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
-                        && responseEntity.getBody().getData().getResult() != null) {
+                    && responseEntity.getBody().getData().getResult() != null) {
                     List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData().getResult();
                     for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
@@ -598,7 +607,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         }
         // Refresh in advance to avoid waiting
         if (metricsBufferQueue.size() >= insertConfig.bufferSize() * 0.8
-                && draining.compareAndSet(false, true)) {
+            && draining.compareAndSet(false, true)) {
             triggerImmediateFlush();
         }
     }
@@ -664,7 +673,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             if (StringUtils.hasText(victoriaMetricsProp.username())
-                    && StringUtils.hasText(victoriaMetricsProp.password())) {
+                && StringUtils.hasText(victoriaMetricsProp.password())) {
                 String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                 String encodedAuth = Base64Util.encode(authStr);
                 headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
@@ -693,7 +702,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             }
 
             ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.url() + IMPORT_PATH,
-                    httpEntity, String.class);
+                httpEntity, String.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("insert metrics data to victoria-metrics success.");
             } else {
