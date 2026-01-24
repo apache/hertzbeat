@@ -46,6 +46,8 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
   @Input()
   instance!: string;
   @Input()
+  monitorName!: string;
+  @Input()
   app!: string;
   @Input()
   metrics!: string;
@@ -264,7 +266,14 @@ export class MonitorDataChartComponent implements OnInit, OnDestroy {
     // load historical metrics data
     this.loading = `${this.i18nSvc.fanyi('monitor.detail.chart.data-loading')}`;
     let metricData$ = this.monitorSvc
-      .getMonitorMetricHistoryData(this.instance, this.app, this.metrics, this.metric, this.timePeriod, isInterval)
+      .getMonitorMetricHistoryData(
+        this.instance,
+        this.app == 'prometheus' ? `_prometheus_${this.monitorName}` : this.app,
+        this.metrics,
+        this.metric,
+        this.timePeriod,
+        isInterval
+      )
       .pipe(
         finalize(() => {
           if (!this.worker$) {
