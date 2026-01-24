@@ -265,12 +265,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     @Override
     public Map<String, List<Value>> getHistoryMetricData(String instance, String app, String metrics, String metric, String history) {
         String labelName = metrics + SPILT + metric;
-        if (CommonConstants.PROMETHEUS.equals(app)) {
+        if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
-            + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
-            + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
+                + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
+                + (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -362,12 +362,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             startTime = dateTime.toEpochSecond();
         }
         String labelName = metrics + SPILT + metric;
-        if (CommonConstants.PROMETHEUS.equals(app)) {
+        if (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             labelName = metrics;
         }
         String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
-            + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
-            + (CommonConstants.PROMETHEUS.equals(app) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
+                + "," + LABEL_KEY_INSTANCE + "=\"" + instance + "\""
+                + (app.startsWith(CommonConstants.PROMETHEUS_APP_PREFIX) ? "" : "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"");
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
