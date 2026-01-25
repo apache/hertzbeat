@@ -206,10 +206,6 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null)
                 : collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-        try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {
-        }
 
         try {
             if (collector != null) {
@@ -429,12 +425,6 @@ public class MonitorServiceImpl implements MonitorService {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
             }
             monitor.setJobId(newJobId);
-
-            // execute only in non paused status
-            try {
-                detectMonitor(monitor, params, collector);
-            } catch (Exception ignored) {
-            }
         }
 
         // After the update is successfully released, refresh the database
