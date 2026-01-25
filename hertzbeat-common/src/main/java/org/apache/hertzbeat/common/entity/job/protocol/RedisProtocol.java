@@ -66,5 +66,14 @@ public class RedisProtocol implements CommonRequestProtocol, Protocol {
      * SSH TUNNEL
      */
     private SshTunnel sshTunnel;
+    
+    @Override
+    public void setHost(String host) {
+        this.host = host;
+    }
 
+    @Override
+    public void setPort(String port) {
+        this.port = port;
+    }
 }
