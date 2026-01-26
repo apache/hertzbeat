@@ -67,7 +67,7 @@ import { AiChatModalService } from '../../shared/services/ai-chat-modal.service'
         Licensed under the Apache License, Version 2.0
       </div>
     </global-footer>
-    <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
+    <setting-drawer *ngIf="showSettingDrawer" appSettingDrawerI18n></setting-drawer>
 
     <!-- AI Chat Button -->
     <div class="ai-chat-button-container">
