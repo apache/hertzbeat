@@ -159,4 +159,8 @@ public class StrBuffer {
         }
         return Double.parseDouble(s);
     }
+
+    public static String escapeForFormat(String value) {
+        return value.replace("%", "%%");
+    }
 }
