@@ -47,6 +47,7 @@ import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.StrBuffer;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -221,7 +222,12 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                         } else {
                             try {
                                 double number = Double.parseDouble(value);
-                                sqlRowBuffer.append(number);
+                                // TDengine doesn't support NaN or Infinity literals, convert to NULL
+                                if (Double.isNaN(number) || Double.isInfinite(number)) {
+                                    sqlRowBuffer.append("NULL");
+                                } else {
+                                    sqlRowBuffer.append(number);
+                                }
                             } catch (Exception e) {
 
                                 if (log.isWarnEnabled()) {
@@ -236,7 +242,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                         if (CommonConstants.NULL_VALUE.equals(value)) {
                             sqlRowBuffer.append("NULL");
                         } else {
-                            sqlRowBuffer.append("'").append(formatStringValue(value)).append("'");
+                            sqlRowBuffer.append("'").append(StrBuffer.escapeForFormat(formatStringValue(value))).append("'");
                         }
                     }
 
