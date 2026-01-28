@@ -36,6 +36,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import reactor.core.publisher.Flux;
 
@@ -56,6 +57,7 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     private final GeneralConfigDao generalConfigDao;
     
     @Autowired
+    @Qualifier("hertzbeatTools")
     private ToolCallbackProvider toolCallbackProvider;
     
     private boolean isConfigured = false;
