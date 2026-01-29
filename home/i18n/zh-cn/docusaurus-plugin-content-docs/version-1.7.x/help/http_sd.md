@@ -18,21 +18,23 @@ HTTP 服务发现允许 HertzBeat 通过调用您的自定义 HTTP API 来发现
 您需要提供或开发一个满足以下要求的 HTTP API：
 
 1. **HTTP 方法**：支持 GET 请求
-2. **响应格式**：返回 JSON 格式数据
-3. **响应结构**：必须包含 `targets` 字段，该字段为字符串数组，每个字符串是一个服务实例地址，格式为 `host:port`
+2. **响应格式**：返回 JSON 格式数组
+3. **响应结构**：必须是数组格式，每个元素包含 `target` 字段（注意是单数），该字段为字符串数组，每个字符串是一个服务实例地址，格式为 `host:port`
 4. **可访问性**：该 API 必须可从 HertzBeat 访问
 
 #### API 响应示例
 
 ```json
-{
-  "targets": [
-    "192.168.1.101:8080",
-    "192.168.1.102:8080",
-    "192.168.1.103:8080",
-    "api.example.com:443"
-  ]
-}
+[
+  {
+    "target": [
+      "192.168.1.101:8080",
+      "192.168.1.102:8080",
+      "192.168.1.103:8080",
+      "api.example.com:443"
+    ]
+  }
+]
 ```
 
 ### 配置参数
@@ -81,13 +83,15 @@ HTTP 服务发现允许 HertzBeat 通过调用您的自定义 HTTP API 来发现
 - **响应**：
 
   ```json
-  {
-    "targets": [
-      "10.0.1.10:8080",
-      "10.0.1.11:8080",
-      "10.0.1.12:8080"
-    ]
-  }
+  [
+    {
+      "target": [
+        "10.0.1.10:8080",
+        "10.0.1.11:8080",
+        "10.0.1.12:8080"
+      ]
+    }
+  ]
   ```
 
 配置示例：
@@ -134,7 +138,7 @@ HTTP 服务发现允许 HertzBeat 通过调用您的自定义 HTTP API 来发现
 
 ### 注意事项
 
-- **响应格式**：API 响应必须是 JSON 格式且包含 `targets` 字段（字符串数组）
+- **响应格式**：API 响应必须是 JSON 数组格式，每个元素包含 `target` 字段（注意是单数，字符串数组）
 - **地址格式**：每个目标地址应为 `host:port` 格式，例如：
   - `192.168.1.100:8080`
   - `api.example.com:443`
@@ -171,21 +175,23 @@ HTTP 服务发现允许 HertzBeat 通过调用您的自定义 HTTP API 来发现
 
 #### 包含额外元数据的响应
 
-虽然基本要求只是 `targets` 字段，但您的 API 可以包含额外的元数据以供未来扩展使用：
+虽然基本要求只是 `target` 字段，但您的 API 可以包含额外的元数据以供未来扩展使用：
 
 ```json
-{
-  "targets": [
-    "192.168.1.10:8080"
-  ],
-  "labels": {
-    "env": "production",
-    "version": "1.0.0"
+[
+  {
+    "target": [
+      "192.168.1.10:8080"
+    ],
+    "labels": {
+      "env": "production",
+      "version": "1.0.0"
+    }
   }
-}
+]
 ```
 
-注意：目前仅使用 `targets` 字段进行服务发现，但未来版本可能支持使用标签信息。
+注意：目前仅使用 `target` 字段进行服务发现，但未来版本可能支持使用标签信息。
 
 ### API 实现示例
 
@@ -197,16 +203,16 @@ HTTP 服务发现允许 HertzBeat 通过调用您的自定义 HTTP API 来发现
 public class ServiceDiscoveryController {
 
     @GetMapping("/services")
-    public Map<String, Object> getServices() {
-        List`<String>` targets = Arrays.asList(
+    public List<Map<String, Object>> getServices() {
+        List<String> targets = Arrays.asList(
             "192.168.1.10:8080",
             "192.168.1.11:8080",
             "192.168.1.12:8080"
         );
 
         Map<String, Object> response = new HashMap<>();
-        response.put("targets", targets);
-        return response;
+        response.put("target", targets);
+        return Collections.singletonList(response);
     }
 }
 ```
@@ -221,8 +227,8 @@ app.get('/api/services', (req, res) => {
     '192.168.1.12:8080'
   ];
 
-  res.json({
-    targets: targets
-  });
+  res.json([{
+    target: targets
+  }]);
 });
 ```
