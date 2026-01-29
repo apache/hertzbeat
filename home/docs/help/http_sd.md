@@ -18,21 +18,23 @@ HTTP Service Discovery allows HertzBeat to discover service instances by calling
 You need to provide or develop an HTTP API that meets the following requirements:
 
 1. **HTTP Method**: Support GET requests
-2. **Response Format**: Return JSON format data
-3. **Response Structure**: Must contain a `targets` field, which is a string array. Each string is a service instance address in the format `host:port`
+2. **Response Format**: Return JSON array format
+3. **Response Structure**: Must be an array format, each element contains a `target` field (note: singular), which is a string array. Each string is a service instance address in the format `host:port`
 4. **Accessibility**: The API must be accessible from HertzBeat
 
 #### API Response Example
 
 ```json
-{
-  "targets": [
-    "192.168.1.101:8080",
-    "192.168.1.102:8080",
-    "192.168.1.103:8080",
-    "api.example.com:443"
-  ]
-}
+[
+  {
+    "target": [
+      "192.168.1.101:8080",
+      "192.168.1.102:8080",
+      "192.168.1.103:8080",
+      "api.example.com:443"
+    ]
+  }
+]
 ```
 
 ### Configuration parameter
@@ -81,13 +83,15 @@ Suppose you have a service management API:
 - **Response**:
 
   ```json
-  {
-    "targets": [
-      "10.0.1.10:8080",
-      "10.0.1.11:8080",
-      "10.0.1.12:8080"
-    ]
-  }
+  [
+    {
+      "target": [
+        "10.0.1.10:8080",
+        "10.0.1.11:8080",
+        "10.0.1.12:8080"
+      ]
+    }
+  ]
   ```
 
 Configuration example:
@@ -134,7 +138,7 @@ Configuration example:
 
 ### Notes
 
-- **Response Format**: The API response must be in JSON format and contain a `targets` field (string array)
+- **Response Format**: The API response must be in JSON array format, each element contains a `target` field (note: singular, string array)
 - **Address Format**: Each target address should be in the format `host:port`, for example:
   - `192.168.1.100:8080`
   - `api.example.com:443`
@@ -171,21 +175,23 @@ Configuration example:
 
 #### Response with Additional Metadata
 
-While the basic requirement is just the `targets` field, your API can include additional metadata for future extensions:
+While the basic requirement is just the `target` field, your API can include additional metadata for future extensions:
 
 ```json
-{
-  "targets": [
-    "192.168.1.10:8080"
-  ],
-  "labels": {
-    "env": "production",
-    "version": "1.0.0"
+[
+  {
+    "target": [
+      "192.168.1.10:8080"
+    ],
+    "labels": {
+      "env": "production",
+      "version": "1.0.0"
+    }
   }
-}
+]
 ```
 
-Note: Currently, only the `targets` field is used for service discovery, but future versions may support using label information.
+Note: Currently, only the `target` field is used for service discovery, but future versions may support using label information.
 
 ### API Implementation Examples
 
@@ -197,16 +203,16 @@ Note: Currently, only the `targets` field is used for service discovery, but fut
 public class ServiceDiscoveryController {
 
     @GetMapping("/services")
-    public Map<String, Object> getServices() {
-        List`<String>` targets = Arrays.asList(
+    public List<Map<String, Object>> getServices() {
+        List<String> targets = Arrays.asList(
             "192.168.1.10:8080",
             "192.168.1.11:8080",
             "192.168.1.12:8080"
         );
 
         Map<String, Object> response = new HashMap<>();
-        response.put("targets", targets);
-        return response;
+        response.put("target", targets);
+        return Collections.singletonList(response);
     }
 }
 ```
@@ -221,8 +227,8 @@ app.get('/api/services', (req, res) => {
     '192.168.1.12:8080'
   ];
 
-  res.json({
-    targets: targets
-  });
+  res.json([{
+    target: targets
+  }]);
 });
 ```
