@@ -65,6 +65,21 @@ POST /api/ai/sop/execute/{skillName}/ai
 
 ```
 YAML Definition → SkillRegistry → SopEngine → Executors → SopResult
-                                     ↓
-                              ToolExecutor / LlmExecutor
+                                      ↓
+                               ToolExecutor / LlmExecutor
+                                      ↓
+                               ToolRegistry (auto-discover @Tool methods)
 ```
+
+## Adding New Tools
+
+Just add `@Tool` annotation to your method - no other code changes needed:
+
+```java
+@Tool(name = "myNewTool", description = "...")
+public String myNewTool(@ToolParam(...) Long param) {
+    // implementation
+}
+```
+
+ToolRegistry auto-discovers all `@Tool` methods at runtime.

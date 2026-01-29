@@ -26,6 +26,7 @@ import org.apache.hertzbeat.ai.sop.executor.SopExecutor;
 import org.apache.hertzbeat.ai.sop.model.OutputConfig;
 import org.apache.hertzbeat.ai.sop.model.OutputType;
 import org.apache.hertzbeat.ai.sop.model.SopDefinition;
+import org.apache.hertzbeat.ai.sop.model.SopParameter;
 import org.apache.hertzbeat.ai.sop.model.SopResult;
 import org.apache.hertzbeat.ai.sop.model.SopStep;
 import org.apache.hertzbeat.ai.sop.model.StepResult;
@@ -118,6 +119,15 @@ public class SopEngineImpl implements SopEngine {
         long startTime = System.currentTimeMillis();
         List<StepResult> stepResults = new ArrayList<>();
         Map<String, Object> context = new HashMap<>(inputParams);
+        
+        // Apply default values for parameters that are not provided
+        if (definition.getParameters() != null) {
+            for (SopParameter param : definition.getParameters()) {
+                if (!context.containsKey(param.getName()) && param.getDefaultValue() != null) {
+                    context.put(param.getName(), param.getDefaultValue());
+                }
+            }
+        }
         
         // Get output configuration first
         OutputConfig outputConfig = definition.getOutput();

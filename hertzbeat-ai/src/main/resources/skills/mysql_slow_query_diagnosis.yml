@@ -1,0 +1,95 @@
+name: mysql_slow_query_diagnosis
+description: "Diagnose MySQL slow queries and provide optimization recommendations"
+version: "1.0"
+
+# Output configuration
+output:
+  type: report
+  format: markdown
+  language: zh
+  contentStep: generate_diagnosis
+
+parameters:
+  - name: monitorId
+    type: long
+    description: "MySQL monitor ID to diagnose"
+    required: true
+  - name: slowQueryLimit
+    type: integer
+    description: "Number of slow queries to analyze (default: 10)"
+    required: false
+    defaultValue: "10"
+
+steps:
+  # Step 1: Get slow query statistics
+  - id: get_slow_queries
+    type: tool
+    tool: getMySqlSlowQueries
+    args:
+      monitorId: "${monitorId}"
+      limit: "${slowQueryLimit}"
+
+  # Step 2: Get current process list
+  - id: get_process_list
+    type: tool
+    tool: getMySqlProcessList
+    args:
+      monitorId: "${monitorId}"
+
+  # Step 3: Get lock wait information
+  - id: get_lock_waits
+    type: tool
+    tool: getMySqlLockWaits
+    args:
+      monitorId: "${monitorId}"
+
+  # Step 4: Get global status for slow query metrics
+  - id: get_slow_status
+    type: tool
+    tool: getMySqlGlobalStatus
+    args:
+      monitorId: "${monitorId}"
+      pattern: "Slow%"
+
+  # Step 5: LLM analyze and generate diagnosis report
+  - id: generate_diagnosis
+    type: llm
+    prompt: |
+      You are a senior MySQL DBA expert. Based on the following diagnostic data, generate a comprehensive slow query diagnosis report.
+      
+      ## Slow Query Statistics (Top N by average execution time)
+      ${get_slow_queries}
+      
+      ## Current Process List (Active queries)
+      ${get_process_list}
+      
+      ## Lock Wait Information
+      ${get_lock_waits}
+      
+      ## Server Slow Query Status
+      ${get_slow_status}
+      
+      Please provide a diagnosis report with the following sections:
+      
+      1. **Problem Summary**
+         - Overall slow query situation
+         - Most critical issues found
+      
+      2. **Slow Query Analysis**
+         - Top slow queries and their characteristics
+         - Common patterns (full table scans, missing indexes, etc.)
+      
+      3. **Lock & Concurrency Issues**
+         - Any lock contention found
+         - Long-running transactions
+      
+      4. **Optimization Recommendations**
+         - Index recommendations
+         - Query optimization suggestions
+         - Configuration tuning tips
+      
+      5. **Urgent Actions**
+         - Queries that need immediate attention
+         - Recommended immediate steps
+      
+      Format the report in markdown. Be specific with SQL examples where applicable.

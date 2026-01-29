@@ -67,7 +67,22 @@ POST /api/ai/sop/execute/{skillName}/ai
 YAML 定义 → SkillRegistry → SopEngine → Executors → SopResult
                                 ↓
                          ToolExecutor / LlmExecutor
+                                ↓
+                         ToolRegistry（自动发现 @Tool 方法）
 ```
+
+## 添加新工具
+
+只需添加 `@Tool` 注解，无需修改其他代码：
+
+```java
+@Tool(name = "myNewTool", description = "...")
+public String myNewTool(@ToolParam(...) Long param) {
+    // 实现逻辑
+}
+```
+
+ToolRegistry 会在运行时自动发现所有 `@Tool` 方法。
 
 ## 配置说明
 
