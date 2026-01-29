@@ -24,7 +24,7 @@ steps:
   # Step 1: Get slow query statistics
   - id: get_slow_queries
     type: tool
-    tool: getMySqlSlowQueries
+    tool: get_mysql_slow_queries
     args:
       monitorId: "${monitorId}"
       limit: "${slowQueryLimit}"
@@ -32,21 +32,21 @@ steps:
   # Step 2: Get current process list
   - id: get_process_list
     type: tool
-    tool: getMySqlProcessList
+    tool: get_mysql_process_list
     args:
       monitorId: "${monitorId}"
 
   # Step 3: Get lock wait information
   - id: get_lock_waits
     type: tool
-    tool: getMySqlLockWaits
+    tool: get_mysql_lock_waits
     args:
       monitorId: "${monitorId}"
 
   # Step 4: Get global status for slow query metrics
   - id: get_slow_status
     type: tool
-    tool: getMySqlGlobalStatus
+    tool: get_mysql_global_status
     args:
       monitorId: "${monitorId}"
       pattern: "Slow%"

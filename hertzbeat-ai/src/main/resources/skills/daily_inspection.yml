@@ -19,7 +19,7 @@ parameters:
 steps:
   - id: get_monitor_summary
     type: tool
-    tool: queryMonitors
+    tool: query_monitors
     args:
       status: 9
       pageSize: 100
@@ -45,7 +45,7 @@ steps:
 
   - id: get_storage_status
     type: tool
-    tool: getWarehouseStatus
+    tool: get_warehouse_status
 
   - id: generate_report
     type: llm

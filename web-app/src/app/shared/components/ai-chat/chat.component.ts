@@ -34,7 +34,14 @@ import { ThemeService } from '../../../service/theme.service';
   styleUrls: ['./chat.component.less']
 })
 export class ChatComponent implements OnInit, OnDestroy {
+  /**
+   * Marker for skill report content that should be displayed directly to users
+   * without further AI processing.
+   */
+  private readonly SKILL_REPORT_MARKER = '[[SKILL_REPORT]]';
+
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
+
 
   conversations: ChatConversation[] = [];
   currentConversation: ChatConversation | null = null;
@@ -62,7 +69,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
     private generalConfigSvc: GeneralConfigService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
@@ -312,6 +319,12 @@ export class ChatComponent implements OnInit, OnDestroy {
           lastMessage.content += chunk.content;
           lastMessage.gmtCreate = chunk.gmtCreate;
 
+          // Check for skill report marker and process it
+          if (lastMessage.content.includes(this.SKILL_REPORT_MARKER)) {
+            lastMessage.content = this.processSkillReportContent(lastMessage.content);
+            lastMessage.isSkillReport = true;
+          }
+
           this.cdr.detectChanges();
           this.scrollToBottom();
         }
@@ -430,6 +443,24 @@ export class ChatComponent implements OnInit, OnDestroy {
       message.content = String(message.content || '');
     }
   }
+
+  /**
+   * Process skill report content by removing the marker and extracting the report.
+   * Skill reports are directly displayed to users without further AI processing.
+   */
+  private processSkillReportContent(content: string): string {
+    // Remove the marker and return the report content
+    const markerIndex = content.indexOf(this.SKILL_REPORT_MARKER);
+    if (markerIndex !== -1) {
+      // Extract content after the marker
+      let reportContent = content.substring(markerIndex + this.SKILL_REPORT_MARKER.length);
+      // Remove leading newlines
+      reportContent = reportContent.replace(/^\n+/, '');
+      return reportContent;
+    }
+    return content;
+  }
+
 
   /**
    * Scroll to bottom of messages with smooth animation

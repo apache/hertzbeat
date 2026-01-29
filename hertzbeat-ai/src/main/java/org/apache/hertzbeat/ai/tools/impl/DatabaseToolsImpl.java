@@ -59,7 +59,7 @@ public class DatabaseToolsImpl implements DatabaseTools {
     }
 
     @Override
-    @Tool(name = "getMySqlSlowQueries", description = "Get MySQL slow query statistics from performance_schema. "
+    @Tool(name = "get_mysql_slow_queries", description = "Get MySQL slow query statistics from performance_schema. "
             + "Returns top N slow queries sorted by average execution time. "
             + "Requires the monitor to be a MySQL type with proper credentials.")
     public String getMySqlSlowQueries(
@@ -84,7 +84,7 @@ public class DatabaseToolsImpl implements DatabaseTools {
     }
 
     @Override
-    @Tool(name = "getMySqlProcessList", description = "Get MySQL current process list. "
+    @Tool(name = "get_mysql_process_list", description = "Get MySQL current process list. "
             + "Shows all active connections and their current state. "
             + "Useful for identifying blocking queries or connection issues.")
     public String getMySqlProcessList(
@@ -101,7 +101,7 @@ public class DatabaseToolsImpl implements DatabaseTools {
     }
 
     @Override
-    @Tool(name = "getMySqlLockWaits", description = "Get MySQL lock wait information. "
+    @Tool(name = "get_mysql_lock_waits", description = "Get MySQL lock wait information. "
             + "Shows current lock waits and blocking transactions. "
             + "Useful for diagnosing deadlocks and lock contention issues.")
     public String getMySqlLockWaits(
@@ -126,7 +126,7 @@ public class DatabaseToolsImpl implements DatabaseTools {
     }
 
     @Override
-    @Tool(name = "getMySqlGlobalStatus", description = "Get MySQL global status variables. "
+    @Tool(name = "get_mysql_global_status", description = "Get MySQL global status variables. "
             + "Returns server status matching the given pattern. "
             + "Examples: 'Slow%' for slow query stats, 'Threads%' for thread stats.")
     public String getMySqlGlobalStatus(
@@ -143,7 +143,7 @@ public class DatabaseToolsImpl implements DatabaseTools {
     }
 
     @Override
-    @Tool(name = "explainQuery", description = "Explain a SELECT query for performance analysis. "
+    @Tool(name = "explain_query", description = "Explain a SELECT query for performance analysis. "
             + "ONLY SELECT queries are allowed for security reasons. "
             + "Returns the execution plan to help optimize the query.")
     public String explainQuery(

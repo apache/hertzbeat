@@ -28,6 +28,8 @@ export interface ChatMessage {
   content: string;
   role: 'user' | 'assistant';
   gmtCreate: Date;
+  /** Flag indicating this message is a skill report that should be displayed directly */
+  isSkillReport?: boolean;
 }
 
 export interface ChatConversation {
@@ -49,7 +51,7 @@ const chat_uri = '/chat';
   providedIn: 'root'
 })
 export class AiChatService {
-  constructor(private http: HttpClient, private localStorageService: LocalStorageService) {}
+  constructor(private http: HttpClient, private localStorageService: LocalStorageService) { }
 
   /**
    * Create a new conversation

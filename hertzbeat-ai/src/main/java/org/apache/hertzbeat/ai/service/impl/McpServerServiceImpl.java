@@ -23,6 +23,7 @@ import org.apache.hertzbeat.ai.tools.AlertDefineTools;
 import org.apache.hertzbeat.ai.tools.AlertTools;
 import org.apache.hertzbeat.ai.tools.MetricsTools;
 import org.apache.hertzbeat.ai.tools.MonitorTools;
+import org.apache.hertzbeat.ai.tools.SkillTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -45,9 +46,18 @@ public class McpServerServiceImpl implements McpServerService {
     private MetricsTools metricsTools;
     @Autowired
     private AlertDefineTools alertDefineTools;
+    @Autowired
+    private SkillTools skillTools;
 
     @Bean
     public ToolCallbackProvider hertzbeatTools() {
-        return MethodToolCallbackProvider.builder().toolObjects(monitorTools, alertTools, alertDefineTools, metricsTools).build();
+        // Note: DatabaseTools is NOT exposed to AI directly.
+        // AI should use Skills (via skillTools) to perform database diagnostics.
+        return MethodToolCallbackProvider.builder()
+                .toolObjects(monitorTools, alertTools, alertDefineTools, metricsTools, 
+                             skillTools)
+                .build();
     }
 }
+
+

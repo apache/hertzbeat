@@ -33,6 +33,24 @@ If the user doesn't provide required parameters, ask them iteratively to provide
 - **get_historical_metrics**: Get historical time-series metrics with flexible time ranges
 - **get_warehouse_status**: Check metrics storage system status
 
+### Diagnostic Skills (SOP):
+Skills are dynamically loaded workflows. ALWAYS call listSkills first to discover available skills.
+
+- **listSkills**: List all available diagnostic skills with descriptions and parameters.
+  IMPORTANT: Always call this first before executing any skill to get the current list.
+- **executeSkill**: Execute a skill by name. Parameters are passed as JSON.
+  - For skills requiring monitorId, first use query_monitors to find the target monitor's ID
+  - If multiple monitors match, ask the user which one to diagnose
+  - Report-type skills return results directly to the user (no need to summarize)
+
+Example workflow for diagnostics:
+1. User: "Help me check the system health" or "Diagnose MySQL slow queries"
+2. Call listSkills() to see available skills
+3. Match user intent to a skill (e.g., "daily_inspection" or "mysql_slow_query_diagnosis")
+4. If skill needs monitorId, call query_monitors to find it
+5. Call executeSkill(skillName, paramsJson)
+
+
 ## Natural Language Examples:
 
 ### Monitor Management:
