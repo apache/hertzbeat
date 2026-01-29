@@ -17,11 +17,10 @@
  * under the License.
  */
 
-import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { Component, NgZone } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgZone } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { of } from 'rxjs';
@@ -56,17 +55,20 @@ describe('SettingDrawerI18nDirective', () => {
     'en-US': {
       'setting.drawer.theme.color': 'Theme Color',
       'setting.drawer.settings': 'Settings',
-      'setting.drawer.info.message': 'The configuration panel is only for preview in the development environment, it will not be displayed in the production environment. Please copy and manually modify the parameter configuration file src/styles/theme.less'
+      'setting.drawer.info.message':
+        'The configuration panel is only for preview in the development environment, it will not be displayed in the production environment. Please copy and manually modify the parameter configuration file src/styles/theme.less'
     },
     'ja-JP': {
       'setting.drawer.theme.color': 'テーマカラー',
       'setting.drawer.settings': '設定',
-      'setting.drawer.info.message': '設定パネルは開発環境でのプレビューのみに使用され、本番環境では表示されません。コピーして、パラメータ設定ファイル src/styles/theme.less を手動で変更してください'
+      'setting.drawer.info.message':
+        '設定パネルは開発環境でのプレビューのみに使用され、本番環境では表示されません。コピーして、パラメータ設定ファイル src/styles/theme.less を手動で変更してください'
     },
     'pt-BR': {
       'setting.drawer.theme.color': 'Cor do Tema',
       'setting.drawer.settings': 'Configurações',
-      'setting.drawer.info.message': 'O painel de configuração é apenas para visualização no ambiente de desenvolvimento, não será exibido no ambiente de produção. Por favor, copie e modifique manualmente o arquivo de configuração de parâmetros src/styles/theme.less'
+      'setting.drawer.info.message':
+        'O painel de configuração é apenas para visualização no ambiente de desenvolvimento, não será exibido no ambiente de produção. Por favor, copie e modifique manualmente o arquivo de configuração de parâmetros src/styles/theme.less'
     },
     'zh-TW': {
       'setting.drawer.theme.color': '主題色',
@@ -79,7 +81,8 @@ describe('SettingDrawerI18nDirective', () => {
     mockTranslations = {
       'setting.drawer.theme.color': 'Theme Color',
       'setting.drawer.settings': 'Settings',
-      'setting.drawer.info.message': 'The configuration panel is only for preview in the development environment, it will not be displayed in the production environment. Please copy and manually modify the parameter configuration file src/styles/theme.less'
+      'setting.drawer.info.message':
+        'The configuration panel is only for preview in the development environment, it will not be displayed in the production environment. Please copy and manually modify the parameter configuration file src/styles/theme.less'
     };
 
     const i18nServiceSpy = jasmine.createSpyObj('I18NService', ['fanyi', 'change'], {
@@ -93,10 +96,7 @@ describe('SettingDrawerI18nDirective', () => {
     await TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       declarations: [TestComponent, SettingDrawerI18nDirective],
-      providers: [
-        { provide: ALAIN_I18N_TOKEN, useValue: i18nServiceSpy },
-        NgZone
-      ]
+      providers: [{ provide: ALAIN_I18N_TOKEN, useValue: i18nServiceSpy }, NgZone]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestComponent);
@@ -122,9 +122,7 @@ describe('SettingDrawerI18nDirective', () => {
     fixture.detectChanges();
 
     const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
-    const requests = languages.map(lang => 
-      httpMock.expectOne(`./assets/i18n/${lang}.json`)
-    );
+    const requests = languages.map(lang => httpMock.expectOne(`./assets/i18n/${lang}.json`));
 
     languages.forEach((lang, index) => {
       requests[index].flush(mockI18nData[lang as keyof typeof mockI18nData]);
@@ -140,9 +138,7 @@ describe('SettingDrawerI18nDirective', () => {
     fixture.detectChanges();
 
     const languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
-    const requests = languages.map(lang => 
-      httpMock.expectOne(`./assets/i18n/${lang}.json`)
-    );
+    const requests = languages.map(lang => httpMock.expectOne(`./assets/i18n/${lang}.json`));
 
     languages.forEach((lang, index) => {
       requests[index].flush(mockI18nData[lang as keyof typeof mockI18nData]);

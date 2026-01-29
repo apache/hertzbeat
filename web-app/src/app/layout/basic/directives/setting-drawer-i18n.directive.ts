@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { Directive, ElementRef, Inject, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Directive, ElementRef, Inject, OnInit, OnDestroy, AfterViewInit, NgZone } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { Subject, forkJoin } from 'rxjs';
@@ -31,10 +31,10 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
   private destroy$ = new Subject<void>();
   private mutationObserver?: MutationObserver;
   private replaceInterval?: any;
-  
+
   private textMappings: { [key: string]: string } = {};
   private mappingsReady = false;
-  
+
   private readonly settingDrawerKeys = [
     'setting.drawer.theme.color',
     'setting.drawer.settings',
@@ -53,7 +53,7 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
     'setting.drawer.copy',
     'setting.drawer.info.message'
   ];
-  
+
   private readonly languages = ['zh-CN', 'en-US', 'ja-JP', 'pt-BR', 'zh-TW'];
 
   constructor(
@@ -64,33 +64,33 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
   ) {
     this.loadMappingsFromI18nFiles();
   }
-  
+
   private loadMappingsFromI18nFiles(): void {
-    const requests = this.languages.map(lang => 
-      this.http.get<{ [key: string]: string }>(`./assets/i18n/${lang}.json`).pipe(
-        map(data => ({ lang, data }))
-      )
+    const requests = this.languages.map(lang =>
+      this.http.get<{ [key: string]: string }>(`./assets/i18n/${lang}.json`).pipe(map(data => ({ lang, data })))
     );
-    
-    forkJoin(requests).pipe(takeUntil(this.destroy$)).subscribe(results => {
-      this.textMappings = {};
-      
-      for (const key of this.settingDrawerKeys) {
-        for (const result of results) {
-          const translation = result.data[key];
-          if (translation && translation.trim()) {
-            this.textMappings[translation] = key;
+
+    forkJoin(requests)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(results => {
+        this.textMappings = {};
+
+        for (const key of this.settingDrawerKeys) {
+          for (const result of results) {
+            const translation = result.data[key];
+            if (translation && translation.trim()) {
+              this.textMappings[translation] = key;
+            }
           }
         }
-      }
-      
-      const sortedEntries = Object.entries(this.textMappings).sort((a, b) => b[0].length - a[0].length);
-      this.textMappings = Object.fromEntries(sortedEntries);
-      
-      this.mappingsReady = true;
-      
-      setTimeout(() => this.replaceText(), 0);
-    });
+
+        const sortedEntries = Object.entries(this.textMappings).sort((a, b) => b[0].length - a[0].length);
+        this.textMappings = Object.fromEntries(sortedEntries);
+
+        this.mappingsReady = true;
+
+        setTimeout(() => this.replaceText(), 0);
+      });
   }
 
   ngOnInit(): void {
@@ -110,7 +110,7 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
 
     this.ngZone.runOutsideAngular(() => {
       let timeoutId: any;
-      this.mutationObserver = new MutationObserver((mutations) => {
+      this.mutationObserver = new MutationObserver(mutations => {
         if (mutations.length > 0) {
           if (timeoutId) {
             clearTimeout(timeoutId);
@@ -155,16 +155,15 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
     if (!this.mappingsReady || Object.keys(this.textMappings).length === 0) {
       return;
     }
-    
+
     requestAnimationFrame(() => {
-      const drawerContent = document.querySelector('.setting-drawer__content') || 
-                           document.querySelector('setting-drawer') ||
-                           this.el.nativeElement;
-      
+      const drawerContent =
+        document.querySelector('.setting-drawer__content') || document.querySelector('setting-drawer') || this.el.nativeElement;
+
       if (!drawerContent) {
         return;
       }
-      
+
       const currentTranslations = new Map<string, string>();
       for (const key of this.settingDrawerKeys) {
         const translation = this.i18nSvc.fanyi(key);
@@ -172,109 +171,101 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
           currentTranslations.set(key, translation);
         }
       }
-      
+
       const currentTranslationValues = Array.from(currentTranslations.values());
-      
+
       const processedNodes = new Set<Node>();
-      
-      const walker = document.createTreeWalker(
-        drawerContent as Node,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: (node: Node) => {
-            const parent = node.parentElement;
-            if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
-              return NodeFilter.FILTER_REJECT;
-            }
-            if (parent && (parent.tagName === 'INPUT' || parent.tagName === 'TEXTAREA' || parent.tagName === 'SELECT')) {
-              return NodeFilter.FILTER_REJECT;
-            }
-            return NodeFilter.FILTER_ACCEPT;
+
+      const walker = document.createTreeWalker(drawerContent as Node, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node: Node) => {
+          const parent = node.parentElement;
+          if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE')) {
+            return NodeFilter.FILTER_REJECT;
           }
+          if (parent && (parent.tagName === 'INPUT' || parent.tagName === 'TEXTAREA' || parent.tagName === 'SELECT')) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          return NodeFilter.FILTER_ACCEPT;
         }
-      );
-      
+      });
+
       let textNode;
-      while (textNode = walker.nextNode()) {
+      while ((textNode = walker.nextNode())) {
         if (processedNodes.has(textNode)) continue;
         processedNodes.add(textNode);
-        
+
         const textContent = textNode.textContent || '';
         if (!textContent.trim()) continue;
-        
+
         let newText = textContent;
         let hasChanges = false;
-        
+
         const alreadyTranslated = currentTranslationValues.some(trans => textContent.includes(trans));
         if (alreadyTranslated) {
           continue;
         }
-        
+
         for (const [knownText, translationKey] of Object.entries(this.textMappings)) {
           const currentTranslation = currentTranslations.get(translationKey);
           if (!currentTranslation) continue;
-          
-          if (newText.includes(knownText) && 
-              knownText !== currentTranslation && 
-              !newText.includes(currentTranslation)) {
+
+          if (newText.includes(knownText) && knownText !== currentTranslation && !newText.includes(currentTranslation)) {
             newText = newText.replace(new RegExp(this.escapeRegExp(knownText), 'g'), currentTranslation);
             hasChanges = true;
           }
         }
-        
+
         if (hasChanges && newText !== textContent) {
           textNode.textContent = newText;
         }
       }
-      
+
       const allElements = (drawerContent as HTMLElement).querySelectorAll('*');
       for (let i = 0; i < allElements.length; i++) {
         const el = allElements[i];
         const htmlElement = el as HTMLElement;
-        
+
         if (['SCRIPT', 'STYLE', 'INPUT', 'TEXTAREA', 'SELECT'].includes(htmlElement.tagName)) {
           continue;
         }
-        
+
         if (htmlElement.children.length === 0 && htmlElement.textContent) {
           const textContent = htmlElement.textContent;
           if (!textContent.trim()) continue;
-          
+
           if (htmlElement.childNodes.length === 1 && htmlElement.childNodes[0].nodeType === Node.TEXT_NODE) {
             if (processedNodes.has(htmlElement.childNodes[0])) {
               continue;
             }
           }
-          
+
           const alreadyTranslated = currentTranslationValues.some(trans => textContent.includes(trans));
           if (alreadyTranslated) {
             continue;
           }
-          
+
           let newText = textContent;
           let hasChanges = false;
-          
+
           for (const [knownText, translationKey] of Object.entries(this.textMappings)) {
             const currentTranslation = currentTranslations.get(translationKey);
             if (!currentTranslation) continue;
-            
-            if (newText.includes(knownText) && 
-                knownText !== currentTranslation && 
-                !newText.includes(currentTranslation)) {
+
+            if (newText.includes(knownText) && knownText !== currentTranslation && !newText.includes(currentTranslation)) {
               newText = newText.replace(new RegExp(this.escapeRegExp(knownText), 'g'), currentTranslation);
               hasChanges = true;
             }
           }
-          
+
           if (hasChanges && newText !== textContent) {
             htmlElement.textContent = newText;
           }
         }
       }
-      
+
       const infoMessageKey = 'setting.drawer.info.message';
       const currentInfoMessage = currentTranslations.get(infoMessageKey);
-      
+
       if (currentInfoMessage) {
         const allInfoMessages: string[] = [];
         for (const [text, key] of Object.entries(this.textMappings)) {
@@ -282,7 +273,7 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
             allInfoMessages.push(text);
           }
         }
-        
+
         const chinesePhrases = [
           '配置栏只在开发环境用于',
           '配置栏只在開發環境用於',
@@ -294,16 +285,16 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
           '參數配置文件',
           'src/styles/theme.less'
         ];
-        
+
         const containers = (drawerContent as HTMLElement).querySelectorAll('div, span, p, li, td, section, article');
         for (let i = 0; i < containers.length; i++) {
           const container = containers[i] as HTMLElement;
           const containerText = container.textContent || '';
-          
+
           if (containerText.includes(currentInfoMessage)) {
             continue;
           }
-          
+
           let containsInfoMessage = false;
           for (const knownInfoMsg of allInfoMessages) {
             if (containerText.includes(knownInfoMsg)) {
@@ -311,34 +302,30 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
               break;
             }
           }
-          
+
           if (!containsInfoMessage) {
             containsInfoMessage = chinesePhrases.some(phrase => containerText.includes(phrase));
           }
-          
+
           const hasChineseChars = /[\u4e00-\u9fa5]/.test(containerText);
           const isLongEnough = containerText.length > 50;
-          
+
           if (containsInfoMessage || (hasChineseChars && isLongEnough && containerText.includes('src/styles/theme.less'))) {
-            const walker = document.createTreeWalker(
-              container,
-              NodeFilter.SHOW_TEXT,
-              null
-            );
-            
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+
             let textNode;
             const textNodes: Node[] = [];
-            
-            while (textNode = walker.nextNode()) {
+
+            while ((textNode = walker.nextNode())) {
               if (!processedNodes.has(textNode)) {
                 textNodes.push(textNode);
               }
             }
-            
+
             if (textNodes.length > 0) {
               textNodes[0].textContent = currentInfoMessage;
               processedNodes.add(textNodes[0]);
-              
+
               for (let j = 1; j < textNodes.length; j++) {
                 textNodes[j].textContent = '';
                 processedNodes.add(textNodes[j]);
@@ -350,11 +337,11 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
           }
         }
       }
-      
+
       for (let i = 0; i < allElements.length; i++) {
         const el = allElements[i];
         const htmlElement = el as HTMLElement;
-        
+
         const attributesToCheck = ['placeholder', 'title', 'aria-label', 'alt'];
         for (let j = 0; j < attributesToCheck.length; j++) {
           const attr = attributesToCheck[j];
@@ -363,19 +350,17 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
             if (attrValue) {
               let newValue = attrValue;
               let hasChanges = false;
-              
+
               for (const [knownText, translationKey] of Object.entries(this.textMappings)) {
                 const currentTranslation = currentTranslations.get(translationKey);
                 if (!currentTranslation) continue;
-                
-                if (newValue.includes(knownText) && 
-                    knownText !== currentTranslation && 
-                    !newValue.includes(currentTranslation)) {
+
+                if (newValue.includes(knownText) && knownText !== currentTranslation && !newValue.includes(currentTranslation)) {
                   newValue = newValue.replace(new RegExp(this.escapeRegExp(knownText), 'g'), currentTranslation);
                   hasChanges = true;
                 }
               }
-              
+
               if (hasChanges && newValue !== attrValue) {
                 htmlElement.setAttribute(attr, newValue);
               }
@@ -385,7 +370,6 @@ export class SettingDrawerI18nDirective implements OnInit, AfterViewInit, OnDest
       }
     });
   }
-
 
   private escapeRegExp(text: string): string {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
