@@ -6,7 +6,7 @@ version: "1.0"
 output:
   type: report           # report / simple / data / action
   format: markdown       # markdown / json / text
-  language: zh           # zh (Chinese) / en (English) - controls LLM response language
+  # language is not specified here - uses system default locale from user's SystemConfig
   contentStep: generate_report  # Which step's output is the main content
 
 parameters:

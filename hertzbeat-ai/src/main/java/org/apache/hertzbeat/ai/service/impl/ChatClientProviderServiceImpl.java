@@ -58,6 +58,7 @@ import java.util.List;
 public class ChatClientProviderServiceImpl implements ChatClientProviderService {
 
     private static final String SKILLS_PLACEHOLDER = "{dynamically_injected_skills_list}";
+    private static final String CONVERSATION_ID_PLACEHOLDER = "{current_conversation_id}";
 
     private final ApplicationContext applicationContext;
 
@@ -106,8 +107,9 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             log.info("Starting streaming chat for conversation: {}", context.getConversationId());
 
-            // Build system prompt with dynamic skills list
-            String systemPrompt = buildSystemPrompt();
+            // Build system prompt with dynamic skills list and conversation ID
+            // The conversationId is injected into the prompt so AI can pass it to schedule tools
+            String systemPrompt = buildSystemPrompt(context.getConversationId());
 
             return chatClient.prompt()
                     .messages(messages)
@@ -125,13 +127,15 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     }
 
     /**
-     * Build the system prompt with dynamically injected skills list.
+     * Build the system prompt with dynamically injected skills list and conversation ID.
      */
-    private String buildSystemPrompt() {
+    private String buildSystemPrompt(Long conversationId) {
         try {
             String template = systemResource.getContentAsString(StandardCharsets.UTF_8);
             String skillsList = generateSkillsList();
-            return template.replace(SKILLS_PLACEHOLDER, skillsList);
+            return template
+                    .replace(SKILLS_PLACEHOLDER, skillsList)
+                    .replace(CONVERSATION_ID_PLACEHOLDER, String.valueOf(conversationId));
         } catch (IOException e) {
             log.error("Failed to read system prompt template: {}", e.getMessage());
             return "";

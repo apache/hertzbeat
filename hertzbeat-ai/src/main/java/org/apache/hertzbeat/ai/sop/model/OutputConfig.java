@@ -59,11 +59,17 @@ public class OutputConfig {
     private String language;
     
     /**
-     * Get language code, default to zh (Chinese)
+     * Get language code.
+     * If not specified in skill config, uses system default locale (from user's SystemConfig).
      */
     public String getLanguageCode() {
         if (language == null || language.isEmpty()) {
-            return "zh";
+            // Use system default locale (set by user's SystemConfig)
+            java.util.Locale defaultLocale = java.util.Locale.getDefault();
+            if (defaultLocale.getLanguage().equals("en")) {
+                return "en";
+            }
+            return "zh"; // Default to Chinese for non-English locales
         }
         return language.toLowerCase();
     }

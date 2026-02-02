@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.ai.sop.model.SopStep;
-import org.apache.hertzbeat.ai.sop.util.SopMessageUtil;
+import org.apache.hertzbeat.ai.utils.SopMessageUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

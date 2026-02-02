@@ -25,7 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.ai.sop.util.SopMessageUtil;
+import org.apache.hertzbeat.ai.utils.SopMessageUtil;
 
 /**
  * Unified SOP execution result.

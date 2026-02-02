@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.ai.sop.util;
+package org.apache.hertzbeat.ai.utils;
 
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
@@ -66,7 +65,9 @@ public class SopMessageUtil {
         } else if ("zh".equalsIgnoreCase(language) || "chinese".equalsIgnoreCase(language)) {
             locale = Locale.CHINESE;
         } else {
-            locale = LocaleContextHolder.getLocale();
+            // Use system default locale (set by user's SystemConfig)
+            // instead of LocaleContextHolder which only works in HTTP request context
+            locale = Locale.getDefault();
         }
         
         try {
