@@ -91,10 +91,10 @@ check result
 > If something like the following appears, it means the signature is correct. Keyword: **`Good signature`**
 
 ```shell
-apache-hertzbeat-xxx-src.tar.gz
+apache-hertzbeat-${release_version}-src.tar.gz
 gpg: Signature made XXXX
 gpg: using RSA key XXXXX
-gpg: Good signature from "xxx @apache.org>"
+gpg: Good signature from "XXX <xxx@apache.org>"
 ```
 
 #### 2.3 Check sha512 hash
@@ -125,10 +125,10 @@ check as follows:
 
 > If the binary/web-binary package is uploaded, check the binary package.
 
-Unzip `apache-hertzbeat-`release_version`-src.tar.gz`
+Unzip `apache-hertzbeat-${release_version}-src.tar.gz`
 
 ```shell
-cd apache-hertzbeat-`release_version`-src
+cd apache-hertzbeat-${release_version}-src
 ```
 
 compile the source code: [Build HertzBeat Binary Package](https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package)
