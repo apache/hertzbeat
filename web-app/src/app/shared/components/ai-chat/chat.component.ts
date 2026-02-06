@@ -42,7 +42,6 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
 
-
   conversations: ChatConversation[] = [];
   currentConversation: ChatConversation | null = null;
   messages: ChatMessage[] = [];
@@ -81,7 +80,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private themeSvc: ThemeService,
     private generalConfigSvc: GeneralConfigService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.theme = this.themeSvc.getTheme() || 'default';
@@ -472,7 +471,6 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
     return content;
   }
-
 
   /**
    * Scroll to bottom of messages with smooth animation

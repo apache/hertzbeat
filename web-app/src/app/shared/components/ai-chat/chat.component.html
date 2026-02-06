@@ -29,8 +29,12 @@
     </div>
 
     <div class="conversation-list">
-      <div *ngFor="let conversation of conversations" class="conversation-item"
-        [class.active]="currentConversation?.id === conversation.id" (click)="selectConversation(conversation)">
+      <div
+        *ngFor="let conversation of conversations"
+        class="conversation-item"
+        [class.active]="currentConversation?.id === conversation.id"
+        (click)="selectConversation(conversation)"
+      >
         <div class="conversation-content">
           <div class="conversation-title">
             {{ getConversationTitle(conversation) }}
@@ -39,8 +43,7 @@
             {{ conversation.gmtUpdate | date : 'MMM d, HH:mm' }}
           </div>
         </div>
-        <button nz-button nzType="text" nzSize="small" nzDanger (click)="deleteConversation(conversation, $event)"
-          class="delete-btn">
+        <button nz-button nzType="text" nzSize="small" nzDanger (click)="deleteConversation(conversation, $event)" class="delete-btn">
           <i nz-icon nzType="delete"></i>
         </button>
       </div>
@@ -66,8 +69,15 @@
       <div class="header-spacer"></div>
 
       <div class="chat-header-actions" *ngIf="currentConversation">
-        <button nz-button nzType="primary" nzSize="small" nzGhost (click)="onShowScheduleModal()" nz-tooltip
-          [nzTooltipTitle]="'ai.chat.schedule.tooltip' | i18n">
+        <button
+          nz-button
+          nzType="primary"
+          nzSize="small"
+          nzGhost
+          (click)="onShowScheduleModal()"
+          nz-tooltip
+          [nzTooltipTitle]="'ai.chat.schedule.tooltip' | i18n"
+        >
           <i nz-icon nzType="clock-circle" nzTheme="outline"></i>
           <span>{{ 'ai.chat.schedule.button' | i18n }}</span>
         </button>
@@ -89,8 +99,7 @@
       <!-- Welcome message -->
       <div *ngIf="messages.length === 0 && !isLoadingConversations" class="welcome-message">
         <div class="welcome-content">
-          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo"
-            class="welcome-icon" />
+          <img [src]="theme === 'dark' ? 'assets/logo_white.svg' : 'assets/logo.svg'" alt="HertzBeat Logo" class="welcome-icon" />
           <h3 class="welcome-title">{{ 'ai.chat.welcome.title' | i18n }}</h3>
           <p class="welcome-description">
             {{ 'ai.chat.welcome.description' | i18n }}
@@ -107,11 +116,14 @@
       </div>
 
       <!-- Chat messages -->
-      <div *ngFor="let message of messages; let i = index" class="message"
-        [class.user-message]="message.role === 'user'" [class.system-push-message]="message.role === 'system_push'">
+      <div
+        *ngFor="let message of messages; let i = index"
+        class="message"
+        [class.user-message]="message.role === 'user'"
+        [class.system-push-message]="message.role === 'system_push'"
+      >
         <div class="message-avatar">
-          <i nz-icon
-            [nzType]="message.role === 'user' ? 'user' : (message.role === 'system_push' ? 'bell' : 'robot')"></i>
+          <i nz-icon [nzType]="message.role === 'user' ? 'user' : message.role === 'system_push' ? 'bell' : 'robot'"></i>
         </div>
         <div class="message-content">
           <div class="message-header">
@@ -125,18 +137,17 @@
             <span class="message-time">{{ formatTime(message.gmtCreate) }}</span>
             <span
               *ngIf="message.role === 'assistant' && isSendingMessage && i === messages.length - 1 && message.content !== ''"
-              class="streaming-indicator">
+              class="streaming-indicator"
+            >
               <i nz-icon nzType="loading" nzSpin style="font-size: 12px"></i>
               <span style="font-size: 11px">Typing...</span>
             </span>
           </div>
           <div class="message-text">
             <div *ngIf="message.role === 'user'" [innerHTML]="message.content"></div>
-            <markdown *ngIf="message.role === 'assistant' || message.role === 'system_push'" [data]="message.content">
-            </markdown>
+            <markdown *ngIf="message.role === 'assistant' || message.role === 'system_push'" [data]="message.content"> </markdown>
           </div>
-          <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage"
-            class="typing-indicator">
+          <div *ngIf="message.role === 'assistant' && message.content === '' && isSendingMessage" class="typing-indicator">
             <span>{{ 'ai.chat.typing' | i18n }}</span>
           </div>
         </div>
@@ -147,11 +158,17 @@
     <div class="input-area">
       <div class="input-container">
         <nz-textarea-count [nzMaxCharacterCount]="1000">
-          <textarea nz-input [(ngModel)]="newMessage" (keypress)="onKeyPress($event)" [disabled]="isSendingMessage"
-            placeholder="{{ 'ai.chat.input.placeholder' | i18n }}" rows="3" style="resize: none"></textarea>
+          <textarea
+            nz-input
+            [(ngModel)]="newMessage"
+            (keypress)="onKeyPress($event)"
+            [disabled]="isSendingMessage"
+            placeholder="{{ 'ai.chat.input.placeholder' | i18n }}"
+            rows="3"
+            style="resize: none"
+          ></textarea>
         </nz-textarea-count>
-        <button nz-button nzType="primary" (click)="sendMessage()" [disabled]="!newMessage.trim() || isSendingMessage"
-          class="send-button">
+        <button nz-button nzType="primary" (click)="sendMessage()" [disabled]="!newMessage.trim() || isSendingMessage" class="send-button">
           <i nz-icon [nzType]="isSendingMessage ? 'loading' : 'send'" [nzSpin]="isSendingMessage"></i>
         </button>
       </div>
@@ -167,21 +184,32 @@
 </div>
 
 <!-- OpenAI Configuration Modal -->
-<nz-modal [(nzVisible)]="showConfigModal" [nzTitle]="'ai.chat.config.title' | i18n" (nzOnCancel)="onCloseConfigModal()"
-  (nzOnOk)="onSaveAiProviderConfig()" nzMaskClosable="false" [nzClosable]="false" nzWidth="700px"
-  [nzOkLoading]="configLoading" [nzOkText]="'ai.chat.config.save' | i18n"
-  [nzCancelText]="'ai.chat.config.cancel' | i18n">
+<nz-modal
+  [(nzVisible)]="showConfigModal"
+  [nzTitle]="'ai.chat.config.title' | i18n"
+  (nzOnCancel)="onCloseConfigModal()"
+  (nzOnOk)="onSaveAiProviderConfig()"
+  nzMaskClosable="false"
+  [nzClosable]="false"
+  nzWidth="700px"
+  [nzOkLoading]="configLoading"
+  [nzOkText]="'ai.chat.config.save' | i18n"
+  [nzCancelText]="'ai.chat.config.cancel' | i18n"
+>
   <div *nzModalContent class="-inner-content">
     <form nz-form nzLayout="vertical">
       <!-- Provider Selection -->
       <nz-form-item>
         <nz-form-label nzRequired="true">{{ 'ai.chat.config.provider' | i18n }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'ai.chat.config.provider.required' | i18n">
-          <nz-select [(ngModel)]="aiProviderConfig.code" name="provider"
-            [nzPlaceHolder]="'ai.chat.config.provider.help' | i18n" (ngModelChange)="onProviderChange($event)"
-            style="width: 100%">
-            <nz-option *ngFor="let option of providerOptions" [nzValue]="option.value"
-              [nzLabel]="option.label"></nz-option>
+          <nz-select
+            [(ngModel)]="aiProviderConfig.code"
+            name="provider"
+            [nzPlaceHolder]="'ai.chat.config.provider.help' | i18n"
+            (ngModelChange)="onProviderChange($event)"
+            style="width: 100%"
+          >
+            <nz-option *ngFor="let option of providerOptions" [nzValue]="option.value" [nzLabel]="option.label"></nz-option>
           </nz-select>
           <p class="form-help">Choose your AI provider (OpenAI, ZhiPu, or ZAI)</p>
         </nz-form-control>
@@ -191,8 +219,7 @@
       <nz-form-item>
         <nz-form-label nzRequired="true">{{ 'ai.chat.config.api-key' | i18n }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'ai.chat.config.api-key.required' | i18n">
-          <input nz-input [(ngModel)]="aiProviderConfig.apiKey" name="apiKey" type="password" placeholder="sk-..."
-            required />
+          <input nz-input [(ngModel)]="aiProviderConfig.apiKey" name="apiKey" type="password" placeholder="sk-..." required />
           <p class="form-help">{{ 'ai.chat.config.api-key.help' | i18n }}</p>
         </nz-form-control>
       </nz-form-item>
@@ -202,11 +229,16 @@
         <nz-form-label>{{ 'ai.chat.config.base-url' | i18n }}</nz-form-label>
         <nz-form-control>
           <nz-input-group [nzSuffix]="resetBtn">
-            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl"
-              placeholder="https://api.openai.com/v1" />
+            <input nz-input [(ngModel)]="aiProviderConfig.baseUrl" name="baseUrl" placeholder="https://api.openai.com/v1" />
             <ng-template #resetBtn>
-              <button nz-button nzType="link" nzSize="small" (click)="resetToDefaults()"
-                [nzTooltipTitle]="'ai.chat.config.reset' | i18n" nz-tooltip>
+              <button
+                nz-button
+                nzType="link"
+                nzSize="small"
+                (click)="resetToDefaults()"
+                [nzTooltipTitle]="'ai.chat.config.reset' | i18n"
+                nz-tooltip
+              >
                 <i nz-icon nzType="reload"></i>
               </button>
             </ng-template>
@@ -228,8 +260,13 @@
 </nz-modal>
 
 <!-- Schedule Configuration Modal -->
-<nz-modal [(nzVisible)]="showScheduleModal" [nzTitle]="'ai.chat.schedule.title' | i18n"
-  (nzOnCancel)="onCloseScheduleModal()" [nzFooter]="null" nzWidth="600px">
+<nz-modal
+  [(nzVisible)]="showScheduleModal"
+  [nzTitle]="'ai.chat.schedule.title' | i18n"
+  (nzOnCancel)="onCloseScheduleModal()"
+  [nzFooter]="null"
+  nzWidth="600px"
+>
   <div *nzModalContent class="schedule-modal-content">
     <!-- Existing Schedules List -->
     <div class="schedule-list" *ngIf="schedules.length > 0">
@@ -251,12 +288,25 @@
               <nz-switch [(ngModel)]="schedule.enabled" (ngModelChange)="onToggleSchedule(schedule)"></nz-switch>
             </td>
             <td>
-              <button nz-button nzType="text" nzSize="small" (click)="onEditSchedule(schedule)" nz-tooltip
-                [nzTooltipTitle]="'common.button.edit' | i18n">
+              <button
+                nz-button
+                nzType="text"
+                nzSize="small"
+                (click)="onEditSchedule(schedule)"
+                nz-tooltip
+                [nzTooltipTitle]="'common.button.edit' | i18n"
+              >
                 <i nz-icon nzType="edit"></i>
               </button>
-              <button nz-button nzType="text" nzDanger nzSize="small" (click)="onDeleteSchedule(schedule)" nz-tooltip
-                [nzTooltipTitle]="'common.button.delete' | i18n">
+              <button
+                nz-button
+                nzType="text"
+                nzDanger
+                nzSize="small"
+                (click)="onDeleteSchedule(schedule)"
+                nz-tooltip
+                [nzTooltipTitle]="'common.button.delete' | i18n"
+              >
                 <i nz-icon nzType="delete"></i>
               </button>
             </td>
@@ -281,14 +331,19 @@
         <nz-form-item>
           <nz-form-label nzRequired>{{ 'ai.chat.schedule.cron.label' | i18n }}</nz-form-label>
           <nz-form-control>
-            <input nz-input [(ngModel)]="editingSchedule.cronExpression" name="editCronExpression"
-              placeholder="0 0 9 * * ?" />
+            <input nz-input [(ngModel)]="editingSchedule.cronExpression" name="editCronExpression" placeholder="0 0 9 * * ?" />
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item>
-          <button nz-button nzType="primary" (click)="onUpdateSchedule()" [nzLoading]="scheduleLoading"
-            [disabled]="!editingSchedule.cronExpression" style="margin-right: 8px">
+          <button
+            nz-button
+            nzType="primary"
+            (click)="onUpdateSchedule()"
+            [nzLoading]="scheduleLoading"
+            [disabled]="!editingSchedule.cronExpression"
+            style="margin-right: 8px"
+          >
             <i nz-icon nzType="save"></i> {{ 'common.button.save' | i18n }}
           </button>
           <button nz-button (click)="onCancelEdit()">
@@ -305,10 +360,13 @@
       <nz-form-item>
         <nz-form-label nzRequired>{{ 'ai.chat.schedule.skill.select' | i18n }}</nz-form-label>
         <nz-form-control>
-          <nz-select [(ngModel)]="newSchedule.sopName" name="sopName"
-            [nzPlaceHolder]="'ai.chat.schedule.skill.placeholder' | i18n" style="width: 100%">
-            <nz-option *ngFor="let skill of availableSkills" [nzValue]="skill.name"
-              [nzLabel]="skill.name + ' - ' + skill.description">
+          <nz-select
+            [(ngModel)]="newSchedule.sopName"
+            name="sopName"
+            [nzPlaceHolder]="'ai.chat.schedule.skill.placeholder' | i18n"
+            style="width: 100%"
+          >
+            <nz-option *ngFor="let skill of availableSkills" [nzValue]="skill.name" [nzLabel]="skill.name + ' - ' + skill.description">
             </nz-option>
           </nz-select>
         </nz-form-control>
@@ -321,19 +379,34 @@
             <input nz-input [(ngModel)]="newSchedule.cronExpression" name="cronExpression" placeholder="0 0 9 * * ?" />
           </nz-input-group>
           <ng-template #cronHelpTpl>
-            <i nz-icon nzType="question-circle" nz-tooltip
-              [nzTooltipTitle]="('ai.chat.schedule.cron.help' | i18n) + '&#10;' + ('ai.chat.schedule.cron.example.daily' | i18n) + '&#10;' + ('ai.chat.schedule.cron.example.weekly' | i18n)"></i>
+            <i
+              nz-icon
+              nzType="question-circle"
+              nz-tooltip
+              [nzTooltipTitle]="
+                ('ai.chat.schedule.cron.help' | i18n) +
+                '&#10;' +
+                ('ai.chat.schedule.cron.example.daily' | i18n) +
+                '&#10;' +
+                ('ai.chat.schedule.cron.example.weekly' | i18n)
+              "
+            ></i>
           </ng-template>
           <p class="form-help">
-            {{ 'ai.chat.schedule.cron.common' | i18n }} <code>0 0 9 * * ?</code> | {{ 'ai.chat.schedule.cron.monday' |
-            i18n }} <code>0 0 9 ? * MON</code>
+            {{ 'ai.chat.schedule.cron.common' | i18n }} <code>0 0 9 * * ?</code> | {{ 'ai.chat.schedule.cron.monday' | i18n }}
+            <code>0 0 9 ? * MON</code>
           </p>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <button nz-button nzType="primary" (click)="onCreateSchedule()" [nzLoading]="scheduleLoading"
-          [disabled]="!newSchedule.sopName || !newSchedule.cronExpression">
+        <button
+          nz-button
+          nzType="primary"
+          (click)="onCreateSchedule()"
+          [nzLoading]="scheduleLoading"
+          [disabled]="!newSchedule.sopName || !newSchedule.cronExpression"
+        >
           <i nz-icon nzType="plus"></i> {{ 'ai.chat.schedule.create' | i18n }}
         </button>
       </nz-form-item>
