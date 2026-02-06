@@ -70,7 +70,7 @@ const schedule_uri = '/ai/schedule';
   providedIn: 'root'
 })
 export class AiChatService {
-  constructor(private http: HttpClient, private localStorageService: LocalStorageService) { }
+  constructor(private http: HttpClient, private localStorageService: LocalStorageService) {}
 
   /**
    * Create a new conversation

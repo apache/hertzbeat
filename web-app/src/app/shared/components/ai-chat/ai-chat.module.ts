@@ -62,4 +62,4 @@ import { ChatComponent } from './chat.component';
   ],
   exports: [ChatComponent]
 })
-export class AiChatModule { }
+export class AiChatModule {}
