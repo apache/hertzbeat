@@ -27,7 +27,7 @@ limitations under the License.
 
    - After creating a new `PR`, you need to associate the existing corresponding `ISSUE` at the Github Development button on the `PR` page (if there is no corresponding ISSUE, it is recommended to create a new corresponding ISSUE).
 
-   - Title naming format  
+   - Title naming format
      `[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
 2. Description
@@ -35,7 +35,7 @@ limitations under the License.
    - Please fill in the `PR` template to describe the contribution. So that the reviewer can understand the problem and solution from the description, rather than just from the code.
    - Check the CheckList
 3. It's recommended that `PR` should be arranged changes such as `cleanup`, `Refactor`, `improve`, and `feature` into separated `PRs`/`Commits`.
-4. Commit message(English, lowercase, no special characters)  
+4. Commit message(English, lowercase, no special characters)
    The commit of messages should follow a pattern similar to the `[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
 ## 2 Code Checkstyle
@@ -133,8 +133,8 @@ Error code description:
    ```
 
 2. Pinyin abbreviations are prohibited for variables (excluding nouns such as place names), such as chengdu.
-3. It is recommended to end variable names with a `type`.  
-   For variables of type `Collection/List`, take `xxxx` (plural representing multiple elements) or end with `xxxList` (specific type).  
+3. It is recommended to end variable names with a `type`.
+   For variables of type `Collection/List`, take `xxxx` (plural representing multiple elements) or end with `xxxList` (specific type).
    For variables of type `map`, describe the `key` and `value` clearly:
 
    ```java
@@ -142,7 +142,7 @@ Error code description:
    Map<Long, String> userIdNameMap;
    ```
 
-4. That can intuitively know the type and meaning of the variable through its name.  
+4. That can intuitively know the type and meaning of the variable through its name.
    Method names should start with a verb first as follows:
 
    ```java
@@ -320,7 +320,7 @@ to reduce code line depth and improve readability like follows:
           ......
           }
       }
-    
+
       ```
 
   - Positive demo:
@@ -630,7 +630,7 @@ public void process(String input) {
      // ignored declaration lines.
      List`<User>` userList = getUsersByBatch(1000);
      if (LOG.isDebugEnabled()) {
-       LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
+       LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList));
      }
      ```
 
@@ -644,6 +644,5 @@ public void process(String input) {
 
 - [https://site.mockito.org/](https://site.mockito.org/)
 - [https://alibaba.github.io/p3c/](https://alibaba.github.io/p3c/)
-- [https://rules.sonarsource.com/java/](https://rules.sonarsource.com/java/)
 - [https://junit.org/junit5/](https://junit.org/junit5/)
 - [https://streampark.apache.org/](https://streampark.apache.org/)
