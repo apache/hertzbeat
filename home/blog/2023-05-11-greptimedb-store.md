@@ -1,8 +1,8 @@
 ---
-title: GreptimeDB & HertzBeat, using the open source temporal database GreptimeDB to store metrics for the open source real-time monitoring HertzBeat    
-author: tom  
-author_title: tom   
-author_url: https://github.com/tomsun28  
+title: GreptimeDB & HertzBeat, using the open source temporal database GreptimeDB to store metrics for the open source real-time monitoring HertzBeat
+author: tom
+author_title: tom
+author_url: https://github.com/tomsun28
 tags: [opensource, practice]
 keywords: [open source monitoring system, open source temporal database, HertzBeat, GreptimeDB]
 ---
@@ -18,7 +18,7 @@ keywords: [open source monitoring system, open source temporal database, HertzBe
 - Efficient storage and computation, with object storage and high data compression rate to achieve ultra-low storage costs. Built-in data analytics solution to avoid replicating data to external data warehouses.
 - Distributed, Highly Reliable & Highly Available, easily scale each module independently with decoupled cloud-native architecture. Ensure data reliability and availability with configurable replicas and automated failover mechanisms.
 
-Cloud: **[GreptimePlay](https://greptime.com/playground)**
+Cloud: **[GreptimePlay](https://greptime.com/product/cloud)**
 
 ### What is HertzBeat?
 
