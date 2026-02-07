@@ -1,6 +1,6 @@
 ---
 id: spring_gateway
-Title: 监控 Spring Cloud Gateway
+title: 监控 Spring Cloud Gateway
 sidebar_label: Spring Cloud Gateway
 keywords: [开源监控工具, 开源 Spring Cloud Gateway 监控工具, 监控 Spring Cloud Gateway 指标]
 ---
