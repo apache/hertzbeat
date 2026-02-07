@@ -2,7 +2,7 @@
 id: ssl_cert  
 title: 监控：SSL证书监控      
 sidebar_label: SSL证书监控    
-keywords: [开源监控系统, 开源网站监控, SSL证书监控监控]
+keywords: [开源监控系统, 开源网站监控, SSL证书监控]
 ---
 
 > 对网站的SSL证书过期时间，响应时间等指标进行监测
