@@ -1,0 +1,82 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: DOC Deploy
+
+on:
+  # Trigger on push to master branch when home directory files are changed
+  push:
+    branches: [ master ]
+    paths:
+      - 'home/**'
+
+  # Allow manual workflow trigger
+  workflow_dispatch:
+
+# Set permissions for deployment
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy Documentation to asf-site Branch
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Setup Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Install dependencies in home directory
+      - name: Install Dependencies
+        working-directory: home
+        run: npm ci
+
+      # Build the documentation site
+      - name: Build Documentation
+        working-directory: home
+        run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      # Deploy to asf-site branch using peaceiris/actions-gh-pages
+      - name: Deploy to asf-site Branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./home/build
+          publish_branch: asf-site
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy documentation to asf-site branch'
+
+      # Output deployment status
+      - name: Deployment Summary
+        run: |
+          echo "Documentation deployed successfully!"
+          echo "Deployment branch: asf-site"
+          echo "Source branch: ${{ github.ref_name }}"
+          echo "Commit SHA: ${{ github.sha }}"
