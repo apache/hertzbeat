@@ -1228,5 +1228,21 @@
   "common.notify.import-progress": "Progresso da Importação",
   "common.notify.query-fail": "Falha na Consulta",
   "define.disable": "Desabilitar",
-  "define.enable": "Habilitar"
+  "define.enable": "Habilitar",
+  "setting.drawer.theme.color": "Cor do Tema",
+  "setting.drawer.settings": "Configurações",
+  "setting.drawer.top": "Topo",
+  "setting.drawer.sidebar": "Barra Lateral",
+  "setting.drawer.content": "Conteúdo",
+  "setting.drawer.other": "Outro",
+  "setting.drawer.height": "Altura",
+  "setting.drawer.background.color": "Cor de Fundo",
+  "setting.drawer.background.color.default": "Padrão igual ao sistema de cores principal",
+  "setting.drawer.top.padding": "Preenchimento superior esquerdo e direito",
+  "setting.drawer.fixed.header.sidebar": "Cabeçalho e barra lateral fixos",
+  "setting.drawer.colorblind.mode": "Modo daltônico",
+  "setting.drawer.preview": "Visualizar",
+  "setting.drawer.reset": "Redefinir",
+  "setting.drawer.copy": "Copiar",
+  "setting.drawer.info.message": "O painel de configuração é apenas para visualização no ambiente de desenvolvimento, não será exibido no ambiente de produção. Por favor, copie e modifique manualmente o arquivo de configuração de parâmetros src/styles/theme.less"
 }
