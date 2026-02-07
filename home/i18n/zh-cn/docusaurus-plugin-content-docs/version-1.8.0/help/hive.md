@@ -1,6 +1,6 @@
 ---
 id: hive
-Title: 监控 Apache Hive
+title: 监控 Apache Hive
 sidebar_label: Apache Hive
 keywords: [开源监控工具, 开源 Apache Hive 监控工具, 监控 Apache Hive 指标]
 ---
