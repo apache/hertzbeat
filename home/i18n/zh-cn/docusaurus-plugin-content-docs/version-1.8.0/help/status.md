@@ -5,7 +5,7 @@ sidebar_label: 状态页面
 keywords: [开源监控系统, 开源网站监控, 状态页面]
 ---
 
-利用 HertzBeat 快速构建强大的状态页面，轻松向用户传达您产品服务的实时状态。例如，Github 的服务状态页 [https://www.githubstatus.com](https://www.githubstatus.com)。
+利用 HertzBeat 快速构建强大的状态页面，轻松向用户传达您产品服务的实时状态。例如，GitHub 的服务状态页 [https://www.githubstatus.com](https://www.githubstatus.com)。
 
 支持状态页组件状态和监控状态联动同步，提供故障事件维护管理机制等功能。提高您的透明度和专业度，增强用户信任，降低沟通成本。
 
