@@ -86,10 +86,10 @@ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 > 出现类似以下内容则说明签名正确，关键字：**`Good signature`**
 
 ```shell
-apache-hertzbeat-xxx-incubating-src.tar.gz
+apache-hertzbeat-${release_version}-src.tar.gz
 gpg: Signature made XXXX
 gpg:                using RSA key XXXXX
-gpg: Good signature from "xxx @apache.org>"
+gpg: Good signature from "XXX <xxx@apache.org>"
 ```
 
 #### 2.3 检查sha512哈希
@@ -102,10 +102,10 @@ for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
 
 #### 2.4 检查二进制包
 
-解压缩  `apache-hertzbeat-${release.version}-incubating-bin.tar.gz`
+解压缩  `apache-hertzbeat-${release_version}-bin.tar.gz`
 
 ```shell
-tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
+tar -xzvf apache-hertzbeat-${release_version}-bin.tar.gz
 ```
 
 进行如下检查：
@@ -123,10 +123,10 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 
 #### 2.5. 源码编译验证
 
-解压缩 `apache-hertzbeat-`release_version`-incubating-src.tar.gz`
+解压缩 `apache-hertzbeat-${release_version}-src.tar.gz`
 
 ```shell
-cd apache-hertzbeat-`release_version`-incubating-src
+cd apache-hertzbeat-${release_version}-src
 ```
 
 编译源码: [https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package](https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package)

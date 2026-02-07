@@ -35,7 +35,7 @@ limitations under the License.
    - 新建 `PR` 时请仔细描述此贡献，描述文档和代码同样重要。审阅者可以从描述中，而不仅仅是从代码中，了解问题和解决方案。
    - 勾选是否完成了对应的 Checklist。
 3. 建议一次 `PR` 只包含一个功能/一种修复/一类改进/一种重构/一次清理/一类文档等
-4. 提交消息(英文，小写，无特殊字符)  
+4. 提交消息(英文，小写，无特殊字符)
    消息的提交应遵循与 `PR` 类似的模式：`[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
 ## 2 代码检查样式
@@ -631,7 +631,7 @@ public void process(String input) {
      // 忽略声明行。
      List`<User>` userList = getUsersByBatch(1000);
      if (LOG.isDebugEnabled()) {
-        LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
+        LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList));
      }
      ```
 
@@ -645,6 +645,5 @@ public void process(String input) {
 
 - [https://site.mockito.org/](https://site.mockito.org/)
 - [https://alibaba.github.io/p3c/](https://alibaba.github.io/p3c/)
-- [https://rules.sonarsource.com/java/](https://rules.sonarsource.com/java/)
 - [https://junit.org/junit5/](https://junit.org/junit5/)
 - [https://streampark.apache.org/](https://streampark.apache.org/)

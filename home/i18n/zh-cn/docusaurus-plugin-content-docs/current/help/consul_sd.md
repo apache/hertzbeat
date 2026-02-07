@@ -15,7 +15,7 @@ Consul 服务发现允许 HertzBeat 连接到您的 Consul 服务器并自动发
 
 #### 部署 Consul 服务器
 
-1. 根据 [Consul 官方文档](https://www.consul.io/docs/install)部署 Consul 服务器。
+1. 根据 [Consul 官方文档](https://developer.hashicorp.com/consul/docs/fundamentals/install)部署 Consul 服务器。
 2. 确保 Consul 服务器可从 HertzBeat 访问。
 3. 验证您可以访问 Consul UI：`http://your-consul-server:8500/ui/`
 4. 确保 Consul HTTP API 可访问（默认端口：8500）
