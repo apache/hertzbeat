@@ -19,14 +19,17 @@
 package org.apache.hertzbeat.ai.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.ai.sop.model.SopDefinition;
+import org.apache.hertzbeat.ai.sop.model.SopParameter;
+import org.apache.hertzbeat.ai.sop.registry.SkillRegistry;
 import org.apache.hertzbeat.common.entity.ai.ChatMessage;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.ai.service.ChatClientProviderService;
 import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.apache.hertzbeat.ai.pojo.dto.ChatRequestContext;
@@ -36,9 +39,12 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,11 +57,17 @@ import java.util.List;
 @Service
 public class ChatClientProviderServiceImpl implements ChatClientProviderService {
 
+    private static final String SKILLS_PLACEHOLDER = "{dynamically_injected_skills_list}";
+    private static final String CONVERSATION_ID_PLACEHOLDER = "{current_conversation_id}";
+
     private final ApplicationContext applicationContext;
 
     private final GeneralConfigDao generalConfigDao;
+
+    private final SkillRegistry skillRegistry;
     
     @Autowired
+    @Qualifier("hertzbeatTools")
     private ToolCallbackProvider toolCallbackProvider;
     
     private boolean isConfigured = false;
@@ -64,9 +76,12 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
     private Resource systemResource;
 
     @Autowired
-    public ChatClientProviderServiceImpl(ApplicationContext applicationContext, GeneralConfigDao generalConfigDao) {
+    public ChatClientProviderServiceImpl(ApplicationContext applicationContext, 
+                                         GeneralConfigDao generalConfigDao,
+                                         @Lazy SkillRegistry skillRegistry) {
         this.applicationContext = applicationContext;
         this.generalConfigDao = generalConfigDao;
+        this.skillRegistry = skillRegistry;
     }
 
     @Override
@@ -92,9 +107,13 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
 
             log.info("Starting streaming chat for conversation: {}", context.getConversationId());
 
+            // Build system prompt with dynamic skills list and conversation ID
+            // The conversationId is injected into the prompt so AI can pass it to schedule tools
+            String systemPrompt = buildSystemPrompt(context.getConversationId());
+
             return chatClient.prompt()
                     .messages(messages)
-                    .system(SystemPromptTemplate.builder().resource(systemResource).build().getTemplate())
+                    .system(systemPrompt)
                     .toolCallbacks(toolCallbackProvider)
                     .stream()
                     .content()
@@ -105,6 +124,55 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
             log.error("Error setting up streaming chat: {}", e.getMessage(), e);
             return Flux.error(e);
         }
+    }
+
+    /**
+     * Build the system prompt with dynamically injected skills list and conversation ID.
+     */
+    private String buildSystemPrompt(Long conversationId) {
+        try {
+            String template = systemResource.getContentAsString(StandardCharsets.UTF_8);
+            String skillsList = generateSkillsList();
+            return template
+                    .replace(SKILLS_PLACEHOLDER, skillsList)
+                    .replace(CONVERSATION_ID_PLACEHOLDER, String.valueOf(conversationId));
+        } catch (IOException e) {
+            log.error("Failed to read system prompt template: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    /**
+     * Generate a formatted list of available skills for the system prompt.
+     */
+    private String generateSkillsList() {
+        List<SopDefinition> skills = skillRegistry.getAllSkills();
+        
+        if (skills.isEmpty()) {
+            return "No skills currently available. Use listSkills tool to refresh.";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (SopDefinition skill : skills) {
+            sb.append("- **").append(skill.getName()).append("**: ");
+            sb.append(skill.getDescription());
+            
+            // Add parameter hints
+            if (skill.getParameters() != null && !skill.getParameters().isEmpty()) {
+                sb.append(" (requires: ");
+                List<String> paramNames = new ArrayList<>();
+                for (SopParameter param : skill.getParameters()) {
+                    if (param.isRequired()) {
+                        paramNames.add(param.getName());
+                    }
+                }
+                sb.append(String.join(", ", paramNames));
+                sb.append(")");
+            }
+            sb.append("\n");
+        }
+        
+        return sb.toString();
     }
 
     @Override

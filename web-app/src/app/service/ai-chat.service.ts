@@ -26,8 +26,10 @@ import { LocalStorageService } from './local-storage.service';
 
 export interface ChatMessage {
   content: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system_push';
   gmtCreate: Date;
+  /** Flag indicating this message is a skill report that should be displayed directly */
+  isSkillReport?: boolean;
 }
 
 export interface ChatConversation {
@@ -43,7 +45,26 @@ export interface ChatRequestContext {
   conversationId?: number;
 }
 
+export interface SopSchedule {
+  id?: number;
+  conversationId: number;
+  sopName: string;
+  sopParams?: string;
+  cronExpression: string;
+  enabled: boolean;
+  lastRunTime?: Date;
+  nextRunTime?: Date;
+  gmtCreate?: Date;
+  gmtUpdate?: Date;
+}
+
+export interface SkillInfo {
+  name: string;
+  description: string;
+}
+
 const chat_uri = '/chat';
+const schedule_uri = '/ai/schedule';
 
 @Injectable({
   providedIn: 'root'
@@ -177,5 +198,49 @@ export class AiChatService {
       });
 
     return responseSubject.asObservable();
+  }
+
+  // ===== Schedule API Methods =====
+
+  /**
+   * Get all schedules for a conversation
+   */
+  getSchedules(conversationId: number): Observable<Message<SopSchedule[]>> {
+    return this.http.get<Message<SopSchedule[]>>(`${schedule_uri}/conversation/${conversationId}`);
+  }
+
+  /**
+   * Create a new schedule
+   */
+  createSchedule(schedule: SopSchedule): Observable<Message<SopSchedule>> {
+    return this.http.post<Message<SopSchedule>>(schedule_uri, schedule);
+  }
+
+  /**
+   * Update a schedule
+   */
+  updateSchedule(id: number, schedule: SopSchedule): Observable<Message<SopSchedule>> {
+    return this.http.put<Message<SopSchedule>>(`${schedule_uri}/${id}`, schedule);
+  }
+
+  /**
+   * Delete a schedule
+   */
+  deleteSchedule(id: number): Observable<Message<void>> {
+    return this.http.delete<Message<void>>(`${schedule_uri}/${id}`);
+  }
+
+  /**
+   * Toggle schedule enabled status
+   */
+  toggleSchedule(id: number, enabled: boolean): Observable<Message<SopSchedule>> {
+    return this.http.put<Message<SopSchedule>>(`${schedule_uri}/${id}/toggle?enabled=${enabled}`, {});
+  }
+
+  /**
+   * Get available SOP skills
+   */
+  getAvailableSkills(): Observable<Message<SkillInfo[]>> {
+    return this.http.get<Message<SkillInfo[]>>(`${schedule_uri}/skills`);
   }
 }

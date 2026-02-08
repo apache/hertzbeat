@@ -78,6 +78,10 @@
 			<groupId>com.usthe.sureness</groupId>
 			<artifactId>spring-boot3-starter-sureness</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
