@@ -4,87 +4,83 @@
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
-    "message": "快速开始",
+    "message": "QuickStart",
     "description": "The label for category quickstart in sidebar docs"
   },
   "sidebar.docs.category.custom": {
-    "message": "自定义监控",
+    "message": "Custom Monitoring",
     "description": "The label for category custom in sidebar docs"
   },
   "sidebar.docs.category.http": {
-    "message": "HTTP协议",
+    "message": "HTTP Protocol",
     "description": "The label for category http in sidebar docs"
   },
   "sidebar.docs.category.jdbc": {
-    "message": "JDBC协议",
+    "message": "JDBC Protocol",
     "description": "The label for category jdbc in sidebar docs"
   },
   "sidebar.docs.category.ssh": {
-    "message": "SSH协议",
+    "message": "SSH Protocol",
     "description": "The label for category ssh in sidebar docs"
   },
   "sidebar.docs.category.telnet": {
-    "message": "TELNET协议",
+    "message": "TELNET Protocol",
     "description": "The label for category telnet in sidebar docs"
   },
   "sidebar.docs.category.guides": {
-    "message": "使用指南",
+    "message": "Use Guides",
     "description": "The label for category guides in sidebar docs"
   },
   "sidebar.docs.category.service": {
-    "message": "应用服务监控",
+    "message": "Service Monitor",
     "description": "The label for category service in sidebar docs"
   },
   "sidebar.docs.category.database": {
-    "message": "数据库监控",
+    "message": "Database Monitor",
     "description": "The label for category database in sidebar docs"
   },
   "sidebar.docs.category.os": {
-    "message": "操作系统监控",
+    "message": "OS Monitor",
     "description": "The label for category os in sidebar docs"
   },
   "sidebar.docs.category.server": {
-    "message": "服务器监控",
+    "message": "Server Monitor",
     "description": "The label for category server in sidebar docs"
   },
-  "sidebar.docs.category.mid": {
-    "message": "中间件监控",
-    "description": "The label for category mid in sidebar docs"
-  },
   "sidebar.docs.category.alert": {
-    "message": "阈值告警",
+    "message": "Alerting",
     "description": "The label for category alert in sidebar docs"
   },
   "sidebar.docs.category.notice": {
-    "message": "消息通知",
+    "message": "Notification",
     "description": "The label for category notice in sidebar docs"
   },
   "sidebar.docs.category.service-discovery": {
-    "message": "服务发现",
+    "message": "Service Discovery",
     "description": "The label for category service-discovery in sidebar docs"
   },
+  "sidebar.docs.category.mid": {
+    "message": "Middleware Monitor",
+    "description": "The label for category mid in sidebar docs"
+  },
   "sidebar.docs.category.Others": {
-    "message": "其它",
+    "message": "Others",
     "description": "The label for category Others in sidebar docs"
   },
   "sidebar.docs.category.cloud-native": {
-    "message": "云原生监控",
+    "message": "CloudNative Monitor",
     "description": "The label for category cloud-native in sidebar docs"
   },
-  "sidebar.docs.link.Install via HuaweiCloud": {
-    "message": "华为云方式部署",
-    "description": "The label for link Install via HuaweiCloud in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
-  },
   "sidebar.docs.category.jmx": {
-    "message": "JMX协议",
+    "message": "JMX Protocol",
     "description": "The label for category jmx in sidebar docs"
   },
   "sidebar.docs.category.snmp": {
-    "message": "SNMP协议",
+    "message": "SNMP Protocol",
     "description": "The label for category snmp in sidebar docs"
   },
   "sidebar.docs.link.Install via Helm": {
-    "message": "Helm方式安装",
+    "message": "Install via Helm",
     "description": "The label for link Install via Helm in sidebar docs, linking to https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
   },
   "sidebar.docs.category.push": {
@@ -92,39 +88,39 @@
     "description": "The label for category push in sidebar docs"
   },
   "sidebar.docs.category.program": {
-    "message": "应用程序监控",
+    "message": "Program Monitor",
     "description": "The label for category program in sidebar docs"
   },
   "sidebar.docs.category.cache": {
-    "message": "缓存监控",
+    "message": "Cache Monitor",
     "description": "The label for category cache in sidebar docs"
   },
   "sidebar.docs.category.bigdata": {
-    "message": "大数据监控",
+    "message": "Bigdata Monitor",
     "description": "The label for category bigdata in sidebar docs"
   },
   "sidebar.docs.category.webserver": {
-    "message": "Web服务器监控",
+    "message": "WebServer Monitor",
     "description": "The label for category webserver in sidebar docs"
   },
-  "sidebar.docs.category.Community": {
-    "message": "社区",
-    "description": "The label for category Community in sidebar docs"
-  },
   "sidebar.docs.category.contribution": {
-    "message": "贡献指南",
+    "message": "Contribution Guide",
     "description": "The label for category contribution in sidebar docs"
   },
   "sidebar.docs.category.submit": {
-    "message": "提交指南",
+    "message": "Submit Guide",
     "description": "The label for category submit in sidebar docs"
   },
   "sidebar.docs.category.release": {
-    "message": "发布指南",
+    "message": "Release Guide",
     "description": "The label for category release in sidebar docs"
   },
+  "sidebar.docs.category.Community": {
+    "message": "Community",
+    "description": "The label for category Community in sidebar docs"
+  },
   "sidebar.docs.category.network": {
-    "message": "网络监控",
+    "message": "Network Monitor",
     "description": "The label for category network in sidebar docs"
   },
   "sidebar.docs.category.NGQL": {
@@ -132,55 +128,39 @@
     "description": "The label for category NGQL in sidebar docs"
   },
   "sidebar.docs.category.llm": {
-    "message": "AI大模型监控",
+    "message": "AI LLM Monitor",
     "description": "The label for category llm in sidebar docs"
   },
   "sidebar.docs.category.aiConfig": {
-    "message": "AI大模型配置",
+    "message": "AI LLM Config",
     "description": "The label for category aiConfig in sidebar docs"
   },
   "sidebar.docs.category.install": {
-    "message": "安装",
+    "message": "Install",
     "description": "The label for category install in sidebar docs"
   },
   "sidebar.docs.category.upgrade": {
-    "message": "升级",
+    "message": "Upgrade",
     "description": "The label for category upgrade in sidebar docs"
   },
   "sidebar.docs.category.setting": {
-    "message": "配置",
+    "message": "Setting",
     "description": "The label for category setting in sidebar docs"
   },
   "sidebar.docs.category.change-db": {
-    "message": "数据库切换",
+    "message": "Change DB",
     "description": "The label for category change-db in sidebar docs"
   },
   "sidebar.docs.category.use-case": {
-    "message": "使用案例",
+    "message": "Use Case",
     "description": "The label for category use-case in sidebar docs"
   },
   "sidebar.docs.category.extern-deploy": {
-    "message": "集成平台部署",
+    "message": "Extern Install",
     "description": "The label for category extern-deploy in sidebar docs"
   },
-  "sidebar.docs.category.quickstart-use-case": {
-    "message": "使用案例",
-    "description": "The label for category quickstart-use-case in sidebar docs"
-  },
-  "sidebar.docs.category.guides-use-case": {
-    "message": "使用案例",
-    "description": "The label for category guides-use-case in sidebar docs"
-  },
-  "sidebar.docs.category.help-custom": {
-    "message": "自定义监控",
-    "description": "The label for category help-custom in sidebar docs"
-  },
-  "sidebar.docs.category.advanced-custom": {
-    "message": "自定义监控",
-    "description": "The label for category advanced-custom in sidebar docs"
-  },
   "sidebar.docs.category.log": {
-    "message": "日志监控 (Beta)",
+    "message": "Log",
     "description": "The label for category log in sidebar docs"
   }
 }
