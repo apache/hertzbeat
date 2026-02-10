@@ -135,7 +135,7 @@
         <kafka-clients.version>3.7.1</kafka-clients.version>
         <netty.version>4.1.117.Final</netty.version>
         <mysql.version>8.4.0</mysql.version>
-        <mssql-jdbc.version>10.2.0.jre8</mssql-jdbc.version>
+        <mssql-jdbc.version>12.10.2.jre11</mssql-jdbc.version>
         <ojdbc8.version>21.5.0.0</ojdbc8.version>
         <mongodb-driver.version>4.6.1</mongodb-driver.version>
         <clickhouse.version>0.4.6</clickhouse.version>
