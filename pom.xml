@@ -82,6 +82,8 @@
         <module>hertzbeat-manager</module>
         <module>hertzbeat-alerter</module>
         <module>hertzbeat-common</module>
+        <module>hertzbeat-common-core</module>
+        <module>hertzbeat-common-spring</module>
         <module>hertzbeat-collector</module>
         <module>hertzbeat-warehouse</module>
         <module>hertzbeat-remoting</module>
@@ -191,6 +193,18 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-common</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- common-core -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-common-core</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- common-spring -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-common-spring</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- base -->
