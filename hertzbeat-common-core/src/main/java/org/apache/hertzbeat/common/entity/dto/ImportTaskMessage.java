@@ -17,13 +17,13 @@
 
 package org.apache.hertzbeat.common.entity.dto;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.hertzbeat.common.constants.ImportTaskStatusEnum;
 import org.apache.hertzbeat.common.constants.ManagerEventTypeEnum;
 import org.apache.hertzbeat.common.constants.NotifyLevelEnum;
-import org.springframework.lang.Nullable;
 
 /**
  * Import task message

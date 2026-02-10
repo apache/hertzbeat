@@ -486,7 +486,7 @@ public final class CollectRep {
             }
 
             public long getTime() {
-                return Integer.parseInt(metadata.getOrDefault(MetricDataConstants.TIME, "0"));
+                return Long.parseLong(metadata.getOrDefault(MetricDataConstants.TIME, "0"));
             }
 
             public Code getCode() {
