@@ -41,7 +41,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "hzb_status_page_incident_component_bind", indexes = {
         @Index(name = "index_incident_component", columnList = "incident_id"),
-        @Index(name = "index_incident_component", columnList = "component_id")
 })
 @Data
 @Builder
@@ -59,7 +58,7 @@ public class StatusPageIncidentComponentBind {
     @Schema(title = "Incident ID", example = "87432674384")
     @Column(name = "incident_id")
     private Long incidentId;
-    
+
     @Schema(title = "Component ID", example = "87432674336")
     @Column(name = "component_id")
     private Long componentId;
@@ -71,5 +70,5 @@ public class StatusPageIncidentComponentBind {
     @Schema(title = "Record modify time", example = "1612198444000")
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-    
+
 }

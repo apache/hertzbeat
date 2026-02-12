@@ -88,7 +88,7 @@ tags: [opensource, practice]
 2. Configure the parameters required for monitoring DynamicTp.
 
     On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.
-    For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.apache.org/docs/help/dynamic_tp/) <https://hertzbeat.apache.org/docs/help/dynamic_tp/>
+    For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.apache.org/docs/help/dynamic_tp/) [https://hertzbeat.apache.org/docs/help/dynamic_tp/](https://hertzbeat.apache.org/docs/help/dynamic_tp/)
 
     ![HertzBeat](/img/blog/monitor-dynamic-tp-2.png)
 
@@ -137,7 +137,7 @@ Of course, just watching is not perfect, monitoring is often accompanied by alar
 
     Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook, SMS**, etc. We take the commonly used Dingtalk as an example.
 
-   - Refer to this [help document](https://hertzbeat.apache.org/docs/help/alert_dingtalk) <https://hertzbeat.apache.org/docs/help/alert_dingtalk> Configure the bot on Dingtalk side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Refer to this [help document](https://hertzbeat.apache.org/docs/help/alert_dingtalk) [https://hertzbeat.apache.org/docs/help/alert_dingtalk](https://hertzbeat.apache.org/docs/help/alert_dingtalk) Configure the bot on Dingtalk side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
    - Configure the recipient parameters in HertzBeat as follows.
 
     [Alert Notification] -> [Add Recipient] -> [Choose Dingtalk bot notification method] -> [Set Dingtalk bot ACCESS_TOKEN] -> [OK]
@@ -168,8 +168,8 @@ Details : DynamicTp has run timeout thread, count is 2
 This practical article takes us to experience how to use HertzBeat to monitor DynamicTp thread pool metrics data, and we can find that HertzBeat with ``monitoring-alerting-notification`` is much more convenient to operate and use, and you only need to point and click on a page to include DynamicTp thread pool into the monitoring and alert notification, and you don't need to deploy multiple components to write YML configuration files anymore. There is no need to deploy multiple components and write YML configuration files.  
 :::
 
-DynamicTp Github: <https://github.com/dromara/dynamic-tp>
-HertzBeat Github: <https://github.com/apache/hertzbeat>
+DynamicTp Github: [https://github.com/dromara/dynamic-tp](https://github.com/dromara/dynamic-tp)
+HertzBeat Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)
 
 **Welcome to learn how to use Star Support!**
 

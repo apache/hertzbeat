@@ -19,9 +19,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 >
 > 您相信只需定义YML就能立刻适配一款K8s或Docker等新的监控类型吗？
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ### v1.3.1 来了
 
@@ -62,5 +62,5 @@ COMMIT;
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**

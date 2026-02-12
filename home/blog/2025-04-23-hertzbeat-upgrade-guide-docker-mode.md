@@ -7,8 +7,8 @@
 - **Back up the database**: Manually back up MySQL data as needed.
 
   ```bash
-  mysqldump -h<HOST-IP> -P<PORT> -uroot -p"PASSWORD" <DB_NAME> > hertzbeat_backup-`date +%Y-%m-%d`.sql  # Single database  
-  mysqldump -h<HOST-IP> -P<PORT> -uroot -p"PASSWORD" --all-databases > hertzbeat_backup-`date +%Y-%m-%d`.sql  # Full database  
+  mysqldump -h<HOST-IP> -P`<PORT>` -uroot -p"PASSWORD" `<DB_NAME>` > hertzbeat_backup-`date +%Y-%m-%d`.sql  # Single database  
+  mysqldump -h<HOST-IP> -P`<PORT>` -uroot -p"PASSWORD" --all-databases > hertzbeat_backup-`date +%Y-%m-%d`.sql  # Full database  
   ```
 
 - **Back up configuration files and data directory**:

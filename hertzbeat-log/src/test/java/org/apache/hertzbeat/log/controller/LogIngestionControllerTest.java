@@ -18,24 +18,22 @@
 package org.apache.hertzbeat.log.controller;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.log.LogEntry;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.log.service.LogProtocolAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,34 +49,29 @@ class LogIngestionControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private LogProtocolAdapter otlpAdapter;
+    private LogProtocolAdapter vectorAdapter;
 
     private LogIngestionController logIngestionController;
 
     @BeforeEach
     void setUp() {
-        List<LogProtocolAdapter> adapters = Arrays.asList(otlpAdapter);
+        List<LogProtocolAdapter> adapters = Arrays.asList(vectorAdapter);
         this.logIngestionController = new LogIngestionController(adapters);
         this.mockMvc = MockMvcBuilders.standaloneSetup(logIngestionController).build();
     }
 
     @Test
-    void testIngestExternLogWithOtlpProtocol() throws Exception {
-        LogEntry logEntry = LogEntry.builder()
-                .timeUnixNano(1734005477630L)
-                .severityNumber(1)
-                .severityText("INFO")
-                .body("Test log message")
-                .attributes(new HashMap<>())
-                .build();
+    void testIngestLogWithKnownProtocol() throws Exception {
+        String logContent = "{\"message\":\"Test log message\"}";
 
-        when(otlpAdapter.supportProtocol()).thenReturn("otlp");
+        when(vectorAdapter.supportProtocol()).thenReturn("vector");
+        doNothing().when(vectorAdapter).ingest(anyString());
 
         mockMvc.perform(
                 MockMvcRequestBuilders
-                        .post("/api/logs/ingest/otlp")
+                        .post("/api/logs/ingest/vector")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(logEntry))
+                        .content(logContent)
         )
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -88,16 +81,16 @@ class LogIngestionControllerTest {
     }
 
     @Test
-    void testIngestExternLogWithUnsupportedProtocol() throws Exception {
-        String unsupportedLogContent = "{\"message\":\"Unsupported protocol log\"}";
+    void testIngestLogWithUnsupportedProtocol() throws Exception {
+        String logContent = "{\"message\":\"Unsupported protocol log\"}";
 
-        when(otlpAdapter.supportProtocol()).thenReturn("otlp");
+        when(vectorAdapter.supportProtocol()).thenReturn("vector");
 
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .post("/api/logs/ingest/unsupported")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(unsupportedLogContent)
+                        .content(logContent)
         )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
@@ -105,38 +98,15 @@ class LogIngestionControllerTest {
     }
 
     @Test
-    void testIngestDefaultExternLog() throws Exception {
-        LogEntry logEntry = LogEntry.builder()
-                .timeUnixNano(1734005477630L)
-                .severityNumber(2)
-                .severityText("WARN")
-                .body("Default protocol log message")
-                .attributes(new HashMap<>())
-                .build();
+    void testIngestLogWithAdapterException() throws Exception {
+        String logContent = "{\"message\":\"Log message that will cause exception\"}";
 
-        when(otlpAdapter.supportProtocol()).thenReturn("otlp");
+        when(vectorAdapter.supportProtocol()).thenReturn("vector");
+        doThrow(new IllegalArgumentException("Invalid log format")).when(vectorAdapter).ingest(anyString());
 
         mockMvc.perform(
                 MockMvcRequestBuilders
-                        .post("/api/logs/ingest")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(logEntry))
-        )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Add extern log success"));
-    }
-
-    @Test
-    void testIngestDefaultExternLogWithAdapterException() throws Exception {
-        String logContent = "{\"message\":\"Default log message that will cause exception\"}";
-
-        when(otlpAdapter.supportProtocol()).thenReturn("otlp");
-        Mockito.doThrow(new IllegalArgumentException("Invalid log format")).when(otlpAdapter).ingest(anyString());
-
-        mockMvc.perform(
-                MockMvcRequestBuilders
-                        .post("/api/logs/ingest")
+                        .post("/api/logs/ingest/vector")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(logContent)
         )

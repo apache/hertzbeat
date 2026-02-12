@@ -45,8 +45,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * PluginParam
  */
 @Entity
-@Table(name = "hzb_plugin_param", indexes = { @Index(columnList = "pluginMetadataId") },
-        uniqueConstraints = @UniqueConstraint(columnNames = {"pluginMetadataId", "field"}))
+@Table(
+    name = "hzb_plugin_param",
+    indexes = {@Index(name = "idx_hzb_plugin_param_plugin_metadata_id", columnList = "plugin_metadata_id")},
+    uniqueConstraints = @UniqueConstraint(name = "uk_hzb_plugin_param_metadata_field", columnNames = {"plugin_metadata_id", "field"})
+)
 @Data
 @Builder
 @AllArgsConstructor
@@ -65,8 +68,9 @@ public class PluginParam {
     /**
      * Monitor ID
      */
-    @Schema(title = "Plugin task ID", example = "875846754543", accessMode = READ_WRITE)
     @NotNull
+    @Column(name = "plugin_metadata_id")
+    @Schema(title = "Plugin task ID", example = "875846754543", accessMode = READ_WRITE)
     private Long pluginMetadataId;
 
     /**
@@ -75,6 +79,7 @@ public class PluginParam {
     @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
     @Size(max = 100)
     @NotNull
+    @Column(name = "field")
     private String field;
 
     /**

@@ -49,8 +49,8 @@ module.exports = {
       respectPrefersColorScheme: true,
     },
     prism: {
-      theme: require('prism-react-renderer/themes/github'),
-      darkTheme: require('prism-react-renderer/themes/dracula'),
+      theme: require('prism-react-renderer').themes.github,
+      darkTheme: require('prism-react-renderer').themes.dracula,
       additionalLanguages: ['java'],
     },
     algolia: {
@@ -303,11 +303,10 @@ module.exports = {
           remarkPlugins: [
             [require('@docusaurus/remark-plugin-npm2yarn'), { sync: true }],
           ],
-          lastVersion: 'current',
+          lastVersion: '1.8.0',
           versions: {
             current: {
               label: 'current',
-              path: '',
             },
           },
         },
@@ -347,7 +346,7 @@ module.exports = {
       {
         debug: false,
         offlineModeActivationStrategies: ['appInstalled', 'queryString'],
-        // swRegister: false,
+        swRegister: false,
         pwaHead: [
           {
             tagName: 'link',

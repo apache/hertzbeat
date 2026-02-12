@@ -20,9 +20,9 @@ keywords: [open source monitoring system, alerting system]
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 灵活的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 
-**Github: <https://github.com/apache/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
 
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ### HertzBeat's 1.4.3 新版本发布啦
 
@@ -81,8 +81,8 @@ keywords: [open source monitoring system, alerting system]
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
 
 ---
 
@@ -90,63 +90,63 @@ keywords: [open source monitoring system, alerting system]
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
 
-- update package deploy doc by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1330>
-- bugfix duplicate collect job when update monitor templates by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1332>
-- bugfix number variable in freemarker template display error by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1334>
-- [alerter] Enhanced reporting of external general alert API by @SurryChen in <https://github.com/apache/hertzbeat/pull/1326>
-- [doc] update hertzbeat-mysql-tdengine readme by @jiashu1024 in <https://github.com/apache/hertzbeat/pull/1335>
-- add jiashu1024 as a contributor for doc by @allcontributors in <https://github.com/apache/hertzbeat/pull/1336>
-- app-mysql.yml: Adjust slow query translation by @1036664317 in <https://github.com/apache/hertzbeat/pull/1337>
-- add 1036664317 as a contributor for doc by @allcontributors in <https://github.com/apache/hertzbeat/pull/1338>
-- Bump com.google.guava:guava from 31.0.1-jre to 32.0.0-jre by @dependabot in <https://github.com/apache/hertzbeat/pull/1339>
-- [feature] support auto collect metrics by prometheus task by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1342>
-- [doc] add vinci as new committer by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1341>
-- [feature] add tag word cloud in dashboard by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1345>
-- support custom prometheus endpoint path by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1346>
-- bugfix tdengine query interval history metrics data with instance error by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1348>
-- unlimit Alert.java content field length by @xiaoguolong in <https://github.com/apache/hertzbeat/pull/1351>
-- add xiaoguolong as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1353>
-- update monitor detail table ui layout by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1352>
-- [doc]add star history by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1356>
-- feature: app-mongodb.yml by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1359>
-- alarm threshold support prometheus task metrics by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1354>
-- support victoriametrics as metrics data storage by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1361>
-- Add time type to support query_time of mysql and mariadb by @Clownsw in <https://github.com/apache/hertzbeat/pull/1364>
-- add Clownsw as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1365>
-- Error occured when I followed running steps to start Front-web by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1366>
-- add Calvin979 as a contributor for doc by @allcontributors in <https://github.com/apache/hertzbeat/pull/1367>
-- enriches the cncf landscape by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1368>
-- Fix flaky test in CollectUtilTest by @bbelide2 in <https://github.com/apache/hertzbeat/pull/1371>
-- add bbelide2 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1372>
-- Fix flaky test replaceSmilingPlaceholder by @bbelide2 in <https://github.com/apache/hertzbeat/pull/1373>
-- add docker-compose script hertzbeat+mysql+victoria-metrics all in one by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1370>
-- Feature: app-jvm.yml support for international name aliases by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1376>
-- add Calvin979 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1377>
-- feature: support monitoring spring gateway metrics by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1374>
-- update code comment and doc, bugfix concurrent exception by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1378>
-- update windows define and accept snmp leaf by @jinyaoMa in <https://github.com/apache/hertzbeat/pull/1379>
-- add jinyaoMa as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1380>
-- fix exception when sending email has special chars by @Carpe-Wang in <https://github.com/apache/hertzbeat/pull/1383>
-- test: add e2e testing for some basic APIs by @LinuxSuRen in <https://github.com/apache/hertzbeat/pull/1387>
-- add LinuxSuRen as a contributor for code, and test by @allcontributors in <https://github.com/apache/hertzbeat/pull/1389>
-- bugfix auto generate monitor name error when add monitor by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1384>
-- bugfix CalculateAlarm execAlertExpression NPE by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1388>
-- Feature: app-redis.yml support for international name aliases by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1390>
-- test: add more monitor related e2e testing case by @LinuxSuRen in <https://github.com/apache/hertzbeat/pull/1391>
-- chore: update the pr template about the e2e testing by @LinuxSuRen in <https://github.com/apache/hertzbeat/pull/1392>
-- add help header ui when update or add monitors by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1399>
-- [hertzbeat] release hertzbeat version v1.4.3 by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1400>
+- update package deploy doc by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1330](https://github.com/apache/hertzbeat/pull/1330)
+- bugfix duplicate collect job when update monitor templates by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1332](https://github.com/apache/hertzbeat/pull/1332)
+- bugfix number variable in freemarker template display error by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1334](https://github.com/apache/hertzbeat/pull/1334)
+- [alerter] Enhanced reporting of external general alert API by @SurryChen in [https://github.com/apache/hertzbeat/pull/1326](https://github.com/apache/hertzbeat/pull/1326)
+- [doc] update hertzbeat-mysql-tdengine readme by @jiashu1024 in [https://github.com/apache/hertzbeat/pull/1335](https://github.com/apache/hertzbeat/pull/1335)
+- add jiashu1024 as a contributor for doc by @allcontributors in [https://github.com/apache/hertzbeat/pull/1336](https://github.com/apache/hertzbeat/pull/1336)
+- app-mysql.yml: Adjust slow query translation by @1036664317 in [https://github.com/apache/hertzbeat/pull/1337](https://github.com/apache/hertzbeat/pull/1337)
+- add 1036664317 as a contributor for doc by @allcontributors in [https://github.com/apache/hertzbeat/pull/1338](https://github.com/apache/hertzbeat/pull/1338)
+- Bump com.google.guava:guava from 31.0.1-jre to 32.0.0-jre by @dependabot in [https://github.com/apache/hertzbeat/pull/1339](https://github.com/apache/hertzbeat/pull/1339)
+- [feature] support auto collect metrics by prometheus task by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1342](https://github.com/apache/hertzbeat/pull/1342)
+- [doc] add vinci as new committer by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1341](https://github.com/apache/hertzbeat/pull/1341)
+- [feature] add tag word cloud in dashboard by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1345](https://github.com/apache/hertzbeat/pull/1345)
+- support custom prometheus endpoint path by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1346](https://github.com/apache/hertzbeat/pull/1346)
+- bugfix tdengine query interval history metrics data with instance error by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1348](https://github.com/apache/hertzbeat/pull/1348)
+- unlimit Alert.java content field length by @xiaoguolong in [https://github.com/apache/hertzbeat/pull/1351](https://github.com/apache/hertzbeat/pull/1351)
+- add xiaoguolong as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1353](https://github.com/apache/hertzbeat/pull/1353)
+- update monitor detail table ui layout by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1352](https://github.com/apache/hertzbeat/pull/1352)
+- [doc]add star history by @zqr10159 in [https://github.com/apache/hertzbeat/pull/1356](https://github.com/apache/hertzbeat/pull/1356)
+- feature: app-mongodb.yml by @a-little-fool in [https://github.com/apache/hertzbeat/pull/1359](https://github.com/apache/hertzbeat/pull/1359)
+- alarm threshold support prometheus task metrics by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1354](https://github.com/apache/hertzbeat/pull/1354)
+- support victoriametrics as metrics data storage by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1361](https://github.com/apache/hertzbeat/pull/1361)
+- Add time type to support query_time of mysql and mariadb by @Clownsw in [https://github.com/apache/hertzbeat/pull/1364](https://github.com/apache/hertzbeat/pull/1364)
+- add Clownsw as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1365](https://github.com/apache/hertzbeat/pull/1365)
+- Error occured when I followed running steps to start Front-web by @Calvin979 in [https://github.com/apache/hertzbeat/pull/1366](https://github.com/apache/hertzbeat/pull/1366)
+- add Calvin979 as a contributor for doc by @allcontributors in [https://github.com/apache/hertzbeat/pull/1367](https://github.com/apache/hertzbeat/pull/1367)
+- enriches the cncf landscape by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1368](https://github.com/apache/hertzbeat/pull/1368)
+- Fix flaky test in CollectUtilTest by @bbelide2 in [https://github.com/apache/hertzbeat/pull/1371](https://github.com/apache/hertzbeat/pull/1371)
+- add bbelide2 as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1372](https://github.com/apache/hertzbeat/pull/1372)
+- Fix flaky test replaceSmilingPlaceholder by @bbelide2 in [https://github.com/apache/hertzbeat/pull/1373](https://github.com/apache/hertzbeat/pull/1373)
+- add docker-compose script hertzbeat+mysql+victoria-metrics all in one by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1370](https://github.com/apache/hertzbeat/pull/1370)
+- Feature: app-jvm.yml support for international name aliases by @Calvin979 in [https://github.com/apache/hertzbeat/pull/1376](https://github.com/apache/hertzbeat/pull/1376)
+- add Calvin979 as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1377](https://github.com/apache/hertzbeat/pull/1377)
+- feature: support monitoring spring gateway metrics by @a-little-fool in [https://github.com/apache/hertzbeat/pull/1374](https://github.com/apache/hertzbeat/pull/1374)
+- update code comment and doc, bugfix concurrent exception by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1378](https://github.com/apache/hertzbeat/pull/1378)
+- update windows define and accept snmp leaf by @jinyaoMa in [https://github.com/apache/hertzbeat/pull/1379](https://github.com/apache/hertzbeat/pull/1379)
+- add jinyaoMa as a contributor for code by @allcontributors in [https://github.com/apache/hertzbeat/pull/1380](https://github.com/apache/hertzbeat/pull/1380)
+- fix exception when sending email has special chars by @Carpe-Wang in [https://github.com/apache/hertzbeat/pull/1383](https://github.com/apache/hertzbeat/pull/1383)
+- test: add e2e testing for some basic APIs by @LinuxSuRen in [https://github.com/apache/hertzbeat/pull/1387](https://github.com/apache/hertzbeat/pull/1387)
+- add LinuxSuRen as a contributor for code, and test by @allcontributors in [https://github.com/apache/hertzbeat/pull/1389](https://github.com/apache/hertzbeat/pull/1389)
+- bugfix auto generate monitor name error when add monitor by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1384](https://github.com/apache/hertzbeat/pull/1384)
+- bugfix CalculateAlarm execAlertExpression NPE by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1388](https://github.com/apache/hertzbeat/pull/1388)
+- Feature: app-redis.yml support for international name aliases by @Calvin979 in [https://github.com/apache/hertzbeat/pull/1390](https://github.com/apache/hertzbeat/pull/1390)
+- test: add more monitor related e2e testing case by @LinuxSuRen in [https://github.com/apache/hertzbeat/pull/1391](https://github.com/apache/hertzbeat/pull/1391)
+- chore: update the pr template about the e2e testing by @LinuxSuRen in [https://github.com/apache/hertzbeat/pull/1392](https://github.com/apache/hertzbeat/pull/1392)
+- add help header ui when update or add monitors by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1399](https://github.com/apache/hertzbeat/pull/1399)
+- [hertzbeat] release hertzbeat version v1.4.3 by @tomsun28 in [https://github.com/apache/hertzbeat/pull/1400](https://github.com/apache/hertzbeat/pull/1400)
 
 ## New Contributors
 
-- @1036664317 made their first contribution in <https://github.com/apache/hertzbeat/pull/1337>
-- @dependabot made their first contribution in <https://github.com/apache/hertzbeat/pull/1339>
-- @xiaoguolong made their first contribution in <https://github.com/apache/hertzbeat/pull/1351>
-- @Clownsw made their first contribution in <https://github.com/apache/hertzbeat/pull/1364>
-- @Calvin979 made their first contribution in <https://github.com/apache/hertzbeat/pull/1366>
-- @bbelide2 made their first contribution in <https://github.com/apache/hertzbeat/pull/1371>
-- @jinyaoMa made their first contribution in <https://github.com/apache/hertzbeat/pull/1379>
-- @LinuxSuRen made their first contribution in <https://github.com/apache/hertzbeat/pull/1387>
+- @1036664317 made their first contribution in [https://github.com/apache/hertzbeat/pull/1337](https://github.com/apache/hertzbeat/pull/1337)
+- @dependabot made their first contribution in [https://github.com/apache/hertzbeat/pull/1339](https://github.com/apache/hertzbeat/pull/1339)
+- @xiaoguolong made their first contribution in [https://github.com/apache/hertzbeat/pull/1351](https://github.com/apache/hertzbeat/pull/1351)
+- @Clownsw made their first contribution in [https://github.com/apache/hertzbeat/pull/1364](https://github.com/apache/hertzbeat/pull/1364)
+- @Calvin979 made their first contribution in [https://github.com/apache/hertzbeat/pull/1366](https://github.com/apache/hertzbeat/pull/1366)
+- @bbelide2 made their first contribution in [https://github.com/apache/hertzbeat/pull/1371](https://github.com/apache/hertzbeat/pull/1371)
+- @jinyaoMa made their first contribution in [https://github.com/apache/hertzbeat/pull/1379](https://github.com/apache/hertzbeat/pull/1379)
+- @LinuxSuRen made their first contribution in [https://github.com/apache/hertzbeat/pull/1387](https://github.com/apache/hertzbeat/pull/1387)
 
 ---
 
@@ -163,5 +163,5 @@ keywords: [open source monitoring system, alerting system]
 
 ---
 
-**Github: <https://github.com/apache/hertzbeat>**
-**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
+**Github: [https://github.com/apache/hertzbeat](https://github.com/apache/hertzbeat)**
+**Gitee: [https://gitee.com/hertzbeat/hertzbeat](https://gitee.com/hertzbeat/hertzbeat)**
