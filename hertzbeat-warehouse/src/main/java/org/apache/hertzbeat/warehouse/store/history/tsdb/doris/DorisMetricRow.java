@@ -17,12 +17,21 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tsdb.doris;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.sql.Timestamp;
 
 /**
  * Internal class to represent a metric row for Doris storage.
  * This class is used by both DorisDataStorage and DorisStreamLoadWriter.
  */
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class DorisMetricRow {
     public String instance;
     public String app;

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -46,6 +47,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -70,6 +72,14 @@ public class DorisStreamLoadWriter {
     private static final long RETRY_BACKOFF_MS = 200L;
     private static final DateTimeFormatter DORIS_DATETIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private static final String METRIC_JSON_PATHS =
+            "[\"$.instance\",\"$.app\",\"$.metrics\",\"$.metric\",\"$.recordTime\",\"$.metricType\",\"$.int32Value\",\"$.doubleValue\",\"$.strValue\",\"$.labels\"]";
+    private static final String METRIC_COLUMNS =
+            "instance,app,metrics,metric,record_time,metric_type,int32_value,double_value,str_value,labels";
+    private static final String LOG_JSON_PATHS =
+            "[\"$.timeUnixNano\",\"$.observedTimeUnixNano\",\"$.eventTime\",\"$.severityNumber\",\"$.severityText\",\"$.body\",\"$.traceId\",\"$.spanId\",\"$.traceFlags\",\"$.attributes\",\"$.resource\",\"$.instrumentationScope\",\"$.droppedAttributesCount\"]";
+    private static final String LOG_COLUMNS =
+            "time_unix_nano,observed_time_unix_nano,event_time,severity_number,severity_text,body,trace_id,span_id,trace_flags,attributes,resource,instrumentation_scope,dropped_attributes_count";
 
     private final String databaseName;
     private final String tableName;
@@ -100,6 +110,22 @@ public class DorisStreamLoadWriter {
         public Double doubleValue;
         public String strValue;
         public String labels;
+    }
+
+    private static final class StreamLoadLogRow {
+        public Long timeUnixNano;
+        public Long observedTimeUnixNano;
+        public String eventTime;
+        public Integer severityNumber;
+        public String severityText;
+        public String body;
+        public String traceId;
+        public String spanId;
+        public Integer traceFlags;
+        public String attributes;
+        public String resource;
+        public String instrumentationScope;
+        public Integer droppedAttributesCount;
     }
 
     /**
@@ -305,10 +331,17 @@ public class DorisStreamLoadWriter {
             return false;
         }
 
-        return writeWithAutoSplit(new ArrayList<>(rows));
+        return writeMetricWithAutoSplit(new ArrayList<>(rows));
     }
 
-    private boolean writeWithAutoSplit(List<DorisMetricRow> rows) {
+    public boolean writeLogs(List<LogEntry> logEntries) {
+        if (!available || logEntries == null || logEntries.isEmpty()) {
+            return false;
+        }
+        return writeLogWithAutoSplit(new ArrayList<>(logEntries));
+    }
+
+    private boolean writeMetricWithAutoSplit(List<DorisMetricRow> rows) {
         List<StreamLoadMetricRow> streamLoadRows = toStreamLoadRows(rows);
         String jsonData = JsonUtil.toJson(streamLoadRows);
         if (jsonData == null) {
@@ -324,11 +357,34 @@ public class DorisStreamLoadWriter {
             List<DorisMetricRow> right = new ArrayList<>(rows.subList(mid, rows.size()));
             log.debug("[Doris StreamLoad] Split batch: rows={}, bytes={}, maxBytes={}",
                     rows.size(), payloadBytes, maxBytesPerBatch);
-            return writeWithAutoSplit(left) && writeWithAutoSplit(right);
+            return writeMetricWithAutoSplit(left) && writeMetricWithAutoSplit(right);
         }
 
         String label = buildLabel();
-        return writeSingleBatch(rows.size(), jsonData, label);
+        return writeSingleBatch(rows.size(), jsonData, label, METRIC_JSON_PATHS, METRIC_COLUMNS);
+    }
+
+    private boolean writeLogWithAutoSplit(List<LogEntry> logEntries) {
+        List<StreamLoadLogRow> streamLoadRows = toStreamLoadLogRows(logEntries);
+        String jsonData = JsonUtil.toJson(streamLoadRows);
+        if (jsonData == null) {
+            log.error("[Doris StreamLoad] Failed to serialize {} log entries to JSON.", logEntries.size());
+            return false;
+        }
+
+        int payloadBytes = jsonData.getBytes(StandardCharsets.UTF_8).length;
+        int maxBytesPerBatch = config.maxBytesPerBatch();
+        if (payloadBytes > maxBytesPerBatch && logEntries.size() > 1) {
+            int mid = logEntries.size() / 2;
+            List<LogEntry> left = new ArrayList<>(logEntries.subList(0, mid));
+            List<LogEntry> right = new ArrayList<>(logEntries.subList(mid, logEntries.size()));
+            log.debug("[Doris StreamLoad] Split log batch: rows={}, bytes={}, maxBytes={}",
+                    logEntries.size(), payloadBytes, maxBytesPerBatch);
+            return writeLogWithAutoSplit(left) && writeLogWithAutoSplit(right);
+        }
+
+        String label = buildLabel();
+        return writeSingleBatch(logEntries.size(), jsonData, label, LOG_JSON_PATHS, LOG_COLUMNS);
     }
 
     private List<StreamLoadMetricRow> toStreamLoadRows(List<DorisMetricRow> rows) {
@@ -357,7 +413,43 @@ public class DorisStreamLoadWriter {
         return DORIS_DATETIME_FORMATTER.format(timestamp.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
     }
 
-    private boolean writeSingleBatch(int rowCount, String jsonData, String label) {
+    private List<StreamLoadLogRow> toStreamLoadLogRows(List<LogEntry> logEntries) {
+        List<StreamLoadLogRow> result = new ArrayList<>(logEntries.size());
+        for (LogEntry logEntry : logEntries) {
+            long timeUnixNano = logEntry.getTimeUnixNano() != null
+                    ? logEntry.getTimeUnixNano()
+                    : System.currentTimeMillis() * 1_000_000L;
+            long observedTimeUnixNano = logEntry.getObservedTimeUnixNano() != null
+                    ? logEntry.getObservedTimeUnixNano()
+                    : timeUnixNano;
+
+            StreamLoadLogRow row = new StreamLoadLogRow();
+            row.timeUnixNano = timeUnixNano;
+            row.observedTimeUnixNano = observedTimeUnixNano;
+            row.eventTime = formatEpochNanos(timeUnixNano);
+            row.severityNumber = logEntry.getSeverityNumber();
+            row.severityText = logEntry.getSeverityText();
+            row.body = JsonUtil.toJson(logEntry.getBody());
+            row.traceId = logEntry.getTraceId();
+            row.spanId = logEntry.getSpanId();
+            row.traceFlags = logEntry.getTraceFlags();
+            row.attributes = JsonUtil.toJson(logEntry.getAttributes());
+            row.resource = JsonUtil.toJson(logEntry.getResource());
+            row.instrumentationScope = JsonUtil.toJson(logEntry.getInstrumentationScope());
+            row.droppedAttributesCount = logEntry.getDroppedAttributesCount();
+            result.add(row);
+        }
+        return result;
+    }
+
+    private String formatEpochNanos(long epochNanos) {
+        long millis = epochNanos / 1_000_000L;
+        return DORIS_DATETIME_FORMATTER.format(
+                Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDateTime());
+    }
+
+    private boolean writeSingleBatch(int rowCount, String jsonData, String label,
+                                     String jsonPaths, String columns) {
         String loadUrl = buildLoadUrl();
         int maxAttempts = Math.max(1, config.retryTimes() + 1);
         boolean useLoadToSingleTablet = loadToSingleTabletHeaderEnabled.get();
@@ -381,10 +473,8 @@ public class DorisStreamLoadWriter {
             if (useLoadToSingleTablet) {
                 httpPut.setHeader("load_to_single_tablet", "true");
             }
-            httpPut.setHeader("jsonpaths",
-                    "[\"$.instance\",\"$.app\",\"$.metrics\",\"$.metric\",\"$.recordTime\",\"$.metricType\",\"$.int32Value\",\"$.doubleValue\",\"$.strValue\",\"$.labels\"]");
-            httpPut.setHeader("columns",
-                    "instance,app,metrics,metric,record_time,metric_type,int32_value,double_value,str_value,labels");
+            httpPut.setHeader("jsonpaths", jsonPaths);
+            httpPut.setHeader("columns", columns);
             setHeaderIfHasText(httpPut, "timezone", config.timezone());
             setHeaderIfHasText(httpPut, "redirect-policy", config.redirectPolicy());
             setHeaderIfHasText(httpPut, "group_commit", config.groupCommit());

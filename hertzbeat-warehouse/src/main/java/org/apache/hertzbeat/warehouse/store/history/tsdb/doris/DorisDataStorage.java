@@ -25,12 +25,15 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -51,6 +54,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -70,6 +74,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private static final String DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
     private static final String DATABASE_NAME = "hertzbeat";
     private static final String TABLE_NAME = "hzb_history";
+    private static final String LOG_TABLE_NAME = "hzb_log";
     private static final String WRITE_MODE_JDBC = "jdbc";
     private static final String WRITE_MODE_STREAM = "stream";
 
@@ -83,6 +88,8 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private static final String LABEL_KEY_START_TIME = "start";
     private static final String LABEL_KEY_END_TIME = "end";
     private static final int MAX_QUERY_LIMIT = 20000;
+    private static final int LOG_BATCH_SIZE = 1000;
+    private static final long NANOS_PER_MILLISECOND = 1_000_000L;
     private static final long MAX_WAIT_MS = 500L;
     private static final int MAX_RETRIES = 3;
 
@@ -98,6 +105,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
 
     // Stream Load writer (only used when writeMode is "stream")
     private DorisStreamLoadWriter streamLoadWriter;
+    private DorisStreamLoadWriter logStreamLoadWriter;
 
     public DorisDataStorage(DorisProperties dorisProperties) {
         if (dorisProperties == null) {
@@ -144,18 +152,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             String urlWithDb = baseUrl.endsWith("/") ? baseUrl + DATABASE_NAME : baseUrl + "/" + DATABASE_NAME;
 
             // Step 3: Create connection pool with database
-            HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(urlWithDb);
-            config.setUsername(properties.username());
-            config.setPassword(properties.password());
-            config.setDriverClassName(DRIVER_NAME);
-            config.setMinimumIdle(poolConfig.minimumIdle());
-            config.setMaximumPoolSize(poolConfig.maximumPoolSize());
-            config.setConnectionTimeout(poolConfig.connectionTimeout());
-            config.setMaxLifetime(poolConfig.maxLifetime());
-            config.setIdleTimeout(poolConfig.idleTimeout());
-            config.setConnectionTestQuery("SELECT 1");
-            config.setPoolName("Doris-HikariCP");
+            HikariConfig config = getHikariConfig(urlWithDb, poolConfig);
 
             this.dataSource = new HikariDataSource(config);
 
@@ -164,6 +161,8 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
                  Statement stmt = conn.createStatement()) {
                 stmt.execute(buildCreateTableSql());
                 log.info("[Doris] Table {} ensured", TABLE_NAME);
+                stmt.execute(buildCreateLogTableSql());
+                log.info("[Doris] Table {} ensured", LOG_TABLE_NAME);
             }
 
             log.info("[Doris] Initialized: {}", urlWithDb);
@@ -174,6 +173,23 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             log.error("[Doris] Failed to initialize: {}", e.getMessage(), e);
         }
         return false;
+    }
+
+    @NotNull
+    private HikariConfig getHikariConfig(String urlWithDb, DorisProperties.PoolConfig poolConfig) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(urlWithDb);
+        config.setUsername(properties.username());
+        config.setPassword(properties.password());
+        config.setDriverClassName(DRIVER_NAME);
+        config.setMinimumIdle(poolConfig.minimumIdle());
+        config.setMaximumPoolSize(poolConfig.maximumPoolSize());
+        config.setConnectionTimeout(poolConfig.connectionTimeout());
+        config.setMaxLifetime(poolConfig.maxLifetime());
+        config.setIdleTimeout(poolConfig.idleTimeout());
+        config.setConnectionTestQuery("SELECT 1");
+        config.setPoolName("Doris-HikariCP");
+        return config;
     }
 
     /**
@@ -191,6 +207,18 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             } else {
                 log.warn("[Doris] Stream Load writer failed, fallback to JDBC.");
                 this.writeMode = WRITE_MODE_JDBC;
+            }
+
+            this.logStreamLoadWriter = new DorisStreamLoadWriter(
+                    DATABASE_NAME, LOG_TABLE_NAME, properties.url(),
+                    properties.username(), properties.password(),
+                    writeConfig.streamLoadConfig()
+            );
+            if (logStreamLoadWriter.isAvailable()) {
+                log.info("[Doris] Log Stream Load writer initialized.");
+            } else {
+                log.warn("[Doris] Log Stream Load writer unavailable, log writes fallback to JDBC.");
+                this.logStreamLoadWriter = null;
             }
         } catch (Exception e) {
             log.error("[Doris] Stream Load init failed: {}", e.getMessage(), e);
@@ -243,6 +271,52 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             sql.append(")");
         }
 
+        return sql.toString();
+    }
+
+    /**
+     * Build CREATE LOG TABLE SQL statement
+     */
+    private String buildCreateLogTableSql() {
+        DorisProperties.TableConfig config = properties.tableConfig();
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("CREATE TABLE IF NOT EXISTS ").append(LOG_TABLE_NAME).append(" (\n");
+        sql.append("    time_unix_nano          BIGINT         COMMENT 'event unix time in nanoseconds',\n");
+        sql.append("    trace_id                VARCHAR(64)    COMMENT 'trace id',\n");
+        sql.append("    span_id                 VARCHAR(32)    COMMENT 'span id',\n");
+        sql.append("    event_time              DATETIME       COMMENT 'event time for partition and query',\n");
+        sql.append("    observed_time_unix_nano BIGINT         COMMENT 'observed unix time in nanoseconds',\n");
+        sql.append("    severity_number         INT            COMMENT 'severity number',\n");
+        sql.append("    severity_text           VARCHAR(32)    COMMENT 'severity text',\n");
+        sql.append("    body                    VARCHAR(65533) COMMENT 'log body json',\n");
+        sql.append("    trace_flags             INT            COMMENT 'trace flags',\n");
+        sql.append("    attributes              VARCHAR(65533) COMMENT 'log attributes json',\n");
+        sql.append("    resource                VARCHAR(65533) COMMENT 'resource json',\n");
+        sql.append("    instrumentation_scope   VARCHAR(").append(config.strColumnMaxLength())
+                .append(") COMMENT 'instrumentation scope json',\n");
+        sql.append("    dropped_attributes_count INT           COMMENT 'dropped attributes count'\n");
+        sql.append(") DUPLICATE KEY(time_unix_nano, trace_id, span_id, event_time)\n");
+
+        if (config.enablePartition()) {
+            sql.append("PARTITION BY RANGE(event_time) ()\n");
+            sql.append("DISTRIBUTED BY HASH(time_unix_nano) BUCKETS ").append(config.buckets()).append("\n");
+            sql.append("PROPERTIES (\n");
+            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
+            sql.append("    \"dynamic_partition.enable\" = \"true\",\n");
+            sql.append("    \"dynamic_partition.time_unit\" = \"").append(config.partitionTimeUnit()).append("\",\n");
+            sql.append("    \"dynamic_partition.end\" = \"").append(config.partitionFutureDays()).append("\",\n");
+            sql.append("    \"dynamic_partition.prefix\" = \"p\",\n");
+            sql.append("    \"dynamic_partition.buckets\" = \"").append(config.buckets()).append("\",\n");
+            sql.append("    \"dynamic_partition.history_partition_num\" = \"")
+                    .append(config.partitionRetentionDays()).append("\"\n");
+            sql.append(")");
+        } else {
+            sql.append("DISTRIBUTED BY HASH(time_unix_nano) BUCKETS ").append(config.buckets()).append("\n");
+            sql.append("PROPERTIES (\n");
+            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\"\n");
+            sql.append(")");
+        }
         return sql.toString();
     }
 
@@ -763,6 +837,327 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     }
 
     @Override
+    public void saveLogData(LogEntry logEntry) {
+        if (logEntry == null) {
+            return;
+        }
+        saveLogDataBatch(List.of(logEntry));
+    }
+
+    @Override
+    public void saveLogDataBatch(List<LogEntry> logEntries) {
+        if (!isServerAvailable() || logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+
+        int total = logEntries.size();
+        for (int i = 0; i < total; i += LOG_BATCH_SIZE) {
+            int end = Math.min(i + LOG_BATCH_SIZE, total);
+            List<LogEntry> batch = logEntries.subList(i, end);
+            if (WRITE_MODE_STREAM.equals(writeMode) && logStreamLoadWriter != null) {
+                boolean success = logStreamLoadWriter.writeLogs(batch);
+                if (!success) {
+                    if (writeConfig.fallbackToJdbcOnFailure()) {
+                        log.warn("[Doris] Log Stream Load failed, fallbackToJdbcOnFailure=true, use JDBC for this batch");
+                        doSaveLogDataJdbc(batch);
+                    } else {
+                        log.error("[Doris] Log Stream Load failed and JDBC fallback is disabled. rows={}", batch.size());
+                    }
+                }
+            } else {
+                doSaveLogDataJdbc(batch);
+            }
+        }
+    }
+
+    private void doSaveLogDataJdbc(List<LogEntry> logEntries) {
+        if (logEntries == null || logEntries.isEmpty()) {
+            return;
+        }
+
+        String insertSql = """
+                INSERT INTO %s.%s (
+                time_unix_nano, trace_id, span_id, event_time, observed_time_unix_nano,
+                severity_number, severity_text, body, trace_flags, attributes, resource,
+                instrumentation_scope, dropped_attributes_count
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """.formatted(DATABASE_NAME, LOG_TABLE_NAME);
+
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
+                for (LogEntry logEntry : logEntries) {
+                    long timeUnixNano = normalizeTimeUnixNano(logEntry.getTimeUnixNano());
+                    long observedTimeUnixNano = logEntry.getObservedTimeUnixNano() != null
+                        ? logEntry.getObservedTimeUnixNano()
+                        : timeUnixNano;
+
+                    pstmt.setLong(1, timeUnixNano);
+                    pstmt.setString(2, logEntry.getTraceId());
+                    pstmt.setString(3, logEntry.getSpanId());
+                    pstmt.setTimestamp(4, nanosToTimestamp(timeUnixNano));
+                    pstmt.setLong(5, observedTimeUnixNano);
+
+                    if (logEntry.getSeverityNumber() != null) {
+                        pstmt.setInt(6, logEntry.getSeverityNumber());
+                    } else {
+                        pstmt.setNull(6, java.sql.Types.INTEGER);
+                    }
+                    pstmt.setString(7, logEntry.getSeverityText());
+                    pstmt.setString(8, JsonUtil.toJson(logEntry.getBody()));
+                    if (logEntry.getTraceFlags() != null) {
+                        pstmt.setInt(9, logEntry.getTraceFlags());
+                    } else {
+                        pstmt.setNull(9, java.sql.Types.INTEGER);
+                    }
+                    pstmt.setString(10, JsonUtil.toJson(logEntry.getAttributes()));
+                    pstmt.setString(11, JsonUtil.toJson(logEntry.getResource()));
+                    pstmt.setString(12, JsonUtil.toJson(logEntry.getInstrumentationScope()));
+                    if (logEntry.getDroppedAttributesCount() != null) {
+                        pstmt.setInt(13, logEntry.getDroppedAttributesCount());
+                    } else {
+                        pstmt.setNull(13, java.sql.Types.INTEGER);
+                    }
+
+                    pstmt.addBatch();
+                }
+                pstmt.executeBatch();
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            log.error("[Doris] Failed to save log data: {}", e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                                        String spanId, Integer severityNumber,
+                                                        String severityText, String searchContent) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT time_unix_nano, observed_time_unix_nano, severity_number, severity_text, body,
+                       trace_id, span_id, trace_flags, attributes, resource, instrumentation_scope, dropped_attributes_count
+                FROM %s.%s
+                """.formatted(DATABASE_NAME, LOG_TABLE_NAME));
+        List<Object> params = new ArrayList<>();
+        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+        sql.append(" ORDER BY time_unix_nano DESC");
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParameters(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return mapRowsToLogEntries(rs);
+            }
+        } catch (Exception e) {
+            log.error("[Doris] queryLogsByMultipleConditions error: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public List<LogEntry> queryLogsByMultipleConditionsWithPagination(Long startTime, Long endTime, String traceId,
+                                                                      String spanId, Integer severityNumber,
+                                                                      String severityText, String searchContent,
+                                                                      Integer offset, Integer limit) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT time_unix_nano, observed_time_unix_nano, severity_number, severity_text, body,
+                       trace_id, span_id, trace_flags, attributes, resource, instrumentation_scope, dropped_attributes_count
+                FROM %s.%s
+                """.formatted(DATABASE_NAME, LOG_TABLE_NAME));
+        List<Object> params = new ArrayList<>();
+        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+        sql.append(" ORDER BY time_unix_nano DESC");
+        if (limit != null && limit > 0) {
+            sql.append(" LIMIT ?");
+            params.add(limit);
+            if (offset != null && offset > 0) {
+                sql.append(" OFFSET ?");
+                params.add(offset);
+            }
+        }
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParameters(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return mapRowsToLogEntries(rs);
+            }
+        } catch (Exception e) {
+            log.error("[Doris] queryLogsByMultipleConditionsWithPagination error: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public long countLogsByMultipleConditions(Long startTime, Long endTime, String traceId,
+                                              String spanId, Integer severityNumber,
+                                              String severityText, String searchContent) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS count FROM %s.%s"
+            .formatted(DATABASE_NAME, LOG_TABLE_NAME));
+        List<Object> params = new ArrayList<>();
+        appendLogWhereClause(sql, params, startTime, endTime, traceId, spanId, severityNumber, severityText, searchContent);
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParameters(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("count");
+                }
+                return 0;
+            }
+        } catch (Exception e) {
+            log.error("[Doris] countLogsByMultipleConditions error: {}", e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    @Override
+    public boolean batchDeleteLogs(List<Long> timeUnixNanos) {
+        if (!isServerAvailable() || timeUnixNanos == null || timeUnixNanos.isEmpty()) {
+            return false;
+        }
+        List<Long> validTimeUnixNanos = timeUnixNanos.stream()
+            .filter(Objects::nonNull)
+            .toList();
+        if (validTimeUnixNanos.isEmpty()) {
+            return false;
+        }
+
+        String placeholders = String.join(",", Collections.nCopies(validTimeUnixNanos.size(), "?"));
+        String sql = "DELETE FROM %s.%s WHERE time_unix_nano IN (%s)"
+            .formatted(DATABASE_NAME, LOG_TABLE_NAME, placeholders);
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            int index = 1;
+            for (Long timeUnixNano : validTimeUnixNanos) {
+                pstmt.setLong(index++, timeUnixNano);
+            }
+            pstmt.executeUpdate();
+            return true;
+        } catch (Exception e) {
+            log.error("[Doris] batchDeleteLogs error: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    private void appendLogWhereClause(StringBuilder sql, List<Object> params,
+                                      Long startTime, Long endTime,
+                                      String traceId, String spanId,
+                                      Integer severityNumber, String severityText,
+                                      String searchContent) {
+        List<String> conditions = new ArrayList<>();
+        if (startTime != null) {
+            conditions.add("time_unix_nano >= ?");
+            params.add(msToNs(startTime));
+        }
+        if (endTime != null) {
+            conditions.add("time_unix_nano <= ?");
+            params.add(msToNs(endTime));
+        }
+        if (StringUtils.hasText(traceId)) {
+            conditions.add("trace_id = ?");
+            params.add(traceId);
+        }
+        if (StringUtils.hasText(spanId)) {
+            conditions.add("span_id = ?");
+            params.add(spanId);
+        }
+        if (severityNumber != null) {
+            conditions.add("severity_number = ?");
+            params.add(severityNumber);
+        }
+        if (StringUtils.hasText(severityText)) {
+            conditions.add("severity_text = ?");
+            params.add(severityText);
+        }
+        if (StringUtils.hasText(searchContent)) {
+            conditions.add("body LIKE ?");
+            params.add("%" + searchContent + "%");
+        }
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+    }
+
+    private void bindParameters(PreparedStatement pstmt, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            pstmt.setObject(i + 1, params.get(i));
+        }
+    }
+
+    private List<LogEntry> mapRowsToLogEntries(ResultSet rs) throws SQLException {
+        List<LogEntry> entries = new LinkedList<>();
+        while (rs.next()) {
+            String instrumentationScopeStr = rs.getString("instrumentation_scope");
+            LogEntry.InstrumentationScope instrumentationScope = null;
+            if (StringUtils.hasText(instrumentationScopeStr)) {
+                instrumentationScope = JsonUtil.fromJson(instrumentationScopeStr, LogEntry.InstrumentationScope.class);
+            }
+
+            LogEntry entry = LogEntry.builder()
+                .timeUnixNano(rs.getLong("time_unix_nano"))
+                .observedTimeUnixNano(rs.getLong("observed_time_unix_nano"))
+                .severityNumber(getNullableInteger(rs, "severity_number"))
+                .severityText(rs.getString("severity_text"))
+                .body(parseJsonMaybe(rs.getString("body")))
+                .traceId(rs.getString("trace_id"))
+                .spanId(rs.getString("span_id"))
+                .traceFlags(getNullableInteger(rs, "trace_flags"))
+                .attributes(castToMap(parseJsonMaybe(rs.getString("attributes"))))
+                .resource(castToMap(parseJsonMaybe(rs.getString("resource"))))
+                .instrumentationScope(instrumentationScope)
+                .droppedAttributesCount(getNullableInteger(rs, "dropped_attributes_count"))
+                .build();
+            entries.add(entry);
+        }
+        return entries;
+    }
+
+    private Integer getNullableInteger(ResultSet rs, String columnName) throws SQLException {
+        int value = rs.getInt(columnName);
+        return rs.wasNull() ? null : value;
+    }
+
+    private static long msToNs(Long ms) {
+        return ms * NANOS_PER_MILLISECOND;
+    }
+
+    private long normalizeTimeUnixNano(Long timeUnixNano) {
+        return timeUnixNano != null ? timeUnixNano : System.currentTimeMillis() * NANOS_PER_MILLISECOND;
+    }
+
+    private Timestamp nanosToTimestamp(long timeUnixNano) {
+        return new Timestamp(timeUnixNano / NANOS_PER_MILLISECOND);
+    }
+
+    private Object parseJsonMaybe(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        String trimmed = value.trim();
+        boolean maybeJson = (trimmed.startsWith("{") && trimmed.endsWith("}"))
+            || (trimmed.startsWith("[") && trimmed.endsWith("]"))
+            || (trimmed.startsWith("\"") && trimmed.endsWith("\""));
+        if (!maybeJson) {
+            return trimmed;
+        }
+        Object parsed = JsonUtil.fromJson(trimmed, Object.class);
+        return parsed != null ? parsed : trimmed;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> castToMap(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        return null;
+    }
+
+    @Override
     public void destroy() {
         log.info("[Doris] Shutting down...");
 
@@ -796,6 +1191,10 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         if (streamLoadWriter != null) {
             streamLoadWriter.close();
             log.info("[Doris] Stream Load writer closed.");
+        }
+        if (logStreamLoadWriter != null) {
+            logStreamLoadWriter.close();
+            log.info("[Doris] Log Stream Load writer closed.");
         }
     }
 
