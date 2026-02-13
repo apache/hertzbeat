@@ -255,8 +255,6 @@ warehouse:
           timeout: 60
           # Max batch size in bytes for stream load (10MB default)
           max-bytes-per-batch: 10485760
-          # Enable GZIP compression for stream load (uses compress_type: gz)
-          enable-compression: false
           # Load to single tablet (better for small batches)
           load-to-single-tablet: false
   # store real-time metrics data, enable only one below

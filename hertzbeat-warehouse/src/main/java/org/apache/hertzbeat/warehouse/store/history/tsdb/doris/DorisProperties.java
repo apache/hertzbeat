@@ -149,8 +149,6 @@ public record DorisProperties(
             @DefaultValue("60") int timeout,
             // Max batch size in bytes for stream load
             @DefaultValue("10485760") int maxBytesPerBatch,
-            // Enable data compression for stream load
-            @DefaultValue("false") boolean enableCompression,
             // Load to single tablet (better for small batches)
             @DefaultValue("false") boolean loadToSingleTablet,
             // Maximum allowed filter ratio in [0,1]
@@ -201,7 +199,7 @@ public record DorisProperties(
          * Factory method to create default StreamLoadConfig
          */
         public static StreamLoadConfig createDefault() {
-            return new StreamLoadConfig(":8030", 60, 10485760, false, false,
+            return new StreamLoadConfig(":8030", 60, 10485760, false,
                     0.1, false, "", "", "", 0, 2);
         }
 
