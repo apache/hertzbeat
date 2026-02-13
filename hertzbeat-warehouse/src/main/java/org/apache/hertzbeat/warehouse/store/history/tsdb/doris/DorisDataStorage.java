@@ -95,6 +95,8 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     private static final long NANOS_PER_MILLISECOND = 1_000_000L;
     private static final long MAX_WAIT_MS = 500L;
     private static final int MAX_RETRIES = 3;
+    private static final String METRIC_BLOOM_FILTER_COLUMNS = "instance,app,metrics,metric";
+    private static final String LOG_BLOOM_FILTER_COLUMNS = "trace_id,span_id,severity_number,severity_text";
 
     private final DorisProperties properties;
     private HikariDataSource dataSource;
@@ -264,6 +266,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             sql.append("DISTRIBUTED BY HASH(instance, app, metrics) BUCKETS ").append(config.buckets()).append("\n");
             sql.append("PROPERTIES (\n");
             sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
+            sql.append("    \"bloom_filter_columns\" = \"").append(METRIC_BLOOM_FILTER_COLUMNS).append("\",\n");
             sql.append("    \"dynamic_partition.enable\" = \"true\",\n");
             sql.append("    \"dynamic_partition.time_unit\" = \"").append(config.partitionTimeUnit()).append("\",\n");
             sql.append("    \"dynamic_partition.end\" = \"").append(config.partitionFutureDays()).append("\",\n");
@@ -276,7 +279,8 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             // Single table mode
             sql.append("DISTRIBUTED BY HASH(instance, app, metrics) BUCKETS ").append(config.buckets()).append("\n");
             sql.append("PROPERTIES (\n");
-            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\"\n");
+            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
+            sql.append("    \"bloom_filter_columns\" = \"").append(METRIC_BLOOM_FILTER_COLUMNS).append("\"\n");
             sql.append(")");
         }
 
@@ -312,6 +316,7 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
             sql.append("DISTRIBUTED BY HASH(time_unix_nano) BUCKETS ").append(config.buckets()).append("\n");
             sql.append("PROPERTIES (\n");
             sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
+            sql.append("    \"bloom_filter_columns\" = \"").append(LOG_BLOOM_FILTER_COLUMNS).append("\",\n");
             sql.append("    \"dynamic_partition.enable\" = \"true\",\n");
             sql.append("    \"dynamic_partition.time_unit\" = \"").append(config.partitionTimeUnit()).append("\",\n");
             sql.append("    \"dynamic_partition.end\" = \"").append(config.partitionFutureDays()).append("\",\n");
@@ -323,7 +328,8 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         } else {
             sql.append("DISTRIBUTED BY HASH(time_unix_nano) BUCKETS ").append(config.buckets()).append("\n");
             sql.append("PROPERTIES (\n");
-            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\"\n");
+            sql.append("    \"replication_num\" = \"").append(config.replicationNum()).append("\",\n");
+            sql.append("    \"bloom_filter_columns\" = \"").append(LOG_BLOOM_FILTER_COLUMNS).append("\"\n");
             sql.append(")");
         }
         return sql.toString();
