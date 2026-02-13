@@ -29,6 +29,7 @@ import org.apache.hertzbeat.common.entity.log.LogEntry;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.store.history.tsdb.AbstractHistoryDataStorage;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -56,7 +57,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -98,21 +101,27 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
 
     private final BlockingQueue<DorisMetricRow> metricsBufferQueue;
     private final DorisProperties.WriteConfig writeConfig;
+    private final WarehouseWorkerPool warehouseWorkerPool;
     private String writeMode;
     private final AtomicBoolean draining = new AtomicBoolean(false);
     private volatile boolean flushThreadRunning = true;
-    private Thread flushThread;
+    private volatile boolean flushTaskStarted;
+    private final CountDownLatch flushTaskStopped = new CountDownLatch(1);
 
     // Stream Load writer (only used when writeMode is "stream")
     private DorisStreamLoadWriter streamLoadWriter;
     private DorisStreamLoadWriter logStreamLoadWriter;
 
-    public DorisDataStorage(DorisProperties dorisProperties) {
+    public DorisDataStorage(DorisProperties dorisProperties, WarehouseWorkerPool warehouseWorkerPool) {
         if (dorisProperties == null) {
             log.error("[Doris] Init error, please config Warehouse Doris props in application.yml");
             throw new IllegalArgumentException("please config Warehouse Doris props");
         }
+        if (warehouseWorkerPool == null) {
+            throw new IllegalArgumentException("please config WarehouseWorkerPool bean");
+        }
         this.properties = dorisProperties;
+        this.warehouseWorkerPool = warehouseWorkerPool;
         this.writeConfig = dorisProperties.writeConfig();
         this.writeMode = writeConfig.writeMode();
         this.metricsBufferQueue = new LinkedBlockingQueue<>(writeConfig.batchSize() * 10);
@@ -321,40 +330,48 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * Start the background flush thread
+     * Start the background flush task.
      */
     private void startFlushThread() {
-        flushThread = new Thread(() -> {
-            while (flushThreadRunning || !metricsBufferQueue.isEmpty()) {
+        try {
+            warehouseWorkerPool.executeJob(() -> {
+                flushTaskStarted = true;
                 try {
-                    List<DorisMetricRow> batch = new ArrayList<>(writeConfig.batchSize());
+                    while (flushThreadRunning || !metricsBufferQueue.isEmpty()) {
+                        try {
+                            List<DorisMetricRow> batch = new ArrayList<>(writeConfig.batchSize());
 
-                    // Wait for data or timeout
-                    DorisMetricRow first = metricsBufferQueue.poll(writeConfig.flushInterval(), TimeUnit.SECONDS);
-                    if (first != null) {
-                        batch.add(first);
-                        // Drain remaining items up to batch size
-                        metricsBufferQueue.drainTo(batch, writeConfig.batchSize() - 1);
+                            // Wait for data or timeout
+                            DorisMetricRow first = metricsBufferQueue.poll(writeConfig.flushInterval(), TimeUnit.SECONDS);
+                            if (first != null) {
+                                batch.add(first);
+                                // Drain remaining items up to batch size
+                                metricsBufferQueue.drainTo(batch, writeConfig.batchSize() - 1);
+                            }
+
+                            if (!batch.isEmpty()) {
+                                doSaveData(batch);
+                                log.debug("[Doris] Flushed {} metrics items", batch.size());
+                            }
+
+                            draining.set(false);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            log.debug("[Doris] Flush task interrupted");
+                            break;
+                        } catch (Exception e) {
+                            log.error("[Doris] Flush task error: {}", e.getMessage(), e);
+                        }
                     }
-
-                    if (!batch.isEmpty()) {
-                        doSaveData(batch);
-                        log.debug("[Doris] Flushed {} metrics items", batch.size());
-                    }
-
-                    draining.set(false);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    log.debug("[Doris] Flush thread interrupted");
-                } catch (Exception e) {
-                    log.error("[Doris] Flush thread error: {}", e.getMessage(), e);
+                    log.info("[Doris] Flush task stopped");
+                } finally {
+                    flushTaskStopped.countDown();
                 }
-            }
-            log.info("[Doris] Flush thread stopped");
-        }, "doris-metrics-flush");
-        flushThread.setDaemon(true);
-        flushThread.start();
-        log.info("[Doris] Started metrics flush thread with interval {} seconds", writeConfig.flushInterval());
+            });
+            log.info("[Doris] Started metrics flush task with interval {} seconds", writeConfig.flushInterval());
+        } catch (RejectedExecutionException e) {
+            log.error("[Doris] Failed to start flush task from WarehouseWorkerPool", e);
+        }
     }
 
     private String normalizeApp(String app) {
@@ -508,9 +525,12 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
         metricsBufferQueue.drainTo(batch, writeConfig.batchSize());
         draining.set(false);
         if (!batch.isEmpty()) {
-            Thread flushNow = new Thread(() -> doSaveData(batch), "doris-immediate-flush");
-            flushNow.setDaemon(true);
-            flushNow.start();
+            try {
+                warehouseWorkerPool.executeJob(() -> doSaveData(batch));
+            } catch (RejectedExecutionException e) {
+                log.warn("[Doris] Immediate flush task rejected by WarehouseWorkerPool, fallback to sync flush");
+                doSaveData(batch);
+            }
         }
     }
 
@@ -1163,11 +1183,13 @@ public class DorisDataStorage extends AbstractHistoryDataStorage {
 
         flushThreadRunning = false;
 
-        // Interrupt flush thread and wait for it to finish
-        if (flushThread != null && flushThread.isAlive()) {
-            flushThread.interrupt();
+        // Wait flush task to finish.
+        if (flushTaskStarted) {
             try {
-                flushThread.join(10000); // Wait up to 10 seconds
+                boolean stopped = flushTaskStopped.await(10000, TimeUnit.MILLISECONDS);
+                if (!stopped) {
+                    log.warn("[Doris] Timed out waiting for flush task to stop");
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
